@@ -1,4 +1,6 @@
 *.js
+!vendor/*.js
+
 *.js.map
 
 lib-cov

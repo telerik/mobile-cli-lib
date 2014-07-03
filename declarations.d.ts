@@ -76,3 +76,18 @@ interface ICommandOptions {
 declare enum ErrorCodes {
 	UNKNOWN = 127
 }
+
+interface IFutureDispatcher	 {
+	run(): void;
+	dispatch(action: () => IFuture<void>);
+}
+
+interface ICommandDispatcher {
+	dispatchCommand(): void;
+	completeCommand(): void;
+}
+
+interface ICancellationService extends IDisposable {
+	begin(name: string): IFuture<void>;
+	end(name: string): void;
+}
