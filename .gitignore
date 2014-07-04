@@ -1,5 +1,6 @@
 *.js
 *.js.map
+!vendor/*.js
 
 lib-cov
 *.seed
