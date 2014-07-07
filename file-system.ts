@@ -1,7 +1,5 @@
 ///<reference path="../.d.ts"/>
 
-"use strict";
-
 import fs = require("fs");
 import unzip = require("unzip");
 import Future = require("fibers/future");
