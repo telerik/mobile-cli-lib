@@ -1,3 +1,17 @@
+declare module Server {
+	interface IResponse {
+		response: any;
+		body?: string;
+		headers: any;
+		error?: Error;
+	}
+
+	interface IHttpClient {
+		httpRequest(url:string): IFuture<IResponse>;
+		httpRequest(options:any): IFuture<IResponse>;
+	}
+}
+
 interface IDisposable {
 	dispose(): void;
 }
