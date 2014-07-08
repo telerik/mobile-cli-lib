@@ -99,7 +99,6 @@ interface IFutureDispatcher	 {
 interface ICommandDispatcher {
 	dispatchCommand(beforeExecuteCommandHook?: (command: ICommand, commandName: string) => void): IFuture<void>;
 	completeCommand(propSchema?: any): void;
-	setConfiguration(config: any): void;
 }
 
 interface ICancellationService extends IDisposable {
