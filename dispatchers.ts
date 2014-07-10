@@ -8,22 +8,17 @@ import path = require("path");
 var options = require("./options");
 
 export class CommandDispatcher implements ICommandDispatcher {
-	private config: any;
-
-	public setConfiguration(config: any) {
-		this.config = config;
-	}
-
 	constructor(private $logger: ILogger,
 		private $cancellation: ICancellationService,
-		private $commandsService: ICommandsService) {}
+		private $commandsService: ICommandsService,
+		private $config) { }
 
 	public dispatchCommand(beforeExecuteCommandHook?: (command: ICommand, commandName: string) => void): IFuture<void> {
 		return(() => {
-			this.$logger.setLoggerConfiguration(this.config, options.log);
+			this.$logger.setLoggerConfiguration(this.$config, options.log);
 
 			if (options.version) {
-				this.$logger.out(this.config.version);
+				this.$logger.out(this.$config.version);
 				return;
 			}
 

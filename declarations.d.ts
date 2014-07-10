@@ -1,3 +1,17 @@
+declare module Server {
+	interface IResponse {
+		response: any;
+		body?: string;
+		headers: any;
+		error?: Error;
+	}
+
+	interface IHttpClient {
+		httpRequest(url:string): IFuture<IResponse>;
+		httpRequest(options:any): IFuture<IResponse>;
+	}
+}
+
 interface IDisposable {
 	dispose(): void;
 }
@@ -85,7 +99,6 @@ interface IFutureDispatcher	 {
 interface ICommandDispatcher {
 	dispatchCommand(beforeExecuteCommandHook?: (command: ICommand, commandName: string) => void): IFuture<void>;
 	completeCommand(propSchema?: any): void;
-	setConfiguration(config: any): void;
 }
 
 interface ICancellationService extends IDisposable {
