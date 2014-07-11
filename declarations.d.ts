@@ -94,6 +94,7 @@ declare enum ErrorCodes {
 
 interface IFutureDispatcher	 {
 	run(): void;
+	runMainFiber(): void;
 	dispatch(action: () => IFuture<void>);
 }
 
