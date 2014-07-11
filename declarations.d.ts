@@ -33,6 +33,7 @@ interface IFileSystem {
 	writeJson(filename: string, data: any, space?: string, encoding?: string): IFuture<void>;
 	copyFile(sourceFileName: string, destinationFileName: string): IFuture<void>;
 	getUniqueFileName(baseName: string): IFuture<string>;
+	isEmptyDir(directoryPath: string): IFuture<boolean>;
 	getFsStats(path: string): IFuture<IFsStats>;
 
 	createReadStream(path: string, options?: {
@@ -93,6 +94,7 @@ declare enum ErrorCodes {
 
 interface IFutureDispatcher	 {
 	run(): void;
+	runMainFiber(): void;
 	dispatch(action: () => IFuture<void>);
 }
 

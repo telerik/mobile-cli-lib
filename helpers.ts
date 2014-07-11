@@ -44,7 +44,7 @@ export function enumerateFilesInDirectorySync(directoryPath, filterCallback?: (f
 }
 
 
-export function getParsedOptions(options, shorthands) {
+export function getParsedOptions(options: any, shorthands: any, defaultProfileDir?: string) {
 	var yargs: any = require("yargs");
 
 	Object.keys(options).forEach((opt) => {
@@ -67,6 +67,8 @@ export function getParsedOptions(options, shorthands) {
 			delete parsed[opt];
 		}
 	});
+
+    parsed["profile-dir"] = parsed["profile-dir"] || defaultProfileDir;
 
 	return parsed;
 }
