@@ -219,5 +219,12 @@ export class FileSystem implements IFileSystem {
 			}
 		}).future<string>()();
 	}
+
+	public isEmptyDir(directoryPath: string): IFuture<boolean> {
+		return(() => {
+			var directoryContent = this.readDirectory(directoryPath).wait();
+			return directoryContent.length === 0;
+		}).future<boolean>()();
+	}
 }
 $injector.register("fs", FileSystem);
