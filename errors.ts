@@ -64,6 +64,8 @@ export function installUncaughtExceptionListener(action?: (err: Error, callstack
 
 		if(action) {
 			action(err, callstack);
+		} else {
+			console.log(callstack || err.toString());
 		}
 
 		process.exit(ErrorCodes.UNKNOWN);

@@ -112,3 +112,8 @@ interface IQueue<T> {
 	enqueue(item: T): void;
 	dequeue(): IFuture<T>;
 }
+
+interface IChildProcess {
+	exec(command: string): IFuture<any>;
+	spawn(command: string, args?: string[], options?: any): any;
+}
