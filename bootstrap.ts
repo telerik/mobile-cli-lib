@@ -10,3 +10,4 @@ $injector.require("commandDispatcher", "./common/dispatchers");
 $injector.require("commandsService", "./common/services/commands-service");
 $injector.require("cancellation", "./common/services/cancellation");
 $injector.require("httpClient", "./common/http-client");
+$injector.require("childProcess", "./common/child-process");
