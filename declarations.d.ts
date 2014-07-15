@@ -34,6 +34,7 @@ interface IFileSystem {
 	copyFile(sourceFileName: string, destinationFileName: string): IFuture<void>;
 	getUniqueFileName(baseName: string): IFuture<string>;
 	isEmptyDir(directoryPath: string): IFuture<boolean>;
+	ensureDirectoryExists(directoryPath: string): IFuture<void>;
 	getFsStats(path: string): IFuture<IFsStats>;
 
 	createReadStream(path: string, options?: {

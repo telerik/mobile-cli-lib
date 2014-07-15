@@ -226,5 +226,13 @@ export class FileSystem implements IFileSystem {
 			return directoryContent.length === 0;
 		}).future<boolean>()();
 	}
+
+	public ensureDirectoryExists(directoryPath: string): IFuture<void> {
+		return(() => {
+			if (!this.exists(directoryPath).wait()) {
+				this.createDirectory(directoryPath).wait();
+			}
+		}).future<void>()();
+	}
 }
 $injector.register("fs", FileSystem);
