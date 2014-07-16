@@ -35,6 +35,7 @@ interface IFileSystem {
 	getUniqueFileName(baseName: string): IFuture<string>;
 	isEmptyDir(directoryPath: string): IFuture<boolean>;
 	ensureDirectoryExists(directoryPath: string): IFuture<void>;
+	rename(oldPath: string, newPath: string): IFuture<void>;
 	getFsStats(path: string): IFuture<IFsStats>;
 
 	createReadStream(path: string, options?: {

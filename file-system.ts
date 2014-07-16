@@ -239,5 +239,18 @@ export class FileSystem implements IFileSystem {
 			}
 		}).future<void>()();
 	}
+
+	public rename(oldPath: string, newPath: string): IFuture<void> {
+		var future = new Future<void>();
+		fs.rename(oldPath, newPath, (err) => {
+			if(err) {
+				future.throw(err);
+			} else {
+				future.return();
+			}
+		});
+
+		return future;
+	}
 }
 $injector.register("fs", FileSystem);
