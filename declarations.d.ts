@@ -118,3 +118,7 @@ interface IChildProcess {
 	exec(command: string): IFuture<any>;
 	spawn(command: string, args?: string[], options?: any): any;
 }
+
+interface IProjectHelper {
+	projectDir: string;
+}
