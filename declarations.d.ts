@@ -34,6 +34,8 @@ interface IFileSystem {
 	copyFile(sourceFileName: string, destinationFileName: string): IFuture<void>;
 	getUniqueFileName(baseName: string): IFuture<string>;
 	isEmptyDir(directoryPath: string): IFuture<boolean>;
+	ensureDirectoryExists(directoryPath: string): IFuture<void>;
+	rename(oldPath: string, newPath: string): IFuture<void>;
 	getFsStats(path: string): IFuture<IFsStats>;
 
 	createReadStream(path: string, options?: {
@@ -116,4 +118,8 @@ interface IQueue<T> {
 interface IChildProcess {
 	exec(command: string): IFuture<any>;
 	spawn(command: string, args?: string[], options?: any): any;
+}
+
+interface IProjectHelper {
+	projectDir: string;
 }

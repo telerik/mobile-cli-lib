@@ -68,7 +68,7 @@ export function getParsedOptions(options: any, shorthands: any, defaultProfileDi
 		}
 	});
 
-    parsed["profile-dir"] = parsed["profile-dir"] || defaultProfileDir;
+	parsed["profile-dir"] = parsed["profile-dir"] || defaultProfileDir;
 
 	return parsed;
 }
@@ -79,4 +79,8 @@ export function formatListOfNames(names: string[], conjunction = "or"): string {
 	} else {
 		return _.initial(names).join(", ") + " " + conjunction + " " + names[names.length - 1];
 	}
+}
+
+export function isWindows() {
+	return process.platform === "win32";
 }
