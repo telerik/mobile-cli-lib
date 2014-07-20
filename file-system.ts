@@ -6,7 +6,7 @@ import Future = require("fibers/future");
 import path = require("path");
 import util = require("util");
 import rimraf = require("rimraf");
-import helpers = require("./helpers");
+import hostInfo = require("./../common/host-info");
 
 export class FileSystem implements IFileSystem {
 	private _stat = Future.wrap(fs.stat);
@@ -57,7 +57,7 @@ export class FileSystem implements IFileSystem {
 
 	public unzip(zipFile: string, destinationDir: string): IFuture<void> {
 		return (() => {
-			if (helpers.isDarwin()) {
+			if (hostInfo.isDarwin()) {
 				var $childProcess = $injector.resolve("$childProcess");
 
 				this.createDirectory(destinationDir).wait();

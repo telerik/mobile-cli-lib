@@ -169,3 +169,7 @@ interface IAnalyticsSettingsService {
 	canRequestConsent(): IFuture<boolean>;
 	getUserId():  IFuture<string>;
 }
+
+interface IHostCapabilities {
+	debugToolsSupported: boolean;
+}

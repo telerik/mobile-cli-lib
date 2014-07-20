@@ -5,8 +5,10 @@ declare module Config {
 		ANALYTICS_API_KEY: string;
 		ANALYTICS_INSTALLATION_ID_SETTING_NAME: string;
 		TRACK_FEATURE_USAGE_SETTING_NAME: string;
+		START_PACKAGE_ACTIVITY_NAME: string;
 		version: string;
 		helpTextPath: string;
+		adbFilePath: string;
 	}
 
 	interface IConfig {

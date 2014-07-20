@@ -3,10 +3,6 @@
 import fs = require("fs");
 import path = require("path");
 
-export function isDarwin() {
-	return process.platform === "darwin";
-}
-
 export function stringReplaceAll(string: string, find: any, replace: string): string {
 	return string.split(find).join(replace);
 }
@@ -81,10 +77,6 @@ export function formatListOfNames(names: string[], conjunction = "or"): string {
 	}
 }
 
-export function isWindows() {
-	return process.platform === "win32";
-}
-
 export function versionCompare(version1: string, version2: string): number {
 	version1 = version1.split("-")[0];
 	version2 = version2.split("-")[0];
@@ -113,9 +105,9 @@ export function toBoolean(str: string) {
 }
 
 export function registerCommand(module: string, commandName: any, executor: (module: any, args: string[]) => IFuture<void>, opts?: ICommandOptions) {
-	var factory = (): ICommand => {
+	var factory = ():ICommand => {
 		return {
-			execute: (args: string[]): IFuture<void> => {
+			execute: (args:string[]):IFuture<void> => {
 				var mod = $injector.resolve(module);
 				return executor(mod, args);
 			},
@@ -124,4 +116,22 @@ export function registerCommand(module: string, commandName: any, executor: (mod
 	};
 
 	$injector.registerCommand(commandName, factory);
+}
+
+export function block(operation: () => void): void {
+	if (isInteractive()) {
+		process.stdin.setRawMode(false);
+	}
+	operation();
+	if (isInteractive()) {
+		process.stdin.setRawMode(true);
+	}
+}
+
+export function isNumber(n: any): boolean {
+	return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
+export function fromWindowsRelativePathToUnix(windowsRelativePath: string): string {
+	return windowsRelativePath.replace(/\\/g, "/");
 }
