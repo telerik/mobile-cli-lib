@@ -122,4 +122,5 @@ interface IChildProcess {
 
 interface IProjectHelper {
 	projectDir: string;
+	generateDefaultAppId(appName: string): string;
 }

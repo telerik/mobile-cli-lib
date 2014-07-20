@@ -11,7 +11,7 @@ export class CommandDispatcher implements ICommandDispatcher {
 	constructor(private $logger: ILogger,
 		private $cancellation: ICancellationService,
 		private $commandsService: ICommandsService,
-		private $config) { }
+		private $config: IConfig) { }
 
 	public dispatchCommand(beforeExecuteCommandHook?: (command: ICommand, commandName: string) => void): IFuture<void> {
 		return(() => {

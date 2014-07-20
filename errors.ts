@@ -75,7 +75,7 @@ export function installUncaughtExceptionListener(action?: (err: Error, callstack
 export class Errors implements IErrors {
 	constructor(
 		private $logger: ILogger,
-		private $config) {}
+		private $config: IConfig) {}
 
 	fail(optsOrFormatStr: any, ...args: any[]): void {
 		var opts = optsOrFormatStr;
