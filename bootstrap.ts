@@ -12,3 +12,5 @@ $injector.require("cancellation", "./common/services/cancellation");
 $injector.require("httpClient", "./common/http-client");
 $injector.require("childProcess", "./common/child-process");
 $injector.require("projectHelper", "./common/project-helper");
+
+$injector.requireCommand(["help", "/?"], "./common/commands/help");
