@@ -188,7 +188,7 @@ export class HttpClient implements Server.IHttpClient {
 
 		progressStream.on("finish", () => {
 			if (timeElapsed >= 1) {
-				this.$logger.out("%s%s%s%s", carriageReturn, Array(lastMessageSize + 1).join(' '), carriageReturn, "Download Completed.");
+				this.$logger.out("%s%s%s%s", carriageReturn, Array(lastMessageSize + 1).join(' '), carriageReturn, "Download completed.");
 			}
 		});
 
