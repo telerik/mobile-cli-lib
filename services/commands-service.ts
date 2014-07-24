@@ -67,7 +67,7 @@ export class CommandsService implements ICommandsService {
 		}
 	}
 
-	public completeCommand(propSchema?: any): IFuture<any> {
+	public completeCommand(getPropSchemaAction?: any): IFuture<any> {
 		return (() => {
 			var tabtab = require("tabtab");
 			tabtab.complete("appbuilder", (err, data) => {
@@ -94,6 +94,8 @@ export class CommandsService implements ICommandsService {
 				if (data.words == 2 && childrenCommands) {
 					return tabtab.log(_.reject(childrenCommands, (children: string) => children[0] === '*'), data);
 				}
+
+				var propSchema = getPropSchemaAction();
 
 				if (propSchema) {
 					var parseResult = /prop ([^ ]+) ([^ ]*)/.exec(data.line);
