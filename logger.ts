@@ -2,14 +2,15 @@
 
 import log4js = require("log4js");
 import util = require("util");
+import options = require("./options");
 
 export class Logger implements ILogger {
 	private log4jsLogger = null;
 	
-	public setLoggerConfiguration(config: any, logLevel: string): void {
+	constructor($config) {
 		var appenders = [];
 
-		if (!config.CI_LOGGER) {
+		if (!$config.CI_LOGGER) {
 			appenders.push({
 				type: "console",
 				layout: {
@@ -22,10 +23,10 @@ export class Logger implements ILogger {
 
 		this.log4jsLogger = log4js.getLogger();
 
-		if (logLevel) {
-			this.log4jsLogger.setLevel(logLevel);
+		if (options.log) {
+			this.log4jsLogger.setLevel(options.log);
 		} else {
-			this.log4jsLogger.setLevel(config.DEBUG ? "TRACE" : "INFO");
+			this.log4jsLogger.setLevel($config.DEBUG ? "TRACE" : "INFO");
 		}
 	}
 

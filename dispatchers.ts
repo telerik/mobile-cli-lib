@@ -15,8 +15,6 @@ export class CommandDispatcher implements ICommandDispatcher {
 
 	public dispatchCommand(beforeExecuteCommandHook?: (command: ICommand, commandName: string) => void): IFuture<void> {
 		return(() => {
-			this.$logger.setLoggerConfiguration(this.$config, options.log);
-
 			if (options.version) {
 				this.$logger.out(this.$config.version);
 				return;

@@ -9,6 +9,4 @@ interface ILogger {
 
 	out(formatStr: any, ...args): void;
 	write(...args): void;
-
-	setLoggerConfiguration(config: any, logLevel: string): void;
 }
