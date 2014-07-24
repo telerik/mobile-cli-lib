@@ -28,12 +28,12 @@ export class CommandsService implements ICommandsService {
 
 	public executeCommand(commandName: string, commandArguments: string[],  beforeExecuteCommandHook?: (command: ICommand, commandName: string) => void): boolean {
 		return this.$errors.beginCommand(
-			() => this.executeCommandUnchecked(commandName, commandArguments),
+			() => this.executeCommandUnchecked(commandName, commandArguments, beforeExecuteCommandHook),
 			() => this.executeCommandUnchecked("help", [this.beautifyCommandName(commandName)]));
 	}
 
 	public tryExecuteCommand(commandName: string, commandArguments: string[], beforeExecuteCommandHook?: (command: ICommand, commandName: string) => void): void {
-		if(!this.executeCommand(commandName, commandArguments)) {
+		if(!this.executeCommand(commandName, commandArguments, beforeExecuteCommandHook)) {
 			this.$logger.fatal("Unknown command '%s'. Use 'appbuilder help' for help.", helpers.stringReplaceAll(commandName, "|", " "));
 			this.tryMatchCommand(commandName);
 		}
