@@ -12,7 +12,7 @@ export class HttpClient implements Server.IHttpClient {
 	private defaultUserAgent: string;
 
 	constructor(private $logger: ILogger,
-				private $config) {}
+				private $config: IConfig) {}
 
 	httpRequest(options): IFuture<Server.IResponse> {
 		return (() => {

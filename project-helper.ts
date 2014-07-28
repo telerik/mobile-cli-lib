@@ -6,7 +6,7 @@ import options = require("./options");
 export class ProjectHelper implements IProjectHelper {
 	constructor(private $logger: ILogger,
 		private $fs: IFileSystem,
-		private $config) { }
+		private $config: IConfig) { }
 
 	private cachedProjectDir = "";
 
@@ -35,6 +35,18 @@ export class ProjectHelper implements IProjectHelper {
 		}
 
 		return this.cachedProjectDir;
+	}
+
+	public generateDefaultAppId(appName: string): string {
+		var sanitizedName = _.filter(appName.split(""), (c) => /[a-zA-Z0-9]/.test(c)).join("");
+		if (sanitizedName) {
+			if (/^\d+$/.test(sanitizedName)) {
+				sanitizedName = "the" + sanitizedName;
+			}
+			return "com.telerik." + sanitizedName;
+		} else {
+			return "com.telerik.the";
+		}
 	}
 }
 $injector.register("projectHelper", ProjectHelper);
