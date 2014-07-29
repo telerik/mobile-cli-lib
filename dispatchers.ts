@@ -79,12 +79,12 @@ class FutureDispatcher implements IFutureDispatcher {
 
     public runMainFiber(): void {
         var fiber = Fiber(() => {
-            var commandDispatcher = $injector.resolve("commandDispatcher");
+            var commandDispatcher : ICommandDispatcher = $injector.resolve("commandDispatcher");
 
             if (process.argv[2] === "completion") {
                 commandDispatcher.completeCommand();
             } else {
-                commandDispatcher.dispatchCommand({}).wait();
+                commandDispatcher.dispatchCommand().wait();
             }
 
             $injector.dispose();
