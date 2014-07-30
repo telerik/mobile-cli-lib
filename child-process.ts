@@ -10,9 +10,19 @@ export class ChildProcess implements IChildProcess {
 		return child_process.exec(command, callback);
 	});
 
+	private _execFile = Future.wrap((command: string, args: string[], callback: (error: any, stdout: NodeBuffer) => void) => {
+		return child_process.execFile(command, args, callback);
+	});
+
 	public exec(command: string): IFuture<any> {
 		this.$logger.debug("exec: %s", command);
 		return this._exec(command);
+	}
+
+	public execFile(command: string, args: string[]): IFuture<any> {
+		this.$logger.debug("execFile: %s", command);
+		args.forEach(a => this.$logger.debug("    %s", a));
+		return this._execFile(command, args);
 	}
 
 	public spawn(command: string, args?: string[], options?: any): any {
