@@ -56,19 +56,21 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public unzip(zipFile: string, destinationDir: string): IFuture<void> {
-		if (helpers.isDarwin()) {
-			var $childProcess = $injector.resolve("$childProcess");
+		return (() => {
+			if (helpers.isDarwin()) {
+				var $childProcess = $injector.resolve("$childProcess");
 
-			this.createDirectory(destinationDir).wait();
-			var unzipProc = $childProcess.spawn('unzip', ['-u', zipFile, '-d', destinationDir],
-				{ stdio: "ignore", detached: true });
-			return this.futureFromEvent(unzipProc, "close");
-		}
-		else {
-			return this.futureFromEvent(
-				this.createReadStream(zipFile)
-					.pipe(unzip.Extract({ path: destinationDir })), "close");
-		}
+				this.createDirectory(destinationDir).wait();
+				var unzipProc = $childProcess.spawn('unzip', ['-u', zipFile, '-d', destinationDir],
+					{ stdio: "ignore", detached: true });
+				this.futureFromEvent(unzipProc, "close").wait();
+			}
+			else {
+				this.futureFromEvent(
+					this.createReadStream(zipFile)
+						.pipe(unzip.Extract({ path: destinationDir })), "close").wait();
+			}
+		}).future<void>()();
 	}
 
 	public exists(path: string): IFuture<boolean> {
