@@ -9,7 +9,7 @@ export class HelpCommand implements ICommand {
 		private $injector: IInjector,
 		private $errors: IErrors,
 		private $fs: IFileSystem,
-		private $config: IConfig) {}
+		private $staticConfig: Config.IStaticConfig) {}
 
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
@@ -22,7 +22,7 @@ export class HelpCommand implements ICommand {
 				topic = util.format("%s|%s", args[0], args[1]);
 			}
 
-			var helpContent = this.$fs.readText(this.$config.helpTextPath).wait();
+			var helpContent = this.$fs.readText(this.$staticConfig.helpTextPath).wait();
 
 			var pattern = util.format("--\\[%s\\]--((.|[\\r\\n])+?)--\\[/\\]--", (<any>RegExp).escape(topic));
 			var regex = new RegExp(pattern);

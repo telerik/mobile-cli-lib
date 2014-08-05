@@ -7,7 +7,7 @@ export class CommandsService implements ICommandsService {
 	constructor(private $errors: IErrors,
 		private $logger: ILogger,
 		private $injector: IInjector,
-		private $config: IConfig) { }
+		private $staticConfig: Config.IStaticConfig) { }
 
 	public allCommands(includeDev: boolean): string[]{
 		var commands = this.$injector.getRegisteredCommandsNames(includeDev);
@@ -35,7 +35,7 @@ export class CommandsService implements ICommandsService {
 
 	public tryExecuteCommand(commandName: string, commandArguments: string[], beforeExecuteCommandHook?: (command: ICommand, commandName: string) => void): void {
 		if(!this.executeCommand(commandName, commandArguments, beforeExecuteCommandHook)) {
-			this.$logger.fatal("Unknown command '%s'. Use '%s help' for help.", helpers.stringReplaceAll(commandName, "|", " "), this.$config.client);
+			this.$logger.fatal("Unknown command '%s'. Use '%s help' for help.", helpers.stringReplaceAll(commandName, "|", " "), this.$staticConfig.CLIENT_NAME);
 			this.tryMatchCommand(commandName);
 		}
 	}
@@ -71,7 +71,7 @@ export class CommandsService implements ICommandsService {
 	public completeCommand(getPropSchemaAction?: any): IFuture<any> {
 		return (() => {
 			var tabtab = require("tabtab");
-			tabtab.complete(this.$config.client, (err, data) => {
+			tabtab.complete(this.$staticConfig.CLIENT_NAME, (err, data) => {
 				if (err || !data) {
 					return;
 				}

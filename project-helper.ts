@@ -6,7 +6,7 @@ import options = require("./options");
 export class ProjectHelper implements IProjectHelper {
 	constructor(private $logger: ILogger,
 		private $fs: IFileSystem,
-		private $config: IConfig) { }
+		private $staticConfig: Config.IStaticConfig) { }
 
 	private cachedProjectDir = "";
 
@@ -20,7 +20,7 @@ export class ProjectHelper implements IProjectHelper {
 		while (true) {
 			this.$logger.trace("Looking for project in '%s'", projectDir);
 
-			if (this.$fs.exists(path.join(projectDir, this.$config.PROJECT_FILE_NAME)).wait()) {
+			if (this.$fs.exists(path.join(projectDir, this.$staticConfig.PROJECT_FILE_NAME)).wait()) {
 				this.$logger.debug("Project directory is '%s'.", projectDir);
 				this.cachedProjectDir = projectDir;
 				break;

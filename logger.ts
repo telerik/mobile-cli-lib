@@ -7,7 +7,7 @@ import options = require("./options");
 export class Logger implements ILogger {
 	private log4jsLogger = null;
 	
-	constructor($config) {
+	constructor($config: Config.IConfig) {
 		var appenders = [];
 
 		if (!$config.CI_LOGGER) {
