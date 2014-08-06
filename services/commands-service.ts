@@ -14,11 +14,13 @@ export class CommandsService implements ICommandsService {
 		return _.reject(commands, (command) => _.contains(command, '|'));
 	}
 
-	public executeCommandUnchecked(commandName: string, commandArguments: string[],  beforeExecuteCommandHook?: (command: ICommand, commandName: string) => void): boolean {
+	public executeCommandUnchecked(commandName: string, commandArguments: string[]): boolean {
 		var command = this.$injector.resolveCommand(commandName);
 		if (command) {
-			if(beforeExecuteCommandHook) {
-				beforeExecuteCommandHook(command, commandName);
+			if (!command.disableAnalytics) {
+				var analyticsService = this.$injector.resolve("analyticsService"); // This should be resolved here due to cyclic dependency
+				analyticsService.checkConsent(commandName).wait();
+				analyticsService.trackFeature(commandName).wait();
 			}
 			command.execute(commandArguments).wait();
 			return true;
@@ -27,14 +29,14 @@ export class CommandsService implements ICommandsService {
 		}
 	}
 
-	public executeCommand(commandName: string, commandArguments: string[],  beforeExecuteCommandHook?: (command: ICommand, commandName: string) => void): boolean {
+	public executeCommand(commandName: string, commandArguments: string[]): boolean {
 		return this.$errors.beginCommand(
-			() => this.executeCommandUnchecked(commandName, commandArguments, beforeExecuteCommandHook),
+			() => this.executeCommandUnchecked(commandName, commandArguments),
 			() => this.executeCommandUnchecked("help", [this.beautifyCommandName(commandName)]));
 	}
 
-	public tryExecuteCommand(commandName: string, commandArguments: string[], beforeExecuteCommandHook?: (command: ICommand, commandName: string) => void): void {
-		if(!this.executeCommand(commandName, commandArguments, beforeExecuteCommandHook)) {
+	public tryExecuteCommand(commandName: string, commandArguments: string[]): void {
+		if(!this.executeCommand(commandName, commandArguments)) {
 			this.$logger.fatal("Unknown command '%s'. Use '%s help' for help.", helpers.stringReplaceAll(commandName, "|", " "), this.$staticConfig.CLIENT_NAME);
 			this.tryMatchCommand(commandName);
 		}

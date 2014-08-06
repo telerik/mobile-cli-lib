@@ -1,7 +1,7 @@
 interface ICommandsService {
 	allCommands(includeDev: boolean): string[];
-	executeCommand(commandName: string, commandArguments: string[],  beforeExecuteCommandHook?: (command: ICommand, commandName: string) => void): boolean;
-	tryExecuteCommand(commandName: string, commandArguments: string[], beforeExecuteCommandHook?: (command: ICommand, commandName: string) => void): void;
-	executeCommandUnchecked(commandName: string, commandArguments: string[],  beforeExecuteCommandHook?: (command: ICommand, commandName: string) => void): boolean;
+	executeCommand(commandName: string, commandArguments: string[]): boolean;
+	tryExecuteCommand(commandName: string, commandArguments: string[]): void;
+	executeCommandUnchecked(commandName: string, commandArguments: string[]): boolean;
 	completeCommand(propSchema?: any): IFuture<any>;
 }

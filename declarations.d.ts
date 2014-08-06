@@ -114,7 +114,7 @@ interface IFutureDispatcher	 {
 }
 
 interface ICommandDispatcher {
-	dispatchCommand(beforeExecuteCommandHook?: (command: ICommand, commandName: string) => void): IFuture<void>;
+	dispatchCommand(): IFuture<void>;
 	completeCommand(propSchema?: any): void;
 }
 
@@ -146,4 +146,26 @@ interface IPropertiesParser {
 
 interface IDictionary<T> {
 	[key: string]: T
+}
+
+interface IStringDictionary extends IDictionary<string> { }
+
+interface IAnalyticsService {
+	checkConsent(featureName: string): IFuture<void>;
+	trackFeature(featureName: string): IFuture<void>;
+	trackException(exception: any, message: string): IFuture<void>;
+}
+
+interface IPrompter extends IDisposable {
+	start(): void;
+	get(schema: IPromptSchema): IFuture<any>;
+	getPassword(prompt: string, options?: {allowEmpty?: boolean}): IFuture<string>;
+	confirm(prompt: string, defaultAction?: () => string): IFuture<boolean>;
+	history(name: string): IPromptHistoryValue;
+	override(object: any): void;
+}
+
+interface IAnalyticsSettingsService {
+	canRequestConsent(): IFuture<boolean>;
+	getUserId():  IFuture<string>;
 }
