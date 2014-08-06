@@ -12,7 +12,8 @@ export class HttpClient implements Server.IHttpClient {
 	private defaultUserAgent: string;
 
 	constructor(private $logger: ILogger,
-				private $config: IConfig) {}
+		private $staticConfig: Config.IStaticConfig,
+		private $config: Config.IConfig) {}
 
 	httpRequest(options): IFuture<Server.IResponse> {
 		return (() => {
@@ -68,7 +69,7 @@ export class HttpClient implements Server.IHttpClient {
 			if (!headers["User-Agent"]) {
 				if (!this.defaultUserAgent) {
 					this.defaultUserAgent = util.format("AppBuilderCLI/%s (Node.js %s; %s; %s)",
-						this.$config.version,
+						this.$staticConfig.version,
 						process.versions.node, process.platform, process.arch);
 					this.$logger.debug("User-Agent: %s", this.defaultUserAgent);
 				}

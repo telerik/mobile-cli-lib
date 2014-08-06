@@ -11,12 +11,12 @@ export class CommandDispatcher implements ICommandDispatcher {
 	constructor(private $logger: ILogger,
 		private $cancellation: ICancellationService,
 		private $commandsService: ICommandsService,
-		private $config: IConfig) { }
+		private $staticConfig: Config.IStaticConfig) { }
 
 	public dispatchCommand(beforeExecuteCommandHook?: (command: ICommand, commandName: string) => void): IFuture<void> {
 		return(() => {
 			if (options.version) {
-				this.$logger.out(this.$config.version);
+				this.$logger.out(this.$staticConfig.version);
 				return;
 			}
 
