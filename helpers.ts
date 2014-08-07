@@ -84,3 +84,22 @@ export function formatListOfNames(names: string[], conjunction = "or"): string {
 export function isWindows() {
 	return process.platform === "win32";
 }
+
+export function versionCompare(version1: string, version2: string): number {
+	version1 = version1.split("-")[0];
+	version2 = version2.split("-")[0];
+	var v1array = _.map(version1.split("."), (x) => parseInt(x, 10)),
+		v2array = _.map(version2.split("."), (x) => parseInt(x, 10));
+
+	if (v1array.length !== v2array.length) {
+		throw new Error("Version strings are not in the same format");
+	}
+
+	for (var i = 0; i < v1array.length; ++i) {
+		if (v1array[i] !== v2array[i]) {
+			return v1array[i] > v2array[i] ? 1 : -1;
+		}
+	}
+
+	return 0;
+}
