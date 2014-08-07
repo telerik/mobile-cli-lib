@@ -125,3 +125,8 @@ interface IProjectHelper {
 	projectDir: string;
 	generateDefaultAppId(appName: string): string;
 }
+
+interface IPropertiesParser {
+	parse(text: string): any;
+	createEditor(filePath: string): IFuture<any>;
+}
