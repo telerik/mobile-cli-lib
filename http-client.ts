@@ -15,7 +15,7 @@ export class HttpClient implements Server.IHttpClient {
 		private $staticConfig: Config.IStaticConfig,
 		private $config: Config.IConfig) {}
 
-	httpRequest(options): IFuture<Server.IResponse> {
+	httpRequest(options: any): IFuture<Server.IResponse> {
 		return (() => {
 			if (_.isString(options)) {
 				options = {
@@ -85,8 +85,8 @@ export class HttpClient implements Server.IHttpClient {
 
 			this.$logger.trace("httpRequest: %s", util.inspect(options));
 
-			var request = http.request(options, (response) => {
-				var data = [];
+			var request = http.request(options, (response: Server.IRequestResponseData) => {
+				var data: string[] = [];
 				var isRedirect = helpers.isResponseRedirect(response);
 				var successful = helpers.isRequestSuccessful(response);
 				if (!successful) {
@@ -105,7 +105,7 @@ export class HttpClient implements Server.IHttpClient {
 
 				if (pipeTo) {
 					pipeTo.on("finish", () => {
-						this.$logger.trace("httpRequest: Piping done. code = %d", response.statusCode);
+						this.$logger.trace("httpRequest: Piping done. code = %d", response.statusCode.toString());
 						result.return({
 							response: response,
 							headers: response.headers
@@ -116,12 +116,12 @@ export class HttpClient implements Server.IHttpClient {
 
 					responseStream.pipe(pipeTo);
 				} else {
-					responseStream.on("data", (chunk) => {
+					responseStream.on("data", (chunk: string) => {
 						data.push(chunk);
 					});
 
 					responseStream.on("end", () => {
-						this.$logger.trace("httpRequest: Done. code = %d", response.statusCode);
+						this.$logger.trace("httpRequest: Done. code = %d", response.statusCode.toString());
 						var body = data.join("");
 
 						if (successful || isRedirect) {
@@ -197,7 +197,7 @@ export class HttpClient implements Server.IHttpClient {
 		return progressStream;
 	}
 
-	private getErrorMessage(response, body: string): string {
+	private getErrorMessage(response: Server.IRequestResponseData, body: string): string {
 		if (response.statusCode === 402) {
 			var subscriptionUrl = util.format("%s://%s/account/subscription", this.$config.AB_SERVER_PROTO, this.$config.AB_SERVER);
 			return util.format("Your subscription has expired. Go to %s to manage your subscription. Note: After you renew your subscription, " +

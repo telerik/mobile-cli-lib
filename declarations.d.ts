@@ -10,6 +10,13 @@ declare module Server {
 		httpRequest(url:string): IFuture<IResponse>;
 		httpRequest(options:any): IFuture<IResponse>;
 	}
+
+	interface IRequestResponseData {
+		statusCode: number;
+		headers: { [index: string]: any };
+		pipe(destination: any, options?: { end?: boolean; }): IRequestResponseData;
+		on(event: string, listener: Function): void;
+	}
 }
 
 interface IDisposable {
@@ -97,7 +104,7 @@ declare enum ErrorCodes {
 interface IFutureDispatcher	 {
 	run(): void;
 	runMainFiber(): void;
-	dispatch(action: () => IFuture<void>);
+	dispatch(action: () => IFuture<void>): void;
 }
 
 interface ICommandDispatcher {
@@ -130,3 +137,9 @@ interface IPropertiesParser {
 	parse(text: string): any;
 	createEditor(filePath: string): IFuture<any>;
 }
+
+interface IDictionary<T> {
+	[key: string]: T
+}
+
+interface IStringDictionary extends IDictionary<string> { }

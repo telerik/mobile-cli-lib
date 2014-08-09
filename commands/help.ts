@@ -31,7 +31,7 @@ export class HelpCommand implements ICommand {
 			if (match) {
 				var helpText = match[1].trim();
 
-				var substitutionPoint;
+				var substitutionPoint: any;
 				while (substitutionPoint = helpText.match(this.$injector.dynamicCallRegex)) {
 					this.$logger.trace(substitutionPoint);
 					var data = this.$injector.dynamicCall(substitutionPoint[0]).wait();

@@ -10,15 +10,15 @@ export function stringReplaceAll(string: string, find: any, replace: string): st
 	return string.split(find).join(replace);
 }
 
-export function isRequestSuccessful(request) {
+export function isRequestSuccessful(request: Server.IRequestResponseData) {
 	return request.statusCode >= 200 && request.statusCode < 300;
 }
 
-export function isResponseRedirect(response) {
+export function isResponseRedirect(response: Server.IRequestResponseData) {
 	return _.contains([301, 302, 303, 307, 308], response.statusCode);
 }
 
-function enumerateFilesInDirectorySyncRecursive(foundFiles, directoryPath, filterCallback) {
+function enumerateFilesInDirectorySyncRecursive(foundFiles: string[], directoryPath: string, filterCallback: (file: string, stat: IFsStats) => boolean): void {
 	var $fs: IFileSystem = $injector.resolve("fs");
 	var contents = $fs.readDirectory(directoryPath).wait();
 	for (var i = 0; i < contents.length; ++i) {
@@ -37,12 +37,11 @@ function enumerateFilesInDirectorySyncRecursive(foundFiles, directoryPath, filte
 }
 
 // filterCallback: function(path: String, stat: fs.Stats): Boolean
-export function enumerateFilesInDirectorySync(directoryPath, filterCallback?: (file: string, stat: fs.Stats) => boolean) {
-	var result = [];
+export function enumerateFilesInDirectorySync(directoryPath: string, filterCallback?: (file: string, stat: IFsStats) => boolean): string[] {
+	var result: string[] = [];
 	enumerateFilesInDirectorySyncRecursive(result, directoryPath, filterCallback);
 	return result;
 }
-
 
 export function getParsedOptions(options: any, shorthands: any, defaultProfileDir?: string) {
 	var yargs: any = require("yargs");

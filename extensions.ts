@@ -18,7 +18,7 @@ interface Error {
 	stack: string;
 }
 
-function startsWith(prefix) {
+function startsWith(prefix: string) {
 	if (typeof prefix !== "string") {
 		throw new Error("prefix must be string");
 	}
@@ -26,7 +26,7 @@ function startsWith(prefix) {
 	return this.length >= prefix.length ? this.substr(0, prefix.length) === prefix : false;
 }
 
-function endsWith(suffix) {
+function endsWith(suffix: string) {
 	if (typeof suffix !== "string") {
 		throw new Error("suffix must be string");
 	}
@@ -54,6 +54,6 @@ String.prototype.endsWith = endsWith;
 String.prototype.isEmpty = isEmpty;
 String.prototype.equals = equals;
 
-(<any>RegExp).escape = (s) => {
+(<any>RegExp).escape = (s: string) => {
 	return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 };

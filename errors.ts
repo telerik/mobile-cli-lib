@@ -8,7 +8,7 @@ Exception.prototype = new Error();
 
 function resolveCallStack(stack: string): string {
 	var stackLines: string[]= stack.split("\n");
-	var parsed = _.map(stackLines, (line): any => {
+	var parsed = _.map(stackLines, (line: string): any => {
 		var match = line.match(/^\s*at ([^(]*) \((.*?):([0-9]+):([0-9]+)\)$/);
 		if (match) {
 			return match;
@@ -55,7 +55,7 @@ function resolveCallStack(stack: string): string {
 }
 
 export function installUncaughtExceptionListener(action?: (err: Error, callstack: string) => void): void {
-	process.on("uncaughtException", (err) => {
+	process.on("uncaughtException", (err: Error) => {
 		var callstack = err.stack;
 		if (callstack) {
 			callstack = resolveCallStack(callstack);
@@ -87,7 +87,7 @@ export class Errors implements IErrors {
 
 		args.unshift(opts.formatStr);
 
-		var exception: any = new Exception();
+		var exception: any = new (<any>Exception)();
 		exception.name = opts.name || "Exception";
 		exception.message = util.format.apply(null, args);
 		exception.stack = new Error(exception.message).stack;
