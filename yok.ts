@@ -29,11 +29,10 @@ var FN_ARG_SPLIT = /,/;
 var FN_ARG = /^\s*(_?)(\S+?)\1\s*$/;
 var STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
 
-function annotate(fn) {
-	var $inject,
-		fnText,
-		argDecl,
-		last;
+function annotate(fn: any) {
+	var $inject: any,
+		fnText: string,
+		argDecl: string[];
 
 	if (typeof fn == 'function') {
 		if (!($inject = fn.$inject)) {
@@ -176,7 +175,7 @@ export class Yok implements IInjector {
 						var commandsService = $injector.resolve("commandsService");
 						var commandName: string = null;
 						var defaultCommand = this.getDefaultCommand(name);
-						var commandArguments = [];
+						var commandArguments: ICommandArgument[] = [];
 
 						if(args.length > 0) {
 							var isValidCommand = this.isValidCommand(this.buildHierarchicalCommand(name, args[0]));
@@ -276,7 +275,7 @@ export class Yok implements IInjector {
 		if (name && name[0] === name[0].toUpperCase()) {
 			function EmptyCtor() {}
 			EmptyCtor.prototype = ctor.prototype;
-			var obj = new EmptyCtor();
+			var obj = new (<any>EmptyCtor)();
 
 			ctor.apply(obj, resolvedArgs);
 			return obj;

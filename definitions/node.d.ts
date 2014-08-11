@@ -16,11 +16,11 @@ declare var __filename: string;
 declare var __dirname: string;
 
 declare function setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]): Timer;
-declare function clearTimeout(timeoutId: Timer);
+declare function clearTimeout(timeoutId: Timer): void;
 declare function setInterval(callback: (...args: any[]) => void, ms: number, ...args: any[]): Timer;
-declare function clearInterval(intervalId: Timer);
+declare function clearInterval(intervalId: Timer): void;
 declare function setImmediate(callback: (...args: any[]) => void, ...args: any[]): any;
-declare function clearImmediate(immediateId: any);
+declare function clearImmediate(immediateId: any): void;
 
 declare var require: {
     (id: string): any;
@@ -67,13 +67,13 @@ declare var Buffer: {
 ************************************************/
 
 declare class EventEmitter {
-    addListener(event: string, listener: Function);
-    on(event: string, listener: Function);
+    addListener(event: string, listener: Function): void;
+    on(event: string, listener: Function): void;
     once(event: string, listener: Function): void;
     removeListener(event: string, listener: Function): void;
     removeAllListeners(event: string): void;
     setMaxListeners(n: number): void;
-    listeners(event: string): { Function; }[];
+    listeners(event: string): { Function: Function; }[];
     emit(event: string, ...args: any[]): void;
 }
 
@@ -156,7 +156,7 @@ declare class NodeProcess extends EventEmitter {
     title: string;
     arch: string;
     platform: string;
-    memoryUsage(): { rss: number; heapTotal; number; heapUsed: number; };
+    memoryUsage(): { rss: number; heapTotal: number; p: number; heapUsed: number; };
     nextTick(callback: Function): void;
     umask(mask?: number): number;
     uptime(): number;
@@ -223,13 +223,13 @@ declare module "querystring" {
 
 declare module "events" {
     export class EventEmitter {
-        addListener(event: string, listener: Function);
+        addListener(event: string, listener: Function): void;
         on(event: string, listener: Function): any;
         once(event: string, listener: Function): void;
         removeListener(event: string, listener: Function): void;
         removeAllListener(event: string): void;
         setMaxListeners(n: number): void;
-        listeners(event: string): { Function; }[];
+        listeners(event: string): { Function: Function; }[];
         emit(event: string, arg1?: any, arg2?: any): void;
     }
 }
@@ -300,7 +300,7 @@ declare module "http" {
     }
     export interface Agent { maxSockets: number; sockets: any; requests: any; }
 
-    export var STATUS_CODES;
+    export var STATUS_CODES: number[];
     export function createServer(requestListener?: (request: ServerRequest, response: ServerResponse) =>void ): Server;
     export function createClient(port?: number, host?: string): any;
     export function request(options: any, callback?: (res: ClientResponse) => void): ClientRequest;
@@ -341,7 +341,7 @@ declare module "cluster" {
     export function removeListener(event: string, listener: Function): void;
     export function removeAllListener(event: string): void;
     export function setMaxListeners(n: number): void;
-    export function listeners(event: string): { Function; }[];
+    export function listeners(event: string): { Function: Function; }[];
     export function emit(event: string, arg1?: any, arg2?: any): void;
 }
 
@@ -365,13 +365,13 @@ declare module "zlib" {
     export function createInflateRaw(options?: ZlibOptions): InflateRaw;
     export function createUnzip(options?: ZlibOptions): Unzip;
 
-    export function deflate(buf: NodeBuffer, callback: (error: Error, result) =>void ): void;
-    export function deflateRaw(buf: NodeBuffer, callback: (error: Error, result) =>void ): void;
-    export function gzip(buf: NodeBuffer, callback: (error: Error, result) =>void ): void;
-    export function gunzip(buf: NodeBuffer, callback: (error: Error, result) =>void ): void;
-    export function inflate(buf: NodeBuffer, callback: (error: Error, result) =>void ): void;
-    export function inflateRaw(buf: NodeBuffer, callback: (error: Error, result) =>void ): void;
-    export function unzip(buf: NodeBuffer, callback: (error: Error, result) =>void ): void;
+    export function deflate(buf: NodeBuffer, callback: (error: Error, result: any) =>void ): void;
+    export function deflateRaw(buf: NodeBuffer, callback: (error: Error, result: any) =>void ): void;
+    export function gzip(buf: NodeBuffer, callback: (error: Error, result: any) =>void ): void;
+    export function gunzip(buf: NodeBuffer, callback: (error: Error, result: any) =>void ): void;
+    export function inflate(buf: NodeBuffer, callback: (error: Error, result: any) =>void ): void;
+    export function inflateRaw(buf: NodeBuffer, callback: (error: Error, result: any) =>void ): void;
+    export function unzip(buf: NodeBuffer, callback: (error: Error, result: any) =>void ): void;
 
     // Constants
     export var Z_NO_FLUSH: number;
@@ -486,7 +486,7 @@ declare module "punycode" {
         decode(string: string): string;
         encode(codePoints: number[]): string;
     }
-    export var version;
+    export var version: string;
 }
 
 declare module "repl" {
@@ -609,7 +609,7 @@ declare module "url" {
         hash?: string;
     }
 
-    export function parse(urlStr: string, parseQueryString? , slashesDenoteHost? ): Url;
+    export function parse(urlStr: string, parseQueryString?: any , slashesDenoteHost?: any): Url;
     export function format(url: Url): string;
     export function resolve(from: string, to: string): string;
 }
@@ -1032,7 +1032,7 @@ declare module "stream" {
         pause(): void;
         resume(): void;
         destroy(): void;
-        push(chunk, encoding?): void;
+        push(chunk: any, encoding?: string): void;
         pipe(destination: WriteStream, options?: { end?: boolean; }): void;
     }
 
@@ -1042,7 +1042,7 @@ declare module "stream" {
         pause(): void;
         resume(): void;
         destroy(): void;
-        push(chunk, encoding?): void;
+        push(chunk: any, encoding?: string): void;
         pipe(destination: WriteStream, options?: { end?: boolean; }): WritableStream;
     }
 

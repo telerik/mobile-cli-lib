@@ -1,17 +1,26 @@
 declare module "log4js" {
 	interface ILogger {
-		fatal(formatStr: string, ...args): void;
-		error(formatStr: string, ...args): void;
-		warn(formatStr: string, ...args): void;
-		info(formatStr: string, ...args): void;
-		debug(formatStr: string, ...args): void;
-		trace(formatStr: string, ...args): void;
+		fatal(formatStr: string, ...args: string[]): void;
+		error(formatStr: string, ...args: string[]): void;
+		warn(formatStr: string, ...args: string[]): void;
+		info(formatStr: string, ...args: string[]): void;
+		debug(formatStr: string, ...args: string[]): void;
+		trace(formatStr: string, ...args: string[]): void;
 
 		setLevel(level: string): void;
 	}
 
 	interface IConfiguration {
-		appenders: any[];
+		appenders: IAppender[];
+	}
+
+	interface IAppender {
+		type: string;
+		layout: ILayout;
+	}
+
+	interface ILayout {
+		type: string;
 	}
 
 	function configure(conf: IConfiguration): void;

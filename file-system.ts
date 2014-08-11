@@ -25,7 +25,7 @@ export class FileSystem implements IFileSystem {
 		zip.pipe(outFile);
 
 		var result = new Future<void>();
-		outFile.on("error", (err) => result.throw(err));
+		outFile.on("error", (err: Error) => result.throw(err));
 
 		var fileIdx = -1;
 		var zipCallback = () => {
@@ -44,7 +44,7 @@ export class FileSystem implements IFileSystem {
 			} else {
 				outFile.on("finish", () => result.return());
 
-				zip.finalize((bytesWritten) => {
+				zip.finalize((bytesWritten: number) => {
 					$logger.debug("zipstream: %d bytes written", bytesWritten);
 					outFile.end();
 				});
@@ -81,7 +81,7 @@ export class FileSystem implements IFileSystem {
 
 	public deleteFile(path: string): IFuture<void> {
 		var future = new Future<void>();
-		fs.unlink(path, (err) => {
+		fs.unlink(path, (err: any) => {
 			if (err && err.code !== "ENOENT") {  // ignore "file doesn't exist" error
 				future.throw(err);
 			} else {
@@ -127,7 +127,7 @@ export class FileSystem implements IFileSystem {
 					break;
 			}
 		});
-		eventEmitter.once("error", (err) => future.throw(err))
+		eventEmitter.once("error", (err: Error) => future.throw(err))
 		return future;
 	}
 
@@ -246,7 +246,7 @@ export class FileSystem implements IFileSystem {
 
 	public rename(oldPath: string, newPath: string): IFuture<void> {
 		var future = new Future<void>();
-		fs.rename(oldPath, newPath, (err) => {
+		fs.rename(oldPath, newPath, (err: Error) => {
 			if(err) {
 				future.throw(err);
 			} else {

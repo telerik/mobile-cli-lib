@@ -5,10 +5,10 @@ import util = require("util");
 import options = require("./options");
 
 export class Logger implements ILogger {
-	private log4jsLogger = null;
+	private log4jsLogger: log4js.ILogger = null;
 	
 	constructor($config: Config.IConfig) {
-		var appenders = [];
+		var appenders: log4js.IAppender[] = [];
 
 		if (!$config.CI_LOGGER) {
 			appenders.push({
@@ -34,35 +34,35 @@ export class Logger implements ILogger {
 		this.log4jsLogger.setLevel(level);
 	}
 
-	fatal(...args): void {
+	fatal(...args: string[]): void {
 		this.log4jsLogger.fatal.apply(this.log4jsLogger, args);
 	}
 
-	error(...args): void {
+	error(...args: string[]): void {
 		this.log4jsLogger.error.apply(this.log4jsLogger, args);
 	}
 
-	warn(...args): void {
+	warn(...args: string[]): void {
 		this.log4jsLogger.warn.apply(this.log4jsLogger, args);
 	}
 
-	info(...args): void {
+	info(...args: string[]): void {
 		this.log4jsLogger.info.apply(this.log4jsLogger, args);
 	}
 
-	debug(...args): void {
+	debug(...args: string[]): void {
 		this.log4jsLogger.debug.apply(this.log4jsLogger, args);
 	}
 
-	trace(...args): void {
+	trace(...args: string[]): void {
 		this.log4jsLogger.trace.apply(this.log4jsLogger, args);
 	}
 
-	out(...args): void {
+	out(...args: string[]): void {
 		console.log(util.format.apply(null, args));
 	}
 
-	write(...args): void {
+	write(...args: string[]): void {
 		process.stdout.write(util.format.apply(null, args));
 	}
 }

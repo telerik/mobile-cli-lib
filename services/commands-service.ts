@@ -42,7 +42,7 @@ export class CommandsService implements ICommandsService {
 
 	private tryMatchCommand(commandName: string): void {
 		var allCommands = this.allCommands(false);
-		var similarCommands = [];
+		var similarCommands: ISimilarCommand[] = [];
 		_.each(allCommands, (command) => {
 			if(!this.$injector.isDefaultCommand(command)) {
 				command = helpers.stringReplaceAll(command, "|", " ");
@@ -71,7 +71,7 @@ export class CommandsService implements ICommandsService {
 	public completeCommand(getPropSchemaAction?: any): IFuture<any> {
 		return (() => {
 			var tabtab = require("tabtab");
-			tabtab.complete(this.$staticConfig.CLIENT_NAME, (err, data) => {
+			tabtab.complete(this.$staticConfig.CLIENT_NAME, (err: Error, data: any) => {
 				if (err || !data) {
 					return;
 				}
@@ -107,7 +107,7 @@ export class CommandsService implements ICommandsService {
 								var range = propSchema[propName].range;
 								if (range) {
 									if (!_.isArray(range)) {
-										range = _.map(range, (value: { input }, key) => {
+										range = _.map(range, (value: { input: string }, key: string) => {
 											return value.input || key;
 										});
 									}

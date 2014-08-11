@@ -4,9 +4,13 @@ declare module "watchr" {
 		paths?: string[];
 		listeners: {
 			error: (error: string) => void;
-			change: (changeType, filePath) => void;
+			change: (changeType: string, filePath: string) => void;
 		};
 	}
 
-	export function watch(arg: IWatchData);
+	export interface IWatcherInstance {
+		close: () => void;
+	}
+
+	export function watch(arg: IWatchData): void;
 }
