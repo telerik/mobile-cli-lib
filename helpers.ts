@@ -1,9 +1,10 @@
 ///<reference path="../.d.ts"/>
+"use strict";
 import fs = require("fs");
 import path = require("path");
 
 export function isDarwin() {
-	return process.platform.toUpperCase() === "DARWIN";
+	return process.platform === "darwin";
 }
 
 export function stringReplaceAll(string: string, find: any, replace: string): string {

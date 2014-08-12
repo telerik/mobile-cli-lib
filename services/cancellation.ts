@@ -29,16 +29,17 @@ export class CancellationService implements ICancellationService {
 			watchr.watch({
 				path: triggerFile,
 				listeners: {
-					error: (error) => {
+					error: (error: Error) => {
 						this.$errors.fail(error);
 					},
-					change: (changeType, filePath) => {
+					change: (changeType: string, filePath: string) => {
 						if (changeType === "delete") {
 							process.exit();
 						}
 					}
 				},
-				next: (err: Error, watcherInstance: watchr.IWatcherInstance) => {
+				next: (err: Error, _watcherInstance: any) => {
+					var watcherInstance: watchr.IWatcherInstance = _watcherInstance;
 					if (err) {
 						watcherInitialized.throw(err);
 					} else {
