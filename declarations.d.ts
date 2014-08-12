@@ -1,3 +1,9 @@
+interface Object {
+	[key: string]: any;
+}
+
+interface IStringDictionary extends IDictionary<string> { }
+
 declare module Server {
 	interface IResponse {
 		response: any;
@@ -30,7 +36,7 @@ interface IFileSystem {
 	deleteFile(path: string): IFuture<void>;
 	deleteDirectory(directory: string): IFuture<void>;
 	getFileSize(path: string): IFuture<number>;
-	futureFromEvent(eventEmitter: any, event: string): IFuture<any>;
+	futureFromEvent(eventEmitter: EventEmitter, event: string): IFuture<any>;
 	createDirectory(path: string): IFuture<void>;
 	readDirectory(path: string): IFuture<string[]>;
 	readFile(filename: string): IFuture<NodeBuffer>;
@@ -141,5 +147,3 @@ interface IPropertiesParser {
 interface IDictionary<T> {
 	[key: string]: T
 }
-
-interface IStringDictionary extends IDictionary<string> { }
