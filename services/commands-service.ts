@@ -72,8 +72,7 @@ export class CommandsService implements ICommandsService {
 
 	public completeCommand(getPropSchemaAction?: any): IFuture<any> {
 		return (() => {
-			var tabtab = require("tabtab");
-			tabtab.complete(this.$staticConfig.CLIENT_NAME, (err: Error, data: any) => {
+			var completeCallback = (err: Error, data: any) => {
 				if (err || !data) {
 					return;
 				}
@@ -123,7 +122,15 @@ export class CommandsService implements ICommandsService {
 				}
 
 				return false;
-			});
+			};
+
+
+			var tabtab = require("tabtab");
+			tabtab.complete(this.$staticConfig.CLIENT_NAME, completeCallback);
+
+			if(this.$staticConfig.CLIENT_NAME_ALIAS) {
+				tabtab.complete(this.$staticConfig.CLIENT_NAME_ALIAS, completeCallback);
+			}
 
 			return true;
 		}).future<any>()();
