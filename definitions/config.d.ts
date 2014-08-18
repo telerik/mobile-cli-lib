@@ -3,6 +3,8 @@ declare module Config {
 		PROJECT_FILE_NAME: string;
 		CLIENT_NAME: string;
 		ANALYTICS_API_KEY: string;
+		ANALYTICS_INSTALLATION_ID_SETTING_NAME: string;
+		TRACK_FEATURE_USAGE_SETTING_NAME: string;
 		version: string;
 		helpTextPath: string;
 	}

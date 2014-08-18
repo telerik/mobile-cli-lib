@@ -103,3 +103,25 @@ export function versionCompare(version1: string, version2: string): number {
 
 	return 0;
 }
+
+export function isInteractive(): boolean {
+	return process.stdout.isTTY && process.stdin.isTTY;
+}
+
+export function toBoolean(str: string) {
+	return str === "true";
+}
+
+export function registerCommand(module: string, commandName: any, executor: (module: any, args: string[]) => IFuture<void>, opts?: ICommandOptions) {
+	var factory = (): ICommand => {
+		return {
+			execute: (args: string[]): IFuture<void> => {
+				var mod = $injector.resolve(module);
+				return executor(mod, args);
+			},
+			disableAnalytics: opts && opts.disableAnalytics
+		};
+	};
+
+	$injector.registerCommand(commandName, factory);
+}

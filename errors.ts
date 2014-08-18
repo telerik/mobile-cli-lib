@@ -54,7 +54,7 @@ function resolveCallStack(stack: string): string {
 	return remapped.join("\n");
 }
 
-export function installUncaughtExceptionListener(action?: (err: Error, callstack: string) => void): void {
+export function installUncaughtExceptionListener(): void {
 	process.on("uncaughtException", (err: Error) => {
 		var callstack = err.stack;
 		if (callstack) {
@@ -62,10 +62,11 @@ export function installUncaughtExceptionListener(action?: (err: Error, callstack
 		}
 		console.log(callstack || err.toString());
 
-		if(action) {
-			action(err, callstack);
-		} else {
-			console.log(callstack || err.toString());
+		try {
+			var analyticsService = $injector.resolve("analyticsService");
+			analyticsService.trackException(err, callstack);
+		} catch (e) {
+			this.$errors.fail("Error while reporting exception: " + e);
 		}
 
 		process.exit(ErrorCodes.UNKNOWN);

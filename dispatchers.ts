@@ -13,7 +13,7 @@ export class CommandDispatcher implements ICommandDispatcher {
 		private $commandsService: ICommandsService,
 		private $staticConfig: Config.IStaticConfig) { }
 
-	public dispatchCommand(beforeExecuteCommandHook?: (command: ICommand, commandName: string) => void): IFuture<void> {
+	public dispatchCommand(): IFuture<void> {
 		return(() => {
 			if (options.version) {
 				this.$logger.out(this.$staticConfig.version);
@@ -30,7 +30,7 @@ export class CommandDispatcher implements ICommandDispatcher {
 
 			this.$cancellation.begin("cli").wait();
 
-			this.$commandsService.tryExecuteCommand(commandName, commandArguments, beforeExecuteCommandHook);
+			this.$commandsService.tryExecuteCommand(commandName, commandArguments);
 		}).future<void>()();
 	}
 
