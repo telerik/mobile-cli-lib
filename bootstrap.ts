@@ -22,3 +22,24 @@ $injector.require("propertiesParser", "./common/properties-parser");
 
 $injector.requireCommand(["help", "/?"], "./common/commands/help");
 $injector.requireCommand("feature-usage-tracking", "./common/services/analytics-service");
+
+$injector.require("iOSCore", "./common/mobile/ios/ios-core");
+$injector.require("coreFoundation", "./common/mobile/ios/ios-core");
+$injector.require("mobileDevice", "./common/mobile/ios/ios-core");
+$injector.require("plistService", "./common/mobile/ios/ios-core");
+
+$injector.require("installationProxyClient", "./common/mobile/ios/ios-proxy-services");
+$injector.require("notificationProxyClient", "./common/mobile/ios/ios-proxy-services");
+$injector.require("houseArrestClient", "./common/mobile/ios/ios-proxy-services");
+
+$injector.require("signal", "./events/signal");
+$injector.require("deviceFound", "./common/mobile/mobile-core/device-discovery");
+$injector.require("deviceLost", "./common/mobile/mobile-core/device-discovery");
+
+$injector.require("deviceDiscovery", "./common/mobile/mobile-core/device-discovery");
+$injector.require("iOSDeviceDiscovery", "./common/mobile/mobile-core/device-discovery");
+$injector.require("androidDeviceDiscovery", "./common/mobile/mobile-core/device-discovery");
+$injector.require("iOSDevice", "./common/mobile/ios/ios-device");
+$injector.require("androidDevice", "./common/mobile/android/android-device");
+
+$injector.require("devicesServices", "./common/mobile/mobile-core/devices-services");
