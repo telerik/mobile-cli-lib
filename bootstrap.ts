@@ -44,3 +44,7 @@ $injector.require("androidDevice", "./common/mobile/android/android-device");
 
 $injector.require("devicesServices", "./common/mobile/mobile-core/devices-services");
 $injector.require("projectNameValidator", "./common/validators/project-name-validator");
+
+$injector.require("androidEmulatorServices", "./common/mobile/android/android-emulator-services");
+$injector.require("iOSEmulatorServices", "./common/mobile/ios/ios-emulator-services");
+$injector.require("wp8EmulatorServices", "./common/mobile/wp8/wp8-emulator-services");
