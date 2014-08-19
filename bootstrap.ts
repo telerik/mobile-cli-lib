@@ -43,3 +43,4 @@ $injector.require("iOSDevice", "./common/mobile/ios/ios-device");
 $injector.require("androidDevice", "./common/mobile/android/android-device");
 
 $injector.require("devicesServices", "./common/mobile/mobile-core/devices-services");
+$injector.require("projectNameValidator", "./common/validators/project-name-validator");
