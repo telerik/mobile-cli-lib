@@ -135,3 +135,11 @@ export function isNumber(n: any): boolean {
 export function fromWindowsRelativePathToUnix(windowsRelativePath: string): string {
 	return windowsRelativePath.replace(/\\/g, "/");
 }
+
+export function isNullOrWhitespace(input: string): boolean {
+	if (!input) {
+		return true;
+	}
+
+	return input.replace(/\s/gi, '').length < 1;
+}
