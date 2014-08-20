@@ -2,6 +2,7 @@ declare module Config {
 	interface IStaticConfig {
 		PROJECT_FILE_NAME: string;
 		CLIENT_NAME: string;
+		CLIENT_NAME_ALIAS?: string;
 		ANALYTICS_API_KEY: string;
 		ANALYTICS_INSTALLATION_ID_SETTING_NAME: string;
 		TRACK_FEATURE_USAGE_SETTING_NAME: string;
