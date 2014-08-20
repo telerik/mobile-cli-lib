@@ -46,10 +46,17 @@ export class CommandDispatcher implements ICommandDispatcher {
 		return "help";
 	}
 
+	// yargs convert parameters that are numbers to numbers, which we do not expect. undo its hard work.
 	private getCommandArguments(): string[] {
 		var remaining: string[] = options._;
 		if (remaining.length > 1) {
-			return remaining.slice(1);
+			remaining = remaining.slice(1);
+			remaining.forEach((item, idx, array) => {
+					if (typeof item === "number") {
+						array[idx] = item.toString();
+					}
+			});
+			return remaining;
 		}
 		return [];
 	}
