@@ -149,4 +149,25 @@ declare module Mobile {
 		publishTelerikAppManager: boolean;
 		hostPlatformsForDeploy: string[];
 	}
+
+	interface IAvdInfo {
+		target: string;
+		targetNum: number;
+		path: string;
+		device?: string;
+		name?: string;
+		abi?: string;
+		skin?: string;
+		sdcard?: string;
+	}
+
+	interface IEmulatorPlatformServices {
+		checkAvailability(): IFuture<void>;
+		startEmulator(app: string, image?: string) : IFuture<void>;
+	}
+
+	interface IEmulatorSettingsService {
+		canStart(platform: string): IFuture<boolean>;
+		minVersion: number;
+	}
 }
