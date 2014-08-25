@@ -163,11 +163,18 @@ declare module Mobile {
 
 	interface IEmulatorPlatformServices {
 		checkAvailability(): IFuture<void>;
-		startEmulator(app: string, image?: string) : IFuture<void>;
+		startEmulator(app: string, emulatorOptions?: IEmulatorOptions) : IFuture<void>;
 	}
 
 	interface IEmulatorSettingsService {
 		canStart(platform: string): IFuture<boolean>;
 		minVersion: number;
+	}
+
+	interface IEmulatorOptions {
+		image?: string;
+		stderrFilePath?: string;
+		stdoutFilePath?: string;
+		deviceFamily?: string;
 	}
 }
