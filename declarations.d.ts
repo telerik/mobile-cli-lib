@@ -132,6 +132,7 @@ interface IChildProcess {
 	exec(command: string): IFuture<any>;
 	execFile(command: string, args: string[]): IFuture<any>;
 	spawn(command: string, args?: string[], options?: any): any;
+	superSpawn(command: string, args: string[], event: string, options?: any): IFuture<void>;
 }
 
 interface IProjectHelper {

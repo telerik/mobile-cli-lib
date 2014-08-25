@@ -2,6 +2,7 @@
 
 import Future = require("fibers/future");
 import child_process = require("child_process");
+import util = require("util");
 
 export class ChildProcess implements IChildProcess {
 	constructor(private $logger: ILogger) {}
@@ -28,5 +29,23 @@ export class ChildProcess implements IChildProcess {
 	public spawn(command: string, args?: string[], options?: any): any {
 		return child_process.spawn(command, args, options);
 	}
+
+	public superSpawn(command: string, args: string[], event: string, options?: any): IFuture<void> { // event should be exit or close
+		var future = new Future<void>();
+		var childProcess = this.spawn(command, args, options);
+		childProcess.once(event, () => {
+			var args = _.toArray(arguments);
+			var statusCode = args[0];
+
+			if(statusCode !== 0) {
+				future.throw(util.format("Command %s exited with code %s", command, statusCode));
+			} else {
+				future.return();
+			}
+		});
+
+		return future;
+	}
+
 }
 $injector.register("childProcess", ChildProcess);
