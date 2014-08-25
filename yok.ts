@@ -195,7 +195,7 @@ export class Yok implements IInjector {
 							commandName = this.buildHierarchicalCommand(name, commandName);
 						}
 
-						commandsService.tryExecuteCommand(commandName, commandName === "help" ? [name] : commandArguments);
+						commandsService.tryExecuteCommand(commandName, commandName === "help" ? [name] : commandArguments).wait();
 					}).future<void>()();
 				}
 			};

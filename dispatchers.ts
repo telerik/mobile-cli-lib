@@ -30,7 +30,7 @@ export class CommandDispatcher implements ICommandDispatcher {
 
 			this.$cancellation.begin("cli").wait();
 
-			this.$commandsService.tryExecuteCommand(commandName, commandArguments);
+			this.$commandsService.tryExecuteCommand(commandName, commandArguments).wait();
 		}).future<void>()();
 	}
 
@@ -84,21 +84,21 @@ class FutureDispatcher implements IFutureDispatcher {
 		this.actions.enqueue(action);
 	}
 
-    public runMainFiber(): void {
-        var fiber = Fiber(() => {
-            var commandDispatcher : ICommandDispatcher = $injector.resolve("commandDispatcher");
+	public runMainFiber(): void {
+		var fiber = Fiber(() => {
+			var commandDispatcher : ICommandDispatcher = $injector.resolve("commandDispatcher");
 
-            if (process.argv[2] === "completion") {
-                commandDispatcher.completeCommand();
-            } else {
-                commandDispatcher.dispatchCommand().wait();
-            }
+			if (process.argv[2] === "completion") {
+				commandDispatcher.completeCommand();
+			} else {
+				commandDispatcher.dispatchCommand().wait();
+			}
 
-            $injector.dispose();
-            Future.assertNoFutureLeftBehind();
-        });
-        global.__main_fiber__ = fiber; // leak fiber to prevent it from being GC'd and thus corrupting V8
-        fiber.run();
+			$injector.dispose();
+			Future.assertNoFutureLeftBehind();
+		});
+		global.__main_fiber__ = fiber; // leak fiber to prevent it from being GC'd and thus corrupting V8
+		fiber.run();
     }
 }
 $injector.register("dispatcher", FutureDispatcher, false);

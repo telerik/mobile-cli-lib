@@ -95,7 +95,7 @@ interface IErrors {
 	fail(formatStr: string, ...args: any[]): void;
 	fail(opts: {formatStr?: string; errorCode?: number; suppressCommandHelp?: boolean}, ...args: any[]): void;
 
-	beginCommand(action: () => any, printCommandHelp: () => void): any;
+	beginCommand(action: () => IFuture<boolean>, printCommandHelp: () => IFuture<boolean>): IFuture<boolean>;
 	verifyHeap(message: string): void;
 }
 
