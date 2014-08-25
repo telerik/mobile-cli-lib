@@ -98,20 +98,22 @@ export class Errors implements IErrors {
 		throw exception;
 	}
 
-	beginCommand(action: () => any, printCommandHelp: () => void): any {
-		try {
-			return action();
-		} catch (ex) {
-			this.$logger.fatal(this.$config.DEBUG
-				? resolveCallStack(ex.stack)
-				: "\x1B[31;1m" + ex.message + "\x1B[0m");
+	beginCommand(action: () => IFuture<boolean>, printCommandHelp: () => IFuture<boolean>): IFuture<boolean> {
+		return (() => {
+			try {
+				return action().wait();
+			} catch (ex) {
+				this.$logger.fatal(this.$config.DEBUG
+					? resolveCallStack(ex.stack)
+					: "\x1B[31;1m" + ex.message + "\x1B[0m");
 
-			if (!ex.suppressCommandHelp) {
-				printCommandHelp();
+				if (!ex.suppressCommandHelp) {
+					printCommandHelp().wait();
+				}
+
+				process.exit(_.isNumber(ex.errorCode) ? ex.errorCode : ErrorCodes.UNKNOWN);
 			}
-
-			process.exit(_.isNumber(ex.errorCode) ? ex.errorCode : ErrorCodes.UNKNOWN);
-		}
+		}).future<boolean>()();
 	}
 
 	// If you want to activate this function, start Node with flags --nouse_idle_notification and --expose_gc

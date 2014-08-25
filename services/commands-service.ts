@@ -14,32 +14,35 @@ export class CommandsService implements ICommandsService {
 		return _.reject(commands, (command) => _.contains(command, '|'));
 	}
 
-	public executeCommandUnchecked(commandName: string, commandArguments: string[]): boolean {
-		var command = this.$injector.resolveCommand(commandName);
-		if (command) {
-			if (!command.disableAnalytics) {
-				var analyticsService = this.$injector.resolve("analyticsService"); // This should be resolved here due to cyclic dependency
-				analyticsService.checkConsent(commandName).wait();
-				analyticsService.trackFeature(commandName).wait();
+	public executeCommandUnchecked(commandName: string, commandArguments: string[]): IFuture<boolean> {
+		return (() => {
+			var command = this.$injector.resolveCommand(commandName);
+			if (command) {
+				if (!command.disableAnalytics) {
+					var analyticsService = this.$injector.resolve("analyticsService"); // This should be resolved here due to cyclic dependency
+					analyticsService.checkConsent(commandName).wait();
+					analyticsService.trackFeature(commandName).wait();
+				}
+				command.execute(commandArguments).wait();
+				return true;
 			}
-			command.execute(commandArguments).wait();
-			return true;
-		} else {
 			return false;
-		}
+		}).future<boolean>()();
 	}
 
-	public executeCommand(commandName: string, commandArguments: string[]): boolean {
+	public executeCommand(commandName: string, commandArguments: string[]): IFuture<boolean> {
 		return this.$errors.beginCommand(
 			() => this.executeCommandUnchecked(commandName, commandArguments),
 			() => this.executeCommandUnchecked("help", [this.beautifyCommandName(commandName)]));
 	}
 
-	public tryExecuteCommand(commandName: string, commandArguments: string[]): void {
-		if(!this.executeCommand(commandName, commandArguments)) {
-			this.$logger.fatal("Unknown command '%s'. Use '%s help' for help.", helpers.stringReplaceAll(commandName, "|", " "), this.$staticConfig.CLIENT_NAME);
-			this.tryMatchCommand(commandName);
-		}
+	public tryExecuteCommand(commandName: string, commandArguments: string[]): IFuture<void> {
+		return (() => {
+			if(!this.executeCommand(commandName, commandArguments).wait()) {
+				this.$logger.fatal("Unknown command '%s'. Use '%s help' for help.", helpers.stringReplaceAll(commandName, "|", " "), this.$staticConfig.CLIENT_NAME);
+				this.tryMatchCommand(commandName);
+			}
+		}).future<void>()();
 	}
 
 	private tryMatchCommand(commandName: string): void {
