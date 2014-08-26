@@ -30,10 +30,16 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		}).future<void>()();
 	}
 
-	startEmulator(image: string) : IFuture<void> {
+	startEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions) : IFuture<void> {
 		return (() => {
 			this.$logger.info("Starting iOS Simulator");
-			this.$childProcess.spawn(IosEmulatorServices.SimulatorLauncher, ["launch", image],
+			var opts = [
+				"launch", app,
+				"--stderr", emulatorOptions.stderrFilePath,
+				"--stdout", emulatorOptions.stdoutFilePath,
+				"--family", emulatorOptions.deviceFamily
+			];
+			this.$childProcess.spawn(IosEmulatorServices.SimulatorLauncher, opts,
 				{ stdio:  ["ignore", "ignore", "ignore"], detached: true }).unref();
 		}).future<void>()();
 	}
