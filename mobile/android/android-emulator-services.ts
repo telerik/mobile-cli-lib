@@ -62,17 +62,17 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 			this.waitForEmulatorBootToComplete().wait();
 
 			// unlock screen
-			var childProcess = this.$childProcess.spawn("adb", ["-e", "shell", "input","keyevent", "82"]);
+			var childProcess = this.$childProcess.spawn(this.$staticConfig.adbFilePath, ["-e", "shell", "input","keyevent", "82"]);
 			this.$fs.futureFromEvent(childProcess, "close").wait();
 
 			// install the app
 			this.$logger.info("installing %s through adb", app);
-			childProcess = this.$childProcess.spawn('adb', ['-e', 'install', '-r', app]);
+			childProcess = this.$childProcess.spawn(this.$staticConfig.adbFilePath, ['-e', 'install', '-r', app]);
 			this.$fs.futureFromEvent(childProcess, "close").wait();
 
 			// run the installed app
 			this.$logger.info("running %s through adb", app);
-			childProcess = this.$childProcess.spawn('adb', ['-e', 'shell', 'am', 'start', '-S', appId + "/" + this.$staticConfig.START_PACKAGE_ACTIVITY_NAME],
+			childProcess = this.$childProcess.spawn(this.$staticConfig.adbFilePath, ['-e', 'shell', 'am', 'start', '-S', appId + "/" + this.$staticConfig.START_PACKAGE_ACTIVITY_NAME],
 				{ stdio:  ["ignore", "ignore", "ignore"], detached: true });
 			this.$fs.futureFromEvent(childProcess, "close").wait();
 			//this.$childProcess.exec(util.format("adb -e shell am start -S %s/%s", appId, this.$staticConfig.START_PACKAGE_ACTIVITY_NAME)).wait();
@@ -88,7 +88,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private getRunningEmulators(): IFuture<string[]> {
 		return (() => {
 			var emulatorDevices: string[] = [];
-			var outputRaw = this.$childProcess.execFile('adb', ['devices']).wait().split(os.EOL);
+			var outputRaw = this.$childProcess.execFile(this.$staticConfig.adbFilePath, ['devices']).wait().split(os.EOL);
 			_.each(outputRaw, (device: string) => {
 				var rx = device.match(/^emulator-(\d+)\s+device$/);
 				if (rx && rx[1]) {
@@ -216,7 +216,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	private isEmulatorBootCompleted(): IFuture<boolean> {
 		return (() => {
-			var output = this.$childProcess.execFile("adb", ["-e", "shell", "getprop", "dev.bootcomplete"]).wait();
+			var output = this.$childProcess.execFile(this.$staticConfig.adbFilePath, ["-e", "shell", "getprop", "dev.bootcomplete"]).wait();
 			var matches = output.match("1");
 			return matches && matches.length > 0;
 		}).future<boolean>()();
