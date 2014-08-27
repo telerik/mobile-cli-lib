@@ -215,9 +215,10 @@ export class AndroidDevice implements Mobile.IDevice {
 	}
 
 	private getLiveSyncUrl(projectType: number): string {
+		var projectTypes = $injector.resolve("$projectTypes");
 		switch (projectType) {
-			case 0: return "icenium://";
-			case 1: return "nativescript://";
+			case projectTypes.Cordova: return "icenium://";
+			case projectTypes.NativeScript: return "nativescript://";
 			default: throw new Error("Unsupported project type");
 		}
 	}
