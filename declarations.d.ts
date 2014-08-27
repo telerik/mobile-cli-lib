@@ -115,7 +115,7 @@ interface IFutureDispatcher	 {
 
 interface ICommandDispatcher {
 	dispatchCommand(): IFuture<void>;
-	completeCommand(propSchema?: any): void;
+	completeCommand(commandsWithPlatformArgument: string[], platforms: string[], getPropSchemaAction?: any): IFuture<boolean>;
 }
 
 interface ICancellationService extends IDisposable {

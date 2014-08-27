@@ -73,15 +73,13 @@ export class CommandsService implements ICommandsService {
 		}
 	}
 
-	public completeCommand(getPropSchemaAction?: any): IFuture<any> {
+	public completeCommand(commandsWithPlatformArgument: string[], platforms: string[], getPropSchemaAction?: any): IFuture<boolean> {
 		return (() => {
 			var completeCallback = (err: Error, data: any) => {
 				if (err || !data) {
 					return;
 				}
 
-				var deviceSpecific = ["build", "deploy"];
-				var propertyCommands = ["print", "set", "add", "del"];
 				var childrenCommands = this.$injector.getChildrenCommandsNames(data.prev);
 
 				if (data.words == 1) {
@@ -92,17 +90,18 @@ export class CommandsService implements ICommandsService {
 					return tabtab.log(Object.keys(require("./options").knownOpts), data, "--");
 				}
 
-				if (_.contains(deviceSpecific, data.prev)) {
-					return tabtab.log(["ios", "android", "wp8"], data);
+				if (_.contains(commandsWithPlatformArgument, data.prev)) {
+					return tabtab.log(platforms, data);
 				}
 
 				if (data.words == 2 && childrenCommands) {
 					return tabtab.log(_.reject(childrenCommands, (children: string) => children[0] === '*'), data);
 				}
 
-				var propSchema = getPropSchemaAction();
+				var propSchema = getPropSchemaAction ? getPropSchemaAction() : null;
 
 				if (propSchema) {
+					var propertyCommands = ["print", "set", "add", "del"];
 					var parseResult = /prop ([^ ]+) ([^ ]*)/.exec(data.line);
 					if (parseResult) {
 						if (_.contains(propertyCommands, parseResult[1])) {
@@ -127,16 +126,15 @@ export class CommandsService implements ICommandsService {
 				return false;
 			};
 
-
 			var tabtab = require("tabtab");
-			tabtab.complete(this.$staticConfig.CLIENT_NAME, completeCallback);
+			tabtab.complete(this.$staticConfig.CLIENT_NAME.toLowerCase(), completeCallback);
 
 			if(this.$staticConfig.CLIENT_NAME_ALIAS) {
-				tabtab.complete(this.$staticConfig.CLIENT_NAME_ALIAS, completeCallback);
+				tabtab.complete(this.$staticConfig.CLIENT_NAME_ALIAS.toLowerCase(), completeCallback);
 			}
 
 			return true;
-		}).future<any>()();
+		}).future<boolean>()();
 	}
 
 	private beautifyCommandName(commandName: string): string {
