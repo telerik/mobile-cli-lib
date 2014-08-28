@@ -2,6 +2,7 @@
 
 import path = require("path");
 import options = require("./options");
+import util = require("util");
 
 export class ProjectHelper implements IProjectHelper {
 	constructor(private $logger: ILogger,
@@ -37,16 +38,17 @@ export class ProjectHelper implements IProjectHelper {
 		return this.cachedProjectDir;
 	}
 
-	public generateDefaultAppId(appName: string): string {
+	public generateDefaultAppId(appName: string, baseAppId: string): string {
 		var sanitizedName = _.filter(appName.split(""), (c) => /[a-zA-Z0-9]/.test(c)).join("");
 		if (sanitizedName) {
 			if (/^\d+$/.test(sanitizedName)) {
 				sanitizedName = "the" + sanitizedName;
 			}
-			return "com.telerik." + sanitizedName;
 		} else {
-			return "com.telerik.the";
+			sanitizedName = "the";
 		}
+
+		return util.format("%s.%s", baseAppId, sanitizedName);
 	}
 }
 $injector.register("projectHelper", ProjectHelper);

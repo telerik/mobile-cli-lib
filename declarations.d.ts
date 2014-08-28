@@ -137,7 +137,7 @@ interface IChildProcess {
 
 interface IProjectHelper {
 	projectDir: string;
-	generateDefaultAppId(appName: string): string;
+	generateDefaultAppId(appName: string, baseAppId: string): string;
 }
 
 interface IPropertiesParser {
