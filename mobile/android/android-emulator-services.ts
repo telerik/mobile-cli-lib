@@ -35,9 +35,9 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		}).future<void>()();
 	}
 
-	public startEmulator(app: string, appId: string, image?: string) : IFuture<void> {
+	public startEmulator(app: string, appId: string, emulatorOptions?: Mobile.IEmulatorOptions) : IFuture<void> {
 		return (() => {
-			image = image || this.getBestFit().wait();
+			var image = (emulatorOptions && emulatorOptions.image) || this.getBestFit().wait();
 			this.startEmulatorCore(app, appId, image).wait();
 		}).future<void>()();
 	}
