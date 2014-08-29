@@ -204,7 +204,7 @@ export class FileSystem implements IFileSystem {
 		return fs.createWriteStream(path, options);
 	}
 
-	public chmod(path: string, mode: number): IFuture<any> {
+	public chmod(path: string, mode: any): IFuture<any> {
 		return this._chmod(path, mode);
 	}
 

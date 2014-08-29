@@ -65,6 +65,7 @@ interface IFileSystem {
 	}): any;
 
 	chmod(path: string, mode: number): IFuture<any>;
+	chmod(path: string, mode: string): IFuture<any>;
 }
 
 // duplicated from fs.Stats, because I cannot import it here
