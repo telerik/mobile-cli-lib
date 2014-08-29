@@ -38,7 +38,11 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	public startEmulator(app: string, appId: string, emulatorOptions?: Mobile.IEmulatorOptions) : IFuture<void> {
 		return (() => {
 			var image = (emulatorOptions && emulatorOptions.image) || this.getBestFit().wait();
-			this.startEmulatorCore(app, appId, image).wait();
+			if (image) {
+				this.startEmulatorCore(app, appId, image).wait();
+			} else {
+				this.$errors.fail("Could not find an emulator image to run your project.");
+			}
 		}).future<void>()();
 	}
 
@@ -75,7 +79,6 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 			childProcess = this.$childProcess.spawn(this.$staticConfig.adbFilePath, ['-e', 'shell', 'am', 'start', '-S', appId + "/" + this.$staticConfig.START_PACKAGE_ACTIVITY_NAME],
 				{ stdio:  ["ignore", "ignore", "ignore"], detached: true });
 			this.$fs.futureFromEvent(childProcess, "close").wait();
-			//this.$childProcess.exec(util.format("adb -e shell am start -S %s/%s", appId, this.$staticConfig.START_PACKAGE_ACTIVITY_NAME)).wait();
 		}).future<void>()();
 	}
 
