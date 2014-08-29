@@ -162,7 +162,7 @@ declare module Mobile {
 	}
 
 	interface IEmulatorPlatformServices {
-		checkAvailability(): IFuture<void>;
+		checkAvailability(dependsOnProject?: boolean): IFuture<void>;
 		startEmulator(app: string, emulatorOptions?: IEmulatorOptions) : IFuture<void>;
 	}
 
