@@ -11,7 +11,7 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		private $errors: IErrors,
 		private $childProcess: IChildProcess) {}
 
-	checkAvailability(): IFuture<void> {
+	checkAvailability(dependsOnProject: boolean = true): IFuture<void> {
 		return (() => {
 			if (!hostInfo.isDarwin()) {
 				this.$errors.fail("iOS Simulator is available only on Mac OS X.");
@@ -24,7 +24,7 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 			}
 
 			var platform = MobileHelper.DevicePlatforms[MobileHelper.DevicePlatforms.iOS];
-			if (!this.$emulatorSettingsService.canStart(platform).wait()) {
+			if (dependsOnProject && !this.$emulatorSettingsService.canStart(platform).wait()) {
 				this.$errors.fail("The current project does not target iOS and cannot be run in the iOS Simulator.");
 			}
 		}).future<void>()();
