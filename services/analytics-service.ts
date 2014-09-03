@@ -22,7 +22,7 @@ export class AnalyticsService implements IAnalyticsService {
 
 	public checkConsent(featureName: string): IFuture<void> {
 		return ((): void => {
-			if (this.$analyticsSettingsService.canRequestConsent().wait()) {
+			if (this.$analyticsSettingsService.canDoRequest().wait()) {
 
 				if(this.isNotConfirmed().wait() && helpers.isInteractive() && !_.contains(this.excluded, featureName)) {
 					this.$logger.out("Do you want to help us improve " +
@@ -40,31 +40,34 @@ export class AnalyticsService implements IAnalyticsService {
 
 	public trackFeature(featureName: string): IFuture<void> {
 		return (() => {
-			try {
-				this.start().wait();
-
-				if (this._eqatecMonitor) {
-					var category = options.client ||
-						(helpers.isInteractive() ? "CLI" : "Non-interactive");
-					this._eqatecMonitor.trackFeature(category + "." + featureName);
+			if(this.$analyticsSettingsService.canDoRequest().wait()) {
+				try {
+					this.start().wait();
+					if (this._eqatecMonitor) {
+						var category = options.client ||
+							(helpers.isInteractive() ? "CLI" : "Non-interactive");
+						this._eqatecMonitor.trackFeature(category + "." + featureName);
+					}
+				} catch(e) {
+					this.$logger.trace("Analytics exception: '%s'", e.toString());
 				}
-			} catch(e) {
-				this.$logger.trace("Analytics exception: '%s'", e.toString());
 			}
 		}).future<void>()();
 	}
 
 	public trackException(exception: any, message: string): IFuture<void> {
 		return (() => {
-			try {
-				this.start().wait();
+			if(this.$analyticsSettingsService.canDoRequest().wait()) {
+				try {
+					this.start().wait();
 
-				if(this._eqatecMonitor) {
-					this._eqatecMonitor.trackException(exception, message);
+					if (this._eqatecMonitor) {
+						this._eqatecMonitor.trackException(exception, message);
+					}
+
+				} catch (e) {
+					this.$logger.trace("Analytics exception: '%s'", e.toString());
 				}
-
-			} catch(e) {
-				this.$logger.trace("Analytics exception: '%s'", e.toString());
 			}
 		}).future<void>()();
 	}
