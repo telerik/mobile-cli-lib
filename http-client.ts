@@ -68,6 +68,7 @@ export class HttpClient implements Server.IHttpClient {
 
 			if (!headers["User-Agent"]) {
 				if (!this.defaultUserAgent) {
+					//TODO: the user agent client name is also passed explicitly during login and should be kept in sync
 					this.defaultUserAgent = util.format("AppBuilderCLI/%s (Node.js %s; %s; %s)",
 						this.$staticConfig.version,
 						process.versions.node, process.platform, process.arch);
