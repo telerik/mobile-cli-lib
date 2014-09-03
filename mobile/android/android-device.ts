@@ -234,7 +234,7 @@ export class AndroidDevice implements Mobile.IDevice {
 				}
 				this.$logger.info("Successfully synced device with identifier '%s'", this.getIdentifier());
 			} else {
-				this.$errors.fail({formatStr: appIdentifier.getliveSyncNotSupportedError(this), suppressCommandHelp: true });
+				this.$errors.fail({formatStr: appIdentifier.getLiveSyncNotSupportedError(this), suppressCommandHelp: true });
 			}
 		}).future<void>()();
 	}

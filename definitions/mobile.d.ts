@@ -24,8 +24,9 @@ declare module Mobile {
 		appIdentifier: string;
 		deviceProjectPath: string;
 		liveSyncFormat: string;
+		encodeLiveSyncHostUri(hostUri: string): string;
 		isLiveSyncSupported(device: any): IFuture<boolean>;
-		getliveSyncNotSupportedError(device: any): string;
+		getLiveSyncNotSupportedError(device: any): string;
 	}
 
 	interface IIOSDevice extends IDevice {

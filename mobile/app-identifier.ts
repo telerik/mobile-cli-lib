@@ -5,6 +5,7 @@ import path = require("path");
 import Future = require("fibers/future");
 import helpers = require("../helpers");
 import util = require("util");
+import querystring = require("querystring");
 
 var ANDROID_PROJECT_PATH = "mnt/sdcard/Icenium/";
 var ANDROID_NATIVESCRIPT_PROJECT_PATH = "/data/data/";
@@ -31,7 +32,11 @@ export class AndroidAppIdentifier implements Mobile.IAppIdentifier {
 		return "";
 	}
 
-	getliveSyncNotSupportedError(device: Mobile.IDevice): string {
+	encodeLiveSyncHostUri(hostUri: string): string {
+		return hostUri;
+	}
+
+	getLiveSyncNotSupportedError(device: Mobile.IDevice): string {
 		return util.format("You can't LiveSync on %s! Deploy the app with LiveSync enabled and wait for the initial start up before LiveSyncing.", device.getIdentifier());
 	}
 
@@ -53,10 +58,14 @@ export class AndroidCompanionAppIdentifier implements Mobile.IAppIdentifier {
 	}
 
 	get liveSyncFormat(): string {
-		return "icenium://%s?LiveSyncToken=%s";
+		return "%s/Mist/MobilePackage/redirect?token=%s";
 	}
 
-	getliveSyncNotSupportedError(device: Mobile.IDevice): string {
+	encodeLiveSyncHostUri(hostUri: string): string {
+		return hostUri;
+	}
+
+	getLiveSyncNotSupportedError(device: Mobile.IDevice): string {
 		return util.format("Cannot LiveSync changes to the companion app. The companion app is not installed on %s.", device.getIdentifier());
 	}
 
@@ -80,10 +89,14 @@ export class AndroidNativeScriptCompanionAppIdentifier implements Mobile.IAppIde
 	}
 
 	get liveSyncFormat(): string {
-		return "nativescript://%s?LiveSyncToken=%s";
+		return "%s/Mist/MobilePackage/redirect?token=%s";
 	}
 
-	getliveSyncNotSupportedError(device: Mobile.IDevice): string {
+	encodeLiveSyncHostUri(hostUri: string): string {
+		return hostUri;
+	}
+
+	getLiveSyncNotSupportedError(device: Mobile.IDevice): string {
 		return util.format("Cannot LiveSync changes to the NativeScript companion app. The NativeScript companion app is not installed on %s.", device.getIdentifier());
 	}
 
@@ -110,7 +123,11 @@ export class IOSAppIdentifier implements Mobile.IAppIdentifier {
 		return "";
 	}
 
-	getliveSyncNotSupportedError(device: Mobile.IDevice): string {
+	encodeLiveSyncHostUri(hostUri: string): string {
+		return querystring.escape(hostUri);
+	}
+
+	getLiveSyncNotSupportedError(device: Mobile.IDevice): string {
 		return "";
 	}
 
@@ -134,7 +151,11 @@ export class IOSCompanionAppIdentifier implements Mobile.IAppIdentifier {
 		return "icenium://%s?LiveSyncToken=%s";
 	}
 
-	getliveSyncNotSupportedError(device: Mobile.IDevice): string {
+	encodeLiveSyncHostUri(hostUri: string): string {
+		return querystring.escape(hostUri);
+	}
+
+	getLiveSyncNotSupportedError(device: Mobile.IDevice): string {
 		return "";
 	}
 
@@ -158,7 +179,11 @@ export class IOSNativeScriptCompanionAppIdentifier implements Mobile.IAppIdentif
 		return "nativescript://%s?LiveSyncToken=%s";
 	}
 
-	getliveSyncNotSupportedError(device: Mobile.IDevice): string {
+	encodeLiveSyncHostUri(hostUri: string): string {
+		return querystring.escape(hostUri);
+	}
+
+	getLiveSyncNotSupportedError(device: Mobile.IDevice): string {
 		return "";
 	}
 
