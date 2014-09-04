@@ -9,6 +9,7 @@ import byline = require("byline");
 import helpers = require("../../helpers");
 import os = require("os");
 import hostInfo = require("../../host-info");
+import options = require("./../../options");
 
 interface IAndroidDeviceDetails {
 	model: string;
@@ -17,20 +18,33 @@ interface IAndroidDeviceDetails {
 	brand: string;
 }
 
+class LiveSyncCommands {
+	public static DeployProjectCommand(liveSyncUrl: string): string {
+		return util.format("DeployProject %s \r", liveSyncUrl);
+	}
+
+	public static ReloadStartViewCommand(): string {
+		return "ReloadStartView";
+	}
+}
+
 export class AndroidDevice implements Mobile.IDevice {
 	private static REFRESH_WEB_VIEW_INTENT_NAME = "com.telerik.RefreshWebView";
 	private static CHANGE_LIVESYNC_URL_INTENT_NAME = "com.telerik.ChangeLiveSyncUrl";
 	private static LIVESYNC_BROADCAST_NAME = "com.telerik.LiveSync";
+	private static CHECK_LIVESYNC_INTENT_NAME = "com.telerik.IsLiveSyncSupported"
 
 	private static DEVICE_TMP_DIR = "/data/local/tmp";
-	private static ION_VER_NEW_SYNC_PROTOCOL = "2.5";
 	private static SYNC_ROOT = "12590FAA-5EDD-4B12-856D-F52A0A1599F2";
 	private static COMMANDS_FILE = "telerik.livesync.commands";
+	private static DEVICE_PATH_SEPARATOR = "/";
 
 	private model: string;
 	private name: string;
 	private version: string;
 	private vendor: string;
+	private tmpRoot: string;
+	private _tmpRoots: IStringDictionary = {};
 	private _installedApplications: string[];
 
 	constructor(private identifier: string, private adb: string,
@@ -38,13 +52,13 @@ export class AndroidDevice implements Mobile.IDevice {
 		private $fs: IFileSystem,
 		private $childProcess: IChildProcess,
 		private $errors: IErrors,
-		private $propertiesParser: IPropertiesParser,
 		private $staticConfig: IStaticConfig) {
 		var details: IAndroidDeviceDetails = this.getDeviceDetails().wait();
 		this.model = details.model;
 		this.name = details.name;
 		this.version = details.release;
 		this.vendor = details.brand;
+		this.tmpRoot = this.buildDevicePath(AndroidDevice.DEVICE_TMP_DIR, AndroidDevice.SYNC_ROOT);
 	}
 
 	private getDeviceDetails(): IFuture<IAndroidDeviceDetails> {
@@ -104,6 +118,32 @@ export class AndroidDevice implements Mobile.IDevice {
 		}).future<string[]>()();
 	}
 
+	public sendBroadcastToDevice(action: string, extras: IStringDictionary = {}): IFuture<number> {
+		return (() => {
+			var broadcastCommand = this.composeCommand("shell am broadcast -a \"%s\"", action);
+
+			_.each(Object.keys(extras), key  => {
+				broadcastCommand += util.format(" -e \"%s\" \"%s\"", key, extras[key]);
+			});
+
+			var result = this.$childProcess.exec(broadcastCommand).wait();
+			var match = result.match(/Broadcast completed: result=(\d+)/);
+			if (match) {
+				return +match[1];
+			}
+
+			this.$errors.fail("Unable to broadcast to android device:\n%s", result);
+		}).future<number>()();
+	}
+
+	private getLiveSyncRoot(appIdentifier: Mobile.IAppIdentifier): string {
+		if(!this._tmpRoots[appIdentifier.appIdentifier]) {
+			this._tmpRoots[appIdentifier.appIdentifier] = this.buildDevicePath(this.tmpRoot, appIdentifier.appIdentifier);
+		}
+
+		return this._tmpRoots[appIdentifier.appIdentifier];
+	}
+
 	private composeCommand(...args: string[]) {
 		var command = util.format.apply(null, args);
 		var result = util.format("\"%s\" -s %s", this.adb, this.identifier);
@@ -135,47 +175,36 @@ export class AndroidDevice implements Mobile.IDevice {
 		}).future<void>()();
 	}
 
-	private _tmpRoot: IStringDictionary = Object.create(null);
-	private prepareTmpDir(appIdentifier: Mobile.IAppIdentifier): IFuture<string> {
+	private ensureLiveSyncHomeDirectoryExists(appIdentifier: Mobile.IAppIdentifier): IFuture<void> {
 		return (() => {
-			if (!this._tmpRoot[appIdentifier.appIdentifier]) {
-				var tmpRoot = this.buildDevicePath(AndroidDevice.DEVICE_TMP_DIR, AndroidDevice.SYNC_ROOT, appIdentifier.appIdentifier);
-				var filesInTmp = this.buildDevicePath(tmpRoot, "*");
-
-				var command = this.composeCommand('shell mkdir -p "%s"', tmpRoot);
-				this.$childProcess.exec(command).wait();
-				command = this.composeCommand('shell rm -rf "%s"', filesInTmp);
-				this.$childProcess.exec(command).wait();
-				this._tmpRoot[appIdentifier.appIdentifier] = tmpRoot;
-			}
-			return this._tmpRoot[appIdentifier.appIdentifier];
-		}).future<string>()();
+			var liveSyncRoot = this.getLiveSyncRoot(appIdentifier);
+			this.ensureDirectoryExists(liveSyncRoot).wait();
+			this.ensurePathHasFullAccessPermissions(liveSyncRoot).wait();
+		}).future<void>()();
 	}
 
-	private pushFilesOnDevice(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier): IFuture<void> {
+	private ensureDirectoryExists(deviceDirectoryPath: string): IFuture<void> {
+		var command = this.composeCommand('shell mkdir -p "%s"', deviceDirectoryPath);
+		return this.$childProcess.exec(command);
+	}
+
+	private ensureFullAccessPermissions(devicePath: string): IFuture<void> {
+		var command = this.composeCommand('shell chmod 0777 "%s"', devicePath);
+		return this.$childProcess.exec(command);
+	}
+
+	private ensurePathHasFullAccessPermissions(deviceDirectoryPath: string, ensuredPath?: string): IFuture<void> {
 		return (() => {
-			// On Samsung Android 4.3 and Nexus KitKat & L devices, one cannot adb push to /data/data/appId/ directly
-			// Instead, we push to /data/local/tmp, where we have the required permissions and them mv to the final destination
-			var tmpRoot = this.prepareTmpDir(appIdentifier).wait();
-
-			localToDevicePaths.forEach((localToDevicePathData) => {
-				var tmpPath = this.buildDevicePath(tmpRoot, helpers.fromWindowsRelativePathToUnix(localToDevicePathData.getRelativeToProjectBasePath()));
-				this.pushFileOnDevice(localToDevicePathData.getLocalPath(), tmpPath).wait();
+			var paths = deviceDirectoryPath.split(AndroidDevice.DEVICE_PATH_SEPARATOR);
+			_.each(paths, p => {
+				if(p !== "") {
+					if(ensuredPath) {
+						this.ensureFullAccessPermissions(this.buildDevicePath(ensuredPath, p)).wait();
+					} else {
+						this.ensureFullAccessPermissions(p).wait();
+					}
+				}
 			});
-
-			// move the files from the tmp dir into their proper path.
-			// Due to limitation of android toolset, we use a more involved shell script
-			// the following line finds all files and subfolders in the tmp dir,
-			// removes the corresponding entries in the data dir and then moves the /tmp files in their proper place on /data
-			// we set IFS so that for will properly iterate over files with spaces in their names
-			// we use for `ls`, because android toolbox lacks find
-			var adbCommand = util.format('IFS=$\'\\n\'; for i in $(ls -a %s); do rm -rf %s/$i && mv %s/$i %s; done; unset IFS',
-				tmpRoot, appIdentifier.deviceProjectPath, tmpRoot, appIdentifier.deviceProjectPath);
-			this.$childProcess.execFile(this.adb, [
-				"-s", this.identifier,
-				"shell",
-				adbCommand
-			]).wait();
 		}).future<void>()();
 	}
 
@@ -190,44 +219,35 @@ export class AndroidDevice implements Mobile.IDevice {
 				var mkdirCommand = this.composeCommand('shell mkdir -p "%s"', isDirectory ? devicePath : path.dirname(devicePath));
 				this.$childProcess.exec(mkdirCommand).wait();
 
-				var pushFileCommand = this.composeCommand('push "%s" "%s"', isDirectory ? path.join(localPath, ".") : localPath, devicePath);
-				this.$childProcess.exec(pushFileCommand).wait();
+				this.pushFileOnDeviceCore(localPath, devicePath).wait();
 			}
 		}).future<void>()();
 	}
 
-	public sendBroadcastToDevice(action: string, extras: IStringDictionary = {}): IFuture<number> {
+	private pushFileOnDeviceCore(localPath: string, devicePath: string): IFuture<void> {
 		return (() => {
-			var broadcastCommand = this.composeCommand("shell am broadcast -a \"%s\"", action);
-
-			Object.keys(extras).forEach((key) => {
-				broadcastCommand += util.format(" -e \"%s\" \"%s\"", key, extras[key]);
-			});
-
-			var result = this.$childProcess.exec(broadcastCommand).wait();
-			var match = result.match(/Broadcast completed: result=(\d+)/);
-			if (match) {
-				return +match[1];
-			} else {
-				this.$errors.fail("Unable to broadcast to android device:\n%s", result);
-			}
-		}).future<number>()();
+			var isDirectory = this.$fs.getFsStats(localPath).wait().isDirectory();
+			var pushFileCommand = this.composeCommand('push "%s" "%s"', isDirectory ? path.join(localPath, ".") : localPath, devicePath);
+			this.$childProcess.exec(pushFileCommand).wait();
+		}).future<void>()();
 	}
 
 	private getLiveSyncUrl(projectType: number): string {
 		var projectTypes = $injector.resolve("$projectTypes");
 		switch (projectType) {
-			case projectTypes.Cordova: return "icenium://";
-			case projectTypes.NativeScript: return "nativescript://";
-			default: throw new Error("Unsupported project type");
+			case projectTypes.Cordova:
+				return "icenium://";
+			case projectTypes.NativeScript:
+				return "nativescript://";
+			default:
+				this.$errors.fail("Unsupported project type");
 		}
 	}
 
 	public sync(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, projectType: number, options: Mobile.ISyncOptions = {}): IFuture<void> {
 		return (() => {
 			if (appIdentifier.isLiveSyncSupported(this).wait()) {
-				var ionVer = this.getIonVersion(appIdentifier).wait();
-				if (this.isNewProtocol(ionVer, AndroidDevice.ION_VER_NEW_SYNC_PROTOCOL)) {
+				if(this.isLiveSyncVersion2(appIdentifier).wait()) {
 					this.syncNewProtocol(localToDevicePaths, appIdentifier, projectType, options).wait();
 				} else {
 					this.syncOldProtocol(localToDevicePaths, appIdentifier, projectType, options).wait();
@@ -239,9 +259,44 @@ export class AndroidDevice implements Mobile.IDevice {
 		}).future<void>()();
 	}
 
+	private isLiveSyncVersion2(appIdentifier: Mobile.IAppIdentifier): IFuture<boolean> {
+		return (() => {
+			var result = this.sendBroadcastToDevice(AndroidDevice.CHECK_LIVESYNC_INTENT_NAME, {"app-id": appIdentifier.appIdentifier}).wait();
+			return result >= 2;
+		}).future<boolean>()();
+	}
+
+	private createLiveSyncCommandsFileOnDevice(appIdentifier: Mobile.IAppIdentifier, commands: string[]): IFuture<void> {
+		return (() => {
+			var hostTmpDir = this.getTempDir();
+			var commandsFileHostPath = path.join(hostTmpDir, AndroidDevice.COMMANDS_FILE);
+			var commandsFile = <WritableStream>this.$fs.createWriteStream(commandsFileHostPath);
+			var fileWritten = this.$fs.futureFromEvent(commandsFile, 'finish');
+
+			_.each(commands, command => {
+				commandsFile.write(command);
+			});
+
+			commandsFile.end();
+			fileWritten.wait();
+
+			// copy it to the device
+			var commandsFileDevicePath = this.buildDevicePath(this.getLiveSyncRoot(appIdentifier), AndroidDevice.COMMANDS_FILE);
+			this.pushFileOnDeviceCore(commandsFileHostPath, commandsFileDevicePath).wait();
+			this.ensureFullAccessPermissions(commandsFileDevicePath).wait();
+		}).future<void>()();
+	}
+
+	private getTempDir(): string {
+		temp.track();
+		return temp.mkdirSync("ab-");
+	}
+
 	private syncOldProtocol(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, projectType: number, options: Mobile.ISyncOptions = {}): IFuture<void> {
 		return (() => {
-			this.pushFilesOnDevice(localToDevicePaths, appIdentifier).wait();
+			_.each(localToDevicePaths, localToDevicePathData => {
+				this.pushFileOnDevice(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()).wait();
+			});
 			if (!options.skipRefresh) {
 				var changeLiveSyncUrlExtras: IStringDictionary = {
 					"liveSyncUrl": this.getLiveSyncUrl(projectType),
@@ -253,39 +308,27 @@ export class AndroidDevice implements Mobile.IDevice {
 		}).future<void>()();
 	}
 
-	private getTempDir(): string {
-		temp.track();
-		return temp.mkdirSync("ab-");
-	}
-
 	private syncNewProtocol(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, projectType: number, options: Mobile.ISyncOptions = {}): IFuture<void> {
 		return (() => {
-			this.pushFilesOnDevice(localToDevicePaths, appIdentifier).wait();
-			// create the commands file
-			var hostTmpDir = this.getTempDir();
-			var commandsFileHostPath = path.join(hostTmpDir, AndroidDevice.COMMANDS_FILE);
-			var commandsFile = <WritableStream>this.$fs.createWriteStream(commandsFileHostPath);
-			var fileWritten = this.$fs.futureFromEvent(commandsFile, 'finish');
-			commandsFile.write("DeployProject " + this.getLiveSyncUrl(projectType) + '\r');
-			commandsFile.write("ReloadStartView" + '\r');
-			commandsFile.end();
-			fileWritten.wait();
-			// copy it to the device
-			var commandsFileDevicePath = this.buildDevicePath(this.prepareTmpDir(appIdentifier).wait(), AndroidDevice.COMMANDS_FILE);
-			this.pushFileOnDevice(commandsFileHostPath, commandsFileDevicePath).wait();
-			// send the refresh notification
-			this.sendBroadcastToDevice(AndroidDevice.LIVESYNC_BROADCAST_NAME, { "app-id": appIdentifier.appIdentifier }).wait();
-		}).future<void>()();
-	}
+			this.ensureLiveSyncHomeDirectoryExists(appIdentifier).wait();
 
-	private getIonVersion(appIdentifier: Mobile.IAppIdentifier): IFuture<string> {
-		return (() => {
-			var output = (<string>this.$childProcess.execFile(this.adb, [
-				"-s", this.getIdentifier(),
-				"shell", "dumpsys", "package", appIdentifier.appIdentifier
-			]).wait());
-			return this.$propertiesParser.parse(output)["versionName"];
-		}).future<string>()();
+			_.each(localToDevicePaths, (localToDevicePathData:Mobile.ILocalToDevicePathData) => {
+				var liveSyncRoot = this.getLiveSyncRoot(appIdentifier);
+				var relativeToProjectBasePath = helpers.fromWindowsRelativePathToUnix(localToDevicePathData.getRelativeToProjectBasePath());
+				var devicePath = this.buildDevicePath(liveSyncRoot, relativeToProjectBasePath);
+				this.ensurePathHasFullAccessPermissions(relativeToProjectBasePath, liveSyncRoot).wait();
+				this.pushFileOnDevice(localToDevicePathData.getLocalPath(), devicePath).wait();
+			});
+
+			if (!options.skipRefresh) {
+				var commands = [
+					LiveSyncCommands.DeployProjectCommand(this.getLiveSyncUrl(projectType)),
+					LiveSyncCommands.ReloadStartViewCommand()
+				];
+				this.createLiveSyncCommandsFileOnDevice(appIdentifier, commands).wait();
+				this.sendBroadcastToDevice(AndroidDevice.LIVESYNC_BROADCAST_NAME, { "app-id": appIdentifier.appIdentifier }).wait();
+			}
+		}).future<void>()();
 	}
 
 	private isNewProtocol(currentIonVersion: string, newProtocolversion: string): boolean {
@@ -293,7 +336,7 @@ export class AndroidDevice implements Mobile.IDevice {
 	}
 
 	private buildDevicePath(...args: string[]): string {
-		return args.join("/");
+		return args.join(AndroidDevice.DEVICE_PATH_SEPARATOR);
 	}
 
 	openDeviceLogStream() {
