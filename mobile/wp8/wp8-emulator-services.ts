@@ -27,8 +27,8 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 	startEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions) : IFuture<void> {
 		return (() => {
 			this.$logger.info("Starting Windows Phone Emulator");
-			var emulatorStarter = path.join (process.env.ProgramFiles, Wp8EmulatorServices.WP8_LAUNCHER_PATH, Wp8EmulatorServices.WP8_LAUNCHER);
-			this.$childProcess.spawn(emulatorStarter, ["/installlaunch", emulatorOptions.image, "/targetdevice:xd"], { stdio:  ["ignore", "ignore", "ignore"], detached: true }).unref();
+			var emulatorStarter = path.join(process.env.ProgramFiles, Wp8EmulatorServices.WP8_LAUNCHER_PATH, Wp8EmulatorServices.WP8_LAUNCHER);
+			this.$childProcess.spawn(emulatorStarter, ["/installlaunch", app, "/targetdevice:xd"], { stdio:  ["ignore", "ignore", "ignore"], detached: true }).unref();
 		}).future<void>()();
 	}
 
