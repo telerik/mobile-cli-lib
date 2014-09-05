@@ -168,7 +168,7 @@ interface IPrompter extends IDisposable {
 }
 
 interface IAnalyticsSettingsService {
-	canRequestConsent(): IFuture<boolean>;
+	canDoRequest(): IFuture<boolean>;
 	getUserId():  IFuture<string>;
 }
 
