@@ -8,7 +8,8 @@ var knownOpts:any = {
 		"verbose" : Boolean,
 		"path" : String,
 		"version": Boolean,
-		"help": Boolean
+		"help": Boolean,
+		"json": Boolean
 	},
 	shorthands = {
 		"v" : "verbose",
