@@ -585,6 +585,8 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 		});
 		if (result < 0) {
 			this.$errors.fail("Error receiving data: %s", result);
+		} else if (result === 0) {
+			return null;
 		}
 
 		return data;
