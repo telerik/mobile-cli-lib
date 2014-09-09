@@ -2,6 +2,7 @@
 "use strict";
 
 import util = require("util");
+import Future = require("fibers/future");
 import hostInfo = require("../../../common/host-info");
 import MobileHelper = require("./../mobile-helper");
 
@@ -32,25 +33,44 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	startEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions) : IFuture<void> {
 		return (() => {
-			this.$logger.info("Starting iOS Simulator");
-			var opts = [
-				"launch", app,
-			];
+			this.killLaunchdSim().wait();
+			this.startEmulatorCore(app, emulatorOptions);
 
-			if (emulatorOptions) {
-				if (emulatorOptions.stderrFilePath) {
-					opts = opts.concat("--stderr", emulatorOptions.stderrFilePath);
-				}
-				if (emulatorOptions.stdoutFilePath) {
-					opts = opts.concat("--stdout", emulatorOptions.stdoutFilePath);
-				}
-				if (emulatorOptions.deviceFamily) {
-					opts = opts.concat("--family", emulatorOptions.deviceFamily);
-				}
-			}
-			this.$childProcess.spawn(IosEmulatorServices.SimulatorLauncher, opts,
-				{ stdio:  ["ignore", "ignore", "ignore"], detached: true }).unref();
 		}).future<void>()();
+	}
+
+	private killLaunchdSim(): IFuture<void> {
+		this.$logger.info("Cleaning up before starting the iOS Simulator");
+
+		var future = new Future<void>();
+		var killAllProc = this.$childProcess.spawn("killall", ["launchd_sim"]);
+		killAllProc.on("close", (code: number) => {
+			future.return();
+		});
+		return future;
+	}
+
+	private startEmulatorCore(app: string, emulatorOptions?: Mobile.IEmulatorOptions): void {
+		this.$logger.info("Starting iOS Simulator");
+
+		var opts = [
+			"launch", app,
+			"--exit"
+		];
+
+		if (emulatorOptions) {
+			if (emulatorOptions.stderrFilePath) {
+				opts = opts.concat("--stderr", emulatorOptions.stderrFilePath);
+			}
+			if (emulatorOptions.stdoutFilePath) {
+				opts = opts.concat("--stdout", emulatorOptions.stdoutFilePath);
+			}
+			if (emulatorOptions.deviceFamily) {
+				opts = opts.concat("--family", emulatorOptions.deviceFamily);
+			}
+		}
+		this.$childProcess.spawn(IosEmulatorServices.SimulatorLauncher, opts,
+			{ stdio:  ["ignore", "ignore", "ignore"], detached: true }).unref();
 	}
 
 	private static SimulatorLauncher = "ios-sim";
