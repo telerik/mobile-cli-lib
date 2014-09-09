@@ -61,7 +61,7 @@ export class FileSystem implements IFileSystem {
 				var $childProcess = $injector.resolve("$childProcess");
 
 				this.createDirectory(destinationDir).wait();
-				var unzipProc = $childProcess.spawn('unzip', ['-u', zipFile, '-d', destinationDir],
+				var unzipProc = $childProcess.spawn('unzip', ['-u', '-o', zipFile, '-d', destinationDir],
 					{ stdio: "ignore", detached: true });
 				this.futureFromEvent(unzipProc, "close").wait();
 			}
