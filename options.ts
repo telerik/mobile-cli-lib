@@ -9,7 +9,8 @@ var knownOpts:any = {
 		"path" : String,
 		"version": Boolean,
 		"help": Boolean,
-		"json": Boolean
+		"json": Boolean,
+		"watch": Boolean
 	},
 	shorthands = {
 		"v" : "verbose",

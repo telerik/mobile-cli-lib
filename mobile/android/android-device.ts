@@ -26,6 +26,14 @@ class LiveSyncCommands {
 	public static ReloadStartViewCommand(): string {
 		return "ReloadStartView \r";
 	}
+
+	public static SyncFilesCommand(): string {
+		return "SyncFiles \r";
+	}
+
+	public static RefreshCurrentViewCommand(): string {
+		return "RefreshCurrentView \r";
+	}
 }
 
 export class AndroidDevice implements Mobile.IDevice {
@@ -216,13 +224,13 @@ export class AndroidDevice implements Mobile.IDevice {
 		}
 	}
 
-	public sync(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, projectType: number, options: Mobile.ISyncOptions = {}): IFuture<void> {
+	public sync(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, projectType: number, syncOptions: Mobile.ISyncOptions = {}): IFuture<void> {
 		return (() => {
 			if (appIdentifier.isLiveSyncSupported(this).wait()) {
 				if(this.isLiveSyncVersion2(appIdentifier).wait()) {
-					this.syncNewProtocol(localToDevicePaths, appIdentifier, projectType, options).wait();
+					this.syncNewProtocol(localToDevicePaths, appIdentifier, projectType, syncOptions).wait();
 				} else {
-					this.syncOldProtocol(localToDevicePaths, appIdentifier, projectType, options).wait();
+					this.syncOldProtocol(localToDevicePaths, appIdentifier, projectType, syncOptions).wait();
 				}
 				this.$logger.info("Successfully synced device with identifier '%s'", this.getIdentifier());
 			} else {
@@ -264,12 +272,12 @@ export class AndroidDevice implements Mobile.IDevice {
 		return temp.mkdirSync("ab-");
 	}
 
-	private syncOldProtocol(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, projectType: number, options: Mobile.ISyncOptions = {}): IFuture<void> {
+	private syncOldProtocol(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, projectType: number, syncOptions: Mobile.ISyncOptions = {}): IFuture<void> {
 		return (() => {
 			_.each(localToDevicePaths, localToDevicePathData => {
 				this.pushFileOnDevice(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()).wait();
 			});
-			if (!options.skipRefresh) {
+			if (!syncOptions.skipRefresh) {
 				var changeLiveSyncUrlExtras: IStringDictionary = {
 					"liveSyncUrl": this.getLiveSyncUrl(projectType),
 					"app-id": appIdentifier.appIdentifier
@@ -280,7 +288,7 @@ export class AndroidDevice implements Mobile.IDevice {
 		}).future<void>()();
 	}
 
-	private syncNewProtocol(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, projectType: number, options: Mobile.ISyncOptions = {}): IFuture<void> {
+	private syncNewProtocol(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, projectType: number, syncOptions: Mobile.ISyncOptions = {}): IFuture<void> {
 		return (() => {
 			var liveSyncRoot = this.getLiveSyncRoot(appIdentifier);
 			var dirs = {};
@@ -306,11 +314,20 @@ export class AndroidDevice implements Mobile.IDevice {
 
 			this.ensureFullAccessPermissions(liveSyncRoot).wait();
 
-			if (!options.skipRefresh) {
-				var commands = [
-					LiveSyncCommands.DeployProjectCommand(this.getLiveSyncUrl(projectType)),
-					LiveSyncCommands.ReloadStartViewCommand()
-				];
+			if (!syncOptions.skipRefresh) {
+				var commands: string[] = [];
+
+				if(options.watch) {
+					commands = [
+						LiveSyncCommands.SyncFilesCommand(),
+						LiveSyncCommands.RefreshCurrentViewCommand()
+					];
+				} else {
+					commands = [
+						LiveSyncCommands.DeployProjectCommand(this.getLiveSyncUrl(projectType)),
+						LiveSyncCommands.ReloadStartViewCommand()
+					];
+				}
 				this.createLiveSyncCommandsFileOnDevice(appIdentifier, commands).wait();
 				this.sendBroadcastToDevice(AndroidDevice.LIVESYNC_BROADCAST_NAME, { "app-id": appIdentifier.appIdentifier }).wait();
 			}
