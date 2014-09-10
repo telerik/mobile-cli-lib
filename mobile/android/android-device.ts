@@ -24,7 +24,7 @@ class LiveSyncCommands {
 	}
 
 	public static ReloadStartViewCommand(): string {
-		return "ReloadStartView";
+		return "ReloadStartView \r";
 	}
 }
 
@@ -175,37 +175,9 @@ export class AndroidDevice implements Mobile.IDevice {
 		}).future<void>()();
 	}
 
-	private ensureLiveSyncHomeDirectoryExists(appIdentifier: Mobile.IAppIdentifier): IFuture<void> {
-		return (() => {
-			var liveSyncRoot = this.getLiveSyncRoot(appIdentifier);
-			this.ensureDirectoryExists(liveSyncRoot).wait();
-			this.ensurePathHasFullAccessPermissions(liveSyncRoot).wait();
-		}).future<void>()();
-	}
-
-	private ensureDirectoryExists(deviceDirectoryPath: string): IFuture<void> {
-		var command = this.composeCommand('shell mkdir -p "%s"', deviceDirectoryPath);
-		return this.$childProcess.exec(command);
-	}
-
 	private ensureFullAccessPermissions(devicePath: string): IFuture<void> {
 		var command = this.composeCommand('shell chmod 0777 "%s"', devicePath);
 		return this.$childProcess.exec(command);
-	}
-
-	private ensurePathHasFullAccessPermissions(deviceDirectoryPath: string, ensuredPath?: string): IFuture<void> {
-		return (() => {
-			var paths = deviceDirectoryPath.split(AndroidDevice.DEVICE_PATH_SEPARATOR);
-			_.each(paths, p => {
-				if(p !== "") {
-					if(ensuredPath) {
-						this.ensureFullAccessPermissions(this.buildDevicePath(ensuredPath, p)).wait();
-					} else {
-						this.ensureFullAccessPermissions(p).wait();
-					}
-				}
-			});
-		}).future<void>()();
 	}
 
 	private pushFileOnDevice(localPath: string, devicePath: string): IFuture<void> {
@@ -310,15 +282,29 @@ export class AndroidDevice implements Mobile.IDevice {
 
 	private syncNewProtocol(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, projectType: number, options: Mobile.ISyncOptions = {}): IFuture<void> {
 		return (() => {
-			this.ensureLiveSyncHomeDirectoryExists(appIdentifier).wait();
+			var liveSyncRoot = this.getLiveSyncRoot(appIdentifier);
+			var dirs = {};
 
-			_.each(localToDevicePaths, (localToDevicePathData:Mobile.ILocalToDevicePathData) => {
-				var liveSyncRoot = this.getLiveSyncRoot(appIdentifier);
+			_.each(localToDevicePaths, (localToDevicePathData: Mobile.ILocalToDevicePathData) => {
 				var relativeToProjectBasePath = helpers.fromWindowsRelativePathToUnix(localToDevicePathData.getRelativeToProjectBasePath());
 				var devicePath = this.buildDevicePath(liveSyncRoot, relativeToProjectBasePath);
-				this.ensurePathHasFullAccessPermissions(relativeToProjectBasePath, liveSyncRoot).wait();
+				var parts = relativeToProjectBasePath.split(AndroidDevice.DEVICE_PATH_SEPARATOR);
+				var currentPath = "";
+
 				this.pushFileOnDevice(localToDevicePathData.getLocalPath(), devicePath).wait();
+
+				_.each(parts, p => {
+					if(p !== "") {
+						currentPath = this.buildDevicePath(currentPath, p);
+						if(!dirs[currentPath]) {
+							dirs[currentPath] = currentPath;
+							this.ensureFullAccessPermissions(this.buildDevicePath(liveSyncRoot, currentPath)).wait();
+						}
+					}
+				});
 			});
+
+			this.ensureFullAccessPermissions(liveSyncRoot).wait();
 
 			if (!options.skipRefresh) {
 				var commands = [
@@ -329,10 +315,6 @@ export class AndroidDevice implements Mobile.IDevice {
 				this.sendBroadcastToDevice(AndroidDevice.LIVESYNC_BROADCAST_NAME, { "app-id": appIdentifier.appIdentifier }).wait();
 			}
 		}).future<void>()();
-	}
-
-	private isNewProtocol(currentIonVersion: string, newProtocolversion: string): boolean {
-		return helpers.versionCompare(currentIonVersion, newProtocolversion) >= 0;
 	}
 
 	private buildDevicePath(...args: string[]): string {
