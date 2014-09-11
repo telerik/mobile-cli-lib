@@ -89,7 +89,7 @@ export class AndroidNativeScriptCompanionAppIdentifier implements Mobile.IAppIde
 	}
 
 	get liveSyncFormat(): string {
-		return "%s/Mist/MobilePackage/redirect?token=%s";
+		return "%s/Mist/MobilePackage/nsredirect?token=%s";
 	}
 
 	encodeLiveSyncHostUri(hostUri: string): string {
