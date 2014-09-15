@@ -77,6 +77,11 @@ export function formatListOfNames(names: string[], conjunction = "or"): string {
 	}
 }
 
+export function getRelativeToRootPath(rootPath: string, filePath: string): string {
+	var relativeToRootPath = filePath.substr(rootPath.length);
+	return relativeToRootPath;
+}
+
 export function versionCompare(version1: string, version2: string): number {
 	version1 = version1.split("-")[0];
 	version2 = version2.split("-")[0];
