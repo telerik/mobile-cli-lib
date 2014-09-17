@@ -35,9 +35,10 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		}).future<void>()();
 	}
 
-	public startEmulator(app: string, appId: string, emulatorOptions?: Mobile.IEmulatorOptions) : IFuture<void> {
+	public startEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions) : IFuture<void> {
 		return (() => {
 			var image = (emulatorOptions && emulatorOptions.image) || this.getBestFit().wait();
+			var appId = emulatorOptions.appId;
 			if (image) {
 				this.startEmulatorCore(app, appId, image).wait();
 			} else {
@@ -56,11 +57,18 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 					{ stdio:  ["ignore", "ignore", "ignore"], detached: true }).unref();
 			}
 
-			// adb does not always wait for the emulator to fully startup. wait for this
-			while (runningEmulators.length === 0) {
+			// often the running adb server does not recognise that the emulator is up and never reports new device. Patch through this obstacle
+			runningEmulators = this.getRunningEmulators().wait();
+			if (runningEmulators.length === 0) {
+				this.$logger.trace("Restarting adb server");
+				this.sleep(10000); // the emulator definitely takes its time to wake up
+				this.$childProcess.spawnFromEvent(this.$staticConfig.adbFilePath, ["kill-server"], "exit").wait();
 				this.sleep(1000);
-				runningEmulators = this.getRunningEmulators().wait();
 			}
+
+			// adb does not always wait for the emulator to fully startup. wait for this
+			this.$logger.trace("waiting for the emulator device to appear");
+			this.$childProcess.spawnFromEvent(this.$staticConfig.adbFilePath, ["wait-for-device"], "exit").wait();
 
 			// waits for the boot animation property of the emulator to switch to 'stopped'
 			this.waitForEmulatorBootToComplete().wait();

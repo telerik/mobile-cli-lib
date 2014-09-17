@@ -177,5 +177,6 @@ declare module Mobile {
 		stderrFilePath?: string;
 		stdoutFilePath?: string;
 		deviceFamily?: string;
+		appId?: string;
 	}
 }

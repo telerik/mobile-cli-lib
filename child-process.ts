@@ -27,12 +27,12 @@ export class ChildProcess implements IChildProcess {
 	}
 
 	public execFile(command: string, args: string[]): IFuture<any> {
-		this.$logger.debug("execFile: %s", command);
-		args.forEach(a => this.$logger.debug("    %s", a));
+		this.$logger.debug("execFile: %s %s", command, args.join(" "));
 		return this._execFile(command, args);
 	}
 
 	public spawn(command: string, args?: string[], options?: any): any {
+		this.$logger.debug("spawn: %s %s", command, args.join(" "));
 		return child_process.spawn(command, args, options);
 	}
 
