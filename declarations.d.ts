@@ -102,6 +102,7 @@ interface IErrors {
 
 interface ICommandOptions {
 	disableAnalytics?: boolean;
+	enableHooks?: boolean;
 }
 
 declare enum ErrorCodes {
@@ -133,7 +134,17 @@ interface IChildProcess {
 	exec(command: string): IFuture<any>;
 	execFile(command: string, args: string[]): IFuture<any>;
 	spawn(command: string, args?: string[], options?: any): any;
-	spawnFromEvent(command: string, args: string[], event: string, options?: any): IFuture<void>;
+	spawnFromEvent(command: string, args: string[], event: string, options?: any, spawnFromEventOptions?: ISpawnFromEventOptions): IFuture<any>;
+}
+
+interface ISpawnResult {
+	stderr: string;
+	stdout: string;
+	exitCode: number;
+}
+
+interface ISpawnFromEventOptions {
+	throwError: boolean;
 }
 
 interface IProjectHelper {
@@ -178,4 +189,20 @@ interface IHostCapabilities {
 
 interface IAutoCompletionService {
 	enableAutoCompletion(): IFuture<void>;
+}
+
+interface IHooksService {
+	initialize(commandName: string): void;
+	executeBeforeHooks(): IFuture<void>;
+	executeAfterHooks(): IFuture<void>;
+}
+
+interface IHook {
+	name: string;
+	fullPath: string;
+}
+
+interface ITypeScriptCompilationService {
+	initialize(typeScriptFiles: string[]): void;
+	compileAllFiles(): IFuture<void>;
 }

@@ -2,12 +2,14 @@
 
 var jaroWinklerDistance = require("../vendor/jaro-winkler_distance");
 import helpers = require("./../helpers");
+import util = require("util");
 
 export class CommandsService implements ICommandsService {
 	constructor(private $errors: IErrors,
 		private $logger: ILogger,
 		private $injector: IInjector,
-		private $staticConfig: Config.IStaticConfig) { }
+		private $staticConfig: Config.IStaticConfig,
+		private $hooksService: IHooksService) { }
 
 	public allCommands(includeDev: boolean): string[]{
 		var commands = this.$injector.getRegisteredCommandsNames(includeDev);
@@ -23,7 +25,21 @@ export class CommandsService implements ICommandsService {
 					analyticsService.checkConsent(commandName).wait();
 					analyticsService.trackFeature(commandName).wait();
 				}
-				command.execute(commandArguments).wait();
+				if(command.enableHooks === undefined || command.enableHooks === true) {
+					// Handle correctly hierarchical commands
+					var childrenCommandsNames = _.map(this.$injector.getChildrenCommandsNames(commandName), command => { return command.replace("*", ""); });
+					if(_.contains(childrenCommandsNames, commandArguments[0])) {
+						commandName = util.format("%s-%s", commandName, commandArguments[0]);
+					}
+
+					this.$hooksService.initialize(commandName);
+					this.$hooksService.executeBeforeHooks().wait();
+					command.execute(commandArguments).wait();
+					this.$hooksService.executeAfterHooks().wait();
+
+				} else {
+					command.execute(commandArguments).wait();
+				}
 				return true;
 			}
 			return false;

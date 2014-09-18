@@ -11,6 +11,8 @@ export class HelpCommand implements ICommand {
 		private $fs: IFileSystem,
 		private $staticConfig: Config.IStaticConfig) {}
 
+	public enableHooks = false;
+
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
 			var topic = (args[0] || "").toLowerCase();
