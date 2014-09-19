@@ -3,6 +3,7 @@
 
 import path = require("path");
 import util = require("util");
+import commandParams = require("../command-params");
 
 export class HelpCommand implements ICommand {
 	constructor(private $logger: ILogger,
@@ -12,6 +13,7 @@ export class HelpCommand implements ICommand {
 		private $staticConfig: Config.IStaticConfig) {}
 
 	public enableHooks = false;
+	public allowedParameters: ICommandParameter[] = [new commandParams.StringCommandParameter(), new commandParams.StringCommandParameter()];
 
 	public execute(args: string[]): IFuture<void> {
 		return (() => {

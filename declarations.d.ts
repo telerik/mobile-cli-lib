@@ -168,6 +168,9 @@ interface IAnalyticsService {
 	checkConsent(featureName: string): IFuture<void>;
 	trackFeature(featureName: string): IFuture<void>;
 	trackException(exception: any, message: string): IFuture<void>;
+	setAnalyticsStatus(enabled: boolean): IFuture<void>;
+	disableAnalytics(): IFuture<void>;
+	getStatusMessage(): IFuture<string>;
 }
 
 interface IPrompter extends IDisposable {
@@ -206,4 +209,11 @@ interface IHook {
 interface ITypeScriptCompilationService {
 	initialize(typeScriptFiles: string[]): void;
 	compileAllFiles(): IFuture<void>;
+}
+
+interface IRemoteProjectService {
+	makeTapServiceCall<T>(call: () => IFuture<T>): IFuture<T>;
+	getProjectProperties(projectName: string): IFuture<any>;
+	getProjects(): IFuture<any>;
+	getProjectName(projectId: string): IFuture<string>;
 }
