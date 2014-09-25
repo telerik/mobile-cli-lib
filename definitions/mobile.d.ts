@@ -147,7 +147,6 @@ declare module Mobile {
 		wirelessDeploy: boolean;
 		cableDeploy: boolean;
 		companion: boolean;
-		publishTelerikAppManager: boolean;
 		hostPlatformsForDeploy: string[];
 	}
 

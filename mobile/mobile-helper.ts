@@ -14,21 +14,18 @@ export var platformCapabilities: {[key: string]: Mobile.IPlatformCapabilities } 
 		wirelessDeploy: true,
 		cableDeploy: true,
 		companion: true,
-		publishTelerikAppManager: true,
 		hostPlatformsForDeploy: ["win32", "darwin"]
 	},
 	Android: {
 		wirelessDeploy: true,
 		cableDeploy: true,
 		companion: true,
-		publishTelerikAppManager: true,
 		hostPlatformsForDeploy: ["win32", "darwin", "linux"]
 	},
 	WP8: {
 		wirelessDeploy: true,
 		cableDeploy: false,
 		companion: false,
-		publishTelerikAppManager: false,
 		hostPlatformsForDeploy: ["win32"]
 	}
 };
