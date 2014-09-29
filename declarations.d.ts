@@ -175,3 +175,7 @@ interface IAnalyticsSettingsService {
 interface IHostCapabilities {
 	debugToolsSupported: boolean;
 }
+
+interface IAutoCompletionService {
+	enableAutoCompletion(): IFuture<void>;
+}
