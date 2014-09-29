@@ -70,7 +70,7 @@ export function isPlatformSupported(platform: string): boolean {
 }
 
 export function generateWP8GUID(): string {
-	return "{" + require("node-uuid").v4() + "}";
+	return helpers.createGUID();
 }
 
 export function validatePlatformName(platform: string, $errors: IErrors): string {
