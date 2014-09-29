@@ -3,8 +3,8 @@
 
 import util = require("util");
 import path = require("path");
-import helpers = require("./../helpers");
-import options = require("./../options");
+import helpers = require("../helpers");
+import options = require("../options");
 import os = require("os");
 var xmlhttprequest = require("xmlhttprequest");
 
@@ -142,7 +142,7 @@ export class AnalyticsService implements IAnalyticsService {
 
 			var guid = this.$userSettingsService.getSettingValue(this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME).wait();
 			if (!guid) {
-				guid = require("node-uuid").v4();
+				guid = helpers.createGUID(false);
 				this.$userSettingsService.saveSetting(this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME, guid).wait();
 			}
 			this.$logger.trace("%s: %s", this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME, guid.toString());

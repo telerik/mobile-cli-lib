@@ -2,6 +2,19 @@
 "use strict";
 import fs = require("fs");
 import path = require("path");
+var uuid = require("node-uuid");
+
+export function createGUID(useBraces: boolean = true) {
+	var output: string;
+
+	if (useBraces) {
+		output = '{' + uuid.v4() + '}';
+	} else {
+		output = uuid.v4();
+	}
+
+	return output;
+}
 
 export function stringReplaceAll(string: string, find: any, replace: string): string {
 	return string.split(find).join(replace);
