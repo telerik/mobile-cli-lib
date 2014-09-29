@@ -1,5 +1,5 @@
 ///<reference path="../.d.ts"/>
-
+"use strict";
 import path = require("path");
 import helpers = require("./../common/helpers");
 
@@ -10,7 +10,8 @@ var knownOpts:any = {
 		"version": Boolean,
 		"help": Boolean,
 		"json": Boolean,
-		"watch": Boolean
+		"watch": Boolean,
+		"avd": String
 	},
 	shorthands = {
 		"v" : "verbose",
