@@ -48,3 +48,5 @@ $injector.require("projectNameValidator", "./common/validators/project-name-vali
 $injector.require("androidEmulatorServices", "./common/mobile/android/android-emulator-services");
 $injector.require("iOSEmulatorServices", "./common/mobile/ios/ios-emulator-services");
 $injector.require("wp8EmulatorServices", "./common/mobile/wp8/wp8-emulator-services");
+
+$injector.require("autoCompletionService", "./common/services/auto-completion-service");
