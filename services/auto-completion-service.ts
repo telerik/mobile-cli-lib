@@ -5,6 +5,8 @@ import path = require("path");
 import util = require("util");
 
 export class AutoCompletionService implements IAutoCompletionService {
+	private scriptsOk = true;
+
 	constructor(private $fs: IFileSystem,
 		private $childProcess: IChildProcess,
 		private $logger: ILogger,
@@ -14,24 +16,29 @@ export class AutoCompletionService implements IAutoCompletionService {
 
 	public enableAutoCompletion(): IFuture<void> {
 		return (() => {
-			var scriptsOk = true;
+			this.updateShellScript(".bashrc").wait();
+			this.updateShellScript(".bash_profile").wait();
+			this.updateShellScript(".zshrc").wait(); // zsh - http://www.acm.uiuc.edu/workshops/zsh/startup_files.html
 
-			try {
-				this.updateShellScript(".bashrc").wait();
-				this.updateShellScript(".bash_profile").wait();
-				this.updateShellScript(".zshrc").wait(); // zsh - http://www.acm.uiuc.edu/workshops/zsh/startup_files.html
-			} catch(err) {
-				this.$logger.out("Failed to update all shell start-up scripts. Auto-completion may not work. " + err);
-				scriptsOk = false;
-			}
-
-			if(scriptsOk) {
+			if(this.scriptsOk) {
 				this.$logger.out("Restart your shell to enable command auto-completion.");
 			}
 		}).future<void>()();
 	}
 
 	private updateShellScript(fileName: string): IFuture<void> {
+		return (() => {
+			try {
+				this.updateShellScriptCore(fileName).wait();
+			} catch (err) {
+				this.$logger.out("Failed to update %s. Auto-completion may not work. ", fileName);
+				this.$logger.out(err);
+				this.scriptsOk = false;
+			}
+		}).future<void>()();
+	}
+
+	private updateShellScriptCore(fileName: string): IFuture<void> {
 		return (() => {
 			var filePath = this.getHomePath(fileName);
 
@@ -50,14 +57,10 @@ export class AutoCompletionService implements IAutoCompletionService {
 			}
 
 			if(doUpdate) {
-				this.updateShellScriptCore(filePath).wait();
+				this.$childProcess.exec(this.$staticConfig.CLIENT_NAME.toLowerCase() + " completion >> " + filePath).wait();
 			}
 
 		}).future<void>()();
-	}
-
-	private updateShellScriptCore(filePath: string): IFuture<void> {
-		return this.$childProcess.exec(this.$staticConfig.CLIENT_NAME.toLowerCase() + " completion >> " + filePath);
 	}
 
 	private getHomePath(fileName: string): string {
