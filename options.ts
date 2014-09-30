@@ -1,21 +1,23 @@
 ///<reference path="../.d.ts"/>
 "use strict";
+
 import path = require("path");
 import helpers = require("./../common/helpers");
 
-var knownOpts:any = {
-		"log" : String,
-		"verbose" : Boolean,
-		"path" : String,
+var knownOpts: any = {
+		"log": String,
+		"verbose": Boolean,
+		"path": String,
 		"version": Boolean,
 		"help": Boolean,
 		"json": Boolean,
 		"watch": Boolean,
-		"avd": String
+		"avd": String,
+		"profile-dir": String,
 	},
 	shorthands = {
-		"v" : "verbose",
-		"p" : "path"
+		"v": "verbose",
+		"p": "path"
 	};
 
 var parsed = helpers.getParsedOptions(knownOpts, shorthands);

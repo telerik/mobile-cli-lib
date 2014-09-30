@@ -2,6 +2,8 @@
 "use strict";
 import fs = require("fs");
 import path = require("path");
+import util = require("util");
+import _ = require("underscore"); 
 var uuid = require("node-uuid");
 
 export function createGUID(useBraces: boolean = true) {
@@ -70,16 +72,30 @@ export function getParsedOptions(options: any, shorthands: any, defaultProfileDi
 	});
 
 	var parsed = yargs.argv;
-
-	Object.keys(parsed).forEach((opt) => {
-		if (options[opt] !== Boolean && typeof(parsed[opt]) === 'boolean') {
-			delete parsed[opt];
-		}
-	});
+	validateYargsArguments(parsed, options);
 
 	parsed["profile-dir"] = parsed["profile-dir"] || defaultProfileDir;
 
 	return parsed;
+}
+
+export function validateYargsArguments(parsed: any, knownOpts: any, isInTestMode?: boolean): void {
+	if (path.basename(process.argv[1]) === "appbuilder.js" || isInTestMode) {
+		_.each(_.keys(parsed), (opt) => {
+			if (opt !== "_" && opt !== "$0" && !knownOpts[opt]) {
+				breakExecution(util.format("The option '%s' is not supported. To see command's options, use '$ appbuilder %s --help'. To see all commands use '$ appbuilder help'.", opt, process.argv[2]));
+			} else if (knownOpts[opt] !== Boolean && typeof (parsed[opt]) === 'boolean') {
+				breakExecution(util.format("The option '%s' requires a value.", opt));
+			} else if (knownOpts[opt] === String && parsed[opt].trim().length === 0) {
+				breakExecution(util.format("The option '%s' requires nonempty value.", opt));
+			}
+		});
+	}
+}
+
+export function breakExecution(message: string): void {
+	console.log("\x1B[31;1m" + message + "\x1B[0m");
+	process.exit(ErrorCodes.INVALID_ARGUMENT);
 }
 
 export function formatListOfNames(names: string[], conjunction = "or"): string {
