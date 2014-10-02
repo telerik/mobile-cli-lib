@@ -18,5 +18,6 @@ declare module Config {
 		DEBUG?: boolean;
 		CI_LOGGER?: boolean;
 		PROXY_TO_FIDDLER?: boolean;
+		TYPESCRIPT_COMPILER_OPTIONS?: any;
 	}
 }

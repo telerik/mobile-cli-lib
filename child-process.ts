@@ -36,22 +36,49 @@ export class ChildProcess implements IChildProcess {
 		return child_process.spawn(command, args, options);
 	}
 
-	public spawnFromEvent(command: string, args: string[], event: string, options?: any): IFuture<void> { // event should be exit or close
-		var future = new Future<void>();
+	public spawnFromEvent(command: string, args: string[], event: string, options?: any, spawnFromEventOptions?: ISpawnFromEventOptions): IFuture<ISpawnResult> { // event should be exit or close
+		var future = new Future<ISpawnResult>();
 		var childProcess = this.spawn(command, args, options);
-		childProcess.once(event, () => {
-			var args = _.toArray(arguments);
-			var statusCode = args[0];
 
-			if(statusCode !== 0) {
-				future.throw(util.format("Command %s exited with code %s", command, statusCode));
+		var capturedOut = '';
+		var capturedErr = '';
+
+		if(childProcess.stdout) {
+			childProcess.stdout.on("data", (data: string) => {
+				capturedOut += data;
+			});
+		}
+
+		if(childProcess.stderr) {
+			childProcess.stderr.on("data", (data: string) =>  {
+				capturedErr += data;
+			});
+		}
+
+		childProcess.on(event, (arg: any) => {
+			var exitCode = typeof arg == 'number' ? arg : arg && arg.code;
+			var result = {
+				stdout: capturedOut,
+				stderr: capturedErr,
+				exitCode: exitCode
+			};
+
+			if(spawnFromEventOptions && spawnFromEventOptions.throwError === false) {
+				future.return(result);
 			} else {
-				future.return();
+				if (exitCode === 0) {
+					future.return(result);
+				} else {
+					var errorMessage = util.format('Command %s failed with exit code %d', command, exitCode);
+					if (capturedErr) {
+						errorMessage += util.format(' Error output: \n %s', capturedErr);
+					}
+					future.throw(errorMessage);
+				}
 			}
 		});
 
 		return future;
 	}
-
 }
 $injector.register("childProcess", ChildProcess);
