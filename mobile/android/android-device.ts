@@ -1,5 +1,5 @@
 ///<reference path="../../../.d.ts"/>
-"use strict"
+"use strict";
 import MobileHelper = require("./../mobile-helper");
 import util = require("util");
 import Future = require("fibers/future");
