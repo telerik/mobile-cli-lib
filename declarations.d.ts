@@ -106,7 +106,8 @@ interface ICommandOptions {
 }
 
 declare enum ErrorCodes {
-	UNKNOWN = 127
+	UNKNOWN = 127,
+	INVALID_ARGUMENT = 128
 }
 
 interface IFutureDispatcher	 {
