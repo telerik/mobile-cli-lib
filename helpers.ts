@@ -55,9 +55,8 @@ export function enumerateFilesInDirectorySync(directoryPath: string, filterCallb
 	return result;
 }
 
-export function getParsedOptions(options: any, shorthands: any, defaultProfileDir?: string) {
+export function getParsedOptions(options: any, shorthands: any) {
 	var yargs: any = require("yargs");
-
 	Object.keys(options).forEach((opt) => {
 		var type = options[opt];
 		if (type === String) {
@@ -72,22 +71,24 @@ export function getParsedOptions(options: any, shorthands: any, defaultProfileDi
 	});
 
 	var parsed = yargs.argv;
-	validateYargsArguments(parsed, options);
-
-	parsed["profile-dir"] = parsed["profile-dir"] || defaultProfileDir;
+	validateYargsArguments(parsed, options, shorthands);
 
 	return parsed;
 }
 
-export function validateYargsArguments(parsed: any, knownOpts: any, isInTestMode?: boolean): void {
+export function validateYargsArguments(parsed: any, knownOpts: any, shorthands: any, isInTestMode?: boolean): void {
 	if (path.basename(process.argv[1]) === "appbuilder.js" || isInTestMode) {
 		_.each(_.keys(parsed), (opt) => {
-			if (opt !== "_" && opt !== "$0" && !knownOpts[opt]) {
+			var option = shorthands[opt] ? shorthands[opt] : opt;
+
+			if (option !== "_" && option !== "$0" && !knownOpts[option]) {
 				breakExecution(util.format("The option '%s' is not supported. To see command's options, use '$ appbuilder %s --help'. To see all commands use '$ appbuilder help'.", opt, process.argv[2]));
-			} else if (knownOpts[opt] !== Boolean && typeof (parsed[opt]) === 'boolean') {
+			} else if (knownOpts[option] !== Boolean && typeof (parsed[opt]) === 'boolean') {
 				breakExecution(util.format("The option '%s' requires a value.", opt));
-			} else if (knownOpts[opt] === String && parsed[opt].trim().length === 0) {
+			} else if (knownOpts[option] === String && parsed[opt].trim().length === 0) {
 				breakExecution(util.format("The option '%s' requires nonempty value.", opt));
+			} else if (knownOpts[option] === Boolean && typeof (parsed[opt]) !== 'boolean') {
+				breakExecution(util.format("The option '%s' does not accept values.", opt));
 			}
 		});
 	}

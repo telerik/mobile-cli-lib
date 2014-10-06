@@ -3,6 +3,8 @@
 
 import path = require("path");
 import helpers = require("./../common/helpers");
+import osenv = require("osenv");
+var yargs: any = require("yargs");
 
 var knownOpts: any = {
 		"log": String,
@@ -20,11 +22,12 @@ var knownOpts: any = {
 		"p": "path"
 	};
 
-var parsed = helpers.getParsedOptions(knownOpts, shorthands);
-
+var parsed = yargs.argv;
 Object.keys(parsed).forEach((opt) => exports[opt] = parsed[opt]);
+var defaultProfileDir = path.join(osenv.home(), ".appbuilder-cli");
+exports["profile-dir"] = exports["profile-dir"] || defaultProfileDir;
 
 exports.knownOpts = knownOpts;
-
+exports.shorthands = shorthands
 declare var exports:any;
 export = exports;
