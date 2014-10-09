@@ -1,4 +1,5 @@
 ///<reference path="../.d.ts"/>
+"use strict";
 
 import fs = require("fs");
 import unzip = require("unzip");
@@ -87,7 +88,7 @@ export class FileSystem implements IFileSystem {
 			} else {
 				future.return();
 			}
-		})
+		});
 		return future;
 	}
 
@@ -115,6 +116,13 @@ export class FileSystem implements IFileSystem {
 		var future = new Future();
 		eventEmitter.once(event, () => {
 			var args = _.toArray(arguments);
+
+			if (event === "error") {
+				var err = <Error>args[0];
+				future.throw(err);
+				return;
+			}
+
 			switch (args.length) {
 				case 0:
 					future.return();
@@ -127,7 +135,6 @@ export class FileSystem implements IFileSystem {
 					break;
 			}
 		});
-		eventEmitter.once("error", (err: Error) => future.throw(err))
 		return future;
 	}
 
