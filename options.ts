@@ -2,7 +2,6 @@
 "use strict";
 
 import path = require("path");
-import helpers = require("./../common/helpers");
 import osenv = require("osenv");
 var yargs: any = require("yargs");
 
@@ -16,18 +15,34 @@ var knownOpts: any = {
 		"watch": Boolean,
 		"avd": String,
 		"profile-dir": String,
+		// If you pass value with dash, yargs adds it to yargs.argv in two ways:
+		// with dash and without dash, replacing first symbol after it with its toUpper equivalent
+		"profileDir": String,
 	},
 	shorthands = {
 		"v": "verbose",
 		"p": "path"
-	};
+	},
+	parsed = yargs.argv;
 
-var parsed = yargs.argv;
-Object.keys(parsed).forEach((opt) => exports[opt] = parsed[opt]);
-var defaultProfileDir = path.join(osenv.home(), ".appbuilder-cli");
-exports["profile-dir"] = exports["profile-dir"] || defaultProfileDir;
+exports.setProfileDir = (profileDir: string) => {
+	var defaultProfileDir = path.join(osenv.home(), profileDir);
+	var selectedProfileDir: string = parsed["profile-dir"] || parsed["profileDir"] || defaultProfileDir;
+
+	// Add the value to yargs arguments.
+	parsed["profile-dir"] = selectedProfileDir;
+	parsed["profileDir"] = selectedProfileDir;
+
+	// Add the value to exported options.
+	exports["profile-dir"] = selectedProfileDir;
+	exports["profileDir"] = selectedProfileDir;
+}
 
 exports.knownOpts = knownOpts;
 exports.shorthands = shorthands
-declare var exports:any;
+
+Object.keys(parsed).forEach((opt) => exports[opt] = parsed[opt]);
+
+declare var exports: any;
 export = exports;
+
