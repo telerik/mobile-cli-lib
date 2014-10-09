@@ -41,7 +41,13 @@ exports.setProfileDir = (profileDir: string) => {
 exports.knownOpts = knownOpts;
 exports.shorthands = shorthands
 
-Object.keys(parsed).forEach((opt) => exports[opt] = parsed[opt]);
+Object.keys(parsed).forEach((opt) => {
+	if (typeof (parsed[opt]) === "number") {
+		exports[opt] = parsed[opt].toString();
+	} else {
+		exports[opt] = parsed[opt];
+	}
+});
 
 declare var exports: any;
 export = exports;
