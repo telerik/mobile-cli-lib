@@ -73,7 +73,7 @@ export class HooksService implements IHooksService {
 					}
 				}
 				var environment = this.prepareEnvironment(hook.fullPath);
-				this.$logger.out("Executing %s hook at location %s with environment ", hook.name, hook.fullPath, environment);
+				this.$logger.trace("Executing %s hook at location %s with environment ", hook.name, hook.fullPath, environment);
 				this.$childProcess.spawnFromEvent(command, [hook.fullPath], "close", environment).wait();
 			}
 		}).future<void>()();
