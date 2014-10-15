@@ -50,15 +50,17 @@ export class TypeScriptCompilationService implements ITypeScriptCompilationServi
 		return (() => {
 			var startTime = new Date().getTime();
 
-			var output = this.$childProcess.spawnFromEvent("node", [typeScriptCompilerPath, "@" + typeScriptCommandsFilePath], "close", { throwError: false }).wait();
+			var output = this.$childProcess.spawnFromEvent("node", [typeScriptCompilerPath, "@" + typeScriptCommandsFilePath], "close", undefined, { throwError: false }).wait();
 			if (output.exitCode === 0) {
 				var endTime = new Date().getTime();
 				var time = (endTime - startTime) / 1000;
 
 				this.$logger.out(util.format("\n Success: %ss for %s typeScript files \n Done without errors.", time.toFixed(2), this.typeScriptFiles.length).green);
 			} else {
-				this.$logger.out(output.stdout);
-				this.$errors.fail("Compilation failed".red);
+				process.stderr.write(output.stderr + "\nCompilation failed".red);
+				process.stdout.write(output.stdout);
+
+				process.exit(1);
 			}
 		}).future<void>()();
 	}

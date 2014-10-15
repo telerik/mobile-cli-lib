@@ -22,6 +22,7 @@ export class HooksService implements IHooksService {
 	constructor(private $childProcess: IChildProcess,
 		private $fs: IFileSystem,
 		private $logger: ILogger,
+		private $errors: IErrors,
 		private $staticConfig: IStaticConfig,
 		private $projectHelper: IProjectHelper) { }
 
@@ -74,7 +75,11 @@ export class HooksService implements IHooksService {
 				}
 				var environment = this.prepareEnvironment(hook.fullPath);
 				this.$logger.trace("Executing %s hook at location %s with environment ", hook.name, hook.fullPath, environment);
-				this.$childProcess.spawnFromEvent(command, [hook.fullPath], "close", environment).wait();
+
+				var output = this.$childProcess.spawnFromEvent(command, [hook.fullPath], "close", environment, { throwError: false}).wait();
+				if(output.exitCode !== 0) {
+					this.$errors.fail(output.stdout + output.stderr);
+				}
 			}
 		}).future<void>()();
 	}
