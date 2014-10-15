@@ -68,43 +68,44 @@ export class TypeScriptCompilationService implements ITypeScriptCompilationServi
 			var compilerOptions: string[] = [];
 			var options = this.$config.TYPESCRIPT_COMPILER_OPTIONS;
 
-			// string options
-			if(options.targetVersion) {
-				compilerOptions.push(options.targetVersion.toUpperCase());
-			}
-			if(options.module) {
-				compilerOptions.push(options.module.toLowerCase());
-			}
-
-			// Boolean options
-			if(options.declaration) {
-				compilerOptions.push("--declaration");
-			}
-			if(options.noImplicitAny) {
-				compilerOptions.push("--noImplicitAny");
-			}
-			if(options.sourceMap) {
-				compilerOptions.push("--sourcemap");
-			}
-			if(options.removeComments) {
-				compilerOptions.push("--removeComments");
-			}
-
-			// Target options - TODO: read this options from .abproject file
-			if(options.out) {
-				compilerOptions.push("--out", options.out);
-			}
-			if(options.outDir) {
-				if(options.out) {
-					this.$logger.warn("WARNING: Option out and outDir should not be used together".magenta);
+			if(options) {
+				// string options
+				if (options.targetVersion) {
+					compilerOptions.push(options.targetVersion.toUpperCase());
 				}
-				compilerOptions.push("--outDir", options.outDir);
-			}
-			if (options.sourceRoot) {
-				compilerOptions.push('--sourceRoot', options.sourceRoot);
-			}
-			if (options.mapRoot) {
-				compilerOptions.push('--mapRoot', options.mapRoot);
+				if (options.module) {
+					compilerOptions.push(options.module.toLowerCase());
+				}
+
+				// Boolean options
+				if (options.declaration) {
+					compilerOptions.push("--declaration");
+				}
+				if (options.noImplicitAny) {
+					compilerOptions.push("--noImplicitAny");
+				}
+				if (options.sourceMap) {
+					compilerOptions.push("--sourcemap");
+				}
+				if (options.removeComments) {
+					compilerOptions.push("--removeComments");
+				}
+
+				if (options.out) {
+					compilerOptions.push("--out", options.out);
+				}
+				if (options.outDir) {
+					if (options.out) {
+						this.$logger.warn("WARNING: Option out and outDir should not be used together".magenta);
+					}
+					compilerOptions.push("--outDir", options.outDir);
+				}
+				if (options.sourceRoot) {
+					compilerOptions.push('--sourceRoot', options.sourceRoot);
+				}
+				if (options.mapRoot) {
+					compilerOptions.push('--mapRoot', options.mapRoot);
+				}
 			}
 
 			return compilerOptions;
