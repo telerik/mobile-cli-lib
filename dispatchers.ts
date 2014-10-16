@@ -1,4 +1,5 @@
 ///<reference path="../.d.ts"/>
+"use strict";
 
 import Fiber = require("fibers");
 import Future = require("fibers/future");
@@ -64,19 +65,18 @@ export class CommandDispatcher implements ICommandDispatcher {
 $injector.register("commandDispatcher", CommandDispatcher);
 
 class FutureDispatcher implements IFutureDispatcher {
-	private actions: IQueue<any>
+	private actions: IQueue<any>;
 
 	public constructor(private $errors: IErrors) { }
 
 	public run(): void {
 		if (this.actions) {
-			this.$errors.fail("You cannot run a running future dispatcher.")
+			this.$errors.fail("You cannot run a running future dispatcher.");
 		}
 		this.actions = new queue.Queue<any>();
 
 		while(true) {
-			var action = this.actions.dequeue().wait();
-			action().wait();
+			this.actions.dequeue().wait();
 		}
 	}
 
