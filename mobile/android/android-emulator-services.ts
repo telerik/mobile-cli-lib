@@ -10,12 +10,15 @@ import path = require("path");
 import util = require("util");
 import hostInfo = require("../../../common/host-info");
 import MobileHelper = require("./../mobile-helper");
+import options = require("../../options");
+import helpers = require("../../helpers");
 
 class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private static ANDROID_DIR_NAME = ".android";
 	private static AVD_DIR_NAME = "avd";
 	private static INI_FILES_MASK = /^(.*)\.ini$/i;
 	private static ENCODING_MASK = /^avd\.ini\.encoding=(.*)$/;
+	private static RETRY_COUNT = 10;
 
 	constructor(private $logger: ILogger,
 		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
@@ -29,63 +32,82 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	public checkAvailability(): IFuture<void> {
 		return (() => {
 			var platform = MobileHelper.DevicePlatforms[MobileHelper.DevicePlatforms.Android];
-			if (!this.$emulatorSettingsService.canStart(platform).wait()) {
+			if(!this.$emulatorSettingsService.canStart(platform).wait()) {
 				this.$errors.fail("The current project does not target Android and cannot be run in the Android emulator.");
 			}
 		}).future<void>()();
 	}
 
-	public startEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions) : IFuture<void> {
+	public startEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): IFuture<void> {
 		return (() => {
-			var image = (emulatorOptions && emulatorOptions.image) || this.getBestFit().wait();
-			var appId = emulatorOptions.appId;
-			if (image) {
-				this.startEmulatorCore(app, appId, image).wait();
+			var image = options.avd || this.getBestFit().wait();
+
+			if(image) {
+				this.startEmulatorCore(app, emulatorOptions.appId, image).wait();
 			} else {
 				this.$errors.fail("Could not find an emulator image to run your project.");
 			}
 		}).future<void>()();
 	}
 
-	private startEmulatorCore(app: string, appId: string, image: string) : IFuture<void> {
+	private startEmulatorCore(app: string, appId: string, image: string): IFuture<void> {
 		return (() => {
 			// start the emulator, if needed
-			var runningEmulators = this.getRunningEmulators().wait();
-			if (runningEmulators.length === 0) {
+			var initiallyRunningEmulators = this.getRunningEmulators().wait();
+
+			// If there's no running emulators or the user had specified an image (--avd) we have to start new emulator.
+			if(initiallyRunningEmulators.length === 0 || options.avd) {
 				this.$logger.info("Starting Android emulator with image %s", image);
 				this.$childProcess.spawn('emulator', ['-avd', image],
-					{ stdio:  ["ignore", "ignore", "ignore"], detached: true }).unref();
+					{ stdio: ["ignore", "ignore", "ignore"], detached: true }).unref();
 			}
 
+			var runningEmulators = this.getRunningEmulators().wait();
+			var retryCount = this.getRetryCount();
+
 			// often the running adb server does not recognise that the emulator is up and never reports new device. Patch through this obstacle
-			runningEmulators = this.getRunningEmulators().wait();
-			if (runningEmulators.length === 0) {
+			for(var retry = 0; retry < retryCount; retry++) {
+				if(runningEmulators.length > initiallyRunningEmulators.length) {
+					break;
+				}
+
 				this.$logger.trace("Restarting adb server");
 				this.sleep(10000); // the emulator definitely takes its time to wake up
 				this.$childProcess.spawnFromEvent(this.$staticConfig.adbFilePath, ["kill-server"], "exit").wait();
 				this.sleep(1000);
+				runningEmulators = this.getRunningEmulators().wait();
 			}
 
-			// adb does not always wait for the emulator to fully startup. wait for this
-			this.$logger.trace("waiting for the emulator device to appear");
-			this.$childProcess.spawnFromEvent(this.$staticConfig.adbFilePath, ["wait-for-device"], "exit").wait();
+			if(retry === retryCount) {
+				this.$errors.fail("Unable to run emulator. Try increasing --retryCount option.");
+			}
+
+			var emulatorId = _.first(runningEmulators);
+			if(options.avd) {
+				// get the id of the started emulator
+				_.forEach(runningEmulators, (emulator) => {
+					if(!_.contains(initiallyRunningEmulators, emulator)) {
+						emulatorId = emulator;
+					}
+				});
+			}
 
 			// waits for the boot animation property of the emulator to switch to 'stopped'
-			this.waitForEmulatorBootToComplete().wait();
+			this.waitForEmulatorBootToComplete(emulatorId, retryCount).wait();
 
 			// unlock screen
-			var childProcess = this.$childProcess.spawn(this.$staticConfig.adbFilePath, ["-e", "shell", "input","keyevent", "82"]);
+			var childProcess = this.$childProcess.spawn(this.$staticConfig.adbFilePath, ["-s", emulatorId, "shell", "input", "keyevent", "82"]);
 			this.$fs.futureFromEvent(childProcess, "close").wait();
 
 			// install the app
 			this.$logger.info("installing %s through adb", app);
-			childProcess = this.$childProcess.spawn(this.$staticConfig.adbFilePath, ['-e', 'install', '-r', app]);
+			childProcess = this.$childProcess.spawn(this.$staticConfig.adbFilePath, ["-s", emulatorId, 'install', '-r', app]);
 			this.$fs.futureFromEvent(childProcess, "close").wait();
 
 			// run the installed app
 			this.$logger.info("running %s through adb", app);
-			childProcess = this.$childProcess.spawn(this.$staticConfig.adbFilePath, ['-e', 'shell', 'am', 'start', '-S', appId + "/" + this.$staticConfig.START_PACKAGE_ACTIVITY_NAME],
-				{ stdio:  ["ignore", "ignore", "ignore"], detached: true });
+			childProcess = this.$childProcess.spawn(this.$staticConfig.adbFilePath, ["-s", emulatorId, 'shell', 'am', 'start', '-S', appId + "/" + this.$staticConfig.START_PACKAGE_ACTIVITY_NAME],
+				{ stdio: ["ignore", "ignore", "ignore"], detached: true });
 			this.$fs.futureFromEvent(childProcess, "close").wait();
 		}).future<void>()();
 	}
@@ -96,12 +118,27 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		Fiber.yield();
 	}
 
+	private getRetryCount(): number {
+		var retryCount = AndroidEmulatorServices.RETRY_COUNT;
+
+		if(options && options.retryCount) {
+			var parsedValue = parseInt(options.retryCount);
+			if(!isNaN(parsedValue) && parsedValue > 0) {
+				retryCount = parsedValue;
+			} else {
+				this.$logger.info("retryCount should be number bigger than 1. Default value: " + retryCount + " will be used.");
+			}
+		}
+
+		return retryCount;
+	}
+
 	private getRunningEmulators(): IFuture<string[]> {
 		return (() => {
 			var emulatorDevices: string[] = [];
 			var outputRaw = this.$childProcess.execFile(this.$staticConfig.adbFilePath, ['devices']).wait().split(os.EOL);
 			_.each(outputRaw, (device: string) => {
-				var rx = device.match(/^emulator-(\d+)\s+device$/);
+				var rx = device.match(/^(emulator-\d+)\s+device$/);
 				if (rx && rx[1]) {
 					emulatorDevices.push(rx[1]);
 				}
@@ -215,24 +252,33 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		}).future<string[]>()();
 	}
 
-	private waitForEmulatorBootToComplete(): IFuture<void> {
+	private waitForEmulatorBootToComplete(emulatorId: string, retryCount: number): IFuture<void> {
 		return (() => {
-			var isEmulatorBootCompleted = this.isEmulatorBootCompleted().wait();
-			while (!isEmulatorBootCompleted) {
-				this.sleep(3000);
-				isEmulatorBootCompleted = this.isEmulatorBootCompleted().wait();
+			helpers.printInfoMessageOnSameLine("Waiting for emulator device initialization...");
+			
+			for(var retry = 0; retry < retryCount; retry++) {
+				this.sleep(10000);
+				var isEmulatorBootCompleted = this.isEmulatorBootCompleted(emulatorId).wait();
+
+				if(isEmulatorBootCompleted) {
+					helpers.printInfoMessageOnSameLine(os.EOL);
+					return;
+				}
+
+				helpers.printInfoMessageOnSameLine(".");
 			}
+
+			helpers.printInfoMessageOnSameLine(os.EOL);
+			this.$errors.fail("Unable to start emulator. Try increasing --retryCount option.");
 		}).future<void>()();
 	}
 
-	private isEmulatorBootCompleted(): IFuture<boolean> {
+	private isEmulatorBootCompleted(emulatorId: string): IFuture<boolean> {
 		return (() => {
-			var output = this.$childProcess.execFile(this.$staticConfig.adbFilePath, ["-e", "shell", "getprop", "dev.bootcomplete"]).wait();
+			var output = this.$childProcess.execFile(this.$staticConfig.adbFilePath, ["-s", emulatorId, "shell", "getprop", "dev.bootcomplete"]).wait();
 			var matches = output.match("1");
 			return matches && matches.length > 0;
 		}).future<boolean>()();
 	}
 }
 $injector.register("androidEmulatorServices", AndroidEmulatorServices);
-
-
