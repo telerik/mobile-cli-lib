@@ -68,7 +68,10 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 			// adb does not always wait for the emulator to fully startup. wait for this
 			this.$logger.trace("waiting for the emulator device to appear");
-			this.$childProcess.spawnFromEvent(this.$staticConfig.adbFilePath, ["wait-for-device"], "exit").wait();
+			while (runningEmulators.length === 0) {
+				this.sleep(1000);
+				runningEmulators = this.getRunningEmulators().wait();
+			}
 
 			// waits for the boot animation property of the emulator to switch to 'stopped'
 			this.waitForEmulatorBootToComplete().wait();
