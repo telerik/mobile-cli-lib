@@ -67,7 +67,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 			// often the running adb server does not recognise that the emulator is up and never reports new device. Patch through this obstacle
 			for(var retry = 0; retry < retryCount; retry++) {
-				if(runningEmulators.length > initiallyRunningEmulators.length) {
+				if(runningEmulators.length > initiallyRunningEmulators.length || (runningEmulators.length > 0 && !options.avd)) {
 					break;
 				}
 
