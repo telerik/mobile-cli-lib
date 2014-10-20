@@ -172,7 +172,6 @@ declare module Mobile {
 	}
 
 	interface IEmulatorOptions {
-		image?: string;
 		stderrFilePath?: string;
 		stdoutFilePath?: string;
 		deviceFamily?: string;

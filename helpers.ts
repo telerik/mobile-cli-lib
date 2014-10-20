@@ -5,6 +5,7 @@ import path = require("path");
 import util = require("util");
 import _ = require("underscore"); 
 var uuid = require("node-uuid");
+var options = require("./options");
 
 export function createGUID(useBraces: boolean = true) {
 	var output: string;
@@ -185,4 +186,11 @@ export function isNullOrWhitespace(input: string): boolean {
 	}
 
 	return input.replace(/\s/gi, '').length < 1;
+}
+
+export function printInfoMessageOnSameLine(message: string): void {
+	if(options.log === "info") {
+		var logger: ILogger = $injector.resolve("logger");
+		logger.write(message);
+	}
 }

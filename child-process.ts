@@ -7,10 +7,6 @@ import util = require("util");
 export class ChildProcess implements IChildProcess {
 	constructor(private $logger: ILogger) {}
 
-	private _execFile = Future.wrap((command: string, args: string[], callback: (error: any, stdout: NodeBuffer) => void) => {
-		return child_process.execFile(command, args, callback);
-	});
-
 	public exec(command: string): IFuture<any> {
 		var future = new Future<any>();
 		child_process.exec(command, (error: Error, stdout: NodeBuffer, stderr: NodeBuffer) => {
@@ -28,7 +24,16 @@ export class ChildProcess implements IChildProcess {
 
 	public execFile(command: string, args: string[]): IFuture<any> {
 		this.$logger.debug("execFile: %s %s", command, args.join(" "));
-		return this._execFile(command, args);
+		var future = new Future<any>();
+		var result = child_process.execFile(command, args, (error: any, stdout: NodeBuffer) => {
+			if(error) {
+				future.throw(error);
+			} else {
+				future.return(stdout);
+			}
+		});
+
+		return future;
 	}
 
 	public spawn(command: string, args?: string[], options?: any): any {
