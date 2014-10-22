@@ -19,6 +19,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private static INI_FILES_MASK = /^(.*)\.ini$/i;
 	private static ENCODING_MASK = /^avd\.ini\.encoding=(.*)$/;
 	private static RETRY_COUNT = 10;
+	private static UNABLE_TO_START_EMULATOR_MESSAGE = "Cannot start the virtual device. Increase the number of retries for the operation with the --retrycount option. Alternatively, run the Android Virtual Device manager and increase the allocated RAM for the virtual device.";
 
 	constructor(private $logger: ILogger,
 		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
@@ -79,7 +80,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 			}
 
 			if(retry === retryCount) {
-				this.$errors.fail("Unable to run emulator. Try increasing --retryCount option.");
+				this.$errors.fail(AndroidEmulatorServices.UNABLE_TO_START_EMULATOR_MESSAGE);
 			}
 
 			var emulatorId = _.first(runningEmulators);
@@ -257,7 +258,6 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 			helpers.printInfoMessageOnSameLine("Waiting for emulator device initialization...");
 			
 			for(var retry = 0; retry < retryCount; retry++) {
-				this.sleep(10000);
 				var isEmulatorBootCompleted = this.isEmulatorBootCompleted(emulatorId).wait();
 
 				if(isEmulatorBootCompleted) {
@@ -266,10 +266,11 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 				}
 
 				helpers.printInfoMessageOnSameLine(".");
+				this.sleep(10000);
 			}
 
 			helpers.printInfoMessageOnSameLine(os.EOL);
-			this.$errors.fail("Unable to start emulator. Try increasing --retryCount option.");
+			this.$errors.fail(AndroidEmulatorServices.UNABLE_TO_START_EMULATOR_MESSAGE);
 		}).future<void>()();
 	}
 
