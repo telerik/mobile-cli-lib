@@ -76,7 +76,8 @@ class FutureDispatcher implements IFutureDispatcher {
 		this.actions = new queue.Queue<any>();
 
 		while(true) {
-			this.actions.dequeue().wait();
+			var action = this.actions.dequeue().wait();
+			action.wait();
 		}
 	}
 
