@@ -10,11 +10,11 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	constructor(private $logger: ILogger,
 		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
 		private $errors: IErrors,
-		private $childProcess: IChildProcess) {}
+		private $childProcess: IChildProcess) { }
 
 	checkAvailability(dependsOnProject: boolean = true): IFuture<void> {
 		return (() => {
-			if (!hostInfo.isDarwin()) {
+			if(!hostInfo.isDarwin()) {
 				this.$errors.fail("iOS Simulator is available only on Mac OS X.");
 			}
 
@@ -25,13 +25,13 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 			}
 
 			var platform = MobileHelper.DevicePlatforms[MobileHelper.DevicePlatforms.iOS];
-			if (dependsOnProject && !this.$emulatorSettingsService.canStart(platform).wait()) {
+			if(dependsOnProject && !this.$emulatorSettingsService.canStart(platform).wait()) {
 				this.$errors.fail("The current project does not target iOS and cannot be run in the iOS Simulator.");
 			}
 		}).future<void>()();
 	}
 
-	startEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions) : IFuture<void> {
+	startEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): IFuture<void> {
 		return (() => {
 			this.killLaunchdSim().wait();
 			this.startEmulatorCore(app, emulatorOptions);
@@ -58,19 +58,29 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 			"--exit"
 		];
 
-		if (emulatorOptions) {
-			if (emulatorOptions.stderrFilePath) {
+		if(emulatorOptions) {
+			if(emulatorOptions.stderrFilePath) {
 				opts = opts.concat("--stderr", emulatorOptions.stderrFilePath);
 			}
-			if (emulatorOptions.stdoutFilePath) {
+			if(emulatorOptions.stdoutFilePath) {
 				opts = opts.concat("--stdout", emulatorOptions.stdoutFilePath);
 			}
-			if (emulatorOptions.deviceFamily) {
+			if(emulatorOptions.deviceFamily) {
 				opts = opts.concat("--family", emulatorOptions.deviceFamily);
 			}
 		}
+
+		// if ios-sim and XCode versions are incompatible, ios-sim --version will raise error.
+		// Use the command in order to determine if we are able to launch the simulator.
+		var versionProcess = this.$childProcess.spawn(IosEmulatorServices.SimulatorLauncher, ["--version"],
+			{ stdio: ["ignore", "ignore", "pipe"] });
+
+		versionProcess.stderr.on("data", (data: ReadableStream) => {
+			this.$errors.fail({ formatStr: data.toString(), hideCallStack: true });
+		});
+
 		this.$childProcess.spawn(IosEmulatorServices.SimulatorLauncher, opts,
-			{ stdio:  ["ignore", "ignore", "ignore"], detached: true }).unref();
+			{ stdio: ["ignore", "ignore", "ignore"], detached: true }).unref();
 	}
 
 	private static SimulatorLauncher = "ios-sim";
