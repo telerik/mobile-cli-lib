@@ -91,7 +91,7 @@ export class Errors implements IErrors {
 		var exception: any = new (<any>Exception)();
 		exception.name = opts.name || "Exception";
 		exception.message = util.format.apply(null, args);
-		exception.stack = new Error(exception.message).stack;
+		exception.stack = opts.hideCallStack ? null : new Error(exception.message).stack;
 		exception.errorCode = opts.errorCode || ErrorCodes.UNKNOWN;
 		exception.suppressCommandHelp = opts.suppressCommandHelp;
 
