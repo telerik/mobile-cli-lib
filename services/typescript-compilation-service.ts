@@ -25,7 +25,8 @@ export class TypeScriptCompilationService implements ITypeScriptCompilationServi
 				// Create typeScript command file
 				var typeScriptCommandsFilePath = path.join(temp.mkdirSync("typeScript-compilation"), "tscommand.txt");
 				var typeScriptCompilerOptions = this.getTypeScriptCompilerOptions().wait();
-				this.$fs.writeFile(typeScriptCommandsFilePath, this.typeScriptFiles.concat(typeScriptCompilerOptions).join(' ')).wait();
+				var typeScriptDefinitionsFiles = this.getTypeScriptDefinitionsFiles().wait();
+				this.$fs.writeFile(typeScriptCommandsFilePath, this.typeScriptFiles.concat(typeScriptDefinitionsFiles).concat(typeScriptCompilerOptions).join(' ')).wait();
 
 				// Get the path to tsc
 				var typeScriptModuleFilePath = require.resolve("typescript");
@@ -73,10 +74,10 @@ export class TypeScriptCompilationService implements ITypeScriptCompilationServi
 			if(options) {
 				// string options
 				if (options.targetVersion) {
-					compilerOptions.push(options.targetVersion.toUpperCase());
+					compilerOptions.push("--target " + options.targetVersion.toUpperCase());
 				}
 				if (options.module) {
-					compilerOptions.push(options.module.toLowerCase());
+					compilerOptions.push("--module " + options.module.toLowerCase());
 				}
 
 				// Boolean options
@@ -94,24 +95,34 @@ export class TypeScriptCompilationService implements ITypeScriptCompilationServi
 				}
 
 				if (options.out) {
-					compilerOptions.push("--out", options.out);
+					compilerOptions.push("--out ", options.out);
 				}
 				if (options.outDir) {
 					if (options.out) {
 						this.$logger.warn("WARNING: Option out and outDir should not be used together".magenta);
 					}
-					compilerOptions.push("--outDir", options.outDir);
+					compilerOptions.push("--outDir ", options.outDir);
 				}
 				if (options.sourceRoot) {
-					compilerOptions.push('--sourceRoot', options.sourceRoot);
+					compilerOptions.push("--sourceRoot ", options.sourceRoot);
 				}
 				if (options.mapRoot) {
-					compilerOptions.push('--mapRoot', options.mapRoot);
+					compilerOptions.push("--mapRoot ", options.mapRoot);
 				}
 			}
 
 			return compilerOptions;
 
+		}).future<string[]>()();
+	}
+
+	private getTypeScriptDefinitionsFiles(): IFuture<string[]> {
+		return (() => {
+			var typeScriptDefinitionsFilesPath = "../../resources/typescript-definitions-files";
+			var definitionsFiles = this.$fs.readDirectory(typeScriptDefinitionsFilesPath).wait();
+			return _.map(definitionsFiles, (definitionFilePath: string) => {
+				return path.join(typeScriptDefinitionsFilesPath, definitionFilePath);
+			});
 		}).future<string[]>()();
 	}
 }
