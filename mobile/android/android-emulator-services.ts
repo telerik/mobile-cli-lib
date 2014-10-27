@@ -19,7 +19,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private static INI_FILES_MASK = /^(.*)\.ini$/i;
 	private static ENCODING_MASK = /^avd\.ini\.encoding=(.*)$/;
 	private static RETRY_COUNT = 10;
-	private static UNABLE_TO_START_EMULATOR_MESSAGE = "Cannot start the virtual device. Increase the number of retries for the operation with the --retrycount option. Alternatively, run the Android Virtual Device manager and increase the allocated RAM for the virtual device.";
+	private static UNABLE_TO_START_EMULATOR_MESSAGE = "Cannot start the virtual device. Increase the number of retries for the operation with the --retryCount option. Alternatively, run the Android Virtual Device manager and increase the allocated RAM for the virtual device.";
 
 	constructor(private $logger: ILogger,
 		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
