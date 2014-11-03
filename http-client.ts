@@ -200,7 +200,7 @@ export class HttpClient implements Server.IHttpClient {
 
 	private getErrorMessage(response: Server.IRequestResponseData, body: string): string {
 		if (response.statusCode === 402) {
-			var subscriptionUrl = util.format("%s://%s/account/subscription", this.$config.AB_SERVER_PROTO, this.$config.AB_SERVER);
+			var subscriptionUrl = util.format("%s://%s/appbuilder/account/subscription", this.$config.AB_SERVER_PROTO, this.$config.AB_SERVER);
 			return util.format("Your subscription has expired. Go to %s to manage your subscription. Note: After you renew your subscription, " +
 				"log out and log back in for the changes to take effect.", subscriptionUrl);
 		} else {
