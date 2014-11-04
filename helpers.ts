@@ -194,3 +194,8 @@ export function printInfoMessageOnSameLine(message: string): void {
 		logger.write(message);
 	}
 }
+
+export function getCurrentEpochTime(): number {
+	var dateTime = new Date();
+	return dateTime.getTime();
+}

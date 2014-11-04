@@ -18,8 +18,8 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private static AVD_DIR_NAME = "avd";
 	private static INI_FILES_MASK = /^(.*)\.ini$/i;
 	private static ENCODING_MASK = /^avd\.ini\.encoding=(.*)$/;
-	private static RETRY_COUNT = 10;
-	private static UNABLE_TO_START_EMULATOR_MESSAGE = "Cannot start the virtual device. Increase the number of retries for the operation with the --retryCount option. Alternatively, run the Android Virtual Device manager and increase the allocated RAM for the virtual device.";
+	private static TIMEOUT_SECONDS = 120;
+	private static UNABLE_TO_START_EMULATOR_MESSAGE = "Cannot run your app in the native emulator. Increase the timeout of the operation with the --timeout option. Alternatively, run the Android Virtual Device manager and increase the allocated RAM for the virtual device.";
 
 	constructor(private $logger: ILogger,
 		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
@@ -64,10 +64,11 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 			}
 
 			var runningEmulators = this.getRunningEmulators().wait();
-			var retryCount = this.getRetryCount();
+			var endTimeEpoch = helpers.getCurrentEpochTime() + this.getMilliSecondsTimeout();
+			var hasTimeLeft = helpers.getCurrentEpochTime() < endTimeEpoch;
 
 			// often the running adb server does not recognise that the emulator is up and never reports new device. Patch through this obstacle
-			for(var retry = 0; retry < retryCount; retry++) {
+			while(hasTimeLeft) {
 				if(runningEmulators.length > initiallyRunningEmulators.length || (runningEmulators.length > 0 && !options.avd)) {
 					break;
 				}
@@ -77,9 +78,10 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 				this.$childProcess.spawnFromEvent(this.$staticConfig.adbFilePath, ["kill-server"], "exit").wait();
 				this.sleep(1000);
 				runningEmulators = this.getRunningEmulators().wait();
+				hasTimeLeft = helpers.getCurrentEpochTime() < endTimeEpoch;
 			}
 
-			if(retry === retryCount) {
+			if(!hasTimeLeft) {
 				this.$errors.fail(AndroidEmulatorServices.UNABLE_TO_START_EMULATOR_MESSAGE);
 			}
 
@@ -94,7 +96,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 			}
 
 			// waits for the boot animation property of the emulator to switch to 'stopped'
-			this.waitForEmulatorBootToComplete(emulatorId, retryCount).wait();
+			this.waitForEmulatorBootToComplete(emulatorId, endTimeEpoch).wait();
 
 			// unlock screen
 			var childProcess = this.$childProcess.spawn(this.$staticConfig.adbFilePath, ["-s", emulatorId, "shell", "input", "keyevent", "82"]);
@@ -119,19 +121,19 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		Fiber.yield();
 	}
 
-	private getRetryCount(): number {
-		var retryCount = AndroidEmulatorServices.RETRY_COUNT;
+	private getMilliSecondsTimeout(): number {
+		var timeout = AndroidEmulatorServices.TIMEOUT_SECONDS;
 
-		if(options && options.retryCount) {
-			var parsedValue = parseInt(options.retryCount);
+		if(options && options.timeout) {
+			var parsedValue = parseInt(options.timeout);
 			if(!isNaN(parsedValue) && parsedValue > 0) {
-				retryCount = parsedValue;
+				timeout = parsedValue;
 			} else {
-				this.$logger.info("retryCount should be number bigger than 1. Default value: " + retryCount + " will be used.");
+				this.$logger.info("timeout should be number bigger than 0. Default value: " + timeout + " seconds will be used.");
 			}
 		}
 
-		return retryCount;
+		return timeout * 1000;
 	}
 
 	private getRunningEmulators(): IFuture<string[]> {
@@ -253,11 +255,11 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		}).future<string[]>()();
 	}
 
-	private waitForEmulatorBootToComplete(emulatorId: string, retryCount: number): IFuture<void> {
+	private waitForEmulatorBootToComplete(emulatorId: string, endTime: number): IFuture<void> {
 		return (() => {
 			helpers.printInfoMessageOnSameLine("Waiting for emulator device initialization...");
-			
-			for(var retry = 0; retry < retryCount; retry++) {
+
+			while(helpers.getCurrentEpochTime() < endTime) {
 				var isEmulatorBootCompleted = this.isEmulatorBootCompleted(emulatorId).wait();
 
 				if(isEmulatorBootCompleted) {
