@@ -4,6 +4,12 @@ var jaroWinklerDistance = require("../vendor/jaro-winkler_distance");
 import helpers = require("./../helpers");
 import util = require("util");
 
+var options: any = require("../options");
+
+class CommandArgumentsValidationHelper {
+	constructor(public isValid: boolean, public remainingArguments: string[]) { }
+}
+
 export class CommandsService implements ICommandsService {
 	constructor(private $errors: IErrors,
 		private $logger: ILogger,
@@ -11,7 +17,7 @@ export class CommandsService implements ICommandsService {
 		private $staticConfig: Config.IStaticConfig,
 		private $hooksService: IHooksService) { }
 
-	public allCommands(includeDev: boolean): string[]{
+	public allCommands(includeDev: boolean): string[] {
 		var commands = this.$injector.getRegisteredCommandsNames(includeDev);
 		return _.reject(commands, (command) => _.contains(command, '|'));
 	}
@@ -19,8 +25,8 @@ export class CommandsService implements ICommandsService {
 	public executeCommandUnchecked(commandName: string, commandArguments: string[]): IFuture<boolean> {
 		return (() => {
 			var command = this.$injector.resolveCommand(commandName);
-			if (command) {
-				if (!command.disableAnalytics) {
+			if(command) {
+				if(!command.disableAnalytics) {
 					var analyticsService = this.$injector.resolve("analyticsService"); // This should be resolved here due to cyclic dependency
 					analyticsService.checkConsent(commandName).wait();
 					analyticsService.trackFeature(commandName).wait();
@@ -47,18 +53,110 @@ export class CommandsService implements ICommandsService {
 	}
 
 	public executeCommand(commandName: string, commandArguments: string[]): IFuture<boolean> {
+		return this.executeCommandAction(commandName, commandArguments, this.executeCommandUnchecked);
+	}
+
+	private executeCommandAction(commandName: string, commandArguments: string[], action: (commandName: string, commandArguments: string[]) => IFuture<boolean>): IFuture<boolean> {
 		return this.$errors.beginCommand(
-			() => this.executeCommandUnchecked(commandName, commandArguments),
+			() => action.apply(this, [commandName, commandArguments]),
 			() => this.executeCommandUnchecked("help", [this.beautifyCommandName(commandName)]));
 	}
 
 	public tryExecuteCommand(commandName: string, commandArguments: string[]): IFuture<void> {
 		return (() => {
-			if(!this.executeCommand(commandName, commandArguments).wait()) {
-				this.$logger.fatal("Unknown command '%s'. Use '%s help' for help.", helpers.stringReplaceAll(commandName, "|", " "), this.$staticConfig.CLIENT_NAME);
-				this.tryMatchCommand(commandName);
+			if(this.executeCommandAction(commandName, commandArguments, this.canExecuteCommand).wait()) {
+				this.executeCommandAction(commandName, commandArguments, this.executeCommandUnchecked).wait();
 			}
 		}).future<void>()();
+	}
+
+	private canExecuteCommand(commandName: string, commandArguments: string[]): IFuture<boolean> {
+		return (() => {
+			var command = this.$injector.resolveCommand(commandName);
+			var beautifiedName = helpers.stringReplaceAll(commandName, "|", " ");
+			if(command) {
+				// If command wants to handle canExecute logic on its own.
+				if(command.canExecute) {
+					return command.canExecute(commandArguments).wait();
+				}
+
+				// First part of hierarchical commands should be validated in specific way.
+				if(this.$injector.isValidHierarchicalCommand(commandName, commandArguments)) {
+					return true;
+				}
+
+				if(this.validateCommandArguments(command, commandArguments).wait()) {
+					return true;
+				}
+
+				this.$errors.fail("Unable to execute command '%s'. Use '$ %s %s --help' for help.", beautifiedName, this.$staticConfig.CLIENT_NAME, beautifiedName);
+				return false;
+			}
+
+			this.$logger.fatal("Unknown command '%s'. Use '%s help' for help.", beautifiedName, this.$staticConfig.CLIENT_NAME);
+			this.tryMatchCommand(commandName);
+
+			return false;
+		}).future<boolean>()();
+	}
+
+	private validateMandatoryParams(commandArguments: string[], mandatoryParams: ICommandParameter[]): IFuture<CommandArgumentsValidationHelper> {
+		return (() => {
+			var commandArgsHelper = new CommandArgumentsValidationHelper(true, commandArguments);
+
+			if(mandatoryParams.length > 0) {
+				// If command has more mandatory params than the passed ones, we shouldn't execute it
+				if(mandatoryParams.length > commandArguments.length) {
+					this.$errors.fail("You need to provide all required parameters.");
+				}
+
+				// If we reach here, the commandArguments are at least as much as mandatoryParams. Now we should verify that we have each of them.
+				_.each(mandatoryParams, (mandatoryParam) => {
+					var argument = _.first(_.select(commandArgsHelper.remainingArguments, (c) => mandatoryParam.validate(c).wait()))
+
+					if(argument) {
+						commandArgsHelper.remainingArguments = _.without(commandArgsHelper.remainingArguments, argument);
+					}
+					else {
+						this.$errors.fail("Missing mandatory parameter.");
+					}
+				});
+			}
+			
+			return commandArgsHelper;
+		}).future<CommandArgumentsValidationHelper>()();
+	}
+
+	private validateCommandArguments(command: ICommand, commandArguments: string[]): IFuture<boolean> {
+		return (() => {
+			var mandatoryParams: ICommandParameter[] = _.filter(command.allowedParameters, (param) => param.mandatory);
+			var commandArgsHelper = this.validateMandatoryParams(commandArguments, mandatoryParams).wait();
+			if(!commandArgsHelper.isValid) {
+				return false;
+			}
+
+			// Command doesn't have any allowedParameters
+			if(!command.allowedParameters || command.allowedParameters.length === 0) {
+				if(commandArguments.length > 0) {
+					this.$errors.fail("This command doesn't accept parameters.");
+				}
+			} else {
+				// Exclude mandatory params, we've already checked them
+				var unverifiedAllowedParams = command.allowedParameters.filter((param) => !param.mandatory);
+
+				_.each(commandArgsHelper.remainingArguments, (argument) => {
+					var parameter = _.find(unverifiedAllowedParams, (c) => c.validate(argument).wait());
+					if(parameter) {
+						// Remove the matched parameter from unverifiedAllowedParams collection, so it will not be used to verify another argument.
+						unverifiedAllowedParams = _.without(unverifiedAllowedParams, parameter);
+					} else {
+						this.$errors.fail("The parameter %s is not valid for this command.", argument);
+					}
+				});
+			}
+
+			return true;
+		}).future<boolean>()();
 	}
 
 	private tryMatchCommand(commandName: string): void {
@@ -68,9 +166,9 @@ export class CommandsService implements ICommandsService {
 			if(!this.$injector.isDefaultCommand(command)) {
 				command = helpers.stringReplaceAll(command, "|", " ");
 				var distance = jaroWinklerDistance(commandName, command);
-				if (commandName.length > 3 && command.indexOf(commandName) != -1) {
+				if(commandName.length > 3 && command.indexOf(commandName) != -1) {
 					similarCommands.push({ rating: 1, name: command });
-				} else if (distance >= 0.65) {
+				} else if(distance >= 0.65) {
 					similarCommands.push({ rating: distance, name: command });
 				}
 			}
@@ -80,7 +178,7 @@ export class CommandsService implements ICommandsService {
 			return -command.rating;
 		}).slice(0, 5);
 
-		if (similarCommands.length > 0) {
+		if(similarCommands.length > 0) {
 			var message = ["Did you mean?"];
 			_.each(similarCommands, (command) => {
 				message.push("\t" + command.name);
@@ -92,40 +190,40 @@ export class CommandsService implements ICommandsService {
 	public completeCommand(commandsWithPlatformArgument: string[], platforms: string[], getPropSchemaAction?: any): IFuture<boolean> {
 		return (() => {
 			var completeCallback = (err: Error, data: any) => {
-				if (err || !data) {
+				if(err || !data) {
 					return;
 				}
 
 				var childrenCommands = this.$injector.getChildrenCommandsNames(data.prev);
 
-				if (data.words == 1) {
+				if(data.words == 1) {
 					return tabtab.log(this.allCommands(false), data);
 				}
 
-				if (data.last.startsWith("--")) {
+				if(data.last.startsWith("--")) {
 					return tabtab.log(Object.keys(require("./options").knownOpts), data, "--");
 				}
 
-				if (_.contains(commandsWithPlatformArgument, data.prev)) {
+				if(_.contains(commandsWithPlatformArgument, data.prev)) {
 					return tabtab.log(platforms, data);
 				}
 
-				if (data.words == 2 && childrenCommands) {
+				if(data.words == 2 && childrenCommands) {
 					return tabtab.log(_.reject(childrenCommands, (children: string) => children[0] === '*'), data);
 				}
 
 				var propSchema = getPropSchemaAction ? getPropSchemaAction() : null;
 
-				if (propSchema) {
+				if(propSchema) {
 					var propertyCommands = ["print", "set", "add", "del"];
 					var parseResult = /prop ([^ ]+) ([^ ]*)/.exec(data.line);
-					if (parseResult) {
-						if (_.contains(propertyCommands, parseResult[1])) {
+					if(parseResult) {
+						if(_.contains(propertyCommands, parseResult[1])) {
 							var propName = parseResult[2];
-							if (propSchema[propName]) {
+							if(propSchema[propName]) {
 								var range = propSchema[propName].range;
-								if (range) {
-									if (!_.isArray(range)) {
+								if(range) {
+									if(!_.isArray(range)) {
 										range = _.map(range, (value: { input: string }, key: string) => {
 											return value.input || key;
 										});

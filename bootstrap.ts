@@ -11,7 +11,9 @@ $injector.require("logger", "./common/logger");
 $injector.require("dispatcher", "./common/dispatchers");
 $injector.require("commandDispatcher", "./common/dispatchers");
 
+$injector.require("stringParameter", "./common/command-params");
 $injector.require("commandsService", "./common/services/commands-service");
+
 $injector.require("cancellation", "./common/services/cancellation");
 $injector.require("analyticsService", "./common/services/analytics-service");
 $injector.require("hooksService", "./common/services/hooks-service");
@@ -23,7 +25,7 @@ $injector.require("projectHelper", "./common/project-helper");
 $injector.require("propertiesParser", "./common/properties-parser");
 
 $injector.requireCommand(["help", "/?"], "./common/commands/help");
-$injector.requireCommand("feature-usage-tracking", "./common/services/analytics-service");
+$injector.requireCommand("feature-usage-tracking", "./common/commands/analytics");
 
 $injector.require("iOSCore", "./common/mobile/ios/ios-core");
 $injector.require("coreFoundation", "./common/mobile/ios/ios-core");

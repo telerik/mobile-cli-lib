@@ -13,6 +13,7 @@ interface IInjector extends IDisposable {
 	dynamicCallRegex: RegExp;
 	dynamicCall(call: string, args?: any[]): any;
 	isDefaultCommand(commandName: string): boolean;
+	isValidHierarchicalCommand(commandName: string, commandArguments: string[]): boolean;
 	getChildrenCommandsNames(commandName: string): string[];
 }
 
