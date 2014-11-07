@@ -2,7 +2,8 @@
 "use strict";
 
 export class StringCommandParameter implements ICommandParameter {
-	constructor(public mandatory?: boolean, public errorMessage?: string) { }
+	public mandatory = false;
+	public errorMessage: string;
 
 	public validate(validationValue: string): IFuture<boolean> {
 		return (() => {
@@ -19,3 +20,14 @@ export class StringCommandParameter implements ICommandParameter {
 	}
 }
 $injector.register("stringParameter", StringCommandParameter);
+
+export class StringParameterBuilder implements IStringParameterBuilder {
+	public createMandatoryParameter(errorMsg: string) {
+		var commandParameter = new StringCommandParameter();
+		commandParameter.mandatory = true;
+		commandParameter.errorMessage = errorMsg;
+
+		return commandParameter;
+	}
+}
+$injector.register("stringParameterBuilder", StringParameterBuilder);
