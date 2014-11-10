@@ -22,7 +22,7 @@ export class StringCommandParameter implements ICommandParameter {
 $injector.register("stringParameter", StringCommandParameter);
 
 export class StringParameterBuilder implements IStringParameterBuilder {
-	public createMandatoryParameter(errorMsg: string) {
+	public createMandatoryParameter(errorMsg: string) : ICommandParameter {
 		var commandParameter = new StringCommandParameter();
 		commandParameter.mandatory = true;
 		commandParameter.errorMessage = errorMsg;
