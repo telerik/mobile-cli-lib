@@ -263,5 +263,17 @@ export class FileSystem implements IFileSystem {
 
 		return future;
 	}
+
+	public closeStream(stream: any): IFuture<void> {
+		var future = new Future<void>();
+		stream.close((err: Error, data: any) => {
+			if(err) {
+				future.throw(err);
+			} else {
+				future.return();
+			}
+		});
+		return future;
+	}
 }
 $injector.register("fs", FileSystem);

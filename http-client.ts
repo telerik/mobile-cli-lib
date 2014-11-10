@@ -142,6 +142,10 @@ export class HttpClient implements Server.IHttpClient {
 				}
 			});
 
+			request.on("error", (error: Error) => {
+				result.throw(error);
+			});
+
 			this.$logger.trace("httpRequest: Sending:\n%s", body ? (typeof body  === "string" ? body : JSON.stringify(body)) : "[empty request body]");
 
 			if (!body || !body.pipe) {
