@@ -12,6 +12,8 @@ $injector.require("dispatcher", "./common/dispatchers");
 $injector.require("commandDispatcher", "./common/dispatchers");
 
 $injector.require("stringParameter", "./common/command-params");
+$injector.require("stringParameterBuilder", "./common/command-params");
+
 $injector.require("commandsService", "./common/services/commands-service");
 
 $injector.require("cancellation", "./common/services/cancellation");

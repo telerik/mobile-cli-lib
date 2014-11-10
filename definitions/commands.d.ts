@@ -21,3 +21,7 @@ interface ICommandParameter {
 	mandatory: boolean;
 	validate(value: string, errorMessage?: string): IFuture<boolean>;
 }
+
+interface IStringParameterBuilder {
+	createMandatoryParameter(errorMsg: string): ICommandParameter;
+}
