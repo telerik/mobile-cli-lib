@@ -50,6 +50,7 @@ interface IFileSystem {
 	ensureDirectoryExists(directoryPath: string): IFuture<void>;
 	rename(oldPath: string, newPath: string): IFuture<void>;
 	getFsStats(path: string): IFuture<IFsStats>;
+	closeStream(stream: any): IFuture<void>;
 
 	createReadStream(path: string, options?: {
 		flags?: string;
