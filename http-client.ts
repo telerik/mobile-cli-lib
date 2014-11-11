@@ -107,10 +107,12 @@ export class HttpClient implements Server.IHttpClient {
 				if (pipeTo) {
 					pipeTo.on("finish", () => {
 						this.$logger.trace("httpRequest: Piping done. code = %d", response.statusCode.toString());
-						result.return({
-							response: response,
-							headers: response.headers
-						});
+						if(!result.isResolved()) {
+							result.return({
+								response: response,
+								headers: response.headers
+							});
+						}
 					});
 
 					pipeTo = this.trackDownloadProgress(pipeTo);
@@ -126,11 +128,13 @@ export class HttpClient implements Server.IHttpClient {
 						var body = data.join("");
 
 						if (successful || isRedirect) {
-							result.return({
-								body: body,
-								response: response,
-								headers: response.headers
-							})
+							if(!result.isResolved()) {
+								result.return({
+									body: body,
+									response: response,
+									headers: response.headers
+								});
+							}
 						} else {
 							var errorMessage = this.getErrorMessage(response, body);
 							var theError: any = new Error(errorMessage);
@@ -143,7 +147,9 @@ export class HttpClient implements Server.IHttpClient {
 			});
 
 			request.on("error", (error: Error) => {
-				result.throw(error);
+				if(!result.isResolved()) {
+					result.throw(error);
+				}
 			});
 
 			this.$logger.trace("httpRequest: Sending:\n%s", body ? (typeof body  === "string" ? body : JSON.stringify(body)) : "[empty request body]");
