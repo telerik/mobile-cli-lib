@@ -2,7 +2,6 @@
 "use strict";
 
 import path = require("path");
-import osenv = require("osenv");
 var yargs: any = require("yargs");
 
 var knownOpts: any = {
@@ -26,8 +25,7 @@ var knownOpts: any = {
 	},
 	parsed = yargs.argv;
 
-exports.setProfileDir = (profileDir: string) => {
-	var defaultProfileDir = path.join(osenv.home(), profileDir);
+exports.setProfileDir = (defaultProfileDir: string) => {
 	var selectedProfileDir: string = parsed["profile-dir"] || parsed["profileDir"] || defaultProfileDir;
 
 	// Add the value to yargs arguments.
