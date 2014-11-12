@@ -40,7 +40,7 @@ exports.setProfileDir = (profileDir: string) => {
 }
 
 exports.knownOpts = knownOpts;
-exports.shorthands = shorthands
+exports.shorthands = shorthands;
 
 Object.keys(parsed).forEach((opt) => {
 	if (typeof (parsed[opt]) === "number") {

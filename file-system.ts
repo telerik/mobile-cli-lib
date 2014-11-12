@@ -7,7 +7,7 @@ import Future = require("fibers/future");
 import path = require("path");
 import util = require("util");
 import rimraf = require("rimraf");
-import hostInfo = require("./../common/host-info");
+import hostInfo = require("./host-info");
 
 export class FileSystem implements IFileSystem {
 	private _stat = Future.wrap(fs.stat);
@@ -286,6 +286,19 @@ export class FileSystem implements IFileSystem {
 			}
 		});
 		return future;
+	}
+
+	public setCurrentUserAsOwner(path: string, owner: string): IFuture<void> {
+		return (() => {
+			if (!hostInfo.isWindows()) {
+				var $childProcess = $injector.resolve("$childProcess");
+
+				var chown = $childProcess.spawn('chown', ['-R', owner, path],
+					{ stdio: "ignore", detached: true });
+				this.futureFromEvent(chown, "close").wait();
+			}
+			// nothing to do on Windows, as chown does not work on this platform
+		}).future<void>()();
 	}
 }
 $injector.register("fs", FileSystem);

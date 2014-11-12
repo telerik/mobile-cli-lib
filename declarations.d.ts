@@ -71,6 +71,8 @@ interface IFileSystem {
 
 	chmod(path: string, mode: number): IFuture<any>;
 	chmod(path: string, mode: string): IFuture<any>;
+
+	setCurrentUserAsOwner(path: string, owner: string): IFuture<void>;
 }
 
 // duplicated from fs.Stats, because I cannot import it here
