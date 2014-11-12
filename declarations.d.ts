@@ -54,6 +54,7 @@ interface IFileSystem {
 	symlink(sourcePath: string, destinationPath: string, type: "dir"): IFuture<void>;
 	symlink(sourcePath: string, destinationPath: string, type: "junction"): IFuture<void>;
 	symlink(sourcePath: string, destinationPath: string, type?: string): IFuture<void>;
+	closeStream(stream: any): IFuture<void>;
 
 	createReadStream(path: string, options?: {
 		flags?: string;
