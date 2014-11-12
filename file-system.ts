@@ -266,7 +266,19 @@ export class FileSystem implements IFileSystem {
 
 	public symlink(sourcePath: string, destinationPath: string, type?: string): IFuture<void> {
 		var future = new Future<void>();
-		fs.symlink(sourcePath, destinationPath, type, (err: Error) => {
+		fs.symlink(sourcePath, destinationPath, type, (err:Error) => {
+			if (err) {
+				future.throw(err);
+			} else {
+				future.return();
+			}
+		});
+		return future;
+	}
+
+	public closeStream(stream: any): IFuture<void> {
+		var future = new Future<void>();
+		stream.close((err: Error, data: any) => {
 			if(err) {
 				future.throw(err);
 			} else {
