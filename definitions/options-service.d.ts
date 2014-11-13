@@ -1,0 +1,3 @@
+interface IOptionsService {
+	getKnownOptions(): string[];
+}
