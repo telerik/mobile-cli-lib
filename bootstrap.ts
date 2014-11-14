@@ -42,6 +42,7 @@ $injector.require("signal", "./events/signal");
 $injector.require("deviceFound", "./common/mobile/mobile-core/device-discovery");
 $injector.require("deviceLost", "./common/mobile/mobile-core/device-discovery");
 
+$injector.require("iTunesValidator", "./common/validators/iTunes-validator");
 $injector.require("deviceDiscovery", "./common/mobile/mobile-core/device-discovery");
 $injector.require("iOSDeviceDiscovery", "./common/mobile/mobile-core/device-discovery");
 $injector.require("androidDeviceDiscovery", "./common/mobile/mobile-core/device-discovery");
