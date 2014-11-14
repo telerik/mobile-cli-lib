@@ -201,7 +201,9 @@ export class CommandsService implements ICommandsService {
 				}
 
 				if(data.last.startsWith("--")) {
-					return tabtab.log(Object.keys(require("./options").knownOpts), data, "--");
+					// Resolve optionsService here. It is not part of common lib, because we need all knownOptions for each CLI.
+					var optionsService: IOptionsService = $injector.resolve("optionsService");
+					return tabtab.log(optionsService.getKnownOptions(), data, "--");
 				}
 
 				if(_.contains(commandsWithPlatformArgument, data.prev)) {
