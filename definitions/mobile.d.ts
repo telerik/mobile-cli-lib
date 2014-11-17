@@ -51,6 +51,10 @@ declare module Mobile {
 		platform: string;
 	}
 
+	interface IiTunesValidator {
+		getError(): IFuture<string>;
+	}
+
 	interface IiOSCore {
 		getCoreFoundationLibrary(): any;
 		getMobileDeviceLibrary(): any;
