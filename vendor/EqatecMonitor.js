@@ -652,6 +652,7 @@
 			monitorversion = '0.0.0.0',
 
 			productId = "",
+			timeout = 10000,
 			isStarted = false,
 			logger = {
 				logError: function () { },
@@ -763,6 +764,18 @@
 				eqatecUtil.log(logger, 'failed while calling start. ' + e.description);
 			}
 		};
+
+		// Currently not used, but can be called in order to set timeout for sending the request
+		var SetRequestTimeout = function(timeoutMilliSeconds) {
+			if(timeoutMilliSeconds) {
+				var tm = parseInt(timeoutMilliSeconds);
+				if(tm && !isNaN(tm) && isFinite(tm) && tm > 0) {
+					eqatecUtil.log(logger, 'setting timeout to ' + timeoutMilliSeconds);
+					timeout = tm;
+				}
+			}
+		};
+
 		var Stop = function () {
 			try {
 				if (!isStarted || isDisabled)
@@ -952,6 +965,7 @@
 
 				if (XMLHttpRequest && requestObject === undefined) {
 					var request = new XMLHttpRequest();
+					request.setTimeout(timeout);
 					var isHttps = navigator || navagator.location || navagator.location.protocol === "https";
 
 					if(isHttps && useCookies && (!("withCredentials" in request) || request.withCredentials === undefined)) {
@@ -1081,6 +1095,14 @@
 			 * @for AnalyticsMonitor
 			 */
 			stop: Stop,
+			/**
+			 * Set timeout for the request. If the passed value is not a positive number
+			 * default value 10000 will be used.
+			 * @method setRequestTimeout
+			 * @param timeoutMilliSeconds {String} the timeout in milliseconds
+			 * @for AnalyticsMonitor
+			 */
+			setRequestTimeout: SetRequestTimeout,
 			/**
 			 * Assigning the installation id. The installation id can be used to associate the data with a
 			 * specific identifier. This can be used to e.g. associate all data from a given logic department
