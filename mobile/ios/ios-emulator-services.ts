@@ -5,6 +5,7 @@ import util = require("util");
 import Future = require("fibers/future");
 import hostInfo = require("../../../common/host-info");
 import MobileHelper = require("./../mobile-helper");
+import options = require("./../../options");
 
 class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	constructor(private $logger: ILogger,
@@ -16,12 +17,6 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		return (() => {
 			if(!hostInfo.isDarwin()) {
 				this.$errors.fail("iOS Simulator is available only on Mac OS X.");
-			}
-
-			try {
-				this.$childProcess.exec(util.format("which ", IosEmulatorServices.SimulatorLauncher)).wait();
-			} catch(err) {
-				this.$errors.fail("Unable to find ios-sim. Run `npm install -g ios-sim` to install it.");
 			}
 
 			var platform = MobileHelper.DevicePlatforms[MobileHelper.DevicePlatforms.iOS];
@@ -52,8 +47,10 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	private startEmulatorCore(app: string, emulatorOptions?: Mobile.IEmulatorOptions): void {
 		this.$logger.info("Starting iOS Simulator");
+		var iosSimPath = require.resolve("ios-sim-portable");
 
 		var opts = [
+			iosSimPath,
 			"launch", app,
 			"--exit"
 		];
@@ -65,24 +62,18 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 			if(emulatorOptions.stdoutFilePath) {
 				opts = opts.concat("--stdout", emulatorOptions.stdoutFilePath);
 			}
-			if(emulatorOptions.deviceFamily) {
-				opts = opts.concat("--family", emulatorOptions.deviceFamily);
-			}
 		}
 
-		// if ios-sim and XCode versions are incompatible, ios-sim --version will raise error.
-		// Use the command in order to determine if we are able to launch the simulator.
-		var versionProcess = this.$childProcess.spawn(IosEmulatorServices.SimulatorLauncher, ["--version"],
-			{ stdio: ["ignore", "ignore", "pipe"] });
+		if(options.deviceType) {
+			opts = opts.concat("--device", options.deviceType);
+		}
 
-		versionProcess.stderr.on("data", (data: ReadableStream) => {
-			this.$errors.fail({ formatStr: data.toString(), hideCallStack: true });
-		});
+		if(options.availableDeviceTypes || options["available-DeviceTypes"]) {
+			this.$childProcess.spawnFromEvent("node", [iosSimPath, "device-types"], "close", { stdio: "inherit" }).wait();
+			return;
+		}
 
-		this.$childProcess.spawn(IosEmulatorServices.SimulatorLauncher, opts,
-			{ stdio: ["ignore", "ignore", "ignore"], detached: true }).unref();
+		this.$childProcess.spawn("node", opts, { stdio: "inherit"});
 	}
-
-	private static SimulatorLauncher = "ios-sim";
 }
 $injector.register("iOSEmulatorServices", IosEmulatorServices);

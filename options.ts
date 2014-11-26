@@ -17,7 +17,10 @@ var knownOpts: any = {
 		// If you pass value with dash, yargs adds it to yargs.argv in two ways:
 		// with dash and without dash, replacing first symbol after it with its toUpper equivalent
 		"profileDir": String,
-		"timeout": String
+		"timeout": String,
+		"deviceType": String,
+		"available-deviceTypes": Boolean,
+		"availableDeviceTypes": Boolean
 	},
 	shorthands = {
 		"v": "verbose",
