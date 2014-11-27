@@ -72,7 +72,7 @@ export function getParsedOptions(options: any, shorthands: any) {
 	});
 
 	var argv = yargs.argv;
-	var parsed = {};
+	var parsed:any = {};
 	_.each(_.keys(argv), (opt) => {
 		if (typeof argv[opt] === "number") {
 			parsed[opt] = argv[opt].toString();
@@ -91,13 +91,13 @@ export function validateYargsArguments(parsed: any, knownOpts: any, shorthands: 
 			var option = shorthands[opt] ? shorthands[opt] : opt;
 
 			if (option !== "_" && option !== "$0" && !knownOpts[option]) {
-				breakExecution(util.format("The option '%s' is not supported. To see command's options, use '$ appbuilder %s --help'. To see all commands use '$ appbuilder help'.", opt, process.argv[2]));
+				exports.breakExecution(util.format("The option '%s' is not supported. To see command's options, use '$ appbuilder %s --help'. To see all commands use '$ appbuilder help'.", opt, process.argv[2]));
 			} else if (knownOpts[option] !== Boolean && typeof (parsed[opt]) === 'boolean') {
-				breakExecution(util.format("The option '%s' requires a value.", opt));
+				exports.breakExecution(util.format("The option '%s' requires a value.", opt));
 			} else if (knownOpts[option] === String && isNullOrWhitespace(parsed[opt])) {
-				breakExecution(util.format("The option '%s' requires non-empty value.", opt));
+				exports.breakExecution(util.format("The option '%s' requires non-empty value.", opt));
 			} else if (knownOpts[option] === Boolean && typeof (parsed[opt]) !== 'boolean') {
-				breakExecution(util.format("The option '%s' does not accept values.", opt));
+				exports.breakExecution(util.format("The option '%s' does not accept values.", opt));
 			}
 		});
 	}

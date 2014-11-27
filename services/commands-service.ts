@@ -1,9 +1,9 @@
 ///<reference path="../../.d.ts"/>
+"use strict";
 
 var jaroWinklerDistance = require("../vendor/jaro-winkler_distance");
 import helpers = require("./../helpers");
 import util = require("util");
-
 var options: any = require("../options");
 
 class CommandArgumentsValidationHelper {

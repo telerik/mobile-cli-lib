@@ -644,7 +644,7 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 	private createPlist(data: {[key: string]: {}}) : {} {
 		var keys = _.keys(data);
 		var values = _.values(data);
-		var plist = {type: "dict", value: {}} ;
+		var plist: {type:string; value:any} = {type: "dict", value: {}} ;
 
 		for(var i=0; i<keys.length; i++) {
 			var type = values[i] instanceof Object ? "dict" : "string";

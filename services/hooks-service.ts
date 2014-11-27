@@ -92,7 +92,7 @@ export class HooksService implements IHooksService {
 		}).future<IHook>()();
 	}
 
-	private getHooksInDirectory(directoryPath: string): IFuture<string[]> {
+	private getHooksInDirectory(directoryPath: string): IFuture<IHook[]> {
 		return (() => {
 			if(!this.cachedHooks[directoryPath]) {
 				var hooks: IHook[] = [];
@@ -116,13 +116,13 @@ export class HooksService implements IHooksService {
 
 			return this.cachedHooks[directoryPath];
 
-		}).future<string[]>()();
+		}).future<IHook[]>()();
 	}
 
 	private prepareEnvironment(hookFullPath: string): any {
 		var clientName = this.$staticConfig.CLIENT_NAME.toUpperCase();
 
-		var environment = { };
+		var environment: IStringDictionary = { };
 		environment[util.format("%s-COMMANDLINE", clientName)] = process.argv.join(' ');
 		environment[util.format("%s-HOOK_FULL_PATH", clientName)] = hookFullPath;
 		environment[util.format("%s-VERSION", clientName)] = this.$staticConfig.version;
