@@ -193,7 +193,7 @@ export class IOSNativeScriptCompanionAppIdentifier implements Mobile.IAppIdentif
 
 }
 
-var factoryRules = {
+var factoryRules:IDictionary<any> = {
 	iOS: {
 		Cordova: {
 			companion: IOSCompanionAppIdentifier,
@@ -215,7 +215,7 @@ var factoryRules = {
 };
 
 export function createAppIdentifier(platform: string, appIdentifier: string, companion: boolean, projectType: number): Mobile.IAppIdentifier {
-	var projectTypes: any = $injector.resolve("projectTypes");
+	var projectTypes = require("../../project-types");
 	var projectTypeString = projectTypes[projectType];
 	var ctor = factoryRules[platform][projectTypeString][companion ? "companion" : "vanilla"];
 	return new ctor(appIdentifier);

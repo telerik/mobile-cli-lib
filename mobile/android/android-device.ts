@@ -1,5 +1,5 @@
 ///<reference path="../../../.d.ts"/>
-"use strict"
+"use strict";
 import MobileHelper = require("./../mobile-helper");
 import util = require("util");
 import Future = require("fibers/future");
@@ -213,7 +213,7 @@ export class AndroidDevice implements Mobile.IDevice {
 	}
 
 	private getLiveSyncUrl(projectType: number): string {
-		var projectTypes = $injector.resolve("$projectTypes");
+		var projectTypes: IProjectTypes = require("../../../project-types"); // a gross hack but we can't use yok
 		switch (projectType) {
 			case projectTypes.Cordova:
 				return "icenium://";
@@ -291,7 +291,7 @@ export class AndroidDevice implements Mobile.IDevice {
 	private syncNewProtocol(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, projectType: number, syncOptions: Mobile.ISyncOptions = {}): IFuture<void> {
 		return (() => {
 			var liveSyncRoot = this.getLiveSyncRoot(appIdentifier);
-			var dirs = {};
+			var dirs:IStringDictionary = Object.create(null);
 
 			_.each(localToDevicePaths, (localToDevicePathData: Mobile.ILocalToDevicePathData) => {
 				var relativeToProjectBasePath = helpers.fromWindowsRelativePathToUnix(localToDevicePathData.getRelativeToProjectBasePath());
