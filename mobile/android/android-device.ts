@@ -213,7 +213,7 @@ export class AndroidDevice implements Mobile.IDevice {
 	}
 
 	private getLiveSyncUrl(projectType: number): string {
-		var projectTypes: IProjectTypes = require("../../../project-types"); // a gross hack but we can't use yok
+		var projectTypes = require("../../../project-types"); // a gross hack but we can't use yok
 		switch (projectType) {
 			case projectTypes.Cordova:
 				return "icenium://";
