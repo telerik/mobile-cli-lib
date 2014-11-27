@@ -178,7 +178,6 @@ declare module Mobile {
 	interface IEmulatorOptions {
 		stderrFilePath?: string;
 		stdoutFilePath?: string;
-		deviceFamily?: string;
 		appId?: string;
 	}
 }
