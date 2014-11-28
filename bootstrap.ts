@@ -28,6 +28,8 @@ $injector.require("propertiesParser", "./common/properties-parser");
 
 $injector.requireCommand(["help", "/?"], "./common/commands/help");
 $injector.requireCommand("feature-usage-tracking", "./common/commands/analytics");
+$injector.requireCommand("device|*list", "./common/commands/list-devices");
+$injector.requireCommand("device|log", "./common/commands/device-log-stream");
 
 $injector.require("iOSCore", "./common/mobile/ios/ios-core");
 $injector.require("coreFoundation", "./common/mobile/ios/ios-core");
