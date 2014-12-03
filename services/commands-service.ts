@@ -66,6 +66,8 @@ export class CommandsService implements ICommandsService {
 		return (() => {
 			if(this.executeCommandAction(commandName, commandArguments, this.canExecuteCommand).wait()) {
 				this.executeCommandAction(commandName, commandArguments, this.executeCommandUnchecked).wait();
+			} else {
+				this.executeCommandUnchecked("help", [this.beautifyCommandName(commandName)]).wait();
 			}
 		}).future<void>()();
 	}
