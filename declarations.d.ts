@@ -62,6 +62,8 @@ interface IFileSystem {
 		fd?: string;
 		mode?: number;
 		bufferSize?: number;
+		start?: number;
+		end?: number;
 	}): any;
 	createWriteStream(path: string, options?: {
 		flags?: string;
