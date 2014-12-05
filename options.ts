@@ -19,7 +19,6 @@ var knownOpts: any = {
 		"profileDir": String,
 		"timeout": String,
 		"deviceType": String,
-		"available-deviceTypes": Boolean,
 		"availableDeviceTypes": Boolean
 	},
 	shorthands = {

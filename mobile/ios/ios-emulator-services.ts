@@ -48,6 +48,12 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private startEmulatorCore(app: string, emulatorOptions?: Mobile.IEmulatorOptions): void {
 		this.$logger.info("Starting iOS Simulator");
 		var iosSimPath = require.resolve("ios-sim-portable");
+		var nodeCommandName = process.argv[0];
+
+		if(options.availableDeviceType) {
+			this.$childProcess.spawnFromEvent(nodeCommandName, [iosSimPath, "device-types"], "close", { stdio: "inherit" }).wait();
+			return;
+		}
 
 		var opts = [
 			iosSimPath,
@@ -68,12 +74,7 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 			opts = opts.concat("--device", options.deviceType);
 		}
 
-		if(options.availableDeviceTypes || options["available-DeviceTypes"]) {
-			this.$childProcess.spawnFromEvent("node", [iosSimPath, "device-types"], "close", { stdio: "inherit" }).wait();
-			return;
-		}
-
-		this.$childProcess.spawn("node", opts, { stdio: "inherit"});
+		this.$childProcess.spawn(nodeCommandName, opts, { stdio: "inherit"});
 	}
 }
 $injector.register("iOSEmulatorServices", IosEmulatorServices);
