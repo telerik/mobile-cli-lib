@@ -13,6 +13,7 @@ export class CancellationService implements ICancellationService {
 				private $logger: ILogger,
 				private $errors: IErrors) {
 		this.$fs.createDirectory(CancellationService.killSwitchDir).wait();
+		this.$fs.chmod(CancellationService.killSwitchDir, "0777").wait();
 	}
 
 	public begin(name: string): IFuture<void> {
@@ -23,6 +24,7 @@ export class CancellationService implements ICancellationService {
 			var streamEnd = this.$fs.futureFromEvent(stream, "finish");
 			stream.end();
 			streamEnd.wait();
+			this.$fs.chmod(triggerFile, "0777").wait();
 
 			this.$logger.trace("Starting watch on killswitch %s", triggerFile);
 			var watcherInitialized = new Future<watchr.IWatcherInstance>();
