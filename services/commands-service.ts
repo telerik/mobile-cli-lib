@@ -195,16 +195,20 @@ export class CommandsService implements ICommandsService {
 		}
 	}
 
-	public completeCommand(commandsWithPlatformArgument: string[], platforms: string[], getPropSchemaAction?: any): IFuture<boolean> {
+	public completeCommand(): IFuture<boolean> {
 		return (() => {
 			var completeCallback = (err: Error, data: any) => {
 				if(err || !data) {
 					return;
 				}
 
-				var childrenCommands = this.$injector.getChildrenCommandsNames(data.prev);
+				var splittedLine = data.line.split(/[ ]+/);
+				var line = _.filter(splittedLine, (w) => w !== "");
+				var commandName = <string>(line[line.length - 2]);
 
-				if(data.words == 1) {
+				var childrenCommands = this.$injector.getChildrenCommandsNames(commandName);
+
+				if(data.words === 1) {
 					return tabtab.log(this.allCommands(false), data);
 				}
 
@@ -214,37 +218,20 @@ export class CommandsService implements ICommandsService {
 					return tabtab.log(optionsService.getKnownOptions(), data, "--");
 				}
 
-				if(_.contains(commandsWithPlatformArgument, data.prev)) {
-					return tabtab.log(platforms, data);
+				if(data.words >= 3) { // Hierarchical command
+					commandName = util.format("%s|%s", line[1], line[2]);
 				}
 
-				if(data.words == 2 && childrenCommands) {
-					return tabtab.log(_.reject(childrenCommands, (children: string) => children[0] === '*'), data);
-				}
-
-				var propSchema = getPropSchemaAction ? getPropSchemaAction() : null;
-
-				if(propSchema) {
-					var propertyCommands = ["print", "set", "add", "del"];
-					var parseResult = /prop ([^ ]+) ([^ ]*)/.exec(data.line);
-					if(parseResult) {
-						if(_.contains(propertyCommands, parseResult[1])) {
-							var propName = parseResult[2];
-							if(propSchema[propName]) {
-								var range = propSchema[propName].range;
-								if(range) {
-									if(!_.isArray(range)) {
-										range = _.map(range, (value: { input: string }, key: string) => {
-											return value.input || key;
-										});
-									}
-									return tabtab.log(range, data);
-								}
-							} else {
-								return tabtab.log(Object.keys(propSchema), data);
-							}
-						}
+				var command = this.$injector.resolveCommand(commandName);
+				if(command) {
+					var completionData = command.completionData;
+					if(completionData) {
+						return tabtab.log(completionData, data)
 					}
+				}
+
+				if(data.words === 2 && childrenCommands) {
+					return tabtab.log(_.reject(childrenCommands, (children: string) => children[0] === '*'), data);
 				}
 
 				return false;

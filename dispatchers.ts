@@ -35,8 +35,8 @@ export class CommandDispatcher implements ICommandDispatcher {
 		}).future<void>()();
 	}
 
-	public completeCommand(commandsWithPlatformArgument: string[], platforms: string[], propSchema?: any): IFuture<boolean> {
-		return this.$commandsService.completeCommand(commandsWithPlatformArgument, platforms, propSchema);
+	public completeCommand(): IFuture<boolean> {
+		return this.$commandsService.completeCommand();
 	}
 
 	private getCommandName(): string {
@@ -90,7 +90,7 @@ class FutureDispatcher implements IFutureDispatcher {
 			var commandDispatcher : ICommandDispatcher = $injector.resolve("commandDispatcher");
 
 			if (process.argv[2] === "completion") {
-				commandDispatcher.completeCommand(["add", "remove", "prepare", "build", "deploy", "emulate", "run"], ["android", "ios"]).wait();
+				commandDispatcher.completeCommand().wait();
 			} else {
 				commandDispatcher.dispatchCommand().wait();
 			}
