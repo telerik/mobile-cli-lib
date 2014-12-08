@@ -50,7 +50,7 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		var iosSimPath = require.resolve("ios-sim-portable");
 		var nodeCommandName = process.argv[0];
 
-		if(options.availableDeviceType) {
+		if(options.availableDevices) {
 			this.$childProcess.spawnFromEvent(nodeCommandName, [iosSimPath, "device-types"], "close", { stdio: "inherit" }).wait();
 			return;
 		}
@@ -70,8 +70,8 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 			}
 		}
 
-		if(options.deviceType) {
-			opts = opts.concat("--device", options.deviceType);
+		if(options.device) {
+			opts = opts.concat("--device", options.device);
 		}
 
 		this.$childProcess.spawn(nodeCommandName, opts, { stdio: "inherit"});

@@ -18,8 +18,8 @@ var knownOpts: any = {
 		// with dash and without dash, replacing first symbol after it with its toUpper equivalent
 		"profileDir": String,
 		"timeout": String,
-		"deviceType": String,
-		"availableDeviceTypes": Boolean
+		"device": String,
+		"availableDevices": Boolean
 	},
 	shorthands = {
 		"v": "verbose",
