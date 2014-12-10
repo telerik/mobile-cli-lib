@@ -67,7 +67,12 @@ export class CommandsService implements ICommandsService {
 			if(this.executeCommandAction(commandName, commandArguments, this.canExecuteCommand).wait()) {
 				this.executeCommandAction(commandName, commandArguments, this.executeCommandUnchecked).wait();
 			} else {
-				this.executeCommandUnchecked("help", [this.beautifyCommandName(commandName)]).wait();
+				// If canExecuteCommand returns false, the command cannot be executed or there's no such command at all.
+				var command = this.$injector.resolveCommand(commandName);
+				if(command) {
+					// If command cannot be executed we should print its help.
+					this.executeCommandUnchecked("help", [this.beautifyCommandName(commandName)]).wait();
+				}
 			}
 		}).future<void>()();
 	}
@@ -75,8 +80,9 @@ export class CommandsService implements ICommandsService {
 	private canExecuteCommand(commandName: string, commandArguments: string[]): IFuture<boolean> {
 		return (() => {
 			var command = this.$injector.resolveCommand(commandName);
-			var beautifiedName = helpers.stringReplaceAll(commandName, "|", " ");
 			if(command) {
+				var beautifiedName = helpers.stringReplaceAll(commandName, "|", " ");
+
 				// If command wants to handle canExecute logic on its own.
 				if(command.canExecute) {
 					return command.canExecute(commandArguments).wait();
