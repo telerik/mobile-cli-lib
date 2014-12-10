@@ -289,7 +289,7 @@ export class Yok implements IInjector {
 			var parsed = call.match(this.dynamicCallRegex);
 			var module = this.resolve(parsed[1]);
 			var data = module[parsed[2]].apply(module, args);
-			if(data && data.wait) {
+			if(data && typeof data.wait === "function") {
 				return data.wait();
 			}
 			return data;
