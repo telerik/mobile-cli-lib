@@ -80,9 +80,9 @@ export class CommandsService implements ICommandsService {
 	private canExecuteCommand(commandName: string, commandArguments: string[]): IFuture<boolean> {
 		return (() => {
 			var command = this.$injector.resolveCommand(commandName);
-			if(command) {
-				var beautifiedName = helpers.stringReplaceAll(commandName, "|", " ");
+			var beautifiedName = helpers.stringReplaceAll(commandName, "|", " ");
 
+			if(command) {
 				// If command wants to handle canExecute logic on its own.
 				if(command.canExecute) {
 					return command.canExecute(commandArguments).wait();
