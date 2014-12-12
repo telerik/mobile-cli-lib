@@ -219,10 +219,3 @@ interface ITypeScriptCompilationService {
 	initialize(typeScriptFiles: string[]): void;
 	compileAllFiles(): IFuture<void>;
 }
-
-interface IRemoteProjectService {
-	makeTapServiceCall<T>(call: () => IFuture<T>): IFuture<T>;
-	getProjectProperties(projectName: string): IFuture<any>;
-	getProjects(): IFuture<any>;
-	getProjectName(projectId: string): IFuture<string>;
-}
