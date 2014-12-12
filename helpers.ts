@@ -176,7 +176,7 @@ export function isNullOrWhitespace(input: string): boolean {
 }
 
 export function printInfoMessageOnSameLine(message: string): void {
-	if(options.log === "info") {
+	if(!options.log || options.log === "info") {
 		var logger: ILogger = $injector.resolve("logger");
 		logger.write(message);
 	}
