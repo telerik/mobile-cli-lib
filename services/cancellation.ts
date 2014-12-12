@@ -3,6 +3,7 @@
 
 import watchr = require("watchr");
 import path = require("path");
+import os = require("os");
 var options: any = require("../options");
 import Future = require("fibers/future");
 
@@ -71,7 +72,7 @@ export class CancellationService implements ICancellationService {
 	}
 
 	private static get killSwitchDir(): string {
-		return path.join(options["profile-dir"], "KillSwitches");
+		return path.join(os.tmpDir(), process.env.SUDO_USER || process.env.USER || process.env.USERNAME,  "KillSwitches");
 	}
 
 	private static makeKillSwitchFileName(name: string): string {
