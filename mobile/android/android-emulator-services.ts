@@ -19,7 +19,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private static INI_FILES_MASK = /^(.*)\.ini$/i;
 	private static ENCODING_MASK = /^avd\.ini\.encoding=(.*)$/;
 	private static TIMEOUT_SECONDS = 120;
-	private static UNABLE_TO_START_EMULATOR_MESSAGE = "Cannot run your app in the native emulator. Increase the timeout of the operation with the --timeout option. Alternatively, run the Android Virtual Device manager and increase the allocated RAM for the virtual device.";
+	private static UNABLE_TO_START_EMULATOR_MESSAGE = "Cannot run your app in the native emulator. Increase the timeout of the operation with the --timeout option or try to restart your adb server with 'adb kill-server' command. Alternatively, run the Android Virtual Device manager and increase the allocated RAM for the virtual device.";
 
 	constructor(private $logger: ILogger,
 		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
@@ -73,10 +73,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 					break;
 				}
 
-				this.$logger.trace("Restarting adb server");
 				this.sleep(10000); // the emulator definitely takes its time to wake up
-				this.$childProcess.spawnFromEvent(this.$staticConfig.adbFilePath, ["kill-server"], "exit").wait();
-				this.sleep(1000);
 				runningEmulators = this.getRunningEmulators().wait();
 				hasTimeLeft = helpers.getCurrentEpochTime() < endTimeEpoch;
 			}
