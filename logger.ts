@@ -1,7 +1,9 @@
 ///<reference path="../.d.ts"/>
+"use strict";
 
 import log4js = require("log4js");
 import util = require("util");
+import stream = require("stream");
 import options = require("./options");
 
 export class Logger implements ILogger {
@@ -65,6 +67,20 @@ export class Logger implements ILogger {
 	write(...args: string[]): void {
 		process.stdout.write(util.format.apply(null, args));
 	}
+
+	prepare(item: any): string {
+		if (typeof item === "undefined" || item === null) {
+			return "[nothing]";
+		}
+		if (typeof item  === "string") {
+			return item;
+		}
+		// do not try to read streams, because they may not be rewindable
+		if (item instanceof stream.Readable) {
+			return "[ReadableStream]";
+		}
+
+		return JSON.stringify(item);
+	}
 }
 $injector.register("logger", Logger);
-
