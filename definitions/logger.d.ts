@@ -9,4 +9,6 @@ interface ILogger {
 
 	out(formatStr: any, ...args: string[]): void;
 	write(...args: string[]): void;
+
+	prepare(item: any): string;
 }
