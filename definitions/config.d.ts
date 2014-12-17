@@ -10,6 +10,7 @@ declare module Config {
 		version: string;
 		helpTextPath: string;
 		adbFilePath: string;
+		sevenZipFilePath: string;
 	}
 
 	interface IConfig {

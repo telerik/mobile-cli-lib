@@ -59,14 +59,22 @@ export class FileSystem implements IFileSystem {
 	public unzip(zipFile: string, destinationDir: string): IFuture<void> {
 		return (() => {
 			if (hostInfo.isDarwin()) {
-				var $childProcess = $injector.resolve("$childProcess");
-
 				this.createDirectory(destinationDir).wait();
+
+				var $childProcess = $injector.resolve("$childProcess");
 				var unzipProc = $childProcess.spawn('unzip', ['-u', '-o', zipFile, '-d', destinationDir],
 					{ stdio: "ignore", detached: true });
 				this.futureFromEvent(unzipProc, "close").wait();
+			} else if (hostInfo.isWindows()) {
+				this.createDirectory(destinationDir).wait();
+
+				var $childProcess = $injector.resolve("$childProcess");
+				var sevenZip = (<IStaticConfig>$injector.resolve("$staticConfig")).sevenZipFilePath;
+				var unzipProc = $childProcess.spawn(sevenZip, ['x', '-y', '-o' + destinationDir, zipFile,],
+					{ stdio: "ignore", detached: true });
+				this.futureFromEvent(unzipProc, "close").wait();
 			}
-			else {
+			else if (hostInfo.isLinux()) {
 				this.futureFromEvent(
 					this.createReadStream(zipFile)
 						.pipe(unzip.Extract({ path: destinationDir })), "close").wait();

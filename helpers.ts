@@ -56,7 +56,7 @@ export function enumerateFilesInDirectorySync(directoryPath: string, filterCallb
 	return result;
 }
 
-export function getParsedOptions(options: any, shorthands: any) {
+export function getParsedOptions(options: any, shorthands: any, clientName: string) {
 	var yargs: any = require("yargs");
 	Object.keys(options).forEach((opt) => {
 		var type = options[opt];
@@ -81,12 +81,13 @@ export function getParsedOptions(options: any, shorthands: any) {
 		}
 	});
 
-	validateYargsArguments(parsed, options, shorthands);
+	validateYargsArguments(parsed, options, shorthands, clientName);
 	return parsed;
 }
 
-export function validateYargsArguments(parsed: any, knownOpts: any, shorthands: any, isInTestMode?: boolean): void {
-	if (path.basename(process.argv[1]) === "appbuilder.js" || isInTestMode) {
+export function validateYargsArguments(parsed: any, knownOpts: any, shorthands: any, clientName?: string): void {
+
+	if(path.basename(process.argv[1]).indexOf(clientName) !== -1) {
 		_.each(_.keys(parsed), (opt) => {
 			var option = shorthands[opt] ? shorthands[opt] : opt;
 
@@ -175,7 +176,7 @@ export function isNullOrWhitespace(input: string): boolean {
 }
 
 export function printInfoMessageOnSameLine(message: string): void {
-	if(options.log === "info") {
+	if(!options.log || options.log === "info") {
 		var logger: ILogger = $injector.resolve("logger");
 		logger.write(message);
 	}

@@ -1,4 +1,5 @@
 ///<reference path="../.d.ts"/>
+"use strict";
 
 import Future = require("fibers/future");
 import child_process = require("child_process");
@@ -36,7 +37,7 @@ export class ChildProcess implements IChildProcess {
 		return future;
 	}
 
-	public spawn(command: string, args?: string[], options?: any): any {
+	public spawn(command: string, args?: string[], options?: any): child_process.ChildProcess {
 		this.$logger.debug("spawn: %s %s", command, args.join(" "));
 		return child_process.spawn(command, args, options);
 	}
