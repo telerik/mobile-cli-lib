@@ -45,7 +45,10 @@ export class Logger implements ILogger {
 	}
 
 	warn(...args: string[]): void {
-		this.log4jsLogger.warn.apply(this.log4jsLogger, args);
+		var message = util.format.apply(null, args);
+		var colorizedMessage = message.yellow;
+
+		this.log4jsLogger.warn.apply(this.log4jsLogger, [colorizedMessage]);
 	}
 
 	info(...args: string[]): void {

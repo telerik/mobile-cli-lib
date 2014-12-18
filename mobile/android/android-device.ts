@@ -42,8 +42,8 @@ export class AndroidDevice implements Mobile.IDevice {
 	private static LIVESYNC_BROADCAST_NAME = "com.telerik.LiveSync";
 	private static CHECK_LIVESYNC_INTENT_NAME = "com.telerik.IsLiveSyncSupported"
 
-	private static DEVICE_TMP_DIR = "/data/local/tmp";
-	private static SYNC_ROOT = "12590FAA-5EDD-4B12-856D-F52A0A1599F2";
+	private static DEVICE_TMP_DIR_FORMAT_V2 = "/data/local/tmp/12590FAA-5EDD-4B12-856D-F52A0A1599F2/%s";
+	private static DEVICE_TMP_DIR_FORMAT_V3 = "/mnt/sdcard/Android/data/%s/files/12590FAA-5EDD-4B12-856D-F52A0A1599F2";
 	private static COMMANDS_FILE = "telerik.livesync.commands";
 	private static DEVICE_PATH_SEPARATOR = "/";
 
@@ -51,7 +51,6 @@ export class AndroidDevice implements Mobile.IDevice {
 	private name: string;
 	private version: string;
 	private vendor: string;
-	private tmpRoot: string;
 	private _tmpRoots: IStringDictionary = {};
 	private _installedApplications: string[];
 
@@ -66,7 +65,6 @@ export class AndroidDevice implements Mobile.IDevice {
 		this.name = details.name;
 		this.version = details.release;
 		this.vendor = details.brand;
-		this.tmpRoot = this.buildDevicePath(AndroidDevice.DEVICE_TMP_DIR, AndroidDevice.SYNC_ROOT);
 	}
 
 	private getDeviceDetails(): IFuture<IAndroidDeviceDetails> {
@@ -144,9 +142,15 @@ export class AndroidDevice implements Mobile.IDevice {
 		}).future<number>()();
 	}
 
-	private getLiveSyncRoot(appIdentifier: Mobile.IAppIdentifier): string {
+	private getLiveSyncRoot(appIdentifier: Mobile.IAppIdentifier, liveSyncVersion: number): string {
 		if(!this._tmpRoots[appIdentifier.appIdentifier]) {
-			this._tmpRoots[appIdentifier.appIdentifier] = this.buildDevicePath(this.tmpRoot, appIdentifier.appIdentifier);
+			if (liveSyncVersion === 2) {
+				this._tmpRoots[appIdentifier.appIdentifier] = util.format(AndroidDevice.DEVICE_TMP_DIR_FORMAT_V2, appIdentifier.appIdentifier);
+			} else if (liveSyncVersion === 3) {
+				this._tmpRoots[appIdentifier.appIdentifier] = util.format(AndroidDevice.DEVICE_TMP_DIR_FORMAT_V3, appIdentifier.appIdentifier);
+			} else {
+				this.$errors.fail("Unsupported LiveSync version: %d", liveSyncVersion);
+			}
 		}
 
 		return this._tmpRoots[appIdentifier.appIdentifier];
@@ -227,8 +231,9 @@ export class AndroidDevice implements Mobile.IDevice {
 	public sync(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, projectType: number, syncOptions: Mobile.ISyncOptions = {}): IFuture<void> {
 		return (() => {
 			if (appIdentifier.isLiveSyncSupported(this).wait()) {
-				if(this.isLiveSyncVersion2(appIdentifier).wait()) {
-					this.syncNewProtocol(localToDevicePaths, appIdentifier, projectType, syncOptions).wait();
+				var liveSyncVersion = this.getLiveSyncVersion(appIdentifier).wait();
+				if(liveSyncVersion >= 2) {
+					this.syncNewProtocol(localToDevicePaths, appIdentifier, projectType, liveSyncVersion, syncOptions).wait();
 				} else {
 					this.syncOldProtocol(localToDevicePaths, appIdentifier, projectType, syncOptions).wait();
 				}
@@ -239,14 +244,14 @@ export class AndroidDevice implements Mobile.IDevice {
 		}).future<void>()();
 	}
 
-	private isLiveSyncVersion2(appIdentifier: Mobile.IAppIdentifier): IFuture<boolean> {
+	private getLiveSyncVersion(appIdentifier: Mobile.IAppIdentifier): IFuture<number> {
 		return (() => {
 			var result = this.sendBroadcastToDevice(AndroidDevice.CHECK_LIVESYNC_INTENT_NAME, {"app-id": appIdentifier.appIdentifier}).wait();
-			return result >= 2;
-		}).future<boolean>()();
+			return result;
+		}).future<number>()();
 	}
 
-	private createLiveSyncCommandsFileOnDevice(appIdentifier: Mobile.IAppIdentifier, commands: string[]): IFuture<void> {
+	private createLiveSyncCommandsFileOnDevice(liveSyncRoot: string, commands: string[]): IFuture<void> {
 		return (() => {
 			var hostTmpDir = this.getTempDir();
 			var commandsFileHostPath = path.join(hostTmpDir, AndroidDevice.COMMANDS_FILE);
@@ -261,7 +266,7 @@ export class AndroidDevice implements Mobile.IDevice {
 			fileWritten.wait();
 
 			// copy it to the device
-			var commandsFileDevicePath = this.buildDevicePath(this.getLiveSyncRoot(appIdentifier), AndroidDevice.COMMANDS_FILE);
+			var commandsFileDevicePath = this.buildDevicePath(liveSyncRoot, AndroidDevice.COMMANDS_FILE);
 			this.pushFileOnDeviceCore(commandsFileHostPath, commandsFileDevicePath).wait();
 			this.ensureFullAccessPermissions(commandsFileDevicePath).wait();
 		}).future<void>()();
@@ -288,28 +293,30 @@ export class AndroidDevice implements Mobile.IDevice {
 		}).future<void>()();
 	}
 
-	private syncNewProtocol(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, projectType: number, syncOptions: Mobile.ISyncOptions = {}): IFuture<void> {
+	private syncNewProtocol(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, projectType: number, liveSyncVersion: number, syncOptions: Mobile.ISyncOptions = {}): IFuture<void> {
 		return (() => {
-			var liveSyncRoot = this.getLiveSyncRoot(appIdentifier);
+			var liveSyncRoot = this.getLiveSyncRoot(appIdentifier, liveSyncVersion);
 			var dirs:IStringDictionary = Object.create(null);
 
 			_.each(localToDevicePaths, (localToDevicePathData: Mobile.ILocalToDevicePathData) => {
 				var relativeToProjectBasePath = helpers.fromWindowsRelativePathToUnix(localToDevicePathData.getRelativeToProjectBasePath());
 				var devicePath = this.buildDevicePath(liveSyncRoot, relativeToProjectBasePath);
-				var parts = relativeToProjectBasePath.split(AndroidDevice.DEVICE_PATH_SEPARATOR);
-				var currentPath = "";
 
 				this.pushFileOnDevice(localToDevicePathData.getLocalPath(), devicePath).wait();
 
-				_.each(parts, p => {
-					if(p !== "") {
-						currentPath = this.buildDevicePath(currentPath, p);
-						if(!dirs[currentPath]) {
-							dirs[currentPath] = currentPath;
-							this.ensureFullAccessPermissions(this.buildDevicePath(liveSyncRoot, currentPath)).wait();
+				if (liveSyncVersion === 2) {
+					var parts = relativeToProjectBasePath.split(AndroidDevice.DEVICE_PATH_SEPARATOR);				
+					var currentPath = "";
+					_.each(parts, p => {
+						if(p !== "") {
+							currentPath = this.buildDevicePath(currentPath, p);
+							if(!dirs[currentPath]) {
+								dirs[currentPath] = currentPath;
+								this.ensureFullAccessPermissions(this.buildDevicePath(liveSyncRoot, currentPath)).wait();
+							}
 						}
-					}
-				});
+					});
+				}
 			});
 
 			this.ensureFullAccessPermissions(liveSyncRoot).wait();
@@ -328,7 +335,7 @@ export class AndroidDevice implements Mobile.IDevice {
 						LiveSyncCommands.ReloadStartViewCommand()
 					];
 				}
-				this.createLiveSyncCommandsFileOnDevice(appIdentifier, commands).wait();
+				this.createLiveSyncCommandsFileOnDevice(liveSyncRoot, commands).wait();
 				this.sendBroadcastToDevice(AndroidDevice.LIVESYNC_BROADCAST_NAME, { "app-id": appIdentifier.appIdentifier }).wait();
 			}
 		}).future<void>()();
