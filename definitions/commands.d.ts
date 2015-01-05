@@ -8,6 +8,7 @@ interface ICommand extends ICommandOptions {
 	// but at least one of them is required. Used in prop|add, prop|set, etc. commands as their logic is complicated and 
 	// default validation in CommandsService is not applicable.
 	canExecute?(args: string[]): IFuture<boolean>;
+	completionData?: string[];
 }
 
 interface ISimilarCommand {
