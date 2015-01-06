@@ -1,6 +1,6 @@
 require("./extensions");
 
-global._ = require("underscore");
+global._ = require("lodash");
 global.$injector = require("./yok").injector;
 
 require("colors");
