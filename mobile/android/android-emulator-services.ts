@@ -21,6 +21,8 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private static TIMEOUT_SECONDS = 120;
 	private static UNABLE_TO_START_EMULATOR_MESSAGE = "Cannot run your app in the native emulator. Increase the timeout of the operation with the --timeout option or try to restart your adb server with 'adb kill-server' command. Alternatively, run the Android Virtual Device manager and increase the allocated RAM for the virtual device.";
 
+	private endTimeEpoch: number;
+
 	constructor(private $logger: ILogger,
 		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
 		private $errors: IErrors,
@@ -54,46 +56,10 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private startEmulatorCore(app: string, appId: string, image: string): IFuture<void> {
 		return (() => {
 			// start the emulator, if needed
-			var initiallyRunningEmulators = this.getRunningEmulators().wait();
-
-			// If there's no running emulators or the user had specified an image (--avd) we have to start new emulator.
-			if(initiallyRunningEmulators.length === 0 || options.avd) {
-				this.$logger.info("Starting Android emulator with image %s", image);
-				this.$childProcess.spawn('emulator', ['-avd', image],
-					{ stdio: ["ignore", "ignore", "ignore"], detached: true }).unref();
-			}
-
-			var runningEmulators = this.getRunningEmulators().wait();
-			var endTimeEpoch = helpers.getCurrentEpochTime() + this.getMilliSecondsTimeout();
-			var hasTimeLeft = helpers.getCurrentEpochTime() < endTimeEpoch;
-
-			// often the running adb server does not recognise that the emulator is up and never reports new device. Patch through this obstacle
-			while(hasTimeLeft) {
-				if(runningEmulators.length > initiallyRunningEmulators.length || (runningEmulators.length > 0 && !options.avd)) {
-					break;
-				}
-
-				this.sleep(10000); // the emulator definitely takes its time to wake up
-				runningEmulators = this.getRunningEmulators().wait();
-				hasTimeLeft = helpers.getCurrentEpochTime() < endTimeEpoch;
-			}
-
-			if(!hasTimeLeft) {
-				this.$errors.fail(AndroidEmulatorServices.UNABLE_TO_START_EMULATOR_MESSAGE);
-			}
-
-			var emulatorId = _.first(runningEmulators);
-			if(options.avd) {
-				// get the id of the started emulator
-				_.forEach(runningEmulators, (emulator) => {
-					if(!_.contains(initiallyRunningEmulators, emulator)) {
-						emulatorId = emulator;
-					}
-				});
-			}
+			var emulatorId = this.startEmulatorInstance(image).wait();
 
 			// waits for the boot animation property of the emulator to switch to 'stopped'
-			this.waitForEmulatorBootToComplete(emulatorId, endTimeEpoch).wait();
+			this.waitForEmulatorBootToComplete(emulatorId).wait();
 
 			// unlock screen
 			var childProcess = this.$childProcess.spawn(this.$staticConfig.adbFilePath, ["-s", emulatorId, "shell", "input", "keyevent", "82"]);
@@ -123,14 +89,58 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 		if(options && options.timeout) {
 			var parsedValue = parseInt(options.timeout);
-			if(!isNaN(parsedValue) && parsedValue > 0) {
+			if(!isNaN(parsedValue) && parsedValue >= 0) {
 				timeout = parsedValue;
 			} else {
-				this.$logger.info("timeout should be number bigger than 0. Default value: " + timeout + " seconds will be used.");
+				this.$logger.info("Specify timeout in a number of seconds to wait. Set it to 0 to wait indefinitely. Default value: " + timeout + " seconds will be used.");
 			}
 		}
 
 		return timeout * 1000;
+	}
+
+	private startEmulatorInstance(image: string): IFuture<string> {
+		return (() => {
+			var initiallyRunningEmulators = this.getRunningEmulators().wait();
+
+			// If there's no running emulators or the user had specified an image (--avd) we have to start new emulator.
+			if(initiallyRunningEmulators.length === 0 || options.avd) {
+				this.$logger.info("Starting Android emulator with image %s", image);
+				this.$childProcess.spawn('emulator', ['-avd', image],
+					{ stdio: "ignore", detached: true }).unref();
+			}
+
+			var runningEmulators = this.getRunningEmulators().wait();
+			var isInfiniteWait = this.getMilliSecondsTimeout() === 0;
+			this.endTimeEpoch = helpers.getCurrentEpochTime() + this.getMilliSecondsTimeout();
+			var hasTimeLeft = helpers.getCurrentEpochTime() < this.endTimeEpoch;
+
+			while(hasTimeLeft || isInfiniteWait) {
+				if(runningEmulators.length > initiallyRunningEmulators.length || (runningEmulators.length > 0 && !options.avd)) {
+					break;
+				}
+
+				this.sleep(10000); // the emulator definitely takes its time to wake up
+				runningEmulators = this.getRunningEmulators().wait();
+				hasTimeLeft = helpers.getCurrentEpochTime() < this.endTimeEpoch;
+			}
+
+			if(!hasTimeLeft && !isInfiniteWait) {
+				this.$errors.fail(AndroidEmulatorServices.UNABLE_TO_START_EMULATOR_MESSAGE);
+			}
+
+			var emulatorId = _.first(runningEmulators);
+			if(options.avd) {
+				// get the id of the started emulator
+				_.forEach(runningEmulators, (emulator) => {
+					if(!_.contains(initiallyRunningEmulators, emulator)) {
+						emulatorId = emulator;
+					}
+				});
+			}
+
+			return emulatorId;
+		}).future<string>()();
 	}
 
 	private getRunningEmulators(): IFuture<string[]> {
@@ -252,11 +262,12 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		}).future<string[]>()();
 	}
 
-	private waitForEmulatorBootToComplete(emulatorId: string, endTime: number): IFuture<void> {
+	private waitForEmulatorBootToComplete(emulatorId: string): IFuture<void> {
 		return (() => {
 			helpers.printInfoMessageOnSameLine("Waiting for emulator device initialization...");
 
-			while(helpers.getCurrentEpochTime() < endTime) {
+			var isInfiniteWait = this.getMilliSecondsTimeout() === 0;
+			while(helpers.getCurrentEpochTime() < this.endTimeEpoch || isInfiniteWait) {
 				var isEmulatorBootCompleted = this.isEmulatorBootCompleted(emulatorId).wait();
 
 				if(isEmulatorBootCompleted) {
