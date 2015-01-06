@@ -214,9 +214,8 @@ var factoryRules:IDictionary<any> = {
 	}
 };
 
-export function createAppIdentifier(platform: string, appIdentifier: string, companion: boolean, projectType: number): Mobile.IAppIdentifier {
-	var projectTypes = require("../../project-types");
-	var projectTypeString = projectTypes[projectType];
-	var ctor = factoryRules[platform][projectTypeString][companion ? "companion" : "vanilla"];
+export function createAppIdentifier(platform: string, appIdentifier: string, companion: boolean): Mobile.IAppIdentifier {
+	var project = $injector.resolve("project");
+	var ctor = factoryRules[platform][project.projectData.Framework][companion ? "companion" : "vanilla"];
 	return new ctor(appIdentifier);
 }
