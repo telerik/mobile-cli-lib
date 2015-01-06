@@ -3,7 +3,7 @@
 import fs = require("fs");
 import path = require("path");
 import util = require("util");
-import _ = require("underscore"); 
+import _ = require("lodash");
 var uuid = require("node-uuid");
 var options = require("./options");
 

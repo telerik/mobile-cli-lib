@@ -161,7 +161,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		return (() => {
 			var minVersion = this.$emulatorSettingsService.minVersion;
 
-			var best =_.chain(this.getAvds().wait())
+			var best =_(this.getAvds().wait())
 				.map(avd => this.getInfoFromAvd(avd).wait())
 				.max(avd => avd.targetNum)
 				.value();
