@@ -62,13 +62,15 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 			this.waitForEmulatorBootToComplete(emulatorId).wait();
 
 			// unlock screen
-			var childProcess = this.$childProcess.spawn(this.$staticConfig.adbFilePath, ["-s", emulatorId, "shell", "input", "keyevent", "82"]);
-			this.$fs.futureFromEvent(childProcess, "close").wait();
+			this.unlockScreen(emulatorId).wait();
 
 			// install the app
 			this.$logger.info("installing %s through adb", app);
-			childProcess = this.$childProcess.spawn(this.$staticConfig.adbFilePath, ["-s", emulatorId, 'install', '-r', app]);
+			var childProcess = this.$childProcess.spawn(this.$staticConfig.adbFilePath, ["-s", emulatorId, 'install', '-r', app]);
 			this.$fs.futureFromEvent(childProcess, "close").wait();
+
+			// unlock screen again in cases when the installation is slow
+			this.unlockScreen(emulatorId).wait();
 
 			// run the installed app
 			this.$logger.info("running %s through adb", app);
@@ -76,6 +78,11 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 				{ stdio: ["ignore", "ignore", "ignore"], detached: true });
 			this.$fs.futureFromEvent(childProcess, "close").wait();
 		}).future<void>()();
+	}
+
+	private unlockScreen(emulatorId: string): IFuture<void> {
+		var childProcess = this.$childProcess.spawn(this.$staticConfig.adbFilePath, ["-s", emulatorId, "shell", "input", "keyevent", "82"]);
+		return this.$fs.futureFromEvent(childProcess, "close");
 	}
 
 	private sleep(ms: number): void {
