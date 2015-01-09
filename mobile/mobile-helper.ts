@@ -25,7 +25,7 @@ export var platformCapabilities: {[key: string]: Mobile.IPlatformCapabilities } 
 	WP8: {
 		wirelessDeploy: true,
 		cableDeploy: false,
-		companion: false,
+		companion: true,
 		hostPlatformsForDeploy: ["win32"]
 	}
 };
