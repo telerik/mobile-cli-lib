@@ -166,6 +166,7 @@ declare module Mobile {
 	}
 
 	interface IEmulatorPlatformServices {
+		checkDependencies(): IFuture<void>;
 		checkAvailability(dependsOnProject?: boolean): IFuture<void>;
 		startEmulator(app: string, emulatorOptions?: IEmulatorOptions) : IFuture<void>;
 	}

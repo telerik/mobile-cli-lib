@@ -9,7 +9,7 @@ import osenv = require("osenv");
 import path = require("path");
 import util = require("util");
 import hostInfo = require("../../../common/host-info");
-import MobileHelper = require("./../mobile-helper");
+import MobileHelper = require("../mobile-helper");
 import options = require("../../options");
 import helpers = require("../../helpers");
 
@@ -30,6 +30,20 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		private $fs: IFileSystem,
 		private $staticConfig: IStaticConfig) {
 		iconv.extendNodeEncodings();
+	}
+
+	public checkDependencies(): IFuture<void> {
+		var future = new Future<void>();
+		var proc = this.$childProcess.spawn('emulator', ['-help']);
+		proc.on("error", (args:any) => {
+			this.$errors.fail("The Android SDK is not configured properly. " +
+				"Verify that you have installed the Android SDK and that you have added its `platform-tools` and `tools` directories to your PATH environment variable.");
+		});
+		proc.on("exit", (code:number) => {
+			future.return();
+		});
+
+		return future;
 	}
 
 	public checkAvailability(): IFuture<void> {
@@ -75,7 +89,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 			// run the installed app
 			this.$logger.info("running %s through adb", app);
 			childProcess = this.$childProcess.spawn(this.$staticConfig.adbFilePath, ["-s", emulatorId, 'shell', 'am', 'start', '-S', appId + "/" + this.$staticConfig.START_PACKAGE_ACTIVITY_NAME],
-				{ stdio: ["ignore", "ignore", "ignore"], detached: true });
+				{ stdio: "ignore", detached: true });
 			this.$fs.futureFromEvent(childProcess, "close").wait();
 		}).future<void>()();
 	}

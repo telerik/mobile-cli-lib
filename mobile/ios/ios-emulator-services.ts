@@ -13,6 +13,11 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		private $errors: IErrors,
 		private $childProcess: IChildProcess) { }
 
+	public checkDependencies(): IFuture<void> {
+		return (() => {
+		}).future<void>()();
+	}
+
 	checkAvailability(dependsOnProject: boolean = true): IFuture<void> {
 		return (() => {
 			if(!hostInfo.isDarwin()) {

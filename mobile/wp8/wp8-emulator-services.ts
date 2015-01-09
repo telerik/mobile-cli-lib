@@ -11,6 +11,11 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 		private $errors: IErrors,
 		private $childProcess: IChildProcess) {}
 
+	public checkDependencies(): IFuture<void> {
+		return (() => {
+		}).future<void>()();
+	}
+
 	checkAvailability(): IFuture<void> {
 		return (() => {
 			if (!hostInfo.isWindows()) {
