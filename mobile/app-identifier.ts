@@ -193,6 +193,32 @@ export class IOSNativeScriptCompanionAppIdentifier implements Mobile.IAppIdentif
 
 }
 
+export class WP8CompanionAppIdentifier implements Mobile.IAppIdentifier {
+	get appIdentifier(): string {
+		return "{9155af5b-e7ed-486d-bc6b-35087fb59ecc}";
+	}
+
+	get deviceProjectPath(): string {
+		return ""; // this is used only on Android for Lollipop
+	}
+
+	get liveSyncFormat(): string {
+		return "%s/Mist/MobilePackage/redirect?token=%s";
+	}
+
+	encodeLiveSyncHostUri(hostUri: string): string {
+		return hostUri;
+	}
+
+	isLiveSyncSupported(device: any): IFuture<boolean> {
+		return Future.fromResult(true);
+	}
+
+	getLiveSyncNotSupportedError(device: any): string {
+		return "";
+	}
+}
+
 var factoryRules:IDictionary<any> = {
 	iOS: {
 		Cordova: {
@@ -210,6 +236,11 @@ var factoryRules:IDictionary<any> = {
 		},
 		NativeScript: {
 			companion: AndroidNativeScriptCompanionAppIdentifier
+		}
+	},
+	WP8: {
+		Cordova: {
+			companion: WP8CompanionAppIdentifier
 		}
 	}
 };
