@@ -20,7 +20,8 @@ var knownOpts: any = {
 		"timeout": String,
 		"device": String,
 		"availableDevices": Boolean,
-		"appid": String
+		"appid": String,
+		"geny": String
 	},
 	shorthands = {
 		"v": "verbose",

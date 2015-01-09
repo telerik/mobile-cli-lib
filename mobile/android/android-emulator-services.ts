@@ -12,6 +12,11 @@ import hostInfo = require("../../../common/host-info");
 import MobileHelper = require("../mobile-helper");
 import options = require("../../options");
 import helpers = require("../../helpers");
+var net = require('net');
+
+class VirtualMachine {
+	constructor(public name: string, public identifier: string) { }
+}
 
 class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private static ANDROID_DIR_NAME = ".android";
@@ -20,6 +25,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private static ENCODING_MASK = /^avd\.ini\.encoding=(.*)$/;
 	private static TIMEOUT_SECONDS = 120;
 	private static UNABLE_TO_START_EMULATOR_MESSAGE = "Cannot run your app in the native emulator. Increase the timeout of the operation with the --timeout option or try to restart your adb server with 'adb kill-server' command. Alternatively, run the Android Virtual Device manager and increase the allocated RAM for the virtual device.";
+	private static RUNNING_ANDROID_EMULATOR_REGEX = /^(emulator-\d+)\s+device$/;
 
 	private endTimeEpoch: number;
 
@@ -33,17 +39,40 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	}
 
 	public checkDependencies(): IFuture<void> {
-		var future = new Future<void>();
-		var proc = this.$childProcess.spawn('emulator', ['-help']);
-		proc.on("error", (args:any) => {
-			this.$errors.fail("The Android SDK is not configured properly. " +
-				"Verify that you have installed the Android SDK and that you have added its `platform-tools` and `tools` directories to your PATH environment variable.");
-		});
-		proc.on("exit", (code:number) => {
-			future.return();
-		});
+		return (() => {
+			this.checkAndroidSDKConfiguration().wait();
+			if(options.geny) {
+				this.checkGenymotionConfiguration().wait();
+			}
+		}).future<void>()();
+	}
 
-		return future;
+	private checkAndroidSDKConfiguration(): IFuture<void> {
+		return (() => {
+			var proc = this.$childProcess.spawnFromEvent('emulator', ['-help'], "exit", undefined, { throwError: false }).wait();
+
+			if(proc.stderr) {
+				this.$errors.fail({
+					formatStr: "The Android SDK is not configured properly. " +
+					"Verify that you have installed the Android SDK and that you have added its `platform-tools` and `tools` directories to your PATH environment variable.",
+					suppressCommandHelp: true
+				});
+			}
+		}).future<void>()();
+	}
+
+	private checkGenymotionConfiguration(): IFuture<void> {
+		return (() => {
+			var proc = this.$childProcess.spawnFromEvent("genyshell", ["-h"], "exit", undefined, { throwError: false }).wait();
+
+			if(proc.stderr) {
+				this.$errors.fail({
+					formatStr: "Genymotion is not configured properly. " +
+					"Verify that you have installed Genymotion and that you have added its installation directory to your PATH environment variable.",
+					suppressCommandHelp: true
+				});
+			}
+		}).future<void>()();
 	}
 
 	public checkAvailability(): IFuture<void> {
@@ -57,7 +86,11 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	public startEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): IFuture<void> {
 		return (() => {
-			var image = options.avd || this.getBestFit().wait();
+			if(options.avd && options.geny) {
+				this.$errors.fail("You cannot specify both --avd and --geny options. Please use only one of them.");
+			}
+
+			var image = options.avd || options.geny || this.getBestFit().wait();
 
 			if(image) {
 				this.startEmulatorCore(app, emulatorOptions.appId, image).wait();
@@ -120,29 +153,105 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		return timeout * 1000;
 	}
 
+
+	private getRunningEmulatorId(image: string): IFuture<string> {
+		return ((): string => {
+			var runningEmulators = this.getRunningEmulators().wait();
+			if(runningEmulators.length === 0) {
+				return "";
+			}
+
+			// if we get here, there's at least one running emulator
+			var getNameFunction = options.geny ? this.getNameFromGenymotionEmulatorId : this.getNameFromSDKEmulatorId;
+			var emulatorId = _(runningEmulators).find(emulator => getNameFunction.apply(this, [emulator]).wait() === image);
+
+			return emulatorId;
+		}).future<string>()();
+	}
+
+	private getNameFromGenymotionEmulatorId(emulatorId: string): IFuture<string> {
+		return (() => {
+			var modelOutputLines: string = this.$childProcess.execFile(this.$staticConfig.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.model"]).wait();
+			this.$logger.trace(modelOutputLines);
+			var model = (<string>_.first(modelOutputLines.split(os.EOL))).trim();
+			return model;
+		}).future<string>()();
+	}
+
+	private getNameFromSDKEmulatorId(emulatorId: string): IFuture<string> {
+		var match = emulatorId.match(/^emulator-(\d+)/);
+		var portNumber: string;
+		if(match && match[1]) {
+			portNumber = match[1];
+		} else {
+			return Future.fromResult("");
+		}
+
+		var future = new Future<string>();
+		var output: string = "";
+		var client = net.connect({ port: portNumber }, () => { 
+			client.write(util.format("avd name%s", os.EOL));
+		});
+
+		client.on('data', (data: any) => {
+			output += data.toString();
+			client.end();
+		});
+		client.on('end', () => {
+			//output should look like:
+			//Android Console: type 'help' for a list of commands
+			//OK
+			//<Name of image>
+			//OK
+			//
+			var name: string;
+			var foundOK = false;
+			var lines: string[] = output.split(os.EOL);
+			// find line between OK
+			_(lines).each((line: string) => {
+				if(foundOK) {
+					name = line.trim();
+					return false;
+				} else if(line.match(/^OK/)) {
+					foundOK = true;
+				}
+			});
+
+			future.return(name);
+		});
+		return future;
+	}
+
 	private startEmulatorInstance(image: string): IFuture<string> {
 		return (() => {
-			var initiallyRunningEmulators = this.getRunningEmulators().wait();
+			var emulatorId = this.getRunningEmulatorId(image).wait();
+			this.endTimeEpoch = helpers.getCurrentEpochTime() + this.getMilliSecondsTimeout();
+			if(emulatorId) {
+				// If there's already a running instance of this image, we'll just deploy the app to it.
+				return emulatorId;
+			}
 
-			// If there's no running emulators or the user had specified an image (--avd) we have to start new emulator.
-			if(initiallyRunningEmulators.length === 0 || options.avd) {
-				this.$logger.info("Starting Android emulator with image %s", image);
+			// have to start new emulator
+			this.$logger.info("Starting Android emulator with image %s", image);
+			if(options.geny) {
+				//player is part of Genymotion, it should be part of the PATH.
+				this.$childProcess.spawn("player", ["--vm-name", image],
+					{ stdio: "ignore", detached: true }).unref();
+			} else {
 				this.$childProcess.spawn('emulator', ['-avd', image],
 					{ stdio: "ignore", detached: true }).unref();
 			}
-
-			var runningEmulators = this.getRunningEmulators().wait();
+			
 			var isInfiniteWait = this.getMilliSecondsTimeout() === 0;
-			this.endTimeEpoch = helpers.getCurrentEpochTime() + this.getMilliSecondsTimeout();
 			var hasTimeLeft = helpers.getCurrentEpochTime() < this.endTimeEpoch;
 
 			while(hasTimeLeft || isInfiniteWait) {
-				if(runningEmulators.length > initiallyRunningEmulators.length || (runningEmulators.length > 0 && !options.avd)) {
-					break;
+				emulatorId = this.getRunningEmulatorId(image).wait();
+				if(emulatorId) {
+					return emulatorId;
 				}
 
 				this.sleep(10000); // the emulator definitely takes its time to wake up
-				runningEmulators = this.getRunningEmulators().wait();
 				hasTimeLeft = helpers.getCurrentEpochTime() < this.endTimeEpoch;
 			}
 
@@ -150,30 +259,58 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 				this.$errors.fail(AndroidEmulatorServices.UNABLE_TO_START_EMULATOR_MESSAGE);
 			}
 
-			var emulatorId = _.first(runningEmulators);
-			if(options.avd) {
-				// get the id of the started emulator
-				_.forEach(runningEmulators, (emulator) => {
-					if(!_.contains(initiallyRunningEmulators, emulator)) {
-						emulatorId = emulator;
+			return emulatorId;
+		}).future<string>()();
+	}
+
+	private getRunningGenymotionEmulators(adbDevicesOutput: string[]): IFuture<string[]> {
+		return ((): string[]=> {
+			var futures = _(adbDevicesOutput).filter(r => !r.match(AndroidEmulatorServices.RUNNING_ANDROID_EMULATOR_REGEX))
+				.map(row => {
+					var match = row.match(/^(.+?)\s+device$/);
+					if(match && match[1]) {
+						// possible genymotion emulator 
+						var emulatorId = match[1];
+						return this.checkForGenymotionProductManufacturer(emulatorId);
 					}
-				});
+
+					return Future.fromResult(undefined);
+				}).value();
+
+			Future.wait(futures);
+
+			return _(futures).filter(future => !!future.get())
+				.map(f => f.get().toString())
+				.value();
+		}).future<string[]>()();
+	}
+
+	private checkForGenymotionProductManufacturer(emulatorId: string): IFuture<string> {
+		return ((): string => {
+			var manufacturer = this.$childProcess.execFile(this.$staticConfig.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.manufacturer"]).wait();
+			if(manufacturer.match(/^Genymotion/i)) {
+				return emulatorId;
 			}
 
-			return emulatorId;
+			return undefined;
 		}).future<string>()();
 	}
 
 	private getRunningEmulators(): IFuture<string[]> {
 		return (() => {
 			var emulatorDevices: string[] = [];
-			var outputRaw = this.$childProcess.execFile(this.$staticConfig.adbFilePath, ['devices']).wait().split(os.EOL);
-			_.each(outputRaw, (device: string) => {
-				var rx = device.match(/^(emulator-\d+)\s+device$/);
-				if (rx && rx[1]) {
-					emulatorDevices.push(rx[1]);
-				}
-			});
+			var outputRaw:string[] = this.$childProcess.execFile(this.$staticConfig.adbFilePath, ['devices']).wait().split(os.EOL);
+			if(options.geny) {
+				emulatorDevices = this.getRunningGenymotionEmulators(outputRaw).wait();
+			} else {
+				_.each(outputRaw, (device: string) => {
+					var rx = device.match(AndroidEmulatorServices.RUNNING_ANDROID_EMULATOR_REGEX);
+
+					if(rx && rx[1]) {
+						emulatorDevices.push(rx[1]);
+					}
+				});
+			}
 			return emulatorDevices;
 		}).future<string[]>()();
 	}
