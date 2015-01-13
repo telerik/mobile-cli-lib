@@ -17,6 +17,8 @@ class MobileServices {
 	public static HOUSE_ARREST: string = "com.apple.mobile.house_arrest";
 	public static NOTIFICATION_PROXY: string = "com.apple.mobile.notification_proxy";
 	public static SYSLOG: string = "com.apple.syslog_relay";
+	public static MOBILE_IMAGE_MOUNTER: string = "com.apple.mobile.mobile_image_mounter";
+	public static DEBUG_SERVER: string = "com.apple.debugserver";
 }
 
 export class AfcFile {
@@ -295,3 +297,46 @@ export class IOSSyslog {
 		this.plistService.readSystemLog(printData);
 	}
 }
+
+export class GDBServer implements Mobile.IGDBServer {
+	private socket: net.NodeSocket = null;
+
+	constructor(private device: Mobile.IIOSDevice) {
+		this.socket = new net.Socket({ fd: device.startService(MobileServices.DEBUG_SERVER) });
+	}
+
+	public run(argv: string[]): void {
+		this.send("QStartNoAckMode");
+		this.socket.write("+");
+		this.send("QEnvironmentHexEncoded:");
+		this.send("QSetDisableASLR:1");
+
+		var encodedArguments = _.map(argv, (arg, index) => util.format("%d,%d,%s", arg.length*2, index, new Buffer(arg).toString("hex"))).join(",");
+		this.send("A"+encodedArguments);
+
+		this.send("qLaunchSuccess");
+		this.send("vCont;c");
+	}
+
+	private send(packet: string): void {
+		var sum = 0;
+		for(var i=0; i< packet.length; i++) {
+			sum += packet.charCodeAt(i);
+		}
+		sum = sum & 255;
+		var data = util.format("$%s#%s", packet, sum.toString(16));
+
+		this.socket.write(data);
+		var commands = ['C', 'c', 'S', 's', 'vCont', 'vAttach', 'vRun', 'vStopped', '?'];
+		var stopReply = _.any(commands, command => packet.startsWith(command));
+
+		if(stopReply) {
+			var resume = true;
+			while(resume) {
+				resume = false;
+				// TODO: extend the protocol communication
+			}
+		}
+	}
+}
+$injector.register("gdbServer", GDBServer);

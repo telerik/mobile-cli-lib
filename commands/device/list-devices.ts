@@ -1,9 +1,9 @@
-///<reference path="../../.d.ts"/>
+///<reference path="../../../.d.ts"/>
 "use strict";
 
 import util = require("util");
-import options = require("./../options");
-import commandParams = require("../command-params");
+import options = require("./../../options");
+import commandParams = require("../../command-params");
 
 export class ListDevicesCommand implements ICommand {
 	constructor(private $devicesServices: Mobile.IDevicesServices,

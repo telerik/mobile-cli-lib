@@ -1,8 +1,8 @@
-///<reference path="../../.d.ts"/>
+///<reference path="../../../.d.ts"/>
 "use strict";
 
-import options = require("./../options");
-import helpers = require("./../helpers");
+import options = require("./../../options");
+import helpers = require("./../../helpers");
 
 export class OpenDeviceLogStreamCommand implements ICommand {
 	private static NOT_SPECIFIED_DEVICE_ERROR_MESSAGE = "More than one device found. Specify device explicitly.";

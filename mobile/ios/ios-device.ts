@@ -1,23 +1,42 @@
 ///<reference path="../../../.d.ts"/>
 
+import Future = require("fibers/future");
 import ref = require("ref");
 import os = require("os");
+import path = require("path");
+import util = require("util");
+
+import iosCore = require("./ios-core");
 import iOSProxyServices = require("./ios-proxy-services");
-import Future = require("fibers/future");
 import MobileHelper = require("./../mobile-helper");
 import helpers = require("./../../helpers");
+
+var CoreTypes = iosCore.CoreTypes;
 
 export class IOSDevice implements Mobile.IIOSDevice {
 
 	private identifier: string = null;
 	private voidPtr = ref.refType(ref.types.void);
+	private mountImageCallbackPtr: NodeBuffer = null;
 
 	constructor(private devicePointer: NodeBuffer,
+		private $childProcess: IChildProcess,
 		private $coreFoundation: Mobile.ICoreFoundation,
-		private $mobileDevice: Mobile.IMobileDevice,
 		private $errors: IErrors,
+		private $fs: IFileSystem,
+		private $injector: IInjector,
 		private $logger: ILogger,
-		private $injector: IInjector) { }
+		private $mobileDevice: Mobile.IMobileDevice) {
+		this.mountImageCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSDevice.mountImageCallback);
+	}
+
+	private static mountImageCallback(dictionary: NodeBuffer, user: NodeBuffer): void {
+		var coreFoundation: Mobile.ICoreFoundation = $injector.resolve("coreFoundation");
+		var logger: ILogger = $injector.resolve("logger");
+
+		var jsDictionary = coreFoundation.cfTypeTo(dictionary);
+		logger.info("[Mounting] %s", jsDictionary["Status"]);
+	}
 
 	public getPlatform(): string {
 		return MobileHelper.DevicePlatforms[MobileHelper.DevicePlatforms.iOS];
@@ -64,8 +83,8 @@ export class IOSDevice implements Mobile.IIOSDevice {
 	}
 
 	private validateResult(result: number, error: string) {
-		if (result != 0) {
-			this.$errors.fail(error);
+		if (result !== 0) {
+			this.$errors.fail(util.format("%s. Result code is: %s", error, result));
 		}
 	}
 
@@ -107,8 +126,126 @@ export class IOSDevice implements Mobile.IIOSDevice {
 	}
 
 	private stopSession() {
-			var result = this.$mobileDevice.deviceStopSession(this.devicePointer);
-			this.validateResult(result, "Unable to stop session");
+		var result = this.$mobileDevice.deviceStopSession(this.devicePointer);
+		this.validateResult(result, "Unable to stop session");
+	}
+
+	private getDeviceValue(value: string): string {
+		var deviceCopyValue = this.$mobileDevice.deviceCopyValue(this.devicePointer, null, this.$coreFoundation.createCFString(value));
+		return this.$coreFoundation.convertCFStringToCString(deviceCopyValue);
+	}
+
+	private lookupApplications(): IDictionary<any> {
+		this.connect();
+		try {
+			this.startSession();
+			try {
+				var dictionaryPointer = ref.alloc(CoreTypes.cfDictionaryRef);
+				var result = this.$mobileDevice.deviceLookupApplications(this.devicePointer, 0, dictionaryPointer);
+				if(result !== 0) {
+					this.$errors.fail("Invalid result code %s from device lookup applications.", result);
+				}
+				var cfDictionary = dictionaryPointer.deref();
+				var jsDictionary = this.$coreFoundation.cfTypeTo(cfDictionary);
+				return jsDictionary;
+			} finally {
+				this.stopSession();
+			}
+		} finally {
+			this.disconnect();
+		}
+	}
+
+	private findDeveloperDirectory(): IFuture<string> {
+		return (() => {
+			var childProcess = this.$childProcess.spawnFromEvent("xcode-select", ["-print-path"], "close").wait();
+			return childProcess.stdout.trim();
+		}).future<string>()();
+	}
+
+	private findDeveloperDiskImageDirectoryPath(): IFuture<string> {
+		return (() => {
+			var developerDirectory = this.findDeveloperDirectory().wait();
+			var buildVersion = this.getDeviceValue("BuildVersion");
+			var productVersion = this.getDeviceValue("ProductVersion");
+			var productVersionParts = productVersion.split(".");
+			var productMajorVersion = productVersionParts[0];
+			var productMinorVersion = productVersionParts[1];
+
+			var developerDiskImagePath = path.join(developerDirectory, "Platforms", "iPhoneOS.platform", "DeviceSupport");
+			var supportPaths = this.$fs.readDirectory(developerDiskImagePath).wait();
+
+			var supportPath: any = null;
+
+			_.each(supportPaths, (sp: string) => {
+				var parts = sp.split(' ');
+				var version = parts[0];
+				var versionParts = version.split(".");
+
+				var supportPathData = {
+					version: version,
+					majorVersion: versionParts[0],
+					minorVersion: versionParts[1],
+					build: parts.length > 1 ? parts[1].replace("(", "").replace(")", "") : null,
+					path: path.join(developerDiskImagePath, sp)
+				}
+
+				if(supportPathData.majorVersion === productMajorVersion) {
+					if(!supportPath) {
+						supportPath = supportPathData;
+					} else {
+						// is this better than the last match?
+						if(supportPathData.minorVersion === productMinorVersion) {
+							if(supportPathData.build === buildVersion) {
+								// perfect match
+								supportPath = supportPathData;
+							} else {
+								// we're still better than existing match
+								if(supportPath.build !== supportPathData.build || supportPath.build === null) {
+									supportPath = supportPathData;
+								}
+							}
+						}
+					}
+				}
+			});
+
+			if(!supportPath) {
+				this.$errors.fail("Unable to find device support path");
+			}
+
+			return supportPath.path;
+		}).future<string>()();
+	}
+
+	private mountImage(): void {
+		this.connect();
+		try {
+			this.startSession();
+			try {
+				var developerDiskImageDirectoryPath = this.findDeveloperDiskImageDirectoryPath().wait();
+				var imagePath = path.join(developerDiskImageDirectoryPath, "DeveloperDiskImage.dmg");
+				this.$logger.info("Mounting %s", imagePath);
+
+				var signature = this.$fs.readFile(util.format("%s.signature", imagePath)).wait();
+				var cfImagePath = this.$coreFoundation.createCFString(imagePath);
+
+				var cfOptions = this.$coreFoundation.cfTypeFrom({
+					ImageType: "Developer",
+					ImageSignature: signature
+				});
+
+				var result = this.$mobileDevice.deviceMountImage(this.devicePointer, cfImagePath, cfOptions, this.mountImageCallbackPtr);
+
+				if(result !== 0 && result !== 3892314230) { // 3892314230 - already mounted
+					this.$errors.fail("Unable to mount image on device.");
+				}
+			} finally {
+				this.stopSession();
+			}
+		} finally {
+			this.disconnect();
+		}
 	}
 
 	public startService(serviceName: string): number {
@@ -163,6 +300,29 @@ export class IOSDevice implements Mobile.IIOSDevice {
 	public openDeviceLogStream() {
 		var iOSSystemLog = this.$injector.resolve(iOSProxyServices.IOSSyslog, {device: this});
 		iOSSystemLog.read();
+	}
+
+	public listApplications(): void {
+		var applications = this.lookupApplications();
+		_(_.sortBy(_.keys(applications))).each((bundleId: string) => this.$logger.info(bundleId));
+	}
+
+	public runApplication(applicationId: string): IFuture<void> {
+		return (() => {
+			var applications = this.lookupApplications();
+			var application = applications[applicationId];
+			if(!application) {
+				var sortedKeys = _.sortBy(_.keys(applications));
+				this.$errors.fail("Invalid application id: %s. All available application ids are: %s%s ", applicationId, os.EOL, sortedKeys.join(os.EOL));
+			}
+
+			this.mountImage();
+			var gdbServer = this.$injector.resolve(iOSProxyServices.GDBServer, {device: this});
+			var executable = util.format("%s/%s", application.Path, application.CFBundleExecutable);
+
+			gdbServer.run([executable]);
+
+		}).future<void>()();
 	}
 }
 
