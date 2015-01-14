@@ -136,7 +136,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 		}).future<void>()();
 	}
 
-	public sync(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, projectType: number, options: Mobile.ISyncOptions = {}): IFuture<void> {
+	public sync(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, liveSyncUrl: string, options: Mobile.ISyncOptions = {}): IFuture<void> {
 		return(() => {
 			//TODO: CloseSocket must be part of afcClient. Refactor it.
 			var houseArrestClient: Mobile.IHouseArrestClient = this.$injector.resolve(iOSProxyServices.HouseArrestClient, {device: this});

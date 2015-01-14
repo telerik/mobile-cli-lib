@@ -216,26 +216,14 @@ export class AndroidDevice implements Mobile.IDevice {
 		}).future<void>()();
 	}
 
-	private getLiveSyncUrl(projectType: number): string {
-		var projectTypes = require("../../../project-types"); // a gross hack but we can't use yok
-		switch (projectType) {
-			case projectTypes.Cordova:
-				return "icenium://";
-			case projectTypes.NativeScript:
-				return "nativescript://";
-			default:
-				this.$errors.fail("Unsupported project type");
-		}
-	}
-
-	public sync(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, projectType: number, syncOptions: Mobile.ISyncOptions = {}): IFuture<void> {
+	public sync(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, liveSyncUrl: string, syncOptions: Mobile.ISyncOptions = {}): IFuture<void> {
 		return (() => {
 			if (appIdentifier.isLiveSyncSupported(this).wait()) {
 				var liveSyncVersion = this.getLiveSyncVersion(appIdentifier).wait();
 				if(liveSyncVersion >= 2) {
-					this.syncNewProtocol(localToDevicePaths, appIdentifier, projectType, liveSyncVersion, syncOptions).wait();
+					this.syncNewProtocol(localToDevicePaths, appIdentifier, liveSyncUrl, liveSyncVersion, syncOptions).wait();
 				} else {
-					this.syncOldProtocol(localToDevicePaths, appIdentifier, projectType, syncOptions).wait();
+					this.syncOldProtocol(localToDevicePaths, appIdentifier, liveSyncUrl, syncOptions).wait();
 				}
 				this.$logger.info("Successfully synced device with identifier '%s'", this.getIdentifier());
 			} else {
@@ -277,14 +265,14 @@ export class AndroidDevice implements Mobile.IDevice {
 		return temp.mkdirSync("ab-");
 	}
 
-	private syncOldProtocol(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, projectType: number, syncOptions: Mobile.ISyncOptions = {}): IFuture<void> {
+	private syncOldProtocol(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, liveSyncUrl: string, syncOptions: Mobile.ISyncOptions = {}): IFuture<void> {
 		return (() => {
 			_.each(localToDevicePaths, localToDevicePathData => {
 				this.pushFileOnDevice(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()).wait();
 			});
 			if (!syncOptions.skipRefresh) {
 				var changeLiveSyncUrlExtras: IStringDictionary = {
-					"liveSyncUrl": this.getLiveSyncUrl(projectType),
+					"liveSyncUrl": liveSyncUrl,
 					"app-id": appIdentifier.appIdentifier
 				};
 				this.sendBroadcastToDevice(AndroidDevice.CHANGE_LIVESYNC_URL_INTENT_NAME, changeLiveSyncUrlExtras).wait();
@@ -293,7 +281,7 @@ export class AndroidDevice implements Mobile.IDevice {
 		}).future<void>()();
 	}
 
-	private syncNewProtocol(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, projectType: number, liveSyncVersion: number, syncOptions: Mobile.ISyncOptions = {}): IFuture<void> {
+	private syncNewProtocol(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, liveSyncUrl: string, liveSyncVersion: number, syncOptions: Mobile.ISyncOptions = {}): IFuture<void> {
 		return (() => {
 			var liveSyncRoot = this.getLiveSyncRoot(appIdentifier, liveSyncVersion);
 			var dirs:IStringDictionary = Object.create(null);
@@ -331,7 +319,7 @@ export class AndroidDevice implements Mobile.IDevice {
 					];
 				} else {
 					commands = [
-						LiveSyncCommands.DeployProjectCommand(this.getLiveSyncUrl(projectType)),
+						LiveSyncCommands.DeployProjectCommand(liveSyncUrl),
 						LiveSyncCommands.ReloadStartViewCommand()
 					];
 				}
@@ -345,7 +333,7 @@ export class AndroidDevice implements Mobile.IDevice {
 		return args.join(AndroidDevice.DEVICE_PATH_SEPARATOR);
 	}
 
-	openDeviceLogStream() {
+	public openDeviceLogStream(): void {
 		var adbLogcat = this.$childProcess.spawn(this.adb, ["-s", this.getIdentifier(), "logcat"]);
 		var lineStream = byline(adbLogcat.stdout);
 

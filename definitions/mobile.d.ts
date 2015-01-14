@@ -15,8 +15,8 @@ declare module Mobile {
 		getVendor(): string;
 		getPlatform(): string;
 		deploy(packageFile: string, packageName: string): IFuture<void>;
-		sync(localToDevicePaths: ILocalToDevicePathData[], appIdentifier: IAppIdentifier, projectType: number): IFuture<void>;
-		sync(localToDevicePaths: ILocalToDevicePathData[], appIdentifier: IAppIdentifier, projectType: number, options: ISyncOptions): IFuture<void>;
+		sync(localToDevicePaths: ILocalToDevicePathData[], appIdentifier: IAppIdentifier, liveSyncUrl: string): IFuture<void>;
+		sync(localToDevicePaths: ILocalToDevicePathData[], appIdentifier: IAppIdentifier, liveSyncUrl: string, options: ISyncOptions): IFuture<void>;
 		openDeviceLogStream(): void;
 	}
 
