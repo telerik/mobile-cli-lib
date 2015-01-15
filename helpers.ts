@@ -6,6 +6,7 @@ import util = require("util");
 import _ = require("lodash");
 var uuid = require("node-uuid");
 var options = require("./options");
+import Future = require("fibers/future");
 
 export function createGUID(useBraces: boolean = true) {
 	var output: string;
@@ -185,4 +186,14 @@ export function printInfoMessageOnSameLine(message: string): void {
 export function getCurrentEpochTime(): number {
 	var dateTime = new Date();
 	return dateTime.getTime();
+}
+
+export function printMsgWithTimeout(message: string, timeout: number): IFuture <void> {
+	var printMsgFuture = new Future<void>();
+	setTimeout(() => {
+		printInfoMessageOnSameLine(message);
+		printMsgFuture.return();
+	}, timeout);
+
+	return printMsgFuture;
 }
