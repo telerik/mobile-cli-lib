@@ -39,7 +39,7 @@ exports.setProfileDir = (defaultProfileDir: string) => {
 	// Add the value to exported options.
 	exports["profile-dir"] = selectedProfileDir;
 	exports["profileDir"] = selectedProfileDir;
-}
+};
 
 exports.knownOpts = knownOpts;
 exports.shorthands = shorthands;
