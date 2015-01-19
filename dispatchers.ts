@@ -23,8 +23,13 @@ export class CommandDispatcher implements ICommandDispatcher {
 
 			var commandName = this.getCommandName();
 			var commandArguments = this.getCommandArguments();
+			var lastArgument: string = _.last(commandArguments);
 
-			if (options.help) {
+			if(options.help) {
+				commandArguments.unshift(commandName);
+				commandName = "help";
+			} else if(lastArgument === "/?" || lastArgument === "?") {
+				commandArguments.pop();
 				commandArguments.unshift(commandName);
 				commandName = "help";
 			}
