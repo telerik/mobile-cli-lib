@@ -248,7 +248,7 @@ export class Yok implements IInjector {
 	public register(name: string, resolver: any, shared: boolean = true): void {
 		trace("registered '%s'", name);
 
-		var dependency = this.modules[name] || {};
+		var dependency:any = this.modules[name] || {};
 		dependency.shared = shared;
 
 		if(_.isFunction(resolver)) {
