@@ -11,7 +11,7 @@ import helpers = require("./../../helpers");
 import net = require("net");
 import MobileHelpers = require("./../mobile-helper");
 
-class MobileServices {
+export class MobileServices {
 	public static APPLE_FILE_CONNECTION: string = "com.apple.afc";
 	public static INSTALLATION_PROXY: string = "com.apple.mobile.installation_proxy";
 	public static HOUSE_ARREST: string = "com.apple.mobile.house_arrest";
@@ -21,7 +21,7 @@ class MobileServices {
 	public static DEBUG_SERVER: string = "com.apple.debugserver";
 }
 
-export class AfcFile {
+export class AfcFile implements Mobile.IAfcFile {
 	private open: boolean = false;
 	private afcFile: number;
 
@@ -53,7 +53,7 @@ export class AfcFile {
 		this.open = true;
 	}
 
-	write(buffer: any, byteLength?: any): boolean {
+	public write(buffer: any, byteLength?: any): boolean {
 		var result = this.$mobileDevice.afcFileRefWrite(this.afcConnection, this.afcFile, buffer, byteLength);
 		if (result !== 0) {
 			this.$errors.fail("Unable to write to file: '%s'. Result is: '%s'", this.afcFile, result);
@@ -62,7 +62,7 @@ export class AfcFile {
 		return true;
 	}
 
-	close() {
+	public close(): void {
 		if (this.open) {
 			var result = this.$mobileDevice.afcFileRefClose(this.afcConnection, this.afcFile);
 			if (result !== 0) {
@@ -95,18 +95,18 @@ export class AfcClient implements Mobile.IAfcClient {
 		this.afcConnection = ref.deref(afcConnection);
 	}
 
-	open(path: string, mode: string) {
+	private open(path: string, mode: string): Mobile.IAfcFile {
 		return this.$injector.resolve(AfcFile, {path: path, mode: mode, afcConnection: this.afcConnection});
 	}
 
-	mkdir(path: string) {
+	public mkdir(path: string) {
 		var result = this.$mobileDevice.afcDirectoryCreate(this.afcConnection, path);
 		if (result !== 0) {
 			this.$errors.fail("Unable to make directory: %s. Result is %s", path, result);
 		}
 	}
 
-	listDir(path: string) {
+	public listDir(path: string) {
 		var afcDirectoryRef = ref.alloc(ref.refType(ref.types.void));
 		var result = this.$mobileDevice.afcDirectoryOpen(this.afcConnection, path, afcDirectoryRef);
 		if (result !== 0) {
@@ -149,7 +149,7 @@ export class AfcClient implements Mobile.IAfcClient {
 		this.$logger.trace("Removing device file '%s', result: %s", devicePath, removeResult.toString());
 	}
 
-	private transfer(localFilePath: string, devicePath: string): IFuture<void> {
+	public transfer(localFilePath: string, devicePath: string): IFuture<void> {
 		return(() => {
 			this.ensureDevicePathExist(path.dirname(devicePath));
 			var reader = this.$fs.createReadStream(localFilePath);
@@ -206,9 +206,9 @@ export class InstallationProxyClient {
 
 			this.plistService.sendMessage({
 				Command: "Install",
-				"PackagePath": helpers.fromWindowsRelativePathToUnix(devicePath)
+				PackagePath: helpers.fromWindowsRelativePathToUnix(devicePath)
 			});
-			this.plistService.receiveMessage().wait();
+			var message = this.plistService.receiveMessage().wait();
 			this.$logger.info("Successfully deployed on device %s", this.device.getIdentifier());
 		}).future<void>()();
 	}
@@ -297,38 +297,3 @@ export class IOSSyslog {
 		this.plistService.readSystemLog(printData);
 	}
 }
-
-export class GDBServer implements Mobile.IGDBServer {
-	private socket: net.NodeSocket = null;
-
-	constructor(private device: Mobile.IIOSDevice) {
-		this.socket = new net.Socket({ fd: device.startService(MobileServices.DEBUG_SERVER) });
-	}
-
-	public run(argv: string[]): void {
-		this.send("QStartNoAckMode");
-		this.socket.write("+");
-		this.send("QEnvironmentHexEncoded:");
-		this.send("QSetDisableASLR:1");
-
-		var encodedArguments = _.map(argv, (arg, index) => util.format("%d,%d,%s", arg.length*2, index, new Buffer(arg).toString("hex"))).join(",");
-		this.send("A"+encodedArguments);
-
-		this.send("qLaunchSuccess");
-		this.send("vCont;c");
-	}
-
-	private send(packet: string): void {
-		var sum = 0;
-		for(var i=0; i< packet.length; i++) {
-			sum += packet.charCodeAt(i);
-		}
-		sum = sum & 255;
-		var data = util.format("$%s#%s", packet, sum.toString(16));
-
-		this.socket.write(data);
-		var commands = ['C', 'c', 'S', 's', 'vCont', 'vAttach', 'vRun', 'vStopped', '?'];
-		var stopReply = _.any(commands, command => packet.startsWith(command));
-	}
-}
-$injector.register("gdbServer", GDBServer);

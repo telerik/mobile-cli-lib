@@ -1,6 +1,7 @@
 ///<reference path="../../../.d.ts"/>
 "use strict";
 
+var bplist = require("bplist-parser");
 import Future = require("fibers/future");
 import ref = require("ref");
 import os = require("os");
@@ -11,6 +12,8 @@ import iosCore = require("./ios-core");
 import iOSProxyServices = require("./ios-proxy-services");
 import MobileHelper = require("./../mobile-helper");
 import helpers = require("./../../helpers");
+import hostInfo = require("./../../host-info");
+import options = require("./../../options");
 
 var CoreTypes = iosCore.CoreTypes;
 
@@ -198,7 +201,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 					minorVersion: versionParts[1],
 					build: parts.length > 1 ? parts[1].replace(/[()]/, () => "") : null,
 					path: path.join(developerDiskImagePath, sp)
-				}
+				};
 
 				if(supportPathData.majorVersion === productMajorVersion) {
 					if(!supportPath) {
@@ -221,35 +224,84 @@ export class IOSDevice implements Mobile.IIOSDevice {
 			});
 
 			if(!supportPath) {
-				this.$errors.fail("Unable to find device support path");
+				this.$errors.fail("Unable to find device support path.");
 			}
 
 			return supportPath.path;
 		}).future<string>()();
 	}
 
-	private mountImage(): void {
-		var func = () => {
-			var developerDiskImageDirectoryPath = this.findDeveloperDiskImageDirectoryPath().wait();
-			var imagePath = path.join(developerDiskImageDirectoryPath, "DeveloperDiskImage.dmg");
-			this.$logger.info("Mounting %s", imagePath);
+	private mountImage(): IFuture<void> {
+		return (() => {
+			var imagePath = options.ddi;
 
-			var signature = this.$fs.readFile(util.format("%s.signature", imagePath)).wait();
-			var cfImagePath = this.$coreFoundation.createCFString(imagePath);
+			if(hostInfo.isWindows()) {
+				if(!imagePath) {
+					this.$errors.fail("On windows operating system you must specify the path to developer disk image using --ddi option");
+				}
 
-			var cfOptions = this.$coreFoundation.cfTypeFrom({
-				ImageType: "Developer",
-				ImageSignature: signature
-			});
+				var imageSignature = this.$fs.readFile(util.format("%s.signature", imagePath)).wait();
+				var imageSize = this.$fs.getFsStats(imagePath).wait().size;
 
-			var result = this.$mobileDevice.deviceMountImage(this.devicePointer, cfImagePath, cfOptions, this.mountImageCallbackPtr);
+				var imageMounterService = this.startService(iOSProxyServices.MobileServices.MOBILE_IMAGE_MOUNTER);
+				var plistService: Mobile.IiOSDeviceSocket = this.$injector.resolve(iosCore.PlistService, { service: imageMounterService, format: CoreTypes.kCFPropertyListBinaryFormat_v1_0 });
+				var result = plistService.exchange({
+					Command: "ReceiveBytes",
+					ImageSize: imageSize,
+					ImageType: "Developer",
+					ImageSignature: imageSignature
+				}).wait();
 
-			if(result !== 0 && result !== IOSDevice.IMAGE_ALREADY_MOUNTED_ERROR_CODE) { // 3892314230 - already mounted
-				this.$errors.fail("Unable to mount image on device.");
+				if(result.Status === "ReceiveBytesAck") {
+					var fileData = this.$fs.readFile(imagePath).wait();
+					plistService.sendAll(fileData);
+				} else {
+					var afcService = this.startService(iOSProxyServices.MobileServices.APPLE_FILE_CONNECTION);
+					var afcClient = this.$injector.resolve(iOSProxyServices.AfcClient, {service: afcService});
+					afcClient.transfer(imagePath, "PublicStaging/staging.dimage").wait();
+				}
+
+				try {
+					result = plistService.exchange({
+						Command: "MountImage",
+						ImageType: "Developer",
+						ImageSignature: imageSignature,
+						ImagePath: "/var/mobile/Media/PublicStaging/staging.dimage"
+					}).wait();
+
+					if(result.Error) {
+						this.$errors.fail("Unable to mount image. %s", result.Error);
+					}
+					if(result.Status) {
+						this.$logger.info("Mount image: %s", result.Status);
+					}
+				} finally {
+					plistService.close();
+				}
+			} else {
+				var func = () => {
+					var developerDiskImageDirectoryPath = this.findDeveloperDiskImageDirectoryPath().wait();
+					var imagePath = path.join(developerDiskImageDirectoryPath, "DeveloperDiskImage.dmg");
+					this.$logger.info("Mounting %s", imagePath);
+
+					var signature = this.$fs.readFile(util.format("%s.signature", imagePath)).wait();
+					var cfImagePath = this.$coreFoundation.createCFString(imagePath);
+
+					var cfOptions = this.$coreFoundation.cfTypeFrom({
+						ImageType: "Developer",
+						ImageSignature: signature
+					});
+
+					var result = this.$mobileDevice.deviceMountImage(this.devicePointer, cfImagePath, cfOptions, this.mountImageCallbackPtr);
+
+					if (result !== 0 && result !== IOSDevice.IMAGE_ALREADY_MOUNTED_ERROR_CODE) { // 3892314230 - already mounted
+						this.$errors.fail("Unable to mount image on device.");
+					}
+				};
+
+			    this.tryToExecuteFunction<void>(func);
 			}
-		};
-
-		this.tryToExecuteFunction<void>(func);
+		}).future<void>()();
 	}
 
 	public startService(serviceName: string): number {
@@ -320,8 +372,8 @@ export class IOSDevice implements Mobile.IIOSDevice {
 				this.$errors.fail("Invalid application id: %s. All available application ids are: %s%s ", applicationId, os.EOL, sortedKeys.join(os.EOL));
 			}
 
-			this.mountImage();
-			var gdbServer = this.$injector.resolve(iOSProxyServices.GDBServer, {device: this});
+			this.mountImage().wait();
+			var gdbServer = this.$injector.resolve(iosCore.GDBServer, {service: this.startService(iOSProxyServices.MobileServices.DEBUG_SERVER)});
 			var executable = util.format("%s/%s", application.Path, application.CFBundleExecutable);
 
 			gdbServer.run([executable]);
@@ -329,5 +381,4 @@ export class IOSDevice implements Mobile.IIOSDevice {
 		}).future<void>()();
 	}
 }
-
 $injector.register("iOSDevice", IOSDevice);

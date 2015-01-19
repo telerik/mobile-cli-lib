@@ -7,6 +7,7 @@ import ffi = require("ffi");
 import struct = require("ref-struct");
 import bufferpack = require("bufferpack");
 import plistlib = require("plistlib");
+import plist = require("plist");
 import helpers = require("../../helpers");
 import hostInfo = require("../../host-info");
 import net = require("net");
@@ -173,7 +174,7 @@ class IOSCore implements Mobile.IiOSCore {
 		var mobileDeviceDll = hostInfo.isWindows() ? path.join(this.MobileDeviceDir, "MobileDevice.dll") : this.MobileDeviceDir;
 		var lib = ffi.DynamicLibrary(mobileDeviceDll);
 
-		return  {
+		return {
 			"AMDeviceNotificationSubscribe": ffi.ForeignFunction(lib.get("AMDeviceNotificationSubscribe"), "uint", [CoreTypes.am_device_notification_callback, "uint", "uint", "uint", CoreTypes.ptrToVoidPtr]),
 			"AMDeviceConnect": ffi.ForeignFunction(lib.get("AMDeviceConnect"), "uint", [CoreTypes.am_device_p]),
 			"AMDeviceIsPaired": ffi.ForeignFunction(lib.get("AMDeviceIsPaired"), "uint", [CoreTypes.am_device_p]),
@@ -201,7 +202,7 @@ class IOSCore implements Mobile.IiOSCore {
 			"AMDeviceCopyDeviceIdentifier": ffi.ForeignFunction(lib.get("AMDeviceCopyDeviceIdentifier"), CoreTypes.cfStringRef, [CoreTypes.am_device_p]),
 			"AMDeviceCopyValue": ffi.ForeignFunction(lib.get("AMDeviceCopyValue"), CoreTypes.cfStringRef, [CoreTypes.am_device_p, CoreTypes.cfStringRef, CoreTypes.cfStringRef]),
 			"AMDeviceNotificationUnsubscribe": ffi.ForeignFunction(lib.get("AMDeviceNotificationUnsubscribe"), CoreTypes.intType, [CoreTypes.amDeviceNotificationRef]),
-			"AMDeviceMountImage": ffi.ForeignFunction(lib.get("AMDeviceMountImage"), CoreTypes.uintType, [CoreTypes.am_device_p, CoreTypes.cfStringRef, CoreTypes.cfDictionaryRef, CoreTypes.am_device_mount_image_callback, CoreTypes.voidPtr]),
+			"AMDeviceMountImage": hostInfo.isDarwin() ? ffi.ForeignFunction(lib.get("AMDeviceMountImage"), CoreTypes.uintType, [CoreTypes.am_device_p, CoreTypes.cfStringRef, CoreTypes.cfDictionaryRef, CoreTypes.am_device_mount_image_callback, CoreTypes.voidPtr]) : null,
 			"AMDSetLogLevel": ffi.ForeignFunction(lib.get("AMDSetLogLevel"), CoreTypes.intType, [CoreTypes.intType])
 		};
 	}
@@ -212,8 +213,9 @@ class IOSCore implements Mobile.IiOSCore {
 		return ffi.Library(winSocketDll, {
 			"closesocket": ["int", ["uint"]],
 			"recv": ["int", ["uint", CoreTypes.charPtr, "int", "int"]],
-			"send": ["int", ["uint", "string", "int", "int"]],
-			"setsockopt": ["int", ["uint", "int", "int", CoreTypes.voidPtr, "int"]]
+			"send": ["int", ["uint", CoreTypes.charPtr, "int", "int"]],
+			"setsockopt": ["int", ["uint", "int", "int", CoreTypes.voidPtr, "int"]],
+			"WSAGetLastError": ["int", []]
 		});
 	}
 }
@@ -543,7 +545,11 @@ export class MobileDevice implements Mobile.IMobileDevice {
 	}
 
 	public deviceMountImage(devicePointer: NodeBuffer, imagePath: NodeBuffer, options: NodeBuffer, mountCallBack: NodeBuffer): number {
-		return this.mobileDeviceLibrary.AMDeviceMountImage(devicePointer, imagePath, options, mountCallBack, null);
+		if(hostInfo.isDarwin()) {
+			return this.mobileDeviceLibrary.AMDeviceMountImage(devicePointer, imagePath, options, mountCallBack, null);
+		}
+
+		this.$errors.fail("AMDeviceMountImage is exported only on Darwin OS");
 	}
 
 	public deviceLookupApplications(devicePointer: NodeBuffer, appType: number, result: NodeBuffer): number {
@@ -598,17 +604,8 @@ export class MobileDevice implements Mobile.IMobileDevice {
 		return this.mobileDeviceLibrary.AFCDirectoryClose(afcConnection, afcDirectory);
 	}
 
-	public isDataReceivingCompleted(reply: string): boolean {
-		//TODO: It should be created parser that converts data from socket to valid javascript dictionary
-		if(reply.indexOf("Error") >= 0) {
-			var openingTag = "<string>";
-			var closingTag = "</string>";
-			if(reply.indexOf(closingTag) >= 0) {
-				this.$errors.fail(reply.substring(reply.indexOf(openingTag) + openingTag.length, reply.indexOf(closingTag)));
-			}
-		}
-
-		return reply.indexOf("Status") >= 0 && reply.indexOf("Complete") >= 0 && reply.indexOf("PercentComplete") < 0;
+	public isDataReceivingCompleted(reply: Mobile.IiOSSocketResponseData): boolean {
+		return reply.Status && reply.Complete && !reply.PercentComplete;
 	}
 
 	public setLogLevel(logLevel: number): number {
@@ -623,7 +620,6 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 
 	constructor(private service: number,
 		private $logger: ILogger,
-		private $mobileDevice: Mobile.IMobileDevice,
 		private $errors: IErrors) {
 		this.winSocketLibrary = IOSCore.getWinSocketLibrary();
 	}
@@ -652,16 +648,52 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 		this.close();
 	}
 
-	public receiveMessage(): IFuture<void> {
-		return(() => {
-			var reply = this.receiveMessageHelper();
-			if(!this.$mobileDevice.isDataReceivingCompleted(reply)) {
-				reply = this.receiveMessageHelper();
-			}
-		}).future<void>()();
+	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData> {
+		return (() => {
+			var message = this.receiveMessageCore();
+			var reply = plist.parse(message);
+			return reply;
+		}).future<Mobile.IiOSSocketResponseData>()();
 	}
 
-	public receiveMessageHelper(): string {
+	public sendMessage(data: any): void {
+		var message: NodeBuffer = null;
+
+		if(typeof(data) === "string") {
+			message = new Buffer(data);
+		}
+        else {
+			var payload:NodeBuffer = new Buffer(plistlib.toString(this.createPlist(data)));
+			var packed:any = bufferpack.pack(">i", [payload.length]);
+			message = Buffer.concat([packed, payload]);
+		}
+
+		var writtenBytes = this.sendCore(message);
+		this.$logger.debug("WinSocket-> sending message: '%s', written bytes: '%s'", message.toString(), writtenBytes.toString());
+		this.$errors.verifyHeap("sendMessage");
+	}
+
+	public sendAll(data: NodeBuffer): void {
+		while(data.length !== 0) {
+			var result = this.sendCore(data);
+			if(result < 0) {
+				this.$errors.fail("Error sending data: %s", result);
+			}
+			data = data.slice(result);
+		}
+	}
+
+	public exchange(message: IDictionary<any>): IFuture<Mobile.IiOSSocketResponseData> {
+		this.sendMessage(message);
+		return this.receiveMessage();
+	}
+
+	public close(): void {
+		this.winSocketLibrary.closesocket(this.service);
+		this.$errors.verifyHeap("socket close");
+	}
+
+	private receiveMessageCore(): string {
 		var data = this.read(4);
 		var reply = "";
 
@@ -683,35 +715,40 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 		return result;
 	}
 
-	public sendMessage(data: {[key: string]: {}}): void {
-		var payload = plistlib.toString(this.createPlist(data));
-		var message = bufferpack.pack(">i", [payload.length]) + payload;
-		var writtenBytes = this.winSocketLibrary.send(this.service, message, message.length, 0);
-		this.$logger.debug("WinSocket-> sending message: '%s', written bytes: '%s'", message, writtenBytes);
-
-		this.$errors.verifyHeap("sendMessage");
+	private sendCore(data: NodeBuffer): number {
+		var writtenBytes = this.winSocketLibrary.send(this.service, data, data.length, 0);
+		this.$logger.debug("WinSocket-> sendCore: writtenBytes '%s'", writtenBytes);
+		return writtenBytes;
 	}
 
-	private createPlist(data: {[key: string]: {}}) : {} {
+	private createPlist(data: IDictionary<any>) : {} {
 		var keys = _.keys(data);
 		var values = _.values(data);
-		var plist: {type:string; value:any} = {type: "dict", value: {}} ;
+		var plistData: {type:string; value:any} = {type: "dict", value: {}};
 
 		for(var i=0; i<keys.length; i++) {
-			var type = values[i] instanceof Object ? "dict" : "string";
-			var value = type === "dict" ? {} : values[i];
+			var type = "";
+			var value: any;
+			if(values[i] instanceof Buffer) {
+				type = "data";
+				value = values[i].toString("base64")
+			} else if(values[i] instanceof Object) {
+				type = "dict";
+				value = {};
+			} else  if(typeof(values[i]) === "number" ) {
+				type = "integer";
+				value = values[i];
+			} else {
+				type = "string";
+				value = values[i];
+			}
 
-			plist.value[keys[i]] = {type: type, value: value};
+			plistData.value[keys[i]] = {type: type, value: value};
 		}
 
-		this.$logger.trace("created plist: '%s'" + plist);
+		this.$logger.trace("created plist: '%s'", plistData.toString());
 
-		return plist;
-	}
-
-	public close(): void {
-		this.winSocketLibrary.closesocket(this.service);
-		this.$errors.verifyHeap("socket close");
+		return plistData;
 	}
 }
 
@@ -726,18 +763,18 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 		this.socket = new net.Socket({ fd: service });
 	}
 
-	public receiveMessage(): IFuture<void> {
-		var result = new Future<void>();
+	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData> {
+		var result = new Future<Mobile.IiOSSocketResponseData>();
 
 		this.socket
 			.on("data", (data: NodeBuffer) => {
 				this.$logger.debug("PosixSocket receiving: '%s'", data.toString());
 				this.$errors.verifyHeap("receiveMessage");
-				var reply = data.toString();
-
+				var message = data.toString();
+				var reply = plist.parse(message);
 				try {
 					if(this.$mobileDevice.isDataReceivingCompleted(reply)) {
-						result.return();
+						result.return(reply);
 					}
 				} catch(e) {
 					result.throw(e);
@@ -765,7 +802,7 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 			});
 	}
 
-	public sendMessage(message: {[key: string]: {}}, format?: number): void {
+	public sendMessage(message: any, format?: number): void {
 		var data = this.$coreFoundation.dictToPlistEncoding(message, format);
 		var payload = bufferpack.pack(">i", [data.length]);
 
@@ -776,6 +813,11 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 		this.socket.write(data);
 
 		this.$errors.verifyHeap("sendMessage");
+	}
+
+	public exchange(message: IDictionary<any>): IFuture<Mobile.IiOSSocketResponseData> {
+		this.$errors.fail("Exchange function is not implemented for OSX");
+		return null;
 	}
 
 	public close(): void {
@@ -797,7 +839,7 @@ export class PlistService implements Mobile.IiOSDeviceSocket {
 		}
 	}
 
-	public receiveMessage(): IFuture<void> {
+	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData> {
 		return this.socket.receiveMessage();
 	}
 
@@ -805,11 +847,61 @@ export class PlistService implements Mobile.IiOSDeviceSocket {
 		this.socket.readSystemLog(action);
 	}
 
-	public sendMessage(message: {[key: string]: {}}) : void {
+	public sendMessage(message: any) : void {
 		this.socket.sendMessage(message, this.format);
+	}
+
+	public exchange(message: IDictionary<any>): IFuture<Mobile.IiOSSocketResponseData> {
+		return this.socket.exchange(message);
 	}
 
 	public close() {
 		this.socket.close();
 	}
+
+	public sendAll(data: NodeBuffer): void {
+		this.socket.sendAll(data);
+	}
 }
+
+export class GDBServer implements Mobile.IGDBServer {
+	private socket: Mobile.IiOSDeviceSocket  = null;
+
+	constructor(private service: number,
+		private $injector: IInjector) {
+
+		if(hostInfo.isWindows()) {
+			this.socket = this.$injector.resolve(WinSocket, {service: this.service});
+		} else if(hostInfo.isDarwin()) {
+			this.socket = this.$injector.resolve(PosixSocket, {service: this.service });
+		}
+	}
+
+	public run(argv: string[]): void {
+		this.send("QStartNoAckMode");
+		this.socket.sendMessage("+");
+		this.send("QEnvironmentHexEncoded:");
+		this.send("QSetDisableASLR:1");
+
+		var encodedArguments = _.map(argv, (arg, index) => util.format("%d,%d,%s", arg.length*2, index, new Buffer(arg).toString("hex"))).join(",");
+		this.send("A"+encodedArguments);
+
+		this.send("qLaunchSuccess");
+		this.send("vCont;c");
+	}
+
+	private send(packet: string): void {
+		var sum = 0;
+		for(var i=0; i< packet.length; i++) {
+			sum += packet.charCodeAt(i);
+		}
+		sum = sum & 255;
+		var data = util.format("$%s#%s", packet, sum.toString(16));
+
+		this.socket.sendMessage(data);
+		var commands = ['C', 'c', 'S', 's', 'vCont', 'vAttach', 'vRun', 'vStopped', '?'];
+		var stopReply = _.any(commands, command => packet.startsWith(command));
+		// TODO: extend the protocol communication
+	}
+}
+$injector.register("gdbServer", GDBServer);

@@ -57,6 +57,6 @@ declare module "bufferpack" {
 		inspect(): string;
 	}
 
-	export function pack(endian: string, lengths: number[]): string;
+	export function pack(endian: string, lengths: number[]): NodeBuffer;
 	export function unpack(endian: string, data: NodeBuffer): number[];
 }
