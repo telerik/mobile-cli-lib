@@ -87,7 +87,6 @@ export function getParsedOptions(options: any, shorthands: any, clientName: stri
 }
 
 export function validateYargsArguments(parsed: any, knownOpts: any, shorthands: any, clientName?: string): void {
-
 	if(path.basename(process.argv[1]).indexOf(clientName) !== -1) {
 		_.each(_.keys(parsed), (opt) => {
 			var option = shorthands[opt] ? shorthands[opt] : opt;

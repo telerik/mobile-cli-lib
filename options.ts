@@ -23,11 +23,12 @@ var knownOpts: any = {
 		"appid": String,
 		"geny": String
 	},
-	shorthands = {
+	shorthands: IStringDictionary = {
 		"v": "verbose",
-		"p": "path"
+		"p": "path",
+		"h": "help"
 	},
-	parsed = yargs.argv;
+	parsed: any = yargs.argv;
 
 exports.setProfileDir = (defaultProfileDir: string) => {
 	var selectedProfileDir: string = parsed["profile-dir"] || parsed["profileDir"] || defaultProfileDir;
@@ -45,10 +46,15 @@ exports.knownOpts = knownOpts;
 exports.shorthands = shorthands;
 
 Object.keys(parsed).forEach((opt) => {
+	var key: string = opt;
+	if(shorthands[opt]) {
+		key = shorthands[opt];
+	}
+
 	if (typeof (parsed[opt]) === "number") {
-		exports[opt] = parsed[opt].toString();
+		exports[key] = parsed[opt].toString();
 	} else {
-		exports[opt] = parsed[opt];
+		exports[key] = parsed[opt];
 	}
 });
 
