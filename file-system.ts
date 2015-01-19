@@ -154,7 +154,7 @@ export class FileSystem implements IFileSystem {
 			} else {
 				future.return();
 			}
-		})
+		});
 		return future;
 	}
 
@@ -187,7 +187,7 @@ export class FileSystem implements IFileSystem {
 		}).future<void>()();
 	}
 
-	public writeJson(filename: string, data: any, space?: string, encoding?: string): IFuture<void> {
+	public writeJson(filename: string, data: any, space: string = "\t", encoding?: string): IFuture<void> {
 		return this.writeFile(filename, JSON.stringify(data, null, space), encoding);
 	}
 
