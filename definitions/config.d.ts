@@ -13,6 +13,7 @@ declare module Config {
 		sevenZipFilePath: string;
 	}
 
+
 	interface IConfig {
 		AB_SERVER?: string;
 		AB_SERVER_PROTO?: string;
