@@ -47,7 +47,7 @@ export class CommandDispatcher implements ICommandDispatcher {
 	private getCommandName(): string {
 		var remaining: string[] = options._;
 		if (remaining.length > 0) {
-			return remaining[0].toLowerCase();
+			return remaining[0].toString().toLowerCase();
 		}
 		return "help";
 	}
