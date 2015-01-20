@@ -53,7 +53,7 @@ export class HttpClient implements Server.IHttpClient {
 			if (this.$config.PROXY_TO_FIDDLER) {
 				options.path = requestProto + "://" + options.host + options.path;
 				headers.Host = options.host;
-				options.host = "127.0.0.1";
+				options.host = this.$config.FIDDLER_HOSTNAME;
 				options.port = 8888;
 			}
 
