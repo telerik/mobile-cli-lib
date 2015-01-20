@@ -4,7 +4,7 @@ interface IInjector extends IDisposable {
 	requireCommand(name: string, file: string): void;
 	requireCommand(names: string[], file: string): void;
 	resolve(ctor: Function, ctorArguments?: { [key: string]: any }): any;
-	resolve(name: string): any;
+	resolve(name: string, ctorArguments?: IDictionary<any>): any;
 	resolveCommand(name: string): ICommand;
 	register(name: string, resolver: any, shared?: boolean): void;
 	registerCommand(name: string, resolver: any): void;
