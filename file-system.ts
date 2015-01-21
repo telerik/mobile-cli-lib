@@ -60,14 +60,14 @@ export class FileSystem implements IFileSystem {
 		return (() => {
 			var shouldOverwriteFiles = options ? options.overwriteExisitingFiles : true;
 
-			if(hostInfo.isDarwin() || hostInfo.isLinux()) {
+			if(hostInfo.isLinux()) {
 				this.createDirectory(destinationDir).wait();
 
 				var $childProcess = $injector.resolve("$childProcess");
 				var unzipProc = $childProcess.spawn('unzip', _.flatten(['-u', shouldOverwriteFiles ? "-o" : "-n", zipFile, '-d', destinationDir, fileFilters || []]),
 					{ stdio: "ignore", detached: true });
 				this.futureFromEvent(unzipProc, "close").wait();
-			} else if(hostInfo.isWindows()) {
+			} else if(hostInfo.isDarwin() || hostInfo.isWindows()) {
 				this.createDirectory(destinationDir).wait();
 
 				var $childProcess = $injector.resolve("$childProcess");
