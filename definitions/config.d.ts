@@ -13,10 +13,12 @@ declare module Config {
 		sevenZipFilePath: string;
 	}
 
+
 	interface IConfig {
 		AB_SERVER?: string;
 		AB_SERVER_PROTO?: string;
 		DEBUG?: boolean;
+		FIDDLER_HOSTNAME?: string;
 		CI_LOGGER?: boolean;
 		PROXY_TO_FIDDLER?: boolean;
 		TYPESCRIPT_COMPILER_OPTIONS?: any;
