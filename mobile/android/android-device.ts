@@ -10,6 +10,7 @@ import helpers = require("../../helpers");
 import os = require("os");
 import hostInfo = require("../../host-info");
 import options = require("./../../options");
+import Fiber = require("fibers");
 
 interface IAndroidDeviceDetails {
 	model: string;
@@ -52,14 +53,16 @@ export class AndroidDevice implements Mobile.IDevice {
 	private version: string;
 	private vendor: string;
 	private _tmpRoots: IStringDictionary = {};
-	private _installedApplications: string[];
+    private _installedApplications: string[];
+    private defaultNodeInspectorUrl: string = "http://127.0.0.1:8080/debug";
 
 	constructor(private identifier: string, private adb: string,
 		private $logger: ILogger,
 		private $fs: IFileSystem,
 		private $childProcess: IChildProcess,
 		private $errors: IErrors,
-		private $staticConfig: IStaticConfig) {
+        private $staticConfig: IStaticConfig,
+        private $opener: IOpener) {
 		var details: IAndroidDeviceDetails = this.getDeviceDetails().wait();
 		this.model = details.model;
 		this.name = details.name;
@@ -168,7 +171,7 @@ export class AndroidDevice implements Mobile.IDevice {
 
 	private startPackageOnDevice(packageName: string): IFuture<void> {
 		return (() => {
-			var startPackageCommand = this.composeCommand("shell am start -a android.intent.action.MAIN -n %s/%s", packageName, this.$staticConfig.START_PACKAGE_ACTIVITY_NAME);
+            var startPackageCommand = this.composeCommand("shell am start -a android.intent.action.MAIN -n %s/%s", packageName, this.$staticConfig.START_PACKAGE_ACTIVITY_NAME);
 			var result = this.$childProcess.exec(startPackageCommand).wait();
 			return result[0];
 		}).future<void>()();
@@ -185,9 +188,166 @@ export class AndroidDevice implements Mobile.IDevice {
 			this.startPackageOnDevice(packageName).wait();
 			this.$logger.info("Successfully deployed on device with identifier '%s'", this.getIdentifier());
 		}).future<void>()();
-	}
+    }
 
-	private ensureFullAccessPermissions(devicePath: string): IFuture<void> {
+    private tcpForward(src: Number, dest: Number): IFuture<void> {
+        return (() => {
+            var tcpForwardCommand = this.composeCommand("forward tcp:%d tcp:%d", src.toString(), dest.toString());
+            this.$childProcess.exec(tcpForwardCommand).wait();
+        }).future<void>()();
+    }
+
+    private startDebuggerClient(port: Number): IFuture<void> {
+        return (() => {
+            var nodeInspectorModuleFilePath = require.resolve("node-inspector");
+            var nodeInspectorModuleDir = path.dirname(nodeInspectorModuleFilePath);
+            var nodeInspectorFullPath = path.join(path.join(nodeInspectorModuleDir, "bin"), "inspector");
+            this.$childProcess.spawn("node", [nodeInspectorFullPath, "--debug-port", port.toString()], { stdio: ["ignore", "ignore", "ignore"], detached: true });
+        }).future<void>()();
+    }
+
+    private openDebuggerClient(url: string): IFuture<void> {
+        return (() => {
+            this.$opener.open(url, "chrome");
+        }).future<void>()();
+    }
+
+    private printDebugPort(packageName: string): void {
+        var res = this.$childProcess.spawnFromEvent(this.adb, ["shell", "am", "broadcast", "-a", packageName + "-GetDgbPort"], "exit").wait();
+        this.$logger.info(res.stdout);
+    }
+
+    private attachDebugger(packageName: string): void {
+        var startDebuggerCommand = this.composeCommand("shell am broadcast -a \"%s-Debug\" --ez enable true", packageName);
+        var port = options["debug-port"];
+        if (port > 0) {
+            startDebuggerCommand += " --ei debuggerPort " + options["debug-port"];
+            this.$childProcess.exec(startDebuggerCommand).wait();
+        } else {
+            var res = this.$childProcess.spawnFromEvent(this.adb, ["shell", "am", "broadcast", "-a", packageName + "-Debug", "--ez", "enable", "true"], "exit").wait();
+            var match = res.stdout.match(/result=(\d)+/);
+            if (match) {
+                port = match[0].substring(7);
+            } else {
+                port = 0;
+            }
+        }
+        if (port > 0) {
+            this.tcpForward(port, port).wait();
+        }
+        this.startDebuggerClient(port).wait();
+        this.openDebuggerClient(this.defaultNodeInspectorUrl + "?port=" + port).wait();
+    }
+
+    private detachDebugger(packageName: string): void {
+        var stopDebuggerCommand = this.composeCommand("shell am broadcast -a \"%s-Debug\" --ez enable false", packageName);
+        this.$childProcess.exec(stopDebuggerCommand).wait();
+    }
+
+    private startAppWithDebugger(packageFile: string, packageName: string): void {
+        var uninstallCommand = this.composeCommand("shell pm uninstall \"%s\"", packageName)
+			    this.$childProcess.exec(uninstallCommand).wait();
+
+        var installCommand = this.composeCommand("install -r \"%s\"", packageFile);
+        this.$childProcess.exec(installCommand).wait();
+
+        var port = options["debug-port"];
+
+        var clearDebugEnvironmentCommand = this.composeCommand('shell rm "/sdcard/Android/data/%s/files/envDebug.out"', packageName);
+        this.$childProcess.exec(clearDebugEnvironmentCommand).wait();
+
+        this.startPackageOnDevice(packageName).wait();
+
+        var dbgPort = this.startAndGetPort(packageName).wait();
+
+        if (dbgPort > 0) {
+            this.tcpForward(dbgPort, dbgPort).wait();
+            this.startDebuggerClient(dbgPort).wait();
+            this.openDebuggerClient(this.defaultNodeInspectorUrl + "?port=" + dbgPort).wait();
+        }
+    }
+
+    public debug(packageFile: string, packageName: string): IFuture<void> {
+        return (() => {
+            if (options["get-port"]) {
+                this.printDebugPort(packageName);
+            } else if (options["start"]) {
+                this.attachDebugger(packageName);
+            } else if (options["stop"]) {
+                this.detachDebugger(packageName);
+            } else if (options["debug-brk"]) {
+                this.startAppWithDebugger(packageFile, packageName);
+            } else {
+                this.$logger.info("Should specify at least one option: debug-brk, start, stop, get-port.");
+            }
+        }).future<void>()();
+    }
+
+    private checkIfRunning(packageName: string): boolean {
+        var isRunning = this.checkIfFileExists(packageName, "envDebug.out").wait();
+        return isRunning;
+    }
+
+    private readDebugPort(packageName: string): IFuture<number> {
+        return (() => {
+            var res = this.$childProcess.spawnFromEvent(this.adb, ["shell", "cat", "/sdcard/Android/data/" + packageName + "/files/envDebug.out"], "exit").wait();
+            var isRunning = res.stdout.indexOf('yes') > -1;
+            return 1;
+        }).future<number>()();
+    }
+
+    private sleep(ms: number): void {
+        var fiber = Fiber.current;
+        setTimeout(() => fiber.run(), ms);
+        Fiber.yield();
+    }
+
+    private checkIfFileExists(packageName: string, filename: string): IFuture<boolean> {
+        return (() => {
+            var args = ["shell", "test", "-f", "/sdcard/Android/data/" + packageName + "/files/" + filename, "&&", "echo 'yes'", "||", "echo 'no'"];
+            var res = this.$childProcess.spawnFromEvent(this.adb, args, "exit").wait();
+            var exists = res.stdout.indexOf('yes') > -1;
+            return exists;
+        }).future<boolean>()();
+    }
+
+    private startAndGetPort(packageName: string): IFuture<number> {
+        return (() => {
+            var port = -1;
+
+            var clearDebugEnvironmentCommand = this.composeCommand('shell rm "/sdcard/Android/data/%s/files/envDebug.in"', packageName);
+            this.$childProcess.exec(clearDebugEnvironmentCommand).wait();
+
+            var isRunning = false;
+            for (var i = 0; i < 10; i++) {
+                this.sleep(1000 /* ms */);
+                isRunning = this.checkIfRunning(packageName);
+                if (isRunning)
+                    break;
+            }
+
+            if (isRunning) {
+                var setEnvironmentCommand = this.composeCommand("shell \"cat /dev/null > \"/sdcard/Android/data/%s/files/envDebug.in\"\"", packageName);
+                this.$childProcess.exec(setEnvironmentCommand).wait();
+
+                for (var i = 0; i < 10; i++) {
+                    this.sleep(1000 /* ms */);
+                    var exists = this.checkIfFileExists(packageName, "envDebug.out").wait();
+                    if (exists) {
+                        var res = this.$childProcess.spawnFromEvent(this.adb, ["shell", "cat", "/sdcard/Android/data/" + packageName + "/files/envDebug.out"], "exit").wait();
+                        var match = res.stdout.match(/PORT=(\d)+/);
+                        if (match) {
+                            port = match[0].substring(5);
+                            break;
+                        }
+                    }
+                }
+            }
+            return port;
+        }).future<number>()();
+    }
+
+    private ensureFullAccessPermissions(devicePath: string): IFuture<void> {
 		var command = this.composeCommand('shell chmod 0777 "%s"', devicePath);
 		return this.$childProcess.exec(command);
 	}

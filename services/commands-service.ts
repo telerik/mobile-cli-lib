@@ -115,7 +115,7 @@ export class CommandsService implements ICommandsService {
 			if(mandatoryParams.length > 0) {
 				// If command has more mandatory params than the passed ones, we shouldn't execute it
 				if(mandatoryParams.length > commandArguments.length) {
-					this.$errors.fail("You need to provide all the required parameters.");
+                    this.$errors.fail("You need to provide all the required parameters.");
 				}
 
 				// If we reach here, the commandArguments are at least as much as mandatoryParams. Now we should verify that we have each of them.
