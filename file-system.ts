@@ -16,7 +16,7 @@ export class FileSystem implements IFileSystem {
 	private _readdir = Future.wrap(fs.readdir);
 	private _chmod = Future.wrap(fs.chmod);
 
-//TODO: try 'archiver' module for zipping
+	//TODO: try 'archiver' module for zipping
 	public zipFiles(zipFile: string, files: string[], zipPathCallback: (path: string) => string): IFuture<void> {
 		//we are resolving it here instead of in the constructor, because config has dependency on file system and config shouldn't require logger
 		var $logger = $injector.resolve("logger");
@@ -31,7 +31,7 @@ export class FileSystem implements IFileSystem {
 		var fileIdx = -1;
 		var zipCallback = () => {
 			fileIdx++;
-			if (fileIdx < files.length) {
+			if(fileIdx < files.length) {
 				var file = files[fileIdx];
 
 				var relativePath = zipPathCallback(file);
@@ -56,28 +56,25 @@ export class FileSystem implements IFileSystem {
 		return result;
 	}
 
-	public unzip(zipFile: string, destinationDir: string): IFuture<void> {
+	public unzip(zipFile: string, destinationDir: string, options?: { overwriteExisitingFiles: boolean}, fileFilters?: string[]): IFuture<void> {
 		return (() => {
-			if (hostInfo.isDarwin()) {
+			var shouldOverwriteFiles = options ? options.overwriteExisitingFiles : true;
+
+			if(hostInfo.isDarwin() || hostInfo.isLinux()) {
 				this.createDirectory(destinationDir).wait();
 
 				var $childProcess = $injector.resolve("$childProcess");
-				var unzipProc = $childProcess.spawn('unzip', ['-u', '-o', zipFile, '-d', destinationDir],
+				var unzipProc = $childProcess.spawn('unzip', _.flatten(['-u', shouldOverwriteFiles ? "-o" : "-n", zipFile, '-d', destinationDir, fileFilters || []]),
 					{ stdio: "ignore", detached: true });
 				this.futureFromEvent(unzipProc, "close").wait();
-			} else if (hostInfo.isWindows()) {
+			} else if(hostInfo.isWindows()) {
 				this.createDirectory(destinationDir).wait();
 
 				var $childProcess = $injector.resolve("$childProcess");
 				var sevenZip = (<IStaticConfig>$injector.resolve("$staticConfig")).sevenZipFilePath;
-				var unzipProc = $childProcess.spawn(sevenZip, ['x', '-y', '-o' + destinationDir, zipFile,],
+				var unzipProc = $childProcess.spawn(sevenZip, _.flatten(['x', shouldOverwriteFiles ? "-y" : "-aos", '-o' + destinationDir, zipFile, fileFilters || []]),
 					{ stdio: "ignore", detached: true });
 				this.futureFromEvent(unzipProc, "close").wait();
-			}
-			else if (hostInfo.isLinux()) {
-				this.futureFromEvent(
-					this.createReadStream(zipFile)
-						.pipe(unzip.Extract({ path: destinationDir })), "close").wait();
 			}
 		}).future<void>()();
 	}
@@ -91,7 +88,7 @@ export class FileSystem implements IFileSystem {
 	public deleteFile(path: string): IFuture<void> {
 		var future = new Future<void>();
 		fs.unlink(path, (err: any) => {
-			if (err && err.code !== "ENOENT") {  // ignore "file doesn't exist" error
+			if(err && err.code !== "ENOENT") {  // ignore "file doesn't exist" error
 				future.throw(err);
 			} else {
 				future.return();
@@ -125,13 +122,13 @@ export class FileSystem implements IFileSystem {
 		eventEmitter.once(event, () => {
 			var args = _.toArray(arguments);
 
-			if (event === "error") {
+			if(event === "error") {
 				var err = <Error>args[0];
 				future.throw(err);
 				return;
 			}
 
-			switch (args.length) {
+			switch(args.length) {
 				case 0:
 					future.return();
 					break;
@@ -146,10 +143,10 @@ export class FileSystem implements IFileSystem {
 		return future;
 	}
 
-	public createDirectory(path:string): IFuture<void> {
+	public createDirectory(path: string): IFuture<void> {
 		var future = new Future<void>();
 		(<any> require("mkdirp"))(path, (err: Error) => {
-			if (err) {
+			if(err) {
 				future.throw(err);
 			} else {
 				future.return();
@@ -167,7 +164,7 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public readText(filename: string, encoding?: string): IFuture<string> {
-		return <IFuture<string>> <any> this._readFile(filename, {encoding: encoding || "utf8"});
+		return <IFuture<string>> <any> this._readFile(filename, { encoding: encoding || "utf8" });
 	}
 
 	public readJson(filename: string, encoding?: string): IFuture<any> {
@@ -229,15 +226,15 @@ export class FileSystem implements IFileSystem {
 
 	public getUniqueFileName(baseName: string): IFuture<string> {
 		return ((): string => {
-			if (!this.exists(baseName).wait()) {
+			if(!this.exists(baseName).wait()) {
 				return baseName;
 			}
 			var extension = path.extname(baseName);
 			var prefix = path.basename(baseName, extension);
 
-			for (var i = 2; ; ++i) {
+			for(var i = 2; ; ++i) {
 				var numberedName = prefix + i + extension;
-				if (!this.exists(numberedName).wait()) {
+				if(!this.exists(numberedName).wait()) {
 					return numberedName;
 				}
 			}
@@ -245,15 +242,15 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public isEmptyDir(directoryPath: string): IFuture<boolean> {
-		return(() => {
+		return (() => {
 			var directoryContent = this.readDirectory(directoryPath).wait();
 			return directoryContent.length === 0;
 		}).future<boolean>()();
 	}
 
 	public ensureDirectoryExists(directoryPath: string): IFuture<void> {
-		return(() => {
-			if (!this.exists(directoryPath).wait()) {
+		return (() => {
+			if(!this.exists(directoryPath).wait()) {
 				this.createDirectory(directoryPath).wait();
 			}
 		}).future<void>()();
@@ -274,8 +271,8 @@ export class FileSystem implements IFileSystem {
 
 	public symlink(sourcePath: string, destinationPath: string, type?: string): IFuture<void> {
 		var future = new Future<void>();
-		fs.symlink(sourcePath, destinationPath, type, (err:Error) => {
-			if (err) {
+		fs.symlink(sourcePath, destinationPath, type, (err: Error) => {
+			if(err) {
 				future.throw(err);
 			} else {
 				future.return();
@@ -298,7 +295,7 @@ export class FileSystem implements IFileSystem {
 
 	public setCurrentUserAsOwner(path: string, owner: string): IFuture<void> {
 		return (() => {
-			if (!hostInfo.isWindows()) {
+			if(!hostInfo.isWindows()) {
 				var $childProcess = $injector.resolve("$childProcess");
 
 				var chown = $childProcess.spawn('chown', ['-R', owner, path],
