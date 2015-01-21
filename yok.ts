@@ -248,7 +248,7 @@ export class Yok implements IInjector {
 	public register(name: string, resolver: any, shared: boolean = true): void {
 		trace("registered '%s'", name);
 
-		var dependency:any = this.modules[name] || {};
+		var dependency: any = this.modules[name] || {};
 		dependency.shared = shared;
 
 		if(_.isFunction(resolver)) {
@@ -271,12 +271,11 @@ export class Yok implements IInjector {
 		return command;
 	}
 
-	public resolve(param: any, ctorArguments?: { [key: string]: any }): any {
+	public resolve(param: any, ctorArguments?: IDictionary<any>): any {
 		if(_.isFunction(param)) {
 			return this.resolveConstructor(<Function> param, ctorArguments);
 		} else {
-			assert.ok(!ctorArguments);
-			return this.resolveByName(<string> param);
+			return this.resolveByName(<string> param, ctorArguments);
 		}
 	}
 
@@ -320,7 +319,7 @@ export class Yok implements IInjector {
 		}
 	}
 
-	private resolveByName(name: string): any {
+	private resolveByName(name: string, ctorArguments?: IDictionary<any>): any {
 		if(name[0] === "$") {
 			name = name.substr(1);
 		}
@@ -345,7 +344,7 @@ export class Yok implements IInjector {
 					throw new Error("no resolver registered for " + name);
 				}
 
-				dependency.instance = this.resolveConstructor(dependency.resolver);
+				dependency.instance = this.resolveConstructor(dependency.resolver, ctorArguments);
 			}
 		}
 		finally {
