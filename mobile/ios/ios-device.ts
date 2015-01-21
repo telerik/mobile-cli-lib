@@ -138,7 +138,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 
     public debug(packageFile: string, packageName: string): IFuture<void> {
         return (() => {
-            // TODO: add implementation
+            this.$errors.fail({formatStr:"this will come in a future version", suppressCommandHelp: true});
         }).future<void>()();
     }
 
