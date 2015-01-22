@@ -393,7 +393,7 @@ export class CoreFoundation implements  Mobile.ICoreFoundation {
 		return result;
 	}
 
-	public cfTypeFrom(value: {[key: string]: any}): NodeBuffer {
+	public cfTypeFrom(value: IDictionary<any>): NodeBuffer {
 		var keys = _.keys(value);
 		var values = _.values(value);
 

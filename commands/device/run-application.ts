@@ -13,7 +13,7 @@ export class RunApplicationOnDeviceCommand implements ICommand {
 
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
-			this.$devicesServices.initialize(undefined, options.device, {skipInferPlatform: true}).wait();
+			this.$devicesServices.initialize({ deviceId: options.device, skipInferPlatform: true }).wait();
 
 			var action = (device: Mobile.IDevice) =>  { return (() => device.runApplication(args[0]).wait()).future<void>()(); };
 			this.$devicesServices.execute(action).wait();

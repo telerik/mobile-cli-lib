@@ -183,8 +183,10 @@ export class DevicesServices implements Mobile.IDevicesServices {
 		}).future<void>()();
 	}
 
-	public initialize(platform: string, deviceOption?: string, options?: Mobile.IDevicesServicesInitializationOptions): IFuture<void> {
-		options = options || {};
+	public initialize(data?: Mobile.IDevicesServicesInitializationOptions): IFuture<void> {
+		var platform = data.platform;
+		var deviceOption = data.deviceId;
+
 		if (this._isInitialized) {
 			return Future.fromResult();
 		}
@@ -206,7 +208,7 @@ export class DevicesServices implements Mobile.IDevicesServices {
 			} else if(!platform && !deviceOption) {
 				this.startLookingForDevices().wait();
 
-				if (!options.skipInferPlatform) {
+				if (!data.skipInferPlatform) {
 					var devices = this.getDevices();
 					var platforms = _.uniq(_.map(devices, (device) => device.getPlatform()));
 

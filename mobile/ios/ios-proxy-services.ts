@@ -329,14 +329,6 @@ export class GDBServer implements Mobile.IGDBServer {
 		this.socket.write(data);
 		var commands = ['C', 'c', 'S', 's', 'vCont', 'vAttach', 'vRun', 'vStopped', '?'];
 		var stopReply = _.any(commands, command => packet.startsWith(command));
-
-		if(stopReply) {
-			var resume = true;
-			while(resume) {
-				resume = false;
-				// TODO: extend the protocol communication
-			}
-		}
 	}
 }
 $injector.register("gdbServer", GDBServer);

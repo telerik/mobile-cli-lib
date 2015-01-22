@@ -42,6 +42,8 @@ declare module Mobile {
 	}
 
 	interface IDevicesServicesInitializationOptions {
+		platform?: string;
+		deviceId?: string;
 		skipInferPlatform?: boolean;
 	}
 
@@ -49,7 +51,7 @@ declare module Mobile {
 		hasDevices: boolean;
 		deviceCount: number;
 		execute(action: (device: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: {allowNoDevices?: boolean}): IFuture<void>;
-		initialize(platform: string, deviceOption?: string, options?: IDevicesServicesInitializationOptions): IFuture<void>;
+		initialize(data: IDevicesServicesInitializationOptions): IFuture<void>;
 		platform: string;
 	}
 
@@ -96,7 +98,7 @@ declare module Mobile {
 		setGetTypeID(): number;
 		dictionaryGetKeysAndValues(dictionary: NodeBuffer, keys: NodeBuffer, values: NodeBuffer): void;
 		dataCreate(allocator: NodeBuffer, data: NodeBuffer, length: number): any;
-		cfTypeFrom(value: {[key: string]: any}): NodeBuffer;
+		cfTypeFrom(value: IDictionary<any>): NodeBuffer;
 		cfTypeTo(cfDictionary: NodeBuffer): IDictionary<any>;
 	}
 

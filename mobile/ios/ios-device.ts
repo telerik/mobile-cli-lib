@@ -1,4 +1,5 @@
 ///<reference path="../../../.d.ts"/>
+"use strict";
 
 import Future = require("fibers/future");
 import ref = require("ref");
@@ -14,6 +15,7 @@ import helpers = require("./../../helpers");
 var CoreTypes = iosCore.CoreTypes;
 
 export class IOSDevice implements Mobile.IIOSDevice {
+	private static IMAGE_ALREADY_MOUNTED_ERROR_CODE = 3892314230;
 
 	private identifier: string = null;
 	private voidPtr = ref.refType(ref.types.void);
@@ -136,24 +138,18 @@ export class IOSDevice implements Mobile.IIOSDevice {
 	}
 
 	private lookupApplications(): IDictionary<any> {
-		this.connect();
-		try {
-			this.startSession();
-			try {
-				var dictionaryPointer = ref.alloc(CoreTypes.cfDictionaryRef);
-				var result = this.$mobileDevice.deviceLookupApplications(this.devicePointer, 0, dictionaryPointer);
-				if(result !== 0) {
-					this.$errors.fail("Invalid result code %s from device lookup applications.", result);
-				}
-				var cfDictionary = dictionaryPointer.deref();
-				var jsDictionary = this.$coreFoundation.cfTypeTo(cfDictionary);
-				return jsDictionary;
-			} finally {
-				this.stopSession();
+		var func = () => {
+			var dictionaryPointer = ref.alloc(CoreTypes.cfDictionaryRef);
+			var result = this.$mobileDevice.deviceLookupApplications(this.devicePointer, 0, dictionaryPointer);
+			if(result !== 0) {
+				this.$errors.fail("Invalid result code %s from device lookup applications.", result);
 			}
-		} finally {
-			this.disconnect();
+			var cfDictionary = dictionaryPointer.deref();
+			var jsDictionary = this.$coreFoundation.cfTypeTo(cfDictionary);
+			return jsDictionary;
 		}
+
+		return this.tryToExecuteFunction<IDictionary<any>>(func);
 	}
 
 	private findDeveloperDirectory(): IFuture<string> {
@@ -161,6 +157,20 @@ export class IOSDevice implements Mobile.IIOSDevice {
 			var childProcess = this.$childProcess.spawnFromEvent("xcode-select", ["-print-path"], "close").wait();
 			return childProcess.stdout.trim();
 		}).future<string>()();
+	}
+
+	private tryToExecuteFunction<TResult>(func: () => TResult): TResult {
+		this.connect();
+		try {
+			this.startSession();
+			try {
+				return func.apply(this, []);
+			} finally {
+				this.stopSession();
+			}
+		} finally {
+			this.disconnect();
+		}
 	}
 
 	private findDeveloperDiskImageDirectoryPath(): IFuture<string> {
@@ -186,7 +196,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 					version: version,
 					majorVersion: versionParts[0],
 					minorVersion: versionParts[1],
-					build: parts.length > 1 ? parts[1].replace("(", "").replace(")", "") : null,
+					build: parts.length > 1 ? parts[1].replace(/[()]/, () => "") : null,
 					path: path.join(developerDiskImagePath, sp)
 				}
 
@@ -219,50 +229,38 @@ export class IOSDevice implements Mobile.IIOSDevice {
 	}
 
 	private mountImage(): void {
-		this.connect();
-		try {
-			this.startSession();
-			try {
-				var developerDiskImageDirectoryPath = this.findDeveloperDiskImageDirectoryPath().wait();
-				var imagePath = path.join(developerDiskImageDirectoryPath, "DeveloperDiskImage.dmg");
-				this.$logger.info("Mounting %s", imagePath);
+		var func = () => {
+			var developerDiskImageDirectoryPath = this.findDeveloperDiskImageDirectoryPath().wait();
+			var imagePath = path.join(developerDiskImageDirectoryPath, "DeveloperDiskImage.dmg");
+			this.$logger.info("Mounting %s", imagePath);
 
-				var signature = this.$fs.readFile(util.format("%s.signature", imagePath)).wait();
-				var cfImagePath = this.$coreFoundation.createCFString(imagePath);
+			var signature = this.$fs.readFile(util.format("%s.signature", imagePath)).wait();
+			var cfImagePath = this.$coreFoundation.createCFString(imagePath);
 
-				var cfOptions = this.$coreFoundation.cfTypeFrom({
-					ImageType: "Developer",
-					ImageSignature: signature
-				});
+			var cfOptions = this.$coreFoundation.cfTypeFrom({
+				ImageType: "Developer",
+				ImageSignature: signature
+			});
 
-				var result = this.$mobileDevice.deviceMountImage(this.devicePointer, cfImagePath, cfOptions, this.mountImageCallbackPtr);
+			var result = this.$mobileDevice.deviceMountImage(this.devicePointer, cfImagePath, cfOptions, this.mountImageCallbackPtr);
 
-				if(result !== 0 && result !== 3892314230) { // 3892314230 - already mounted
-					this.$errors.fail("Unable to mount image on device.");
-				}
-			} finally {
-				this.stopSession();
+			if(result !== 0 && result !== IOSDevice.IMAGE_ALREADY_MOUNTED_ERROR_CODE) { // 3892314230 - already mounted
+				this.$errors.fail("Unable to mount image on device.");
 			}
-		} finally {
-			this.disconnect();
-		}
+		};
+
+		this.tryToExecuteFunction<void>(func);
 	}
 
 	public startService(serviceName: string): number {
-		this.connect();
-		try {
-			this.startSession();
-			try {
-				var socket = ref.alloc("int");
-				var result = this.$mobileDevice.deviceStartService(this.devicePointer, this.$coreFoundation.createCFString(serviceName), socket);
-				this.validateResult(result, "Unable to start service");
-				return ref.deref(socket);
-			} finally {
-				this.stopSession();
-			}
-		} finally {
-			this.disconnect();
+		var func = () => {
+			var socket = ref.alloc("int");
+			var result = this.$mobileDevice.deviceStartService(this.devicePointer, this.$coreFoundation.createCFString(serviceName), socket);
+			this.validateResult(result, "Unable to start service");
+			return ref.deref(socket);
 		}
+
+		return this.tryToExecuteFunction<number>(func);
 	}
 
 	public deploy(packageFile: string, packageName: string): IFuture<void> {
