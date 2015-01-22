@@ -43,7 +43,10 @@ export class AndroidDevice implements Mobile.IDevice {
 	private static LIVESYNC_BROADCAST_NAME = "com.telerik.LiveSync";
 	private static CHECK_LIVESYNC_INTENT_NAME = "com.telerik.IsLiveSyncSupported"
 
-	private static DEVICE_TMP_DIR_FORMAT_V2 = "/data/local/tmp/12590FAA-5EDD-4B12-856D-F52A0A1599F2/%s";
+    private static ENV_DEBUG_IN_FILENAME = "envDebug.in";
+    private static ENV_DEBUG_OUT_FILENAME = "envDebug.out";
+    private static PACKAGE_EXTERNAL_DIR_TEMPLATE = "/sdcard/Android/data/%s/files/";
+    private static DEVICE_TMP_DIR_FORMAT_V2 = "/data/local/tmp/12590FAA-5EDD-4B12-856D-F52A0A1599F2/%s";
 	private static DEVICE_TMP_DIR_FORMAT_V3 = "/mnt/sdcard/Android/data/%s/files/12590FAA-5EDD-4B12-856D-F52A0A1599F2";
 	private static COMMANDS_FILE = "telerik.livesync.commands";
 	private static DEVICE_PATH_SEPARATOR = "/";
@@ -246,14 +249,16 @@ export class AndroidDevice implements Mobile.IDevice {
 
     private startAppWithDebugger(packageFile: string, packageName: string): void {
         var uninstallCommand = this.composeCommand("shell pm uninstall \"%s\"", packageName)
-			    this.$childProcess.exec(uninstallCommand).wait();
+		this.$childProcess.exec(uninstallCommand).wait();
 
         var installCommand = this.composeCommand("install -r \"%s\"", packageFile);
         this.$childProcess.exec(installCommand).wait();
 
         var port = options["debug-port"];
 
-        var clearDebugEnvironmentCommand = this.composeCommand('shell rm "/sdcard/Android/data/%s/files/envDebug.out"', packageName);
+        var packageDir = util.format(AndroidDevice.PACKAGE_EXTERNAL_DIR_TEMPLATE, packageName);
+        var envDebugOutFullpath = packageDir + AndroidDevice.ENV_DEBUG_OUT_FILENAME;
+        var clearDebugEnvironmentCommand = this.composeCommand('shell rm "%s"', envDebugOutFullpath);
         this.$childProcess.exec(clearDebugEnvironmentCommand).wait();
 
         this.startPackageOnDevice(packageName).wait();
@@ -284,20 +289,15 @@ export class AndroidDevice implements Mobile.IDevice {
     }
 
     private checkIfRunning(packageName: string): boolean {
-        var isRunning = this.checkIfFileExists(packageName, "envDebug.out").wait();
+        var packageDir = util.format(AndroidDevice.PACKAGE_EXTERNAL_DIR_TEMPLATE, packageName);
+        var envDebugOutFullpath = packageDir + AndroidDevice.ENV_DEBUG_OUT_FILENAME;
+        var isRunning = this.checkIfFileExists(envDebugOutFullpath).wait();
         return isRunning;
     }
 
-    private readDebugPort(packageName: string): IFuture<number> {
+    private checkIfFileExists(filename: string): IFuture<boolean> {
         return (() => {
-            var res = this.$childProcess.spawnFromEvent(this.adb, ["shell", "cat", "/sdcard/Android/data/" + packageName + "/files/envDebug.out"], "exit").wait();
-            var isRunning = res.stdout.indexOf('yes') > -1;
-        }).future<number>()();
-    }
-
-    private checkIfFileExists(packageName: string, filename: string): IFuture<boolean> {
-        return (() => {
-            var args = ["shell", "test", "-f", "/sdcard/Android/data/" + packageName + "/files/" + filename, "&&", "echo 'yes'", "||", "echo 'no'"];
+            var args = ["shell", "test", "-f", filename, "&&", "echo 'yes'", "||", "echo 'no'"];
             var res = this.$childProcess.spawnFromEvent(this.adb, args, "exit").wait();
             var exists = res.stdout.indexOf('yes') > -1;
             return exists;
@@ -308,7 +308,9 @@ export class AndroidDevice implements Mobile.IDevice {
         return (() => {
             var port = -1;
 
-            var clearDebugEnvironmentCommand = this.composeCommand('shell rm "/sdcard/Android/data/%s/files/envDebug.in"', packageName);
+            var packageDir = util.format(AndroidDevice.PACKAGE_EXTERNAL_DIR_TEMPLATE, packageName);
+            var envDebugInFullpath = packageDir + AndroidDevice.ENV_DEBUG_IN_FILENAME;
+            var clearDebugEnvironmentCommand = this.composeCommand('shell rm "%s"', envDebugInFullpath);
             this.$childProcess.exec(clearDebugEnvironmentCommand).wait();
 
             var isRunning = false;
@@ -320,14 +322,15 @@ export class AndroidDevice implements Mobile.IDevice {
             }
 
             if (isRunning) {
-                var setEnvironmentCommand = this.composeCommand("shell \"cat /dev/null > \"/sdcard/Android/data/%s/files/envDebug.in\"\"", packageName);
+                var setEnvironmentCommand = this.composeCommand('shell "cat /dev/null > %s"', envDebugInFullpath);
                 this.$childProcess.exec(setEnvironmentCommand).wait();
 
                 for (var i = 0; i < 10; i++) {
                     helpers.sleep(1000 /* ms */);
-                    var exists = this.checkIfFileExists(packageName, "envDebug.out").wait();
+                    var envDebugOutFullpath = packageDir + AndroidDevice.ENV_DEBUG_OUT_FILENAME;
+                    var exists = this.checkIfFileExists(envDebugOutFullpath).wait();
                     if (exists) {
-                        var res = this.$childProcess.spawnFromEvent(this.adb, ["shell", "cat", "/sdcard/Android/data/" + packageName + "/files/envDebug.out"], "exit").wait();
+                        var res = this.$childProcess.spawnFromEvent(this.adb, ["shell", "cat", envDebugOutFullpath], "exit").wait();
                         var match = res.stdout.match(/PORT=(\d)+/);
                         if (match) {
                             port = match[0].substring(5);
