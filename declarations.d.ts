@@ -228,3 +228,18 @@ interface ITypeScriptCompilationService {
 	initialize(typeScriptFiles: string[]): void;
 	compileAllFiles(): IFuture<void>;
 }
+
+interface IDynamicHelpService {
+	isProjectType(...args: string[]): IFuture<boolean>;
+	isPlatform(...args: string[]): boolean;
+	getLocalVariables(): IFuture<IDictionary<any>>;
+}
+
+interface IDynamicHelpProvider {
+	isProjectType(args: string[]): IFuture<boolean>;
+	getLocalVariables(): IFuture<IDictionary<any>>;
+}
+
+interface IMicroTemplateService {
+	parseContent(data: string): string;
+}

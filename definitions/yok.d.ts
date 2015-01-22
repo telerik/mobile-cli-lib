@@ -15,6 +15,7 @@ interface IInjector extends IDisposable {
 	isDefaultCommand(commandName: string): boolean;
 	isValidHierarchicalCommand(commandName: string, commandArguments: string[]): boolean;
 	getChildrenCommandsNames(commandName: string): string[];
+	buildHierarchicalCommand(parentCommandName: string, commandLineArguments: string[]): any;
 }
 
 declare var $injector: IInjector;
