@@ -18,6 +18,8 @@ declare module Mobile {
 		sync(localToDevicePaths: ILocalToDevicePathData[], appIdentifier: IAppIdentifier, liveSyncUrl: string): IFuture<void>;
 		sync(localToDevicePaths: ILocalToDevicePathData[], appIdentifier: IAppIdentifier, liveSyncUrl: string, options: ISyncOptions): IFuture<void>;
 		openDeviceLogStream(): void;
+		listApplications?(): void;
+		runApplication?(applicationId: string): IFuture<void>;
 	}
 
 	interface IAppIdentifier {
@@ -40,6 +42,8 @@ declare module Mobile {
 	}
 
 	interface IDevicesServicesInitializationOptions {
+		platform?: string;
+		deviceId?: string;
 		skipInferPlatform?: boolean;
 	}
 
@@ -47,7 +51,7 @@ declare module Mobile {
 		hasDevices: boolean;
 		deviceCount: number;
 		execute(action: (device: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: {allowNoDevices?: boolean}): IFuture<void>;
-		initialize(platform: string, deviceOption?: string, options?: IDevicesServicesInitializationOptions): IFuture<void>;
+		initialize(data: IDevicesServicesInitializationOptions): IFuture<void>;
 		platform: string;
 	}
 
@@ -65,7 +69,7 @@ declare module Mobile {
 		runLoopGetCurrent(): any;
 		stringCreateWithCString(alloc: NodeBuffer, str: string, encoding: number): NodeBuffer;
 		dictionaryGetValue(theDict: NodeBuffer, value: NodeBuffer): NodeBuffer;
-		numberGetValue(number: NodeBuffer, theType: number, valuePtr: NodeBuffer): boolean;
+		numberGetValue(num: NodeBuffer, theType: number, valuePtr: NodeBuffer): boolean;
 		kCFRunLoopCommonModes(): NodeBuffer;
 		kCFRunLoopDefaultMode(): NodeBuffer;
 		kCFTypeDictionaryKeyCallBacks(): NodeBuffer;
@@ -93,6 +97,9 @@ declare module Mobile {
 		dateGetTypeID(): number;
 		setGetTypeID(): number;
 		dictionaryGetKeysAndValues(dictionary: NodeBuffer, keys: NodeBuffer, values: NodeBuffer): void;
+		dataCreate(allocator: NodeBuffer, data: NodeBuffer, length: number): any;
+		cfTypeFrom(value: IDictionary<any>): NodeBuffer;
+		cfTypeTo(cfDictionary: NodeBuffer): IDictionary<any>;
 	}
 
 	interface IMobileDevice {
@@ -109,6 +116,8 @@ declare module Mobile {
 		deviceStartService(devicePointer: NodeBuffer, serviceName: NodeBuffer, socketNumber: NodeBuffer): number;
 		deviceTransferApplication(service: number, packageFile: NodeBuffer, options: NodeBuffer, installationCallback: NodeBuffer): number;
 		deviceInstallApplication(service: number, packageFile: NodeBuffer, options: NodeBuffer, installationCallback: NodeBuffer): number;
+		deviceMountImage(devicePointer: NodeBuffer, imagePath: NodeBuffer, options: NodeBuffer, mountCallBack: NodeBuffer): number;
+		deviceLookupApplications(devicePointer: NodeBuffer, appType: number, result: NodeBuffer): number;
 		afcConnectionOpen(service: number, timeout: number, afcConnection: NodeBuffer): number;
 		afcConnectionClose(afcConnection: NodeBuffer): number;
 		afcDirectoryCreate(afcConnection: NodeBuffer, path: string): number;
@@ -121,6 +130,7 @@ declare module Mobile {
 		afcDirectoryRead(afcConnection: NodeBuffer, afcdirectory: NodeBuffer,  name: NodeBuffer): number;
 		afcDirectoryClose(afcConnection: NodeBuffer, afcdirectory: NodeBuffer): number;
 		isDataReceivingCompleted(reply: string): boolean;
+		setLogLevel(logLevel: number): number;
 	}
 
 	interface IHouseArrestClient {
@@ -145,6 +155,10 @@ declare module Mobile {
 		readSystemLog(action: (data: NodeBuffer) => void): void;
 		sendMessage(message: {[key: string]: {}}, format?: number): void;
 		close(): void;
+	}
+
+	interface IGDBServer {
+		run(argv: string[]): void;
 	}
 
 	interface IPlatformCapabilities {

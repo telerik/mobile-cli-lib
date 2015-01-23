@@ -57,6 +57,7 @@ export class CoreTypes {
 
 	public static am_device_notification_callback = ffi.Function("void", [ref.refType(CoreTypes.am_device_notification_callback_info), CoreTypes.voidPtr]);
 	public static am_device_install_application_callback = ffi.Function("void", [CoreTypes.cfDictionaryRef, CoreTypes.voidPtr]);
+	public static am_device_mount_image_callback = ffi.Function("void", [CoreTypes.voidPtr, CoreTypes.intType]);
 	public static cf_run_loop_timer_callback = ffi.Function("void", [CoreTypes.voidPtr, CoreTypes.voidPtr]);
 }
 
@@ -138,7 +139,7 @@ class IOSCore implements Mobile.IiOSCore {
 			"CFStringGetCStringPtr": ffi.ForeignFunction(lib.get("CFStringGetCStringPtr"), CoreTypes.charPtr, [CoreTypes.cfStringRef, "uint"]),
 			"CFStringGetCString": ffi.ForeignFunction(lib.get("CFStringGetCString"), CoreTypes.boolType, [CoreTypes.cfStringRef, CoreTypes.charPtr, "uint", "uint"]),
 			"CFStringGetLength":  ffi.ForeignFunction(lib.get("CFStringGetLength"), "ulong", [CoreTypes.cfStringRef]),
-			"CFDictionaryGetCount": ffi.ForeignFunction(lib.get("CFDictionaryGetCount"), "int", [CoreTypes.cfDictionaryRef]),
+			"CFDictionaryGetCount": ffi.ForeignFunction(lib.get("CFDictionaryGetCount"), CoreTypes.intType, [CoreTypes.cfDictionaryRef]),
 			"CFDictionaryGetKeysAndValues": ffi.ForeignFunction(lib.get("CFDictionaryGetKeysAndValues"), "void", [CoreTypes.cfDictionaryRef, CoreTypes.ptrToVoidPtr, CoreTypes.ptrToVoidPtr]),
 			"CFDictionaryCreate": ffi.ForeignFunction(lib.get("CFDictionaryCreate"), CoreTypes.cfDictionaryRef, [CoreTypes.voidPtr, CoreTypes.ptrToVoidPtr, CoreTypes.ptrToVoidPtr, "int", ref.refType(this.cfDictionaryKeyCallBacks), ref.refType(this.cfDictionaryValueCallBacks)]),
 			"kCFTypeDictionaryKeyCallBacks": lib.get("kCFTypeDictionaryKeyCallBacks"),
@@ -163,7 +164,8 @@ class IOSCore implements Mobile.IiOSCore {
 			"CFSetGetTypeID": ffi.ForeignFunction(lib.get("CFSetGetTypeID"), ref.types.long, []),
 			"CFDataGetBytePtr": ffi.ForeignFunction(lib.get("CFDataGetBytePtr"), ref.refType(ref.types.uint8), [CoreTypes.voidPtr]),
 			"CFDataGetLength": ffi.ForeignFunction(lib.get("CFDataGetLength"), ref.types.long, [CoreTypes.voidPtr]),
-			"CFDataCreate": ffi.ForeignFunction(lib.get("CFDataCreate"), CoreTypes.voidPtr, [CoreTypes.voidPtr, CoreTypes.voidPtr, ref.types.long])
+			"CFDataCreate": ffi.ForeignFunction(lib.get("CFDataCreate"), CoreTypes.voidPtr, [CoreTypes.voidPtr, CoreTypes.voidPtr, ref.types.long]),
+			"CFStringGetMaximumSizeForEncoding": ffi.ForeignFunction(lib.get("CFStringGetMaximumSizeForEncoding"), CoreTypes.intType, [CoreTypes.intType, CoreTypes.uint32Type])
 		};
 	}
 
@@ -183,7 +185,7 @@ class IOSCore implements Mobile.IiOSCore {
 			"AMDeviceStartService": ffi.ForeignFunction(lib.get("AMDeviceStartService"), "uint", [CoreTypes.am_device_p, CoreTypes.cfStringRef, CoreTypes.intPtr, CoreTypes.voidPtr]),
 			"AMDeviceTransferApplication": ffi.ForeignFunction(lib.get("AMDeviceTransferApplication"), "uint", ["int", CoreTypes.cfStringRef, CoreTypes.cfDictionaryRef, CoreTypes.am_device_install_application_callback, CoreTypes.voidPtr]),
 			"AMDeviceInstallApplication": ffi.ForeignFunction(lib.get("AMDeviceInstallApplication"), "uint", ["int", CoreTypes.cfStringRef, CoreTypes.cfDictionaryRef, CoreTypes.am_device_install_application_callback, CoreTypes.voidPtr]),
-			"AMDeviceLookupApplications": ffi.ForeignFunction(lib.get("AMDeviceLookupApplications"), "uint", [CoreTypes.am_device_p, "uint", ref.refType(CoreTypes.cfDictionaryRef)]),
+			"AMDeviceLookupApplications": ffi.ForeignFunction(lib.get("AMDeviceLookupApplications"), CoreTypes.uintType, [CoreTypes.am_device_p, CoreTypes.uintType, ref.refType(CoreTypes.cfDictionaryRef)]),
 			"AMDeviceUninstallApplication": ffi.ForeignFunction(lib.get("AMDeviceUninstallApplication"), "uint", ["int", CoreTypes.cfStringRef, CoreTypes.cfDictionaryRef, CoreTypes.am_device_install_application_callback, CoreTypes.voidPtr]),
 			"AFCConnectionOpen": ffi.ForeignFunction(lib.get("AFCConnectionOpen"), "uint", ["int", "uint", ref.refType(CoreTypes.afcConnectionRef)]),
 			"AFCConnectionClose": ffi.ForeignFunction(lib.get("AFCConnectionClose"), "uint", [CoreTypes.afcConnectionRef]),
@@ -198,7 +200,9 @@ class IOSCore implements Mobile.IiOSCore {
 			"AFCDirectoryClose": ffi.ForeignFunction(lib.get("AFCDirectoryClose"), CoreTypes.afcError, [CoreTypes.afcConnectionRef, CoreTypes.afcDirectoryRef]),
 			"AMDeviceCopyDeviceIdentifier": ffi.ForeignFunction(lib.get("AMDeviceCopyDeviceIdentifier"), CoreTypes.cfStringRef, [CoreTypes.am_device_p]),
 			"AMDeviceCopyValue": ffi.ForeignFunction(lib.get("AMDeviceCopyValue"), CoreTypes.cfStringRef, [CoreTypes.am_device_p, CoreTypes.cfStringRef, CoreTypes.cfStringRef]),
-			"AMDeviceNotificationUnsubscribe": ffi.ForeignFunction(lib.get("AMDeviceNotificationUnsubscribe"), CoreTypes.intType, [CoreTypes.amDeviceNotificationRef])
+			"AMDeviceNotificationUnsubscribe": ffi.ForeignFunction(lib.get("AMDeviceNotificationUnsubscribe"), CoreTypes.intType, [CoreTypes.amDeviceNotificationRef]),
+			"AMDeviceMountImage": ffi.ForeignFunction(lib.get("AMDeviceMountImage"), CoreTypes.uintType, [CoreTypes.am_device_p, CoreTypes.cfStringRef, CoreTypes.cfDictionaryRef, CoreTypes.am_device_mount_image_callback, CoreTypes.voidPtr]),
+			"AMDSetLogLevel": ffi.ForeignFunction(lib.get("AMDSetLogLevel"), CoreTypes.intType, [CoreTypes.intType])
 		};
 	}
 
@@ -221,6 +225,10 @@ export class CoreFoundation implements  Mobile.ICoreFoundation {
 	constructor($iOSCore: Mobile.IiOSCore,
 		private $errors: IErrors){
 		this.coreFoundationLibrary = $iOSCore.getCoreFoundationLibrary();
+	}
+
+	public stringGetMaximumSizeForEncoding(len: number, encoding: number): number {
+		return this.coreFoundationLibrary.CFStringGetMaximumSizeForEncoding(len, encoding);
 	}
 
 	public runLoopRun(): void {
@@ -307,8 +315,8 @@ export class CoreFoundation implements  Mobile.ICoreFoundation {
 		return this.coreFoundationLibrary.CFDictionaryGetTypeID();
 	}
 
-	public numberGetValue(number: NodeBuffer, theType: number, valuePtr: NodeBuffer): boolean {
-		return this.coreFoundationLibrary.CFNumberGetValue(number, theType, valuePtr);
+	public numberGetValue(num: NodeBuffer, theType: number, valuePtr: NodeBuffer): boolean {
+		return this.coreFoundationLibrary.CFNumberGetValue(num, theType, valuePtr);
 	}
 
 	public getTypeID(buffer: NodeBuffer): number {
@@ -385,7 +393,7 @@ export class CoreFoundation implements  Mobile.ICoreFoundation {
 		return result;
 	}
 
-	private cfTypeFrom(value: {[key: string]: any}): NodeBuffer {
+	public cfTypeFrom(value: IDictionary<any>): NodeBuffer {
 		var keys = _.keys(value);
 		var values = _.values(value);
 
@@ -397,7 +405,15 @@ export class CoreFoundation implements  Mobile.ICoreFoundation {
 
 		for(var i=0; i< len; i++) {
 			var cfKey = this.createCFString(keys[i]);
-			var cfValue =this.createCFString(values[i]);
+			var cfValue: any;
+
+			if(typeof values[i] === "string") {
+				cfValue = this.createCFString(values[i]);
+			} else if(values[i] instanceof Buffer) {
+				cfValue = this.dataCreate(null, values[i], values[i].length);
+			} else {
+				cfValue = this.cfTypeFrom(values[i]);
+			}
 
 			ref.writePointer(keysBuffer, offset, cfKey);
 			ref.writePointer(valuesBuffer, offset, cfValue);
@@ -407,16 +423,39 @@ export class CoreFoundation implements  Mobile.ICoreFoundation {
 		return this.dictionaryCreate(null, keysBuffer, valuesBuffer, len, this.kCFTypeDictionaryKeyCallBacks(), this.kCFTypeDictionaryValueCallBacks());
 	}
 
-	private cfTypeTo(value: NodeBuffer): NodeBuffer {
-		var typeId = this.getTypeID(value);
-		var retval: NodeBuffer = null;
+	public cfTypeTo(dataRef: NodeBuffer): any {
+		var typeId = this.getTypeID(dataRef);
 
-		if(typeId === this.dataGetTypeID()) {
-			var len = this.dataGetLength(value);
-			retval = ref.reinterpret(this.dataGetBytePtr(value), len);
+		if(typeId === this.stringGetTypeID()) {
+			return this.convertCFStringToCString(dataRef);
+		} else if(typeId === this.dataGetTypeID()) {
+			var len = this.dataGetLength(dataRef);
+			var retval = ref.reinterpret(this.dataGetBytePtr(dataRef), len);
+			return retval;
+		} else if(typeId === this.dictionaryGetTypeID()) {
+			var count = this.dictionaryGetCount(dataRef);
+
+			var keys = new Buffer(count * CoreTypes.pointerSize);
+			var values = new Buffer(count * CoreTypes.pointerSize);
+			this.dictionaryGetKeysAndValues(dataRef, keys, values);
+
+			var jsDictionary = Object.create(null);
+			var offset = 0;
+
+			for(var i=0; i<count; i++) {
+				var keyPointer = ref.readPointer(keys, offset, CoreTypes.pointerSize);
+				var valuePointer = ref.readPointer(values, offset, CoreTypes.pointerSize);
+				offset += CoreTypes.pointerSize;
+
+				var jsKey = this.cfTypeTo(keyPointer);
+				var jsValue = this.cfTypeTo(valuePointer);
+				jsDictionary[jsKey] = jsValue;
+			}
+
+			return jsDictionary;
+		} else { // We don't need it for now
+			return "";
 		}
-
-		return retval;
 	}
 
 	public dictToPlistEncoding(dict: {[key: string]: {}}, format: number): NodeBuffer {
@@ -503,6 +542,14 @@ export class MobileDevice implements Mobile.IMobileDevice {
 		return this.mobileDeviceLibrary.AMDeviceInstallApplication(service, packageFile, options, installationCallback, null);
 	}
 
+	public deviceMountImage(devicePointer: NodeBuffer, imagePath: NodeBuffer, options: NodeBuffer, mountCallBack: NodeBuffer): number {
+		return this.mobileDeviceLibrary.AMDeviceMountImage(devicePointer, imagePath, options, mountCallBack, null);
+	}
+
+	public deviceLookupApplications(devicePointer: NodeBuffer, appType: number, result: NodeBuffer): number {
+		return this.mobileDeviceLibrary.AMDeviceLookupApplications(devicePointer, appType, result);
+	}
+
 	public afcConnectionOpen(service: number, timeout: number, afcConnection: NodeBuffer): number {
 		return this.mobileDeviceLibrary.AFCConnectionOpen(service, timeout, afcConnection);
 	}
@@ -562,6 +609,10 @@ export class MobileDevice implements Mobile.IMobileDevice {
 		}
 
 		return reply.indexOf("Status") >= 0 && reply.indexOf("Complete") >= 0 && reply.indexOf("PercentComplete") < 0;
+	}
+
+	public setLogLevel(logLevel: number): number {
+		return this.mobileDeviceLibrary.AMDSetLogLevel(logLevel);
 	}
  }
 $injector.register("mobileDevice", MobileDevice);

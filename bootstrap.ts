@@ -28,9 +28,11 @@ $injector.require("propertiesParser", "./common/properties-parser");
 
 $injector.requireCommand(["help", "/?"], "./common/commands/help");
 $injector.requireCommand("feature-usage-tracking", "./common/commands/analytics");
-$injector.requireCommand("dev-post-install", "./common/commands/post-install");
-$injector.requireCommand("device|*list", "./common/commands/list-devices");
-$injector.requireCommand("device|log", "./common/commands/device-log-stream");
+
+$injector.requireCommand("device|*list", "./common/commands/device/list-devices");
+$injector.requireCommand("device|log", "./common/commands/device/device-log-stream");
+$injector.requireCommand("device|run", "./common/commands/device/run-application");
+$injector.requireCommand("device|list-applications", "./common/commands/device/list-applications");
 
 $injector.require("iOSCore", "./common/mobile/ios/ios-core");
 $injector.require("coreFoundation", "./common/mobile/ios/ios-core");
@@ -40,6 +42,7 @@ $injector.require("plistService", "./common/mobile/ios/ios-core");
 $injector.require("installationProxyClient", "./common/mobile/ios/ios-proxy-services");
 $injector.require("notificationProxyClient", "./common/mobile/ios/ios-proxy-services");
 $injector.require("houseArrestClient", "./common/mobile/ios/ios-proxy-services");
+$injector.require("gdbServer", "./common/mobile/ios/ios-proxy-services");
 
 $injector.require("signal", "./events/signal");
 $injector.require("deviceFound", "./common/mobile/mobile-core/device-discovery");

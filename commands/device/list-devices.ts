@@ -1,9 +1,9 @@
-///<reference path="../../.d.ts"/>
+///<reference path="../../../.d.ts"/>
 "use strict";
 
 import util = require("util");
-import options = require("./../options");
-import commandParams = require("../command-params");
+import options = require("./../../options");
+import commandParams = require("../../command-params");
 
 export class ListDevicesCommand implements ICommand {
 	constructor(private $devicesServices: Mobile.IDevicesServices,
@@ -15,7 +15,7 @@ export class ListDevicesCommand implements ICommand {
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
 			var index = 1;
-			this.$devicesServices.initialize(args[0], null, {skipInferPlatform: true}).wait();
+			this.$devicesServices.initialize({platform: args[0], deviceId: null, skipInferPlatform: true}).wait();
 
 			var action: (device: Mobile.IDevice) => IFuture<void>;
 			if (options.json) {
