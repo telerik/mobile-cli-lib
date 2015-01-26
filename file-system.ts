@@ -59,23 +59,13 @@ export class FileSystem implements IFileSystem {
 	public unzip(zipFile: string, destinationDir: string, options?: { overwriteExisitingFiles: boolean}, fileFilters?: string[]): IFuture<void> {
 		return (() => {
 			var shouldOverwriteFiles = options ? options.overwriteExisitingFiles : true;
+			var $childProcess = $injector.resolve("$childProcess");
+			this.createDirectory(destinationDir).wait();
 
-			if(hostInfo.isDarwin() || hostInfo.isLinux()) {
-				this.createDirectory(destinationDir).wait();
-
-				var $childProcess = $injector.resolve("$childProcess");
-				var unzipProc = $childProcess.spawn('unzip', _.flatten(['-u', shouldOverwriteFiles ? "-o" : "-n", zipFile, '-d', destinationDir, fileFilters || []]),
-					{ stdio: "ignore", detached: true });
-				this.futureFromEvent(unzipProc, "close").wait();
-			} else if(hostInfo.isWindows()) {
-				this.createDirectory(destinationDir).wait();
-
-				var $childProcess = $injector.resolve("$childProcess");
-				var sevenZip = (<IStaticConfig>$injector.resolve("$staticConfig")).sevenZipFilePath;
-				var unzipProc = $childProcess.spawn(sevenZip, _.flatten(['x', shouldOverwriteFiles ? "-y" : "-aos", '-o' + destinationDir, zipFile, fileFilters || []]),
-					{ stdio: "ignore", detached: true });
-				this.futureFromEvent(unzipProc, "close").wait();
-			}
+			var sevenZip = (<IStaticConfig>$injector.resolve("$staticConfig")).sevenZipFilePath;
+			var unzipProc = $childProcess.spawn(sevenZip, _.flatten(['x', shouldOverwriteFiles ? "-y" : "-aos", '-o' + destinationDir, zipFile, fileFilters || []]),
+				{ stdio: "ignore", detached: true });
+			this.futureFromEvent(unzipProc, "close").wait();
 		}).future<void>()();
 	}
 
