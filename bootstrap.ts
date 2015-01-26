@@ -65,3 +65,4 @@ $injector.require("iOSEmulatorServices", "./common/mobile/ios/ios-emulator-servi
 $injector.require("wp8EmulatorServices", "./common/mobile/wp8/wp8-emulator-services");
 
 $injector.require("autoCompletionService", "./common/services/auto-completion-service");
+$injector.require("opener", "./common/opener");

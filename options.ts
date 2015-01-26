@@ -21,7 +21,16 @@ var knownOpts: any = {
 		"device": String,
 		"availableDevices": Boolean,
 		"appid": String,
-		"geny": String
+		"geny": String,
+        //
+        "debug-brk": Boolean,
+        "debugBrk": Boolean,
+        "debug-port": Number,
+        "debugPort": Number,
+        "get-port": Boolean,
+        "getPort": Boolean,
+        "start": Boolean,
+        "stop": Boolean
 	},
 	shorthands: IStringDictionary = {
 		"v": "verbose",

@@ -271,6 +271,12 @@ export class IOSDevice implements Mobile.IIOSDevice {
 		}).future<void>()();
 	}
 
+    public debug(packageFile: string, packageName: string): IFuture<void> {
+        return (() => {
+            this.$errors.fail({formatStr:"this will come in a future version", suppressCommandHelp: true});
+        }).future<void>()();
+    }
+
 	public sync(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, liveSyncUrl: string, options: Mobile.ISyncOptions = {}): IFuture<void> {
 		return(() => {
 			//TODO: CloseSocket must be part of afcClient. Refactor it.

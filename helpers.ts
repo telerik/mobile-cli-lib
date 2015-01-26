@@ -7,6 +7,7 @@ import _ = require("lodash");
 var uuid = require("node-uuid");
 var options = require("./options");
 import Future = require("fibers/future");
+import Fiber = require("fibers");
 
 export function createGUID(useBraces: boolean = true) {
 	var output: string;
@@ -195,4 +196,10 @@ export function printMsgWithTimeout(message: string, timeout: number): IFuture <
 	}, timeout);
 
 	return printMsgFuture;
+}
+
+export function sleep(ms: number): void {
+  var fiber = Fiber.current;
+  setTimeout(() => fiber.run(), ms);
+  Fiber.yield();
 }
