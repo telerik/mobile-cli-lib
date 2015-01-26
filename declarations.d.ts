@@ -101,6 +101,10 @@ interface IFsStats {
 	ctime: Date;
 }
 
+interface IOpener {
+	open(filename: string, appname?: string): void;
+}
+
 interface IErrors {
 	fail(formatStr: string, ...args: any[]): void;
 	fail(opts: {formatStr?: string; errorCode?: number; suppressCommandHelp?: boolean}, ...args: any[]): void;

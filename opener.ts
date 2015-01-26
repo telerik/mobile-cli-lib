@@ -6,7 +6,7 @@ import xopen = require("open");
 
 export class Opener implements IOpener {
 	
-    public open(target: string, appname: string): void {
+    public open(target: string, appname?: string): void {
         xopen(target, appname);
 	}
 }
