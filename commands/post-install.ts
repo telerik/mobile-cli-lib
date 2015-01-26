@@ -22,6 +22,7 @@ export class PostInstallCommand implements ICommand {
 				}
 
 				this.$fs.chmod(this.$staticConfig.adbFilePath, "0777").wait();
+				this.$fs.chmod(this.$staticConfig.sevenZipFilePath, "0777").wait();
 			}
 
 			this.$autoCompletionService.enableAutoCompletion().wait();
