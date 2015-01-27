@@ -34,7 +34,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		private $errors: IErrors,
 		private $childProcess: IChildProcess,
 		private $fs: IFileSystem,
-		private $staticConfig: IStaticConfig) {
+		private $staticConfig: Config.IStaticConfig) {
 		iconv.extendNodeEncodings();
 	}
 

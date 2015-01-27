@@ -13,7 +13,7 @@ export class AnalyticsService implements IAnalyticsService {
 	private analyticsStatus: AnalyticsStatus = null;
 	private _eqatecMonitor: any;
 
-	constructor(private $staticConfig: IStaticConfig,
+	constructor(private $staticConfig: Config.IStaticConfig,
 		private $logger: ILogger,
 		private $errors: IErrors,
 		private $prompter: IPrompter,
