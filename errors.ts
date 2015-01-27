@@ -98,7 +98,12 @@ export class Errors implements IErrors {
 		throw exception;
 	}
 
-	beginCommand(action: () => IFuture<boolean>, printCommandHelp: () => IFuture<boolean>): IFuture<boolean> {
+	public failWithoutHelp(message: string, ...args: any[]): void {
+		args.unshift(message);
+		this.fail({ formatStr: util.format.apply(null, args), suppressCommandHelp: true });
+	}
+
+	public beginCommand(action: () => IFuture<boolean>, printCommandHelp: () => IFuture<boolean>): IFuture<boolean> {
 		return (() => {
 			try {
 				return action().wait();
