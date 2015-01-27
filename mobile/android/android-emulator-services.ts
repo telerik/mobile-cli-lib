@@ -47,16 +47,20 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		}).future<void>()();
 	}
 
+	private static MISSING_SDK_MESSAGE = "The Android SDK is not configured properly. " +
+		"Verify that you have installed the Android SDK and that you have added its `platform-tools` and `tools` directories to your PATH environment variable.";
+
 	private checkAndroidSDKConfiguration(): IFuture<void> {
 		return (() => {
-			var proc = this.$childProcess.spawnFromEvent('emulator', ['-help'], "exit", undefined, { throwError: false }).wait();
+			try {
+				var proc = this.$childProcess.spawnFromEvent('emulator', ['-help'], "exit", undefined, { throwError: false }).wait();
 
-			if(proc.stderr) {
-				this.$errors.fail({
-					formatStr: "The Android SDK is not configured properly. " +
-					"Verify that you have installed the Android SDK and that you have added its `platform-tools` and `tools` directories to your PATH environment variable.",
-					suppressCommandHelp: true
-				});
+				if(proc.stderr) {
+					this.$errors.fail({formatStr: AndroidEmulatorServices.MISSING_SDK_MESSAGE, suppressCommandHelp: true});
+				}
+			} catch (e) {
+				var message: string = (e.code === "ENOENT") ? AndroidEmulatorServices.MISSING_SDK_MESSAGE : e.message;
+				this.$errors.fail({formatStr: message, suppressCommandHelp: true});
 			}
 		}).future<void>()();
 	}

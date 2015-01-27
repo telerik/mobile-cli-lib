@@ -62,7 +62,7 @@ export class ChildProcess implements IChildProcess {
 		}
 
 		childProcess.on(event, (arg: any) => {
-			var exitCode = typeof arg == 'number' ? arg : arg && arg.code;
+			var exitCode = typeof arg === 'number' ? arg : arg && arg.code;
 			var result = {
 				stdout: capturedOut,
 				stderr: capturedErr,
@@ -79,9 +79,13 @@ export class ChildProcess implements IChildProcess {
 					if (capturedErr) {
 						errorMessage += util.format(' Error output: \n %s', capturedErr);
 					}
-					future.throw(errorMessage);
+					future.throw(new Error(errorMessage));
 				}
 			}
+		});
+
+		childProcess.once("error", (err: Error) => {
+			future.throw(err);
 		});
 
 		return future;
