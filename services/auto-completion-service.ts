@@ -10,7 +10,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 	constructor(private $fs: IFileSystem,
 		private $childProcess: IChildProcess,
 		private $logger: ILogger,
-		private $staticConfig: IStaticConfig) {	}
+		private $staticConfig: Config.IStaticConfig) {	}
 
 	public disableAnalytics = true;
 

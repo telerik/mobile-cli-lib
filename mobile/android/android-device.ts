@@ -64,7 +64,7 @@ export class AndroidDevice implements Mobile.IDevice {
 		private $fs: IFileSystem,
 		private $childProcess: IChildProcess,
 		private $errors: IErrors,
-        private $staticConfig: IStaticConfig,
+        private $staticConfig: Config.IStaticConfig,
         private $opener: IOpener) {
 		var details: IAndroidDeviceDetails = this.getDeviceDetails().wait();
 		this.model = details.model;

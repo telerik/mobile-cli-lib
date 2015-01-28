@@ -20,9 +20,8 @@ export class TypeScriptCompilationService implements ITypeScriptCompilationServi
 
 	constructor(private $childProcess: IChildProcess,
 		private $fs: IFileSystem,
-		private $errors: IErrors,
 		private $logger: ILogger,
-		private $config: IConfiguration) { }
+		private $config: Config.IConfig) { }
 
 	public initialize(typeScriptFiles: string[]): void {
 		this.typeScriptFiles = typeScriptFiles;

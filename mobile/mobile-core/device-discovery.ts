@@ -168,7 +168,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery {
 
 	constructor(private $childProcess: IChildProcess,
 		private $injector: IInjector,
-		private $staticConfig: IStaticConfig){
+		private $staticConfig: Config.IStaticConfig){
 		super();
 	}
 

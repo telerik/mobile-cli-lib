@@ -6,7 +6,7 @@ import options = require("../../common/options");
 export class PostInstallCommand implements ICommand {
 	constructor(private $autoCompletionService: IAutoCompletionService,
 		private $fs: IFileSystem,
-		private $staticConfig: IStaticConfig) {
+		private $staticConfig: Config.IStaticConfig) {
 	}
 
 	public disableAnalytics = true;

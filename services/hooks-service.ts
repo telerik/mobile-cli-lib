@@ -23,7 +23,7 @@ export class HooksService implements IHooksService {
 		private $fs: IFileSystem,
 		private $logger: ILogger,
 		private $errors: IErrors,
-		private $staticConfig: IStaticConfig,
+		private $staticConfig: Config.IStaticConfig,
 		private $projectHelper: IProjectHelper) { }
 
 	public initialize(commandName: string): void {

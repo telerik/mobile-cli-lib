@@ -62,7 +62,7 @@ export class FileSystem implements IFileSystem {
 			var $childProcess = $injector.resolve("$childProcess");
 			this.createDirectory(destinationDir).wait();
 
-			var sevenZip = (<IStaticConfig>$injector.resolve("$staticConfig")).sevenZipFilePath;
+			var sevenZip = (<Config.IStaticConfig>$injector.resolve("$staticConfig")).sevenZipFilePath;
 			var unzipProc = $childProcess.spawn(sevenZip, _.flatten(['x', shouldOverwriteFiles ? "-y" : "-aos", '-o' + destinationDir, zipFile, fileFilters || []]),
 				{ stdio: "ignore", detached: true });
 			this.futureFromEvent(unzipProc, "close").wait();
