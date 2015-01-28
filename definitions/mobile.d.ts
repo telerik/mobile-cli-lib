@@ -130,7 +130,7 @@ declare module Mobile {
 		afcDirectoryOpen(afcConnection: NodeBuffer, path: string, afcDirectory: NodeBuffer): number;
 		afcDirectoryRead(afcConnection: NodeBuffer, afcdirectory: NodeBuffer,  name: NodeBuffer): number;
 		afcDirectoryClose(afcConnection: NodeBuffer, afcdirectory: NodeBuffer): number;
-		isDataReceivingCompleted(reply: string): boolean;
+		isDataReceivingCompleted(reply: IDictionary<any>): boolean;
 		setLogLevel(logLevel: number): number;
 	}
 
@@ -141,8 +141,16 @@ declare module Mobile {
 	}
 
 	interface IAfcClient {
+		transfer(localFilePath: string, devicePath: string): IFuture<void>;
 		transferCollection(localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void>;
 		deleteFile(devicePath: string): void;
+		mkdir(path: string): void;
+		listDir(path: string): void;
+	}
+
+	interface IAfcFile {
+		write(buffer: any, byteLength?: any): boolean;
+		close(): void;
 	}
 
 	interface ILocalToDevicePathData {
@@ -151,10 +159,20 @@ declare module Mobile {
 		getRelativeToProjectBasePath(): string;
 	}
 
+	interface IiOSSocketResponseData {
+		Status?: string;
+		Error?: string;
+		PercentComplete?: string;
+		Complete?: boolean;
+	}
+
 	interface IiOSDeviceSocket {
-		receiveMessage(): IFuture<void>;
+		receiveMessage(): IFuture<IiOSSocketResponseData>;
 		readSystemLog(action: (data: NodeBuffer) => void): void;
 		sendMessage(message: {[key: string]: {}}, format?: number): void;
+		sendMessage(message: string): void;
+		sendAll?(data: NodeBuffer): void;
+		exchange(message: IDictionary<any>): IFuture<IiOSSocketResponseData>;
 		close(): void;
 	}
 

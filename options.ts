@@ -22,15 +22,15 @@ var knownOpts: any = {
 		"availableDevices": Boolean,
 		"appid": String,
 		"geny": String,
-        //
-        "debug-brk": Boolean,
-        "debugBrk": Boolean,
-        "debug-port": Number,
-        "debugPort": Number,
-        "get-port": Boolean,
-        "getPort": Boolean,
-        "start": Boolean,
-        "stop": Boolean
+		"debug-brk": Boolean,
+		"debugBrk": Boolean,
+		"debug-port": Number,
+		"debugPort": Number,
+		"get-port": Boolean,
+		"getPort": Boolean,
+		"start": Boolean,
+		"stop": Boolean,
+		"ddi": String // the path to developer  disk image
 	},
 	shorthands: IStringDictionary = {
 		"v": "verbose",
