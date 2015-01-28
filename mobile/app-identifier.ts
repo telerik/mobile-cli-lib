@@ -37,7 +37,7 @@ export class AndroidAppIdentifier implements Mobile.IAppIdentifier {
 	}
 
 	getLiveSyncNotSupportedError(device: Mobile.IDevice): string {
-		return util.format("You can't LiveSync on %s! Deploy the app with LiveSync enabled and wait for the initial start up before LiveSyncing.", device.getIdentifier());
+		return util.format("You can't LiveSync on device with id %s! Deploy the app with LiveSync enabled and wait for the initial start up before LiveSyncing.", device.getIdentifier());
 	}
 
 	isLiveSyncSupported(device: any): IFuture<boolean> {
