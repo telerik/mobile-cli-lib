@@ -108,7 +108,7 @@ interface IOpener {
 interface IErrors {
 	fail(formatStr: string, ...args: any[]): void;
 	fail(opts: {formatStr?: string; errorCode?: number; suppressCommandHelp?: boolean}, ...args: any[]): void;
-
+	failWithoutHelp(message: string, ...args: any[]): void;
 	beginCommand(action: () => IFuture<boolean>, printCommandHelp: () => IFuture<boolean>): IFuture<boolean>;
 	verifyHeap(message: string): void;
 }
