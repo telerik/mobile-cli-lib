@@ -1,7 +1,6 @@
 ///<reference path="../../../.d.ts"/>
 "use strict";
 
-var bplist = require("bplist-parser");
 import Future = require("fibers/future");
 import ref = require("ref");
 import os = require("os");
