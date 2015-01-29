@@ -14,21 +14,13 @@ export function isWindows32() {
 }
 
 export function isDarwin() {
-	return process.platform.toUpperCase() === "DARWIN";
+	return process.platform === "darwin";
 }
 
 export function isLinux() {
 	return process.platform === "linux";
 }
 
-export var hostCapabilities: { [key:string]: IHostCapabilities } = {
-	"win32": { 
-		debugToolsSupported: true
-	},
-	"darwin": {
-		debugToolsSupported: true
-	},
-	"linux": {
-		debugToolsSupported: false
-	}
+export function isLinux64(): boolean {
+	return isLinux() && process.config.variables.host_arch === "x64";
 }
