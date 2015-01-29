@@ -651,8 +651,12 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData> {
 		return (() => {
 			var message = this.receiveMessageCore();
-			var reply = plist.parse(message);
-			return reply;
+			if(!message.startsWith("bplist")) {
+				var reply = plist.parse(message);
+				return reply;
+			}
+
+			return null;
 		}).future<Mobile.IiOSSocketResponseData>()();
 	}
 
