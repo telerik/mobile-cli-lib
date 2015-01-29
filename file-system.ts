@@ -60,10 +60,11 @@ export class FileSystem implements IFileSystem {
 		return (() => {
 			var shouldOverwriteFiles = options ? options.overwriteExisitingFiles : true;
 			var $childProcess = $injector.resolve("$childProcess");
+			var $resourceConstants = $injector.resolve("resourceConstants");
+
 			this.createDirectory(destinationDir).wait();
 
-			var sevenZip = (<Config.IStaticConfig>$injector.resolve("$staticConfig")).sevenZipFilePath;
-			var unzipProc = $childProcess.spawn(sevenZip, _.flatten(['x', shouldOverwriteFiles ? "-y" : "-aos", '-o' + destinationDir, zipFile, fileFilters || []]),
+			var unzipProc = $childProcess.spawn($resourceConstants.SEVEN_ZIP_FILE_PATH, _.flatten(['x', shouldOverwriteFiles ? "-y" : "-aos", '-o' + destinationDir, zipFile, fileFilters || []]),
 				{ stdio: "ignore", detached: true });
 			this.futureFromEvent(unzipProc, "close").wait();
 		}).future<void>()();
