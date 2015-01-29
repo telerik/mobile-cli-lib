@@ -8,7 +8,6 @@ import os = require("os");
 import osenv = require("osenv");
 import path = require("path");
 import util = require("util");
-import hostInfo = require("../../../common/host-info");
 import MobileHelper = require("../mobile-helper");
 import options = require("../../options");
 import helpers = require("../../helpers");
