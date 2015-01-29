@@ -168,13 +168,13 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery {
 
 	constructor(private $childProcess: IChildProcess,
 		private $injector: IInjector,
-		private $staticConfig: Config.IStaticConfig){
+		private $resourceConstants: IResourceConstants){
 		super();
 	}
 
 	private get Adb() {
-		if(!AndroidDeviceDiscovery.adb) {
-			AndroidDeviceDiscovery.adb = helpers.getPathToAdb($injector).wait();
+		if (!AndroidDeviceDiscovery.adb) {
+			AndroidDeviceDiscovery.adb = this.$resourceConstants.ADB_FILE_PATH;
 		}
 
 		return AndroidDeviceDiscovery.adb;

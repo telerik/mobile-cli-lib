@@ -21,7 +21,7 @@ export class ProjectHelper implements IProjectHelper {
 		while (true) {
 			this.$logger.trace("Looking for project in '%s'", projectDir);
 
-			if (this.$fs.exists(path.join(projectDir, this.$staticConfig.PROJECT_FILE_NAME)).wait()) {
+			if (this.$staticConfig.PROJECT_FILE_NAME && this.$fs.exists(path.join(projectDir, this.$staticConfig.PROJECT_FILE_NAME)).wait()) {
 				this.$logger.debug("Project directory is '%s'.", projectDir);
 				this.cachedProjectDir = projectDir;
 				break;

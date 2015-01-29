@@ -66,3 +66,4 @@ $injector.require("wp8EmulatorServices", "./common/mobile/wp8/wp8-emulator-servi
 
 $injector.require("autoCompletionService", "./common/services/auto-completion-service");
 $injector.require("opener", "./common/opener");
+$injector.require("resourceConstants", "./common/resource-constants");

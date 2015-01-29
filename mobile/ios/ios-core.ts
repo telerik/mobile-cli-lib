@@ -657,7 +657,6 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 				return reply;
 			}
 
-			// TODO: add parsing for binary plists
 			return null;
 		}).future<Mobile.IiOSSocketResponseData>()();
 	}

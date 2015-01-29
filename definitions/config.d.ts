@@ -9,10 +9,7 @@ declare module Config {
 		START_PACKAGE_ACTIVITY_NAME: string;
 		version: string;
 		helpTextPath: string;
-		adbFilePath: string;
-		sevenZipFilePath: string;
 	}
-
 
 	interface IConfig {
 		AB_SERVER?: string;

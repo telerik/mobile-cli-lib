@@ -63,10 +63,12 @@ export class FileSystem implements IFileSystem {
 			this.createDirectory(destinationDir).wait();
 			var args =  <string[]>(_.flatten(['x', shouldOverwriteFiles ? "-y" : "-aos", '-o' + destinationDir, isCaseSensitive ? '' : '-ssc-', zipFile, fileFilters || []]));
 
-			var $childProcess = this.$injector.resolve("childProcess");
-			var $staticConfig = this.$injector.resolve("staticConfig");
+			var $childProcess = this.$injector.resolve("$childProcess");
+			var $resourceConstants = this.$injector.resolve("$resourceConstants");
 
-			$childProcess.spawnFromEvent($staticConfig.sevenZipFilePath, args, "close", { stdio: "ignore", detached: true }).wait();
+			var unzipProc = $childProcess.spawn($resourceConstants.SEVEN_ZIP_FILE_PATH, _.flatten(['x', shouldOverwriteFiles ? "-y" : "-aos", '-o' + destinationDir, zipFile, fileFilters || []]),
+				{ stdio: "ignore", detached: true });
+			this.futureFromEvent(unzipProc, "close").wait();
 		}).future<void>()();
 	}
 

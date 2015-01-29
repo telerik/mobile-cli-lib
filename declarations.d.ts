@@ -227,3 +227,8 @@ interface ITypeScriptCompilationService {
 	initialize(typeScriptFiles: string[]): void;
 	compileAllFiles(): IFuture<void>;
 }
+
+interface IResourceConstants {
+	ADB_FILE_PATH: string;
+	SEVEN_ZIP_FILE_PATH: string;
+}
