@@ -648,11 +648,16 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 		this.close();
 	}
 
-	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData> {
+	public receiveMessage(format?: number): IFuture<Mobile.IiOSSocketResponseData> {
 		return (() => {
 			var message = this.receiveMessageCore();
-			var reply = plist.parse(message);
-			return reply;
+			if(format === CoreTypes.kCFPropertyListXMLFormat_v1_0) {
+				var reply = plist.parse(message);
+				return reply;
+			}
+
+			// TODO: add parsing for binary plists
+			return null;
 		}).future<Mobile.IiOSSocketResponseData>()();
 	}
 
@@ -840,7 +845,7 @@ export class PlistService implements Mobile.IiOSDeviceSocket {
 	}
 
 	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData> {
-		return this.socket.receiveMessage();
+		return this.socket.receiveMessage(this.format);
 	}
 
 	public readSystemLog(action: (data: NodeBuffer) => void): any {
