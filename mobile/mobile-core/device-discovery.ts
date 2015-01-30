@@ -11,7 +11,6 @@ import Signal = require("./../../events/signal");
 import Future = require("fibers/future");
 import child_process = require("child_process");
 import helpers = require("./../../helpers");
-import hostInfo = require("../../host-info");
 var options = require("./../../options");
 
 export class DeviceDiscovery implements Mobile.IDeviceDiscovery {

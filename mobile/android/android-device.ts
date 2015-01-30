@@ -8,7 +8,6 @@ import temp = require("temp");
 import byline = require("byline");
 import helpers = require("../../helpers");
 import os = require("os");
-import hostInfo = require("../../host-info");
 import options = require("./../../options");
 import Fiber = require("fibers");
 
