@@ -172,8 +172,8 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery {
 	}
 
 	private get Adb() {
-		if (!AndroidDeviceDiscovery.adb) {
-			AndroidDeviceDiscovery.adb = this.$staticConfig.adbFilePath;
+		if(!AndroidDeviceDiscovery.adb) {
+			AndroidDeviceDiscovery.adb = helpers.getPathToAdb($injector).wait();
 		}
 
 		return AndroidDeviceDiscovery.adb;
