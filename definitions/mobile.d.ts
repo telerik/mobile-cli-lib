@@ -19,7 +19,6 @@ declare module Mobile {
 		sync(localToDevicePaths: ILocalToDevicePathData[], appIdentifier: IAppIdentifier, liveSyncUrl: string, options: ISyncOptions): IFuture<void>;
 		debug(packageFile: string, packageName: string): IFuture<void>;
 		openDeviceLogStream(): void;
-		getInstalledApplications(): IFuture<string[]>;
 		runApplication(applicationId: string): IFuture<void>;
 	}
 
@@ -119,6 +118,8 @@ declare module Mobile {
 		deviceInstallApplication(service: number, packageFile: NodeBuffer, options: NodeBuffer, installationCallback: NodeBuffer): number;
 		deviceMountImage(devicePointer: NodeBuffer, imagePath: NodeBuffer, options: NodeBuffer, mountCallBack: NodeBuffer): number;
 		deviceLookupApplications(devicePointer: NodeBuffer, appType: number, result: NodeBuffer): number;
+		deviceGetInterfaceType(devicePointer: NodeBuffer): number;
+		deviceGetConnectionId(devicePointer: NodeBuffer): number;
 		afcConnectionOpen(service: number, timeout: number, afcConnection: NodeBuffer): number;
 		afcConnectionClose(afcConnection: NodeBuffer): number;
 		afcDirectoryCreate(afcConnection: NodeBuffer, path: string): number;
@@ -132,6 +133,14 @@ declare module Mobile {
 		afcDirectoryClose(afcConnection: NodeBuffer, afcdirectory: NodeBuffer): number;
 		isDataReceivingCompleted(reply: IDictionary<any>): boolean;
 		setLogLevel(logLevel: number): number;
+
+		/**
+		 * Connect to a port on iOS device connected over USB.
+		 * @param connectionId Connection ID obtained throught IMobileDevice deviceGetConnectionId.
+		 * @param port Port on the device to connect to. The native API expects it in big endian!
+		 * @param socketRef Out param, reference to the socket file descriptor.
+		 */
+		uSBMuxConnectByPort(connectionId: number, port: number, socketRef: NodeBuffer): number;
 	}
 
 	interface IHouseArrestClient {
@@ -171,7 +180,8 @@ declare module Mobile {
 		readSystemLog(action: (data: NodeBuffer) => void): void;
 		sendMessage(message: {[key: string]: {}}, format?: number): void;
 		sendMessage(message: string): void;
-		sendAll?(data: NodeBuffer): void;
+		sendAll? (data: NodeBuffer): void;
+		receiveAll? (callback: (data: NodeBuffer) => void): void;
 		exchange(message: IDictionary<any>): IFuture<IiOSSocketResponseData>;
 		close(): void;
 	}
@@ -201,7 +211,7 @@ declare module Mobile {
 	interface IEmulatorPlatformServices {
 		checkDependencies(): IFuture<void>;
 		checkAvailability(dependsOnProject?: boolean): IFuture<void>;
-		startEmulator(app: string, emulatorOptions?: IEmulatorOptions) : IFuture<void>;
+		startEmulator(app: string, emulatorOptions?: IEmulatorOptions): IFuture<void>;
 	}
 
 	interface IEmulatorSettingsService {

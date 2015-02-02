@@ -10,6 +10,7 @@ import util = require("util");
 import helpers = require("./../../helpers");
 import net = require("net");
 import MobileHelpers = require("./../mobile-helper");
+import plistlib = require("plistlib");
 
 export class MobileServices {
 	public static APPLE_FILE_CONNECTION: string = "com.apple.afc";
@@ -220,25 +221,106 @@ export class InstallationProxyClient {
 $injector.register("installationProxyClient", InstallationProxyClient);
 
 export class NotificationProxyClient {
+
 	private plistService: Mobile.IiOSDeviceSocket = null;
+	private observers: IDictionary<Array<Function>> = {};
+
+	private buffer: string = "";
 
 	constructor(private device: Mobile.IIOSDevice,
 		private $injector: IInjector) { }
 
-	postNotification(notificationName: string) {
-		this.plistService = this.$injector.resolve(iOSCore.PlistService, {service:  this.device.startService(MobileServices.NOTIFICATION_PROXY), format: iOSCore.CoreTypes.kCFPropertyListBinaryFormat_v1_0});
-
+	public postNotification(notificationName: string) {
+		this.openSocket();
 		var result = this.plistService.sendMessage({
 			"Command": "PostNotification",
 			"Name": notificationName,
 			"ClientOptions": ""
 		});
+		return result;
+	}
+
+	public addObserver(name: string, callback: (name: string) => void) {
+		this.openSocket();
+
+		var result = this.plistService.sendMessage({
+			"Command": "ObserveNotification",
+			"Name": name
+		});
+
+		var array = this.observers[name];
+		if (!array) {
+			array = new Array();
+			this.observers[name] = array;
+		}
+		array.push(callback);
 
 		return result;
 	}
 
+	public removeObserver(name: string, callback: (name: string) => void) {
+		var array = this.observers[name];
+		if (array) {
+			var index = array.indexOf(callback);
+			if (index !== -1) {
+				array.splice(index, 1);
+			}
+		}
+	}
+
+	private openSocket() {
+		if (!this.plistService) {
+			this.plistService = this.$injector.resolve(iOSCore.PlistService, { service: this.device.startService(MobileServices.NOTIFICATION_PROXY), format: iOSCore.CoreTypes.kCFPropertyListBinaryFormat_v1_0 });
+			if (this.plistService.receiveAll) {
+				this.plistService.receiveAll(this.handleData.bind(this));
+			}
+		}
+	}
+
+	private handleData(data: NodeBuffer): void {
+		this.buffer += data.toString();
+
+		var PLIST_HEAD = "<plist";
+		var PLIST_TAIL = "</plist>";
+
+		var start = this.buffer.indexOf(PLIST_HEAD);
+		var end = this.buffer.indexOf(PLIST_TAIL);
+
+		while (start >= 0 && end >= 0) {
+			var plist = this.buffer.substr(start, end + PLIST_TAIL.length);
+			this.buffer = this.buffer.substr(end + PLIST_TAIL.length);
+
+			plistlib.loadString(plist, (err: any, plist: any) => {
+				if (!err && plist) {
+					this.handlePlistNotification(plist);
+				}
+			});
+
+			var start = this.buffer.indexOf("<plist");
+			var end = this.buffer.indexOf("</plist>");
+		}
+	}
+
 	public closeSocket() {
 		this.plistService.close();
+	}
+
+	private handlePlistNotification(plist: any) {
+		if (plist.type !== "dict")
+			return;
+		var value = plist.value;
+		if (!value)
+			return;
+		var command = value["Command"];
+		var name = value["Name"]
+		if (command.type !== "string" || command.value !== "RelayNotification" || name.type !== "string")
+			return;
+		var notification = name.value;
+		var observers = this.observers[notification];
+		if (!observers)
+			return;
+
+		observers.forEach(observer => observer(notification));
 	}
 }
 

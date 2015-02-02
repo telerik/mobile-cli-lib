@@ -25,6 +25,7 @@ export class CoreTypes {
 	public static uintType = ref.types.uint;
 	public static uint32Type = ref.types.uint32;
 	public static intType = ref.types.int;
+	public static longType = ref.types.long;
 	public static boolType = ref.types.bool;
 	public static doubleType = ref.types.double;
 
@@ -204,7 +205,10 @@ class IOSCore implements Mobile.IiOSCore {
 			"AMDeviceCopyValue": ffi.ForeignFunction(lib.get("AMDeviceCopyValue"), CoreTypes.cfStringRef, [CoreTypes.am_device_p, CoreTypes.cfStringRef, CoreTypes.cfStringRef]),
 			"AMDeviceNotificationUnsubscribe": ffi.ForeignFunction(lib.get("AMDeviceNotificationUnsubscribe"), CoreTypes.intType, [CoreTypes.amDeviceNotificationRef]),
 			"AMDeviceMountImage": hostInfo.isDarwin() ? ffi.ForeignFunction(lib.get("AMDeviceMountImage"), CoreTypes.uintType, [CoreTypes.am_device_p, CoreTypes.cfStringRef, CoreTypes.cfDictionaryRef, CoreTypes.am_device_mount_image_callback, CoreTypes.voidPtr]) : null,
-			"AMDSetLogLevel": ffi.ForeignFunction(lib.get("AMDSetLogLevel"), CoreTypes.intType, [CoreTypes.intType])
+			"AMDSetLogLevel": ffi.ForeignFunction(lib.get("AMDSetLogLevel"), CoreTypes.intType, [CoreTypes.intType]),
+			"AMDeviceGetInterfaceType": ffi.ForeignFunction(lib.get("AMDeviceGetInterfaceType"), CoreTypes.longType, [CoreTypes.am_device_p]),
+			"AMDeviceGetConnectionID": ffi.ForeignFunction(lib.get("AMDeviceGetConnectionID"), CoreTypes.longType, [CoreTypes.am_device_p]),
+			"USBMuxConnectByPort": ffi.ForeignFunction(lib.get("USBMuxConnectByPort"), CoreTypes.intType, [CoreTypes.intType, CoreTypes.intType, CoreTypes.intPtr])
 		};
 	}
 
@@ -556,6 +560,14 @@ export class MobileDevice implements Mobile.IMobileDevice {
 		return this.mobileDeviceLibrary.AMDeviceLookupApplications(devicePointer, appType, result);
 	}
 
+	public deviceGetInterfaceType(devicePointer: NodeBuffer): number {
+		return this.mobileDeviceLibrary.AMDeviceGetInterfaceType(devicePointer);
+	}
+
+	public deviceGetConnectionId(devicePointer: NodeBuffer): number {
+		return this.mobileDeviceLibrary.AMDeviceGetConnectionID(devicePointer);
+	}
+
 	public afcConnectionOpen(service: number, timeout: number, afcConnection: NodeBuffer): number {
 		return this.mobileDeviceLibrary.AFCConnectionOpen(service, timeout, afcConnection);
 	}
@@ -610,6 +622,10 @@ export class MobileDevice implements Mobile.IMobileDevice {
 
 	public setLogLevel(logLevel: number): number {
 		return this.mobileDeviceLibrary.AMDSetLogLevel(logLevel);
+	}
+
+	public uSBMuxConnectByPort(connectionId: number, port: number, socketRef: NodeBuffer): number {
+		return this.mobileDeviceLibrary.USBMuxConnectByPort(connectionId, port, socketRef);
 	}
  }
 $injector.register("mobileDevice", MobileDevice);
@@ -668,7 +684,7 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 		if(typeof(data) === "string") {
 			message = new Buffer(data);
 		}
-        else {
+		else {
 			var payload:NodeBuffer = new Buffer(plistlib.toString(this.createPlist(data)));
 			var packed:any = bufferpack.pack(">i", [payload.length]);
 			message = Buffer.concat([packed, payload]);
@@ -687,6 +703,15 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 			}
 			data = data.slice(result);
 		}
+	}
+
+	public receiveAll(handler: (data: NodeBuffer) => void): void {
+		var data = this.read(WinSocket.BYTES_TO_READ);
+		while (data) {
+			handler(data);
+			data = this.read(WinSocket.BYTES_TO_READ);
+		}
+		this.close();
 	}
 
 	public exchange(message: IDictionary<any>): IFuture<Mobile.IiOSSocketResponseData> {
@@ -861,6 +886,10 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 		this.$errors.verifyHeap("sendMessage");
 	}
 
+	public receiveAll(handler: (data: NodeBuffer) => void): void {
+		this.socket.on('data', handler);
+	}
+
 	public exchange(message: IDictionary<any>): IFuture<Mobile.IiOSSocketResponseData> {
 		this.$errors.fail("Exchange function is not implemented for OSX");
 		return null;
@@ -907,6 +936,12 @@ export class PlistService implements Mobile.IiOSDeviceSocket {
 
 	public sendAll(data: NodeBuffer): void {
 		this.socket.sendAll(data);
+	}
+
+	public receiveAll(handler: (data: NodeBuffer) => void): void {
+		if (this.socket.receiveAll) {
+			this.socket.receiveAll(handler);
+		}
 	}
 }
 
