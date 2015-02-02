@@ -619,6 +619,7 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 	private static BYTES_TO_READ = 1024;
 
 	constructor(private service: number,
+		private format: number,
 		private $logger: ILogger,
 		private $errors: IErrors) {
 		this.winSocketLibrary = IOSCore.getWinSocketLibrary();
@@ -648,10 +649,10 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 		this.close();
 	}
 
-	public receiveMessage(format?: number): IFuture<Mobile.IiOSSocketResponseData> {
+	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData> {
 		return (() => {
 			var message = this.receiveMessageCore();
-			if(format === CoreTypes.kCFPropertyListXMLFormat_v1_0) {
+			if(this.format === CoreTypes.kCFPropertyListXMLFormat_v1_0) {
 				var reply = plist.parse(message);
 				return reply;
 			}
@@ -838,14 +839,14 @@ export class PlistService implements Mobile.IiOSDeviceSocket {
 		private format: number,
 		private $injector: IInjector) {
 		if(hostInfo.isWindows()) {
-			this.socket = this.$injector.resolve(WinSocket, {service: this.service});
+			this.socket = this.$injector.resolve(WinSocket, {service: this.service, format: this.format });
 		} else if(hostInfo.isDarwin()) {
 			this.socket = this.$injector.resolve(PosixSocket, {service: this.service });
 		}
 	}
 
 	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData> {
-		return this.socket.receiveMessage(this.format);
+		return this.socket.receiveMessage();
 	}
 
 	public readSystemLog(action: (data: NodeBuffer) => void): any {
@@ -876,7 +877,7 @@ export class GDBServer implements Mobile.IGDBServer {
 		private $injector: IInjector) {
 
 		if(hostInfo.isWindows()) {
-			this.socket = this.$injector.resolve(WinSocket, {service: this.service});
+			this.socket = this.$injector.resolve(WinSocket, {service: this.service, format: 0});
 		} else if(hostInfo.isDarwin()) {
 			this.socket = this.$injector.resolve(PosixSocket, {service: this.service });
 		}

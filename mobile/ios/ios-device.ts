@@ -243,7 +243,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 				var imageSize = this.$fs.getFsStats(imagePath).wait().size;
 
 				var imageMounterService = this.startService(iOSProxyServices.MobileServices.MOBILE_IMAGE_MOUNTER);
-				var plistService: Mobile.IiOSDeviceSocket = this.$injector.resolve(iosCore.PlistService, { service: imageMounterService, format: CoreTypes.kCFPropertyListBinaryFormat_v1_0 });
+				var plistService: Mobile.IiOSDeviceSocket = this.$injector.resolve(iosCore.PlistService, { service: imageMounterService, format: CoreTypes.kCFPropertyListXMLFormat_v1_0 });
 				var result = plistService.exchange({
 					Command: "ReceiveBytes",
 					ImageSize: imageSize,
