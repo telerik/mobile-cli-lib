@@ -32,6 +32,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		"Verify that you have installed Genymotion and that you have added its installation directory to your PATH environment variable.";
 
 	private endTimeEpoch: number;
+	private adbFilePath: string;
 
 	constructor(private $logger: ILogger,
 		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
@@ -40,6 +41,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		private $fs: IFileSystem,
 		private $staticConfig: Config.IStaticConfig) {
 		iconv.extendNodeEncodings();
+		this.adbFilePath = helpers.getPathToAdb($injector).wait();
 	}
 
 	public checkDependencies(): IFuture<void> {
@@ -118,7 +120,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 			// install the app
 			this.$logger.info("installing %s through adb", app);
-			var childProcess = this.$childProcess.spawn(this.$staticConfig.adbFilePath, ["-s", emulatorId, 'install', '-r', app]);
+			var childProcess = this.$childProcess.spawn(this.adbFilePath, ["-s", emulatorId, 'install', '-r', app]);
 			this.$fs.futureFromEvent(childProcess, "close").wait();
 
 			// unlock screen again in cases when the installation is slow
@@ -126,14 +128,14 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 			// run the installed app
 			this.$logger.info("running %s through adb", app);
-			childProcess = this.$childProcess.spawn(this.$staticConfig.adbFilePath, ["-s", emulatorId, 'shell', 'am', 'start', '-S', appId + "/" + this.$staticConfig.START_PACKAGE_ACTIVITY_NAME],
+			childProcess = this.$childProcess.spawn(this.adbFilePath, ["-s", emulatorId, 'shell', 'am', 'start', '-S', appId + "/" + this.$staticConfig.START_PACKAGE_ACTIVITY_NAME],
 				{ stdio: "ignore", detached: true });
 			this.$fs.futureFromEvent(childProcess, "close").wait();
 		}).future<void>()();
 	}
 
 	private unlockScreen(emulatorId: string): IFuture<void> {
-		var childProcess = this.$childProcess.spawn(this.$staticConfig.adbFilePath, ["-s", emulatorId, "shell", "input", "keyevent", "82"]);
+		var childProcess = this.$childProcess.spawn(this.adbFilePath, ["-s", emulatorId, "shell", "input", "keyevent", "82"]);
 		return this.$fs.futureFromEvent(childProcess, "close");
 	}
 
@@ -176,7 +178,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	private getNameFromGenymotionEmulatorId(emulatorId: string): IFuture<string> {
 		return (() => {
-			var modelOutputLines: string = this.$childProcess.execFile(this.$staticConfig.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.model"]).wait();
+			var modelOutputLines: string = this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.model"]).wait();
 			this.$logger.trace(modelOutputLines);
 			var model = (<string>_.first(modelOutputLines.split(os.EOL))).trim();
 			return model;
@@ -292,7 +294,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	private checkForGenymotionProductManufacturer(emulatorId: string): IFuture<string> {
 		return ((): string => {
-			var manufacturer = this.$childProcess.execFile(this.$staticConfig.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.manufacturer"]).wait();
+			var manufacturer = this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.manufacturer"]).wait();
 			if(manufacturer.match(/^Genymotion/i)) {
 				return emulatorId;
 			}
@@ -304,7 +306,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private getRunningEmulators(): IFuture<string[]> {
 		return (() => {
 			var emulatorDevices: string[] = [];
-			var outputRaw:string[] = this.$childProcess.execFile(this.$staticConfig.adbFilePath, ['devices']).wait().split(os.EOL);
+			var outputRaw: string[] = this.$childProcess.execFile(this.adbFilePath, ['devices']).wait().split(os.EOL);
 			if(options.geny) {
 				emulatorDevices = this.getRunningGenymotionEmulators(outputRaw).wait();
 			} else {
@@ -449,7 +451,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	private isEmulatorBootCompleted(emulatorId: string): IFuture<boolean> {
 		return (() => {
-			var output = this.$childProcess.execFile(this.$staticConfig.adbFilePath, ["-s", emulatorId, "shell", "getprop", "dev.bootcomplete"]).wait();
+			var output = this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "dev.bootcomplete"]).wait();
 			var matches = output.match("1");
 			return matches && matches.length > 0;
 		}).future<boolean>()();

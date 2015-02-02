@@ -203,3 +203,28 @@ export function sleep(ms: number): void {
   setTimeout(() => fiber.run(), ms);
   Fiber.yield();
 }
+
+export function getPathToAdb(injector: IInjector): IFuture<string> {
+	return ((): string => {
+		try {
+			var childProcess: IChildProcess = injector.resolve("childProcess");
+			var logger: ILogger = injector.resolve("logger");
+			var staticConfig: IStaticConfig = injector.resolve("staticConfig");
+
+			var warningMessage = util.format("Unable to find adb in PATH. Default one from %s resources will be used.", staticConfig.CLIENT_NAME);
+			var proc = childProcess.spawnFromEvent("adb", ["version"], "exit", undefined, { throwError: false }).wait();
+
+			if(proc.stderr) {
+				logger.warn(warningMessage);
+				return staticConfig.adbFilePath;
+			}
+		} catch(e) {
+			if(e.code === "ENOENT") {
+				logger.warn(warningMessage);
+				return staticConfig.adbFilePath;
+			}
+		}
+
+		return "adb";
+	}).future<string>()();
+}
