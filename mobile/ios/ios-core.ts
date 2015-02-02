@@ -13,6 +13,7 @@ import hostInfo = require("../../host-info");
 import net = require("net");
 import util = require("util");
 import Future = require("fibers/future");
+import bplistParser = require("bplist-parser");
 
 export class CoreTypes {
 	public static pointerSize = ref.types.size_t.size;
@@ -385,7 +386,6 @@ export class CoreFoundation implements  Mobile.ICoreFoundation {
 				if (status) {
 					result = stringBuffer.toString("utf8", 0, cfstrLength);
 				} else {
-					this.$errors.fail("Unable to convert string: ", result);
 				}
 			} else {
 				result = ref.readCString(rawData, 0);
@@ -762,6 +762,7 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 	private socket: net.NodeSocket = null;
 
 	constructor(service: number,
+		private format: number,
 		private $coreFoundation: Mobile.ICoreFoundation,
 		private $mobileDevice: Mobile.IMobileDevice,
 		private $logger: ILogger,
@@ -771,21 +772,50 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 
 	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData> {
 		var result = new Future<Mobile.IiOSSocketResponseData>();
+		var capturedData: NodeBuffer = new Buffer(0);
 
 		this.socket
 			.on("data", (data: NodeBuffer) => {
-				this.$logger.debug("PosixSocket receiving: '%s'", data.toString());
-				this.$errors.verifyHeap("receiveMessage");
-				var message = data.toString();
-				var reply = plist.parse(message);
-				try {
-					if(this.$mobileDevice.isDataReceivingCompleted(reply)) {
-						result.return(reply);
-					}
-				} catch(e) {
-					result.throw(e);
-				}
+				capturedData = Buffer.concat([capturedData, data]);
 
+				if(this.format === CoreTypes.kCFPropertyListBinaryFormat_v1_0) {
+					var isExceptionThrown = false;
+
+					try {
+						var message = bplistParser.parseBuffer(data);
+					} catch(e) {
+						isExceptionThrown = true;
+					}
+
+					if(!isExceptionThrown) {
+						this.$logger.trace("MESSAGE RECEIVING");
+						this.$logger.trace(message);
+
+						if(message && typeof(message) === "object" && message[0]) {
+							message = message[0];
+							var output = "";
+							if(message.Status) {
+								output += util.format("Status: %s", message.Status);
+							}
+							if(message.PercentComplete) {
+								output += util.format(" PercentComplete: %s", message.PercentComplete);
+							}
+							this.$logger.out(output);
+
+							if(message.Status && message.Status === "Complete") {
+								result.return(message);
+							}
+						}
+					}
+				} else if(this.format === CoreTypes.kCFPropertyListXMLFormat_v1_0) {
+					try {
+						var parsedData = plist.parse(capturedData.toString());
+					} catch(e) {
+						parsedData = {};
+					}
+
+					result.return(parsedData);
+				}
 			})
 			.on("error", (error: Error) => {
 				result.throw(error);
@@ -809,14 +839,18 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 	}
 
 	public sendMessage(message: any, format?: number): void {
-		var data = this.$coreFoundation.dictToPlistEncoding(message, format);
-		var payload = bufferpack.pack(">i", [data.length]);
+		if(typeof(message) === "string") {
+			this.socket.write(message);
+		} else {
+			var data = this.$coreFoundation.dictToPlistEncoding(message, format);
+			var payload = bufferpack.pack(">i", [data.length]);
 
-		this.$logger.trace("PlistService sending: ");
-		this.$logger.trace(data.toString());
+			this.$logger.trace("PlistService sending: ");
+			this.$logger.trace(data.toString());
 
-		this.socket.write(payload);
-		this.socket.write(data);
+			this.socket.write(payload);
+			this.socket.write(data);
+		}
 
 		this.$errors.verifyHeap("sendMessage");
 	}
@@ -841,7 +875,7 @@ export class PlistService implements Mobile.IiOSDeviceSocket {
 		if(hostInfo.isWindows()) {
 			this.socket = this.$injector.resolve(WinSocket, {service: this.service, format: this.format });
 		} else if(hostInfo.isDarwin()) {
-			this.socket = this.$injector.resolve(PosixSocket, {service: this.service });
+			this.socket = this.$injector.resolve(PosixSocket, {service: this.service, format: this.format });
 		}
 	}
 
@@ -879,7 +913,7 @@ export class GDBServer implements Mobile.IGDBServer {
 		if(hostInfo.isWindows()) {
 			this.socket = this.$injector.resolve(WinSocket, {service: this.service, format: 0});
 		} else if(hostInfo.isDarwin()) {
-			this.socket = this.$injector.resolve(PosixSocket, {service: this.service });
+			this.socket = this.$injector.resolve(PosixSocket, {service: this.service, format: CoreTypes.kCFPropertyListXMLFormat_v1_0});
 		}
 	}
 
