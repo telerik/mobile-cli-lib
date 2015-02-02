@@ -63,10 +63,10 @@ export function installUncaughtExceptionListener(): void {
 		console.log(callstack || err.toString());
 
 		try {
-			var analyticsService = $injector.resolve("analyticsService");
+		 	var analyticsService = $injector.resolve("analyticsService");
 			analyticsService.trackException(err, callstack);
 		} catch (e) {
-			this.$errors.fail("Error while reporting exception: " + e);
+			$injector.resolve("$logger").error("Error while reporting exception: " + e);
 		}
 
 		process.exit(ErrorCodes.UNKNOWN);
