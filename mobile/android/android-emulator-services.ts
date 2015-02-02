@@ -27,6 +27,11 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private static UNABLE_TO_START_EMULATOR_MESSAGE = "Cannot run your app in the native emulator. Increase the timeout of the operation with the --timeout option or try to restart your adb server with 'adb kill-server' command. Alternatively, run the Android Virtual Device manager and increase the allocated RAM for the virtual device.";
 	private static RUNNING_ANDROID_EMULATOR_REGEX = /^(emulator-\d+)\s+device$/;
 
+	private static MISSING_SDK_MESSAGE = "The Android SDK is not configured properly. " +
+		"Verify that you have installed the Android SDK and that you have added its `platform-tools` and `tools` directories to your PATH environment variable.";
+	private static MISSING_GENYMOTION_MESSAGE = "Genymotion is not configured properly. " +
+		"Verify that you have installed Genymotion and that you have added its installation directory to your PATH environment variable.";
+
 	private endTimeEpoch: number;
 
 	constructor(private $logger: ILogger,
@@ -47,9 +52,6 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		}).future<void>()();
 	}
 
-	private static MISSING_SDK_MESSAGE = "The Android SDK is not configured properly. " +
-		"Verify that you have installed the Android SDK and that you have added its `platform-tools` and `tools` directories to your PATH environment variable.";
-
 	private checkAndroidSDKConfiguration(): IFuture<void> {
 		return (() => {
 			try {
@@ -67,14 +69,14 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	private checkGenymotionConfiguration(): IFuture<void> {
 		return (() => {
-			var proc = this.$childProcess.spawnFromEvent("genyshell", ["-h"], "exit", undefined, { throwError: false }).wait();
+			try {
+				var proc = this.$childProcess.spawnFromEvent("genyshell", ["-h"], "exit", undefined, { throwError: false }).wait();
+			} catch(e) {
+				this.$errors.failWithoutHelp(AndroidEmulatorServices.MISSING_GENYMOTION_MESSAGE);
+			}
 
 			if(proc.stderr) {
-				this.$errors.fail({
-					formatStr: "Genymotion is not configured properly. " +
-					"Verify that you have installed Genymotion and that you have added its installation directory to your PATH environment variable.",
-					suppressCommandHelp: true
-				});
+				this.$errors.failWithoutHelp(AndroidEmulatorServices.MISSING_GENYMOTION_MESSAGE);
 			}
 		}).future<void>()();
 	}
