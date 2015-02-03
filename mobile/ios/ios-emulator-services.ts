@@ -3,7 +3,7 @@
 
 import util = require("util");
 import Future = require("fibers/future");
-import hostInfo = require("../../../common/host-info");
+import hostInfo = require("../../host-info");
 import MobileHelper = require("./../mobile-helper");
 import options = require("./../../options");
 
