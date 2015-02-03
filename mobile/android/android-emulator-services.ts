@@ -63,7 +63,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 				}
 			} catch (e) {
 				var message: string = (e.code === "ENOENT") ? AndroidEmulatorServices.MISSING_SDK_MESSAGE : e.message;
-				this.$errors.fail({formatStr: message, suppressCommandHelp: true});
+				this.$errors.failWithoutHelp(message);
 			}
 		}).future<void>()();
 	}
@@ -71,12 +71,13 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private checkGenymotionConfiguration(): IFuture<void> {
 		return (() => {
 			try {
-				var proc = this.$childProcess.spawnFromEvent("genyshell", ["-h"], "exit", undefined, { throwError: false }).wait();
+				var proc = this.$childProcess.spawnFromEvent("player", [], "exit", undefined, { throwError: false }).wait();
 			} catch(e) {
-				this.$errors.failWithoutHelp(AndroidEmulatorServices.MISSING_GENYMOTION_MESSAGE);
+				var message: string = (e.code === "ENOENT") ? AndroidEmulatorServices.MISSING_SDK_MESSAGE : e.message;
+				this.$errors.failWithoutHelp(message);
 			}
 
-			if(proc.stderr) {
+			if(proc.stderr && !proc.stderr.startsWith("Usage:")) {
 				this.$errors.failWithoutHelp(AndroidEmulatorServices.MISSING_GENYMOTION_MESSAGE);
 			}
 		}).future<void>()();
