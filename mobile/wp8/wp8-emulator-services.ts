@@ -2,7 +2,7 @@
 "use strict";
 
 import path = require("path");
-import hostInfo = require("../../../common/host-info");
+import hostInfo = require("../../host-info");
 import MobileHelper = require("./../mobile-helper");
 
 class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {

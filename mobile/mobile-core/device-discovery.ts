@@ -11,7 +11,6 @@ import Signal = require("./../../events/signal");
 import Future = require("fibers/future");
 import child_process = require("child_process");
 import helpers = require("./../../helpers");
-import hostInfo = require("../../host-info");
 var options = require("./../../options");
 
 export class DeviceDiscovery implements Mobile.IDeviceDiscovery {
@@ -173,8 +172,8 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery {
 	}
 
 	private get Adb() {
-		if (!AndroidDeviceDiscovery.adb) {
-			AndroidDeviceDiscovery.adb = this.$staticConfig.adbFilePath;
+		if(!AndroidDeviceDiscovery.adb) {
+			AndroidDeviceDiscovery.adb = helpers.getPathToAdb($injector).wait();
 		}
 
 		return AndroidDeviceDiscovery.adb;

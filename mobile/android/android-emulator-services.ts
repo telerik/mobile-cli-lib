@@ -8,7 +8,6 @@ import os = require("os");
 import osenv = require("osenv");
 import path = require("path");
 import util = require("util");
-import hostInfo = require("../../../common/host-info");
 import MobileHelper = require("../mobile-helper");
 import options = require("../../options");
 import helpers = require("../../helpers");
@@ -27,7 +26,13 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private static UNABLE_TO_START_EMULATOR_MESSAGE = "Cannot run your app in the native emulator. Increase the timeout of the operation with the --timeout option or try to restart your adb server with 'adb kill-server' command. Alternatively, run the Android Virtual Device manager and increase the allocated RAM for the virtual device.";
 	private static RUNNING_ANDROID_EMULATOR_REGEX = /^(emulator-\d+)\s+device$/;
 
+	private static MISSING_SDK_MESSAGE = "The Android SDK is not configured properly. " +
+		"Verify that you have installed the Android SDK and that you have added its `platform-tools` and `tools` directories to your PATH environment variable.";
+	private static MISSING_GENYMOTION_MESSAGE = "Genymotion is not configured properly. " +
+		"Verify that you have installed Genymotion and that you have added its installation directory to your PATH environment variable.";
+
 	private endTimeEpoch: number;
+	private adbFilePath: string;
 
 	constructor(private $logger: ILogger,
 		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
@@ -36,6 +41,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		private $fs: IFileSystem,
 		private $staticConfig: Config.IStaticConfig) {
 		iconv.extendNodeEncodings();
+		this.adbFilePath = helpers.getPathToAdb($injector).wait();
 	}
 
 	public checkDependencies(): IFuture<void> {
@@ -47,9 +53,6 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		}).future<void>()();
 	}
 
-	private static MISSING_SDK_MESSAGE = "The Android SDK is not configured properly. " +
-		"Verify that you have installed the Android SDK and that you have added its `platform-tools` and `tools` directories to your PATH environment variable.";
-
 	private checkAndroidSDKConfiguration(): IFuture<void> {
 		return (() => {
 			try {
@@ -60,21 +63,22 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 				}
 			} catch (e) {
 				var message: string = (e.code === "ENOENT") ? AndroidEmulatorServices.MISSING_SDK_MESSAGE : e.message;
-				this.$errors.fail({formatStr: message, suppressCommandHelp: true});
+				this.$errors.failWithoutHelp(message);
 			}
 		}).future<void>()();
 	}
 
 	private checkGenymotionConfiguration(): IFuture<void> {
 		return (() => {
-			var proc = this.$childProcess.spawnFromEvent("genyshell", ["-h"], "exit", undefined, { throwError: false }).wait();
+			try {
+				var proc = this.$childProcess.spawnFromEvent("player", [], "exit", undefined, { throwError: false }).wait();
+			} catch(e) {
+				var message: string = (e.code === "ENOENT") ? AndroidEmulatorServices.MISSING_SDK_MESSAGE : e.message;
+				this.$errors.failWithoutHelp(message);
+			}
 
-			if(proc.stderr) {
-				this.$errors.fail({
-					formatStr: "Genymotion is not configured properly. " +
-					"Verify that you have installed Genymotion and that you have added its installation directory to your PATH environment variable.",
-					suppressCommandHelp: true
-				});
+			if(proc.stderr && !proc.stderr.startsWith("Usage:")) {
+				this.$errors.failWithoutHelp(AndroidEmulatorServices.MISSING_GENYMOTION_MESSAGE);
 			}
 		}).future<void>()();
 	}
@@ -117,7 +121,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 			// install the app
 			this.$logger.info("installing %s through adb", app);
-			var childProcess = this.$childProcess.spawn(this.$staticConfig.adbFilePath, ["-s", emulatorId, 'install', '-r', app]);
+			var childProcess = this.$childProcess.spawn(this.adbFilePath, ["-s", emulatorId, 'install', '-r', app]);
 			this.$fs.futureFromEvent(childProcess, "close").wait();
 
 			// unlock screen again in cases when the installation is slow
@@ -125,14 +129,14 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 			// run the installed app
 			this.$logger.info("running %s through adb", app);
-			childProcess = this.$childProcess.spawn(this.$staticConfig.adbFilePath, ["-s", emulatorId, 'shell', 'am', 'start', '-S', appId + "/" + this.$staticConfig.START_PACKAGE_ACTIVITY_NAME],
+			childProcess = this.$childProcess.spawn(this.adbFilePath, ["-s", emulatorId, 'shell', 'am', 'start', '-S', appId + "/" + this.$staticConfig.START_PACKAGE_ACTIVITY_NAME],
 				{ stdio: "ignore", detached: true });
 			this.$fs.futureFromEvent(childProcess, "close").wait();
 		}).future<void>()();
 	}
 
 	private unlockScreen(emulatorId: string): IFuture<void> {
-		var childProcess = this.$childProcess.spawn(this.$staticConfig.adbFilePath, ["-s", emulatorId, "shell", "input", "keyevent", "82"]);
+		var childProcess = this.$childProcess.spawn(this.adbFilePath, ["-s", emulatorId, "shell", "input", "keyevent", "82"]);
 		return this.$fs.futureFromEvent(childProcess, "close");
 	}
 
@@ -175,7 +179,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	private getNameFromGenymotionEmulatorId(emulatorId: string): IFuture<string> {
 		return (() => {
-			var modelOutputLines: string = this.$childProcess.execFile(this.$staticConfig.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.model"]).wait();
+			var modelOutputLines: string = this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.model"]).wait();
 			this.$logger.trace(modelOutputLines);
 			var model = (<string>_.first(modelOutputLines.split(os.EOL))).trim();
 			return model;
@@ -291,7 +295,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	private checkForGenymotionProductManufacturer(emulatorId: string): IFuture<string> {
 		return ((): string => {
-			var manufacturer = this.$childProcess.execFile(this.$staticConfig.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.manufacturer"]).wait();
+			var manufacturer = this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.manufacturer"]).wait();
 			if(manufacturer.match(/^Genymotion/i)) {
 				return emulatorId;
 			}
@@ -303,7 +307,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private getRunningEmulators(): IFuture<string[]> {
 		return (() => {
 			var emulatorDevices: string[] = [];
-			var outputRaw:string[] = this.$childProcess.execFile(this.$staticConfig.adbFilePath, ['devices']).wait().split(os.EOL);
+			var outputRaw: string[] = this.$childProcess.execFile(this.adbFilePath, ['devices']).wait().split(os.EOL);
 			if(options.geny) {
 				emulatorDevices = this.getRunningGenymotionEmulators(outputRaw).wait();
 			} else {
@@ -448,7 +452,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	private isEmulatorBootCompleted(emulatorId: string): IFuture<boolean> {
 		return (() => {
-			var output = this.$childProcess.execFile(this.$staticConfig.adbFilePath, ["-s", emulatorId, "shell", "getprop", "dev.bootcomplete"]).wait();
+			var output = this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "dev.bootcomplete"]).wait();
 			var matches = output.match("1");
 			return matches && matches.length > 0;
 		}).future<boolean>()();
