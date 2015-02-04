@@ -70,10 +70,6 @@ export class IOSDevice implements Mobile.IIOSDevice {
 		return "Apple";
 	}
 
-	public getInstalledApplications(): IFuture<string[]> {
-		throw new Error("Not implemented");
-	}
-
 	private getValue(value: string): string {
 		this.connect();
 		this.startSession();
@@ -243,7 +239,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 				var imageSize = this.$fs.getFsStats(imagePath).wait().size;
 
 				var imageMounterService = this.startService(iOSProxyServices.MobileServices.MOBILE_IMAGE_MOUNTER);
-				var plistService: Mobile.IiOSDeviceSocket = this.$injector.resolve(iosCore.PlistService, { service: imageMounterService, format: CoreTypes.kCFPropertyListBinaryFormat_v1_0 });
+				var plistService: Mobile.IiOSDeviceSocket = this.$injector.resolve(iosCore.PlistService, { service: imageMounterService, format: CoreTypes.kCFPropertyListXMLFormat_v1_0 });
 				var result = plistService.exchange({
 					Command: "ReceiveBytes",
 					ImageSize: imageSize,
@@ -298,7 +294,11 @@ export class IOSDevice implements Mobile.IIOSDevice {
 					}
 				};
 
-			    this.tryToExecuteFunction<void>(func);
+				try {
+			    	this.tryToExecuteFunction<void>(func);
+				} catch(e) {
+
+				}
 			}
 		}).future<void>()();
 	}
@@ -357,9 +357,10 @@ export class IOSDevice implements Mobile.IIOSDevice {
 		iOSSystemLog.read();
 	}
 
-	public listApplications(): void {
-		var applications = this.lookupApplications();
-		_(_.sortBy(_.keys(applications))).each((bundleId: string) => this.$logger.info(bundleId));
+	public getInstalledApplications():  IFuture<string[]> {
+		return (() => {
+			return _(this.lookupApplications()).keys().sortBy((identifier: string) => identifier.toLowerCase()).value();
+		}).future<string[]>()();
 	}
 
 	public runApplication(applicationId: string): IFuture<void> {
@@ -377,6 +378,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 
 			gdbServer.run([executable]);
 
+			this.$logger.info("Successfully run application %s on device with ID %s", applicationId, this.getIdentifier());
 		}).future<void>()();
 	}
 }

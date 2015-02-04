@@ -387,6 +387,11 @@ export class AndroidDevice implements Mobile.IDevice {
 		}).future<void>()();
 	}
 
+
+	public runApplication(applicationId: string): IFuture<void> {
+		return this.startPackageOnDevice(applicationId);
+	}
+
 	private getLiveSyncVersion(appIdentifier: Mobile.IAppIdentifier): IFuture<number> {
 		return (() => {
 			var result = this.sendBroadcastToDevice(AndroidDevice.CHECK_LIVESYNC_INTENT_NAME, {"app-id": appIdentifier.appIdentifier}).wait();
