@@ -365,6 +365,10 @@ export class IOSDevice implements Mobile.IIOSDevice {
 
 	public runApplication(applicationId: string): IFuture<void> {
 		return (() => {
+			if(hostInfo.isWindows()) {
+				this.$errors.fail("$appbuilder device run command is not supported on Windows for iOS devices.");
+			}
+
 			var applications = this.lookupApplications();
 			var application = applications[applicationId];
 			if(!application) {
