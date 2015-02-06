@@ -7,6 +7,7 @@ import helpers = require("./../../helpers");
 export class RunApplicationOnDeviceCommand implements ICommand {
 
 	constructor(private $devicesServices: Mobile.IDevicesServices,
+		private $errors: IErrors,
 		private $stringParameter: ICommandParameter) { }
 
 	allowedParameters: ICommandParameter[] = [this.$stringParameter];
@@ -14,6 +15,10 @@ export class RunApplicationOnDeviceCommand implements ICommand {
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
 			this.$devicesServices.initialize({ deviceId: options.device, skipInferPlatform: true }).wait();
+
+			if (this.$devicesServices.deviceCount > 1) {
+				this.$errors.fail("More than one device found. Specify device explicitly with --device option.To discover device ID, use $appbuilder device command.");
+			}
 
 			var action = (device: Mobile.IDevice) =>  { return (() => device.runApplication(args[0]).wait()).future<void>()(); };
 			this.$devicesServices.execute(action).wait();
