@@ -109,7 +109,7 @@ class IOSCore implements Mobile.IiOSCore {
 	}
 
 	private get CommonProgramFilesPath(): string {
-		return hostInfo.isWindows64() ?  process.env["CommonProgramFiles(x86)"] : process.env.CommonProgramFiles;
+		return process.env.CommonProgramFiles;
 	}
 
 	private is32BitProcess(): boolean {
