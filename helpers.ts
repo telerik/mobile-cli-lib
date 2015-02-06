@@ -8,6 +8,7 @@ var uuid = require("node-uuid");
 var options = require("./options");
 import Future = require("fibers/future");
 import Fiber = require("fibers");
+var Table = require("cli-table");
 
 export function createGUID(useBraces: boolean = true) {
 	var output: string;
@@ -227,4 +228,14 @@ export function getPathToAdb(injector: IInjector): IFuture<string> {
 
 		return "adb";
 	}).future<string>()();
+}
+
+export function createTable(headers: string[], data: string[][]): any {
+	var table = new Table({
+		head: headers,
+		chars: { 'mid': '', 'left-mid': '', 'mid-mid': '', 'right-mid': '' }
+	});
+
+	_.forEach(data, row => table.push(row));
+	return table;
 }
