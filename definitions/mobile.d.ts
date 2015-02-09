@@ -19,8 +19,8 @@ declare module Mobile {
 		sync(localToDevicePaths: ILocalToDevicePathData[], appIdentifier: IAppIdentifier, liveSyncUrl: string, options: ISyncOptions): IFuture<void>;
 		debug(packageFile: string, packageName: string): IFuture<void>;
 		openDeviceLogStream(): void;
-		listApplications?(): void;
-		runApplication?(applicationId: string): IFuture<void>;
+		getInstalledApplications(): IFuture<string[]>;
+		runApplication(applicationId: string): IFuture<void>;
 	}
 
 	interface IAppIdentifier {
@@ -167,7 +167,7 @@ declare module Mobile {
 	}
 
 	interface IiOSDeviceSocket {
-		receiveMessage(format?: number): IFuture<IiOSSocketResponseData>;
+		receiveMessage(): IFuture<IiOSSocketResponseData>;
 		readSystemLog(action: (data: NodeBuffer) => void): void;
 		sendMessage(message: {[key: string]: {}}, format?: number): void;
 		sendMessage(message: string): void;

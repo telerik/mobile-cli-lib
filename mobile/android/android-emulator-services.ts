@@ -73,7 +73,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 			try {
 				var proc = this.$childProcess.spawnFromEvent("player", [], "exit", undefined, { throwError: false }).wait();
 			} catch(e) {
-				var message: string = (e.code === "ENOENT") ? AndroidEmulatorServices.MISSING_SDK_MESSAGE : e.message;
+				var message: string = (e.code === "ENOENT") ? AndroidEmulatorServices.MISSING_GENYMOTION_MESSAGE : e.message;
 				this.$errors.failWithoutHelp(message);
 			}
 

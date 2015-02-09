@@ -5867,7 +5867,7 @@ declare module _ {
         * @see _.keys
         **/
         keys(): LoDashArrayWrapper<string>
-    }
+	}
 
     //_.mapValues
     interface LoDashStatic {
@@ -6122,7 +6122,22 @@ declare module _ {
         * @return Returns an array of property values.
         **/
         values(object: any): any[];
-    }
+	}
+
+	interface LoDashObjectWrapper<T> {
+		/**
+		* @see _.values
+		**/
+		values(): LoDashArrayWrapper<any>
+	}
+
+	interface LoDashArrayWrapper<T> {
+		/**
+		* @see _.values
+		**/
+		values(): LoDashArrayWrapper<any>
+	}
+
 
     /*************
      * Utilities *
