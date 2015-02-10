@@ -60,6 +60,9 @@ Object.keys(parsed).forEach((opt) => {
 		key = shorthands[opt];
 	}
 
+	if (opt !== "_" && parsed[opt] instanceof Array) {
+		parsed[opt] = parsed[opt][0]; // see https://www.npmjs.com/package/yargs#duplicates
+	}
 	if (typeof (parsed[opt]) === "number") {
 		exports[key] = parsed[opt].toString();
 	} else {

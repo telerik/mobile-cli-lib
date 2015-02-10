@@ -94,7 +94,7 @@ export function validateYargsArguments(parsed: any, knownOpts: any, shorthands: 
 			var option = shorthands[opt] ? shorthands[opt] : opt;
 
 			if (option !== "_" && option !== "$0" && !knownOpts[option]) {
-				exports.breakExecution(util.format("The option '%s' is not supported. To see command's options, use '$ appbuilder %s --help'. To see all commands use '$ appbuilder help'.", opt, process.argv[2]));
+				exports.breakExecution(util.format("The option '%s' is not supported. To see command's options, use '$ %s %s --help'. To see all commands use '$ %s help'.", opt, clientName, process.argv[2], clientName));
 			} else if (knownOpts[option] !== Boolean && typeof (parsed[opt]) === 'boolean') {
 				exports.breakExecution(util.format("The option '%s' requires a value.", opt));
 			} else if (knownOpts[option] === String && isNullOrWhitespace(parsed[opt])) {
