@@ -54,17 +54,8 @@ export class CommandDispatcher implements ICommandDispatcher {
 
 	// yargs convert parameters that are numbers to numbers, which we do not expect. undo its hard work.
 	private getCommandArguments(): string[] {
-		var remaining: string[] = options._;
-		if (remaining.length > 1) {
-			remaining = remaining.slice(1);
-			remaining.forEach((item, idx, array) => {
-					if (typeof item === "number") {
-						array[idx] = item.toString();
-					}
-			});
-			return remaining;
-		}
-		return [];
+		var remaining: string[] = options._.slice(1);
+		return _.map(remaining, (item) => (typeof item === "number") ? item.toString() : item);
 	}
 }
 $injector.register("commandDispatcher", CommandDispatcher);
