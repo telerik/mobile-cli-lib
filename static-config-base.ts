@@ -10,7 +10,7 @@ export class StaticConfigBase implements Config.IStaticConfig {
 	public ANALYTICS_API_KEY: string = null;
 	public ANALYTICS_INSTALLATION_ID_SETTING_NAME: string = null;
 	public TRACK_FEATURE_USAGE_SETTING_NAME: string = null;
-	public START_PACKAGE_ACTIVITY_NAME: string = null;
+	public START_PACKAGE_ACTIVITY_NAME: string;
 	public version: string = null;
 	public get helpTextPath(): string {
 		return null;
