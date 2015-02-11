@@ -31,7 +31,7 @@ interface IDisposable {
 
 interface IFileSystem {
 	zipFiles(zipFile: string, files: string[], zipPathCallback: (path: string) => string): IFuture<void>;
-	unzip(zipFile: string, destinationDir: string, options?: { overwriteExisitingFiles: boolean }, fileFilters?: string[]): IFuture<void>;
+	unzip(zipFile: string, destinationDir: string, options?: { overwriteExisitingFiles?: boolean; caseSensitive?: boolean}, fileFilters?: string[]): IFuture<void>;
 	exists(path: string): IFuture<boolean>;
 	deleteFile(path: string): IFuture<void>;
 	deleteDirectory(directory: string): IFuture<void>;

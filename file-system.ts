@@ -56,14 +56,19 @@ export class FileSystem implements IFileSystem {
 		return result;
 	}
 
-	public unzip(zipFile: string, destinationDir: string, options?: { overwriteExisitingFiles: boolean}, fileFilters?: string[]): IFuture<void> {
+	public unzip(zipFile: string, destinationDir: string, options?: { overwriteExisitingFiles?: boolean; caseSensitive?: boolean}, fileFilters?: string[]): IFuture<void> {
 		return (() => {
 			var shouldOverwriteFiles = options ? options.overwriteExisitingFiles : true;
+			var isCaseSensitive = options ? options.caseSensitive : true;
+			
+			//the wild card symbol at the end is required in order for the -ssc- switch of 7zip to behave properly
+			zipFile = isCaseSensitive ? zipFile : zipFile + '*';
+			
 			var $childProcess = $injector.resolve("$childProcess");
 			this.createDirectory(destinationDir).wait();
 
 			var sevenZip = (<Config.IStaticConfig>$injector.resolve("$staticConfig")).sevenZipFilePath;
-			var unzipProc = $childProcess.spawn(sevenZip, _.flatten(['x', shouldOverwriteFiles ? "-y" : "-aos", '-o' + destinationDir, zipFile, fileFilters || []]),
+			var unzipProc = $childProcess.spawn(sevenZip, _.flatten(['x', shouldOverwriteFiles ? "-y" : "-aos", '-o' + destinationDir, isCaseSensitive ? '' : '-ssc-', zipFile, fileFilters || []]),
 				{ stdio: "ignore", detached: true });
 			this.futureFromEvent(unzipProc, "close").wait();
 		}).future<void>()();
