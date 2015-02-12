@@ -2,7 +2,7 @@
 "use strict";
 
 var jaroWinklerDistance = require("../vendor/jaro-winkler_distance");
-import helpers = require("./../helpers");
+import helpers = require("../helpers");
 import util = require("util");
 var options: any = require("../options");
 
@@ -50,10 +50,6 @@ export class CommandsService implements ICommandsService {
 			}
 			return false;
 		}).future<boolean>()();
-	}
-
-	public executeCommand(commandName: string, commandArguments: string[]): IFuture<boolean> {
-		return this.executeCommandAction(commandName, commandArguments, this.executeCommandUnchecked);
 	}
 
 	private executeCommandAction(commandName: string, commandArguments: string[], action: (commandName: string, commandArguments: string[]) => IFuture<boolean>): IFuture<boolean> {

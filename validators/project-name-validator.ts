@@ -1,5 +1,5 @@
 ///<reference path="../../.d.ts"/>
-"use strict"
+"use strict";
 import path = require("path");
 import helpers = require("../helpers");
 import ValidationResult = require("./validation-result");
