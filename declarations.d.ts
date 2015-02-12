@@ -111,6 +111,7 @@ interface IErrors {
 	failWithoutHelp(message: string, ...args: any[]): void;
 	beginCommand(action: () => IFuture<boolean>, printCommandHelp: () => IFuture<boolean>): IFuture<boolean>;
 	verifyHeap(message: string): void;
+	executeAction(action: Function): any;
 }
 
 interface ICommandOptions {

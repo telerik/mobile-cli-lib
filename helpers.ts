@@ -3,7 +3,6 @@
 import fs = require("fs");
 import path = require("path");
 import util = require("util");
-import _ = require("lodash");
 var uuid = require("node-uuid");
 var options = require("./options");
 import Future = require("fibers/future");
@@ -61,8 +60,7 @@ export function enumerateFilesInDirectorySync(directoryPath: string, filterCallb
 
 export function getParsedOptions(options: any, shorthands: any, clientName: string) {
 	var yargs: any = require("yargs");
-	Object.keys(options).forEach((opt) => {
-		var type = options[opt];
+	_.each(options, (type, opt) => {
 		if (type === String) {
 			yargs.string(opt);
 		} else if (type === Boolean) {
@@ -70,19 +68,11 @@ export function getParsedOptions(options: any, shorthands: any, clientName: stri
 		}
 	});
 
-	Object.keys(shorthands).forEach((key) => {
-		yargs.alias(key, shorthands[key]);
-	});
+	Object.keys(shorthands).forEach(key => yargs.alias(key, shorthands[key]));
 
 	var argv = yargs.argv;
 	var parsed:any = {};
-	_.each(_.keys(argv), (opt) => {
-		if (typeof argv[opt] === "number") {
-			parsed[opt] = argv[opt].toString();
-		} else {
-			parsed[opt] = argv[opt];
-		}
-	});
+	_.each(_.keys(argv), opt => parsed[opt] =  (typeof argv[opt] === "number") ? argv[opt].toString() : argv[opt]);
 
 	validateYargsArguments(parsed, options, shorthands, clientName);
 	return parsed;
@@ -90,25 +80,23 @@ export function getParsedOptions(options: any, shorthands: any, clientName: stri
 
 export function validateYargsArguments(parsed: any, knownOpts: any, shorthands: any, clientName?: string): void {
 	if(path.basename(process.argv[1]).indexOf(clientName) !== -1) {
+		var errors = $injector.resolve("$errors");
 		_.each(_.keys(parsed), (opt) => {
 			var option = shorthands[opt] ? shorthands[opt] : opt;
 
 			if (option !== "_" && option !== "$0" && !knownOpts[option]) {
-				exports.breakExecution(util.format("The option '%s' is not supported. To see command's options, use '$ appbuilder %s --help'. To see all commands use '$ appbuilder help'.", opt, process.argv[2]));
+				errors.failWithoutHelp("The option '%s' is not supported. To see command's options, use '$ %s help %s'. To see all commands use '$ %s help'.", opt, clientName, process.argv[2], clientName);
 			} else if (knownOpts[option] !== Boolean && typeof (parsed[opt]) === 'boolean') {
-				exports.breakExecution(util.format("The option '%s' requires a value.", opt));
+				errors.failWithoutHelp("The option '%s' requires a value.", opt);
+			} else if (opt !== "_" && _.isArray(parsed[opt])) {
+				errors.failWithoutHelp("You have set the %s option multiple times. Check the correct command syntax below and try again.", opt);
 			} else if (knownOpts[option] === String && isNullOrWhitespace(parsed[opt])) {
-				exports.breakExecution(util.format("The option '%s' requires non-empty value.", opt));
+				errors.failWithoutHelp("The option '%s' requires non-empty value.", opt);
 			} else if (knownOpts[option] === Boolean && typeof (parsed[opt]) !== 'boolean') {
-				exports.breakExecution(util.format("The option '%s' does not accept values.", opt));
+				errors.failWithoutHelp("The option '%s' does not accept values.", opt);
 			}
 		});
 	}
-}
-
-export function breakExecution(message: string): void {
-	console.log("\x1B[31;1m" + message + "\x1B[0m");
-	process.exit(ErrorCodes.INVALID_ARGUMENT);
 }
 
 export function formatListOfNames(names: string[], conjunction = "or"): string {

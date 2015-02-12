@@ -18,7 +18,7 @@ export class OpenDeviceLogStreamCommand implements ICommand {
 			this.$devicesServices.initialize({ deviceId: options.device, skipInferPlatform: true }).wait();
 
 			if (this.$devicesServices.deviceCount > 1) {
-				this.$commandsService.executeCommand("device", []).wait();
+				this.$commandsService.tryExecuteCommand("device", []).wait();
 				this.$errors.fail(OpenDeviceLogStreamCommand.NOT_SPECIFIED_DEVICE_ERROR_MESSAGE);
 			}
 

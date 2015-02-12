@@ -1,4 +1,5 @@
 ///<reference path="../.d.ts"/>
+"use strict";
 
 interface String {
 	startsWith(prefix: string): boolean;

@@ -28,7 +28,7 @@ export class AnalyticsService implements IAnalyticsService {
 					this.$logger.out("Do you want to help us improve " +
 						"Telerik".white.bold + " " + this.$staticConfig.CLIENT_NAME.cyan.bold
 						+ " by automatically sending anonymous usage statistics? We will not use this information to identify or contact you."
-						+ " You can read our official Privacy Policy at")
+						+ " You can read our official Privacy Policy at");
 					var message = "http://www.telerik.com/company/privacy-policy";
 
 					var trackFeatureUsage = this.$prompter.confirm(message, () => "y").wait();

@@ -1,8 +1,10 @@
 ///<reference path="../.d.ts"/>
+"use strict";
 
 import util = require("util");
 import path = require("path");
 
+// we need this to overwrite .stack property (read-only in Error)
 function Exception() {}
 Exception.prototype = new Error();
 
@@ -63,10 +65,11 @@ export function installUncaughtExceptionListener(): void {
 		console.log(callstack || err.toString());
 
 		try {
-		 	var analyticsService = $injector.resolve("analyticsService");
+			var analyticsService = $injector.resolve("analyticsService");
 			analyticsService.trackException(err, callstack);
 		} catch (e) {
-			$injector.resolve("$logger").error("Error while reporting exception: " + e);
+			// Do not replace with logger due to cyclic dependency
+			console.log("Error while reporting exception: " + e);
 		}
 
 		process.exit(ErrorCodes.UNKNOWN);
@@ -76,7 +79,8 @@ export function installUncaughtExceptionListener(): void {
 export class Errors implements IErrors {
 	constructor(
 		private $logger: ILogger,
-		private $config: Config.IConfig) {}
+		private $config: Config.IConfig) {
+	}
 
 	fail(optsOrFormatStr: any, ...args: any[]): void {
 		var opts = optsOrFormatStr;
@@ -91,7 +95,7 @@ export class Errors implements IErrors {
 		var exception: any = new (<any>Exception)();
 		exception.name = opts.name || "Exception";
 		exception.message = util.format.apply(null, args);
-		exception.stack = opts.hideCallStack ? null : new Error(exception.message).stack;
+		exception.stack = new Error(exception.message).stack;
 		exception.errorCode = opts.errorCode || ErrorCodes.UNKNOWN;
 		exception.suppressCommandHelp = opts.suppressCommandHelp;
 
@@ -119,6 +123,19 @@ export class Errors implements IErrors {
 				process.exit(_.isNumber(ex.errorCode) ? ex.errorCode : ErrorCodes.UNKNOWN);
 			}
 		}).future<boolean>()();
+	}
+
+
+	public executeAction(action: Function): any {
+		try {
+			return action();
+		} catch (ex) {
+			console.log(this.$config.DEBUG
+				? resolveCallStack(ex.stack)
+				: "\x1B[31;1m" + ex.message + "\x1B[0m");
+
+			process.exit(_.isNumber(ex.errorCode) ? ex.errorCode : ErrorCodes.UNKNOWN);
+		}
 	}
 
 	// If you want to activate this function, start Node with flags --nouse_idle_notification and --expose_gc

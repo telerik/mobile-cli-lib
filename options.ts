@@ -1,7 +1,8 @@
 ///<reference path="../.d.ts"/>
 "use strict";
-
+import _ = require("lodash");
 import path = require("path");
+import helpers = require("./helpers");
 var yargs: any = require("yargs");
 
 var knownOpts: any = {
@@ -55,18 +56,16 @@ exports.knownOpts = knownOpts;
 exports.shorthands = shorthands;
 
 Object.keys(parsed).forEach((opt) => {
-	var key: string = opt;
-	if(shorthands[opt]) {
-		key = shorthands[opt];
-	}
-
-	if (typeof (parsed[opt]) === "number") {
-		exports[key] = parsed[opt].toString();
-	} else {
-		exports[key] = parsed[opt];
-	}
+	var key: string = (shorthands[opt]) || opt;
+	exports[key] =  (typeof (parsed[opt]) === "number") ? parsed[opt].toString() :  parsed[opt];
 });
+
+exports.validateArgs = (client: string) => {
+	return $injector.resolve("$errors")
+		.executeAction(
+			() => helpers.getParsedOptions(knownOpts, shorthands, client)
+	);
+};
 
 declare var exports: any;
 export = exports;
-
