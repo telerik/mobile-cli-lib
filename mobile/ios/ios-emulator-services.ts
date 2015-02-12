@@ -63,6 +63,7 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		var opts = [
 			iosSimPath,
 			"launch", app,
+			"--timeout", options.timeout,
 			"--exit"
 		];
 
