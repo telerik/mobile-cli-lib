@@ -10,7 +10,6 @@ import rimraf = require("rimraf");
 import hostInfo = require("./host-info");
 
 export class FileSystem implements IFileSystem {
-	private _stat = Future.wrap(fs.stat);
 	private _readFile = Future.wrap(fs.readFile);
 	private _writeFile = Future.wrap<void>(fs.writeFile);
 	private _readdir = Future.wrap(fs.readdir);
@@ -216,7 +215,15 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public getFsStats(path: string): IFuture<fs.Stats> {
-		return this._stat(path);
+		var res = new Future<fs.Stats>();
+		fs.stat(path, (err: Error, stats: fs.Stats) => {
+			if (err) {
+				res.throw(err);
+			} else {
+				res.return(stats);
+			}
+		});
+		return res;
 	}
 
 	public getUniqueFileName(baseName: string): IFuture<string> {
