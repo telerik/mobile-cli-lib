@@ -80,7 +80,7 @@ export class AndroidDevice implements Mobile.IDevice {
 			var parsedDetails: any = {};
 			details.split(/\r?\n|\r/).forEach((value) => {
 				//sample line is "ro.build.version.release=4.4"
-				var match = /(?:ro\.build\.version|ro\.product)\.(.+)=(.+)/.exec(value)
+				var match = /(?:ro\.build\.version|ro\.product)\.(.+)=(.+)/.exec(value);
 				if (match) {
 					parsedDetails[match[1]] = match[2];
 				}
@@ -117,7 +117,7 @@ export class AndroidDevice implements Mobile.IDevice {
 	public getInstalledApplications(): IFuture<string[]> {
 		return (() => {
 			if (!this._installedApplications) {
-				var listPackagesCommand = this.composeCommand("shell pm list packages")
+				var listPackagesCommand = this.composeCommand("shell pm list packages");
 				var result = this.$childProcess.exec(listPackagesCommand).wait();
 				this._installedApplications = _.map(result.split(os.EOL), (packageString: string) => {
 					var match = packageString.match(/package:(.+)/);
@@ -125,7 +125,7 @@ export class AndroidDevice implements Mobile.IDevice {
 				}).filter(parsedPackage => parsedPackage != null);
 			}
 
-			return this._installedApplications
+			return this._installedApplications;
 		}).future<string[]>()();
 	}
 
@@ -133,9 +133,7 @@ export class AndroidDevice implements Mobile.IDevice {
 		return (() => {
 			var broadcastCommand = this.composeCommand("shell am broadcast -a \"%s\"", action);
 
-			_.each(Object.keys(extras), key  => {
-				broadcastCommand += util.format(" -e \"%s\" \"%s\"", key, extras[key]);
-			});
+			_.each(extras, (value,key) => broadcastCommand += util.format(" -e \"%s\" \"%s\"", key, value) );
 
 			var result = this.$childProcess.exec(broadcastCommand).wait();
 			var match = result.match(/Broadcast completed: result=(\d+)/);
@@ -174,14 +172,13 @@ export class AndroidDevice implements Mobile.IDevice {
 	private startPackageOnDevice(packageName: string): IFuture<void> {
 		return (() => {
 			var startPackageCommand = this.composeCommand("shell am start -a android.intent.action.MAIN -n %s/%s", packageName, this.$staticConfig.START_PACKAGE_ACTIVITY_NAME);
-			var result = this.$childProcess.exec(startPackageCommand).wait();
-			return result[0];
+			this.$childProcess.exec(startPackageCommand).wait();
 		}).future<void>()();
 	}
 
 	public deploy(packageFile: string, packageName: string): IFuture<void> {
 		return (() => {
-			var uninstallCommand = this.composeCommand("shell pm uninstall \"%s\"", packageName)
+			var uninstallCommand = this.composeCommand("shell pm uninstall \"%s\"", packageName);
 			this.$childProcess.exec(uninstallCommand).wait();
 
 			var installCommand = this.composeCommand("install -r \"%s\"", packageFile);
@@ -193,8 +190,8 @@ export class AndroidDevice implements Mobile.IDevice {
     }
 
     private tcpForward(src: Number, dest: Number): void {
-          var tcpForwardCommand = this.composeCommand("forward tcp:%d tcp:%d", src.toString(), dest.toString());
-          this.$childProcess.exec(tcpForwardCommand).wait();
+		var tcpForwardCommand = this.composeCommand("forward tcp:%d tcp:%d", src.toString(), dest.toString());
+		this.$childProcess.exec(tcpForwardCommand).wait();
     }
 
     private startDebuggerClient(port: Number): IFuture<void> {
@@ -202,14 +199,12 @@ export class AndroidDevice implements Mobile.IDevice {
             var nodeInspectorModuleFilePath = require.resolve("node-inspector");
             var nodeInspectorModuleDir = path.dirname(nodeInspectorModuleFilePath);
             var nodeInspectorFullPath = path.join(nodeInspectorModuleDir, "bin", "inspector");
-            this.$childProcess.spawn(process.argv[0], [nodeInspectorFullPath, "--debug-port", port.toString()], { stdio: ["ignore", "ignore", "ignore"], detached: true });
+            this.$childProcess.spawn(process.argv[0], [nodeInspectorFullPath, "--debug-port", port.toString()], { stdio: "ignore", detached: true });
         }).future<void>()();
     }
 
-    private openDebuggerClient(url: string): IFuture<void> {
-        return (() => {
-            this.$opener.open(url, "chrome");
-        }).future<void>()();
+    private openDebuggerClient(url: string): void {
+		this.$opener.open(url, "chrome");
     }
 
     private printDebugPort(packageName: string): void {
@@ -235,7 +230,7 @@ export class AndroidDevice implements Mobile.IDevice {
         if ((0 < port) && (port < 65536)) {
             this.tcpForward(port, port);
             this.startDebuggerClient(port).wait();
-            this.openDebuggerClient(this.defaultNodeInspectorUrl + "?port=" + port).wait();
+            this.openDebuggerClient(this.defaultNodeInspectorUrl + "?port=" + port);
         } else {
           this.$logger.info("Cannot detect debug port.");
         }
@@ -247,7 +242,7 @@ export class AndroidDevice implements Mobile.IDevice {
     }
 
     private startAppWithDebugger(packageFile: string, packageName: string): void {
-        var uninstallCommand = this.composeCommand("shell pm uninstall \"%s\"", packageName)
+        var uninstallCommand = this.composeCommand("shell pm uninstall \"%s\"", packageName);
 		this.$childProcess.exec(uninstallCommand).wait();
 
         var installCommand = this.composeCommand("install -r \"%s\"", packageFile);
@@ -267,7 +262,7 @@ export class AndroidDevice implements Mobile.IDevice {
         if (dbgPort > 0) {
             this.tcpForward(dbgPort, dbgPort);
             this.startDebuggerClient(dbgPort).wait();
-            this.openDebuggerClient(this.defaultNodeInspectorUrl + "?port=" + dbgPort).wait();
+            this.openDebuggerClient(this.defaultNodeInspectorUrl + "?port=" + dbgPort);
         }
     }
 
@@ -332,7 +327,7 @@ export class AndroidDevice implements Mobile.IDevice {
                         var res = this.$childProcess.spawnFromEvent(this.adb, ["shell", "cat", envDebugOutFullpath], "exit").wait();
                         var match = res.stdout.match(/PORT=(\d)+/);
                         if (match) {
-                            port = match[0].substring(5);
+                            port = parseInt(match[0].substring(5), 10);
                             break;
                         }
                     }
@@ -393,10 +388,7 @@ export class AndroidDevice implements Mobile.IDevice {
 	}
 
 	private getLiveSyncVersion(appIdentifier: Mobile.IAppIdentifier): IFuture<number> {
-		return (() => {
-			var result = this.sendBroadcastToDevice(AndroidDevice.CHECK_LIVESYNC_INTENT_NAME, {"app-id": appIdentifier.appIdentifier}).wait();
-			return result;
-		}).future<number>()();
+		return this.sendBroadcastToDevice(AndroidDevice.CHECK_LIVESYNC_INTENT_NAME, {"app-id": appIdentifier.appIdentifier});
 	}
 
 	private createLiveSyncCommandsFileOnDevice(liveSyncRoot: string, commands: string[]): IFuture<void> {
