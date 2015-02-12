@@ -11,6 +11,7 @@ import Signal = require("./../../events/signal");
 import Future = require("fibers/future");
 import child_process = require("child_process");
 import helpers = require("./../../helpers");
+import hostInfo = require("../../host-info");
 var options = require("./../../options");
 
 export class DeviceDiscovery implements Mobile.IDeviceDiscovery {
@@ -53,7 +54,6 @@ export class DeviceDiscovery implements Mobile.IDeviceDiscovery {
 $injector.register("deviceDiscovery", DeviceDiscovery);
 
 class IOSDeviceDiscovery extends DeviceDiscovery {
-
 	private static ADNCI_MSG_CONNECTED = 1;
 	private static ADNCI_MSG_DISCONNECTED = 2;
 	private static APPLE_SERVICE_NOT_STARTED_ERROR_CODE = 0xE8000063;
@@ -97,7 +97,7 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 	}
 
 	private validateResult(result: number, error: string) {
-		if(result != 0)  {
+		if(result !== 0)  {
 			this.$errors.fail(error);
 		}
 	}
@@ -153,7 +153,7 @@ $injector.register("iOSDeviceDiscovery", ($errors: IErrors, $logger: ILogger, $f
 	var error = $iTunesValidator.getError().wait();
 	var result: Mobile.IDeviceDiscovery = null;
 
-	if(error) {
+	if(error || hostInfo.isLinux()) {
 		result = new IOSDeviceDiscoveryStub($logger, error);
 	} else {
 		result = $injector.resolve(IOSDeviceDiscovery);
