@@ -164,7 +164,7 @@ export class AndroidDevice implements Mobile.IDevice {
 	private composeCommand(...args: string[]) {
 		var command = util.format.apply(null, args);
 		var result = util.format("\"%s\" -s %s", this.adb, this.identifier);
-		if (command && !command.isEmpty()) {
+		if (!helpers.isNullOrWhitespace(command)) {
 			result += util.format(" %s", command);
 		}
 

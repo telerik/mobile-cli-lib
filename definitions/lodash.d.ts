@@ -6138,6 +6138,14 @@ declare module _ {
 		values(): LoDashArrayWrapper<any>
 	}
 
+	/***********
+	 * Strings *
+	 ***********/
+
+	interface LoDashStatic {
+		endsWith(string?:string, target?:string, position?:number): boolean;
+		startsWith(string?:string, target?:string, position?:number): boolean;
+	}
 
     /*************
      * Utilities *

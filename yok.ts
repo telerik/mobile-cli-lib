@@ -104,7 +104,7 @@ export class Yok implements IInjector {
 			var commands = commandName.split("|");
 
 			if(commands.length > 1) {
-				if(commands[1].startsWith('*') && this.modules[this.createCommandName(commands[0])]) {
+				if(_.startsWith(commands[1], '*') && this.modules[this.createCommandName(commands[0])]) {
 					throw new Error("Default commands should be required before child commands");
 				}
 
@@ -154,7 +154,7 @@ export class Yok implements IInjector {
 
 	private getDefaultCommand(name: string) {
 		var subCommands = this.hierarchicalCommands[name];
-		var defaultCommand = _.find(subCommands, (command) => command.startsWith("*"));
+		var defaultCommand = _.find(subCommands, (command) => _.startsWith(command, "*"));
 		return defaultCommand;
 	}
 
@@ -369,10 +369,10 @@ export class Yok implements IInjector {
 
 	public getRegisteredCommandsNames(includeDev: boolean): string[] {
 		var modulesNames: string[] = _.keys(this.modules);
-		var commandsNames: string[] = _.filter(modulesNames, (moduleName: string) => moduleName.startsWith(util.format("%s.", this.COMMANDS_NAMESPACE)));
+		var commandsNames: string[] = _.filter(modulesNames, moduleName => _.startsWith(moduleName, util.format("%s.", this.COMMANDS_NAMESPACE)));
 		var commands = _.map(commandsNames, (commandName: string) => commandName.substr(this.COMMANDS_NAMESPACE.length + 1));
 		if(!includeDev) {
-			commands = _.reject(commands, (command) => command.startsWith("dev-"));
+			commands = _.reject(commands, (command) => _.startsWith(command, "dev-"));
 		}
 		return commands;
 	}

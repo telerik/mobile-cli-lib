@@ -1,4 +1,5 @@
 ///<reference path="./../../../.d.ts"/>
+"use strict";
 
 import ref = require("ref");
 import util = require("util");
@@ -196,9 +197,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery {
 			var result = this.$childProcess.exec(requestAllDevicesCommand).wait();
 
 			var devices = result.toString().split(os.EOL).slice(1)
-				.filter( (element: string) => {
-					return element && !element.isEmpty();
-				})
+				.filter( (element:string) => !helpers.isNullOrWhitespace(element) )
 				.map((element: string) => {
 					// http://developer.android.com/tools/help/adb.html#devicestatus
 					var parts = element.split("\t");
