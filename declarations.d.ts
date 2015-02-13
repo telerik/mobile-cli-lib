@@ -112,6 +112,7 @@ interface IErrors {
 	beginCommand(action: () => IFuture<boolean>, printCommandHelp: () => IFuture<boolean>): IFuture<boolean>;
 	verifyHeap(message: string): void;
 	executeAction(action: Function): any;
+	printCallStack: boolean;
 }
 
 interface ICommandOptions {

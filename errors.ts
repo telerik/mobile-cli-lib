@@ -77,17 +77,13 @@ export function installUncaughtExceptionListener(): void {
 }
 
 export class Errors implements IErrors {
-	constructor(
-		private $logger: ILogger,
-		private $config: Config.IConfig) {
-	}
+
+	public printCallStack: boolean = false;
 
 	fail(optsOrFormatStr: any, ...args: any[]): void {
 		var opts = optsOrFormatStr;
 		if (_.isString(opts)) {
-			opts = {
-				formatStr: opts
-			};
+			opts = { formatStr: opts };
 		}
 
 		args.unshift(opts.formatStr);
@@ -112,7 +108,7 @@ export class Errors implements IErrors {
 			try {
 				return action().wait();
 			} catch (ex) {
-				this.$logger.fatal(this.$config.DEBUG
+				console.log(this.printCallStack
 					? resolveCallStack(ex.stack)
 					: "\x1B[31;1m" + ex.message + "\x1B[0m");
 
@@ -130,7 +126,7 @@ export class Errors implements IErrors {
 		try {
 			return action();
 		} catch (ex) {
-			console.log(this.$config.DEBUG
+			console.log(this.printCallStack
 				? resolveCallStack(ex.stack)
 				: "\x1B[31;1m" + ex.message + "\x1B[0m");
 
@@ -141,7 +137,7 @@ export class Errors implements IErrors {
 	// If you want to activate this function, start Node with flags --nouse_idle_notification and --expose_gc
 	verifyHeap(message: string): void {
 		if(global.gc) {
-			this.$logger.trace("verifyHeap: '%s'", message);
+			console.log("verifyHeap: '%s'", message);
 			global.gc();
 		}
 	}
