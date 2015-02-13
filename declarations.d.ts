@@ -46,7 +46,8 @@ interface IFileSystem {
 	writeJson(filename: string, data: any, space?: string, encoding?: string): IFuture<void>;
 	copyFile(sourceFileName: string, destinationFileName: string): IFuture<void>;
 	getUniqueFileName(baseName: string): IFuture<string>;
-	isEmptyDir(directoryPath: string): IFuture<boolean>;
+    isEmptyDir(directoryPath: string): IFuture<boolean>;
+    isRelativePath(path: string): boolean /* feels so lonely here, I don't have a Future */;
 	ensureDirectoryExists(directoryPath: string): IFuture<void>;
 	rename(oldPath: string, newPath: string): IFuture<void>;
 	getFsStats(path: string): IFuture<IFsStats>;

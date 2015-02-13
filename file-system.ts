@@ -294,7 +294,13 @@ export class FileSystem implements IFileSystem {
 			var directoryContent = this.readDirectory(directoryPath).wait();
 			return directoryContent.length === 0;
 		}).future<boolean>()();
-	}
+    }
+
+    public isRelativePath(p: string): boolean {
+        var normal = path.normalize(p);
+        var absolute = path.resolve(p);
+        return normal != absolute;
+    }
 
 	public ensureDirectoryExists(directoryPath: string): IFuture<void> {
 		return (() => {
