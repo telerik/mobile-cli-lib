@@ -116,7 +116,7 @@ export class CommandsService implements ICommandsService {
 
 				// If we reach here, the commandArguments are at least as much as mandatoryParams. Now we should verify that we have each of them.
 				_.each(mandatoryParams, (mandatoryParam) => {
-					var argument = _.first(_.select(commandArgsHelper.remainingArguments, (c) => mandatoryParam.validate(c).wait()))
+					var argument = _.find(commandArgsHelper.remainingArguments, c => mandatoryParam.validate(c).wait());
 
 					if(argument) {
 						commandArgsHelper.remainingArguments = _.without(commandArgsHelper.remainingArguments, argument);
