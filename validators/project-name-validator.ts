@@ -38,13 +38,13 @@ export class ProjectNameValidator implements IProjectNameValidator {
 		if(name.length > ProjectNameValidator.MAX_FILENAME_LENGTH) {
 			return new ValidationResult.ValidationResult(ProjectNameValidator.TOO_LONG_NAME_ERROR_MESSAGE);
 		}
-		if(name.startsWith(" ")) {
+		if(_.startsWith(name, " ")) {
 			return new ValidationResult.ValidationResult(ProjectNameValidator.LEADING_SPACES_ERROR_MESSAGE);
 		}
-		if(name.endsWith(".")) {
+		if(_.endsWith(name, ".")) {
 			return new ValidationResult.ValidationResult(ProjectNameValidator.TRAILING_DOTS_ERROR_MESSAGE);
 		}
-		if(name.endsWith((" "))) {
+		if(_.endsWith(name, " ")) {
 			return new ValidationResult.ValidationResult(ProjectNameValidator.TRAILING_SPACES_ERROR_MESSAGE);
 		}
 

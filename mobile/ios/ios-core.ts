@@ -1,4 +1,4 @@
-///<reference path="./../../../.d.ts"/>
+///<reference path="../../../.d.ts"/>
 "use strict";
 
 import path = require("path");
@@ -940,7 +940,7 @@ export class GDBServer implements Mobile.IGDBServer {
 
 		this.socket.sendMessage(data);
 		var commands = ['C', 'c', 'S', 's', 'vCont', 'vAttach', 'vRun', 'vStopped', '?'];
-		var stopReply = _.any(commands, command => packet.startsWith(command));
+		var stopReply = _.any(commands, command => _.startsWith(packet, command));
 		// TODO: extend the protocol communication
 	}
 }
