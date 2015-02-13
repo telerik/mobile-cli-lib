@@ -80,22 +80,5 @@ class FutureDispatcher implements IFutureDispatcher {
 	public dispatch(action: () => IFuture<void>) {
 		this.actions.enqueue(action);
 	}
-
-	public runMainFiber(): void {
-		var fiber = Fiber(() => {
-			var commandDispatcher : ICommandDispatcher = $injector.resolve("commandDispatcher");
-
-			if (process.argv[2] === "completion") {
-				commandDispatcher.completeCommand().wait();
-			} else {
-				commandDispatcher.dispatchCommand().wait();
-			}
-
-			$injector.dispose();
-			Future.assertNoFutureLeftBehind();
-		});
-
-		fiber.run();
-    }
 }
 $injector.register("dispatcher", FutureDispatcher, false);
