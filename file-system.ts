@@ -10,11 +10,8 @@ import rimraf = require("rimraf");
 import hostInfo = require("./host-info");
 
 export class FileSystem implements IFileSystem {
-	private _stat = Future.wrap(fs.stat);
-	private _readFile = Future.wrap(fs.readFile);
-	private _writeFile = Future.wrap<void>(fs.writeFile);
-	private _readdir = Future.wrap(fs.readdir);
-	private _chmod = Future.wrap(fs.chmod);
+
+
 
 	//TODO: try 'archiver' module for zipping
 	public zipFiles(zipFile: string, files: string[], zipPathCallback: (path: string) => string): IFuture<void> {
@@ -151,15 +148,47 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public readDirectory(path: string): IFuture<string[]> {
-		return this._readdir(path);
+		var future = new Future<string[]>();
+		fs.readdir(path, (err: Error, files: string[]) => {
+			if(err) {
+				future.throw(err);
+			} else {
+				future.return(files);
+			}
+		});
+		return future;
 	}
 
 	public readFile(filename: string): IFuture<NodeBuffer> {
-		return this._readFile(filename);
+		var future = new Future<NodeBuffer>();
+		fs.readFile(filename, (err: Error, data: NodeBuffer) => {
+			if(err) {
+				future.throw(err);
+			} else {
+				future.return(data);
+			}
+		});
+		return future;
 	}
 
-	public readText(filename: string, encoding?: string): IFuture<string> {
-		return <IFuture<string>> <any> this._readFile(filename, { encoding: encoding || "utf8" });
+	public readText(filename: string, options?: any): IFuture<string> {
+		options = options || { encoding: "utf8" };
+		if (_.isString(options)) {
+			options = { encoding: options }
+		}
+		if (!options.encoding) {
+			options.encoding = "utf8";
+		}
+
+		var future = new Future<string>();
+		fs.readFile(filename, options, (err: Error, data: string) => {
+			if(err) {
+				future.throw(err);
+			} else {
+				future.return(data);
+			}
+		});
+		return future;
 	}
 
 	public readJson(filename: string, encoding?: string): IFuture<any> {
@@ -175,7 +204,15 @@ export class FileSystem implements IFileSystem {
 	public writeFile(filename: string, data: any, encoding?: string): IFuture<void> {
 		return (() => {
 			this.createDirectory(path.dirname(filename)).wait();
-			this._writeFile(filename, data, { encoding: encoding }).wait();
+			var future = new Future<void>();
+			fs.writeFile(filename, data, { encoding: encoding }, (err: Error) => {
+				if(err) {
+					future.throw(err);
+				} else {
+					future.return();
+				}
+			});
+			future.wait();
 		}).future<void>()();
 	}
 
@@ -211,12 +248,28 @@ export class FileSystem implements IFileSystem {
 		return fs.createWriteStream(path, options);
 	}
 
-	public chmod(path: string, mode: any): IFuture<any> {
-		return this._chmod(path, mode);
+	public chmod(path: string, mode: any): IFuture<void> {
+		var future = new Future<void>();
+		fs.chmod(path, mode, (err: Error) => {
+			if(err) {
+				future.throw(err);
+			} else {
+				future.return();
+			}
+		});
+		return future;
 	}
 
 	public getFsStats(path: string): IFuture<fs.Stats> {
-		return this._stat(path);
+		var future = new Future<fs.Stats>();
+		fs.stat(path, (err: Error, data: fs.Stats) => {
+			if(err) {
+				future.throw(err);
+			} else {
+				future.return(data);
+			}
+		});
+		return future;
 	}
 
 	public getUniqueFileName(baseName: string): IFuture<string> {
