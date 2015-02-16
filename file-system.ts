@@ -54,8 +54,8 @@ export class FileSystem implements IFileSystem {
 
 	public unzip(zipFile: string, destinationDir: string, options?: { overwriteExisitingFiles?: boolean; caseSensitive?: boolean}, fileFilters?: string[]): IFuture<void> {
 		return (() => {
-			var shouldOverwriteFiles = options && options.overwriteExisitingFiles ? options.overwriteExisitingFiles : true;
-			var isCaseSensitive = options && options.caseSensitive ? options.caseSensitive : true;
+			var shouldOverwriteFiles = !(options && options.overwriteExisitingFiles === false);
+			var isCaseSensitive = !(options && options.caseSensitive === false);
 			
 			//the wild card symbol at the end is required in order for the -ssc- switch of 7zip to behave properly
 			zipFile = isCaseSensitive ? zipFile : zipFile + '*';
