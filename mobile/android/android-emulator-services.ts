@@ -223,7 +223,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 				} else if(line.match(/^OK/)) {
 					foundOK = true;
 				}
-			});
+			}).value();
 
 			future.return(name);
 		});
@@ -327,10 +327,9 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		return (() => {
 			var minVersion = this.$emulatorSettingsService.minVersion;
 
-			var best =_(this.getAvds().wait())
+			var best = _(this.getAvds().wait())
 				.map(avd => this.getInfoFromAvd(avd).wait())
-				.max(avd => avd.targetNum)
-				.value();
+				.max(avd => avd.targetNum);
 
 			return (best.targetNum >= minVersion) ? best.name : null;
 		}).future<string>()();
