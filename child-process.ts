@@ -10,21 +10,21 @@ export class ChildProcess implements IChildProcess {
 
 	public exec(command: string, options?: any): IFuture<any> {
 		var future = new Future<any>();
-        var callback = (error: Error, stdout: NodeBuffer, stderr: NodeBuffer) => {
-            this.$logger.trace("Exec %s \n stdout: %s \n stderr: %s", command, stdout.toString(), stderr.toString());
+		var callback = (error: Error, stdout: NodeBuffer, stderr: NodeBuffer) => {
+			this.$logger.trace("Exec %s \n stdout: %s \n stderr: %s", command, stdout.toString(), stderr.toString());
 
-            if(error) {
-                future.throw(error);
-            } else {
-                future.return(stdout);
-            }
-        };
+			if(error) {
+				future.throw(error);
+			} else {
+				future.return(stdout);
+			}
+		};
 
-        if (typeof options === 'object') {
-            child_process.exec(command, options, callback);
-        } else {
-            child_process.exec(command, callback);
-        }
+		if (typeof options === 'object') {
+			child_process.exec(command, options, callback);
+		} else {
+			child_process.exec(command, callback);
+		}
 
 		return future;
 	}
