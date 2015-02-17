@@ -147,7 +147,7 @@ interface IQueue<T> {
 }
 
 interface IChildProcess {
-	exec(command: string): IFuture<any>;
+	exec(command: string, options?: any): IFuture<any>;
 	execFile(command: string, args: string[]): IFuture<any>;
 	spawn(command: string, args?: string[], options?: any): any; // it returns child_process.ChildProcess you can safely cast to it
 	spawnFromEvent(command: string, args: string[], event: string, options?: any, spawnFromEventOptions?: ISpawnFromEventOptions): IFuture<any>;
