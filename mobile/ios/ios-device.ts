@@ -294,11 +294,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 					}
 				};
 
-				try {
-			    	this.tryToExecuteFunction<void>(func);
-				} catch(e) {
-
-				}
+				this.tryToExecuteFunction<void>(func);
 			}
 		}).future<void>()();
 	}
