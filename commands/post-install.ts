@@ -26,9 +26,6 @@ export class PostInstallCommand implements ICommand {
 				if (process.env.SUDO_USER) {
 					this.$fs.setCurrentUserAsOwner(options.profileDir, process.env.SUDO_USER).wait();
 				}
-
-				this.$fs.chmod(this.$staticConfig.adbFilePath, "0777").wait();
-				this.$fs.chmod(this.$staticConfig.sevenZipFilePath, "0777").wait();
 			}
 
 			this.$autoCompletionService.enableAutoCompletion().wait();
