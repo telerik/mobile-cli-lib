@@ -33,71 +33,8 @@ export function isResponseRedirect(response: Server.IRequestResponseData) {
 	return _.contains([301, 302, 303, 307, 308], response.statusCode);
 }
 
-function enumerateFilesInDirectorySyncRecursive(foundFiles: string[], directoryPath: string, filterCallback: (file: string, stat: IFsStats) => boolean): void {
-	var $fs: IFileSystem = $injector.resolve("fs");
-	var contents = $fs.readDirectory(directoryPath).wait();
-	for (var i = 0; i < contents.length; ++i) {
-		var file = path.join(directoryPath, contents[i]);
-		var stat = $fs.getFsStats(file).wait();
-		if (filterCallback && !filterCallback(file, stat)) {
-			continue;
-		}
 
-		if (stat.isDirectory()) {
-			enumerateFilesInDirectorySyncRecursive(foundFiles, file, filterCallback);
-		} else {
-			foundFiles.push(file);
-		}
-	}
-}
 
-// filterCallback: function(path: String, stat: fs.Stats): Boolean
-export function enumerateFilesInDirectorySync(directoryPath: string, filterCallback?: (file: string, stat: IFsStats) => boolean): string[] {
-	var result: string[] = [];
-	enumerateFilesInDirectorySyncRecursive(result, directoryPath, filterCallback);
-	return result;
-}
-
-export function getParsedOptions(options: any, shorthands: any, clientName: string) {
-	var yargs: any = require("yargs");
-	_.each(options, (type, opt) => {
-		if (type === String) {
-			yargs.string(opt);
-		} else if (type === Boolean) {
-			yargs.boolean(opt);
-		}
-	});
-
-	Object.keys(shorthands).forEach(key => yargs.alias(key, shorthands[key]));
-
-	var argv = yargs.argv;
-	var parsed:any = {};
-	_.each(_.keys(argv), opt => parsed[opt] =  (typeof argv[opt] === "number") ? argv[opt].toString() : argv[opt]);
-
-	validateYargsArguments(parsed, options, shorthands, clientName);
-	return parsed;
-}
-
-export function validateYargsArguments(parsed: any, knownOpts: any, shorthands: any, clientName?: string): void {
-	if(path.basename(process.argv[1]).indexOf(clientName) !== -1) {
-		var errors = $injector.resolve("$errors");
-		_.each(_.keys(parsed), (opt) => {
-			var option = shorthands[opt] ? shorthands[opt] : opt;
-
-			if (option !== "_" && option !== "$0" && !knownOpts[option]) {
-				errors.failWithoutHelp("The option '%s' is not supported. To see command's options, use '$ %s help %s'. To see all commands use '$ %s help'.", opt, clientName, process.argv[2], clientName);
-			} else if (knownOpts[option] !== Boolean && typeof (parsed[opt]) === 'boolean') {
-				errors.failWithoutHelp("The option '%s' requires a value.", opt);
-			} else if (opt !== "_" && _.isArray(parsed[opt])) {
-				errors.failWithoutHelp("You have set the %s option multiple times. Check the correct command syntax below and try again.", opt);
-			} else if (knownOpts[option] === String && isNullOrWhitespace(parsed[opt])) {
-				errors.failWithoutHelp("The option '%s' requires non-empty value.", opt);
-			} else if (knownOpts[option] === Boolean && typeof (parsed[opt]) !== 'boolean') {
-				errors.failWithoutHelp("The option '%s' does not accept values.", opt);
-			}
-		});
-	}
-}
 
 export function formatListOfNames(names: string[], conjunction = "or"): string {
 	if (names.length <= 1) {
@@ -165,26 +102,9 @@ export function isNullOrWhitespace(input: string): boolean {
 	return input.replace(/\s/gi, '').length < 1;
 }
 
-export function printInfoMessageOnSameLine(message: string): void {
-	if(!options.log || options.log === "info") {
-		var logger: ILogger = $injector.resolve("logger");
-		logger.write(message);
-	}
-}
-
 export function getCurrentEpochTime(): number {
 	var dateTime = new Date();
 	return dateTime.getTime();
-}
-
-export function printMsgWithTimeout(message: string, timeout: number): IFuture <void> {
-	var printMsgFuture = new Future<void>();
-	setTimeout(() => {
-		printInfoMessageOnSameLine(message);
-		printMsgFuture.return();
-	}, timeout);
-
-	return printMsgFuture;
 }
 
 export function sleep(ms: number): void {

@@ -430,22 +430,22 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	private waitForEmulatorBootToComplete(emulatorId: string): IFuture<void> {
 		return (() => {
-			helpers.printInfoMessageOnSameLine("Waiting for emulator device initialization...");
+			this.$logger.printInfoMessageOnSameLine("Waiting for emulator device initialization...");
 
 			var isInfiniteWait = this.getMilliSecondsTimeout() === 0;
 			while(helpers.getCurrentEpochTime() < this.endTimeEpoch || isInfiniteWait) {
 				var isEmulatorBootCompleted = this.isEmulatorBootCompleted(emulatorId).wait();
 
 				if(isEmulatorBootCompleted) {
-					helpers.printInfoMessageOnSameLine(os.EOL);
+					this.$logger.printInfoMessageOnSameLine(os.EOL);
 					return;
 				}
 
-				helpers.printInfoMessageOnSameLine(".");
+				this.$logger.printInfoMessageOnSameLine(".");
 				this.sleep(10000);
 			}
 
-			helpers.printInfoMessageOnSameLine(os.EOL);
+			this.$logger.printInfoMessageOnSameLine(os.EOL);
 			this.$errors.fail(AndroidEmulatorServices.UNABLE_TO_START_EMULATOR_MESSAGE);
 		}).future<void>()();
 	}

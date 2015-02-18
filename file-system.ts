@@ -10,13 +10,12 @@ import rimraf = require("rimraf");
 import hostInfo = require("./host-info");
 
 export class FileSystem implements IFileSystem {
-
-
+	constructor(private $injector: IInjector) { }
 
 	//TODO: try 'archiver' module for zipping
 	public zipFiles(zipFile: string, files: string[], zipPathCallback: (path: string) => string): IFuture<void> {
 		//we are resolving it here instead of in the constructor, because config has dependency on file system and config shouldn't require logger
-		var $logger = $injector.resolve("logger");
+		var $logger = this.$injector.resolve("logger");
 		var zipstream = require("zipstream");
 		var zip = zipstream.createZip({ level: 9 });
 		var outFile = fs.createWriteStream(zipFile);
@@ -60,14 +59,14 @@ export class FileSystem implements IFileSystem {
 			
 			//the wild card symbol at the end is required in order for the -ssc- switch of 7zip to behave properly
 			zipFile = isCaseSensitive ? zipFile : zipFile + '*';
-			
-			var $childProcess = $injector.resolve("$childProcess");
-			this.createDirectory(destinationDir).wait();
 
-			var sevenZip = (<Config.IStaticConfig>$injector.resolve("$staticConfig")).sevenZipFilePath;
-			var unzipProc = $childProcess.spawn(sevenZip, _.flatten(['x', shouldOverwriteFiles ? "-y" : "-aos", '-o' + destinationDir, isCaseSensitive ? '' : '-ssc-', zipFile, fileFilters || []]),
-				{ stdio: "ignore", detached: true });
-			this.futureFromEvent(unzipProc, "close").wait();
+			this.createDirectory(destinationDir).wait();
+			var args =  <string[]>(_.flatten(['x', shouldOverwriteFiles ? "-y" : "-aos", '-o' + destinationDir, isCaseSensitive ? '' : '-ssc-', zipFile, fileFilters || []]));
+
+			var $childProcess = this.$injector.resolve("childProcess");
+			var $staticConfig = this.$injector.resolve("staticConfig");
+
+			$childProcess.spawnFromEvent($staticConfig.sevenZipFilePath, args, "close", { stdio: "ignore", detached: true }).wait();
 		}).future<void>()();
 	}
 
@@ -343,15 +342,35 @@ export class FileSystem implements IFileSystem {
 
 	public setCurrentUserAsOwner(path: string, owner: string): IFuture<void> {
 		return (() => {
-			if(!hostInfo.isWindows()) {
-				var $childProcess = $injector.resolve("$childProcess");
+			var $childProcess = this.$injector.resolve("childProcess");
 
+			if(!hostInfo.isWindows()) {
 				var chown = $childProcess.spawn('chown', ['-R', owner, path],
 					{ stdio: "ignore", detached: true });
 				this.futureFromEvent(chown, "close").wait();
 			}
 			// nothing to do on Windows, as chown does not work on this platform
 		}).future<void>()();
+	}
+
+// filterCallback: function(path: String, stat: fs.Stats): Boolean
+	public enumerateFilesInDirectorySync(directoryPath: string, filterCallback?: (file: string, stat: IFsStats) => boolean, foundFiles?: string[]): string[] {
+		foundFiles = foundFiles || [];
+		var contents = this.readDirectory(directoryPath).wait();
+		for (var i = 0; i < contents.length; ++i) {
+			var file = path.join(directoryPath, contents[i]);
+			var stat = this.getFsStats(file).wait();
+			if (filterCallback && !filterCallback(file, stat)) {
+				continue;
+			}
+
+			if (stat.isDirectory()) {
+				this.enumerateFilesInDirectorySync(file, filterCallback, foundFiles);
+			} else {
+				foundFiles.push(file);
+			}
+		}
+		return foundFiles;
 	}
 }
 $injector.register("fs", FileSystem);

@@ -210,7 +210,7 @@ export class CommandsService implements ICommandsService {
 
 				if(data.last.startsWith("--")) {
 					// Resolve optionsService here. It is not part of common lib, because we need all knownOptions for each CLI.
-					var optionsService: IOptionsService = $injector.resolve("optionsService");
+					var optionsService: IOptionsService = this.$injector.resolve("optionsService");
 					return tabtab.log(optionsService.getKnownOptions(), data, "--");
 				}
 

@@ -91,6 +91,10 @@ export interface IDependency {
 }
 
 export class Yok implements IInjector {
+	constructor() {
+		this.register("injector", this);
+	}
+
 	private COMMANDS_NAMESPACE: string = "commands";
 	private modules: {
 		[name: string]: IDependency;
@@ -396,4 +400,3 @@ export class Yok implements IInjector {
 }
 
 export var injector = new Yok();
-injector.register("injector", injector);
