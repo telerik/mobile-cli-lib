@@ -5,6 +5,7 @@ import log4js = require("log4js");
 import util = require("util");
 import stream = require("stream");
 import options = require("./options");
+import Future = require("fibers/future");
 
 export class Logger implements ILogger {
 	private log4jsLogger: log4js.ILogger = null;
@@ -84,6 +85,22 @@ export class Logger implements ILogger {
 		}
 
 		return JSON.stringify(item);
+	}
+
+	public printInfoMessageOnSameLine(message: string): void {
+		if(!options.log || options.log === "info") {
+			this.write(message);
+		}
+	}
+
+	public printMsgWithTimeout(message: string, timeout: number): IFuture <void> {
+		var printMsgFuture = new Future<void>();
+		setTimeout(() => {
+			this.printInfoMessageOnSameLine(message);
+			printMsgFuture.return();
+		}, timeout);
+
+		return printMsgFuture;
 	}
 }
 $injector.register("logger", Logger);

@@ -13,7 +13,7 @@ export class HelpCommand implements ICommand {
 		private $staticConfig: Config.IStaticConfig) {}
 
 	public enableHooks = false;
-	public allowedParameters: ICommandParameter[] = [new commandParams.StringCommandParameter(), new commandParams.StringCommandParameter()];
+	public allowedParameters: ICommandParameter[] = [new commandParams.StringCommandParameter(this.$injector), new commandParams.StringCommandParameter(this.$injector)];
 
 	public execute(args: string[]): IFuture<void> {
 		return (() => {

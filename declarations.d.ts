@@ -75,6 +75,7 @@ interface IFileSystem {
 	chmod(path: string, mode: string): IFuture<any>;
 
 	setCurrentUserAsOwner(path: string, owner: string): IFuture<void>;
+	enumerateFilesInDirectorySync(directoryPath: string, filterCallback?: (file: string, stat: IFsStats) => boolean): string[];
 }
 
 // duplicated from fs.Stats, because I cannot import it here
@@ -112,6 +113,8 @@ interface IErrors {
 	beginCommand(action: () => IFuture<boolean>, printCommandHelp: () => IFuture<boolean>): IFuture<boolean>;
 	verifyHeap(message: string): void;
 	executeAction(action: Function): any;
+	validateArgs(client: string, knownOpts: any, shorthands: any): any;
+	validateYargsArguments(parsed: any, knownOpts: any, shorthands: any, clientName?: string): void;
 	printCallStack: boolean;
 }
 

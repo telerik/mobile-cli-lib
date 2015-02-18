@@ -60,12 +60,5 @@ Object.keys(parsed).forEach((opt) => {
 	exports[key] =  (typeof (parsed[opt]) === "number") ? parsed[opt].toString() :  parsed[opt];
 });
 
-exports.validateArgs = (client: string) => {
-	return $injector.resolve("$errors")
-		.executeAction(
-			() => helpers.getParsedOptions(knownOpts, shorthands, client)
-	);
-};
-
 declare var exports: any;
 export = exports;

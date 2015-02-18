@@ -79,13 +79,18 @@ export class ChildProcess implements IChildProcess {
 					if (capturedErr) {
 						errorMessage += util.format(' Error output: \n %s', capturedErr);
 					}
-					future.throw(new Error(errorMessage));
+
+					if(!future.isResolved()) {
+						future.throw(new Error(errorMessage));
+					}
 				}
 			}
 		});
 
 		childProcess.once("error", (err: Error) => {
-			future.throw(err);
+			if(!future.isResolved()) {
+				future.throw(err);
+			}
 		});
 
 		return future;
