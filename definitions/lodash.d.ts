@@ -3681,22 +3681,23 @@ declare module _ {
         * @see _.max
         **/
         max(
-            callback?: ListIterator<T, any>,
-            thisArg?: any): LoDashWrapper<T>;
+			callback?: ListIterator<T, any>,
+			thisArg?: any): T;
 
         /**
         * @see _.max
         * @param pluckValue _.pluck style callback
         **/
         max(
-            pluckValue: string): LoDashWrapper<T>;
+            pluckValue: string): T;
 
         /**
         * @see _.max
         * @param whereValue _.where style callback
         **/
-        max<W>(
-            whereValue: W): LoDashWrapper<T>;
+
+		max<W>(
+			whereValue: W): W;
     }
 
     //_.min
@@ -3793,21 +3794,21 @@ declare module _ {
         **/
         min(
             callback?: ListIterator<T, any>,
-            thisArg?: any): LoDashWrapper<T>;
+            thisArg?: any): T;
 
         /**
         * @see _.min
         * @param pluckValue _.pluck style callback
         **/
         min(
-            pluckValue: string): LoDashWrapper<T>;
+            pluckValue: string): T;
 
         /**
         * @see _.min
         * @param whereValue _.where style callback
         **/
         min<W>(
-            whereValue: W): LoDashWrapper<T>;
+            whereValue: W): T;
     }
 
     //_.pluck
