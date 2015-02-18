@@ -8,9 +8,9 @@ import util = require("util");
 export class ChildProcess implements IChildProcess {
 	constructor(private $logger: ILogger) {}
 
-	public exec(command: string): IFuture<any> {
+	public exec(command: string, options?: any): IFuture<any> {
 		var future = new Future<any>();
-		child_process.exec(command, (error: Error, stdout: NodeBuffer, stderr: NodeBuffer) => {
+		var callback = (error: Error, stdout: NodeBuffer, stderr: NodeBuffer) => {
 			this.$logger.trace("Exec %s \n stdout: %s \n stderr: %s", command, stdout.toString(), stderr.toString());
 
 			if(error) {
@@ -18,7 +18,13 @@ export class ChildProcess implements IChildProcess {
 			} else {
 				future.return(stdout);
 			}
-		});
+		};
+
+		if (options) {
+			child_process.exec(command, options, callback);
+		} else {
+			child_process.exec(command, callback);
+		}
 
 		return future;
 	}
