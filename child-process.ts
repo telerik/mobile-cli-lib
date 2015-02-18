@@ -20,7 +20,7 @@ export class ChildProcess implements IChildProcess {
 			}
 		};
 
-		if (typeof options === 'object') {
+		if (options) {
 			child_process.exec(command, options, callback);
 		} else {
 			child_process.exec(command, callback);

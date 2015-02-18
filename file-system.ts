@@ -299,7 +299,7 @@ export class FileSystem implements IFileSystem {
 	public isRelativePath(p: string): boolean {
 		var normal = path.normalize(p);
 		var absolute = path.resolve(p);
-		return normal != absolute;
+		return normal !== absolute;
 	}
 
 	public ensureDirectoryExists(directoryPath: string): IFuture<void> {
