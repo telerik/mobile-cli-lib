@@ -139,22 +139,28 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 
 class IOSDeviceDiscoveryStub extends DeviceDiscovery {
 	constructor(private $logger: ILogger,
+		private $staticConfig: IStaticConfig,
 		private error: string) {
 		super();
 	}
 
 	public startLookingForDevices(): IFuture<void> {
-		this.$logger.warn(this.error);
+		if(this.error) {
+			this.$logger.warn(this.error);
+		} else if(hostInfo.isLinux()) {
+			this.$logger.warn("In this version of the %s command-line interface, you cannot use connected iOS devices.", this.$staticConfig.CLIENT_NAME);
+		}
+		
 		return Future.fromResult();
 	}
 }
 
-$injector.register("iOSDeviceDiscovery", ($errors: IErrors, $logger: ILogger, $fs: IFileSystem, $injector: IInjector, $iTunesValidator: Mobile.IiTunesValidator) => {
+$injector.register("iOSDeviceDiscovery", ($errors: IErrors, $logger: ILogger, $fs: IFileSystem, $injector: IInjector, $iTunesValidator: Mobile.IiTunesValidator, $staticConfig: IStaticConfig) => {
 	var error = $iTunesValidator.getError().wait();
 	var result: Mobile.IDeviceDiscovery = null;
 
 	if(error || hostInfo.isLinux()) {
-		result = new IOSDeviceDiscoveryStub($logger, error);
+		result = new IOSDeviceDiscoveryStub($logger, $staticConfig, error);
 	} else {
 		result = $injector.resolve(IOSDeviceDiscovery);
 	}
