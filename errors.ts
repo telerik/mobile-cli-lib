@@ -96,6 +96,14 @@ export class Errors implements IErrors {
 		exception.errorCode = opts.errorCode || ErrorCodes.UNKNOWN;
 		exception.suppressCommandHelp = opts.suppressCommandHelp;
 
+		// with current implementation, one can write try { $errors.fail() } catch {} and the program will continie execution in bad state
+		// this ensures that even when the program continues, at least on the next event loop cycle it will terminate
+		// this does not resolve the issue that after the catch and before the next tick, there is plenty of code which can corrupt user data
+		// but is better than nothing
+		process.nextTick(() => {
+			throw exception;
+		});
+
 		throw exception;
 	}
 
