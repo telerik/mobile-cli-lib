@@ -803,7 +803,9 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 							this.$logger.out(output);
 
 							if(message.Status && message.Status === "Complete") {
-								result.return(message);
+								if(!result.isResolved()) {
+									result.return(message);
+								}
 							}
 						}
 					}
@@ -814,11 +816,15 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 						parsedData = {};
 					}
 
-					result.return(parsedData);
+					if(!result.isResolved()) {
+						result.return(parsedData);
+					}
 				}
 			})
 			.on("error", (error: Error) => {
-				result.throw(error);
+				if(!result.isResolved()) {
+					result.throw(error);
+				}
 			});
 
 		return result;
