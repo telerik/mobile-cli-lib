@@ -2,6 +2,7 @@
 "use strict";
 
 import Future = require("fibers/future");
+import net = require("net");
 import ref = require("ref");
 import os = require("os");
 import path = require("path");
@@ -18,6 +19,7 @@ var CoreTypes = iosCore.CoreTypes;
 
 export class IOSDevice implements Mobile.IIOSDevice {
 	private static IMAGE_ALREADY_MOUNTED_ERROR_CODE = 3892314230;
+	private static INTERFACE_USB = 1;
 
 	private identifier: string = null;
 	private voidPtr = ref.refType(ref.types.void);
@@ -295,12 +297,16 @@ export class IOSDevice implements Mobile.IIOSDevice {
 				};
 
 				try {
-			    	this.tryToExecuteFunction<void>(func);
+					this.tryToExecuteFunction<void>(func);
 				} catch(e) {
 
 				}
 			}
 		}).future<void>()();
+	}
+
+	private getInterfaceType(): number {
+		return this.$mobileDevice.deviceGetInterfaceType(this.devicePointer);
 	}
 
 	public startService(serviceName: string): number {
@@ -322,11 +328,16 @@ export class IOSDevice implements Mobile.IIOSDevice {
 		}).future<void>()();
 	}
 
-    public debug(packageFile: string, packageName: string): IFuture<void> {
-        return (() => {
-            this.$errors.fail({formatStr:"this will come in a future version", suppressCommandHelp: true});
-        }).future<void>()();
-    }
+	public debug(packageFile: string, packageName: string): IFuture<void> {
+		return (() => {
+			var debugging: IOSDeviceDebugging = this.$injector.resolve(IOSDeviceDebugging, {
+				packageFile: packageFile,
+				packageName: packageName,
+				$iOSDevice: this
+			});
+			debugging.debug();
+		}).future<void>()();
+	}
 
 	public sync(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, liveSyncUrl: string, options: Mobile.ISyncOptions = {}): IFuture<void> {
 		return(() => {
@@ -344,7 +355,6 @@ export class IOSDevice implements Mobile.IIOSDevice {
 				var notificationProxyClient = this.$injector.resolve(iOSProxyServices.NotificationProxyClient, {device: this});
 				notificationProxyClient.postNotification("com.telerik.app.refreshWebView");
 				notificationProxyClient.closeSocket();
-
 			}
 
 			this.$logger.out("Successfully synced device with identifier '%s'", this.getIdentifier());
@@ -385,5 +395,169 @@ export class IOSDevice implements Mobile.IIOSDevice {
 			this.$logger.info("Successfully run application %s on device with ID %s", applicationId, this.getIdentifier());
 		}).future<void>()();
 	}
+
+	public connectToPort(port: number): net.NodeSocket {
+		var interfaceType = this.getInterfaceType();
+		if(interfaceType === IOSDevice.INTERFACE_USB) {
+			var connectionId = this.$mobileDevice.deviceGetConnectionId(this.devicePointer);
+			var socketRef = ref.alloc(CoreTypes.intType);
+
+			this.$mobileDevice.uSBMuxConnectByPort(connectionId, this.htons(port), socketRef);
+			var socketValue = socketRef.deref();
+
+			return new net.Socket({ fd: socketValue });
+		}
+
+		return null;
+	}
+
+	/**
+	 * Converts a little endian 16 bit int number to 16 bit int big endian number.
+	 */
+	private htons(port: number): number {
+		var result =  (port & 0xff00) >> 8 | (port & 0x00ff) << 8;
+		return result;
+	}
 }
 $injector.register("iOSDevice", IOSDevice);
+
+export class IOSDeviceDebugging {
+	private notificationProxyClient: iOSProxyServices.NotificationProxyClient;
+
+	constructor(
+		private packageFile: string,
+		private packageName: string,
+		private $iOSDevice: IOSDevice,
+
+		private $injector: IInjector,
+
+		private $logger: ILogger,
+		private $errors: IErrors,
+
+		private $npm: INodePackageManager,
+		private $childProcess: IChildProcess) {
+
+		this.notificationProxyClient = this.$injector.resolve(iOSProxyServices.NotificationProxyClient, { device: this.$iOSDevice });
+	}
+
+	public debug(): void {
+		if (options["get-port"]) {
+			this.$errors.fail({ formatStr: "this feature is not supported in the selected platform", suppressCommandHelp: true });
+		} else if (options["start"]) {
+			this.attachDebugger();
+		} else if (options["stop"]) {
+			this.$errors.fail({ formatStr: "this feature is not supported in the selected platform", suppressCommandHelp: true });
+		} else if (options["debug-brk"]) {
+			this.startAppWithDebugger();
+		} else {
+			this.$logger.info("Should specify exactly one option: debug-brk, start");
+		}
+	}
+
+	public attachDebugger(): void {
+		this.attachAtRuntime();
+	}
+
+	public startAppWithDebugger(): void {
+		this.$iOSDevice.deploy(this.packageFile, this.packageName).wait();
+		this.attachAtStartup();
+		this.$iOSDevice.runApplication(this.packageName).wait();
+	}
+
+	private attachAtStartup() {
+		this.startTheFrontEnd();
+
+		var appLaunchMessage = this.packageName + ":NativeScript.Debug.AppLaunching";
+		this.notificationProxyClient.addObserver(appLaunchMessage, () => {
+			this.$logger.info("Got AppLaunching");
+			this.startTheBackend("WaitForDebugger");
+		});
+	}
+
+	private attachAtRuntime(): void {
+		this.startTheFrontEnd();
+		this.startTheBackend("AttachRequest");
+	}
+
+	private startTheFrontEnd(): void {
+		this.openSafariFrontEnd();
+		this.printHowToTerminate();
+	}
+
+	private startTheBackend(message: string) {
+		this.attachWhenReady();
+		this.postDebugNotification(message);
+	}
+
+	private openSafariFrontEnd(): void {
+		var tnsIosPackage = this.$npm.install("tns-ios").wait();
+		var safariPath = path.join(tnsIosPackage, "WebInspectorUI/Safari/Main.html");
+		this.$childProcess.exec("open -a Safari " + safariPath).wait();
+	}
+
+	private attachWhenReady(): void {
+
+		var identifier = this.$iOSDevice.getIdentifier();
+		this.$logger.info("Device Identifier: " + identifier);
+
+		var appReadyForAttachMessage = this.packageName + ":NativeScript.Debug.ReadyForAttach";
+		this.notificationProxyClient.addObserver(appReadyForAttachMessage, () => {
+			this.$logger.info("Got ReadyForAttach");
+			
+			// NOTE: We will try to provide command line options to select ports, at least on the localhost.
+			var devicePort = 8080;
+			var localPort = 8080;
+
+			var localServer = net.createServer((localSocket) => {
+				this.$logger.info("Front-end client connected to localhost " + localPort);
+
+				var deviceSocket: any;
+
+				var buff = new Array();
+				localSocket.on('data', (data: NodeBuffer) => {
+					if (deviceSocket) {
+						deviceSocket.write(data);
+					} else {
+						buff.push(data);
+					}
+				});
+				localSocket.on('end', () => {
+					this.$logger.info('Localhost client disconnected!');
+					process.exit(0);
+				});
+
+				deviceSocket = this.$iOSDevice.connectToPort(devicePort);
+				this.$logger.info("Connected localhost " + localPort + " to device " + devicePort);
+
+				buff.forEach((data) => {
+					deviceSocket.write(data);
+				});
+
+				deviceSocket.on('data', (data: NodeBuffer) => {
+					localSocket.write(data);
+				});
+
+				deviceSocket.on('end', () => {
+					this.$logger.info("Device socket closed!");
+					process.exit(0);
+				});
+
+			});
+
+			localServer.listen(localPort, () => {
+				this.$logger.info("Opened localhost " + localPort);
+			});
+		});
+	}
+
+	private printHowToTerminate() {
+		this.$logger.info("\nSetting up debugger proxy...\n\nPress Ctrl + C to terminate!\n");
+	}
+
+	private postDebugNotification(notification: string): void {
+		var attachRequestMessage = this.packageName + ":NativeScript.Debug.AttachRequest";
+		this.notificationProxyClient.postNotification(attachRequestMessage);
+		this.$logger.info("Send " + notification);
+	}
+}
+$injector.register("iOSDeviceDebugging", IOSDeviceDebugging);
