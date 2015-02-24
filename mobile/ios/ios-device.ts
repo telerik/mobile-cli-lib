@@ -324,14 +324,14 @@ export class IOSDevice implements Mobile.IIOSDevice {
 		}).future<void>()();
 	}
 
-	public debug(packageFile: string, packageName: string): IFuture<void> {
+	public debug(packageFile: string, packageName: string, debugOnDeviceSetup?: Mobile.IDebugOnDeviceSetup): IFuture<void> {
 		return (() => {
 			var debugging: IOSDeviceDebugging = this.$injector.resolve(IOSDeviceDebugging, {
 				packageFile: packageFile,
 				packageName: packageName,
 				$iOSDevice: this
 			});
-			debugging.debug();
+			debugging.debug(debugOnDeviceSetup);
 		}).future<void>()();
 	}
 
@@ -421,8 +421,8 @@ export class IOSDeviceDebugging {
 	private notificationProxyClient: iOSProxyServices.NotificationProxyClient;
 
 	constructor(
-		private packageFile: string,
 		private packageName: string,
+		private packageFile: string,
 		private $iOSDevice: IOSDevice,
 
 		private $injector: IInjector,
@@ -430,38 +430,37 @@ export class IOSDeviceDebugging {
 		private $logger: ILogger,
 		private $errors: IErrors,
 
-		private $npm: INodePackageManager,
 		private $childProcess: IChildProcess) {
 
 		this.notificationProxyClient = this.$injector.resolve(iOSProxyServices.NotificationProxyClient, { device: this.$iOSDevice });
 	}
 
-	public debug(): void {
+	public debug(debugOnDeviceSetup: Mobile.IDebugOnDeviceSetup): void {
 		if (options["get-port"]) {
 			this.$errors.fail({ formatStr: "this feature is not supported in the selected platform", suppressCommandHelp: true });
 		} else if (options["start"]) {
-			this.attachDebugger();
+			this.attachDebugger(debugOnDeviceSetup);
 		} else if (options["stop"]) {
 			this.$errors.fail({ formatStr: "this feature is not supported in the selected platform", suppressCommandHelp: true });
 		} else if (options["debug-brk"]) {
-			this.startAppWithDebugger();
+			this.startAppWithDebugger(debugOnDeviceSetup);
 		} else {
 			this.$logger.info("Should specify exactly one option: debug-brk, start");
 		}
 	}
 
-	public attachDebugger(): void {
-		this.attachAtRuntime();
+	public attachDebugger(debugOnDeviceSetup: Mobile.IDebugOnDeviceSetup): void {
+		this.attachAtRuntime(debugOnDeviceSetup);
 	}
 
-	public startAppWithDebugger(): void {
+	public startAppWithDebugger(debugOnDeviceSetup: Mobile.IDebugOnDeviceSetup): void {
 		this.$iOSDevice.deploy(this.packageFile, this.packageName).wait();
-		this.attachAtStartup();
+		this.attachAtStartup(debugOnDeviceSetup);
 		this.$iOSDevice.runApplication(this.packageName).wait();
 	}
 
-	private attachAtStartup() {
-		this.startTheFrontEnd();
+	private attachAtStartup(debugOnDeviceSetup: Mobile.IDebugOnDeviceSetup) {
+		this.startTheFrontEnd(debugOnDeviceSetup);
 
 		var appLaunchMessage = this.packageName + ":NativeScript.Debug.AppLaunching";
 		this.notificationProxyClient.addObserver(appLaunchMessage, () => {
@@ -470,13 +469,13 @@ export class IOSDeviceDebugging {
 		});
 	}
 
-	private attachAtRuntime(): void {
-		this.startTheFrontEnd();
+	private attachAtRuntime(debugOnDeviceSetup: Mobile.IDebugOnDeviceSetup): void {
+		this.startTheFrontEnd(debugOnDeviceSetup);
 		this.startTheBackend("AttachRequest");
 	}
 
-	private startTheFrontEnd(): void {
-		this.openSafariFrontEnd();
+	private startTheFrontEnd(debugOnDeviceSetup: Mobile.IDebugOnDeviceSetup): void {
+		this.openSafariFrontEnd(debugOnDeviceSetup);
 		this.printHowToTerminate();
 	}
 
@@ -485,10 +484,8 @@ export class IOSDeviceDebugging {
 		this.postDebugNotification(message);
 	}
 
-	private openSafariFrontEnd(): void {
-		var tnsIosPackage = this.$npm.install("tns-ios").wait();
-		var safariPath = path.join(tnsIosPackage, "WebInspectorUI/Safari/Main.html");
-		this.$childProcess.exec("open -a Safari " + safariPath).wait();
+	private openSafariFrontEnd(debugOnDeviceSetup: Mobile.IDebugOnDeviceSetup): void {
+		this.$childProcess.exec("open -a Safari " + debugOnDeviceSetup.frontEndPath).wait();
 	}
 
 	private attachWhenReady(): void {

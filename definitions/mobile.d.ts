@@ -17,7 +17,7 @@ declare module Mobile {
 		deploy(packageFile: string, packageName: string): IFuture<void>;
 		sync(localToDevicePaths: ILocalToDevicePathData[], appIdentifier: IAppIdentifier, liveSyncUrl: string): IFuture<void>;
 		sync(localToDevicePaths: ILocalToDevicePathData[], appIdentifier: IAppIdentifier, liveSyncUrl: string, options: ISyncOptions): IFuture<void>;
-		debug(packageFile: string, packageName: string): IFuture<void>;
+		debug(packageFile: string, packageName: string, debugOnDeviceSetup?: Mobile.IDebugOnDeviceSetup): IFuture<void>;
 		openDeviceLogStream(): void;
 		runApplication(applicationId: string): IFuture<void>;
 	}
@@ -33,6 +33,10 @@ declare module Mobile {
 
 	interface IIOSDevice extends IDevice {
 		startService(serviceName: string): number;
+	}
+
+	interface IDebugOnDeviceSetup {
+		frontEndPath?: string;
 	}
 
 	interface IDeviceDiscovery {
