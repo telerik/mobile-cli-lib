@@ -308,7 +308,7 @@ export class AndroidDevice implements Mobile.IDevice {
             this.$childProcess.exec(clearDebugEnvironmentCommand).wait();
 
             var isRunning = false;
-            for (var i = 0; i < 10; i++) {
+            for (var i = 0; i < 30; i++) {
                 helpers.sleep(1000 /* ms */);
                 isRunning = this.checkIfRunning(packageName);
                 if (isRunning)
