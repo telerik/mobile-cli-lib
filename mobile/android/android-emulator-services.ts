@@ -70,14 +70,15 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	private checkGenymotionConfiguration(): IFuture<void> {
 		return (() => {
+			var proc: any;
 			try {
-				var proc = this.$childProcess.spawnFromEvent("player", [], "exit", undefined, { throwError: false }).wait();
+				proc = this.$childProcess.spawnFromEvent("player", [], "exit", undefined, { throwError: false }).wait();
 			} catch(e) {
 				var message: string = (e.code === "ENOENT") ? AndroidEmulatorServices.MISSING_GENYMOTION_MESSAGE : e.message;
 				this.$errors.failWithoutHelp(message);
 			}
 
-			if(proc.stderr && !proc.stderr.startsWith("Usage:")) {
+			if(proc.stderr && !_.startsWith(proc.stderr, "Usage:")) {
 				this.$errors.failWithoutHelp(AndroidEmulatorServices.MISSING_GENYMOTION_MESSAGE);
 			}
 		}).future<void>()();
