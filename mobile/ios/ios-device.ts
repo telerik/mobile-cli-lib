@@ -13,7 +13,8 @@ import iOSProxyServices = require("./ios-proxy-services");
 import MobileHelper = require("./../mobile-helper");
 import helpers = require("./../../helpers");
 import hostInfo = require("./../../host-info");
-import options = require("./../../options");
+import commonOptions = require("./../../options");
+import options = require("./../../../options");
 
 var CoreTypes = iosCore.CoreTypes;
 
@@ -230,7 +231,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 
 	private mountImage(): IFuture<void> {
 		return (() => {
-			var imagePath = options.ddi;
+			var imagePath = commonOptions.ddi;
 
 			if(hostInfo.isWindows()) {
 				if(!imagePath) {
@@ -343,7 +344,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 			afcClientForAppDocuments.transferCollection(localToDevicePaths).wait();
 			houseArrestClient.closeSocket();
 
-			if (!options.skipRefresh) {
+			if (!commonOptions.skipRefresh) {
 				var afcClientForContainer = houseArrestClient.getAfcClientForAppContainer(appIdentifier.appIdentifier);
 				afcClientForContainer.deleteFile("/Library/Preferences/ServerInfo.plist");
 				houseArrestClient.closeSocket();
@@ -431,19 +432,20 @@ export class IOSDeviceDebugging {
 		private $errors: IErrors,
 
 		private $npm: INodePackageManager,
-		private $childProcess: IChildProcess) {
+		private $childProcess: IChildProcess,
+		private $fs: IFileSystem) {
 
 		this.notificationProxyClient = this.$injector.resolve(iOSProxyServices.NotificationProxyClient, { device: this.$iOSDevice });
 	}
 
 	public debug(): void {
-		if (options["get-port"]) {
+		if (commonOptions["get-port"]) {
 			this.$errors.fail({ formatStr: "this feature is not supported in the selected platform", suppressCommandHelp: true });
-		} else if (options["start"]) {
+		} else if (commonOptions["start"]) {
 			this.attachDebugger();
-		} else if (options["stop"]) {
+		} else if (commonOptions["stop"]) {
 			this.$errors.fail({ formatStr: "this feature is not supported in the selected platform", suppressCommandHelp: true });
-		} else if (options["debug-brk"]) {
+		} else if (commonOptions["debug-brk"]) {
 			this.startAppWithDebugger();
 		} else {
 			this.$logger.info("Should specify exactly one option: debug-brk, start");
@@ -486,7 +488,18 @@ export class IOSDeviceDebugging {
 	}
 
 	private openSafariFrontEnd(): void {
-		var tnsIosPackage = this.$npm.install("tns-ios").wait();
+		var tnsIosPackage = "";
+
+		if(options.frameworkPath) {
+			if(this.$fs.getFsStats(options.frameworkPath).wait().isFile()) {
+				this.$errors.fail("frameworkPath option must be path to directory which contains tns-ios framework");
+			}
+
+			tnsIosPackage = path.resolve(options.frameworkPath);
+		} else {
+			tnsIosPackage = this.$npm.install("tns-ios").wait();
+		}
+
 		var safariPath = path.join(tnsIosPackage, "WebInspectorUI/Safari/Main.html");
 		this.$childProcess.exec("open -a Safari " + safariPath).wait();
 	}
