@@ -180,6 +180,13 @@ export class AnalyticsService implements IAnalyticsService {
 		}).future<void>()();
 	}
 
+	public isEnabled(): IFuture<boolean> {
+		return (() => {
+			var analyticsStatus = this.getAnalyticsStatus().wait();
+			return analyticsStatus === AnalyticsStatus.enabled;
+		}).future<boolean>()();
+	}
+
 	private isDisabled(): IFuture<boolean> {
 		return (() => {
 			var analyticsStatus = this.getAnalyticsStatus().wait();
