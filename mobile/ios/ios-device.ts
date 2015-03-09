@@ -10,7 +10,6 @@ import util = require("util");
 
 import iosCore = require("./ios-core");
 import iOSProxyServices = require("./ios-proxy-services");
-import MobileHelper = require("./../mobile-helper");
 import helpers = require("./../../helpers");
 import hostInfo = require("./../../host-info");
 import options = require("./../../options");
@@ -32,7 +31,9 @@ export class IOSDevice implements Mobile.IIOSDevice {
 		private $fs: IFileSystem,
 		private $injector: IInjector,
 		private $logger: ILogger,
-		private $mobileDevice: Mobile.IMobileDevice) {
+		private $mobileDevice: Mobile.IMobileDevice,
+		private $staticConfig: IStaticConfig,
+		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
 		this.mountImageCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSDevice.mountImageCallback);
 	}
 
@@ -45,7 +46,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 	}
 
 	public getPlatform(): string {
-		return MobileHelper.DevicePlatforms[MobileHelper.DevicePlatforms.iOS];
+		return this.$devicePlatformsConstants.iOS;
 	}
 
 	public getIdentifier(): string {
@@ -372,7 +373,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 	public runApplication(applicationId: string): IFuture<void> {
 		return (() => {
 			if(hostInfo.isWindows()) {
-				this.$errors.fail("$appbuilder device run command is not supported on Windows for iOS devices.");
+				this.$errors.fail("$%s device run command is not supported on Windows for iOS devices.", this.$staticConfig.CLIENT_NAME.toLowerCase());
 			}
 
 			var applications = this.lookupApplications();

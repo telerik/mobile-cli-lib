@@ -149,7 +149,7 @@ class IOSDeviceDiscoveryStub extends DeviceDiscovery {
 		if(this.error) {
 			this.$logger.warn(this.error);
 		} else if(hostInfo.isLinux()) {
-			this.$logger.warn("In this version of the %s command-line interface, you cannot use connected iOS devices.", this.$staticConfig.CLIENT_NAME);
+			this.$logger.warn("In this version of the %s command-line interface, you cannot use connected iOS devices.", this.$staticConfig.CLIENT_NAME.toLowerCase());
 		}
 		
 		return Future.fromResult();

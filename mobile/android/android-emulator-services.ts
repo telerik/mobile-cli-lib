@@ -8,7 +8,6 @@ import os = require("os");
 import osenv = require("osenv");
 import path = require("path");
 import util = require("util");
-import MobileHelper = require("../mobile-helper");
 import options = require("../../options");
 import helpers = require("../../helpers");
 var net = require('net');
@@ -39,7 +38,8 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		private $errors: IErrors,
 		private $childProcess: IChildProcess,
 		private $fs: IFileSystem,
-		private $staticConfig: Config.IStaticConfig) {
+		private $staticConfig: Config.IStaticConfig,
+		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
 		iconv.extendNodeEncodings();
 		this.adbFilePath = helpers.getPathToAdb($injector).wait();
 	}
@@ -86,7 +86,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	public checkAvailability(): IFuture<void> {
 		return (() => {
-			var platform = MobileHelper.DevicePlatforms[MobileHelper.DevicePlatforms.Android];
+			var platform = this.$devicePlatformsConstants.Android;
 			if(!this.$emulatorSettingsService.canStart(platform).wait()) {
 				this.$errors.fail("The current project does not target Android and cannot be run in the Android emulator.");
 			}

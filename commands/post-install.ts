@@ -3,10 +3,11 @@
 
 import options = require("../options");
 import hostInfo = require("../host-info");
+import util = require("util");
 
 export class PostInstallCommand implements ICommand {
 	private static SEVEN_ZIP_ERROR_MESSAGE = "It looks like there's a problem with your system configuration. " +
-		"You can find all system requirements on http://docs.telerik.com/platform/appbuilder/running-appbuilder/running-the-cli/system-requirements-cli";
+		"You can find all system requirements on %s"; 
 
 	constructor(private $autoCompletionService: IAutoCompletionService,
 		private $fs: IFileSystem,
@@ -35,14 +36,15 @@ export class PostInstallCommand implements ICommand {
 
 	private checkSevenZip(): IFuture<void> {
 		return (() => {
+			var sevenZipErrorMessage = util.format(PostInstallCommand.SEVEN_ZIP_ERROR_MESSAGE, this.$staticConfig.SYS_REQUIREMENTS_LINK);
 			try {
 				var proc = this.$childProcess.spawnFromEvent(this.$staticConfig.sevenZipFilePath, ["-h"], "exit", undefined, { throwError: false }).wait();
 
 				if(proc.stderr) {
-					this.$errors.failWithoutHelp(PostInstallCommand.SEVEN_ZIP_ERROR_MESSAGE);
+					this.$errors.failWithoutHelp(sevenZipErrorMessage);
 				}
 			} catch(e) {
-				var message: string = (e.code === "ENOENT") ? PostInstallCommand.SEVEN_ZIP_ERROR_MESSAGE : e.message;
+				var message: string = (e.code === "ENOENT") ? sevenZipErrorMessage : e.message;
 				this.$errors.failWithoutHelp(message);
 			}
 		}).future<void>()();

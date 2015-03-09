@@ -1,6 +1,5 @@
 ///<reference path="../../../.d.ts"/>
 "use strict";
-import MobileHelper = require("./../mobile-helper");
 import util = require("util");
 import Future = require("fibers/future");
 import path = require("path");
@@ -42,10 +41,10 @@ export class AndroidDevice implements Mobile.IDevice {
 	private static LIVESYNC_BROADCAST_NAME = "com.telerik.LiveSync";
 	private static CHECK_LIVESYNC_INTENT_NAME = "com.telerik.IsLiveSyncSupported"
 
-    private static ENV_DEBUG_IN_FILENAME = "envDebug.in";
-    private static ENV_DEBUG_OUT_FILENAME = "envDebug.out";
-    private static PACKAGE_EXTERNAL_DIR_TEMPLATE = "/sdcard/Android/data/%s/files/";
-    private static DEVICE_TMP_DIR_FORMAT_V2 = "/data/local/tmp/12590FAA-5EDD-4B12-856D-F52A0A1599F2/%s";
+	private static ENV_DEBUG_IN_FILENAME = "envDebug.in";
+	private static ENV_DEBUG_OUT_FILENAME = "envDebug.out";
+	private static PACKAGE_EXTERNAL_DIR_TEMPLATE = "/sdcard/Android/data/%s/files/";
+	private static DEVICE_TMP_DIR_FORMAT_V2 = "/data/local/tmp/12590FAA-5EDD-4B12-856D-F52A0A1599F2/%s";
 	private static DEVICE_TMP_DIR_FORMAT_V3 = "/mnt/sdcard/Android/data/%s/files/12590FAA-5EDD-4B12-856D-F52A0A1599F2";
 	private static COMMANDS_FILE = "telerik.livesync.commands";
 	private static DEVICE_PATH_SEPARATOR = "/";
@@ -55,16 +54,17 @@ export class AndroidDevice implements Mobile.IDevice {
 	private version: string;
 	private vendor: string;
 	private _tmpRoots: IStringDictionary = {};
-    private _installedApplications: string[];
-    private defaultNodeInspectorUrl = "http://127.0.0.1:8080/debug";
+	private _installedApplications: string[];
+	private defaultNodeInspectorUrl = "http://127.0.0.1:8080/debug";
 
 	constructor(private identifier: string, private adb: string,
 		private $logger: ILogger,
 		private $fs: IFileSystem,
 		private $childProcess: IChildProcess,
 		private $errors: IErrors,
-        private $staticConfig: Config.IStaticConfig,
-        private $opener: IOpener) {
+		private $staticConfig: Config.IStaticConfig,
+		private $opener: IOpener,
+		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
 		var details: IAndroidDeviceDetails = this.getDeviceDetails().wait();
 		this.model = details.model;
 		this.name = details.name;
@@ -91,7 +91,7 @@ export class AndroidDevice implements Mobile.IDevice {
 	}
 
 	public getPlatform(): string {
-		return MobileHelper.DevicePlatforms[MobileHelper.DevicePlatforms.Android];
+		return this.$devicePlatformsConstants.Android;
 	}
 
 	public getIdentifier(): string {

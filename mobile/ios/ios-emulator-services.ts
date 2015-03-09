@@ -4,14 +4,15 @@
 import util = require("util");
 import Future = require("fibers/future");
 import hostInfo = require("../../host-info");
-import MobileHelper = require("./../mobile-helper");
 import options = require("./../../options");
 
 class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	constructor(private $logger: ILogger,
 		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
 		private $errors: IErrors,
-		private $childProcess: IChildProcess) { }
+		private $childProcess: IChildProcess,
+		private $mobileHelper: Mobile.IMobileHelper,
+		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) { }
 
 	public checkDependencies(): IFuture<void> {
 		return (() => {
@@ -24,7 +25,7 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 				this.$errors.fail("iOS Simulator is available only on Mac OS X.");
 			}
 
-			var platform = MobileHelper.DevicePlatforms[MobileHelper.DevicePlatforms.iOS];
+			var platform = this.$devicePlatformsConstants.iOS;
 			if(dependsOnProject && !this.$emulatorSettingsService.canStart(platform).wait()) {
 				this.$errors.fail("The current project does not target iOS and cannot be run in the iOS Simulator.");
 			}
