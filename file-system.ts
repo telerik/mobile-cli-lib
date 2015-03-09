@@ -61,7 +61,7 @@ export class FileSystem implements IFileSystem {
 			zipFile = isCaseSensitive ? zipFile : zipFile + '*';
 
 			this.createDirectory(destinationDir).wait();
-			var args =  <string[]>(_.flatten(['x', shouldOverwriteFiles ? "-y" : "-aos", '-o' + destinationDir, isCaseSensitive ? '' : '-ssc-', zipFile, fileFilters || []]));
+			var args =  <string[]>(_.flatten(['x', shouldOverwriteFiles ? "-y" : "-aos", '-o' + destinationDir, isCaseSensitive ? '-ssc' : '-ssc-', zipFile, fileFilters || []]));
 
 			var $childProcess = this.$injector.resolve("childProcess");
 			var $staticConfig = this.$injector.resolve("staticConfig");
