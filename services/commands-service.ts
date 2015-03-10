@@ -11,6 +11,10 @@ class CommandArgumentsValidationHelper {
 }
 
 export class CommandsService implements ICommandsService {
+	private static HIERARCHICAL_COMMANDS_DELIMITER = "|";
+	private static HIERARCHICAL_COMMANDS_DEFAULT_COMMAND_DELIMITER = "|*";
+	private static HOOKS_COMMANDS_DELIMITER = "-";
+
 	constructor(private $errors: IErrors,
 		private $logger: ILogger,
 		private $injector: IInjector,
@@ -33,9 +37,10 @@ export class CommandsService implements ICommandsService {
 				}
 				if(command.enableHooks === undefined || command.enableHooks === true) {
 					// Handle correctly hierarchical commands
-					var childrenCommandsNames = _.map(this.$injector.getChildrenCommandsNames(commandName), command => { return command.replace("*", ""); });
-					if(_.contains(childrenCommandsNames, commandArguments[0])) {
-						commandName = util.format("%s-%s", commandName, commandArguments[0]);
+					var hierarchicalCommandName = this.$injector.buildHierarchicalCommand(commandName, commandArguments);
+					if(hierarchicalCommandName) {
+						commandName = helpers.stringReplaceAll(hierarchicalCommandName.commandName, CommandsService.HIERARCHICAL_COMMANDS_DEFAULT_COMMAND_DELIMITER, CommandsService.HOOKS_COMMANDS_DELIMITER);
+						commandName = helpers.stringReplaceAll(commandName, CommandsService.HIERARCHICAL_COMMANDS_DELIMITER, CommandsService.HOOKS_COMMANDS_DELIMITER); 
 					}
 
 					this.$hooksService.initialize(commandName);
@@ -77,7 +82,6 @@ export class CommandsService implements ICommandsService {
 		return (() => {
 			var command = this.$injector.resolveCommand(commandName);
 			var beautifiedName = helpers.stringReplaceAll(commandName, "|", " ");
-
 			if(command) {
 				// If command wants to handle canExecute logic on its own.
 				if(command.canExecute) {

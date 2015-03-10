@@ -101,7 +101,7 @@ export class Yok implements IInjector {
 	} = {};
 
 	private resolutionProgress: any = {};
-    private hierarchicalCommands: IDictionary<string[]> = {};
+	private hierarchicalCommands: IDictionary<string[]> = {};
 
 	public requireCommand(names: any, file: string) {
 		forEachName(names, (commandName) => {
@@ -118,7 +118,7 @@ export class Yok implements IInjector {
 					this.hierarchicalCommands[parentCommandName] = [];
 				}
 
-				this.hierarchicalCommands[parentCommandName].push(commands[1]);
+				this.hierarchicalCommands[parentCommandName].push(_.rest(commands).join("|"));
 			}
 
 			if(commands.length > 1 && !this.modules[this.createCommandName(commands[0])]) {
@@ -167,8 +167,29 @@ export class Yok implements IInjector {
 		return _.contains(allCommands, name);
 	}
 
-	private buildHierarchicalCommand(parentCommandName: string, childCommandName: string) {
-		return util.format("%s|%s", parentCommandName, childCommandName);
+	public buildHierarchicalCommand(parentCommandName: string, commandLineArguments: string[]): any {
+		var subCommandName: string;
+		var subCommands = this.hierarchicalCommands[parentCommandName];
+		var remainingArguments = commandLineArguments;
+		var foundSubCommand = false;
+		_.each(commandLineArguments, arg => {
+			subCommandName = subCommandName ? this.getHierarchicalCommandName(subCommandName, arg) : arg;
+			remainingArguments = _.rest(remainingArguments);
+			if(_.any(subCommands,(sc) => sc === subCommandName)) {
+				foundSubCommand = true;
+				return false;
+			} else if(_.any(subCommands, sc => sc === "*" + subCommandName)) {
+				subCommandName = "*" + subCommandName;
+				foundSubCommand = true;
+				return false;
+			}
+		});
+
+		if(foundSubCommand) {
+			return { commandName: this.getHierarchicalCommandName(parentCommandName, subCommandName), remainingArguments: remainingArguments };
+		}
+
+		return undefined;
 	}
 
 	private createHierarchicalCommand(name: string) {
@@ -183,29 +204,24 @@ export class Yok implements IInjector {
 						var allowedParams: ICommandParameter[];
 
 						if(args.length > 0) {
-							var isValidCommand = this.isValidCommand(this.buildHierarchicalCommand(name, args[0]));
+							var hierarchicalCommand = this.buildHierarchicalCommand(name, args);
+							var isValidCommand = this.isValidCommand(hierarchicalCommand.commandName);
 							if(isValidCommand) {
-								commandName = args[0];
-								commandArguments = _.rest(args);
+								commandName = hierarchicalCommand.commandName;
+								commandArguments = hierarchicalCommand.remainingArguments;
 							} else {
-								commandName = defaultCommand || "help";
-								// If we'll execute the default command, but it's full name had been written by the user
-								// for example "appbuilder cloud list", we have to remove the "list" option from the arguments that we'll pass to the command.
-								if(_.contains(this.hierarchicalCommands[name], "*" + args[0])) {
-									commandArguments = _.rest(args);
-								}
-								else {
-									commandArguments = args;
-								}
+								commandArguments = args;
+								commandName = "help";
 							}
 						} else {
 							//Execute only default command without arguments
-							commandName = defaultCommand || "help";
+							if(defaultCommand) {
+								commandName = this.getHierarchicalCommandName(name, defaultCommand);
+							} else {
+								commandName = "help";
+							}
 						}
 
-						if(commandName !== "help") {
-							commandName = this.buildHierarchicalCommand(name, commandName);
-						}
 						commandsService.tryExecuteCommand(commandName, commandName === "help" ? [name] : commandArguments).wait();
 					}).future<void>()();
 				}
@@ -213,6 +229,10 @@ export class Yok implements IInjector {
 		};
 
 		$injector.registerCommand(name, factory);
+	}
+
+	private getHierarchicalCommandName(parentCommandName: string, subCommandName: string) {
+		return [parentCommandName, subCommandName].join("|")
 	}
 
 	public isValidHierarchicalCommand(commandName: string, commandArguments: string[]): boolean {
@@ -224,11 +244,10 @@ export class Yok implements IInjector {
 
 			var subCommands = this.hierarchicalCommands[commandName];
 			if(subCommands) {
-				if(_.any(subCommands, (sc) => sc === commandArguments[0] || sc === "*" + commandArguments[0])) {
-					// The passed second argument is valid subCommand
-					return true;
-				} else {
-					// The passed argument is not one of the subCommands.
+				var fullCommandName = this.buildHierarchicalCommand(commandName, commandArguments);
+				var hasSubCommand = fullCommandName !== undefined;
+				if(!fullCommandName) {
+					// The passed arguments are not one of the subCommands.
 					// Check if the default command accepts arguments - if no, return false;
 					var defaultCommandName = this.getDefaultCommand(commandName);
 					var defaultCommand = this.resolveCommand(util.format("%s|%s", commandName, defaultCommandName));
@@ -236,9 +255,11 @@ export class Yok implements IInjector {
 						return true;
 					} else {
 						var errors = $injector.resolve("errors");
-						errors.fail(util.format("'%s' is not valid sub-command for '%s' command", commandArguments[0], commandName));
+						errors.fail("The input is not valid sub-command for '%s' command", commandName);
 					}
 				}
+
+				return true;
 			}
 		}
 
@@ -283,14 +304,24 @@ export class Yok implements IInjector {
 		}
 	}
 
+	/* Regex to match dynamic calls in the following format:
+		#{moduleName.functionName} or
+		#{moduleName.functionName(param1)} or
+		#{moduleName.functionName(param1, param2)} - multiple parameters separated with comma are supported 
+		Check dynamicCall method for sample usage of this regular expression and see how to determine the passed parameters
+	*/
 	public get dynamicCallRegex(): RegExp {
-		return /#{([^.]+)\.([^}]+)}/;
+		return /#{([^.]+)\.([^}]+?)(\((.+)\))*}/;
 	}
 
 	public dynamicCall(call: string, args?: any[]): IFuture<any> {
 		return (() => {
 			var parsed = call.match(this.dynamicCallRegex);
 			var module = this.resolve(parsed[1]);
+			if(!args && parsed[3]) {
+				args = _.map(parsed[4].split(","), arg => arg.trim());
+			}
+
 			var data = module[parsed[2]].apply(module, args);
 			if(data && typeof data.wait === "function") {
 				return data.wait();
@@ -381,7 +412,7 @@ export class Yok implements IInjector {
 		return commands;
 	}
 
-	public getChildrenCommandsNames(commandName: string): string[] {
+	public getChildrenCommandsNames(commandName: string): string[]{
 		return this.hierarchicalCommands[commandName];
 	}
 

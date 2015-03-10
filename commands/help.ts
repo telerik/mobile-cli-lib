@@ -3,17 +3,23 @@
 
 import path = require("path");
 import util = require("util");
+import os = require("os");
 import commandParams = require("../command-params");
-
+import Future = require("fibers/future");
 export class HelpCommand implements ICommand {
 	constructor(private $logger: ILogger,
 		private $injector: IInjector,
 		private $errors: IErrors,
 		private $fs: IFileSystem,
-		private $staticConfig: Config.IStaticConfig) {}
+		private $staticConfig: Config.IStaticConfig,
+		private $microTemplateService: IMicroTemplateService) { }
 
 	public enableHooks = false;
-	public allowedParameters: ICommandParameter[] = [new commandParams.StringCommandParameter(this.$injector), new commandParams.StringCommandParameter(this.$injector)];
+	public canExecute(args: string[]): IFuture<boolean> {
+		return Future.fromResult(true);
+	}
+
+	public allowedParameters: ICommandParameter[] = [];
 
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
@@ -22,8 +28,9 @@ export class HelpCommand implements ICommand {
 				topic = "";
 			}
 
-			if(args[1]) {
-				topic = util.format("%s|%s", args[0], args[1]);
+			var hierarchicalCommand = this.$injector.buildHierarchicalCommand(args[0], _.rest(args));
+			if(hierarchicalCommand) {
+				topic = hierarchicalCommand.commandName;
 			}
 
 			var helpContent = this.$fs.readText(this.$staticConfig.helpTextPath).wait();
@@ -35,19 +42,10 @@ export class HelpCommand implements ICommand {
 			if (match) {
 				var helpText = match[1].trim();
 
-				var substitutionPoint: any;
-				while (substitutionPoint = helpText.match(this.$injector.dynamicCallRegex)) {
-					this.$logger.trace(substitutionPoint);
-					var data = this.$injector.dynamicCall(substitutionPoint[0]).wait();
-
-					var pointStart = substitutionPoint.index;
-					var pointEnd = pointStart + substitutionPoint[0].length;
-					helpText = helpText.substr(0, pointStart) + data + helpText.substr(pointEnd);
-				}
-
-				this.$logger.out(helpText);
+				var outputText = this.$microTemplateService.parseContent(helpText);
+				this.$logger.out(outputText);
 			} else {
-				this.$errors.fail({ formatStr: "Unknown help topic '%s'", suppressCommandHelp: true }, topic);
+				this.$errors.failWithoutHelp("Unknown help topic '%s'", topic);
 			}
 		}).future<void>()();
 	}
