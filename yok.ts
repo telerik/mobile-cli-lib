@@ -205,13 +205,18 @@ export class Yok implements IInjector {
 
 						if(args.length > 0) {
 							var hierarchicalCommand = this.buildHierarchicalCommand(name, args);
-							var isValidCommand = this.isValidCommand(hierarchicalCommand.commandName);
-							if(isValidCommand) {
+							if(hierarchicalCommand) {
 								commandName = hierarchicalCommand.commandName;
 								commandArguments = hierarchicalCommand.remainingArguments;
 							} else {
-								commandArguments = args;
-								commandName = "help";
+								commandName = defaultCommand ? this.getHierarchicalCommandName(name, defaultCommand) : "help";
+								// If we'll execute the default command, but it's full name had been written by the user
+								// for example "appbuilder cloud list", we have to remove the "list" option from the arguments that we'll pass to the command.
+								if(_.contains(this.hierarchicalCommands[name], "*" + args[0])) {
+									commandArguments = _.rest(args);
+								} else {
+									commandArguments = args;
+								}
 							}
 						} else {
 							//Execute only default command without arguments

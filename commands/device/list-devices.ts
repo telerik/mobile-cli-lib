@@ -4,6 +4,7 @@
 import util = require("util");
 import options = require("./../../options");
 import commandParams = require("../../command-params");
+import MobileHelper = require("../../mobile/mobile-helper");
 
 export class ListDevicesCommand implements ICommand {
 	constructor(private $devicesServices: Mobile.IDevicesServices,
@@ -41,3 +42,33 @@ export class ListDevicesCommand implements ICommand {
 	}
 }
 $injector.registerCommand("device|*list", ListDevicesCommand);
+
+class ListAndroidDevicesCommand implements ICommand {
+	constructor(private $injector: IInjector) { }
+
+	allowedParameters: ICommandParameter[] = [];
+
+	public execute(args: string[]): IFuture<void> {
+		return (() => {
+			var listDevicesCommand: ICommand = this.$injector.resolve(ListDevicesCommand);
+			var platform = MobileHelper.DevicePlatforms[MobileHelper.DevicePlatforms.Android]
+			listDevicesCommand.execute([platform]).wait();
+		}).future<void>()();
+	}
+}
+$injector.registerCommand("device|android", ListAndroidDevicesCommand);
+
+class ListiOSDevicesCommand implements ICommand {
+	constructor(private $injector: IInjector) { }
+
+	allowedParameters: ICommandParameter[] = [];
+
+	public execute(args: string[]): IFuture<void> {
+		return (() => {
+			var listDevicesCommand: ICommand = this.$injector.resolve(ListDevicesCommand);
+			var platform = MobileHelper.DevicePlatforms[MobileHelper.DevicePlatforms.iOS]
+			listDevicesCommand.execute([platform]).wait();
+		}).future<void>()();
+	}
+}
+$injector.registerCommand("device|ios", ListiOSDevicesCommand);

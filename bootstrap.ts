@@ -32,6 +32,9 @@ $injector.requireCommand("feature-usage-tracking", "./common/commands/analytics"
 $injector.requireCommand("dev-post-install", "./common/commands/post-install");
 
 $injector.requireCommand("device|*list", "./common/commands/device/list-devices");
+$injector.requireCommand("device|android", "./common/commands/device/list-devices");
+$injector.requireCommand("device|ios", "./common/commands/device/list-devices");
+
 $injector.requireCommand("device|log", "./common/commands/device/device-log-stream");
 $injector.requireCommand("device|run", "./common/commands/device/run-application");
 $injector.requireCommand("device|list-applications", "./common/commands/device/list-applications");
