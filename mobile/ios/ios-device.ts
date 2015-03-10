@@ -392,7 +392,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 		}).future<void>()();
 	}
 
-	public connectToPort(port: number): net.NodeSocket {
+	public connectToPort(port: number): net.Socket {
 		var interfaceType = this.getInterfaceType();
 		if(interfaceType === IOSDevice.INTERFACE_USB) {
 			var connectionId = this.$mobileDevice.deviceGetConnectionId(this.devicePointer);

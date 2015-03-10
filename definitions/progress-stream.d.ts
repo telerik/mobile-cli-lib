@@ -1,5 +1,5 @@
 declare module "progress-stream" {
-	function progressStream(options: IProgressStreamOptions, onProgress?: (progress: IProgressStreamReport) => void): ReadableStream;
+	function progressStream(options: IProgressStreamOptions, onProgress?: (progress: IProgressStreamReport) => void): NodeJS.ReadableStream;
 	export = progressStream;
 }
 

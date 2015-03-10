@@ -175,7 +175,7 @@ export class HttpClient implements Server.IHttpClient {
 		}).future<Server.IResponse>()();
 	}
 
-	private trackDownloadProgress(pipeTo: WritableStream): ReadableStream {
+	private trackDownloadProgress(pipeTo: NodeJS.WritableStream): NodeJS.ReadableStream {
 		// \r for carriage return doesn't work on windows in node for some reason so we have to use it's hex representation \x1B[0G
 		var lastMessageSize = 0,
 			carriageReturn = "\x1B[0G",

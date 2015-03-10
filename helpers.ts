@@ -33,9 +33,6 @@ export function isResponseRedirect(response: Server.IRequestResponseData) {
 	return _.contains([301, 302, 303, 307, 308], response.statusCode);
 }
 
-
-
-
 export function formatListOfNames(names: string[], conjunction = "or"): string {
 	if (names.length <= 1) {
 		return names[0];
