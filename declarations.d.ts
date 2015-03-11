@@ -36,7 +36,7 @@ interface IFileSystem {
 	deleteFile(path: string): IFuture<void>;
 	deleteDirectory(directory: string): IFuture<void>;
 	getFileSize(path: string): IFuture<number>;
-	futureFromEvent(eventEmitter: EventEmitter, event: string): IFuture<any>;
+	futureFromEvent(eventEmitter: NodeJS.EventEmitter, event: string): IFuture<any>;
 	createDirectory(path: string): IFuture<void>;
 	readDirectory(path: string): IFuture<string[]>;
 	readFile(filename: string): IFuture<NodeBuffer>;

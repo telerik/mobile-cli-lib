@@ -784,7 +784,7 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 }
 
 class PosixSocket implements Mobile.IiOSDeviceSocket {
-	private socket: net.NodeSocket = null;
+	private socket: net.Socket = null;
 
 	constructor(service: number,
 		private format: number,

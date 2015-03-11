@@ -2,7 +2,7 @@ interface IUnzipOptions {
 	path: string;
 }
 
-declare class ZipEntry extends ReadableStream {
+interface ZipEntry extends NodeJS.ReadableStream {
 	path: string;
 	type: string;
 	size: number;
@@ -11,6 +11,6 @@ declare class ZipEntry extends ReadableStream {
 }
 
 declare module "unzip" {
-	function Extract(opts: IUnzipOptions): WritableStream;
-	function Parse(): WritableStream;
+	function Extract(opts: IUnzipOptions): NodeJS.WritableStream;
+	function Parse(): NodeJS.WritableStream;
 }

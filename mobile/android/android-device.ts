@@ -395,7 +395,7 @@ export class AndroidDevice implements Mobile.IDevice {
 		return (() => {
 			var hostTmpDir = this.getTempDir();
 			var commandsFileHostPath = path.join(hostTmpDir, AndroidDevice.COMMANDS_FILE);
-			var commandsFile = <WritableStream>this.$fs.createWriteStream(commandsFileHostPath);
+			var commandsFile = <NodeJS.WritableStream>this.$fs.createWriteStream(commandsFileHostPath);
 			var fileWritten = this.$fs.futureFromEvent(commandsFile, 'finish');
 
 			_.each(commands, command => {
