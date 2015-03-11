@@ -548,7 +548,7 @@ export class IOSDeviceDebugging {
 	}
 
 	private postDebugNotification(notification: string): void {
-		var attachRequestMessage = this.packageName + ":NativeScript.Debug.AttachRequest";
+		var attachRequestMessage = this.packageName + ":NativeScript.Debug." + notification;
 		this.notificationProxyClient.postNotification(attachRequestMessage);
 		this.$logger.info("Send " + notification);
 	}
