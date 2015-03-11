@@ -19,6 +19,7 @@ var CoreTypes = iosCore.CoreTypes;
 
 export class IOSDevice implements Mobile.IIOSDevice {
 	private static IMAGE_ALREADY_MOUNTED_ERROR_CODE = 3892314230;
+	private static INCOMPATIBLE_IMAGE_SIGNATURE_ERROR_CODE = 3892314163;
 	private static INTERFACE_USB = 1;
 
 	private identifier: string = null;
@@ -292,7 +293,11 @@ export class IOSDevice implements Mobile.IIOSDevice {
 					var result = this.$mobileDevice.deviceMountImage(this.devicePointer, cfImagePath, cfOptions, this.mountImageCallbackPtr);
 
 					if (result !== 0 && result !== IOSDevice.IMAGE_ALREADY_MOUNTED_ERROR_CODE) { // 3892314230 - already mounted
-						this.$errors.fail("Unable to mount image on device.");
+						if(result === IOSDevice.INCOMPATIBLE_IMAGE_SIGNATURE_ERROR_CODE) { // 3892314163
+							this.$logger.warn("Unable to mount image %s on device %s.", imagePath, this.identifier);
+						} else {
+							this.$errors.fail("Unable to mount image on device.");
+						}
 					}
 				};
 
