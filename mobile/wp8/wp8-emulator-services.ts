@@ -3,13 +3,13 @@
 
 import path = require("path");
 import hostInfo = require("../../host-info");
-import MobileHelper = require("./../mobile-helper");
 
 class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 	constructor(private $logger: ILogger,
 		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
 		private $errors: IErrors,
-		private $childProcess: IChildProcess) {}
+		private $childProcess: IChildProcess,
+		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) { }
 
 	public checkDependencies(): IFuture<void> {
 		return (() => {
@@ -22,7 +22,7 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 				this.$errors.fail("Windows Phone Emulator is available only on Windows 8 or later.");
 			}
 
-			var platform = MobileHelper.DevicePlatforms[MobileHelper.DevicePlatforms.WP8];
+			var platform = this.$devicePlatformsConstants.WP8;
 			if (!this.$emulatorSettingsService.canStart(platform).wait()) {
 				this.$errors.fail("The current project does not target Windows Phone 8 and cannot be run in the Windows Phone emulator.");
 			}

@@ -3,7 +3,6 @@
 import Signal = require("./../../events/signal");
 import util = require("util");
 import Future = require("fibers/future");
-import MobileHelper = require("./../mobile-helper");
 import helpers = require("./../../helpers");
 var assert = require("assert");
 import constants = require("../constants");
@@ -11,8 +10,8 @@ import constants = require("../constants");
 export class DevicesServices implements Mobile.IDevicesServices {
 	private devices: { [key: string]: Mobile.IDevice } = {};
 	private platforms: string[] = [];
-	private static NOT_FOUND_DEVICE_BY_IDENTIFIER_ERROR_MESSAGE = "Could not find device by specified identifier '%s'. To list currently connected devices and verify that the specified identifier exists, run 'appbuilder device'.";
-	private static NOT_FOUND_DEVICE_BY_INDEX_ERROR_MESSAGE = "Could not find device by specified index %d. To list currently connected devices and verify that the specified index exists, run 'appbuilder device'.";
+	private static NOT_FOUND_DEVICE_BY_IDENTIFIER_ERROR_MESSAGE = "Could not find device by specified identifier '%s'. To list currently connected devices and verify that the specified identifier exists, run '%s device'.";
+	private static NOT_FOUND_DEVICE_BY_INDEX_ERROR_MESSAGE = "Could not find device by specified index %d. To list currently connected devices and verify that the specified index exists, run '%s device'.";
 	private _platform: string;
 	private _device: Mobile.IDevice;
 	private _isInitialized = false;
@@ -20,7 +19,9 @@ export class DevicesServices implements Mobile.IDevicesServices {
 	constructor(private $logger: ILogger,
 		private $errors: IErrors,
 		private $iOSDeviceDiscovery: Mobile.IDeviceDiscovery,
-		private $androidDeviceDiscovery: Mobile.IDeviceDiscovery) {
+		private $androidDeviceDiscovery: Mobile.IDeviceDiscovery,
+		private $staticConfig: IStaticConfig,
+		private $mobileHelper: Mobile.IMobileHelper) {
 		this.attachToDeviceDiscoveryEvents();
 	}
 
@@ -41,31 +42,22 @@ export class DevicesServices implements Mobile.IDevicesServices {
 			return this.platforms;
 		}
 
-		var devicePlatforms = MobileHelper.DevicePlatforms;
-		for (var platform in devicePlatforms) {
-			if(typeof devicePlatforms[platform] === "number") {
-				var platformCapabilities = MobileHelper.platformCapabilities[platform];
-				if (platformCapabilities.cableDeploy) {
-					this.platforms.push(platform);
-				}
-			}
-		}
-
+		this.platforms = _.filter(this.$mobileHelper.platformNames, platform => this.$mobileHelper.getPlatformCapabilities(platform).cableDeploy);
 		return this.platforms;
 	}
 
 	private getPlatform(platform: string): string {
 		var allSupportedPlatforms = this.getAllPlatforms();
-		var normalizedPlatform = MobileHelper.validatePlatformName(platform, this.$errors)
+		var normalizedPlatform = this.$mobileHelper.validatePlatformName(platform);
 		if(!_.contains(allSupportedPlatforms, normalizedPlatform)) {
-			this.$errors.fail("Deploying to %s connected devices is not supported. Build the " +
+			this.$errors.failWithoutHelp("Deploying to %s connected devices is not supported. Build the " +
 				"app using the `build` command and deploy the package manually.", normalizedPlatform);
 		}
 
 		return normalizedPlatform;
 	}
 
-	attachToDeviceDiscoveryEvents() {
+	private attachToDeviceDiscoveryEvents() {
 		this.$iOSDeviceDiscovery.deviceFound.add(this.onDeviceFound, this);
 		this.$iOSDeviceDiscovery.deviceLost.add(this.onDeviceLost, this);
 
@@ -89,9 +81,9 @@ export class DevicesServices implements Mobile.IDevicesServices {
 			if(!this._platform) {
 				this.$iOSDeviceDiscovery.startLookingForDevices().wait();
 				this.$androidDeviceDiscovery.startLookingForDevices().wait();
-			} else if(MobileHelper.isiOSPlatform(this._platform)) {
+			} else if(this.$mobileHelper.isiOSPlatform(this._platform)) {
 				this.$iOSDeviceDiscovery.startLookingForDevices().wait();
-			} else if(MobileHelper.isAndroidPlatform(this._platform)) {
+			} else if(this.$mobileHelper.isAndroidPlatform(this._platform)) {
 				this.$androidDeviceDiscovery.startLookingForDevices().wait();
 			}
 		}).future<void>()();
@@ -113,7 +105,7 @@ export class DevicesServices implements Mobile.IDevicesServices {
 	private getDeviceByIdentifier(identifier: string): Mobile.IDevice {
 		var searchedDevice = _.find(this.getDevices(), (device: Mobile.IDevice) => { return device.getIdentifier() === identifier; });
 		if(!searchedDevice) {
-			this.$errors.fail(DevicesServices.NOT_FOUND_DEVICE_BY_IDENTIFIER_ERROR_MESSAGE, identifier);
+			this.$errors.fail(DevicesServices.NOT_FOUND_DEVICE_BY_IDENTIFIER_ERROR_MESSAGE, identifier, this.$staticConfig.CLIENT_NAME.toLowerCase());
 		}
 
 		return searchedDevice;
@@ -131,7 +123,7 @@ export class DevicesServices implements Mobile.IDevicesServices {
 			}
 
 			if(!device) {
-				this.$errors.fail("Cannot resolve the specified connected device by the provided index or identifier. To list currently connected devices and verify that the specified index or identifier exists, run 'appbuilder device'.");
+				this.$errors.fail("Cannot resolve the specified connected device by the provided index or identifier. To list currently connected devices and verify that the specified index or identifier exists, run '%s device'.", this.$staticConfig.CLIENT_NAME.toLowerCase());
 			}
 
 			return device;
@@ -246,7 +238,7 @@ export class DevicesServices implements Mobile.IDevicesServices {
 
 	private validateIndex(index: number): void {
 		if (index < 0 || index > this.getDevices().length) {
-			throw new Error(util.format(DevicesServices.NOT_FOUND_DEVICE_BY_INDEX_ERROR_MESSAGE, index));
+			throw new Error(util.format(DevicesServices.NOT_FOUND_DEVICE_BY_INDEX_ERROR_MESSAGE, index, this.$staticConfig.CLIENT_NAME.toLowerCase()));
 		}
 	}
 }

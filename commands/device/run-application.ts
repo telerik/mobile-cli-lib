@@ -8,7 +8,8 @@ export class RunApplicationOnDeviceCommand implements ICommand {
 
 	constructor(private $devicesServices: Mobile.IDevicesServices,
 		private $errors: IErrors,
-		private $stringParameter: ICommandParameter) { }
+		private $stringParameter: ICommandParameter,
+		private $staticConfig: IStaticConfig) { }
 
 	allowedParameters: ICommandParameter[] = [this.$stringParameter];
 
@@ -17,7 +18,7 @@ export class RunApplicationOnDeviceCommand implements ICommand {
 			this.$devicesServices.initialize({ deviceId: options.device, skipInferPlatform: true }).wait();
 
 			if (this.$devicesServices.deviceCount > 1) {
-				this.$errors.fail("More than one device found. Specify device explicitly with --device option.To discover device ID, use $appbuilder device command.");
+				this.$errors.fail("More than one device found. Specify device explicitly with --device option.To discover device ID, use $%s device command.", this.$staticConfig.CLIENT_NAME.toLowerCase());
 			}
 
 			var action = (device: Mobile.IDevice) =>  { return (() => device.runApplication(args[0]).wait()).future<void>()(); };

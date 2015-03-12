@@ -45,7 +45,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 			var doUpdate = true;
 			if (this.$fs.exists(filePath).wait()) {
 				var contents = this.$fs.readText(filePath).wait();
-				var regExp = new RegExp(util.format("%s\\s+completion\\s+--\\s+", this.$staticConfig.CLIENT_NAME));
+				var regExp = new RegExp(util.format("%s\\s+completion\\s+--\\s+", this.$staticConfig.CLIENT_NAME.toLowerCase()));
 				var matchCondition = contents.match(regExp);
 				if(this.$staticConfig.CLIENT_NAME_ALIAS) {
 					matchCondition = matchCondition || contents.match(new RegExp(util.format("%s\\s+completion\\s+--\\s+", this.$staticConfig.CLIENT_NAME_ALIAS.toLowerCase())));

@@ -203,7 +203,9 @@ interface IPrompter extends IDisposable {
 
 interface IAnalyticsSettingsService {
 	canDoRequest(): IFuture<boolean>;
-	getUserId():  IFuture<string>;
+	getUserId(): IFuture<string>;
+	getClientName(): string;
+	getPrivacyPolicyLink(): string;
 }
 
 interface IHostCapabilities {

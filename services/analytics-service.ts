@@ -26,10 +26,10 @@ export class AnalyticsService implements IAnalyticsService {
 
 				if(this.isNotConfirmed().wait() && helpers.isInteractive() && !_.contains(this.excluded, featureName)) {
 					this.$logger.out("Do you want to help us improve " +
-						"Telerik".white.bold + " " + this.$staticConfig.CLIENT_NAME.cyan.bold
+						this.$analyticsSettingsService.getClientName() + 
 						+ " by automatically sending anonymous usage statistics? We will not use this information to identify or contact you."
 						+ " You can read our official Privacy Policy at");
-					var message = "http://www.telerik.com/company/privacy-policy";
+					var message = this.$analyticsSettingsService.getPrivacyPolicyLink();
 
 					var trackFeatureUsage = this.$prompter.confirm(message, () => "y").wait();
 					this.setAnalyticsStatus(trackFeatureUsage).wait();

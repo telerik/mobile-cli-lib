@@ -228,4 +228,27 @@ declare module Mobile {
 		stdoutFilePath?: string;
 		appId?: string;
 	}
+
+	interface IPlatformsCapabilities {
+		getPlatformNames(): string[];
+		getAllCapabilities(): IDictionary<Mobile.IPlatformCapabilities>;
+	}
+
+	interface IMobileHelper {
+		platformNames: string[];
+		isAndroidPlatform(platform: string): boolean;
+		isiOSPlatform(platform: string): boolean;
+		isWP8Platform(platform: string): boolean;
+		normalizePlatformName(platform: string): string;
+		isPlatformSupported(platform: string): boolean;
+		validatePlatformName(platform: string): string;
+		getPlatformCapabilities(platform: string): Mobile.IPlatformCapabilities;
+		generateLocalToDevicePathData(localPath: string, devicePath: string, relativeToProjectBasePath: string): Mobile.ILocalToDevicePathData;
+	}
+
+	interface IDevicePlatformsConstants {
+		iOS: string;
+		Android: string;
+		WP8: string;
+	}
 }
