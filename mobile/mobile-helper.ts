@@ -73,9 +73,9 @@ export class MobileHelper implements Mobile.IMobileHelper {
 		}
 
 		var normalizedPlatform = this.normalizePlatformName(platform);
-		if(!normalizedPlatform) {
+		if(!normalizedPlatform || !_.contains(this.platformNames, normalizedPlatform)) {
 			this.$errors.fail("'%s' is not a valid device platform. Valid platforms are %s.",
-				platform, helpers.formatListOfNames(this.$mobilePlatformsCapabilities.getPlatformNames()));
+				platform, helpers.formatListOfNames(this.platformNames));
 		}
 		return normalizedPlatform;
 	}
