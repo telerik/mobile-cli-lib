@@ -44,17 +44,18 @@ export class HttpClient implements Server.IHttpClient {
 			var pipeTo = options.pipeTo;
 			delete options.pipeTo;
 
-			var proto = this.$config.PROXY_TO_FIDDLER ? "http" : requestProto;
+			var proto = this.$config.USE_PROXY ? "http" : requestProto;
 			var http = require(proto);
 
 			options.headers = options.headers || {};
 			var headers = options.headers;
 
-			if (this.$config.PROXY_TO_FIDDLER) {
+			if(this.$config.USE_PROXY) {
 				options.path = requestProto + "://" + options.host + options.path;
 				headers.Host = options.host;
-				options.host = this.$config.FIDDLER_HOSTNAME;
-				options.port = 8888;
+				options.host = this.$config.PROXY_HOSTNAME;
+				options.port = this.$config.PROXY_PORT;
+				this.$logger.trace("Using proxy with host: %s, port: %d, path is: %s", options.host, options.port, options.path);
 			}
 
 			if (!headers.Accept || headers.Accept.indexOf("application/json") < 0) {
