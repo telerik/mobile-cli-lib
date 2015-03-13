@@ -4,7 +4,7 @@
 import path = require("path");
 import util = require("util");
 
-export class ConfigBase implements IConfiguration {
+export class ConfigBase implements Config.IConfig {
 	constructor(protected $fs: IFileSystem) { }
 
 	protected loadConfig(name: string): IFuture<any> {
