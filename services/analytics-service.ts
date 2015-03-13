@@ -165,6 +165,8 @@ export class AnalyticsService implements IAnalyticsService {
 			userAgentString = "(Windows NT " + os.release() + ")";
 		} else if(osType === "Darwin") {
 			userAgentString = "(Mac OS X " + os.release() + ")";
+		} else {
+			userAgentString = "(" + osType +")";
 		}
 
 		return userAgentString;
