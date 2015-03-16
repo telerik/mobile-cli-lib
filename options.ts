@@ -11,33 +11,33 @@ var yargs: any = require("yargs");
 // IMPORTANT: In your code, it is better to use the value without dashes (profileDir in the example).
 // This way your code will work in case "$ <cli name> emulate android --profile-dir" or "$ <cli name> emulate android --profileDir" is used by user.
 var knownOpts: any = {
-		"log": String,
-		"verbose": Boolean,
-		"path": String,
-		"version": Boolean,
-		"help": Boolean,
-		"json": Boolean,
-		"watch": Boolean,
-		"avd": String,
-		"profile-dir": String,
-		"timeout": String,
-		"device": String,
-		"availableDevices": Boolean,
-		"appid": String,
-		"geny": String,
-		"debug-brk": Boolean,
-		"debug-port": Number,
-		"get-port": Boolean,
-		"start": Boolean,
-		"stop": Boolean,
-		"ddi": String // the path to developer  disk image
-	},
-	shorthands: IStringDictionary = {
-		"v": "verbose",
-		"p": "path",
-		"h": "help"
-	},
-	parsed: any = yargs.argv;
+	"log": String,
+	"verbose": Boolean,
+	"path": String,
+	"version": Boolean,
+	"help": Boolean,
+	"json": Boolean,
+	"watch": Boolean,
+	"avd": String,
+	"profile-dir": String,
+	"timeout": String,
+	"device": String,
+	"availableDevices": Boolean,
+	"appid": String,
+	"geny": String,
+	"debug-brk": Boolean,
+	"debug-port": Number,
+	"get-port": Boolean,
+	"start": Boolean,
+	"stop": Boolean,
+	"ddi": String // the path to developer  disk image
+};
+var shorthands: IStringDictionary = {
+	"v": "verbose",
+	"p": "path",
+	"h": "help"
+};
+var parsed: any = yargs.argv;
 
 exports.setProfileDir = (defaultProfileDir: string) => {
 	var selectedProfileDir: string = parsed["profile-dir"] || parsed["profileDir"] || defaultProfileDir;

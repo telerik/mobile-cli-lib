@@ -36,7 +36,6 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		return (() => {
 			this.killLaunchdSim().wait();
 			this.startEmulatorCore(app, emulatorOptions);
-
 		}).future<void>()();
 	}
 
