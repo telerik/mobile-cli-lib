@@ -1103,7 +1103,7 @@ declare module _ {
         **/
         last<T>(
             array: Array<T>,
-            n: number): T[];
+            n: number): T;
 
         /**
         * @see _.last
@@ -1111,7 +1111,7 @@ declare module _ {
         **/
         last<T>(
             array: List<T>,
-            n: number): T[];
+            n: number): T;
 
         /**
         * @see _.last
@@ -1120,7 +1120,7 @@ declare module _ {
         last<T>(
             array: Array<T>,
             callback: ListIterator<T, boolean>,
-            thisArg?: any): T[];
+            thisArg?: any): T;
 
         /**
         * @see _.last
@@ -1129,7 +1129,7 @@ declare module _ {
         last<T>(
             array: List<T>,
             callback: ListIterator<T, boolean>,
-            thisArg?: any): T[];
+            thisArg?: any): T;
 
         /**
         * @see _.last
@@ -1137,7 +1137,7 @@ declare module _ {
         **/
         last<T>(
             array: Array<T>,
-            pluckValue: string): T[];
+            pluckValue: string): T;
 
         /**
         * @see _.last
@@ -1145,7 +1145,7 @@ declare module _ {
         **/
         last<T>(
             array: List<T>,
-            pluckValue: string): T[];
+            pluckValue: string): T;
 
         /**
         * @see _.last
@@ -1153,7 +1153,7 @@ declare module _ {
         **/
         last<W, T>(
             array: Array<T>,
-            whereValue: W): T[];
+            whereValue: W): T;
 
         /**
         * @see _.last
@@ -1161,7 +1161,7 @@ declare module _ {
         **/
         last<W, T>(
             array: List<T>,
-            whereValue: W): T[];
+            whereValue: W): T;
     }
 
     //_.lastIndexOf

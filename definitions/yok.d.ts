@@ -3,7 +3,15 @@ interface IInjector extends IDisposable {
 	require(names: string[], file: string): void;
 	requireCommand(name: string, file: string): void;
 	requireCommand(names: string[], file: string): void;
+	/**
+	 * Resolves an implementation by constructor function.
+	 * The injector will create new instances for every call.
+	 */
 	resolve(ctor: Function, ctorArguments?: { [key: string]: any }): any;
+	/**
+	 * Resolves an implementation by name.
+	 * The injector will create only one instance per name and return the same instance on subsequent calls.
+	 */
 	resolve(name: string, ctorArguments?: IDictionary<any>): any;
 	resolveCommand(name: string): ICommand;
 	register(name: string, resolver: any, shared?: boolean): void;
