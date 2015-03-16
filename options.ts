@@ -22,6 +22,7 @@ var knownOpts: any = {
 		"profile-dir": String,
 		"timeout": String,
 		"device": String,
+		"availableDevices": Boolean,
 		"appid": String,
 		"geny": String,
 		"debug-brk": Boolean,
