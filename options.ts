@@ -5,6 +5,11 @@ import path = require("path");
 import helpers = require("./helpers");
 var yargs: any = require("yargs");
 
+// If you pass value with dash, yargs adds it to yargs.argv in two ways:
+// with dash and without dash, replacing first symbol after it with its toUpper equivalent
+// ex, "$ <cli name> emulate android --profile-dir" will add profile-dir to yargs.argv as profile-dir and profileDir
+// IMPORTANT: In your code, it is better to use the value without dashes (profileDir in the example).
+// This way your code will work in case "$ <cli name> emulate android --profile-dir" or "$ <cli name> emulate android --profileDir" is used by user.
 var knownOpts: any = {
 		"log": String,
 		"verbose": Boolean,
@@ -15,20 +20,13 @@ var knownOpts: any = {
 		"watch": Boolean,
 		"avd": String,
 		"profile-dir": String,
-		// If you pass value with dash, yargs adds it to yargs.argv in two ways:
-		// with dash and without dash, replacing first symbol after it with its toUpper equivalent
-		"profileDir": String,
 		"timeout": String,
 		"device": String,
-		"availableDevices": Boolean,
 		"appid": String,
 		"geny": String,
 		"debug-brk": Boolean,
-		"debugBrk": Boolean,
 		"debug-port": Number,
-		"debugPort": Number,
 		"get-port": Boolean,
-		"getPort": Boolean,
 		"start": Boolean,
 		"stop": Boolean,
 		"ddi": String // the path to developer  disk image

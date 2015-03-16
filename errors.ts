@@ -167,24 +167,37 @@ export class Errors implements IErrors {
 		return this.executeAction(action);
 	}
 
-	public validateYargsArguments(parsed: any, knownOpts: any, shorthands: any, clientName?: string): void {
-		if(path.basename(process.argv[1]).indexOf(clientName) !== -1) {
-			_.each(_.keys(parsed), (opt) => {
-				var option = shorthands[opt] ? shorthands[opt] : opt;
-
-				if (option !== "_" && option !== "$0" && !knownOpts[option]) {
-					this.failWithoutHelp("The option '%s' is not supported. To see command's options, use '$ %s help %s'. To see all commands use '$ %s help'.", opt, clientName, process.argv[2], clientName);
-				} else if (knownOpts[option] !== Boolean && typeof (parsed[opt]) === 'boolean') {
-					this.failWithoutHelp("The option '%s' requires a value.", opt);
-				} else if (opt !== "_" && _.isArray(parsed[opt])) {
-					this.failWithoutHelp("You have set the %s option multiple times. Check the correct command syntax below and try again.", opt);
-				} else if (knownOpts[option] === String && helpers.isNullOrWhitespace(parsed[opt])) {
-					this.failWithoutHelp("The option '%s' requires non-empty value.", opt);
-				} else if (knownOpts[option] === Boolean && typeof (parsed[opt]) !== 'boolean') {
-					this.failWithoutHelp("The option '%s' does not accept values.", opt);
-				}
-			});
+	public getYargsOriginalOption(option: string): string {
+		var matchUpperCaseLetters = option.match(/(.+?)([A-Z])(.*)/);
+		if(matchUpperCaseLetters) {
+			// get here if option with upperCase letter is specified, for example profileDir
+			// check if in knownOptions we have its kebabCase presentation
+			var secondaryPresentation = util.format("%s-%s%s", matchUpperCaseLetters[1], matchUpperCaseLetters[2].toLowerCase(), matchUpperCaseLetters[3] || '');
+			return this.getYargsOriginalOption(secondaryPresentation);
 		}
+
+		return option;
+	}
+
+	public validateYargsArguments(parsed: any, knownOpts: any, shorthands: any, clientName?: string): void {
+		var knownOptionsKeys = _.keys(knownOpts);
+		_.each(_.keys(parsed), (opt) => {
+			var option: string = shorthands[opt] || opt;
+			var secondaryPresentation = this.getYargsOriginalOption(option);
+			option = _.contains(knownOptionsKeys, secondaryPresentation) ? secondaryPresentation : option;
+
+			if (option !== "_" && option !== "$0" && !knownOpts[option]) {
+				this.failWithoutHelp("The option '%s' is not supported. To see command's options, use '$ %s help %s'. To see all commands use '$ %s help'.", opt, clientName, process.argv[2], clientName);
+			} else if (knownOpts[option] !== Boolean && typeof (parsed[opt]) === 'boolean') {
+				this.failWithoutHelp("The option '%s' requires a value.", opt);
+			} else if (opt !== "_" && _.isArray(parsed[opt])) {
+				this.failWithoutHelp("You have set the %s option multiple times. Check the correct command syntax below and try again.", opt);
+			} else if (knownOpts[option] === String && helpers.isNullOrWhitespace(parsed[opt])) {
+				this.failWithoutHelp("The option '%s' requires non-empty value.", opt);
+			} else if (knownOpts[option] === Boolean && typeof (parsed[opt]) !== 'boolean') {
+				this.failWithoutHelp("The option '%s' does not accept values.", opt);
+			}
+		});
 	}
 
 	public validateArgs(client: string, knownOpts: any, shorthands: any): any {
