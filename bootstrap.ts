@@ -30,6 +30,7 @@ $injector.requireCommand(["help", "/?"], "./common/commands/help");
 $injector.requireCommand("feature-usage-tracking", "./common/commands/analytics");
 
 $injector.requireCommand("dev-post-install", "./common/commands/post-install");
+$injector.requireCommand("autocomplete", "./common/commands/completion-prompt");
 
 $injector.requireCommand("device|*list", "./common/commands/device/list-devices");
 $injector.requireCommand("device|android", "./common/commands/device/list-devices");
