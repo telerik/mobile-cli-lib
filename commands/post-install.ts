@@ -13,7 +13,8 @@ export class PostInstallCommand implements ICommand {
 		private $fs: IFileSystem,
 		private $staticConfig: Config.IStaticConfig,
 		private $childProcess: IChildProcess,
-		private $errors: IErrors) {
+		private $errors: IErrors,
+		private $commandsService: ICommandsService) {
 	}
 
 	public disableAnalytics = true;
@@ -29,8 +30,8 @@ export class PostInstallCommand implements ICommand {
 				}
 			}
 
-			this.$autoCompletionService.enableAutoCompletion().wait();
 			this.checkSevenZip().wait();
+			this.$commandsService.tryExecuteCommand("autocomplete", []).wait();
 		}).future<void>()();
 	}
 
