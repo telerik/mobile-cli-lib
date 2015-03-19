@@ -12,6 +12,9 @@ declare module Config {
 		helpTextPath: string;
 		adbFilePath: string;
 		sevenZipFilePath: string;
+		MAN_PAGES_DIR: string;
+		HTML_PAGES_DIR: string;
+		HTML_HELPERS_DIR: string;
 	}
 
 	interface IConfig {

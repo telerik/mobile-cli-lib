@@ -6144,9 +6144,29 @@ declare module _ {
 	 ***********/
 
 	interface LoDashStatic {
-		endsWith(string?:string, target?:string, position?:number): boolean;
-		startsWith(string?:string, target?:string, position?:number): boolean;
-	}
+        camelCase(str?: string): string;
+        capitalize(str?: string): string;
+        deburr(str?: string): string;
+        endsWith(str?: string, target?: string, position?: number): boolean;
+        escape(str?: string): string;
+        escapeRegExp(str?: string): string;
+        kebabCase(str?: string): string;
+        pad(str?: string, length?: number, chars?: string): string;
+        padLeft(str?: string, length?: number, chars?: string): string;
+        padRight(str?: string, length?: number, chars?: string): string;
+        repeat(str?: string, n?: number): string;
+        snakeCase(str?: string): string;
+        startCase(str?: string): string;
+        startsWith(str?: string, target?: string, position?: number): boolean;
+        trim(str?: string, chars?: string): string;
+        trimLeft(str?: string, chars?: string): string;
+        trimRight(str?: string, chars?: string): string;
+        trunc(str?: string, len?: number): string;
+        trunc(str?: string, options?: { length?: number; omission?: string; separator?: string }): string;
+        trunc(str?: string, options?: { length?: number; omission?: string; separator?: RegExp }): string;
+        words(str?: string, pattern?: string): string[];
+        words(str?: string, pattern?: RegExp): string[];
+    }
 
     /*************
      * Utilities *

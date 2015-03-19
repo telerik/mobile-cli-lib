@@ -5,6 +5,7 @@ import os = require("os");
 
 export class DynamicHelpService implements IDynamicHelpService {
 	constructor(private $dynamicHelpProvider: IDynamicHelpProvider) { }
+
 	public isProjectType(...args: string[]): IFuture<boolean> {
 		return this.$dynamicHelpProvider.isProjectType(args);
 	}
@@ -14,12 +15,16 @@ export class DynamicHelpService implements IDynamicHelpService {
 		return _.any(args, arg => arg.toLowerCase() === platform);
 	}
 
-	public getLocalVariables(): IFuture<IDictionary<any>> {
+	public getLocalVariables(options: { isHtml: boolean }): IFuture<IDictionary<any>> {
 		return ((): IDictionary<any> => {
-			var localVariables = this.$dynamicHelpProvider.getLocalVariables().wait();
-			localVariables["isLinux"] = this.isPlatform("linux");
-			localVariables["isWindows"] = this.isPlatform("win32");
-			localVariables["isMacOS"] = this.isPlatform("darwin");
+			var isHtml = options.isHtml;
+			//in html help we want to show all help. Only CONSOLE specific help(wrapped in if(isConsole) ) must be omitted
+			var localVariables = this.$dynamicHelpProvider.getLocalVariables(options).wait();
+			localVariables["isLinux"] = isHtml || this.isPlatform("linux");
+			localVariables["isWindows"] = isHtml || this.isPlatform("win32");
+			localVariables["isMacOS"] = isHtml || this.isPlatform("darwin");
+			localVariables["isConsole"] = !isHtml;
+			localVariables["isHtml"] = isHtml;
 
 			return localVariables;
 		}).future<IDictionary<any>>()();

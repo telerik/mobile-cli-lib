@@ -215,6 +215,18 @@ export class FileSystem implements IFileSystem {
 		}).future<void>()();
 	}
 
+	public appendFile(filename: string, data: any, encoding?: string): IFuture<void> {
+		var future = new Future<void>();
+		fs.appendFile(filename, data, { encoding: encoding },(err: Error) => {
+			if(err) {
+				future.throw(err);
+			} else {
+				future.return();
+			}
+		});
+		return future;
+	}
+
 	public writeJson(filename: string, data: any, space: string = "\t", encoding?: string): IFuture<void> {
 		return this.writeFile(filename, JSON.stringify(data, null, space), encoding);
 	}

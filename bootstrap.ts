@@ -74,3 +74,4 @@ $injector.require("dynamicHelpService", "./common/services/dynamic-help-service"
 $injector.require("microTemplateService", "./common/services/micro-templating-service");
 $injector.require("mobileHelper", "./common/mobile/mobile-helper");
 $injector.require("devicePlatformsConstants", "./common/mobile/device-platforms-constants");
+$injector.require("htmlHelpService", "./common/services/html-help-service");

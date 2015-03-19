@@ -24,4 +24,16 @@ export class StaticConfigBase implements Config.IStaticConfig {
 	public get adbFilePath(): string {
 		return path.join(__dirname, util.format("resources/platform-tools/android/%s/adb", process.platform));
 	}
+
+	public get MAN_PAGES_DIR(): string {
+		return path.join(__dirname, "../../", "docs", "man_pages");
+	}
+
+	public get HTML_PAGES_DIR(): string {
+		return path.join(__dirname, "../../", "docs", "html");
+	}
+
+	public get HTML_HELPERS_DIR(): string {
+		return path.join(__dirname, "../../", "docs", "helpers");
+	}
 }

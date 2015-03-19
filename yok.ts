@@ -123,6 +123,9 @@ export class Yok implements IInjector {
 
 			if(commands.length > 1 && !this.modules[this.createCommandName(commands[0])]) {
 				this.require(this.createCommandName(commands[0]), file);
+				if(commands[1] && !commandName.match(/\|\*/)) {
+					this.require(this.createCommandName(commandName), file);
+				}
 			} else {
 				this.require(this.createCommandName(commandName), file);
 			}
