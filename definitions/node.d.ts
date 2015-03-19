@@ -745,7 +745,6 @@ declare module "net" {
     }
 
     export var Socket: {
-		// HACK
         new (options?: { fd?: number | string; type?: string; allowHalfOpen?: boolean; }): Socket;
     };
 

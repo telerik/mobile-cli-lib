@@ -17,7 +17,6 @@ declare module Mobile {
 		deploy(packageFile: string, packageName: string): IFuture<void>;
 		sync(localToDevicePaths: ILocalToDevicePathData[], appIdentifier: IAppIdentifier, liveSyncUrl: string): IFuture<void>;
 		sync(localToDevicePaths: ILocalToDevicePathData[], appIdentifier: IAppIdentifier, liveSyncUrl: string, options: ISyncOptions): IFuture<void>;
-		debug(packageFile: string, packageName: string, debuggerSetup?: any): IFuture<void>;
 		openDeviceLogStream(): void;
 		runApplication(applicationId: string): IFuture<void>;
 	}
@@ -29,6 +28,10 @@ declare module Mobile {
 		encodeLiveSyncHostUri(hostUri: string): string;
 		isLiveSyncSupported(device: any): IFuture<boolean>;
 		getLiveSyncNotSupportedError(device: any): string;
+	}
+
+	interface IAndroidDevice extends IDevice {
+		debug(packageFile: string, packageName: string, debuggerSetup?: any): IFuture<void>;
 	}
 
 	interface IIOSDevice extends IDevice {

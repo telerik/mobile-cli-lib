@@ -35,7 +35,7 @@ class LiveSyncCommands {
 	}
 }
 
-export class AndroidDevice implements Mobile.IDevice {
+export class AndroidDevice implements Mobile.IAndroidDevice {
 	private static REFRESH_WEB_VIEW_INTENT_NAME = "com.telerik.RefreshWebView";
 	private static CHANGE_LIVESYNC_URL_INTENT_NAME = "com.telerik.ChangeLiveSyncUrl";
 	private static LIVESYNC_BROADCAST_NAME = "com.telerik.LiveSync";
@@ -308,7 +308,7 @@ export class AndroidDevice implements Mobile.IDevice {
             this.$childProcess.exec(clearDebugEnvironmentCommand).wait();
 
             var isRunning = false;
-            for (var i = 0; i < 30; i++) {
+            for (var i = 0; i < 60; i++) {
                 helpers.sleep(1000 /* ms */);
                 isRunning = this.checkIfRunning(packageName);
                 if (isRunning)
