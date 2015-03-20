@@ -126,12 +126,12 @@ export class AnalyticsService implements IAnalyticsService {
 				return;
 			}
 
-			global.XMLHttpRequest = xmlhttprequest.XMLHttpRequest;
-			global.userAgent = this.getUserAgentString();
-
 			require("../vendor/EqatecMonitor");
 
 			var settings = global._eqatec.createSettings(this.$staticConfig.ANALYTICS_API_KEY);
+			settings.useHttps = false;
+			settings.userAgent = this.getUserAgentString();
+			settings.xmlHttpRequest = new xmlhttprequest.XMLHttpRequest();
 			settings.version = this.$staticConfig.version;
 			settings.loggingInterface = {
 				logMessage: this.$logger.trace.bind(this.$logger),
