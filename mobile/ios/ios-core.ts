@@ -783,8 +783,20 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 	}
 }
 
+
+enum ReadState {
+    Length,
+    Plist
+}
+
 class PosixSocket implements Mobile.IiOSDeviceSocket {
-	private socket: net.Socket = null;
+    private socket: net.Socket = null;
+
+    private buffer: Buffer = new Buffer(0);
+
+    // Initial reading state: We expect to read a 4 bytes length first
+    private state: ReadState = ReadState.Length;
+    private length: number = 4;
 
 	constructor(service: number,
 		private format: number,
@@ -797,51 +809,74 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 
 	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData> {
 		var result = new Future<Mobile.IiOSSocketResponseData>();
-		var capturedData: NodeBuffer = new Buffer(0);
 
 		this.socket
 			.on("data", (data: NodeBuffer) => {
-				capturedData = Buffer.concat([capturedData, data]);
-
-				if(this.format === CoreTypes.kCFPropertyListBinaryFormat_v1_0) {
-					var isExceptionThrown = false;
-
+				this.buffer = Buffer.concat([this.buffer, data]);
+				if (this.format === CoreTypes.kCFPropertyListBinaryFormat_v1_0) {
 					try {
-						var message = bplistParser.parseBuffer(data);
-					} catch(e) {
-						isExceptionThrown = true;
-					}
+						while (this.buffer.length >= this.length) {
+							switch (this.state) {
+								case ReadState.Length:
+									this.length = this.buffer.readInt32BE(0);
+									this.buffer = this.buffer.slice(4);
+									this.state = ReadState.Plist;
+									break;
+								case ReadState.Plist:
+									try {
+										var plistBuffer = this.buffer.slice(0, this.length);
+										var message = bplistParser.parseBuffer(plistBuffer);
+										this.$logger.trace("MESSAGE RECEIVING");
+										this.$logger.trace(message);
+										try {
+											if (message && typeof (message) === "object" && message[0]) {
+												message = message[0];
+												var output = "";
+												if (message.Status) {
+													output += util.format("Status: %s", message.Status);
+												}
+												if (message.PercentComplete) {
+													output += util.format(" PercentComplete: %s", message.PercentComplete);
+												}
+												this.$logger.out(output);
 
-					if(!isExceptionThrown) {
-						this.$logger.trace("MESSAGE RECEIVING");
-						this.$logger.trace(message);
+												if (message.Status && message.Status === "Complete") {
+													if (!result.isResolved()) {
+														result.return(message);
+													}
+												}
 
-						if(message && typeof(message) === "object" && message[0]) {
-							message = message[0];
-							var output = "";
-							if(message.Status) {
-								output += util.format("Status: %s", message.Status);
-							}
-							if(message.PercentComplete) {
-								output += util.format(" PercentComplete: %s", message.PercentComplete);
-							}
-							this.$logger.out(output);
+												var status = message[0].Status;
+												var percentComplete = message[0].PercentComplete;
+												this.$logger.trace("Status: " + status + " PercentComplete: " + percentComplete);
+											}
+										} catch (e) {
+											this.$logger.trace("Failed to retreive state: " + e);
+										}
+									}
+									catch (e) {
+										this.$logger.trace("Failed to parse bplist: " + e);
+									}
 
-							if(message.Status && message.Status === "Complete") {
-								if(!result.isResolved()) {
-									result.return(message);
-								}
+									this.buffer = this.buffer.slice(this.length);
+
+									this.state = ReadState.Length;
+									this.length = 4;
+
+									break;
 							}
 						}
+					} catch (e) {
+						this.$logger.trace("Exeption thrown!!!");
 					}
-				} else if(this.format === CoreTypes.kCFPropertyListXMLFormat_v1_0) {
+				} else if (this.format === CoreTypes.kCFPropertyListXMLFormat_v1_0) {
 					try {
-						var parsedData = plist.parse(capturedData.toString());
-					} catch(e) {
+						var parsedData = plist.parse(this.buffer.toString());
+					} catch (e) {
 						parsedData = {};
 					}
 
-					if(!result.isResolved()) {
+					if (!result.isResolved()) {
 						result.return(parsedData);
 					}
 				}
