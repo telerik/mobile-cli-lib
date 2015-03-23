@@ -1,6 +1,8 @@
 ///<reference path="../.d.ts"/>
 "use strict";
 
+import Future = require("fibers/future");
+
 export function isWindows() {
 	return process.platform === "win32";
 }
@@ -23,4 +25,36 @@ export function isLinux() {
 
 export function isLinux64(): boolean {
 	return isLinux() && process.config.variables.host_arch === "x64";
+}
+
+export function dotNetVersion(message: string) : IFuture<string> {
+	if (isWindows()) {
+		var result = new Future<string>();
+		var Winreg = require("winreg");
+		var regKey = new Winreg({
+			hive: Winreg.HKLM,
+			key:  '\\Software\\Microsoft\\NET Framework Setup\\NDP\\v4\\Client'
+		});
+		regKey.get("Version", (err: Error, value: any) => {
+			if (err) {
+				result.throw(new Error(message));
+			} else {
+				result.return(value.value);
+			}
+		});
+		return result;
+	}
+}
+
+export function isDotNet40Installed(message?: string) : IFuture<boolean> {
+	return (() => {
+		if (isWindows()) {
+			try {
+				dotNetVersion(message || "An error occurred while reading the registry.").wait();
+				return true;
+			} catch (e) {
+				return false;
+			}
+		}
+	}).future<boolean>()();
 }

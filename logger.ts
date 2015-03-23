@@ -37,6 +37,10 @@ export class Logger implements ILogger {
 		this.log4jsLogger.setLevel(level);
 	}
 
+	getLevel(): string {
+		return this.log4jsLogger.level.toString();
+	}
+
 	fatal(...args: string[]): void {
 		this.log4jsLogger.fatal.apply(this.log4jsLogger, args);
 	}

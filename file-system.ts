@@ -2,7 +2,6 @@
 "use strict";
 
 import fs = require("fs");
-import unzip = require("unzip");
 import Future = require("fibers/future");
 import path = require("path");
 import util = require("util");

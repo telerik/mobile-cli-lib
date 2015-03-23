@@ -7,6 +7,7 @@ require("colors");
 $injector.require("errors", "./common/errors");
 $injector.require("fs", "./common/file-system");
 $injector.require("logger", "./common/logger");
+$injector.require("sysInfo", "./common/sysinfo");
 
 $injector.require("dispatcher", "./common/dispatchers");
 $injector.require("commandDispatcher", "./common/dispatchers");
