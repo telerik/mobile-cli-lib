@@ -27,11 +27,14 @@ export class HooksService implements IHooksService {
 		private $projectHelper: IProjectHelper) { }
 
 	public initialize(commandName: string): void {
-		this.commandName = commandName;
-		this.beforeHookName = util.format("before-%s", commandName);
-		this.afterHookName = util.format("after-%s", commandName);
+		// Remove everything after | (including the pipe)
+		this.commandName = commandName.replace(/\|[\s\S]*$/, "");
+		this.beforeHookName = util.format("before-%s", this.commandName);
+		this.afterHookName = util.format("after-%s", this.commandName);
 		this.cachedHooks = {};
 
+		this.$logger.trace("BeforeHookName for command %s is %s", commandName, this.beforeHookName);
+		this.$logger.trace("AfterHookName for command %s is %s", commandName, this.afterHookName);
 		var customHooksDirectory: string = null;
 		var relativeToLibPath = path.join(__dirname, "../../");
 		var defaultHooksDirectories = [
