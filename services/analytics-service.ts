@@ -25,8 +25,8 @@ export class AnalyticsService implements IAnalyticsService {
 			if(this.$analyticsSettingsService.canDoRequest().wait()) {
 
 				if(this.isNotConfirmed().wait() && helpers.isInteractive() && !_.contains(this.excluded, featureName)) {
-					this.$logger.out("Do you want to help us improve " +
-						this.$analyticsSettingsService.getClientName() + 
+					this.$logger.out("Do you want to help us improve "
+						+ this.$analyticsSettingsService.getClientName()
 						+ " by automatically sending anonymous usage statistics? We will not use this information to identify or contact you."
 						+ " You can read our official Privacy Policy at");
 					var message = this.$analyticsSettingsService.getPrivacyPolicyLink();
