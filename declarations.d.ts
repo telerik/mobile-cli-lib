@@ -43,6 +43,7 @@ interface IFileSystem {
 	readText(filename: string, encoding?: string): IFuture<string>;
 	readJson(filename: string, encoding?: string): IFuture<any>;
 	writeFile(filename: string, data: any, encoding?: string): IFuture<void>;
+	appendFile(filename: string, data: any, encoding?: string): IFuture<void>;
 	writeJson(filename: string, data: any, space?: string, encoding?: string): IFuture<void>;
 	copyFile(sourceFileName: string, destinationFileName: string): IFuture<void>;
 	getUniqueFileName(baseName: string): IFuture<string>;
@@ -235,14 +236,20 @@ interface ITypeScriptCompilationService {
 interface IDynamicHelpService {
 	isProjectType(...args: string[]): IFuture<boolean>;
 	isPlatform(...args: string[]): boolean;
-	getLocalVariables(): IFuture<IDictionary<any>>;
+	getLocalVariables(options: { isHtml: boolean }): IFuture<IDictionary<any>>;
 }
 
 interface IDynamicHelpProvider {
 	isProjectType(args: string[]): IFuture<boolean>;
-	getLocalVariables(): IFuture<IDictionary<any>>;
+	getLocalVariables(options: { isHtml: boolean }): IFuture<IDictionary<any>>;
 }
 
 interface IMicroTemplateService {
-	parseContent(data: string): string;
+	parseContent(data: string, options: {isHtml: boolean }): string;
+}
+
+interface IHtmlHelpService {
+	generateHtmlPages(): IFuture<void>;
+	getCommandLineHelpForCommand(commandName: string): IFuture<string>;
+	openHelpForCommandInBrowser(commandName: string): IFuture<void>;
 }

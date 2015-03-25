@@ -57,10 +57,15 @@ export class CommandsService implements ICommandsService {
 		}).future<boolean>()();
 	}
 
+	private printHelp(commandName: string): IFuture<boolean> {
+		options.help = true;
+		return this.executeCommandUnchecked("help", [this.beautifyCommandName(commandName)]);
+	}
+
 	private executeCommandAction(commandName: string, commandArguments: string[], action: (commandName: string, commandArguments: string[]) => IFuture<boolean>): IFuture<boolean> {
 		return this.$errors.beginCommand(
 			() => action.apply(this, [commandName, commandArguments]),
-			() => this.executeCommandUnchecked("help", [this.beautifyCommandName(commandName)]));
+			() => this.printHelp(commandName));
 	}
 
 	public tryExecuteCommand(commandName: string, commandArguments: string[]): IFuture<void> {
@@ -72,7 +77,7 @@ export class CommandsService implements ICommandsService {
 				var command = this.$injector.resolveCommand(commandName);
 				if(command) {
 					// If command cannot be executed we should print its help.
-					this.executeCommandUnchecked("help", [this.beautifyCommandName(commandName)]).wait();
+					this.printHelp(commandName).wait();
 				}
 			}
 		}).future<void>()();

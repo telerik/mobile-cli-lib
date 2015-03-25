@@ -6,13 +6,12 @@ import util = require("util");
 import os = require("os");
 import commandParams = require("../command-params");
 import Future = require("fibers/future");
+import options = require("../options");
+
 export class HelpCommand implements ICommand {
 	constructor(private $logger: ILogger,
 		private $injector: IInjector,
-		private $errors: IErrors,
-		private $fs: IFileSystem,
-		private $staticConfig: Config.IStaticConfig,
-		private $microTemplateService: IMicroTemplateService) { }
+		private $htmlHelpService: IHtmlHelpService) { }
 
 	public enableHooks = false;
 	public canExecute(args: string[]): IFuture<boolean> {
@@ -24,28 +23,16 @@ export class HelpCommand implements ICommand {
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
 			var topic = (args[0] || "").toLowerCase();
-			if (topic === "help") {
-				topic = "";
-			}
-
 			var hierarchicalCommand = this.$injector.buildHierarchicalCommand(args[0], _.rest(args));
 			if(hierarchicalCommand) {
 				topic = hierarchicalCommand.commandName;
 			}
 
-			var helpContent = this.$fs.readText(this.$staticConfig.helpTextPath).wait();
-
-			var pattern = util.format("--\\[%s\\]--((.|[\\r\\n])+?)--\\[/\\]--", (<any>RegExp).escape(topic));
-			var regex = new RegExp(pattern);
-
-			var match = regex.exec(helpContent);
-			if (match) {
-				var helpText = match[1].trim();
-
-				var outputText = this.$microTemplateService.parseContent(helpText);
-				this.$logger.out(outputText);
+			if(options.help) {
+				var help = this.$htmlHelpService.getCommandLineHelpForCommand(topic).wait();
+				this.$logger.out(help);
 			} else {
-				this.$errors.failWithoutHelp("Unknown help topic '%s'", topic);
+				this.$htmlHelpService.openHelpForCommandInBrowser(topic).wait();
 			}
 		}).future<void>()();
 	}

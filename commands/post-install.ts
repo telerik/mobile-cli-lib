@@ -14,7 +14,8 @@ export class PostInstallCommand implements ICommand {
 		private $staticConfig: Config.IStaticConfig,
 		private $childProcess: IChildProcess,
 		private $errors: IErrors,
-		private $commandsService: ICommandsService) {
+		private $commandsService: ICommandsService,
+		private $htmlHelpService: IHtmlHelpService) {
 	}
 
 	public disableAnalytics = true;
@@ -32,6 +33,7 @@ export class PostInstallCommand implements ICommand {
 
 			this.checkSevenZip().wait();
 			this.$commandsService.tryExecuteCommand("autocomplete", []).wait();
+			this.$htmlHelpService.generateHtmlPages().wait();
 		}).future<void>()();
 	}
 
