@@ -43,6 +43,8 @@ export function dotNetVersion(message: string) : IFuture<string> {
 			}
 		});
 		return result;
+	} else {
+		return Future.fromResult<string>(null);
 	}
 }
 
@@ -55,6 +57,8 @@ export function isDotNet40Installed(message?: string) : IFuture<boolean> {
 			} catch (e) {
 				return false;
 			}
+		} else {
+			return false;
 		}
 	}).future<boolean>()();
 }
