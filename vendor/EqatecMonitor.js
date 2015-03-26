@@ -16,7 +16,6 @@
  */
 
 (function (global) {
-	global.navigator = {};
 	// Defining a number of utility methods utilized internally
 	var eqatecUtil = {
 		// Returns true if the argument is a function
@@ -52,14 +51,27 @@
 			}
 			return "";
 		},
-		// Get a timestamp for the current time
+		// Get a timestamp for events occurring in this session, guaranteed to be higher than the _timestampBarrier
 		getTimeStamp: function () {
-			return new Date().getTime(); //will return milliseconds since 1/1 1970
+			var t = new Date().getTime(); //will return milliseconds since 1/1 1970
+			return t === eqatecUtil._timestampBarrier
+				? t + 1
+				: t;
 		},
+		// Get a realtime timestamp for the start of a session or payload
+		getTimeStampBarrier: function () {
+			eqatecUtil._timestampBarrier = eqatecUtil.getTimeStamp();
+			return eqatecUtil._timestampBarrier;
+		},
+		_timestampBarrier: 0,
 		// Returns true if the argument is a number
 		isNumber: function (val) {
-			var to = typeof val;
-			return (to === "number");
+			// See http://stackoverflow.com/a/1830844
+			return !isNaN(parseInt(val)) && isFinite(val);
+		},
+		// Parse an input object into a number (should be validated using isNumber first)
+		toNumber: function (val) {
+			return parseInt(val);
 		},
 		// parsing the argument as a url
 		parseURL: function (url) {
@@ -75,7 +87,7 @@
 			return uri;
 		},
 		// Returns the default server Uri, using the productid notation
-		getServerUri: function (logger, productId, inputServerUri) {
+		getServerUri: function (logger, productId, inputServerUri, useHttps) {
 			if (inputServerUri && eqatecUtil.isString(inputServerUri)) {
 				try {
 					// parsing into
@@ -91,9 +103,15 @@
 				}
 			}
 
-			var targetProtocol = "http";
-			if(global && global.location && global.location.protocol != "http:") {
+			var targetProtocol;
+			if (typeof useHttps === 'undefined') {
+				targetProtocol = "http";
+				if (global && global.location && global.location.protocol !== "http:")
+					targetProtocol = "https";
+			} else if (useHttps) {
 				targetProtocol = "https";
+			} else {
+				targetProtocol = "http";
 			}
 			return targetProtocol + "://" + productId + ".monitor-eqatec.com/json.ashx";
 		},
@@ -117,24 +135,27 @@
 		},
 		// Get the environment information of the current client
 		getInfo: function (logger) {
-			var info = {}, nav = global.navigator, scr = global.screen, doc = global.document;
-
-			info.screen = scr ? scr.width + "x" + scr.height : "-";
-			info.depth = scr ? scr.colorDepth + "-bit" : "-";
-
-			if(nav) {
-				info.language = (nav && (nav.language || nav.userLanguage) || "-").toLowerCase();
+			var navigator = global.navigator, screen = global.screen, document = global.document;
+			var info = {};
+			if (screen) {
+				info.screen = screen.width + "x" + screen.height;
+				info.depth = screen.colorDepth + "-bit";
 			}
-			if(doc) {
-				info.characterSet = doc.characterSet || doc.charset || "-";
+			if (navigator) {
+				var language = navigator.language || navigator.userLanguage;
+				if (language)
+					info.language = language.toLowerCase();
+			}
+			if (document) {
+				info.characterSet = document.characterSet || document.charset || "-";
 				try {
-					var docElem = doc.documentElement,
-						docBody = doc.body,
+					var docElem = document.documentElement,
+						docBody = document.body,
 						bodyDim = docBody && docBody["clientWidth"] && docBody["clientHeight"],
 						dimensions = [];
 
 					if (docElem) {
-						if (docElem["clientWidth"] && docElem["clientHeight"] && ("CSS1Compat" === doc.compatMode || !bodyDim)) {
+						if (docElem["clientWidth"] && docElem["clientHeight"] && ("CSS1Compat" === document.compatMode || !bodyDim)) {
 							dimensions = [docElem["clientWidth"], docElem["clientHeight"]];
 						}
 						else if (bodyDim) {
@@ -147,7 +168,6 @@
 					eqatecUtil.error(logger, 'Unable to read browser info: ' + err.message);
 				}
 			}
-
 			return info;
 		},
 		// generates a random id to simulate a guid
@@ -212,7 +232,7 @@
 		setTimeout: function (callback, timeoutInMilliseconds) {
 			try {
 				if (eqatecUtil.isFunction(callback) && eqatecUtil.isNumber(timeoutInMilliseconds)) {
-					return global.setTimeout(callback, timeoutInMilliseconds);
+					return global.setTimeout(callback, eqatecUtil.toNumber(timeoutInMilliseconds));
 				}
 			}
 			catch (e) { }
@@ -229,6 +249,7 @@
 		// returns true if cookies are enabled in browser
 		cookiesEnabled: function () {
 			try {
+				var navigator = global.navigator || {};
 				var isCookieEnabled = (navigator.cookieEnabled) ? true : false;
 				if (typeof navigator.cookieEnabled == "undefined" && !isCookieEnabled) {
 					document.cookie = "testcookie";
@@ -282,7 +303,7 @@
 				var a = i[b];
 				return "string" === typeof a ? a : "\\u" + ("0000" + b.charCodeAt(0).toString(16)).slice(-4);
 			}) +
-				'"' : '"' + b + '"';
+			'"' : '"' + b + '"';
 		}
 		function e(a, c) {
 			var d, f, i, l, p = j, o, n = c[a];
@@ -306,7 +327,7 @@
 						for (d = 0; d < l; d += 1)
 							o[d] = e(d, n) || "null";
 						i = 0 === o.length ? "[]" : j ? "[\n" + j + o.join(",\n" + j) + "\n" + p + "]" : "[" +
-							o.join(",") + "]";
+						o.join(",") + "]";
 						j = p;
 						return i;
 					}
@@ -328,7 +349,7 @@
 		c || (c = {});
 		"function" !== typeof Date.prototype.toJSON && (Date.prototype.toJSON = function () {
 			return isFinite(this.valueOf()) ? this.getUTCFullYear() + "-" + a(this.getUTCMonth() +
-				1) + "-" + a(this.getUTCDate()) + "T" + a(this.getUTCHours()) + ":" + a(this.getUTCMinutes()) + ":" + a(this.getUTCSeconds()) + "Z" : null;
+			1) + "-" + a(this.getUTCDate()) + "T" + a(this.getUTCHours()) + ":" + a(this.getUTCMinutes()) + ":" + a(this.getUTCSeconds()) + "Z" : null;
 		}, String.prototype.toJSON = Number.prototype.toJSON = Boolean.prototype.toJSON = function () {
 			return this.valueOf();
 		});
@@ -453,8 +474,8 @@
 			maxExceptions: 10,
 			maxInstallationIdSize: 50
 		};
-		var StartSession = function () {
-			startTime = eqatecUtil.getTimeStamp();
+		var StartSession = function (time) {
+			startTime = time;
 			isStarted = true;
 		};
 		var StopSession = function () {
@@ -535,7 +556,7 @@
 				var timeStamp = eqatecUtil.getTimeStamp();
 				featureValues.push({
 					name: name,
-					value: value,
+					value: eqatecUtil.toNumber(value),
 					type: 0,
 					runtime: timeStamp - startTime
 				});
@@ -652,7 +673,6 @@
 			monitorversion = '0.0.0.0',
 
 			productId = "",
-			timeout = 10000,
 			isStarted = false,
 			logger = {
 				logError: function () { },
@@ -661,7 +681,6 @@
 
 			payloadsSend = 0,
 			versionSend = 0,
-			lastSendTime = 0,
 			isSending = false,
 			hasForceSyncBeenCalledWhileSending = false,
 			startCount = 0,
@@ -671,6 +690,9 @@
 			version = "",
 			location = {},
 			useCookies = false,
+			useHttps = true,
+			userAgent = undefined,
+			xmlHttpRequest = undefined,
 			isDisabled = false,
 			serverUri = '',
 			statisticsContainer = {};
@@ -684,9 +706,12 @@
 				version = settings.version;
 				location = settings.location || {};
 				useCookies = eqatecUtil.cookiesEnabled() && settings.useCookies;
+				useHttps = settings.useHttps;
+				userAgent = settings.userAgent;
+				xmlHttpRequest = settings.xmlHttpRequest;
 				isDisabled = eqatecUtil.trackingDisabled();
 
-				serverUri = eqatecUtil.getServerUri(logger, productId, settings.serverUri);
+				serverUri = eqatecUtil.getServerUri(logger, productId, settings.serverUri, useHttps);
 				statisticsContainer = StatisticsContainer(logger);
 
 				if (productId.length < 32 || productId.length > 36)
@@ -705,7 +730,7 @@
 				var resultingSessionId = '';
 				var resultingUserId = userId || '';
 				var resultingStartCount = 1;
-				var resultingStartTime = eqatecUtil.getTimeStamp();
+				var resultingStartTime = eqatecUtil.getTimeStampBarrier();
 				if (useCookies) {
 					// if cookies are enabled, we try to recreate the sessionid and userid from the
 					// cookies and store them again
@@ -713,26 +738,37 @@
 					var path = "/";
 					var domain = "";
 
-					// check if the session cookie is already assigned
-					var sessionCookieValue = eqatecUtil.getCookie("__eqtSession");
-					var parsedLiteral = eqatecUtil.parseCookieStringToLiteral(sessionCookieValue);
-					if (!parsedLiteral) {
-						//can't seem to find a valid session cookie, so we'll create a new one
+					var updateCookie = function () {
 						resultingSessionId = eqatecUtil.generateId(productId);
 						isNewSession = true;
 
 						// this is a session cookie, maintained by the browser, so no expiration
 						// on this item...
 						sessionCookieValue = resultingSessionId + "." + resultingStartTime;
-						eqatecUtil.setCookie("__eqtSession", sessionCookieValue, path, 0, domain);
+						eqatecUtil.setCookie("__eqtSession" + productId, sessionCookieValue, path, 0, domain);
+
+					};
+
+					// check if the session cookie is already assigned
+					var sessionCookieValue = eqatecUtil.getCookie("__eqtSession" + productId);
+					var parsedLiteral = eqatecUtil.parseCookieStringToLiteral(sessionCookieValue);
+					if (!parsedLiteral) {
+						//can't seem to find a valid session cookie, so we'll create a new one
+						updateCookie();
 					} else {
 						//parse the session cookie into an id and a start time
 						resultingSessionId = parsedLiteral.first;
-						resultingStartTime = parseInt(parsedLiteral.second);
+						var oldStartTime = parseInt(parsedLiteral.second);
+						var timespan = resultingStartTime - oldStartTime;
+						if (timespan > 60 * 60 * 24 * 1000) { //older than 24 hours
+							updateCookie();
+						} else {
+							resultingStartTime = oldStartTime;
+						}
 					}
 
 					// if no user id is assigned, we'll generate a new user id and push to cookies
-					var existingUserId = eqatecUtil.getCookie("__eqtUser");
+					var existingUserId = eqatecUtil.getCookie("__eqtUser" + productId);
 					parsedLiteral = eqatecUtil.parseCookieStringToLiteral(existingUserId);
 					if (!parsedLiteral) {
 						resultingUserId = eqatecUtil.generateId(productId);
@@ -745,14 +781,14 @@
 
 					var userIdTimeout = 1000 * 60 * 60 * 24 * 365; // 1 year
 					var userCookieValue = resultingUserId + "." + resultingStartCount;
-					eqatecUtil.setCookie("__eqtUser", userCookieValue, path, userIdTimeout, domain);
+					eqatecUtil.setCookie("__eqtUser" + productId, userCookieValue, path, userIdTimeout, domain);
 				}
 
 				sessionId = resultingSessionId || eqatecUtil.generateId(productId); // from the cookie or generate new
 				userId = resultingUserId; // only get a userid if received from cookies
 				startCount = resultingStartCount;
 				startTime = resultingStartTime;
-				statisticsContainer.startSession();
+				statisticsContainer.startSession(startTime);
 				payloadsSend = 0;
 				statisticsContainer.clear();
 				isStarted = true;
@@ -764,18 +800,6 @@
 				eqatecUtil.log(logger, 'failed while calling start. ' + e.description);
 			}
 		};
-
-		// Currently not used, but can be called in order to set timeout for sending the request
-		var SetRequestTimeout = function(timeoutMilliSeconds) {
-			if(timeoutMilliSeconds) {
-				var tm = parseInt(timeoutMilliSeconds);
-				if(tm && !isNaN(tm) && isFinite(tm) && tm > 0) {
-					eqatecUtil.log(logger, 'setting timeout to ' + timeoutMilliSeconds);
-					timeout = tm;
-				}
-			}
-		};
-
 		var Stop = function () {
 			try {
 				if (!isStarted || isDisabled)
@@ -783,7 +807,7 @@
 
 				if (useCookies) {
 					// explicitly clear the session id from cookies
-					eqatecUtil.setCookie("__eqtSession", "");
+					eqatecUtil.setCookie("__eqtSession" + productId, "");
 				}
 				statisticsContainer.stopSession();
 
@@ -812,6 +836,8 @@
 				}
 				if (userid) {
 					userId = eqatecUtil.asString(userid);
+					if (userId && userId.length < 32 || userId.length > 36)
+						eqatecUtil.log(logger, 'Invalid UserId assigned, expecting GUID instead of ' + userId);
 					ForceSync();
 				}
 			}
@@ -910,7 +936,7 @@
 			}
 		};
 		var createPayload = function (queryStringArray) {
-			var clientTime = eqatecUtil.getTimeStamp();
+			var clientTime = eqatecUtil.getTimeStampBarrier();
 			var runtime = (clientTime - startTime);
 			var payload = {
 				version: version,
@@ -924,6 +950,7 @@
 				starttime: startTime,
 				session: statisticsContainer.getPayload()
 			};
+
 
 			if (location && location.latitude && location.longitude) {
 				payload.location = location;
@@ -949,32 +976,36 @@
 		var sendPayloadToServer = function (isStopMessage) {
 			try {
 				var successPostFix = isStopMessage === true ? " Monitor stopped." : "";
-				lastSendTime = eqatecUtil.getTimeStamp();
 				hasForceSyncBeenCalledWhileSending = false;
 				var requestObject, jsonData;
 				var qs = [];
 				var versionSending = statisticsContainer.version(); //the version of the statistics that is being send
 				jsonData = createPayload(qs);
 				var queryString = "?" + qs.join('&');
-				var fullUri = serverUri.replace("https", "http") + queryString;
+				var fullUri = serverUri + queryString;
 
 				// determine if we need to use the XDomainRequest or XMLHttpRequest to
 				// access remote server. Most likely a cross-origin server so IE8 + IE9 should
 				// use XDomainRequest while others can use XMLHttpRequest. Note that we prefer XHR
 				// over XDR in IE10 by testing for XMLHttpRequest and withcredentials (see )
-
-				if (XMLHttpRequest && requestObject === undefined) {
-					var request = new XMLHttpRequest();
-					request.setTimeout(timeout);
-					var isHttps = navigator || navagator.location || navagator.location.protocol === "https";
-
-					if(isHttps && useCookies && (!("withCredentials" in request) || request.withCredentials === undefined)) {
-						eqatecUtil.log(logger, "CORS with cookies are not supported");
+				var request;
+				if (settings.xmlHttpRequest) {
+					request = settings.xmlHttpRequest;
+				}
+				else if (XMLHttpRequest) {
+					xhrRequest = new XMLHttpRequest();
+					if ("withCredentials" in xhrRequest && undefined !== xhrRequest.withCredentials)
+						request = xhrRequest;
+				}
+				if (request) {
+					if (eqatecUtil.isFunction(request.setTimeout)) {
+						request.setTimeout(30000); // Set timeout to 30 sec
 					}
-
 					request.open("POST", fullUri, true);
 					request.setRequestHeader("Content-Type", "text/plain"); //sending text/plain for now,
-					request.setRequestHeader("User-Agent", userAgent);
+					if (userAgent) {
+						request.setRequestHeader("User-Agent", userAgent); // Set the user-agent field explicitly
+					}
 
 					request.onreadystatechange = function () {
 						try {
@@ -1002,6 +1033,7 @@
 					};
 					requestObject = request; //CORS only support here (see http://www.html5rocks.com/en/tutorials/cors/)
 				}
+
 				if (global.XDomainRequest !== undefined && requestObject === undefined) {
 					requestObject = new global.XDomainRequest();
 					requestObject.open("POST", fullUri);
@@ -1071,6 +1103,14 @@
 				 */
 				isStarted: isStarted,
 				/**
+				 * Get the current value of the cookie identifier for the monitor.
+				 * Note that this value may be empty if the monitor is not started yet.
+				 * @property cookieId
+				 * @for AnalyticsMonitorStatus
+				 * @type {String}
+				 */
+				cookieId: userId,
+				/**
 				 * Returns true if the monitor has been disabled. The monitor is automatically
 				 * disabled if the hosting browser has `DoNotTrack` assigned.
 				 * @property isDisabled
@@ -1096,14 +1136,6 @@
 			 */
 			stop: Stop,
 			/**
-			 * Set timeout for the request. If the passed value is not a positive number
-			 * default value 10000 will be used.
-			 * @method setRequestTimeout
-			 * @param timeoutMilliSeconds {String} the timeout in milliseconds
-			 * @for AnalyticsMonitor
-			 */
-			setRequestTimeout: SetRequestTimeout,
-			/**
 			 * Assigning the installation id. The installation id can be used to associate the data with a
 			 * specific identifier. This can be used to e.g. associate all data from a given logic department
 			 * with the same identifier
@@ -1113,12 +1145,14 @@
 			 */
 			setInstallationID: SetInstallationID,
 			/**
-			 * Assigning the user id. The user id can be assigned by the caller to signal a specific user identifier
-			 * to associate with this data. This is mainly used in order to compensate for lack of cookie support
-			 * and it is recommended to provide e.g. an anonymous value such as a hash of a user id. Note that
-			 * you need to call this before starting the monitor, otherwise this value does not have any effect.
+			 * Assigning the user id, which is used to identify this unique user. This value must be a GUID and
+			 * must be set before the monitor is started by calling start().
+			 * This value is ONLY used in the case where the monitor cannot rely on cookies to store a persistent
+			 * identifiation of this user: when cookies has been turned off in the monitor settings (by setting
+			 * settings.useCookies to false) or if the browser does not allow cookies. In all other cases the
+			 * UserID provided here will be ignored.
 			 * @method setUserID
-			 * @param userID {String} the user id
+			 * @param userID {String} the user id as a GUID
 			 * @for AnalyticsMonitor
 			 */
 			setUserID: SetUserID,
@@ -1277,6 +1311,35 @@
 			 */
 			useCookies: true,
 			/**
+			 * Determines if the monitor should use HTTPS protocol for communicating with the server. By default
+			 * this setting is undefined. The meaning is:
+			 *
+			 *   undefined: use the protocol of the current page, as defined by windows.location.protocol
+			 *   true: use https
+			 *   false: use http
+			 *
+			 * @property useHttps
+			 * @for AnalyticsMonitorSettings
+			 * @type {Boolean}
+			 */
+			useHttps: undefined,
+			/**
+			 * Use this as the User-Agent string when communicating with the server. Default is undefined, which
+			 * instructs the monitor to use the default user-agent string.
+			 * @property userAgent
+			 * @for AnalyticsMonitorSettings
+			 * @type {Boolean}
+			 */
+			userAgent: undefined,
+			/**
+			 * Use this XMLHttpRequest object for requests to the Analytics service. Default is undefined, which
+			 * instructs the monitor to use the browser's default XMLHttpRequest API, if available.
+			 * @property xmlHttpRequest
+			 * @for AnalyticsMonitorSettings
+			 * @type {XMLHttpRequest}
+			 */
+			xmlHttpRequest: undefined,
+			/**
 			 * The location of the tracking, if available. Can be assigned to a specific latitude and longitude. By
 			 * default a non-specified location is provided.
 			 * @property location
@@ -1411,4 +1474,9 @@
 	// 'Leaking' internal utility function to allow for more elaborate testing
 	if (global._eqatecDebug)
 		eqt['eqatecUtil'] = eqatecUtil;
-})(global);
+})(
+	// Use window as global, if that exists; otherwise use global (for headless/node.js environments)
+	(typeof window !== "undefined" && window !== null) ? window :
+		(typeof global !== "undefined" && global !== null) ? global :
+		{}
+);
