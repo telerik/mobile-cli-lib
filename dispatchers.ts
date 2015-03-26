@@ -12,13 +12,20 @@ export class CommandDispatcher implements ICommandDispatcher {
 	constructor(private $logger: ILogger,
 		private $cancellation: ICancellationService,
 		private $commandsService: ICommandsService,
-		private $staticConfig: Config.IStaticConfig) { }
+		private $staticConfig: Config.IStaticConfig,
+		private $sysInfo: ISysInfo) { }
 
 	public dispatchCommand(): IFuture<void> {
 		return(() => {
 			if (options.version) {
 				this.$logger.out(this.$staticConfig.version);
 				return;
+			}
+
+			if (this.$logger.getLevel() === "TRACE") {
+				var sysInfo = this.$sysInfo.getSysInfo();
+				this.$logger.trace("System information:");
+				this.$logger.trace(sysInfo);
 			}
 
 			var commandName = this.getCommandName();

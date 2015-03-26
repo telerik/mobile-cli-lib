@@ -8,6 +8,7 @@ declare module "log4js" {
 		trace(formatStr: string, ...args: string[]): void;
 
 		setLevel(level: string): void;
+		level: any;
 	}
 
 	interface IConfiguration {

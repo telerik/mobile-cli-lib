@@ -255,3 +255,44 @@ interface IHtmlHelpService {
 	getCommandLineHelpForCommand(commandName: string): IFuture<string>;
 	openHelpForCommandInBrowser(commandName: string): IFuture<void>;
 }
+
+interface ISysInfoData {
+	/** name and version of the CLI app itself */
+	procInfo: string;
+
+	// os stuff
+	/** os platform flavour, reported by os.platform */
+	platform: string;
+	/** Full os name, like `uname -a` on unix, registry query on win */
+	os: string;
+	/** .net version, applicable to windows only */
+	dotNetVer: string;
+	/** The command shell in use, usually bash or cmd */
+	shell: string;
+
+	// node stuff
+	/** node.js version, returned by `process.version` */
+	nodeVer: string;
+	/** npm version, returned by `npm -v` */
+	npmVer: string;
+	/** Process architecture, returned by `process.arch` */
+	procArch: string;
+	/** node-gyp version as returned by `node-gyp -v`*/
+	nodeGypVer: string;
+
+	// dependencies
+	/** Version string of java as returned by `java -version` */
+	javaVer: string;
+	/** version string of ant, as returned by `ant -version` */
+	antVer: string;
+	/** Xcode version string as returned by `xcodebuild -version`. Valid only on Mac */
+	xcodeVer: string;
+	/** Version string of adb, as returned by `adb version` */
+	adbVer: string;
+	/** Whether iTunes is installed on the machine */
+	itunesInstalled: boolean;
+}
+
+interface ISysInfo {
+	getSysInfo(): ISysInfoData;
+}
