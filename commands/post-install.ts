@@ -38,19 +38,8 @@ export class PostInstallCommand implements ICommand {
 	}
 
 	private checkSevenZip(): IFuture<void> {
-		return (() => {
-			var sevenZipErrorMessage = util.format(PostInstallCommand.SEVEN_ZIP_ERROR_MESSAGE, this.$staticConfig.SYS_REQUIREMENTS_LINK);
-			try {
-				var proc = this.$childProcess.spawnFromEvent(this.$staticConfig.sevenZipFilePath, ["-h"], "exit", undefined, { throwError: false }).wait();
-
-				if(proc.stderr) {
-					this.$errors.failWithoutHelp(sevenZipErrorMessage);
-				}
-			} catch(e) {
-				var message: string = (e.code === "ENOENT") ? sevenZipErrorMessage : e.message;
-				this.$errors.failWithoutHelp(message);
-			}
-		}).future<void>()();
+		var sevenZipErrorMessage = util.format(PostInstallCommand.SEVEN_ZIP_ERROR_MESSAGE, this.$staticConfig.SYS_REQUIREMENTS_LINK);
+		return this.$childProcess.tryExecuteApplication(this.$staticConfig.sevenZipFilePath, ["-h"], "exit", sevenZipErrorMessage);
 	}
 }
 $injector.registerCommand("dev-post-install", PostInstallCommand);

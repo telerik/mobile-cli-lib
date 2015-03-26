@@ -54,34 +54,12 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	}
 
 	private checkAndroidSDKConfiguration(): IFuture<void> {
-		return (() => {
-			try {
-				var proc = this.$childProcess.spawnFromEvent('emulator', ['-help'], "exit", undefined, { throwError: false }).wait();
-
-				if(proc.stderr) {
-					this.$errors.fail({formatStr: AndroidEmulatorServices.MISSING_SDK_MESSAGE, suppressCommandHelp: true});
-				}
-			} catch (e) {
-				var message: string = (e.code === "ENOENT") ? AndroidEmulatorServices.MISSING_SDK_MESSAGE : e.message;
-				this.$errors.failWithoutHelp(message);
-			}
-		}).future<void>()();
+		return this.$childProcess.tryExecuteApplication('emulator', ['-help'], "exit", AndroidEmulatorServices.MISSING_SDK_MESSAGE);
 	}
 
 	private checkGenymotionConfiguration(): IFuture<void> {
-		return (() => {
-			var proc: any;
-			try {
-				proc = this.$childProcess.spawnFromEvent("player", [], "exit", undefined, { throwError: false }).wait();
-			} catch(e) {
-				var message: string = (e.code === "ENOENT") ? AndroidEmulatorServices.MISSING_GENYMOTION_MESSAGE : e.message;
-				this.$errors.failWithoutHelp(message);
-			}
-
-			if(proc.stderr && !_.startsWith(proc.stderr, "Usage:")) {
-				this.$errors.failWithoutHelp(AndroidEmulatorServices.MISSING_GENYMOTION_MESSAGE);
-			}
-		}).future<void>()();
+		var condition = (childProcess: any) => childProcess.stderr && !_.startsWith(childProcess.stderr, "Usage:");
+		return this.$childProcess.tryExecuteApplication("player", [], "exit",  AndroidEmulatorServices.MISSING_GENYMOTION_MESSAGE, condition);
 	}
 
 	public checkAvailability(): IFuture<void> {

@@ -6,7 +6,8 @@ import child_process = require("child_process");
 import util = require("util");
 
 export class ChildProcess implements IChildProcess {
-	constructor(private $logger: ILogger) {}
+	constructor(private $logger: ILogger,
+		private $errors: IErrors) {}
 
 	public exec(command: string, options?: any): IFuture<any> {
 		var future = new Future<any>();
@@ -100,6 +101,25 @@ export class ChildProcess implements IChildProcess {
 		});
 
 		return future;
+	}
+
+	public tryExecuteApplication(command: string, args: string[], event: string, errorMessage: string, condition: (childProcess: any) => boolean): IFuture<any> {
+		return (() => {
+			var childProcess = this.tryExecuteApplicationCore(command, args, event, errorMessage).wait();
+
+			if(condition && condition(childProcess)) {
+				this.$errors.fail(errorMessage);
+			}
+		}).future<void>()();
+	}
+
+	private tryExecuteApplicationCore(command: string, args: string[], event: string, errorMessage: string): IFuture<any> {
+		try {
+			return this.spawnFromEvent(command, args, event, undefined, { throwError: false });
+		} catch(e) {
+			var message = (e.code === "ENOENT") ? errorMessage : e.message;
+			this.$errors.failWithoutHelp(message);
+		}
 	}
 }
 $injector.register("childProcess", ChildProcess);

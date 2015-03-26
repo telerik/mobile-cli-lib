@@ -76,6 +76,20 @@ export class FileSystem implements IFileSystem {
 		return future;
 	}
 
+	public tryExecuteFileOperation(path: string, operation: () => IFuture<any>, enoentErrorMessage?: string): IFuture<void> {
+		return (() => {
+			try {
+				operation().wait();
+			} catch(e) {
+				this.$injector.resolve("$logger").trace("tryExecuteFileOperation failed with error %s.", e);
+				if(enoentErrorMessage) {
+					var message = (e.code === "ENOENT") ? enoentErrorMessage : e.message;
+					this.$injector.resolve("$errors").failWithoutHelp(message);
+				}
+			}
+		}).future<void>()();
+	}
+
 	public deleteFile(path: string): IFuture<void> {
 		var future = new Future<void>();
 		fs.unlink(path, (err: any) => {
