@@ -19,7 +19,8 @@ export class CommandsService implements ICommandsService {
 		private $logger: ILogger,
 		private $injector: IInjector,
 		private $staticConfig: Config.IStaticConfig,
-		private $hooksService: IHooksService) { }
+		private $hooksService: IHooksService,
+		private $commandsServiceProvider: ICommandsServiceProvider) { }
 
 	public allCommands(includeDev: boolean): string[] {
 		var commands = this.$injector.getRegisteredCommandsNames(includeDev);
@@ -104,6 +105,11 @@ export class CommandsService implements ICommandsService {
 
 				this.$errors.fail("Unable to execute command '%s'. Use '$ %s %s --help' for help.", beautifiedName, this.$staticConfig.CLIENT_NAME.toLowerCase(), beautifiedName);
 				return false;
+			} else {
+				if(_.any(this.$commandsServiceProvider.allDynamicCommands())) {
+					this.$commandsServiceProvider.generateDynamicCommands().wait();
+					return this.canExecuteCommand(commandName, commandArguments).wait();
+				}
 			}
 
 			this.$logger.fatal("Unknown command '%s'. Use '%s help' for help.", beautifiedName, this.$staticConfig.CLIENT_NAME.toLowerCase());

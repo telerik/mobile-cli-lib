@@ -4,3 +4,8 @@ interface ICommandsService {
 	executeCommandUnchecked(commandName: string, commandArguments: string[]): IFuture<boolean>;
 	completeCommand(): IFuture<boolean>;
 }
+
+interface ICommandsServiceProvider {
+	allDynamicCommands(): IFuture<string[]>;
+	generateDynamicCommands(): IFuture<void>;
+}
