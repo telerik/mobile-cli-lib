@@ -6,6 +6,7 @@ interface ICommandsService {
 }
 
 interface ICommandsServiceProvider {
-	allDynamicCommands(): IFuture<string[]>;
+	getDynamicCommands(): IFuture<string[]>;
 	generateDynamicCommands(): IFuture<void>;
+	registerDynamicSubCommands(): void;
 }

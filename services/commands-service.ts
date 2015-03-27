@@ -14,13 +14,15 @@ export class CommandsService implements ICommandsService {
 	private static HIERARCHICAL_COMMANDS_DELIMITER = "|";
 	private static HIERARCHICAL_COMMANDS_DEFAULT_COMMAND_DELIMITER = "|*";
 	private static HOOKS_COMMANDS_DELIMITER = "-";
+	private areDynamicSubcommandsRegistered = false;
 
 	constructor(private $errors: IErrors,
 		private $logger: ILogger,
 		private $injector: IInjector,
 		private $staticConfig: Config.IStaticConfig,
 		private $hooksService: IHooksService,
-		private $commandsServiceProvider: ICommandsServiceProvider) { }
+		private $commandsServiceProvider: ICommandsServiceProvider) {
+	}
 
 	public allCommands(includeDev: boolean): string[] {
 		var commands = this.$injector.getRegisteredCommandsNames(includeDev);
@@ -71,6 +73,10 @@ export class CommandsService implements ICommandsService {
 
 	public tryExecuteCommand(commandName: string, commandArguments: string[]): IFuture<void> {
 		return (() => {
+			if(!this.areDynamicSubcommandsRegistered) {
+				this.$commandsServiceProvider.registerDynamicSubCommands();
+				this.areDynamicSubcommandsRegistered = true;
+			}
 			if(this.executeCommandAction(commandName, commandArguments, this.canExecuteCommand).wait()) {
 				this.executeCommandAction(commandName, commandArguments, this.executeCommandUnchecked).wait();
 			} else {
@@ -84,7 +90,7 @@ export class CommandsService implements ICommandsService {
 		}).future<void>()();
 	}
 
-	private canExecuteCommand(commandName: string, commandArguments: string[]): IFuture<boolean> {
+	private canExecuteCommand(commandName: string, commandArguments: string[], isDynamicCommand?: boolean): IFuture<boolean> {
 		return (() => {
 			var command = this.$injector.resolveCommand(commandName);
 			var beautifiedName = helpers.stringReplaceAll(commandName, "|", " ");
@@ -105,10 +111,10 @@ export class CommandsService implements ICommandsService {
 
 				this.$errors.fail("Unable to execute command '%s'. Use '$ %s %s --help' for help.", beautifiedName, this.$staticConfig.CLIENT_NAME.toLowerCase(), beautifiedName);
 				return false;
-			} else {
-				if(_.any(this.$commandsServiceProvider.allDynamicCommands())) {
+			} else if(!isDynamicCommand){
+				if(_.any(this.$commandsServiceProvider.getDynamicCommands())) {
 					this.$commandsServiceProvider.generateDynamicCommands().wait();
-					return this.canExecuteCommand(commandName, commandArguments).wait();
+					return this.canExecuteCommand(commandName, commandArguments, true).wait();
 				}
 			}
 
