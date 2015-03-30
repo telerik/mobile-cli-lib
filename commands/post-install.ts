@@ -60,7 +60,7 @@ export class PostInstallCommand implements ICommand {
 	private printNSWarnings(sysInfo: ISysInfoData) {
 		if (!sysInfo.adbVer) {
 			this.$logger.warn("WARNING: adb from the Android SDK is not installed or is not configured properly.");
-			this.$logger.out("For Android-related operations, the AppBuilder CLI will use a built-in version of adb." + os.EOL
+			this.$logger.out("For Android-related operations, the NativeScript CLI will use a built-in version of adb." + os.EOL
 			+ "To avoid possible issues with the native Android emulator, Genymotion or connected" + os.EOL
 			+ "Android devices, verify that you have installed the latest Android SDK and" + os.EOL
 			+ "its dependencies as described in http://developer.android.com/sdk/index.html#Requirements" + os.EOL);

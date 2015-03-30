@@ -47,7 +47,7 @@ export class SysInfo implements ISysInfo {
 			procOutput = this.exec("adb version");
 			res.adbVer = procOutput ? procOutput.split(os.EOL)[0] : null;
 
-			procOutput = this.exec("android -h").toString();
+			procOutput = this.exec("android -h");
 			res.androidInstalled = procOutput ? _.contains(procOutput, "android") : false;
 
 			this.sysInfoCache = res;
