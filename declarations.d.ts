@@ -278,8 +278,6 @@ interface ISysInfoData {
 	nodeGypVer: string;
 
 	// dependencies
-	/** Version string of java as returned by `java -version` */
-	javaVer: string;
 	/** version string of ant, as returned by `ant -version` */
 	antVer: string;
 	/** Xcode version string as returned by `xcodebuild -version`. Valid only on Mac */
@@ -288,6 +286,8 @@ interface ISysInfoData {
 	adbVer: string;
 	/** Whether iTunes is installed on the machine */
 	itunesInstalled: boolean;
+	/** Whether `android` executable can be run */
+	androidInstalled: boolean;
 }
 
 interface ISysInfo {
