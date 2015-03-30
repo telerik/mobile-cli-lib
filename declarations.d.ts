@@ -196,12 +196,9 @@ interface IAnalyticsService {
 }
 
 interface IPrompter extends IDisposable {
-	start(): void;
-	get(schema: IPromptSchema): IFuture<any>;
+	get(schema: IPromptSchema[]): IFuture<any>;
 	getPassword(prompt: string, options?: {allowEmpty?: boolean}): IFuture<string>;
-	confirm(prompt: string, defaultAction?: () => string): IFuture<boolean>;
-	history(name: string): IPromptHistoryValue;
-	override(object: any): void;
+	confirm(prompt: string, defaultAction?: () => boolean): IFuture<boolean>;
 }
 
 interface IAnalyticsSettingsService {

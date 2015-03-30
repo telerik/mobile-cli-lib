@@ -18,7 +18,7 @@ export class CompletionPromptCommand implements ICommand {
 				this.$logger.out("If you are using bash or zsh, you can enable command line auto completion.");
 				var message = "Enable it now?";
 
-				var autoCompetionStatus = this.$prompter.confirm(message, () => "y").wait();
+				var autoCompetionStatus = this.$prompter.confirm(message, () => true).wait();
 
 				if (autoCompetionStatus) {
 					this.$autoCompletionService.enableAutoCompletion().wait();

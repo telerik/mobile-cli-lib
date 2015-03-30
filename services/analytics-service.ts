@@ -31,7 +31,7 @@ export class AnalyticsService implements IAnalyticsService {
 						+ " You can read our official Privacy Policy at");
 					var message = this.$analyticsSettingsService.getPrivacyPolicyLink();
 
-					var trackFeatureUsage = this.$prompter.confirm(message, () => "y").wait();
+					var trackFeatureUsage = this.$prompter.confirm(message, () => true).wait();
 					this.setAnalyticsStatus(trackFeatureUsage).wait();
 				}
 			}

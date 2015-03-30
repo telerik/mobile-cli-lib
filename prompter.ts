@@ -1,7 +1,7 @@
 ///<reference path="../.d.ts"/>
 
 import Future = require("fibers/future");
-import prompt = require("prompt");
+import prompt = require("inquirer");
 import helpers = require("./helpers");
 import readline = require("readline");
 var MuteStream = require("mute-stream");
@@ -33,27 +33,19 @@ export class Prompter implements IPrompter {
 		}
 	}
 
-	public start() {
-		prompt.start();
-	}
-
 	public dispose() {
 		if (this.ctrlcReader) {
 			this.ctrlcReader.close();
 		}
 	}
 
-	public get(schema: IPromptSchema): IFuture<any> {
+	public get(schema: IPromptSchema[]): IFuture<any> {
 		var future = new Future;
-		prompt.get(schema, (err: any, result: any) => {
-			if (err) {
-				// the error is normally Ctrl-C:
-				// move the cursor after the prompt (so that the error is not printed right after the user input)
-				console.log("");
-				err.suppressCommandHelp = true;
-				future.throw(err);
-			} else {
+		prompt.prompt(schema, (result: any) => {
+			if(result) {
 				future.return(result);
+			} else {
+				future.throw(result);
 			}
 		});
 		return future;
@@ -62,49 +54,32 @@ export class Prompter implements IPrompter {
 	public getPassword(prompt: string, options?: {allowEmpty?: boolean}): IFuture<string> {
 		return (() => {
 			var schema: IPromptSchema = {
-				properties: {
-					password: {
-						description: prompt,
-						type: "string",
-						hidden: true,
-						required: !(options && options.allowEmpty),
-						message: "Password must be non-empty."
-					}
+				message: prompt,
+				type: "password",
+				name: "password",
+				validate: (value: any) => {
+					var allowEmpty = options && options.allowEmpty;
+					return (!allowEmpty && !value) ? "Password must be non-empty" : true;
 				}
 			};
 
-			var result = this.get(schema).wait();
+			var result = this.get([schema]).wait();
 			return result.password;
 		}).future<string>()();
 	}
 
-	public confirm(prompt: string, defaultAction?: () => string): IFuture<boolean> {
+	public confirm(prompt: string, defaultAction?: () => boolean): IFuture<boolean> {
 		return ((): boolean => {
-
-			var schema: IPromptSchema = {
-				properties: {
-					prompt: {
-						description: prompt + " (y/n)",
-						type: "string",
-						required: true,
-						default: defaultAction,
-						message: "Enter 'y' (for yes) or 'n' (for no).",
-						conform: (value: string) => /^[yn]$/i.test(value)
-					}
-				}
+			var schema = {
+				type: "confirm",
+				name: "prompt",
+				default: defaultAction,
+				message: prompt
 			};
 
-			var result = this.get(schema).wait();
-			return result.prompt.toLowerCase() === "y";
+			var result = this.get([schema]).wait();
+			return result.prompt;
 		}).future<boolean>()();
-	}
-
-	public history(name: string): IPromptHistoryValue {
-		return prompt.history(name);
-	}
-
-	public override(object: any): void {
-		prompt.override = object;
 	}
 }
 $injector.register("prompter", Prompter);
