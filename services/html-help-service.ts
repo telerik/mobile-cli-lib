@@ -139,19 +139,10 @@ export class HtmlHelpService implements IHtmlHelpService {
 			var opts = {
 				unescape: true,
 				link: chalk.red
-				// TODO: Use tableOptions when marked-terminal officialy supports them.
-				// tableOptions: { colWidths: [20,50] }
 			};
 
 			marked.setOptions({ renderer: new TerminalRenderer(opts) });
-			var parsedMarkdown = marked(outputText);
-			// Fix issue inside marked-terminal when table contains < >.
-			// Check https://github.com/mikaelbr/marked-terminal/issues/12 for more details.
-			// Do not remove spaces before < and after > - they are required for correct rendering of cli-table
-			// as the width of columns is calculated with 4 symbols (&lt;), so we should replace values with correct ones with same length
-			return parsedMarkdown
-				.replace(/\&lt;/g, "   <")
-				.replace(/\&gt;/g, ">   ");
+			return marked(outputText);
 		}).future<string>()();
 	}
 }
