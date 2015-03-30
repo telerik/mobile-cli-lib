@@ -34,11 +34,8 @@ export class SysInfo implements ISysInfo {
 			res.npmVer = procOutput ? procOutput.split("\n")[0] : null;
 
 			// dependencies
-			try {
-				res.javaVer = this.$childProcess.spawnFromEvent("java", ["-version"], "exit").wait().stderr.split(os.EOL)[2];
-			} catch(e) {
-				res.javaVer = null;
-			} // if we got an error, assume not working
+			// Java detection is disabled for now. Leaving the code in case we decide to use it later
+			// res.javaVer = this.$childProcess.spawnFromEvent("java", ["-version"], "exit").wait().stderr.split(os.EOL)[2];
 
 			procOutput = this.exec("ant -version");
 			res.antVer = procOutput ? procOutput.split(os.EOL)[0] : null;
@@ -49,6 +46,9 @@ export class SysInfo implements ISysInfo {
 
 			procOutput = this.exec("adb version");
 			res.adbVer = procOutput ? procOutput.split(os.EOL)[0] : null;
+
+			procOutput = this.exec("android -h").toString();
+			res.androidInstalled = procOutput ? _.contains(procOutput, "android") : false;
 
 			this.sysInfoCache = res;
 		}
