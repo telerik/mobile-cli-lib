@@ -220,7 +220,7 @@ export class InstallationProxyClient {
 }
 $injector.register("installationProxyClient", InstallationProxyClient);
 
-export class NotificationProxyClient {
+export class NotificationProxyClient implements Mobile.INotificationProxyClient {
 
 	private plistService: Mobile.IiOSDeviceSocket = null;
 	private observers: IDictionary<Array<Function>> = {};
@@ -230,14 +230,14 @@ export class NotificationProxyClient {
 	constructor(private device: Mobile.IIOSDevice,
 		private $injector: IInjector) { }
 
-	public postNotification(notificationName: string) {
+	public postNotification(notificationName: string): void {
+		this.plistService = this.$injector.resolve(iOSCore.PlistService, { service: this.device.startService(MobileServices.NOTIFICATION_PROXY), format: iOSCore.CoreTypes.kCFPropertyListBinaryFormat_v1_0 });
+		this.postNotificationCore(notificationName);
+	}
+
+	public postNotificationAndAttachForData(notificationName: string): void {
 		this.openSocket();
-		var result = this.plistService.sendMessage({
-			"Command": "PostNotification",
-			"Name": notificationName,
-			"ClientOptions": ""
-		});
-		return result;
+		this.postNotificationCore(notificationName);
 	}
 
 	public addObserver(name: string, callback: (name: string) => void) {
@@ -299,6 +299,14 @@ export class NotificationProxyClient {
 			var start = this.buffer.indexOf("<plist");
 			var end = this.buffer.indexOf("</plist>");
 		}
+	}
+
+	private postNotificationCore(notificationName: string): void {
+		this.plistService.sendMessage({
+			"Command": "PostNotification",
+			"Name": notificationName,
+			"ClientOptions": ""
+		});
 	}
 
 	public closeSocket() {
