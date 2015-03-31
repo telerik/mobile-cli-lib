@@ -14,6 +14,10 @@ import net = require("net");
 import util = require("util");
 import Future = require("fibers/future");
 import bplistParser = require("bplist-parser");
+import string_decoder = require("string_decoder");
+import stream = require("stream");
+import options = require("../../options");
+import assert = require("assert");
 
 export class CoreTypes {
 	public static pointerSize = ref.types.size_t.size;
@@ -867,7 +871,7 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 							}
 						}
 					} catch (e) {
-						this.$logger.trace("Exeption thrown!!!");
+						this.$logger.trace("Exception thrown: " + e);
 					}
 				} else if (this.format === CoreTypes.kCFPropertyListXMLFormat_v1_0) {
 					try {
@@ -980,44 +984,117 @@ export class PlistService implements Mobile.IiOSDeviceSocket {
 	}
 }
 
-export class GDBServer implements Mobile.IGDBServer {
-	private socket: Mobile.IiOSDeviceSocket  = null;
+function getCharacterCodePoint(ch: string) {
+	assert.equal(ch.length, 1);
 
-	constructor(private service: number,
-		private $injector: IInjector) {
+	var code = ch.charCodeAt(0);
 
-		if(hostInfo.isWindows()) {
-			this.socket = this.$injector.resolve(WinSocket, {service: this.service, format: 0});
-		} else if(hostInfo.isDarwin()) {
-			this.socket = this.$injector.resolve(PosixSocket, {service: this.service, format: CoreTypes.kCFPropertyListXMLFormat_v1_0});
+	// Surrogate pair
+	assert.ok(!(0xD800 <= code && code <= 0xffff));
+
+	return code;
+}
+
+class GDBStandardOutputAdapter extends stream.Transform {
+	private utf8StringDecoder = new string_decoder.StringDecoder("utf8");
+
+	constructor(opts?:stream.TransformOptions) {
+		super(opts);
+		stream.Transform.call(this, opts);
+	}
+
+	public _transform(packet:any, encoding:string, done:Function):void {
+		try {
+			var result = "";
+
+			for (var i = 0; i < packet.length; i++) {
+				if(packet[i] === getCharacterCodePoint("$")) {
+					var start = ++i;
+
+					while (packet[i] !== getCharacterCodePoint("#")) {
+						i++;
+					}
+					var end = i;
+
+					// Skip checksum
+					i++;
+					i++;
+
+					if(!(packet[start] === getCharacterCodePoint("O") && packet[start + 1] !== getCharacterCodePoint("K"))) {
+						continue;
+					}
+					start++;
+
+					var hexString = packet.toString("ascii", start, end);
+					var hex = new Buffer(hexString, "hex");
+					result += this.utf8StringDecoder.write(hex);
+				}
+			}
+
+			done(null, result)
+		} catch (e) {
+			done(e);
 		}
+	}
+}
+
+class GDBSignalWatcher extends stream.Writable {
+	constructor(opts?:stream.WritableOptions) {
+		super(opts);
+		stream.Writable.call(this, opts);
+	}
+
+	public _write(packet:any, encoding:string, callback:Function) {
+		try {
+			for (var i = 0; i < packet.length - 2; i++) {
+				if(packet[i] === getCharacterCodePoint("$") && (packet[i + 1] === getCharacterCodePoint("T") || packet[i + 1] === getCharacterCodePoint("S"))) {
+					// SIGKILL
+					if(packet[i + 2] === getCharacterCodePoint("9")) {
+						process.exit(1);
+					}
+				}
+			}
+			callback(null);
+		} catch(e) {
+			callback(e);
+		}
+	}
+}
+
+export class GDBServer implements Mobile.IGDBServer {
+	constructor(private socket:net.Socket) {
 	}
 
 	public run(argv: string[]): void {
 		this.send("QStartNoAckMode");
-		this.socket.sendMessage("+");
+		this.socket.write("+");
 		this.send("QEnvironmentHexEncoded:");
 		this.send("QSetDisableASLR:1");
 
-		var encodedArguments = _.map(argv, (arg, index) => util.format("%d,%d,%s", arg.length*2, index, new Buffer(arg).toString("hex"))).join(",");
-		this.send("A"+encodedArguments);
+		var encodedArguments = _.map(argv, (arg, index) => util.format("%d,%d,%s", arg.length * 2, index, new Buffer(arg).toString("hex"))).join(",");
+		this.send("A" + encodedArguments);
 
 		this.send("qLaunchSuccess");
-		this.send("vCont;c");
+
+		if(options.printAppOutput) {
+			this.socket.pipe(new GDBStandardOutputAdapter()).pipe(process.stdout);
+			this.socket.pipe(new GDBSignalWatcher());
+			this.send("vCont;c");
+		} else {
+			// Disconnecting the debugger closes the socket and allows the process to quit
+			this.send("D");
+		}
 	}
 
 	private send(packet: string): void {
 		var sum = 0;
-		for(var i=0; i< packet.length; i++) {
-			sum += packet.charCodeAt(i);
+		for(var i = 0; i < packet.length; i++) {
+			sum += getCharacterCodePoint(packet[i]);
 		}
 		sum = sum & 255;
-		var data = util.format("$%s#%s", packet, sum.toString(16));
 
-		this.socket.sendMessage(data);
-		var commands = ['C', 'c', 'S', 's', 'vCont', 'vAttach', 'vRun', 'vStopped', '?'];
-		var stopReply = _.any(commands, command => _.startsWith(packet, command));
-		// TODO: extend the protocol communication
+		var data = util.format("$%s#%s", packet, sum.toString(16));
+		this.socket.write(data);
 	}
 }
 $injector.register("gdbServer", GDBServer);

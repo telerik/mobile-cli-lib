@@ -63,24 +63,29 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		var opts = [
 			iosSimPath,
 			"launch", app,
-			"--timeout", options.timeout,
-			"--exit"
+			"--timeout", options.timeout
 		];
 
-		if(emulatorOptions) {
-			if(emulatorOptions.stderrFilePath) {
-				opts = opts.concat("--stderr", emulatorOptions.stderrFilePath);
+		if(options.printAppOutput) {
+			opts.push("--logging");
+		} else {
+			if(emulatorOptions) {
+				if(emulatorOptions.stderrFilePath) {
+					opts = opts.concat("--stderr", emulatorOptions.stderrFilePath);
+				}
+				if(emulatorOptions.stdoutFilePath) {
+					opts = opts.concat("--stdout", emulatorOptions.stdoutFilePath);
+				}
 			}
-			if(emulatorOptions.stdoutFilePath) {
-				opts = opts.concat("--stdout", emulatorOptions.stdoutFilePath);
-			}
+
+			opts.push("--exit");
 		}
 
 		if(options.device) {
 			opts = opts.concat("--device", options.device);
 		}
 
-		this.$childProcess.spawn(nodeCommandName, opts, { stdio: "inherit"});
+		this.$childProcess.spawn(nodeCommandName, opts, { stdio: "inherit" });
 	}
 }
 $injector.register("iOSEmulatorServices", IosEmulatorServices);

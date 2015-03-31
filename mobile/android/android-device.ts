@@ -173,6 +173,10 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		return (() => {
 			var startPackageCommand = this.composeCommand("shell am start -a android.intent.action.MAIN -n %s/%s", packageName, this.$staticConfig.START_PACKAGE_ACTIVITY_NAME);
 			this.$childProcess.exec(startPackageCommand).wait();
+
+			if (options.printAppOutput) {
+				this.openDeviceLogStream();
+			}
 		}).future<void>()();
 	}
 

@@ -378,7 +378,9 @@ export class IOSDevice implements Mobile.IIOSDevice {
 			}
 
 			this.mountImage().wait();
-			var gdbServer = this.$injector.resolve(iosCore.GDBServer, {service: this.startService(iOSProxyServices.MobileServices.DEBUG_SERVER)});
+
+			var service = this.startService(iOSProxyServices.MobileServices.DEBUG_SERVER);
+			var gdbServer = this.$injector.resolve(iosCore.GDBServer, {socket: new net.Socket({ fd: service })});
 			var executable = util.format("%s/%s", application.Path, application.CFBundleExecutable);
 
 			gdbServer.run([executable]);
