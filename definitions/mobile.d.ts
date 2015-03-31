@@ -197,6 +197,11 @@ declare module Mobile {
 		run(argv: string[]): void;
 	}
 
+	interface INotificationProxyClient {
+		postNotification(notificationName: string): void;
+		postNotificationAndAttachForData(notificationName: string): void;
+	}
+
 	interface IPlatformCapabilities {
 		wirelessDeploy: boolean;
 		cableDeploy: boolean;
