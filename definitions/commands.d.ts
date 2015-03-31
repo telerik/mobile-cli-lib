@@ -11,6 +11,8 @@ interface ICommand extends ICommandOptions {
 	completionData?: string[];
 }
 
+interface IDynamicCommand extends ICommand { }
+
 interface ISimilarCommand {
 	name: string;
 	rating: number;
