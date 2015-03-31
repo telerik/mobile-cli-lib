@@ -1000,7 +1000,6 @@ class GDBStandardOutputAdapter extends stream.Transform {
 
 	constructor(opts?:stream.TransformOptions) {
 		super(opts);
-		stream.Transform.call(this, opts);
 	}
 
 	public _transform(packet:any, encoding:string, done:Function):void {
@@ -1041,7 +1040,6 @@ class GDBStandardOutputAdapter extends stream.Transform {
 class GDBSignalWatcher extends stream.Writable {
 	constructor(opts?:stream.WritableOptions) {
 		super(opts);
-		stream.Writable.call(this, opts);
 	}
 
 	public _write(packet:any, encoding:string, callback:Function) {
