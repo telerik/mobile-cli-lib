@@ -61,6 +61,7 @@ $injector.require("iOSDeviceDiscovery", "./common/mobile/mobile-core/device-disc
 $injector.require("androidDeviceDiscovery", "./common/mobile/mobile-core/device-discovery");
 $injector.require("iOSDevice", "./common/mobile/ios/ios-device");
 $injector.require("androidDevice", "./common/mobile/android/android-device");
+$injector.require("logcatHelper", "./common/mobile/android/logcat-helper");
 
 $injector.require("devicesServices", "./common/mobile/mobile-core/devices-services");
 $injector.require("projectNameValidator", "./common/validators/project-name-validator");
