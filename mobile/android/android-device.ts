@@ -4,7 +4,6 @@ import util = require("util");
 import Future = require("fibers/future");
 import path = require("path");
 import temp = require("temp");
-import byline = require("byline");
 import helpers = require("../../helpers");
 import os = require("os");
 import options = require("./../../options");
@@ -64,7 +63,8 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		private $errors: IErrors,
 		private $staticConfig: Config.IStaticConfig,
 		private $opener: IOpener,
-		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
+		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
+		private $logcatHelper: Mobile.ILogcatHelper) {
 		var details: IAndroidDeviceDetails = this.getDeviceDetails().wait();
 		this.model = details.model;
 		this.name = details.name;
@@ -490,46 +490,6 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 	}
 
 	public openDeviceLogStream(): void {
-		var adbLogcat = this.$childProcess.spawn(this.adb, ["-s", this.getIdentifier(), "logcat"]);
-		var lineStream = byline(adbLogcat.stdout);
-
-		adbLogcat.stderr.on("data", (data: NodeBuffer) => {
-			this.$logger.trace("ADB logcat stderr: " + data.toString());
-		});
-
-		adbLogcat.on("close", (code: number) => {
-			if (code !== 0) {
-				this.$logger.trace("ADB process exited with code " + code.toString());
-			}
-		});
-
-		lineStream.on('data', (line: NodeBuffer) => {
-			var lineText = line.toString();
-			var log = this.getConsoleLogFromLine(lineText);
-			if (log) {
-				if (log.tag) {
-					this.$logger.out("%s: %s", log.tag, log.message);
-				} else {
-					this.$logger.out(log.message);
-				}
-			}
-		});
-	}
-
-	private getConsoleLogFromLine(lineText: String): any {
-		var acceptedTags = ["chromium", "Web Console"];
-
-		//sample line is "I/Web Console(    4438): Received Event: deviceready at file:///storage/emulated/0/Icenium/com.telerik.TestApp/js/index.js:48"
-		var match = lineText.match(/.\/(.+?)\(\s*(\d+?)\): (.*)/);
-		if (match) {
-			if (acceptedTags.indexOf(match[1]) !== -1) {
-				return { tag: match[1], message: match[3] };
-			}
-		}
-		else if (_.any(acceptedTags, (tag: string) => { return lineText.indexOf(tag) !== -1; })) {
-			return { message: match[3] };
-		}
-
-		return null;
+		this.$logcatHelper.start(this.getIdentifier(), this.adb);
 	}
 }

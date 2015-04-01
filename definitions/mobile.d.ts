@@ -38,6 +38,10 @@ declare module Mobile {
 		startService(serviceName: string): number;
 	}
 
+	interface ILogcatHelper {
+		start(deviceIdentifier: string, adbPath: string): any;
+	}
+
 	interface IDebugOnDeviceSetup {
 		frontEndPath?: string;
 	}

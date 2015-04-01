@@ -39,7 +39,8 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		private $childProcess: IChildProcess,
 		private $fs: IFileSystem,
 		private $staticConfig: Config.IStaticConfig,
-		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
+		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
+		private $logcatHelper: Mobile.ILogcatHelper) {
 		iconv.extendNodeEncodings();
 		this.adbFilePath = helpers.getPathToAdb($injector).wait();
 	}
@@ -111,6 +112,10 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 			childProcess = this.$childProcess.spawn(this.adbFilePath, ["-s", emulatorId, 'shell', 'am', 'start', '-S', appId + "/" + this.$staticConfig.START_PACKAGE_ACTIVITY_NAME],
 				{ stdio: "ignore", detached: true });
 			this.$fs.futureFromEvent(childProcess, "close").wait();
+
+			if (options.printAppOutput) {
+				this.$logcatHelper.start(emulatorId, this.adbFilePath);
+			}
 		}).future<void>()();
 	}
 
