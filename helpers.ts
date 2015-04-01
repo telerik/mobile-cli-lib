@@ -4,7 +4,6 @@ import fs = require("fs");
 import path = require("path");
 import util = require("util");
 var uuid = require("node-uuid");
-var options = require("./options");
 import Future = require("fibers/future");
 import Fiber = require("fibers");
 var Table = require("cli-table");
