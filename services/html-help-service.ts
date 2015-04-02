@@ -4,7 +4,6 @@
 import util = require("util");
 import Future = require("fibers/future");
 import path = require("path");
-import options = require("options");
 import marked = require("marked");
 var TerminalRenderer = require('marked-terminal');
 var chalk = require("chalk");
