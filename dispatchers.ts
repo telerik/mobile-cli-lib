@@ -56,7 +56,9 @@ export class CommandDispatcher implements ICommandDispatcher {
 		if (remaining.length > 0) {
 			return remaining[0].toString().toLowerCase();
 		}
-		return "help";
+		// if only <CLI_NAME> is specified on console, show console help
+		options.help = true;
+		return "";
 	}
 
 	// yargs convert parameters that are numbers to numbers, which we do not expect. undo its hard work.
