@@ -65,12 +65,14 @@ export function installUncaughtExceptionListener(): void {
 		}
 		console.log(callstack || err.toString());
 
-		try {
-			var analyticsService = $injector.resolve("analyticsService");
-			analyticsService.trackException(err, callstack);
-		} catch (e) {
-			// Do not replace with logger due to cyclic dependency
-			console.log("Error while reporting exception: " + e);
+		if(!$injector.resolve("staticConfig").disableAnalytics) {
+			try {
+				var analyticsService = $injector.resolve("analyticsService");
+				analyticsService.trackException(err, callstack);
+			} catch (e) {
+				// Do not replace with logger due to cyclic dependency
+				console.log("Error while reporting exception: " + e);
+			}
 		}
 
 		process.exit(ErrorCodes.UNKNOWN);

@@ -33,7 +33,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 		private $injector: IInjector,
 		private $logger: ILogger,
 		private $mobileDevice: Mobile.IMobileDevice,
-		private $staticConfig: IStaticConfig,
+		private $staticConfig: Config.IStaticConfig,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
 		this.mountImageCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSDevice.mountImageCallback);
 	}

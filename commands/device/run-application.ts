@@ -9,7 +9,7 @@ export class RunApplicationOnDeviceCommand implements ICommand {
 	constructor(private $devicesServices: Mobile.IDevicesServices,
 		private $errors: IErrors,
 		private $stringParameter: ICommandParameter,
-		private $staticConfig: IStaticConfig) { }
+		private $staticConfig: Config.IStaticConfig) { }
 
 	allowedParameters: ICommandParameter[] = [this.$stringParameter];
 

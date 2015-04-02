@@ -32,13 +32,14 @@ export class CommandsService implements ICommandsService {
 	public executeCommandUnchecked(commandName: string, commandArguments: string[]): IFuture<boolean> {
 		return (() => {
 			var command = this.$injector.resolveCommand(commandName);
+
 			if(command) {
-				if(!command.disableAnalytics) {
+				if(!this.$staticConfig.disableAnalytics && !command.disableAnalytics) {
 					var analyticsService = this.$injector.resolve("analyticsService"); // This should be resolved here due to cyclic dependency
 					analyticsService.checkConsent(commandName).wait();
 					analyticsService.trackFeature(commandName).wait();
 				}
-				if(command.enableHooks === undefined || command.enableHooks === true) {
+				if(!this.$staticConfig.disableHooks && (command.enableHooks === undefined || command.enableHooks === true)) {
 					// Handle correctly hierarchical commands
 					var hierarchicalCommandName = this.$injector.buildHierarchicalCommand(commandName, commandArguments);
 					if(hierarchicalCommandName) {
