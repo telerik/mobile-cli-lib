@@ -2,13 +2,15 @@
 "use strict";
 
 import os = require("os");
+import child_process = require("child_process");
 import osenv = require("osenv");
 import Future = require("fibers/future");
 import hostInfo = require("./host-info");
 
 export class SysInfo implements ISysInfo {
 	constructor(private $childProcess: IChildProcess,
-				private $iTunesValidator: Mobile.IiTunesValidator) { }
+				private $iTunesValidator: Mobile.IiTunesValidator,
+				private $logger: ILogger) { }
 
 	private sysInfoCache: ISysInfoData = undefined;
 
@@ -33,10 +35,6 @@ export class SysInfo implements ISysInfo {
 			procOutput = this.$childProcess.exec("npm -v").wait();
 			res.npmVer = procOutput ? procOutput.split("\n")[0] : null;
 
-			// dependencies
-			// Java detection is disabled for now. Leaving the code in case we decide to use it later
-			// res.javaVer = this.$childProcess.spawnFromEvent("java", ["-version"], "exit").wait().stderr.split(os.EOL)[2];
-
 			procOutput = this.exec("ant -version");
 			res.antVer = procOutput ? procOutput.split(os.EOL)[0] : null;
 
@@ -47,7 +45,7 @@ export class SysInfo implements ISysInfo {
 			procOutput = this.exec("adb version");
 			res.adbVer = procOutput ? procOutput.split(os.EOL)[0] : null;
 
-			procOutput = this.exec("android -h");
+			procOutput = this.execAndroidH();
 			res.androidInstalled = procOutput ? _.contains(procOutput, "android") : false;
 
 			this.sysInfoCache = res;
@@ -62,6 +60,26 @@ export class SysInfo implements ISysInfo {
 		} catch(e) {
 			return null;
 		} // if we got an error, assume not working
+	}
+
+	// `android -h` returns exit code 1 on successful invocation (Mac OS X for now, possibly Linux). Therefore, we cannot use $childProcess
+	private execAndroidH(): string {
+		var future = new Future<any>();
+		var callback = (error: Error, stdout: NodeBuffer, stderr: NodeBuffer) => {
+			this.$logger.trace("Exec android -h \n stdout: %s \n stderr: %s", stdout.toString(), stderr.toString());
+
+			var err: any = error;
+			if(error && err.code !== 1 && !err.killed && !err.signal) {
+				future.throw(error);
+			} else {
+				future.return(stdout);
+			}
+		};
+
+		child_process.exec("android -h", callback);
+
+		var result = future.wait();
+		return result;
 	}
 
 	private winVer(): string {
