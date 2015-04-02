@@ -112,7 +112,7 @@ export class CommandsService implements ICommandsService {
 				this.$errors.fail("Unable to execute command '%s'. Use '$ %s %s --help' for help.", beautifiedName, this.$staticConfig.CLIENT_NAME.toLowerCase(), beautifiedName);
 				return false;
 			} else if(!isDynamicCommand){
-				if(_.any(this.$commandsServiceProvider.getDynamicCommands())) {
+				if(_.any(this.$commandsServiceProvider.getDynamicCommands().wait())) {
 					this.$commandsServiceProvider.generateDynamicCommands().wait();
 					return this.canExecuteCommand(commandName, commandArguments, true).wait();
 				}
