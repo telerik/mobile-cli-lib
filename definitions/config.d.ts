@@ -14,6 +14,7 @@ declare module Config {
 		sevenZipFilePath: string;
 		disableAnalytics?: boolean;
 		disableHooks?: boolean;
+		enableDeviceRunCommandOnWindows?: boolean;
 		MAN_PAGES_DIR: string;
 		HTML_PAGES_DIR: string;
 		HTML_HELPERS_DIR: string;

@@ -1069,7 +1069,16 @@ class GDBSignalWatcher extends stream.Writable {
 }
 
 export class GDBServer implements Mobile.IGDBServer {
-	constructor(private socket:net.Socket) {
+	constructor(private socket: any, // socket is fd on Windows and net.Socket on mac
+		private $injector: IInjector) {
+		if(hostInfo.isWindows()) {
+			var winSocket = this.$injector.resolve(WinSocket, {service: this.socket, format: 0});
+			this.socket = {
+				write: (message: string): void => {
+					winSocket.sendMessage(message);
+				}
+			}
+		}
 	}
 
 	public run(argv: string[]): void {
@@ -1083,13 +1092,17 @@ export class GDBServer implements Mobile.IGDBServer {
 
 		this.send("qLaunchSuccess");
 
-		if(options.printAppOutput) {
-			this.socket.pipe(new GDBStandardOutputAdapter()).pipe(process.stdout);
-			this.socket.pipe(new GDBSignalWatcher());
+		if(hostInfo.isWindows()) {
 			this.send("vCont;c");
 		} else {
-			// Disconnecting the debugger closes the socket and allows the process to quit
-			this.send("D");
+			if (options.printAppOutput) {
+				this.socket.pipe(new GDBStandardOutputAdapter()).pipe(process.stdout);
+				this.socket.pipe(new GDBSignalWatcher());
+				this.send("vCont;c");
+			} else {
+				// Disconnecting the debugger closes the socket and allows the process to quit
+				this.send("D");
+			}
 		}
 	}
 

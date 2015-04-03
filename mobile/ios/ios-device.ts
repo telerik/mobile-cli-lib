@@ -410,7 +410,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 
 	public runApplication(applicationId: string): IFuture<void> {
 		return (() => {
-			if(hostInfo.isWindows()) {
+			if(hostInfo.isWindows() && (this.$staticConfig.enableDeviceRunCommandOnWindows === null || this.$staticConfig.enableDeviceRunCommandOnWindows === undefined)) {
 				this.$errors.fail("$%s device run command is not supported on Windows for iOS devices.", this.$staticConfig.CLIENT_NAME.toLowerCase());
 			}
 
@@ -424,7 +424,8 @@ export class IOSDevice implements Mobile.IIOSDevice {
 			this.mountImage().wait();
 
 			var service = this.startService(iOSProxyServices.MobileServices.DEBUG_SERVER);
-			var gdbServer = this.$injector.resolve(iosCore.GDBServer, {socket: new net.Socket({ fd: service })});
+			var socket = hostInfo.isWindows() ? service :  new net.Socket({ fd: service });
+			var gdbServer = this.$injector.resolve(iosCore.GDBServer, { socket: socket });
 			var executable = util.format("%s/%s", application.Path, application.CFBundleExecutable);
 
 			gdbServer.run([executable]);
