@@ -115,7 +115,7 @@ export function getPathToAdb(injector: IInjector): IFuture<string> {
 		try {
 			var childProcess: IChildProcess = injector.resolve("childProcess");
 			var logger: ILogger = injector.resolve("logger");
-			var staticConfig: IStaticConfig = injector.resolve("staticConfig");
+			var staticConfig: Config.IStaticConfig = injector.resolve("staticConfig");
 
 			var warningMessage = util.format("Unable to find adb in PATH. Default one from %s resources will be used.", staticConfig.CLIENT_NAME.toLowerCase());
 			var proc = childProcess.spawnFromEvent("adb", ["version"], "exit", undefined, { throwError: false }).wait();

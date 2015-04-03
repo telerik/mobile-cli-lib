@@ -12,6 +12,8 @@ declare module Config {
 		helpTextPath: string;
 		adbFilePath: string;
 		sevenZipFilePath: string;
+		disableAnalytics?: boolean;
+		disableHooks?: boolean;
 		MAN_PAGES_DIR: string;
 		HTML_PAGES_DIR: string;
 		HTML_HELPERS_DIR: string;

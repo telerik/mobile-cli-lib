@@ -140,7 +140,7 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 
 class IOSDeviceDiscoveryStub extends DeviceDiscovery {
 	constructor(private $logger: ILogger,
-		private $staticConfig: IStaticConfig,
+		private $staticConfig: Config.IStaticConfig,
 		private error: string) {
 		super();
 	}
@@ -156,7 +156,7 @@ class IOSDeviceDiscoveryStub extends DeviceDiscovery {
 	}
 }
 
-$injector.register("iOSDeviceDiscovery", ($errors: IErrors, $logger: ILogger, $fs: IFileSystem, $injector: IInjector, $iTunesValidator: Mobile.IiTunesValidator, $staticConfig: IStaticConfig) => {
+$injector.register("iOSDeviceDiscovery", ($errors: IErrors, $logger: ILogger, $fs: IFileSystem, $injector: IInjector, $iTunesValidator: Mobile.IiTunesValidator, $staticConfig: Config.IStaticConfig) => {
 	var error = $iTunesValidator.getError().wait();
 	var result: Mobile.IDeviceDiscovery = null;
 

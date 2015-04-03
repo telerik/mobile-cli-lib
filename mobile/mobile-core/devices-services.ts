@@ -20,7 +20,7 @@ export class DevicesServices implements Mobile.IDevicesServices {
 		private $errors: IErrors,
 		private $iOSDeviceDiscovery: Mobile.IDeviceDiscovery,
 		private $androidDeviceDiscovery: Mobile.IDeviceDiscovery,
-		private $staticConfig: IStaticConfig,
+		private $staticConfig: Config.IStaticConfig,
 		private $mobileHelper: Mobile.IMobileHelper) {
 		this.attachToDeviceDiscoveryEvents();
 	}
