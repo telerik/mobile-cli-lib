@@ -173,8 +173,9 @@ export class CommandsService implements ICommandsService {
 				_.each(commandArgsHelper.remainingArguments, (argument) => {
 					var parameter = _.find(unverifiedAllowedParams, (c) => c.validate(argument).wait());
 					if(parameter) {
+						var index = unverifiedAllowedParams.indexOf(parameter);
 						// Remove the matched parameter from unverifiedAllowedParams collection, so it will not be used to verify another argument.
-						unverifiedAllowedParams = _.without(unverifiedAllowedParams, parameter);
+						unverifiedAllowedParams = unverifiedAllowedParams.splice(index, 1);
 					} else {
 						this.$errors.fail("The parameter %s is not valid for this command.", argument);
 					}
