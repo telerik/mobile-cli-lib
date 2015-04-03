@@ -24,6 +24,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 	private identifier: string = null;
 	private voidPtr = ref.refType(ref.types.void);
 	private mountImageCallbackPtr: NodeBuffer = null;
+	private uninstallApplicationCallbackPtr: NodeBuffer = null;
 
 	constructor(private devicePointer: NodeBuffer,
 		private $childProcess: IChildProcess,
@@ -36,6 +37,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 		private $staticConfig: Config.IStaticConfig,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
 		this.mountImageCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSDevice.mountImageCallback);
+		this.uninstallApplicationCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSDevice.uninstallCallback);
 	}
 
 	private static mountImageCallback(dictionary: NodeBuffer, user: NodeBuffer): void {
@@ -44,6 +46,32 @@ export class IOSDevice implements Mobile.IIOSDevice {
 
 		var jsDictionary = coreFoundation.cfTypeTo(dictionary);
 		logger.info("[Mounting] %s", jsDictionary["Status"]);
+	}
+
+	private static uninstallCallback(dictionary: NodeBuffer, user: NodeBuffer): void {
+		IOSDevice.showStatus("Uninstalling", dictionary);
+	}
+
+	private static showStatus(action: string, dictionary: NodeBuffer) {
+		var coreFoundation: Mobile.ICoreFoundation = $injector.resolve("coreFoundation");
+		var logger: ILogger = $injector.resolve("logger");
+
+		var jsDictionary = coreFoundation.cfTypeTo(dictionary);
+		var output = [util.format("[%s]", action)];
+
+		var append = (value: string) => {
+			if(jsDictionary[value]) {
+				output.push(util.format("%s: %s", value, jsDictionary[value]));
+			}
+		};
+
+		if(jsDictionary) {
+			append("PercentComplete");
+			append("Status");
+			append("Path");
+		}
+
+		logger.info(output.join(" "));
 	}
 
 	public getPlatform(): string {
@@ -311,6 +339,22 @@ export class IOSDevice implements Mobile.IIOSDevice {
 		return this.$mobileDevice.deviceGetInterfaceType(this.devicePointer);
 	}
 
+	private startHouseArrestService(bundleId: string): number {
+		var func = () => {
+			var fdRef = ref.alloc("int");
+			var result = this.$mobileDevice.deviceStartHouseArrestService(this.devicePointer, this.$coreFoundation.createCFString(bundleId), null, fdRef);
+			var fd = fdRef.deref();
+
+			if(result !== 0) {
+				this.$errors.fail("AMDeviceStartHouseArrestService returned %s", result);
+			}
+
+			return fd;
+		};
+
+		return this.tryToExecuteFunction<number>(func);
+	}
+
 	public startService(serviceName: string): number {
 		var func = () => {
 			var socket = ref.alloc("int");
@@ -389,6 +433,22 @@ export class IOSDevice implements Mobile.IIOSDevice {
 		}).future<void>()();
 	}
 
+	public uninstallApplication(applicationId: string): IFuture<void> {
+		return (() => {
+			var afc = this.startService(iOSProxyServices.MobileServices.INSTALLATION_PROXY);
+			try {
+				var result = this.$mobileDevice.deviceUninstallApplication(afc, this.$coreFoundation.createCFString(applicationId), null, this.uninstallApplicationCallbackPtr);
+				if(result !== 0) {
+					this.$errors.fail("AMDeviceUninstallApplication returned '%d'.", result);
+				}
+			} finally {
+				//this.stopSession();
+			}
+
+			this.$logger.trace("Application %s has been uninstalled successfully.", applicationId);
+		}).future<void>()();
+	}
+
 	public connectToPort(port: number): net.Socket {
 		var interfaceType = this.getInterfaceType();
 		if(interfaceType === IOSDevice.INTERFACE_USB) {
@@ -410,6 +470,68 @@ export class IOSDevice implements Mobile.IIOSDevice {
 	private htons(port: number): number {
 		var result =  (port & 0xff00) >> 8 | (port & 0x00ff) << 8;
 		return result;
+	}
+
+	private resolveAfc(): Mobile.IAfcClient {
+		var service = options.app ? this.startHouseArrestService(options.app) : this.startService(iOSProxyServices.MobileServices.APPLE_FILE_CONNECTION);
+		var afcClient:Mobile.IAfcClient = this.$injector.resolve(iOSProxyServices.AfcClient, {service: service});
+		return afcClient;
+	}
+
+	public getFile(deviceFilePath: string): IFuture<void> {
+		return (() => {
+			var afcClient = this.resolveAfc();
+			var fileToRead = afcClient.open(deviceFilePath, "r");
+			var fileToWrite = options.file ? this.$fs.createWriteStream(options.file) : process.stdout;
+			var dataSizeToRead = 8192;
+			var size = 0;
+
+			while(true) {
+				var data = fileToRead.read(dataSizeToRead);
+				if(!data || data.length === 0) {
+					break;
+				}
+				fileToWrite.write(data);
+				size += data.length;
+			}
+
+			fileToRead.close();
+			this.$logger.info("%s bytes read from %s", size.toString(), deviceFilePath);
+
+		}).future<void>()();
+	}
+
+	public putFile(localFilePath: string, deviceFilePath: string): IFuture<void> {
+		var afcClient = this.resolveAfc();
+		return afcClient.transfer(localFilePath, deviceFilePath);
+	}
+
+	public listFiles(devicePath: string): IFuture<void> {
+		return (() => {
+			if (!devicePath) {
+				devicePath = ".";
+			}
+
+			this.$logger.info("Listing %s", devicePath);
+
+			var afcClient = this.resolveAfc();
+
+			var walk = (root:string, indent:number) => {
+				this.$logger.info(util.format("%s %s", Array(indent).join(" "), root));
+				var children:string[] = [];
+				try {
+					children = afcClient.listDir(root);
+				} catch (e) {
+					children = [];
+				}
+
+				_.each(children, (child:string) => {
+					walk(root + "/" + child, indent + 1);
+				});
+			};
+
+			walk(devicePath, 0);
+		}).future<void>()();
 	}
 }
 $injector.register("iOSDevice", IOSDevice);

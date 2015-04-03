@@ -54,6 +54,18 @@ export class AfcFile implements Mobile.IAfcFile {
 		this.open = true;
 	}
 
+	public read(len: number): any {
+		var readLengthRef = ref.alloc(iOSCore.CoreTypes.uintType, len);
+		var data = new Buffer(len * iOSCore.CoreTypes.pointerSize);
+		var result = this.$mobileDevice.afcFileRefRead(this.afcConnection, this.afcFile, data, readLengthRef);
+		if(result !== 0) {
+			this.$errors.fail("Unable to read data from file '%s'. Result is: '%s'", this.afcFile, result);
+		}
+
+		var readLength = readLengthRef.deref();
+		return data.slice(0, readLength);
+	}
+
 	public write(buffer: any, byteLength?: any): boolean {
 		var result = this.$mobileDevice.afcFileRefWrite(this.afcConnection, this.afcFile, buffer, byteLength);
 		if (result !== 0) {
@@ -96,7 +108,7 @@ export class AfcClient implements Mobile.IAfcClient {
 		this.afcConnection = ref.deref(afcConnection);
 	}
 
-	private open(path: string, mode: string): Mobile.IAfcFile {
+	public open(path: string, mode: string): Mobile.IAfcFile {
 		return this.$injector.resolve(AfcFile, {path: path, mode: mode, afcConnection: this.afcConnection});
 	}
 
@@ -107,7 +119,7 @@ export class AfcClient implements Mobile.IAfcClient {
 		}
 	}
 
-	public listDir(path: string) {
+	public listDir(path: string): string[] {
 		var afcDirectoryRef = ref.alloc(ref.refType(ref.types.void));
 		var result = this.$mobileDevice.afcDirectoryOpen(this.afcConnection, path, afcDirectoryRef);
 		if (result !== 0) {
@@ -116,6 +128,7 @@ export class AfcClient implements Mobile.IAfcClient {
 
 		var afcDirectoryValue = ref.deref(afcDirectoryRef);
 		var name = ref.alloc(ref.refType(ref.types.char));
+		var entries: string[] = [];
 
 		while (this.$mobileDevice.afcDirectoryRead(this.afcConnection, afcDirectoryValue, name) === 0) {
 			var value = ref.deref(name);
@@ -124,11 +137,13 @@ export class AfcClient implements Mobile.IAfcClient {
 			}
 			var filePath = ref.readCString(value, 0);
 			if (filePath !== "." && filePath !== "..") {
-				console.log(filePath);
+				entries.push(filePath);
 			}
 		}
 
 		this.$mobileDevice.afcDirectoryClose(this.afcConnection, afcDirectoryValue);
+
+		return entries;
 	}
 
 	public transferPackage(localFilePath: string, devicePath: string): IFuture<void> {

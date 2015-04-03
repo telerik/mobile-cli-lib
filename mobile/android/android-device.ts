@@ -391,6 +391,24 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		return this.startPackageOnDevice(applicationId);
 	}
 
+	public listApplications(): void { }
+
+	public uninstallApplication(applicationId: string): IFuture<void> {
+		return (() => { }).future<void>()();
+	}
+
+	public listFiles(devicePath: string): IFuture<void> {
+		return (() => { }).future<void>()();
+	}
+
+	public getFile(deviceFilePath: string): IFuture<void> {
+		return (() => { }).future<void>()();
+	}
+
+	public putFile(localFilePath: string, deviceFilePath: string): IFuture<void> {
+		return (() => { }).future<void>()();
+	}
+
 	private getLiveSyncVersion(appIdentifier: Mobile.IAppIdentifier): IFuture<number> {
 		return this.sendBroadcastToDevice(AndroidDevice.CHECK_LIVESYNC_INTENT_NAME, {"app-id": appIdentifier.appIdentifier});
 	}

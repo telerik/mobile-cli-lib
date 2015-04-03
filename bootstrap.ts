@@ -40,6 +40,10 @@ $injector.requireCommand("device|ios", "./common/commands/device/list-devices");
 $injector.requireCommand("device|log", "./common/commands/device/device-log-stream");
 $injector.requireCommand("device|run", "./common/commands/device/run-application");
 $injector.requireCommand("device|list-applications", "./common/commands/device/list-applications");
+$injector.requireCommand("device|uninstall", "./common/commands/device/uninstall-application");
+$injector.requireCommand("device|list-files", "./common/commands/device/list-files");
+$injector.requireCommand("device|get-file", "./common/commands/device/get-file");
+$injector.requireCommand("device|put-file", "./common/commands/device/put-file");
 
 $injector.require("iOSCore", "./common/mobile/ios/ios-core");
 $injector.require("coreFoundation", "./common/mobile/ios/ios-core");

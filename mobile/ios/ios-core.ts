@@ -194,6 +194,7 @@ class IOSCore implements Mobile.IiOSCore {
 			"AMDeviceInstallApplication": ffi.ForeignFunction(lib.get("AMDeviceInstallApplication"), "uint", ["int", CoreTypes.cfStringRef, CoreTypes.cfDictionaryRef, CoreTypes.am_device_install_application_callback, CoreTypes.voidPtr]),
 			"AMDeviceLookupApplications": ffi.ForeignFunction(lib.get("AMDeviceLookupApplications"), CoreTypes.uintType, [CoreTypes.am_device_p, CoreTypes.uintType, ref.refType(CoreTypes.cfDictionaryRef)]),
 			"AMDeviceUninstallApplication": ffi.ForeignFunction(lib.get("AMDeviceUninstallApplication"), "uint", ["int", CoreTypes.cfStringRef, CoreTypes.cfDictionaryRef, CoreTypes.am_device_install_application_callback, CoreTypes.voidPtr]),
+			"AMDeviceStartHouseArrestService": ffi.ForeignFunction(lib.get("AMDeviceStartHouseArrestService"), CoreTypes.intType, [CoreTypes.am_device_p, CoreTypes.cfStringRef, CoreTypes.voidPtr, CoreTypes.intPtr, CoreTypes.voidPtr]),
 			"AFCConnectionOpen": ffi.ForeignFunction(lib.get("AFCConnectionOpen"), "uint", ["int", "uint", ref.refType(CoreTypes.afcConnectionRef)]),
 			"AFCConnectionClose": ffi.ForeignFunction(lib.get("AFCConnectionClose"), "uint", [CoreTypes.afcConnectionRef]),
 			"AFCDirectoryCreate": ffi.ForeignFunction(lib.get("AFCDirectoryCreate"), "uint", [CoreTypes.afcConnectionRef, "string"]),
@@ -552,6 +553,14 @@ export class MobileDevice implements Mobile.IMobileDevice {
 		return this.mobileDeviceLibrary.AMDeviceInstallApplication(service, packageFile, options, installationCallback, null);
 	}
 
+	public deviceUninstallApplication(service: number, bundleId: NodeBuffer, options: NodeBuffer, callback: NodeBuffer): number {
+		return this.mobileDeviceLibrary.AMDeviceUninstallApplication(service, bundleId, options, callback, null);
+	}
+
+	public deviceStartHouseArrestService(devicePointer: NodeBuffer, bundleId: NodeBuffer, options: NodeBuffer, fdRef: NodeBuffer): number {
+		return this.mobileDeviceLibrary.AMDeviceStartHouseArrestService(devicePointer, bundleId, options, fdRef, null);
+	}
+
 	public deviceMountImage(devicePointer: NodeBuffer, imagePath: NodeBuffer, options: NodeBuffer, mountCallBack: NodeBuffer): number {
 		if(hostInfo.isDarwin()) {
 			return this.mobileDeviceLibrary.AMDeviceMountImage(devicePointer, imagePath, options, mountCallBack, null);
@@ -600,7 +609,7 @@ export class MobileDevice implements Mobile.IMobileDevice {
 		return this.mobileDeviceLibrary.AFCFileRefWrite(afcConnection, afcFileRef, buffer, byteLength);
 	}
 
-	public afcFileRefRead(afcConnection: NodeBuffer, afcFileRef: number, buffer: NodeBuffer, byteLength: number): number {
+	public afcFileRefRead(afcConnection: NodeBuffer, afcFileRef: number, buffer: NodeBuffer, byteLength: NodeBuffer): number {
 		return this.mobileDeviceLibrary.AFCFileRefRead(afcConnection, afcFileRef, buffer, byteLength);
 	}
 
