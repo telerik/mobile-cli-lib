@@ -70,7 +70,7 @@ export class SysInfo implements ISysInfo {
 
 			var err: any = error;
 			if(error && err.code !== 1 && !err.killed && !err.signal) {
-				future.throw(error);
+				future.return(null);
 			} else {
 				future.return(stdout);
 			}
