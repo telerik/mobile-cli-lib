@@ -50,6 +50,8 @@ exports.setProfileDir = (defaultProfileDir: string) => {
 	// Add the value to exported options.
 	exports["profile-dir"] = selectedProfileDir;
 	exports["profileDir"] = selectedProfileDir;
+
+	exports["defaultProfileDir"] = defaultProfileDir;
 };
 
 exports.knownOpts = knownOpts;
