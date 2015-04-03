@@ -11,19 +11,22 @@ var chalk = require("chalk");
 export class HtmlHelpService implements IHtmlHelpService {
 	private static MARKDOWN_FILE_EXTENSION = ".md";
 	private static HTML_FILE_EXTENSION = ".html";
-	private static MAN_PAGE_NAME_PLACEHOLDER = "@MAN_PAGE_NAME@";
-	private static HTML_COMMAND_HELP_PLACEHOLDER = "@HTML_COMMAND_HELP@";
-	private static RELATIVE_PATH_TO_STYLES_CSS_PLACEHOLDER = "@RELATIVE_PATH_TO_STYLES_CSS@";
+	private static MAN_PAGE_NAME_REGEX = /@MAN_PAGE_NAME@/g;
+	private static HTML_COMMAND_HELP_REGEX = /@HTML_COMMAND_HELP@/g;
+	private static RELATIVE_PATH_TO_STYLES_CSS_REGEX = /@RELATIVE_PATH_TO_STYLES_CSS@/g;
+	private static RELATIVE_PATH_TO_IMAGES_REGEX = /@RELATIVE_PATH_TO_IMAGES@/g;
 
 	private pathToManPages: string;
 	private pathToHtmlPages: string;
 	private get pathToStylesCss(): string {
-		return path.join(this.$staticConfig.HTML_HELPERS_DIR, "styles.css");
+		return path.join(this.$staticConfig.HTML_COMMON_HELPERS_DIR, "styles.css");
 	}
 
 	private get pathToBasicPage(): string {
-		return path.join(this.$staticConfig.HTML_HELPERS_DIR, "basic-page.html");
+		return path.join(this.$staticConfig.HTML_COMMON_HELPERS_DIR, "basic-page.html");
 	}
+
+	private pathToImages = this.$staticConfig.HTML_CLI_HELPERS_DIR;
 
 	constructor(private $logger: ILogger,
 		private $injector: IInjector,
@@ -62,9 +65,10 @@ export class HtmlHelpService implements IHtmlHelpService {
 			this.$logger.trace("HTML file path for '%s' man page is: '%s'.", mdFileName, filePath);
 
 			var outputHtml = basicHtmlPage
-				.replace(HtmlHelpService.MAN_PAGE_NAME_PLACEHOLDER, mdFileName.replace(HtmlHelpService.MARKDOWN_FILE_EXTENSION, ""))
-				.replace(HtmlHelpService.HTML_COMMAND_HELP_PLACEHOLDER, htmlText)
-				.replace(HtmlHelpService.RELATIVE_PATH_TO_STYLES_CSS_PLACEHOLDER, path.relative(path.dirname(filePath), this.pathToStylesCss));
+				.replace(HtmlHelpService.MAN_PAGE_NAME_REGEX, mdFileName.replace(HtmlHelpService.MARKDOWN_FILE_EXTENSION, ""))
+				.replace(HtmlHelpService.HTML_COMMAND_HELP_REGEX, htmlText)
+				.replace(HtmlHelpService.RELATIVE_PATH_TO_STYLES_CSS_REGEX, path.relative(path.dirname(filePath), this.pathToStylesCss))
+				.replace(HtmlHelpService.RELATIVE_PATH_TO_IMAGES_REGEX, path.relative(path.dirname(filePath), this.pathToImages));
 
 			this.$fs.writeFile(filePath, outputHtml).wait();
 			this.$logger.trace("Finished writing file '%s'.", filePath);

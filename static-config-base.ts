@@ -33,7 +33,9 @@ export class StaticConfigBase implements Config.IStaticConfig {
 		return path.join(__dirname, "../../", "docs", "html");
 	}
 
-	public get HTML_HELPERS_DIR(): string {
-		return path.join(__dirname, "../../", "docs", "helpers");
+	public get HTML_COMMON_HELPERS_DIR(): string {
+		return path.join(__dirname, "docs", "helpers");
 	}
+
+	public HTML_CLI_HELPERS_DIR: string;
 }
