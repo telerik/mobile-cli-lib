@@ -19,6 +19,10 @@ declare module Mobile {
 		sync(localToDevicePaths: ILocalToDevicePathData[], appIdentifier: IAppIdentifier, liveSyncUrl: string, options: ISyncOptions): IFuture<void>;
 		openDeviceLogStream(): void;
 		runApplication(applicationId: string): IFuture<void>;
+		uninstallApplication(applicationId: string): IFuture<void>;
+		listFiles(devicePath: string): IFuture<void>;
+		getFile(deviceFilePath: string): IFuture<void>;
+		putFile(localFilePath: string, deviceFilePath: string): IFuture<void>;
 	}
 
 	interface IAppIdentifier {
@@ -127,6 +131,8 @@ declare module Mobile {
 		deviceStartService(devicePointer: NodeBuffer, serviceName: NodeBuffer, socketNumber: NodeBuffer): number;
 		deviceTransferApplication(service: number, packageFile: NodeBuffer, options: NodeBuffer, installationCallback: NodeBuffer): number;
 		deviceInstallApplication(service: number, packageFile: NodeBuffer, options: NodeBuffer, installationCallback: NodeBuffer): number;
+		deviceUninstallApplication(service: number, bundleId: NodeBuffer, options: NodeBuffer, callback: NodeBuffer): number;
+		deviceStartHouseArrestService(devicePointer: NodeBuffer, bundleId: NodeBuffer, options: NodeBuffer, fdRef: NodeBuffer): number;
 		deviceMountImage(devicePointer: NodeBuffer, imagePath: NodeBuffer, options: NodeBuffer, mountCallBack: NodeBuffer): number;
 		deviceLookupApplications(devicePointer: NodeBuffer, appType: number, result: NodeBuffer): number;
 		deviceGetInterfaceType(devicePointer: NodeBuffer): number;
@@ -137,7 +143,7 @@ declare module Mobile {
 		afcFileRefOpen(afcConnection: NodeBuffer, path: string, mode: number, afcFileRef: NodeBuffer): number;
 		afcFileRefClose(afcConnection: NodeBuffer, afcFileRef: number): number;
 		afcFileRefWrite(afcConnection: NodeBuffer, afcFileRef: number, buffer: NodeBuffer, byteLength: number): number;
-		afcFileRefRead(afcConnection: NodeBuffer, afcFileRef: number, buffer: NodeBuffer, byteLength: number): number;
+		afcFileRefRead(afcConnection: NodeBuffer, afcFileRef: number, buffer: NodeBuffer, byteLength: NodeBuffer): number;
 		afcRemovePath(afcConnection: NodeBuffer, path: string): number;
 		afcDirectoryOpen(afcConnection: NodeBuffer, path: string, afcDirectory: NodeBuffer): number;
 		afcDirectoryRead(afcConnection: NodeBuffer, afcdirectory: NodeBuffer,  name: NodeBuffer): number;
@@ -161,15 +167,17 @@ declare module Mobile {
 	}
 
 	interface IAfcClient {
+		open(path: string, mode: string): Mobile.IAfcFile;
 		transfer(localFilePath: string, devicePath: string): IFuture<void>;
 		transferCollection(localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void>;
 		deleteFile(devicePath: string): void;
 		mkdir(path: string): void;
-		listDir(path: string): void;
+		listDir(path: string): string[];
 	}
 
 	interface IAfcFile {
 		write(buffer: any, byteLength?: any): boolean;
+		read(len: number): any;
 		close(): void;
 	}
 
@@ -207,9 +215,9 @@ declare module Mobile {
 	}
 
 	interface IPlatformCapabilities {
-		wirelessDeploy: boolean;
+		wirelessDeploy?: boolean;
 		cableDeploy: boolean;
-		companion: boolean;
+		companion?: boolean;
 		hostPlatformsForDeploy: string[];
 	}
 
