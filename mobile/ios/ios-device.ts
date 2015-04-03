@@ -497,14 +497,14 @@ export class IOSDevice implements Mobile.IIOSDevice {
 			}
 
 			fileToRead.close();
-			this.$logger.info("%s bytes read from %s", size.toString(), deviceFilePath);
+			this.$logger.trace("%s bytes read from %s", size.toString(), deviceFilePath);
 
 		}).future<void>()();
 	}
 
 	public putFile(localFilePath: string, deviceFilePath: string): IFuture<void> {
 		var afcClient = this.resolveAfc();
-		return afcClient.transfer(localFilePath, deviceFilePath);
+		return afcClient.transfer(path.resolve(localFilePath), deviceFilePath);
 	}
 
 	public listFiles(devicePath: string): IFuture<void> {
