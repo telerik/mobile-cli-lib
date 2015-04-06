@@ -365,7 +365,11 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		var platform = target.replace('android-', '');
 		var platformNumber = +platform;
 		if (isNaN(platformNumber)) {
-			if (platform === "L") {
+			// this might be a google image
+			platform = target.split(":")[2];
+			if (platform) {
+				platformNumber = +platform;
+			} else if (platform === "L") { // Android SDK 20 was actually marked with the letter L
 				platformNumber = 20;
 			}
 		}
