@@ -4,6 +4,7 @@
 var jaroWinklerDistance = require("../vendor/jaro-winkler_distance");
 import helpers = require("../helpers");
 import util = require("util");
+import os = require("os");
 var options: any = require("../options");
 
 class CommandArgumentsValidationHelper {
@@ -133,7 +134,9 @@ export class CommandsService implements ICommandsService {
 			if(mandatoryParams.length > 0) {
 				// If command has more mandatory params than the passed ones, we shouldn't execute it
 				if(mandatoryParams.length > commandArguments.length) {
-                    this.$errors.fail("You need to provide all the required parameters.");
+					var customErrorMessages = _.map(mandatoryParams, mp => mp.errorMessage);
+					customErrorMessages.splice(0, 0, "You need to provide all the required parameters.");
+					this.$errors.failWithoutHelp(customErrorMessages.join(os.EOL));
 				}
 
 				// If we reach here, the commandArguments are at least as much as mandatoryParams. Now we should verify that we have each of them.
