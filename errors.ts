@@ -117,7 +117,6 @@ export class Errors implements IErrors {
 			try {
 				return action().wait();
 			} catch(ex) {
-				console.log("this.printCallStack = " + this.printCallStack);
 				console.log(this.printCallStack
 					? resolveCallStack(ex)
 					: "\x1B[31;1m" + ex.message + "\x1B[0m");
