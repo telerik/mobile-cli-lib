@@ -9,8 +9,8 @@ import helpers = require("./helpers");
 function Exception() {}
 Exception.prototype = new Error();
 
-function resolveCallStack(stack: string): string {
-	var stackLines: string[]= stack.split("\n");
+function resolveCallStack(error: Error): string {
+	var stackLines: string[]= error.stack.split("\n");
 	var parsed = _.map(stackLines, (line: string): any => {
 		var match = line.match(/^\s*at ([^(]*) \((.*?):([0-9]+):([0-9]+)\)$/);
 		if (match) {
@@ -54,14 +54,20 @@ function resolveCallStack(stack: string): string {
 		return util.format("    at %s (%s:%s:%s)", functionName, source, sourcePos.line, sourcePos.column);
 	});
 
-	return remapped.join("\n");
+	var outputMessage = remapped.join("\n");
+	if(outputMessage.indexOf(error.message) === -1) {
+		// when fibers throw error in node 0.12.x, the stack does NOT contain the message
+		outputMessage = outputMessage.replace(/Error/, "Error: " + error.message);
+	}
+
+	return outputMessage;
 }
 
 export function installUncaughtExceptionListener(): void {
 	process.on("uncaughtException", (err: Error) => {
 		var callstack = err.stack;
 		if (callstack) {
-			callstack = resolveCallStack(callstack);
+			callstack = resolveCallStack(err);
 		}
 		console.log(callstack || err.toString());
 
@@ -110,9 +116,9 @@ export class Errors implements IErrors {
 		return (() => {
 			try {
 				return action().wait();
-			} catch (ex) {
+			} catch(ex) {
 				console.log(this.printCallStack
-					? resolveCallStack(ex.stack)
+					? resolveCallStack(ex)
 					: "\x1B[31;1m" + ex.message + "\x1B[0m");
 
 				if (!ex.suppressCommandHelp) {
@@ -130,7 +136,7 @@ export class Errors implements IErrors {
 			return action();
 		} catch (ex) {
 			console.log(this.printCallStack
-				? resolveCallStack(ex.stack)
+				? resolveCallStack(ex)
 				: "\x1B[31;1m" + ex.message + "\x1B[0m");
 
 			process.exit(_.isNumber(ex.errorCode) ? ex.errorCode : ErrorCodes.UNKNOWN);
