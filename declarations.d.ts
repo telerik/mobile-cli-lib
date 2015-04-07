@@ -214,6 +214,9 @@ interface IHostCapabilities {
 
 interface IAutoCompletionService {
 	enableAutoCompletion(): IFuture<void>;
+	disableAutoCompletion(): IFuture<void>;
+	isAutoCompletionEnabled(): IFuture<boolean>;
+	isObsoleteAutoCompletionEnabled(): IFuture<boolean>;
 }
 
 interface IHooksService {
