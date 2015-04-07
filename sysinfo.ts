@@ -35,6 +35,13 @@ export class SysInfo implements ISysInfo {
 			procOutput = this.$childProcess.exec("npm -v").wait();
 			res.npmVer = procOutput ? procOutput.split("\n")[0] : null;
 
+			// dependencies
+			try {
+				res.javaVer = this.$childProcess.spawnFromEvent("java", ["-version"], "exit").wait().stderr.split(os.EOL)[2];
+			} catch(e) {
+				res.javaVer = null;
+			}
+
 			procOutput = this.exec("ant -version");
 			res.antVer = procOutput ? procOutput.split(os.EOL)[0] : null;
 

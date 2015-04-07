@@ -95,6 +95,14 @@ export class PostInstallCommand implements ICommand {
 			+ "To be able to work with connected iOS devices," + os.EOL
 			+ "download and install iTunes from http://www.apple.com" + os.EOL);
 		}
+		if(!sysInfo.javaVer) {
+			this.$logger.warn("WARNING: The Java Development Kit (JDK) is not installed or is not configured properly.");
+			this.$logger.out("You will not be able to work with the Android SDK and you might not be able" + os.EOL
+				+ "to perform some Android-related operations. To ensure that you can develop and" + os.EOL
+				+ "test your apps for Android, verify that you have installed the JDK as" + os.EOL
+				+ "described in http://docs.oracle.com/javase/8/docs/technotes/guides/install/install_overview.html (for JDK 8)" + os.EOL
+				+ "or http://docs.oracle.com/javase/7/docs/webnotes/install/ (for JDK 7)." + os.EOL);
+		}
 	}
 
 	private printAppBuilderWarnings(sysInfo: ISysInfoData) {
@@ -121,6 +129,14 @@ export class PostInstallCommand implements ICommand {
 			this.$logger.out("You will not be able to work with iOS devices via cable connection." + os.EOL
 			+ "To be able to work with connected iOS devices," + os.EOL
 			+ "download and install iTunes from http://www.apple.com" + os.EOL);
+		}
+		if(!sysInfo.javaVer) {
+			this.$logger.warn("WARNING: The Java Development Kit (JDK) is not installed or is not configured properly.");
+			this.$logger.out("You will not be able to work with the Android SDK and you might not be able" + os.EOL
+			+ "to perform some Android-related operations. To ensure that you can develop and" + os.EOL
+			+ "test your apps for Android, verify that you have installed the JDK as" + os.EOL
+			+ "described in http://docs.oracle.com/javase/8/docs/technotes/guides/install/install_overview.html (for JDK 8)" + os.EOL
+			+ "or http://docs.oracle.com/javase/7/docs/webnotes/install/ (for JDK 7)." + os.EOL);
 		}
 	}
 
