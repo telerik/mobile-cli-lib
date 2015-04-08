@@ -68,6 +68,33 @@ export class Prompter implements IPrompter {
 		}).future<string>()();
 	}
 
+	public getString(prompt: string): IFuture<string> {
+		return (() => {
+			var schema: IPromptSchema = {
+				message: prompt,
+				type: "input",
+				name: "inputString"
+			};
+
+			var result = this.get([schema]).wait();
+			return result.inputString;
+		}).future<string>()();
+	}
+
+	public promptForChoice(promptMessage: string, choices: any[]): IFuture<string> {
+		return (() => {
+			var schema: IPromptSchema = {
+				message: promptMessage,
+				type: "list",
+				name: "userAnswer",
+				choices: choices
+			};
+
+			var result = this.get([schema]).wait();
+			return result.userAnswer;
+		}).future<string>()();
+	}
+
 	public confirm(prompt: string, defaultAction?: () => boolean): IFuture<boolean> {
 		return ((): boolean => {
 			var schema = {
