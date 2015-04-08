@@ -38,7 +38,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 	private static REFRESH_WEB_VIEW_INTENT_NAME = "com.telerik.RefreshWebView";
 	private static CHANGE_LIVESYNC_URL_INTENT_NAME = "com.telerik.ChangeLiveSyncUrl";
 	private static LIVESYNC_BROADCAST_NAME = "com.telerik.LiveSync";
-	private static CHECK_LIVESYNC_INTENT_NAME = "com.telerik.IsLiveSyncSupported"
+	private static CHECK_LIVESYNC_INTENT_NAME = "com.telerik.IsLiveSyncSupported";
 
 	private static ENV_DEBUG_IN_FILENAME = "envDebug.in";
 	private static ENV_DEBUG_OUT_FILENAME = "envDebug.out";
