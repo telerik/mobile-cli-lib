@@ -136,7 +136,7 @@ export class CommandsService implements ICommandsService {
 				if(mandatoryParams.length > commandArguments.length) {
 					var customErrorMessages = _.map(mandatoryParams, mp => mp.errorMessage);
 					customErrorMessages.splice(0, 0, "You need to provide all the required parameters.");
-					this.$errors.failWithoutHelp(customErrorMessages.join(os.EOL));
+					this.$errors.fail(customErrorMessages.join(os.EOL));
 				}
 
 				// If we reach here, the commandArguments are at least as much as mandatoryParams. Now we should verify that we have each of them.
