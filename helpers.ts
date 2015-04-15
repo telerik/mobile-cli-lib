@@ -143,3 +143,13 @@ export function createTable(headers: string[], data: string[][]): any {
 	_.forEach(data, row => table.push(row));
 	return table;
 }
+
+export function remove<T>(array: T[], predicate: (element: T) => boolean, numberOfElements?: number): T[] {
+	numberOfElements = numberOfElements || 1;
+	var index = _.findIndex(array, predicate);
+	if (index === -1) {
+		return new Array<T>();
+	}
+
+    return <T[]>array.splice(index, numberOfElements);
+}
