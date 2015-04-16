@@ -6,6 +6,7 @@ import Future = require("fibers/future");
 import path = require("path");
 import util = require("util");
 import rimraf = require("rimraf");
+import minimatch = require("minimatch");
 import hostInfo = require("./host-info");
 
 export class FileSystem implements IFileSystem {
@@ -55,18 +56,36 @@ export class FileSystem implements IFileSystem {
 		return (() => {
 			var shouldOverwriteFiles = !(options && options.overwriteExisitingFiles === false);
 			var isCaseSensitive = !(options && options.caseSensitive === false);
-			
-			//the wild card symbol at the end is required in order for the -ssc- switch of 7zip to behave properly
-			zipFile = isCaseSensitive ? zipFile : zipFile + '*';
 
 			this.createDirectory(destinationDir).wait();
-			var args =  <string[]>(_.flatten(['x', shouldOverwriteFiles ? "-y" : "-aos", '-o' + destinationDir, isCaseSensitive ? '-ssc' : '-ssc-', zipFile, fileFilters || []]));
+
+			var proc: string;
+			if (hostInfo.isWindows()) {
+				proc = path.join(__dirname, "resources/platform-tools/unzip/win32/unzip");
+			} else if (hostInfo.isDarwin()) {
+				proc = "unzip"; // darwin unzip is info-zip
+			} else if (hostInfo.isLinux()) {
+				proc = "unzip"; // linux unzip is info-zip
+			}
+
+			if (!isCaseSensitive) {
+				zipFile = this.findFileCaseInsensitive(zipFile);
+			}
+
+			var args =  <string[]>(_.flatten(['-b', shouldOverwriteFiles ? "-o" : "-n", isCaseSensitive ? [] : '-C', zipFile, fileFilters || [], '-d', destinationDir]));
 
 			var $childProcess = this.$injector.resolve("childProcess");
-			var $staticConfig = this.$injector.resolve("staticConfig");
-
-			$childProcess.spawnFromEvent($staticConfig.sevenZipFilePath, args, "close", { stdio: "ignore", detached: true }).wait();
+			$childProcess.spawnFromEvent(proc, args, "close", { stdio: "ignore", detached: true }).wait();
 		}).future<void>()();
+	}
+
+	private findFileCaseInsensitive(file: string): string {
+		var dir = path.dirname(file);
+		var basename = path.basename(file);
+		var entries = this.readDirectory(dir).wait();
+		var match = minimatch.match(entries, basename, {nocase:true, nonegate: true, nonull: true})[0];
+		var result = path.join(dir, match);
+		return result;
 	}
 
 	public exists(path: string): IFuture<boolean> {

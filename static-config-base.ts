@@ -17,10 +17,6 @@ export class StaticConfigBase implements Config.IStaticConfig {
 		return null;
 	}
 
-	public get sevenZipFilePath(): string {
-		return path.join(__dirname, util.format("resources/platform-tools/unzip/%s/7za", process.platform));
-	}
-
 	public get adbFilePath(): string {
 		return path.join(__dirname, util.format("resources/platform-tools/android/%s/adb", process.platform));
 	}

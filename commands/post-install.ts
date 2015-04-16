@@ -13,7 +13,6 @@ export class PostInstallCommand implements ICommand {
 
 	constructor(private $fs: IFileSystem,
 		private $staticConfig: Config.IStaticConfig,
-		private $childProcess: IChildProcess,
 		private $commandsService: ICommandsService,
 		private $htmlHelpService: IHtmlHelpService,
 		private $sysInfo: ISysInfo,
@@ -42,8 +41,6 @@ export class PostInstallCommand implements ICommand {
 			} else {
 				this.printAppBuilderWarnings(sysInfo);
 			}
-
-			this.checkSevenZip().wait();
 
 			this.$commandsService.tryExecuteCommand("autocomplete", []).wait();
 		}).future<void>()();
@@ -138,11 +135,6 @@ export class PostInstallCommand implements ICommand {
 			+ "described in http://docs.oracle.com/javase/8/docs/technotes/guides/install/install_overview.html (for JDK 8)" + os.EOL
 			+ "or http://docs.oracle.com/javase/7/docs/webnotes/install/ (for JDK 7)." + os.EOL);
 		}
-	}
-
-	private checkSevenZip(): IFuture<void> {
-		var sevenZipErrorMessage = util.format(PostInstallCommand.SEVEN_ZIP_ERROR_MESSAGE, this.$staticConfig.SYS_REQUIREMENTS_LINK);
-		return this.$childProcess.tryExecuteApplication(this.$staticConfig.sevenZipFilePath, ["-h"], "exit", sevenZipErrorMessage);
 	}
 }
 $injector.registerCommand("dev-post-install", PostInstallCommand);
