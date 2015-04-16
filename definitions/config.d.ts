@@ -11,7 +11,6 @@ declare module Config {
 		version: string;
 		helpTextPath: string;
 		adbFilePath: string;
-		sevenZipFilePath: string;
 		disableAnalytics?: boolean;
 		disableHooks?: boolean;
 		enableDeviceRunCommandOnWindows?: boolean;
