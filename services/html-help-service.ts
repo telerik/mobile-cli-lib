@@ -15,6 +15,8 @@ export class HtmlHelpService implements IHtmlHelpService {
 	private static HTML_COMMAND_HELP_REGEX = /@HTML_COMMAND_HELP@/g;
 	private static RELATIVE_PATH_TO_STYLES_CSS_REGEX = /@RELATIVE_PATH_TO_STYLES_CSS@/g;
 	private static RELATIVE_PATH_TO_IMAGES_REGEX = /@RELATIVE_PATH_TO_IMAGES@/g;
+	private static RELATIVE_PATH_TO_INDEX_REGEX = /@RELATIVE_PATH_TO_INDEX@/g;
+	private static MARKDROWN_LINK_REGEX = /\[([\s\S]+?)\]\([\s\S]*?\)/g;
 
 	private pathToManPages: string;
 	private pathToHtmlPages: string;
@@ -27,6 +29,9 @@ export class HtmlHelpService implements IHtmlHelpService {
 	}
 
 	private pathToImages = this.$staticConfig.HTML_CLI_HELPERS_DIR;
+	private get pathToIndexHtml(): string {
+		return path.join(this.$staticConfig.HTML_PAGES_DIR, "index.html");
+	}
 
 	constructor(private $logger: ILogger,
 		private $injector: IInjector,
@@ -69,7 +74,8 @@ export class HtmlHelpService implements IHtmlHelpService {
 				.replace(HtmlHelpService.MAN_PAGE_NAME_REGEX, mdFileName.replace(HtmlHelpService.MARKDOWN_FILE_EXTENSION, ""))
 				.replace(HtmlHelpService.HTML_COMMAND_HELP_REGEX, htmlText)
 				.replace(HtmlHelpService.RELATIVE_PATH_TO_STYLES_CSS_REGEX, path.relative(path.dirname(filePath), this.pathToStylesCss))
-				.replace(HtmlHelpService.RELATIVE_PATH_TO_IMAGES_REGEX, path.relative(path.dirname(filePath), this.pathToImages));
+				.replace(HtmlHelpService.RELATIVE_PATH_TO_IMAGES_REGEX, path.relative(path.dirname(filePath), this.pathToImages))
+				.replace(HtmlHelpService.RELATIVE_PATH_TO_INDEX_REGEX, path.relative(path.dirname(filePath), this.pathToIndexHtml));
 
 			this.$fs.writeFile(filePath, outputHtml).wait();
 			this.$logger.trace("Finished writing file '%s'.", filePath);
@@ -144,10 +150,23 @@ export class HtmlHelpService implements IHtmlHelpService {
 	public getCommandLineHelpForCommand(commandName: string): IFuture<string> {
 		return ((): string => {
 			var helpText = this.readMdFileForCommand(commandName).wait();
-			var outputText = this.$microTemplateService.parseContent(helpText, { isHtml: false });
+			var outputText = this.$microTemplateService.parseContent(helpText, { isHtml: false })
+				.replace(/&nbsp;/g, " ")
+				.replace(HtmlHelpService.MARKDROWN_LINK_REGEX, "$1");
+
 			var opts = {
 				unescape: true,
-				link: chalk.red
+				link: chalk.red,
+				tableOptions: {
+					chars: { 'mid': '', 'left-mid': '', 'mid-mid': '', 'right-mid': '' },
+					style: {
+						'padding-left': 1,
+						'padding-right': 1,
+						head: ['green', 'bold'],
+						border: ['grey'],
+						compact: false
+					}
+				}
 			};
 
 			marked.setOptions({ renderer: new TerminalRenderer(opts) });
