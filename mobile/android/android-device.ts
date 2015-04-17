@@ -171,7 +171,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 
 	private startPackageOnDevice(packageName: string): IFuture<void> {
 		return (() => {
-			var startPackageCommand = this.composeCommand("shell am start -a android.intent.action.MAIN -n %s/%s", packageName, this.$staticConfig.START_PACKAGE_ACTIVITY_NAME);
+			var startPackageCommand = this.composeCommand("shell am start -a android.intent.action.MAIN -n %s/%s -c android.intent.category.LAUNCHER", packageName, this.$staticConfig.START_PACKAGE_ACTIVITY_NAME);
 			this.$childProcess.exec(startPackageCommand).wait();
 
 			if (options.printAppOutput) {
