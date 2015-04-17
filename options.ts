@@ -25,6 +25,7 @@ var knownOpts: any = {
 	"availableDevices": Boolean,
 	"appid": String,
 	"geny": String,
+	"vs": Boolean,
 	"debug-brk": Boolean,
 	"debug-port": Number,
 	"get-port": Boolean,

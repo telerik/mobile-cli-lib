@@ -10,6 +10,7 @@ import path = require("path");
 import util = require("util");
 import options = require("../../options");
 import helpers = require("../../helpers");
+import hostInfo = require("../../host-info");
 var net = require('net');
 
 class VirtualMachine {
@@ -145,7 +146,6 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		return timeout * 1000;
 	}
 
-
 	private getRunningEmulatorId(image: string): IFuture<string> {
 		return ((): string => {
 			var runningEmulators = this.getRunningEmulators().wait();
@@ -229,6 +229,10 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 				//player is part of Genymotion, it should be part of the PATH.
 				this.$childProcess.spawn("player", ["--vm-name", image],
 					{ stdio: "ignore", detached: true }).unref();
+			} else if (options.vs) {
+				this.$childProcess.spawn(this.xdePath,
+					["/name", "VS Emulator Android - Phone", "/video", "720x1280"],
+					{ stdio: "ignore", detached: true }).unref();
 			} else {
 				this.$childProcess.spawn('emulator', ['-avd', image],
 					{ stdio: "ignore", detached: true }).unref();
@@ -253,6 +257,29 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 			return emulatorId;
 		}).future<string>()();
+	}
+
+	private get xdePath(): string {
+		var future = new Future<string>();
+		var Winreg = require("winreg");
+
+		var key = hostInfo.isWindows64 ?
+			"\\SOFTWARE\\Wow6432Node\\Microsoft\\Microsoft Visual Studio Emulator for Android\\1.0" :
+			"\\SOFTWARE\\Microsoft\\Microsoft Visual Studio Emulator for Android\\1.0";
+
+		var regKey = new Winreg({
+			hive: Winreg.HKLM,
+			key:  key
+		});
+		regKey.get("InstallDir", (err: Error, value: any) => {
+			if (err) {
+				future.throw(err);
+			} else {
+				var fullPath = path.join(value.value, "xde.exe");
+				future.return(fullPath);
+			}
+		});
+		return future.wait();
 	}
 
 	private getRunningGenymotionEmulators(adbDevicesOutput: string[]): IFuture<string[]> {
