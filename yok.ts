@@ -227,6 +227,10 @@ export class Yok implements IInjector {
 								commandName = this.getHierarchicalCommandName(name, defaultCommand);
 							} else {
 								commandName = "help";
+
+								// Show command-line help
+								var options = require("./options");
+								options.help = true;
 							}
 						}
 
