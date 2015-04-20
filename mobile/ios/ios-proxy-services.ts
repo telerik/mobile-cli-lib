@@ -351,7 +351,8 @@ export class HouseArrestClient implements Mobile.IHouseArrestClient {
 	private plistService: Mobile.IiOSDeviceSocket = null;
 
 	constructor(private device: Mobile.IIOSDevice,
-		private $injector: IInjector) {
+		private $injector: IInjector,
+		private $errors: IErrors) {
 	}
 
 	private getAfcClientCore(command: string, applicationIdentifier: string): Mobile.IAfcClient {
@@ -363,13 +364,12 @@ export class HouseArrestClient implements Mobile.IHouseArrestClient {
 			"Identifier": applicationIdentifier
 		});
 
-		this.plistService.receiveMessage().wait();
+		var response = this.plistService.receiveMessage().wait();
+		if(response.Error) {
+			this.$errors.failWithoutHelp(response.Error);
+		}
 
 		return this.$injector.resolve(AfcClient, {service: service});
-	}
-
-	public getAfcClientForAppDocuments(applicationIdentifier: string): Mobile.IAfcClient {
-		return this.getAfcClientCore("VendDocuments", applicationIdentifier);
 	}
 
 	public getAfcClientForAppContainer(applicationIdentifier: string): Mobile.IAfcClient {
