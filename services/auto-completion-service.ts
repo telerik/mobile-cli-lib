@@ -57,8 +57,11 @@ export class AutoCompletionService implements IAutoCompletionService {
 
 	public removeObsoleteAutoCompletion(): IFuture<void> {
 		return (() => {
-			// in previous releases we were writing directly in .bash_profile, .bashrc and .zshrc - remove this old code
-			this.shellProfiles.forEach(file => {
+			// In previous releases we were writing directly in .bash_profile, .bashrc, .zshrc and .profile - remove this old code
+			var shellProfilesToBeCleared = this.shellProfiles;
+			// Add .profile only here as we do not want new autocompletion in this file, but we have to remove our old code from it.
+			shellProfilesToBeCleared.push(this.getHomePath(".profile"));
+			shellProfilesToBeCleared.forEach(file => {
 				try {
 					var text = this.$fs.readText(file).wait();
 					var newText = text.replace(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME), "");
