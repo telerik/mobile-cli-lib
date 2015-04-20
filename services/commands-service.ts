@@ -230,14 +230,16 @@ export class CommandsService implements ICommandsService {
 
 				var childrenCommands = this.$injector.getChildrenCommandsNames(commandName);
 
-				if(data.words === 1) {
-					return tabtab.log(this.allCommands(false), data);
+				if(data.last && _.startsWith(data.last, "--")) {
+					return tabtab.log(_.keys(options.knownOpts), data, "--");
 				}
 
-				if(data.last.startsWith("--")) {
-					// Resolve optionsService here. It is not part of common lib, because we need all knownOptions for each CLI.
-					var optionsService: IOptionsService = this.$injector.resolve("optionsService");
-					return tabtab.log(optionsService.getKnownOptions(), data, "--");
+				if(data.last && _.startsWith(data.last, "-")) {
+					return tabtab.log(_.keys(options.shorthands), data, "-");
+				}
+
+				if(data.words === 1) {
+					return tabtab.log(this.allCommands(false), data);
 				}
 
 				if(data.words >= 3) { // Hierarchical command
