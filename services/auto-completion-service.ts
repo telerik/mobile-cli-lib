@@ -172,9 +172,15 @@ export class AutoCompletionService implements IAutoCompletionService {
 					this.$fs.appendFile(fileName, this.completionShellScriptContent).wait();
 					this.scriptsUpdated = true;
 				}
-			} catch (err) {
-				this.$logger.out("Failed to update %s. Auto-completion may not work. ", fileName);
-				this.$logger.out(err);
+			} catch(err) {
+				this.$logger.out("Unable to update %s. Command-line completion might not work.", fileName);
+				// When npm is installed with sudo, in some cases the installation cannot write to shell profiles
+				// Advise the user how to enable autocompletion after the installation is completed.
+				if(err.code === "EPERM" && !hostInfo.isWindows() && process.env.SUDO_USER) {
+					this.$logger.out("To enable command-line completion, run '$ %s autocomplete enable'.", this.$staticConfig.CLIENT_NAME);
+				}
+
+				this.$logger.trace(err);
 				this.scriptsOk = false;
 			}
 		}).future<void>()();
