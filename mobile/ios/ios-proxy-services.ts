@@ -349,6 +349,9 @@ export class NotificationProxyClient implements Mobile.INotificationProxyClient 
 
 export class HouseArrestClient implements Mobile.IHouseArrestClient {
 	private plistService: Mobile.IiOSDeviceSocket = null;
+	private static PREDEFINED_ERRORS: IStringDictionary = {
+		ApplicationLookupFailed: "Unable to find the application on a connected device. Ensure that the application is installed and try again."
+	}
 
 	constructor(private device: Mobile.IIOSDevice,
 		private $injector: IInjector,
@@ -366,7 +369,7 @@ export class HouseArrestClient implements Mobile.IHouseArrestClient {
 
 		var response = this.plistService.receiveMessage().wait();
 		if(response.Error) {
-			this.$errors.failWithoutHelp(response.Error);
+			this.$errors.failWithoutHelp(HouseArrestClient.PREDEFINED_ERRORS[response.Error] || response.Error);
 		}
 
 		return this.$injector.resolve(AfcClient, {service: service});
