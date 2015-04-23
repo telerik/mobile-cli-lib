@@ -383,7 +383,6 @@ export class HouseArrestClient implements Mobile.IHouseArrestClient {
 
 export class IOSSyslog {
 	private plistService: Mobile.IiOSDeviceSocket;
-	private matchRegex = new RegExp(".*?((Cordova.{3}|AppBuilder)\\[\\d+\\] <Warning>: )", 'i');
 
 	constructor(private device: Mobile.IIOSDevice,
 		private $logger: ILogger,
@@ -392,12 +391,16 @@ export class IOSSyslog {
 	}
 
 	public read(): void {
+		var shouldLog = false;
+		setTimeout(() => shouldLog = true, 2500);
+
 		var printData = (data: NodeBuffer) => {
-			var output = ref.readCString(data, 0);
-			if(this.matchRegex.test(output)) {
-				this.$logger.out(output);
+			if(shouldLog) {
+				var output = ref.readCString(data, 0);
+				this.$logger.write(output);
 			}
 		};
+
 
 		this.plistService.readSystemLog(printData);
 	}

@@ -1095,7 +1095,7 @@ export class GDBServer implements Mobile.IGDBServer {
 		if(hostInfo.isWindows()) {
 			this.send("vCont;c");
 		} else {
-			if (options.printAppOutput) {
+			if (!options.justlaunch) {
 				this.socket.pipe(new GDBStandardOutputAdapter()).pipe(process.stdout);
 				this.socket.pipe(new GDBSignalWatcher());
 				this.send("vCont;c");

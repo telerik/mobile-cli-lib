@@ -113,7 +113,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 				{ stdio: "ignore", detached: true });
 			this.$fs.futureFromEvent(childProcess, "close").wait();
 
-			if (options.printAppOutput) {
+			if (!options.justlaunch) {
 				this.$logcatHelper.start(emulatorId, this.adbFilePath);
 			}
 		}).future<void>()();
