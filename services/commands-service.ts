@@ -25,8 +25,8 @@ export class CommandsService implements ICommandsService {
 		private $commandsServiceProvider: ICommandsServiceProvider) {
 	}
 
-	public allCommands(includeDev: boolean): string[] {
-		var commands = this.$injector.getRegisteredCommandsNames(includeDev);
+	public allCommands(opts: {includeDevCommands: boolean}): string[] {
+		var commands = this.$injector.getRegisteredCommandsNames(opts.includeDevCommands);
 		return _.reject(commands, (command) => _.contains(command, '|'));
 	}
 
@@ -190,7 +190,7 @@ export class CommandsService implements ICommandsService {
 	}
 
 	private tryMatchCommand(commandName: string): void {
-		var allCommands = this.allCommands(false);
+		var allCommands = this.allCommands({includeDevCommands: false});
 		var similarCommands: ISimilarCommand[] = [];
 		_.each(allCommands, (command) => {
 			if(!this.$injector.isDefaultCommand(command)) {
@@ -239,7 +239,11 @@ export class CommandsService implements ICommandsService {
 				}
 
 				if(data.words === 1) {
-					return tabtab.log(this.allCommands(false), data);
+					var allCommands = this.allCommands({includeDevCommands: false});
+					if(_.startsWith(data.last, this.$commandsServiceProvider.dynamicCommandsPrefix)) {
+						allCommands = allCommands.concat(this.$commandsServiceProvider.getDynamicCommands().wait());
+					}
+					return tabtab.log(allCommands, data);
 				}
 
 				if(data.words >= 3) { // Hierarchical command
