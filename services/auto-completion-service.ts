@@ -75,7 +75,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 					}
 				} catch(error) {
 					if(error.code !== "ENOENT") {
-						this.$logger.trace("Error while trying to disable autocompletion for '%s' file. Error is:\n%s", error);
+						this.$logger.trace("Error while trying to disable autocompletion for '%s' file. Error is:\n%s", error.toString());
 					}
 				}
 			});
@@ -148,9 +148,13 @@ export class AutoCompletionService implements IAutoCompletionService {
 
 	private isNewAutoCompletionEnabledInFile(fileName: string): IFuture<boolean> {
 		return ((): boolean => {
-			var data = this.$fs.readText(fileName).wait();
-			if(data && data.indexOf(this.completionShellScriptContent) !== -1) {
-				return true;
+			try {
+				var data = this.$fs.readText(fileName).wait();
+				if(data && data.indexOf(this.completionShellScriptContent) !== -1) {
+					return true;
+				}
+			} catch(err) {
+				this.$logger.trace("Error while checking is autocompletion enabled in file %s. Error is: '%s'", fileName, err.toString());
 			}
 
 			return false;
@@ -159,8 +163,12 @@ export class AutoCompletionService implements IAutoCompletionService {
 
 	private isObsoleteAutoCompletionEnabledInFile(fileName: string): IFuture<boolean> {
 		return (() => {
-			var text = this.$fs.readText(fileName).wait();
-			return text.match(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME)) || text.match(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME));
+			try {
+				var text = this.$fs.readText(fileName).wait();
+				return text.match(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME)) || text.match(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME));
+			} catch(err) {
+				this.$logger.trace("Error while checking is obsolete autocompletion enabled in file %s. Error is: '%s'", fileName, err.toString());
+			}
 		}).future<boolean>()();
 	}
 
@@ -232,7 +240,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 				}
 			} catch(err) {
 				this.$logger.out("Failed to update %s. Auto-completion may not work. ", filePath);
-				this.$logger.out(err);
+				this.$logger.trace(err);
 				this.scriptsOk = false;
 			}
 		}).future<void>()();
