@@ -31,7 +31,7 @@ var knownOpts: any = {
 	"start": Boolean,
 	"stop": Boolean,
 	"ddi": String, // the path to developer  disk image
-	"print-app-output": Boolean
+	"justlaunch": Boolean
 };
 var shorthands: IStringDictionary = {
 	"v": "verbose",

@@ -66,7 +66,7 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 			"--timeout", options.timeout
 		];
 
-		if(options.printAppOutput) {
+		if(!options.justlaunch) {
 			opts.push("--logging");
 		} else {
 			if(emulatorOptions) {
