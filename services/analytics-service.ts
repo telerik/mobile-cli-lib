@@ -6,7 +6,10 @@ import path = require("path");
 import helpers = require("../helpers");
 import options = require("../options");
 import os = require("os");
-var xmlhttprequest = require("xmlhttprequest");
+// HACK
+global.XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+global.XMLHttpRequest.prototype.withCredentials = false;
+// HACK -end
 
 export class AnalyticsService implements IAnalyticsService {
 	private excluded = ["help", "feature-usage-tracking"];
@@ -131,7 +134,6 @@ export class AnalyticsService implements IAnalyticsService {
 			var settings = global._eqatec.createSettings(this.$staticConfig.ANALYTICS_API_KEY);
 			settings.useHttps = false;
 			settings.userAgent = this.getUserAgentString();
-			settings.xmlHttpRequest = new xmlhttprequest.XMLHttpRequest();
 			settings.version = this.$staticConfig.version;
 			settings.loggingInterface = {
 				logMessage: this.$logger.trace.bind(this.$logger),
@@ -155,7 +157,14 @@ export class AnalyticsService implements IAnalyticsService {
 			}
 
 			this._eqatecMonitor.start();
+
+			this.reportNodeVersion();
 		}).future<void>()();
+	}
+
+	private reportNodeVersion() {
+		var reportedVersion: string = process.version.slice(1).replace(/[.]/g, "_");
+		this._eqatecMonitor.trackFeature("NodeJSVersion." + reportedVersion);
 	}
 
 	private getUserAgentString(): string {
