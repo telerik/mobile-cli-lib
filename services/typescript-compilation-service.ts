@@ -194,7 +194,7 @@ export class TypeScriptCompilationService implements ITypeScriptCompilationServi
 
 	private getTypeScriptDefinitionsFiles(): IFuture<string[]> {
 		return (() => {
-			var typeScriptDefinitionsFilesPath = path.join(__dirname, "../../../resources/typescript-definitions-files");
+			var typeScriptDefinitionsFilesPath = path.join(__dirname, "../resources/typescript-definitions-files");
 			var definitionsFiles = this.$fs.readDirectory(typeScriptDefinitionsFilesPath).wait();
 			return _.map(definitionsFiles, (definitionFilePath: string) => {
 				return path.join(typeScriptDefinitionsFilesPath, definitionFilePath);
