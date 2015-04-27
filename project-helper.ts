@@ -39,7 +39,7 @@ export class ProjectHelper implements IProjectHelper {
 	}
 
 	public generateDefaultAppId(appName: string, baseAppId: string): string {
-		var sanitizedName = _.filter(appName.split(""), (c) => /[a-zA-Z0-9]/.test(c)).join("");
+		var sanitizedName = this.sanitizeName(appName);
 		if (sanitizedName) {
 			if (/^\d+$/.test(sanitizedName)) {
 				sanitizedName = "the" + sanitizedName;
@@ -49,6 +49,11 @@ export class ProjectHelper implements IProjectHelper {
 		}
 
 		return util.format("%s.%s", baseAppId, sanitizedName);
+	}
+
+	public sanitizeName(appName: string): string {
+		var sanitizedName = _.filter(appName.split(""), (c) => /[a-zA-Z0-9]/.test(c)).join("");
+		return sanitizedName;
 	}
 }
 $injector.register("projectHelper", ProjectHelper);
