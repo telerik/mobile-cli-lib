@@ -25,8 +25,8 @@ export class CommandsService implements ICommandsService {
 		private $commandsServiceProvider: ICommandsServiceProvider) {
 	}
 
-	public allCommands(includeDev: boolean): string[] {
-		var commands = this.$injector.getRegisteredCommandsNames(includeDev);
+	public allCommands(opts: {includeDevCommands: boolean}): string[] {
+		var commands = this.$injector.getRegisteredCommandsNames(opts.includeDevCommands);
 		return _.reject(commands, (command) => _.contains(command, '|'));
 	}
 
@@ -190,7 +190,7 @@ export class CommandsService implements ICommandsService {
 	}
 
 	private tryMatchCommand(commandName: string): void {
-		var allCommands = this.allCommands(false);
+		var allCommands = this.allCommands({includeDevCommands: false});
 		var similarCommands: ISimilarCommand[] = [];
 		_.each(allCommands, (command) => {
 			if(!this.$injector.isDefaultCommand(command)) {
@@ -230,14 +230,20 @@ export class CommandsService implements ICommandsService {
 
 				var childrenCommands = this.$injector.getChildrenCommandsNames(commandName);
 
-				if(data.words === 1) {
-					return tabtab.log(this.allCommands(false), data);
+				if(data.last && _.startsWith(data.last, "--")) {
+					return tabtab.log(_.keys(options.knownOpts), data, "--");
 				}
 
-				if(data.last.startsWith("--")) {
-					// Resolve optionsService here. It is not part of common lib, because we need all knownOptions for each CLI.
-					var optionsService: IOptionsService = this.$injector.resolve("optionsService");
-					return tabtab.log(optionsService.getKnownOptions(), data, "--");
+				if(data.last && _.startsWith(data.last, "-")) {
+					return tabtab.log(_.keys(options.shorthands), data, "-");
+				}
+
+				if(data.words === 1) {
+					var allCommands = this.allCommands({includeDevCommands: false});
+					if(_.startsWith(data.last, this.$commandsServiceProvider.dynamicCommandsPrefix)) {
+						allCommands = allCommands.concat(this.$commandsServiceProvider.getDynamicCommands().wait());
+					}
+					return tabtab.log(allCommands, data);
 				}
 
 				if(data.words >= 3) { // Hierarchical command

@@ -21,7 +21,7 @@ export class PreUninstallCommand implements ICommand {
 			var adbPath = path.join(__dirname, relativeAdbPath);
 
 			var killAdbServerCommand = util.format("\"%s\" kill-server", adbPath);
-			this.$logger.warn("Trying to kill adb server. Some running andorid related operations may fail.");
+			this.$logger.warn("Trying to kill adb server. Some running Android related operations may fail.");
 
 			try {
 				this.$childProcess.exec(killAdbServerCommand).wait();
