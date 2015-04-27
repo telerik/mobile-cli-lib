@@ -1,16 +1,17 @@
 ///<reference path="../../../.d.ts"/>
 "use strict";
 import byline = require("byline");
+import util = require("util");
 
 export class LogcatHelper implements Mobile.ILogcatHelper {
-	private lineRegex = /.\/(.+?)\s*\(\s*(\d+?)\): (.*)/;
-
 	constructor(private $childProcess: IChildProcess,
-		    private $logger: ILogger) {
+		    private $logcatPrinter: Mobile.ILogcatPrinter,
+			private $logger: ILogger){
 
 	}
 
 	public start(deviceIdentifier: string, adbPath: string): any {
+		this.$childProcess.exec(util.format("%s -s %s logcat -c", adbPath, deviceIdentifier)).wait(); // remove cached logs
 		var adbLogcat = this.$childProcess.spawn(adbPath, ["-s", deviceIdentifier, "logcat"]);
 		var lineStream = byline(adbLogcat.stdout);
 
@@ -26,33 +27,10 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 
 		lineStream.on('data', (line: NodeBuffer) => {
 			var lineText = line.toString();
-			var log = this.getConsoleLogFromLine(lineText);
-			if(log) {
-				if(log.tag) {
-					this.$logger.out("%s: %s", log.tag, log.message);
-				} else {
-					this.$logger.out(log.message);
-				}
-			}
+			this.$logcatPrinter.print(lineText);
 		});
 
 		return adbLogcat;
-	}
-
-	private getConsoleLogFromLine(lineText: String): any {
-		var acceptedTags = ["chromium", "Web Console", "JS"];
-
-		//sample line is "I/Web Console(    4438): Received Event: deviceready at file:///storage/emulated/0/Icenium/com.telerik.TestApp/js/index.js:48"
-		var match = lineText.match(this.lineRegex);
-		if(match) {
-			if(acceptedTags.indexOf(match[1]) !== -1) {
-				return {tag: match[1], message: match[3]};
-			}
-		} else if(_.any(acceptedTags, (tag: string) => { return lineText.indexOf(tag) !== -1; })) {
-			return {message: match[3]};
-		}
-
-		return null;
 	}
 }
 $injector.register("logcatHelper", LogcatHelper);

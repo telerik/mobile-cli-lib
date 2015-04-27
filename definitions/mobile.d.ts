@@ -46,6 +46,10 @@ declare module Mobile {
 		start(deviceIdentifier: string, adbPath: string): any;
 	}
 
+	interface ILogcatPrinter {
+		print(line: string): void;
+	}
+
 	interface IDebugOnDeviceSetup {
 		frontEndPath?: string;
 	}
