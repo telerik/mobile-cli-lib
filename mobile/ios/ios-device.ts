@@ -378,8 +378,8 @@ export class IOSDevice implements Mobile.IIOSDevice {
 		return(() => {
 			//TODO: CloseSocket must be part of afcClient. Refactor it.
 			var houseArrestClient: Mobile.IHouseArrestClient = this.$injector.resolve(iOSProxyServices.HouseArrestClient, {device: this});
-			var afcClientForAppDocuments = houseArrestClient.getAfcClientForAppDocuments(appIdentifier.appIdentifier);
-			afcClientForAppDocuments.transferCollection(localToDevicePaths).wait();
+			var afcClientForContainer = houseArrestClient.getAfcClientForAppContainer(appIdentifier.appIdentifier);
+			afcClientForContainer.transferCollection(localToDevicePaths).wait();
 			houseArrestClient.closeSocket();
 
 			if (!options.skipRefresh) {

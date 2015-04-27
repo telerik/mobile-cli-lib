@@ -4,6 +4,7 @@
 var jaroWinklerDistance = require("../vendor/jaro-winkler_distance");
 import helpers = require("../helpers");
 import util = require("util");
+import os = require("os");
 var options: any = require("../options");
 
 class CommandArgumentsValidationHelper {
@@ -24,8 +25,8 @@ export class CommandsService implements ICommandsService {
 		private $commandsServiceProvider: ICommandsServiceProvider) {
 	}
 
-	public allCommands(includeDev: boolean): string[] {
-		var commands = this.$injector.getRegisteredCommandsNames(includeDev);
+	public allCommands(opts: {includeDevCommands: boolean}): string[] {
+		var commands = this.$injector.getRegisteredCommandsNames(opts.includeDevCommands);
 		return _.reject(commands, (command) => _.contains(command, '|'));
 	}
 
@@ -112,7 +113,7 @@ export class CommandsService implements ICommandsService {
 
 				this.$errors.fail("Unable to execute command '%s'. Use '$ %s %s --help' for help.", beautifiedName, this.$staticConfig.CLIENT_NAME.toLowerCase(), beautifiedName);
 				return false;
-			} else if(!isDynamicCommand){
+			} else if(!isDynamicCommand && _.startsWith(commandName, this.$commandsServiceProvider.dynamicCommandsPrefix)){
 				if(_.any(this.$commandsServiceProvider.getDynamicCommands().wait())) {
 					this.$commandsServiceProvider.generateDynamicCommands().wait();
 					return this.canExecuteCommand(commandName, commandArguments, true).wait();
@@ -133,7 +134,9 @@ export class CommandsService implements ICommandsService {
 			if(mandatoryParams.length > 0) {
 				// If command has more mandatory params than the passed ones, we shouldn't execute it
 				if(mandatoryParams.length > commandArguments.length) {
-                    this.$errors.fail("You need to provide all the required parameters.");
+					var customErrorMessages = _.map(mandatoryParams, mp => mp.errorMessage);
+					customErrorMessages.splice(0, 0, "You need to provide all the required parameters.");
+					this.$errors.fail(customErrorMessages.join(os.EOL));
 				}
 
 				// If we reach here, the commandArguments are at least as much as mandatoryParams. Now we should verify that we have each of them.
@@ -187,7 +190,7 @@ export class CommandsService implements ICommandsService {
 	}
 
 	private tryMatchCommand(commandName: string): void {
-		var allCommands = this.allCommands(false);
+		var allCommands = this.allCommands({includeDevCommands: false});
 		var similarCommands: ISimilarCommand[] = [];
 		_.each(allCommands, (command) => {
 			if(!this.$injector.isDefaultCommand(command)) {
@@ -227,14 +230,20 @@ export class CommandsService implements ICommandsService {
 
 				var childrenCommands = this.$injector.getChildrenCommandsNames(commandName);
 
-				if(data.words === 1) {
-					return tabtab.log(this.allCommands(false), data);
+				if(data.last && _.startsWith(data.last, "--")) {
+					return tabtab.log(_.keys(options.knownOpts), data, "--");
 				}
 
-				if(data.last.startsWith("--")) {
-					// Resolve optionsService here. It is not part of common lib, because we need all knownOptions for each CLI.
-					var optionsService: IOptionsService = this.$injector.resolve("optionsService");
-					return tabtab.log(optionsService.getKnownOptions(), data, "--");
+				if(data.last && _.startsWith(data.last, "-")) {
+					return tabtab.log(_.keys(options.shorthands), data, "-");
+				}
+
+				if(data.words === 1) {
+					var allCommands = this.allCommands({includeDevCommands: false});
+					if(_.startsWith(data.last, this.$commandsServiceProvider.dynamicCommandsPrefix)) {
+						allCommands = allCommands.concat(this.$commandsServiceProvider.getDynamicCommands().wait());
+					}
+					return tabtab.log(allCommands, data);
 				}
 
 				if(data.words >= 3) { // Hierarchical command

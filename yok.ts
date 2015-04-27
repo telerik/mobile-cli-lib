@@ -227,6 +227,10 @@ export class Yok implements IInjector {
 								commandName = this.getHierarchicalCommandName(name, defaultCommand);
 							} else {
 								commandName = "help";
+
+								// Show command-line help
+								var options = require("./options");
+								options.help = true;
 							}
 						}
 
@@ -259,12 +263,18 @@ export class Yok implements IInjector {
 					// Check if the default command accepts arguments - if no, return false;
 					var defaultCommandName = this.getDefaultCommand(commandName);
 					var defaultCommand = this.resolveCommand(util.format("%s|%s", commandName, defaultCommandName));
-					if(defaultCommand && defaultCommand.allowedParameters.length > 0) {
-						return true;
-					} else {
-						var errors = $injector.resolve("errors");
-						errors.fail("The input is not valid sub-command for '%s' command", commandName);
-					}
+					if(defaultCommand) {
+						if (defaultCommand.canExecute) {
+							return defaultCommand.canExecute(commandArguments).wait();
+						} 
+
+						if (defaultCommand.allowedParameters.length > 0) {
+							return true;
+						}
+					} 
+					
+					var errors = $injector.resolve("errors");
+					errors.fail("The input is not valid sub-command for '%s' command", commandName);
 				}
 
 				return true;

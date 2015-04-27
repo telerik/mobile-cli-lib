@@ -57,8 +57,11 @@ export class AutoCompletionService implements IAutoCompletionService {
 
 	public removeObsoleteAutoCompletion(): IFuture<void> {
 		return (() => {
-			// in previous releases we were writing directly in .bash_profile, .bashrc and .zshrc - remove this old code
-			this.shellProfiles.forEach(file => {
+			// In previous releases we were writing directly in .bash_profile, .bashrc, .zshrc and .profile - remove this old code
+			var shellProfilesToBeCleared = this.shellProfiles;
+			// Add .profile only here as we do not want new autocompletion in this file, but we have to remove our old code from it.
+			shellProfilesToBeCleared.push(this.getHomePath(".profile"));
+			shellProfilesToBeCleared.forEach(file => {
 				try {
 					var text = this.$fs.readText(file).wait();
 					var newText = text.replace(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME), "");
@@ -72,7 +75,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 					}
 				} catch(error) {
 					if(error.code !== "ENOENT") {
-						this.$logger.trace("Error while trying to disable autocompletion for '%s' file. Error is:\n%s", error);
+						this.$logger.trace("Error while trying to disable autocompletion for '%s' file. Error is:\n%s", error.toString());
 					}
 				}
 			});
@@ -145,9 +148,13 @@ export class AutoCompletionService implements IAutoCompletionService {
 
 	private isNewAutoCompletionEnabledInFile(fileName: string): IFuture<boolean> {
 		return ((): boolean => {
-			var data = this.$fs.readText(fileName).wait();
-			if(data && data.indexOf(this.completionShellScriptContent) !== -1) {
-				return true;
+			try {
+				var data = this.$fs.readText(fileName).wait();
+				if(data && data.indexOf(this.completionShellScriptContent) !== -1) {
+					return true;
+				}
+			} catch(err) {
+				this.$logger.trace("Error while checking is autocompletion enabled in file %s. Error is: '%s'", fileName, err.toString());
 			}
 
 			return false;
@@ -156,8 +163,12 @@ export class AutoCompletionService implements IAutoCompletionService {
 
 	private isObsoleteAutoCompletionEnabledInFile(fileName: string): IFuture<boolean> {
 		return (() => {
-			var text = this.$fs.readText(fileName).wait();
-			return text.match(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME)) || text.match(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME));
+			try {
+				var text = this.$fs.readText(fileName).wait();
+				return text.match(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME)) || text.match(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME));
+			} catch(err) {
+				this.$logger.trace("Error while checking is obsolete autocompletion enabled in file %s. Error is: '%s'", fileName, err.toString());
+			}
 		}).future<boolean>()();
 	}
 
@@ -169,9 +180,15 @@ export class AutoCompletionService implements IAutoCompletionService {
 					this.$fs.appendFile(fileName, this.completionShellScriptContent).wait();
 					this.scriptsUpdated = true;
 				}
-			} catch (err) {
-				this.$logger.out("Failed to update %s. Auto-completion may not work. ", fileName);
-				this.$logger.out(err);
+			} catch(err) {
+				this.$logger.out("Unable to update %s. Command-line completion might not work.", fileName);
+				// When npm is installed with sudo, in some cases the installation cannot write to shell profiles
+				// Advise the user how to enable autocompletion after the installation is completed.
+				if(err.code === "EPERM" && !hostInfo.isWindows() && process.env.SUDO_USER) {
+					this.$logger.out("To enable command-line completion, run '$ %s autocomplete enable'.", this.$staticConfig.CLIENT_NAME);
+				}
+
+				this.$logger.trace(err);
 				this.scriptsOk = false;
 			}
 		}).future<void>()();
@@ -223,7 +240,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 				}
 			} catch(err) {
 				this.$logger.out("Failed to update %s. Auto-completion may not work. ", filePath);
-				this.$logger.out(err);
+				this.$logger.trace(err);
 				this.scriptsOk = false;
 			}
 		}).future<void>()();

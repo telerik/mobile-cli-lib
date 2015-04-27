@@ -183,8 +183,6 @@ interface IDictionary<T> {
 	[key: string]: T
 }
 
-interface IStringDictionary extends IDictionary<string> { }
-
 interface IAnalyticsService {
 	checkConsent(featureName: string): IFuture<void>;
 	trackFeature(featureName: string): IFuture<void>;
@@ -198,6 +196,8 @@ interface IAnalyticsService {
 interface IPrompter extends IDisposable {
 	get(schema: IPromptSchema[]): IFuture<any>;
 	getPassword(prompt: string, options?: {allowEmpty?: boolean}): IFuture<string>;
+	getString(prompt: string): IFuture<string>;
+	promptForChoice(promptMessage: string, choices: any[]): IFuture<string>;
 	confirm(prompt: string, defaultAction?: () => boolean): IFuture<boolean>;
 }
 

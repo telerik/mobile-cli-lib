@@ -22,6 +22,7 @@ interface ICommandArgument { }
 
 interface ICommandParameter {
 	mandatory: boolean;
+	errorMessage?: string
 	validate(value: string, errorMessage?: string): IFuture<boolean>;
 }
 

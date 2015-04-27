@@ -16,7 +16,7 @@ export class HtmlHelpService implements IHtmlHelpService {
 	private static RELATIVE_PATH_TO_STYLES_CSS_REGEX = /@RELATIVE_PATH_TO_STYLES_CSS@/g;
 	private static RELATIVE_PATH_TO_IMAGES_REGEX = /@RELATIVE_PATH_TO_IMAGES@/g;
 	private static RELATIVE_PATH_TO_INDEX_REGEX = /@RELATIVE_PATH_TO_INDEX@/g;
-	private static MARKDROWN_LINK_REGEX = /\[([\s\S]+?)\]\([\s\S]*?\)/g;
+	private static MARKDOWN_LINK_REGEX = /\[([\w -`<>]+?)\]\([\s\S]*?\)/g;
 
 	private pathToManPages: string;
 	private pathToHtmlPages: string;
@@ -39,7 +39,8 @@ export class HtmlHelpService implements IHtmlHelpService {
 		private $fs: IFileSystem,
 		private $staticConfig: Config.IStaticConfig,
 		private $microTemplateService: IMicroTemplateService,
-		private $opener: IOpener) {
+		private $opener: IOpener,
+		private $commandsServiceProvider: ICommandsServiceProvider) {
 		this.pathToHtmlPages = this.$staticConfig.HTML_PAGES_DIR;
 		this.pathToManPages = this.$staticConfig.MAN_PAGES_DIR;
 	}
@@ -107,8 +108,11 @@ export class HtmlHelpService implements IHtmlHelpService {
 
 		var availableCommands = this.$injector.getRegisteredCommandsNames(false).sort();
 		this.$logger.trace("List of registered commands: %s", availableCommands.join(", "));
-		if(commandName && !_.contains(availableCommands, commandName)) {
-			this.$errors.failWithoutHelp("Unknown command '%s'. Try '$ %s help' for a full list of supported commands.", commandName, this.$staticConfig.CLIENT_NAME.toLowerCase());
+		if(commandName && _.startsWith(commandName, this.$commandsServiceProvider.dynamicCommandsPrefix) && !_.contains(availableCommands, commandName)) {
+			var dynamicCommands = this.$commandsServiceProvider.getDynamicCommands().wait();
+			if(!_.contains(dynamicCommands, commandName)) {
+				this.$errors.failWithoutHelp("Unknown command '%s'. Try '$ %s help' for a full list of supported commands.", commandName, this.$staticConfig.CLIENT_NAME.toLowerCase());
+			}
 		}
 
 		return commandName.replace(/\|/g, "-") || "index";
@@ -148,7 +152,7 @@ export class HtmlHelpService implements IHtmlHelpService {
 			var helpText = this.readMdFileForCommand(commandName).wait();
 			var outputText = this.$microTemplateService.parseContent(helpText, { isHtml: false })
 				.replace(/&nbsp;/g, " ")
-				.replace(HtmlHelpService.MARKDROWN_LINK_REGEX, "$1");
+				.replace(HtmlHelpService.MARKDOWN_LINK_REGEX, "$1");
 
 			var opts = {
 				unescape: true,
