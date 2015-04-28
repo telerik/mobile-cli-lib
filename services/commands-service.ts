@@ -144,7 +144,7 @@ export class CommandsService implements ICommandsService {
 					var argument = _.find(commandArgsHelper.remainingArguments, c => mandatoryParam.validate(c).wait());
 
 					if(argument) {
-						commandArgsHelper.remainingArguments = _.without(commandArgsHelper.remainingArguments, argument);
+						helpers.remove(commandArgsHelper.remainingArguments, arg => arg === argument);
 					}
 					else {
 						this.$errors.fail("Missing mandatory parameter.");
