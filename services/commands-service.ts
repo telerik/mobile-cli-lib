@@ -8,7 +8,11 @@ import os = require("os");
 var options: any = require("../options");
 
 class CommandArgumentsValidationHelper {
-	constructor(public isValid: boolean, public remainingArguments: string[]) { }
+	constructor(public isValid: boolean, _remainingArguments: string[]) {
+		this.remainingArguments = _remainingArguments.slice();
+	}
+
+	public remainingArguments: string[];
 }
 
 export class CommandsService implements ICommandsService {
