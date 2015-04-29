@@ -231,7 +231,7 @@ interface IHook {
 }
 
 interface ITypeScriptCompilationService {
-	initialize(typeScriptFiles: string[]): void;
+	initialize(typeScriptFiles: string[], definitionFiles?: string[]): void;
 	compileAllFiles(): IFuture<void>;
 }
 
