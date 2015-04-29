@@ -17,14 +17,16 @@ interface ITypeScriptCompilerMessages {
 
 export class TypeScriptCompilationService implements ITypeScriptCompilationService {
 	private typeScriptFiles: string[];
+	private definitionFiles: string[];
 
 	constructor(private $childProcess: IChildProcess,
 		private $fs: IFileSystem,
 		private $logger: ILogger,
 		private $config: Config.IConfig) { }
 
-	public initialize(typeScriptFiles: string[]): void {
+	public initialize(typeScriptFiles: string[], definitionFiles?: string[]): void {
 		this.typeScriptFiles = typeScriptFiles;
+		this.definitionFiles = definitionFiles || [];
 	}
 
 	public compileAllFiles(): IFuture<void> {
@@ -194,11 +196,14 @@ export class TypeScriptCompilationService implements ITypeScriptCompilationServi
 
 	private getTypeScriptDefinitionsFiles(): IFuture<string[]> {
 		return (() => {
-			var typeScriptDefinitionsFilesPath = path.join(__dirname, "../../../resources/typescript-definitions-files");
-			var definitionsFiles = this.$fs.readDirectory(typeScriptDefinitionsFilesPath).wait();
-			return _.map(definitionsFiles, (definitionFilePath: string) => {
-				return path.join(typeScriptDefinitionsFilesPath, definitionFilePath);
-			});
+			var defaultTypeScriptDefinitionsFilesPath = path.join(__dirname, "../../../resources/typescript-definitions-files");
+			var defaultDefinitionsFiles = this.$fs.readDirectory(defaultTypeScriptDefinitionsFilesPath).wait();
+
+			// Exclude definition files from default path, which are already part of the project (check only the name of the file)
+			var remainingDefaultDefinitionFiles = _.filter(defaultDefinitionsFiles, defFile => !_.any(this.definitionFiles, f => path.basename(f) === defFile));
+			return _.map(remainingDefaultDefinitionFiles,(definitionFilePath: string) => {
+				return path.join(defaultTypeScriptDefinitionsFilesPath, definitionFilePath);
+			}).concat(this.definitionFiles);
 		}).future<string[]>()();
 	}
 }
