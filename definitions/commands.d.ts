@@ -2,6 +2,8 @@ interface ICommand extends ICommandOptions {
 	execute(args: string[]): IFuture<void>;
 	allowedParameters: ICommandParameter[];
 
+	isEnabled?: boolean;
+
 	// Implement this method in cases when you want to have your own logic for validation. In case you do not implement it,
 	// the command will be evaluated from CommandsService's canExecuteCommand method.
 	// One possible case where you can use this method is when you have two commandParameters, neither of them is mandatory,

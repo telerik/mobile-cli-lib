@@ -27,6 +27,7 @@ declare module Config {
 		PROXY_HOSTNAME?: string;
 		USE_PROXY?: boolean;
 		PROXY_PORT?: number;
+		ON_PREM?: boolean;
 		CI_LOGGER?: boolean;
 		TYPESCRIPT_COMPILER_OPTIONS?: any;
 	}
