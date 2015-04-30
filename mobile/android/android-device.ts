@@ -259,6 +259,9 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
         var clearDebugEnvironmentCommand = this.composeCommand('shell rm "%s"', envDebugOutFullpath);
         this.$childProcess.exec(clearDebugEnvironmentCommand).wait();
 
+        var setDebugBreakEnvironmentCommand = this.composeCommand('shell echo "" > "%s"', "debugbreak");
+        this.$childProcess.exec(setDebugBreakEnvironmentCommand).wait();
+		
         this.startPackageOnDevice(packageName).wait();
 
         var dbgPort = this.startAndGetPort(packageName).wait();
