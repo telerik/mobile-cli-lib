@@ -6,12 +6,12 @@ import util = require("util");
 import os = require("os");
 import commandParams = require("../command-params");
 import Future = require("fibers/future");
-import options = require("../options");
 
 export class HelpCommand implements ICommand {
 	constructor(private $logger: ILogger,
 		private $injector: IInjector,
-		private $htmlHelpService: IHtmlHelpService) { }
+		private $htmlHelpService: IHtmlHelpService,
+		private $options: IOptions) { }
 
 	public enableHooks = false;
 	public canExecute(args: string[]): IFuture<boolean> {
@@ -28,8 +28,8 @@ export class HelpCommand implements ICommand {
 				topic = hierarchicalCommand.commandName;
 			}
 
-			if(options.help) {
-				let help = this.$htmlHelpService.getCommandLineHelpForCommand(topic).wait();
+			if(this.$options.help) {
+				var help = this.$htmlHelpService.getCommandLineHelpForCommand(topic).wait();
 				this.$logger.out(help);
 			} else {
 				this.$htmlHelpService.openHelpForCommandInBrowser(topic).wait();

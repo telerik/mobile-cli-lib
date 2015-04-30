@@ -4,7 +4,6 @@
 import log4js = require("log4js");
 import util = require("util");
 import stream = require("stream");
-import options = require("./options");
 import Future = require("fibers/future");
 
 export class Logger implements ILogger {
@@ -14,7 +13,8 @@ export class Logger implements ILogger {
 	private passwordRegex = /[Pp]assword=(.*?)(['&,]|$)|\"[Pp]assword\":\"(.*?)\"/;
 	private requestBodyRegex = /^\"(.*?)\"$/;
 	
-	constructor($config: Config.IConfig) {
+	constructor($config: Config.IConfig,
+		private $options: IOptions) {
 		let appenders: log4js.IAppender[] = [];
 
 		if (!$config.CI_LOGGER) {
@@ -30,8 +30,8 @@ export class Logger implements ILogger {
 
 		this.log4jsLogger = log4js.getLogger();
 
-		if (options.log) {
-			this.log4jsLogger.setLevel(options.log);
+		if (this.$options.log) {
+			this.log4jsLogger.setLevel(this.$options.log);
 		} else {
 			this.log4jsLogger.setLevel($config.DEBUG ? "TRACE" : "INFO");
 		}
@@ -101,7 +101,7 @@ export class Logger implements ILogger {
 	}
 
 	public printInfoMessageOnSameLine(message: string): void {
-		if(!options.log || options.log === "info") {
+		if(!this.$options.log || this.$options.log === "info") {
 			this.write(message);
 		}
 	}

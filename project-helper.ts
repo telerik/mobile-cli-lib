@@ -1,14 +1,14 @@
 ///<reference path="../.d.ts"/>
 
 import path = require("path");
-import options = require("./options");
 import util = require("util");
 
 export class ProjectHelper implements IProjectHelper {
 	constructor(private $logger: ILogger,
 		private $fs: IFileSystem,
 		private $staticConfig: Config.IStaticConfig,
-		private $errors: IErrors) { }
+		private $errors: IErrors,
+		private $options: IOptions) { }
 
 	private cachedProjectDir = "";
 
@@ -18,7 +18,7 @@ export class ProjectHelper implements IProjectHelper {
 		}
 		this.cachedProjectDir = null;
 
-		let projectDir = path.resolve(options.path || ".");
+		var projectDir = path.resolve(this.$options.path || ".");
 		while (true) {
 			this.$logger.trace("Looking for project in '%s'", projectDir);
 			var projectFilePath = path.join(projectDir, this.$staticConfig.PROJECT_FILE_NAME);
@@ -32,7 +32,7 @@ export class ProjectHelper implements IProjectHelper {
 
 			let dir = path.dirname(projectDir);
 			if (dir === projectDir) {
-				this.$logger.debug("No project found at or above '%s'.", options.path || path.resolve("."));
+				this.$logger.debug("No project found at or above '%s'.", this.$options.path || path.resolve("."));
 				break;
 			}
 			projectDir = dir;

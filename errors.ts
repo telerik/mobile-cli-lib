@@ -64,7 +64,7 @@ function resolveCallStack(error: Error): string {
 }
 
 export function installUncaughtExceptionListener(): void {
-	process.on("uncaughtException", (err: Error) => {
+	process.on("uncaughtException", (err: Error) => {		
 		let callstack = err.stack;
 		if (callstack) {
 			callstack = resolveCallStack(err);
@@ -100,7 +100,7 @@ export class Errors implements IErrors {
 		let exception: any = new (<any>Exception)();
 		exception.name = opts.name || "Exception";
 		exception.message = util.format.apply(null, args);
-		exception.stack = new Error(exception.message).stack;
+		exception.stack = (new Error(exception.message)).stack;
 		exception.errorCode = opts.errorCode || ErrorCodes.UNKNOWN;
 		exception.suppressCommandHelp = opts.suppressCommandHelp;
 
@@ -130,86 +130,12 @@ export class Errors implements IErrors {
 		}).future<boolean>()();
 	}
 
-
-	public executeAction(action: Function): any {
-		try {
-			return action();
-		} catch (ex) {
-			console.log(this.printCallStack
-				? resolveCallStack(ex)
-				: "\x1B[31;1m" + ex.message + "\x1B[0m");
-
-			process.exit(_.isNumber(ex.errorCode) ? ex.errorCode : ErrorCodes.UNKNOWN);
-		}
-	}
-
 	// If you want to activate this function, start Node with flags --nouse_idle_notification and --expose_gc
 	verifyHeap(message: string): void {
 		if(global.gc) {
 			console.log("verifyHeap: '%s'", message);
 			global.gc();
 		}
-	}
-
-	private getParsedOptions(options: any, shorthands: any, clientName: string): any {
-		let action = () => {
-			let yargs:any = require("yargs");
-			_.each(options, (type, opt) => {
-				if (type === String) {
-					yargs.string(opt);
-				} else if (type === Boolean) {
-					yargs.boolean(opt);
-				}
-			});
-
-			Object.keys(shorthands).forEach(key => yargs.alias(key, shorthands[key]));
-
-			let argv = yargs.argv;
-			let parsed:any = {};
-			_.each(_.keys(argv), opt => parsed[opt] = (typeof argv[opt] === "number") ? argv[opt].toString() : argv[opt]);
-
-			this.validateYargsArguments(parsed, options, shorthands, clientName);
-			return parsed;
-		};
-
-		return this.executeAction(action);
-	}
-
-	public getYargsOriginalOption(option: string): string {
-		let matchUpperCaseLetters = option.match(/(.+?)([A-Z])(.*)/);
-		if(matchUpperCaseLetters) {
-			// get here if option with upperCase letter is specified, for example profileDir
-			// check if in knownOptions we have its kebabCase presentation
-			let secondaryPresentation = util.format("%s-%s%s", matchUpperCaseLetters[1], matchUpperCaseLetters[2].toLowerCase(), matchUpperCaseLetters[3] || '');
-			return this.getYargsOriginalOption(secondaryPresentation);
-		}
-
-		return option;
-	}
-
-	public validateYargsArguments(parsed: any, knownOpts: any, shorthands: any, clientName?: string): void {
-		let knownOptionsKeys = _.keys(knownOpts);
-		_.each(_.keys(parsed), (opt) => {
-			let option: string = shorthands[opt] || opt;
-			let secondaryPresentation = this.getYargsOriginalOption(option);
-			option = _.contains(knownOptionsKeys, secondaryPresentation) ? secondaryPresentation : option;
-
-			if (option !== "_" && option !== "$0" && !knownOpts[option]) {
-				this.failWithoutHelp("The option '%s' is not supported. To see command's options, use '$ %s help %s'. To see all commands use '$ %s help'.", opt, clientName, process.argv[2], clientName);
-			} else if (knownOpts[option] !== Boolean && typeof (parsed[opt]) === 'boolean') {
-				this.failWithoutHelp("The option '%s' requires a value.", opt);
-			} else if (opt !== "_" && _.isArray(parsed[opt]) && knownOpts[option] !== Array) {
-				this.failWithoutHelp("You have set the %s option multiple times. Check the correct command syntax below and try again.", opt);
-			} else if (knownOpts[option] === String && helpers.isNullOrWhitespace(parsed[opt])) {
-				this.failWithoutHelp("The option '%s' requires non-empty value.", opt);
-			} else if (knownOpts[option] === Boolean && typeof (parsed[opt]) !== 'boolean') {
-				this.failWithoutHelp("The option '%s' does not accept values.", opt);
-			}
-		});
-	}
-
-	public validateArgs(client: string, knownOpts: any, shorthands: any): any {
-		return this.getParsedOptions(knownOpts, shorthands, client);
 	}
 }
 $injector.register("errors", Errors);

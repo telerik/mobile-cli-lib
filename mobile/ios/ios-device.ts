@@ -11,8 +11,6 @@ import util = require("util");
 import iosCore = require("./ios-core");
 import iOSProxyServices = require("./ios-proxy-services");
 import helpers = require("./../../helpers");
-import hostInfo = require("./../../host-info");
-import options = require("./../../options");
 
 let CoreTypes = iosCore.CoreTypes;
 
@@ -35,7 +33,9 @@ export class IOSDevice implements Mobile.IIOSDevice {
 		private $logger: ILogger,
 		private $mobileDevice: Mobile.IMobileDevice,
 		private $staticConfig: Config.IStaticConfig,
-		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
+		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
+		private $hostInfo: IHostInfo,
+		private $options: IOptions) {
 		this.mountImageCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSDevice.mountImageCallback);
 		this.uninstallApplicationCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSDevice.uninstallCallback);
 	}
@@ -260,9 +260,9 @@ export class IOSDevice implements Mobile.IIOSDevice {
 
 	private mountImage(): IFuture<void> {
 		return (() => {
-			let imagePath = options.ddi;
+			let imagePath = this.$options.ddi;
 
-			if(hostInfo.isWindows()) {
+			if(this.$hostInfo.isWindows) {
 				if(!imagePath) {
 					this.$errors.fail("On windows operating system you must specify the path to developer disk image using --ddi option");
 				}
@@ -382,7 +382,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 			afcClientForContainer.transferCollection(localToDevicePaths).wait();
 			houseArrestClient.closeSocket();
 
-			if (!options.skipRefresh) {
+			if (!this.$options.skipRefresh) {
 				let afcClientForContainer = houseArrestClient.getAfcClientForAppContainer(appIdentifier.appIdentifier);
 				afcClientForContainer.deleteFile("/Library/Preferences/ServerInfo.plist");
 				houseArrestClient.closeSocket();
@@ -410,7 +410,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 
 	public runApplication(applicationId: string): IFuture<void> {
 		return (() => {
-			if(hostInfo.isWindows() && (this.$staticConfig.enableDeviceRunCommandOnWindows === null || this.$staticConfig.enableDeviceRunCommandOnWindows === undefined)) {
+			if(this.$hostInfo.isWindows && (this.$staticConfig.enableDeviceRunCommandOnWindows === null || this.$staticConfig.enableDeviceRunCommandOnWindows === undefined)) {
 				this.$errors.fail("$%s device run command is not supported on Windows for iOS devices.", this.$staticConfig.CLIENT_NAME.toLowerCase());
 			}
 
@@ -423,10 +423,10 @@ export class IOSDevice implements Mobile.IIOSDevice {
 
 			this.mountImage().wait();
 
-			let service = this.startService(iOSProxyServices.MobileServices.DEBUG_SERVER);
-			let socket = hostInfo.isWindows() ? service :  new net.Socket({ fd: service });
-			let gdbServer = this.$injector.resolve(iosCore.GDBServer, { socket: socket });
-			let executable = util.format("%s/%s", application.Path, application.CFBundleExecutable);
+			var service = this.startService(iOSProxyServices.MobileServices.DEBUG_SERVER);
+			var socket = this.$hostInfo.isWindows ? service :  new net.Socket({ fd: service });
+			var gdbServer = this.$injector.resolve(iosCore.GDBServer, { socket: socket });
+			var executable = util.format("%s/%s", application.Path, application.CFBundleExecutable);
 
 			gdbServer.run([executable]);
 
@@ -474,7 +474,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 	}
 
 	private resolveAfc(): Mobile.IAfcClient {
-		let service = options.app ? this.startHouseArrestService(options.app) : this.startService(iOSProxyServices.MobileServices.APPLE_FILE_CONNECTION);
+		let service = this.$options.app ? this.startHouseArrestService(this.$options.app) : this.startService(iOSProxyServices.MobileServices.APPLE_FILE_CONNECTION);
 		let afcClient:Mobile.IAfcClient = this.$injector.resolve(iOSProxyServices.AfcClient, {service: service});
 		return afcClient;
 	}
@@ -483,7 +483,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 		return (() => {
 			let afcClient = this.resolveAfc();
 			let fileToRead = afcClient.open(deviceFilePath, "r");
-			let fileToWrite = options.file ? this.$fs.createWriteStream(options.file) : process.stdout;
+			let fileToWrite = this.$options.file ? this.$fs.createWriteStream(this.$options.file) : process.stdout;
 			let dataSizeToRead = 8192;
 			let size = 0;
 

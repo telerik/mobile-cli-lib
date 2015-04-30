@@ -4,9 +4,8 @@
 let gaze = require("gaze");
 import path = require("path");
 import os = require("os");
-let options: any = require("../options");
 import Future = require("fibers/future");
-import hostInfo = require("../host-info");
+let hostInfo = $injector.resolve("hostInfo");
 
 class CancellationService implements ICancellationService {
 	private watches: IDictionary<IWatcherInstance> = {};
@@ -79,7 +78,7 @@ class CancellationServiceDummy implements ICancellationService {
 	}
 }
 
-if (hostInfo.isWindows()) {
+if (hostInfo.isWindows) {
 	$injector.register("cancellation", CancellationService);
 } else {
 	$injector.register("cancellation", CancellationServiceDummy);

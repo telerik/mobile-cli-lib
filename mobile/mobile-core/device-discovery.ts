@@ -12,8 +12,6 @@ import Signal = require("./../../events/signal");
 import Future = require("fibers/future");
 import child_process = require("child_process");
 import helpers = require("./../../helpers");
-import hostInfo = require("../../host-info");
-let options = require("./../../options");
 
 export class DeviceDiscovery implements Mobile.IDeviceDiscovery {
 	private devices: {[key: string]: Mobile.IDevice} = {};
@@ -65,7 +63,8 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 	constructor(private $coreFoundation: Mobile.ICoreFoundation,
 		private $mobileDevice: Mobile.IMobileDevice,
 		private $errors: IErrors,
-		private $injector: IInjector) {
+		private $injector: IInjector,
+		private $options: IOptions) {
 		super();
 		this.timerCallbackPtr = CoreTypes.CoreTypes.cf_run_loop_timer_callback.toPointer(IOSDeviceDiscovery.timerCallback);
 		this.notificationCallbackPtr = CoreTypes.CoreTypes.am_device_notification_callback.toPointer(IOSDeviceDiscovery.deviceNotificationCallback);
@@ -74,7 +73,7 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 	public startLookingForDevices(): IFuture<void> {
 		return (() => {
 			this.subscribeForNotifications();
-			let defaultTimeoutInSeconds = options.timeout ? parseInt(options.timeout, 10)/1000 : 1;
+			let defaultTimeoutInSeconds = this.$options.timeout ? parseInt(this.$options.timeout, 10)/1000 : 1;
 			this.startRunLoopWithTimer(defaultTimeoutInSeconds);
 		}).future<void>()();
 	}
@@ -141,6 +140,7 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 class IOSDeviceDiscoveryStub extends DeviceDiscovery {
 	constructor(private $logger: ILogger,
 		private $staticConfig: Config.IStaticConfig,
+		private $hostInfo: IHostInfo,
 		private error: string) {
 		super();
 	}
@@ -148,7 +148,7 @@ class IOSDeviceDiscoveryStub extends DeviceDiscovery {
 	public startLookingForDevices(): IFuture<void> {
 		if(this.error) {
 			this.$logger.warn(this.error);
-		} else if(hostInfo.isLinux()) {
+		} else if(this.$hostInfo.isLinux) {
 			this.$logger.warn("In this version of the %s command-line interface, you cannot use connected iOS devices.", this.$staticConfig.CLIENT_NAME.toLowerCase());
 		}
 		
@@ -156,12 +156,12 @@ class IOSDeviceDiscoveryStub extends DeviceDiscovery {
 	}
 }
 
-$injector.register("iOSDeviceDiscovery", ($errors: IErrors, $logger: ILogger, $fs: IFileSystem, $injector: IInjector, $iTunesValidator: Mobile.IiTunesValidator, $staticConfig: Config.IStaticConfig) => {
-	let error = $iTunesValidator.getError().wait();
-	let result: Mobile.IDeviceDiscovery = null;
+$injector.register("iOSDeviceDiscovery", ($errors: IErrors, $logger: ILogger, $fs: IFileSystem, $injector: IInjector, $iTunesValidator: Mobile.IiTunesValidator, $staticConfig: Config.IStaticConfig, $hostInfo: IHostInfo) => {
+	var error = $iTunesValidator.getError().wait();
+	var result: Mobile.IDeviceDiscovery = null;
 
-	if(error || hostInfo.isLinux()) {
-		result = new IOSDeviceDiscoveryStub($logger, $staticConfig, error);
+	if(error || this.$hostInfo.isLinux) {
+		result = new IOSDeviceDiscoveryStub($logger, $staticConfig, $hostInfo, error);
 	} else {
 		result = $injector.resolve(IOSDeviceDiscovery);
 	}

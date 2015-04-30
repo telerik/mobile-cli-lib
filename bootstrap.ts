@@ -1,6 +1,4 @@
 global._ = require("lodash");
-require("./extensions");
-
 global.$injector = require("./yok").injector;
 
 require("colors");
@@ -8,6 +6,7 @@ $injector.require("errors", "./common/errors");
 $injector.require("fs", "./common/file-system");
 $injector.require("logger", "./common/logger");
 $injector.require("sysInfo", "./common/sysinfo");
+$injector.require("hostInfo", "./common/host-info");
 
 $injector.require("dispatcher", "./common/dispatchers");
 $injector.require("commandDispatcher", "./common/dispatchers");

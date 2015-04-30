@@ -1,6 +1,6 @@
 ///<reference path="../.d.ts"/>
 "use strict";
-import fs = require("fs");
+
 import path = require("path");
 import util = require("util");
 let uuid = require("node-uuid");

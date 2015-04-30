@@ -16,7 +16,6 @@ import Future = require("fibers/future");
 import bplistParser = require("bplist-parser");
 import string_decoder = require("string_decoder");
 import stream = require("stream");
-import options = require("../../options");
 import assert = require("assert");
 
 export class CoreTypes {
@@ -72,7 +71,8 @@ class IOSCore implements Mobile.IiOSCore {
 
 	constructor(private $logger: ILogger,
 		private $fs: IFileSystem,
-		private $errors: IErrors) { }
+		private $errors: IErrors,
+		private $hostInfo: IHostInfo) { }
 
 	private cfDictionaryKeyCallBacks = struct({
 		version: CoreTypes.uintType,
@@ -94,9 +94,9 @@ class IOSCore implements Mobile.IiOSCore {
 	public static kCFStringEncodingUTF8 = 0x08000100;
 
 	private get CoreFoundationDir(): string {
-		if(hostInfo.isWindows()) {
+		if(this.$hostInfo.isWindows) {
 			return path.join(this.CommonProgramFilesPath, "Apple", "Apple Application Support");
-		} else if(hostInfo.isDarwin()) {
+		} else if(this.$hostInfo.isDarwin) {
 			return "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation";
 		}
 
@@ -104,9 +104,9 @@ class IOSCore implements Mobile.IiOSCore {
 	}
 
 	private get MobileDeviceDir(): string {
-		if(hostInfo.isWindows()) {
+		if(this.$hostInfo.isWindows) {
 			return path.join(this.CommonProgramFilesPath, "Apple", "Mobile Device Support");
-		} else if(hostInfo.isDarwin()) {
+		} else if(this.$hostInfo.isDarwin) {
 			return "/System/Library/PrivateFrameworks/MobileDevice.framework/MobileDevice";
 		}
 
@@ -128,13 +128,13 @@ class IOSCore implements Mobile.IiOSCore {
 	}
 
 	public getCoreFoundationLibrary(): {[key: string]: any} {
-		if(hostInfo.isWindows()) {
+		if(this.$hostInfo.isWindows) {
 			process.env.PATH = this.CoreFoundationDir + ";" + process.env.PATH;
 			process.env.PATH += ";" + this.MobileDeviceDir;
 		}
 
-		let coreFoundationDll = hostInfo.isWindows() ?  path.join(this.CoreFoundationDir, "CoreFoundation.dll") : this.CoreFoundationDir;
-		let lib = ffi.DynamicLibrary(coreFoundationDll);
+		var coreFoundationDll = this.$hostInfo.isWindows ?  path.join(this.CoreFoundationDir, "CoreFoundation.dll") : this.CoreFoundationDir;
+		var lib = ffi.DynamicLibrary(coreFoundationDll);
 
 		return {
 			"CFRunLoopRun": ffi.ForeignFunction(lib.get("CFRunLoopRun"), "void", []),
@@ -177,7 +177,7 @@ class IOSCore implements Mobile.IiOSCore {
 	}
 
 	public getMobileDeviceLibrary(): {[key: string]: any} {
-		let mobileDeviceDll = hostInfo.isWindows() ? path.join(this.MobileDeviceDir, "MobileDevice.dll") : this.MobileDeviceDir;
+		let mobileDeviceDll = this.$hostInfo.isWindows ? path.join(this.MobileDeviceDir, "MobileDevice.dll") : this.MobileDeviceDir;
 		let lib = ffi.DynamicLibrary(mobileDeviceDll);
 
 		return {
@@ -198,7 +198,7 @@ class IOSCore implements Mobile.IiOSCore {
 			"AFCConnectionOpen": ffi.ForeignFunction(lib.get("AFCConnectionOpen"), "uint", ["int", "uint", ref.refType(CoreTypes.afcConnectionRef)]),
 			"AFCConnectionClose": ffi.ForeignFunction(lib.get("AFCConnectionClose"), "uint", [CoreTypes.afcConnectionRef]),
 			"AFCDirectoryCreate": ffi.ForeignFunction(lib.get("AFCDirectoryCreate"), "uint", [CoreTypes.afcConnectionRef, "string"]),
-			"AFCFileRefOpen": (hostInfo.isDarwin() || process.arch === "x64") ? ffi.ForeignFunction(lib.get("AFCFileRefOpen"), "uint", [CoreTypes.afcConnectionRef, "string", "uint", ref.refType(CoreTypes.afcFileRef)]) : ffi.ForeignFunction(lib.get("AFCFileRefOpen"), "uint", [CoreTypes.afcConnectionRef, "string", "uint", "uint", ref.refType(CoreTypes.afcFileRef)]),
+			"AFCFileRefOpen": (this.$hostInfo.isDarwin || process.arch === "x64") ? ffi.ForeignFunction(lib.get("AFCFileRefOpen"), "uint", [CoreTypes.afcConnectionRef, "string", "uint", ref.refType(CoreTypes.afcFileRef)]) : ffi.ForeignFunction(lib.get("AFCFileRefOpen"), "uint", [CoreTypes.afcConnectionRef, "string", "uint", "uint", ref.refType(CoreTypes.afcFileRef)]),
 			"AFCFileRefClose": ffi.ForeignFunction(lib.get("AFCFileRefClose"), "uint", [CoreTypes.afcConnectionRef, CoreTypes.afcFileRef]),
 			"AFCFileRefWrite": ffi.ForeignFunction(lib.get("AFCFileRefWrite"), "uint", [CoreTypes.afcConnectionRef, CoreTypes.afcFileRef, CoreTypes.voidPtr, "uint"]),
 			"AFCFileRefRead": ffi.ForeignFunction(lib.get("AFCFileRefRead"), "uint", [CoreTypes.afcConnectionRef, CoreTypes.afcFileRef, CoreTypes.voidPtr, CoreTypes.uintPtr]),
@@ -209,7 +209,7 @@ class IOSCore implements Mobile.IiOSCore {
 			"AMDeviceCopyDeviceIdentifier": ffi.ForeignFunction(lib.get("AMDeviceCopyDeviceIdentifier"), CoreTypes.cfStringRef, [CoreTypes.am_device_p]),
 			"AMDeviceCopyValue": ffi.ForeignFunction(lib.get("AMDeviceCopyValue"), CoreTypes.cfStringRef, [CoreTypes.am_device_p, CoreTypes.cfStringRef, CoreTypes.cfStringRef]),
 			"AMDeviceNotificationUnsubscribe": ffi.ForeignFunction(lib.get("AMDeviceNotificationUnsubscribe"), CoreTypes.intType, [CoreTypes.amDeviceNotificationRef]),
-			"AMDeviceMountImage": hostInfo.isDarwin() ? ffi.ForeignFunction(lib.get("AMDeviceMountImage"), CoreTypes.uintType, [CoreTypes.am_device_p, CoreTypes.cfStringRef, CoreTypes.cfDictionaryRef, CoreTypes.am_device_mount_image_callback, CoreTypes.voidPtr]) : null,
+			"AMDeviceMountImage": this.$hostInfo.isDarwin ? ffi.ForeignFunction(lib.get("AMDeviceMountImage"), CoreTypes.uintType, [CoreTypes.am_device_p, CoreTypes.cfStringRef, CoreTypes.cfDictionaryRef, CoreTypes.am_device_mount_image_callback, CoreTypes.voidPtr]) : null,
 			"AMDSetLogLevel": ffi.ForeignFunction(lib.get("AMDSetLogLevel"), CoreTypes.intType, [CoreTypes.intType]),
 			"AMDeviceGetInterfaceType": ffi.ForeignFunction(lib.get("AMDeviceGetInterfaceType"), CoreTypes.longType, [CoreTypes.am_device_p]),
 			"AMDeviceGetConnectionID": ffi.ForeignFunction(lib.get("AMDeviceGetConnectionID"), CoreTypes.longType, [CoreTypes.am_device_p]),
@@ -497,7 +497,8 @@ export class MobileDevice implements Mobile.IMobileDevice {
 	private mobileDeviceLibrary: any;
 
 	constructor($iOSCore: Mobile.IiOSCore,
-		private $errors: IErrors) {
+		private $errors: IErrors,
+		private $hostInfo: IHostInfo) {
 		this.mobileDeviceLibrary = $iOSCore.getMobileDeviceLibrary();
 	}
 
@@ -562,7 +563,7 @@ export class MobileDevice implements Mobile.IMobileDevice {
 	}
 
 	public deviceMountImage(devicePointer: NodeBuffer, imagePath: NodeBuffer, options: NodeBuffer, mountCallBack: NodeBuffer): number {
-		if(hostInfo.isDarwin()) {
+		if(this.$hostInfo.isDarwin) {
 			return this.mobileDeviceLibrary.AMDeviceMountImage(devicePointer, imagePath, options, mountCallBack, null);
 		}
 
@@ -594,9 +595,9 @@ export class MobileDevice implements Mobile.IMobileDevice {
 	}
 
 	public afcFileRefOpen(afcConnection: NodeBuffer, path: string,  mode: number, afcFileRef: NodeBuffer): number {
-		if(hostInfo.isWindows() && process.arch === "ia32") {
+		if(this.$hostInfo.isWindows && process.arch === "ia32") {
 			return this.mobileDeviceLibrary.AFCFileRefOpen(afcConnection, path, mode, 0, afcFileRef);
-		} else if(hostInfo.isDarwin() || process.arch === "x64") {
+		} else if(this.$hostInfo.isDarwin || process.arch === "x64") {
 			return this.mobileDeviceLibrary.AFCFileRefOpen(afcConnection, path, mode, afcFileRef);
 		}
 	}
@@ -954,10 +955,11 @@ export class PlistService implements Mobile.IiOSDeviceSocket {
 
 	constructor(private service: number,
 		private format: number,
-		private $injector: IInjector) {
-		if(hostInfo.isWindows()) {
+		private $injector: IInjector,
+		private $hostInfo: IHostInfo) {
+		if(this.$hostInfo.isWindows) {
 			this.socket = this.$injector.resolve(WinSocket, {service: this.service, format: this.format });
-		} else if(hostInfo.isDarwin()) {
+		} else if(this.$hostInfo.isDarwin) {
 			this.socket = this.$injector.resolve(PosixSocket, {service: this.service, format: this.format });
 		}
 	}
@@ -1070,9 +1072,11 @@ class GDBSignalWatcher extends stream.Writable {
 
 export class GDBServer implements Mobile.IGDBServer {
 	constructor(private socket: any, // socket is fd on Windows and net.Socket on mac
-		private $injector: IInjector) {
-		if(hostInfo.isWindows()) {
-			let winSocket = this.$injector.resolve(WinSocket, {service: this.socket, format: 0});
+		private $injector: IInjector,
+		private $hostInfo: IHostInfo,
+		private $options: IOptions) {
+		if(this.$hostInfo.isWindows) {
+			var winSocket = this.$injector.resolve(WinSocket, {service: this.socket, format: 0});
 			this.socket = {
 				write: (message: string): void => {
 					winSocket.sendMessage(message);
@@ -1092,10 +1096,10 @@ export class GDBServer implements Mobile.IGDBServer {
 
 		this.send("qLaunchSuccess");
 
-		if(hostInfo.isWindows()) {
+		if(this.$hostInfo.isWindows) {
 			this.send("vCont;c");
 		} else {
-			if (!options.justlaunch) {
+			if (!this.$options.justlaunch) {
 				this.socket.pipe(new GDBStandardOutputAdapter()).pipe(process.stdout);
 				this.socket.pipe(new GDBSignalWatcher());
 				this.send("vCont;c");

@@ -1,7 +1,6 @@
 ﻿///<reference path="../../.d.ts"/>
 "use strict";
 
-import options = require("../options");
 import path = require("path");
 import util = require("util");
 
@@ -10,7 +9,8 @@ export class PreUninstallCommand implements ICommand {
 
 	constructor(private $fs: IFileSystem,
 		private $childProcess: IChildProcess,
-		private $logger: ILogger) { }
+		private $logger: ILogger,
+		private $options: IOptions) { }
 	public disableAnalytics = true;
 
 	public allowedParameters: ICommandParameter[] = [];
@@ -30,7 +30,7 @@ export class PreUninstallCommand implements ICommand {
 				this.$logger.warn("Unable to kill adb server.");
 			}
 
-			this.$fs.deleteFile(path.join(options["profile-dir"], "KillSwitches", "cli")).wait();
+			this.$fs.deleteFile(path.join(this.$options.profileDir, "KillSwitches", "cli")).wait();
 		}).future<void>()();
 	}
 }

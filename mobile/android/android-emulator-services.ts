@@ -8,7 +8,6 @@ import os = require("os");
 import osenv = require("osenv");
 import path = require("path");
 import util = require("util");
-import options = require("../../options");
 import helpers = require("../../helpers");
 let net = require('net');
 
@@ -40,7 +39,8 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		private $fs: IFileSystem,
 		private $staticConfig: Config.IStaticConfig,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
-		private $logcatHelper: Mobile.ILogcatHelper) {
+		private $logcatHelper: Mobile.ILogcatHelper,
+		private $options: IOptions) {
 		iconv.extendNodeEncodings();
 		this.adbFilePath = helpers.getPathToAdb($injector).wait();
 	}
@@ -48,7 +48,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	public checkDependencies(): IFuture<void> {
 		return (() => {
 			this.checkAndroidSDKConfiguration().wait();
-			if(options.geny) {
+			if(this.$options.geny) {
 				this.checkGenymotionConfiguration().wait();
 			}
 		}).future<void>()();
@@ -74,12 +74,11 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	public startEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): IFuture<void> {
 		return (() => {
-			if(options.avd && options.geny) {
+			if(this.$options.avd && this.$options.geny) {
 				this.$errors.fail("You cannot specify both --avd and --geny options. Please use only one of them.");
 			}
 
-			let image = options.avd || options.geny || this.getBestFit().wait();
-
+			let image = this.$options.avd || this.$options.geny || this.getBestFit().wait();
 			if(image) {
 				this.startEmulatorCore(app, emulatorOptions.appId, image).wait();
 			} else {
@@ -113,7 +112,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 				{ stdio: "ignore", detached: true });
 			this.$fs.futureFromEvent(childProcess, "close").wait();
 
-			if (!options.justlaunch) {
+			if (!this.$options.justlaunch) {
 				this.$logcatHelper.start(emulatorId, this.adbFilePath);
 			}
 		}).future<void>()();
@@ -133,8 +132,8 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private getMilliSecondsTimeout(): number {
 		let timeout = AndroidEmulatorServices.TIMEOUT_SECONDS;
 
-		if(options && options.timeout) {
-			let parsedValue = parseInt(options.timeout);
+		if(this.$options && this.$options.timeout) {
+			let parsedValue = parseInt(this.$options.timeout);
 			if(!isNaN(parsedValue) && parsedValue >= 0) {
 				timeout = parsedValue;
 			} else {
@@ -154,7 +153,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 			}
 
 			// if we get here, there's at least one running emulator
-			let getNameFunction = options.geny ? this.getNameFromGenymotionEmulatorId : this.getNameFromSDKEmulatorId;
+			let getNameFunction = this.$options.geny ? this.getNameFromGenymotionEmulatorId : this.getNameFromSDKEmulatorId;
 			let emulatorId = _(runningEmulators).find(emulator => getNameFunction.apply(this, [emulator]).wait() === image);
 
 			return emulatorId;
@@ -225,7 +224,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 			// have to start new emulator
 			this.$logger.info("Starting Android emulator with image %s", image);
-			if(options.geny) {
+			if(this.$options.geny) {
 				//player is part of Genymotion, it should be part of the PATH.
 				this.$childProcess.spawn("player", ["--vm-name", image],
 					{ stdio: "ignore", detached: true }).unref();
@@ -290,9 +289,10 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	private getRunningEmulators(): IFuture<string[]> {
 		return (() => {
-			let emulatorDevices: string[] = [];
-			let outputRaw: string[] = this.$childProcess.execFile(this.adbFilePath, ['devices']).wait().split(os.EOL);
-			if(options.geny) {
+
+			var emulatorDevices: string[] = [];
+			var outputRaw: string[] = this.$childProcess.execFile(this.adbFilePath, ['devices']).wait().split(os.EOL);
+			if(this.$options.geny) {
 				emulatorDevices = this.getRunningGenymotionEmulators(outputRaw).wait();
 			} else {
 				_.each(outputRaw, (device: string) => {

@@ -3,20 +3,20 @@
 "use strict";
 
 import path = require("path");
-import hostInfo = require("../host-info");
 
 export class ITunesValidator implements Mobile.IiTunesValidator {
 	private static NOT_INSTALLED_iTUNES_ERROR_MESSAGE = "iTunes is not installed. Install it on your system and run this command again.";
 	private static BITNESS_MISMATCH_ERROR_MESSAGE = "The bitness of Node.js and iTunes must match. Verify that both Node.js and iTunes are 32-bit or 64-bit and try again.";
 	private static UNSUPPORTED_OS_ERROR_MESSAGE = "iTunes is not available for this operating system. You will not be able to work with connected iOS devices.";
 
-	constructor(private $fs: IFileSystem) { }
+	constructor(private $fs: IFileSystem,
+		private $hostInfo: IHostInfo) { }
 
 	public getError(): IFuture<string> {
 		return (() => {
-			if(hostInfo.isWindows()) {
-				let commonProgramFiles = "";
-				let isNode64 =  process.arch === "x64";
+			if(this.$hostInfo.isWindows) {
+				var commonProgramFiles = "";
+				var isNode64 =  process.arch === "x64";
 
 				if(isNode64) { //x64-windows
 					commonProgramFiles = process.env.CommonProgramFiles;
@@ -24,7 +24,7 @@ export class ITunesValidator implements Mobile.IiTunesValidator {
 						return ITunesValidator.BITNESS_MISMATCH_ERROR_MESSAGE;
 					}
 				} else {
-					if(hostInfo.isWindows32()) { // x86-node, x86-windows
+					if(this.$hostInfo.isWindows32) { // x86-node, x86-windows
 						commonProgramFiles = process.env.CommonProgramFiles;
 					} else { // x86-node, x64-windows
 						// check for x64-iTunes
@@ -39,11 +39,9 @@ export class ITunesValidator implements Mobile.IiTunesValidator {
 				if(!this.isiTunesInstalledOnWindows(commonProgramFiles).wait()) {
 					return ITunesValidator.NOT_INSTALLED_iTUNES_ERROR_MESSAGE;
 				}
-
-				return null;
-			} else if(hostInfo.isDarwin()) {
-				let coreFoundationDir = "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation";
-				let mobileDeviceDir = "/System/Library/PrivateFrameworks/MobileDevice.framework/MobileDevice";
+			} else if(this.$hostInfo.isDarwin) {
+				var coreFoundationDir = "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation";
+				var mobileDeviceDir = "/System/Library/PrivateFrameworks/MobileDevice.framework/MobileDevice";
 
 				if(!this.isiTunesInstalledCore(coreFoundationDir, mobileDeviceDir).wait()) {
 					return ITunesValidator.NOT_INSTALLED_iTUNES_ERROR_MESSAGE;
