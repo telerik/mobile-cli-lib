@@ -251,6 +251,7 @@ declare module Mobile {
 		stderrFilePath?: string;
 		stdoutFilePath?: string;
 		appId?: string;
+		args?: string
 	}
 
 	interface IPlatformsCapabilities {
