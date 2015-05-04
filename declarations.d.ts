@@ -172,6 +172,7 @@ interface ISpawnFromEventOptions {
 interface IProjectHelper {
 	projectDir: string;
 	generateDefaultAppId(appName: string, baseAppId: string): string;
+	sanitizeName(appName: string): string;
 }
 
 interface IPropertiesParser {
