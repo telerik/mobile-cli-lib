@@ -9,6 +9,10 @@ import Future = require("fibers/future");
 
 export class Logger implements ILogger {
 	private log4jsLogger: log4js.ILogger = null;
+	private encodeRequestPaths: string[] = ['/appbuilder/api/itmstransporter/applications?username='];
+	private encodeBody: boolean = false;
+	private passwordRegex = /[Pp]assword=(.*?)(['&,]|$)|\"[Pp]assword\":\"(.*?)\"/;
+	private requestBodyRegex = /^\"(.*?)\"$/;
 	
 	constructor($config: Config.IConfig) {
 		var appenders: log4js.IAppender[] = [];
@@ -64,11 +68,13 @@ export class Logger implements ILogger {
 	}
 
 	debug(...args: string[]): void {
-		this.log4jsLogger.debug.apply(this.log4jsLogger, args);
+		var encodedArgs: string[] = this.getPasswordEncodedArguments(args);
+		this.log4jsLogger.debug.apply(this.log4jsLogger, encodedArgs);
 	}
 
 	trace(...args: string[]): void {
-		this.log4jsLogger.trace.apply(this.log4jsLogger, args);
+		var encodedArgs: string[] = this.getPasswordEncodedArguments(args);
+		this.log4jsLogger.trace.apply(this.log4jsLogger, encodedArgs);
 	}
 
 	out(...args: string[]): void {
@@ -108,6 +114,40 @@ export class Logger implements ILogger {
 		}, timeout);
 
 		return printMsgFuture;
+	}
+
+	private getPasswordEncodedArguments(args: string[]): string[] {
+		return _.map(args, argument => {
+			if (typeof argument !== 'string') {
+				return argument;
+			}
+
+			var passwordMatch = this.passwordRegex.exec(argument);
+			if (passwordMatch) {
+				var password = passwordMatch[1] || passwordMatch[3];
+				return this.getHiddenPassword(password, argument);
+			}
+
+			if (this.encodeBody) {
+				var bodyMatch = this.requestBodyRegex.exec(argument);
+				if (bodyMatch) {
+					return this.getHiddenPassword(bodyMatch[1], argument);
+				}
+			}
+
+			_.each(this.encodeRequestPaths, path => {
+					if (argument.indexOf('path') > -1) {
+						this.encodeBody = argument.indexOf(path) > -1;
+						return false;
+					}
+				})
+
+			return argument;
+		});
+	}
+
+	private getHiddenPassword(password: string, originalString: string) {
+		return originalString.replace(password, new Array(password.length + 1).join('*'));
 	}
 }
 $injector.register("logger", Logger);
