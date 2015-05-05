@@ -101,6 +101,11 @@ export class CommandsService implements ICommandsService {
 			var command = this.$injector.resolveCommand(commandName);
 			var beautifiedName = helpers.stringReplaceAll(commandName, "|", " ");
 			if(command) {
+				// Verify command is enabled
+				if (command.isDisabled) {
+					this.$errors.failWithoutHelp("This command is not applicable to your environment.");
+				}
+
 				// If command wants to handle canExecute logic on its own.
 				if(command.canExecute) {
 					return command.canExecute(commandArguments).wait();
