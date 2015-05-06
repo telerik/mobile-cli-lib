@@ -85,6 +85,10 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 			opts = opts.concat("--device", options.device);
 		}
 
+		if (emulatorOptions.args) {
+			opts.push(util.format("--args=\"%s\"", emulatorOptions.args));
+		}
+
 		this.$childProcess.spawn(nodeCommandName, opts, { stdio: "inherit" });
 	}
 }
