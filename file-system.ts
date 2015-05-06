@@ -142,7 +142,7 @@ export class FileSystem implements IFileSystem {
 
 	public futureFromEvent(eventEmitter: any, event: string): IFuture<any> {
 		var future = new Future();
-		eventEmitter.once(event, () => {
+		eventEmitter.once(event, function() {
 			var args = _.toArray(arguments);
 
 			if(event === "error") {
