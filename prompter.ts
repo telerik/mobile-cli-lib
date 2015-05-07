@@ -4,7 +4,7 @@ import Future = require("fibers/future");
 import prompt = require("inquirer");
 import helpers = require("./helpers");
 import readline = require("readline");
-var MuteStream = require("mute-stream");
+let MuteStream = require("mute-stream");
 
 export class Prompter implements IPrompter {
 	private ctrlcReader: readline.ReadLine;
@@ -20,7 +20,7 @@ export class Prompter implements IPrompter {
 
 			// We need to create mute-stream and to pass it as output to ctrlcReader
 			// This will prevent the prompter to show the user's text twice on the console
-			var mutestream = new MuteStream();
+			let mutestream = new MuteStream();
 			mutestream.pipe(process.stdout);
 			mutestream.mute();
 
@@ -40,7 +40,7 @@ export class Prompter implements IPrompter {
 	}
 
 	public get(schema: IPromptSchema[]): IFuture<any> {
-		var future = new Future;
+		let future = new Future;
 		prompt.prompt(schema, (result: any) => {
 			if(result) {
 				future.return(result);
@@ -53,58 +53,58 @@ export class Prompter implements IPrompter {
 
 	public getPassword(prompt: string, options?: {allowEmpty?: boolean}): IFuture<string> {
 		return (() => {
-			var schema: IPromptSchema = {
+			let schema: IPromptSchema = {
 				message: prompt,
 				type: "password",
 				name: "password",
 				validate: (value: any) => {
-					var allowEmpty = options && options.allowEmpty;
+					let allowEmpty = options && options.allowEmpty;
 					return (!allowEmpty && !value) ? "Password must be non-empty" : true;
 				}
 			};
 
-			var result = this.get([schema]).wait();
+			let result = this.get([schema]).wait();
 			return result.password;
 		}).future<string>()();
 	}
 
 	public getString(prompt: string): IFuture<string> {
 		return (() => {
-			var schema: IPromptSchema = {
+			let schema: IPromptSchema = {
 				message: prompt,
 				type: "input",
 				name: "inputString"
 			};
 
-			var result = this.get([schema]).wait();
+			let result = this.get([schema]).wait();
 			return result.inputString;
 		}).future<string>()();
 	}
 
 	public promptForChoice(promptMessage: string, choices: any[]): IFuture<string> {
 		return (() => {
-			var schema: IPromptSchema = {
+			let schema: IPromptSchema = {
 				message: promptMessage,
 				type: "list",
 				name: "userAnswer",
 				choices: choices
 			};
 
-			var result = this.get([schema]).wait();
+			let result = this.get([schema]).wait();
 			return result.userAnswer;
 		}).future<string>()();
 	}
 
 	public confirm(prompt: string, defaultAction?: () => boolean): IFuture<boolean> {
 		return ((): boolean => {
-			var schema = {
+			let schema = {
 				type: "confirm",
 				name: "prompt",
 				default: defaultAction,
 				message: prompt
 			};
 
-			var result = this.get([schema]).wait();
+			let result = this.get([schema]).wait();
 			return result.prompt;
 		}).future<boolean>()();
 	}

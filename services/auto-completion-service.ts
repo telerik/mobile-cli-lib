@@ -49,22 +49,22 @@ export class AutoCompletionService implements IAutoCompletionService {
 	}
 
 	private getTabTabObsoleteRegex(clientName: string): RegExp {
-		var tabTabStartPoint = util.format(AutoCompletionService.TABTAB_COMPLETION_START_REGEX_PATTERN, clientName.toLowerCase());
-		var tabTabEndPoint = util.format(AutoCompletionService.TABTAB_COMPLETION_END_REGEX_PATTERN, clientName.toLowerCase());
-		var tabTabRegex = new RegExp(util.format("%s[\\s\\S]*%s", tabTabStartPoint, tabTabEndPoint));
+		let tabTabStartPoint = util.format(AutoCompletionService.TABTAB_COMPLETION_START_REGEX_PATTERN, clientName.toLowerCase());
+		let tabTabEndPoint = util.format(AutoCompletionService.TABTAB_COMPLETION_END_REGEX_PATTERN, clientName.toLowerCase());
+		let tabTabRegex = new RegExp(util.format("%s[\\s\\S]*%s", tabTabStartPoint, tabTabEndPoint));
 		return tabTabRegex;
 	}
 
 	public removeObsoleteAutoCompletion(): IFuture<void> {
 		return (() => {
 			// In previous releases we were writing directly in .bash_profile, .bashrc, .zshrc and .profile - remove this old code
-			var shellProfilesToBeCleared = this.shellProfiles;
+			let shellProfilesToBeCleared = this.shellProfiles;
 			// Add .profile only here as we do not want new autocompletion in this file, but we have to remove our old code from it.
 			shellProfilesToBeCleared.push(this.getHomePath(".profile"));
 			shellProfilesToBeCleared.forEach(file => {
 				try {
-					var text = this.$fs.readText(file).wait();
-					var newText = text.replace(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME), "");
+					let text = this.$fs.readText(file).wait();
+					let newText = text.replace(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME), "");
 					if(this.$staticConfig.CLIENT_NAME_ALIAS) {
 						newText = newText.replace(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME_ALIAS), "");
 					}
@@ -84,9 +84,9 @@ export class AutoCompletionService implements IAutoCompletionService {
 
 	private get completionShellScriptContent() {
 		if(!this._completionShellScriptContent) {
-			var startText = util.format(AutoCompletionService.COMPLETION_START_COMMENT_PATTERN, this.$staticConfig.CLIENT_NAME.toLowerCase());
-			var content = util.format("if [ -f %s ]; then \n    source %s \nfi", this.cliRunCommandsFile, this.cliRunCommandsFile)
-			var endText = util.format(AutoCompletionService.COMPLETION_END_COMMENT_PATTERN, this.$staticConfig.CLIENT_NAME.toLowerCase());
+			let startText = util.format(AutoCompletionService.COMPLETION_START_COMMENT_PATTERN, this.$staticConfig.CLIENT_NAME.toLowerCase());
+			let content = util.format("if [ -f %s ]; then \n    source %s \nfi", this.cliRunCommandsFile, this.cliRunCommandsFile)
+			let endText = util.format(AutoCompletionService.COMPLETION_END_COMMENT_PATTERN, this.$staticConfig.CLIENT_NAME.toLowerCase());
 			this._completionShellScriptContent = util.format("\n%s\n%s\n%s\n", startText, content, endText);
 		}
 
@@ -95,7 +95,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 
 	public isAutoCompletionEnabled(): IFuture<boolean> {
 		return ((): boolean => {
-			var result = true;
+			let result = true;
 			_.each(this.shellProfiles, filePath => {
 				result = this.isNewAutoCompletionEnabledInFile(filePath).wait() || this.isObsoleteAutoCompletionEnabledInFile(filePath).wait();
 				if(!result) {
@@ -133,7 +133,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 
 	public isObsoleteAutoCompletionEnabled(): IFuture<boolean> {
 		return (() => {
-			var result = true;
+			let result = true;
 			_.each(this.shellProfiles, shellProfile => {
 				result = this.isObsoleteAutoCompletionEnabledInFile(shellProfile).wait();
 				if(!result) {
@@ -149,7 +149,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 	private isNewAutoCompletionEnabledInFile(fileName: string): IFuture<boolean> {
 		return ((): boolean => {
 			try {
-				var data = this.$fs.readText(fileName).wait();
+				let data = this.$fs.readText(fileName).wait();
 				if(data && data.indexOf(this.completionShellScriptContent) !== -1) {
 					return true;
 				}
@@ -164,7 +164,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 	private isObsoleteAutoCompletionEnabledInFile(fileName: string): IFuture<boolean> {
 		return (() => {
 			try {
-				var text = this.$fs.readText(fileName).wait();
+				let text = this.$fs.readText(fileName).wait();
 				return text.match(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME)) || text.match(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME));
 			} catch(err) {
 				this.$logger.trace("Error while checking is obsolete autocompletion enabled in file %s. Error is: '%s'", fileName, err.toString());
@@ -199,7 +199,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 			try {
 				if(this.isNewAutoCompletionEnabledInFile(fileName).wait()) {
 					this.$logger.trace("AutoCompletion is enabled in %s file. Trying to disable it.", fileName);
-					var data = this.$fs.readText(fileName).wait();
+					let data = this.$fs.readText(fileName).wait();
 					data = data.replace(this.completionShellScriptContent, "");
 					this.$fs.writeFile(fileName, data).wait();
 					this.scriptsUpdated = true;
@@ -217,14 +217,14 @@ export class AutoCompletionService implements IAutoCompletionService {
 
 	private updateCLIShellScript(): IFuture<void> {
 		return (() => {
-			try {
-				var filePath = this.cliRunCommandsFile;
+			let filePath = this.cliRunCommandsFile;
 
-				var doUpdate = true;
+			try {
+				let doUpdate = true;
 				if (this.$fs.exists(filePath).wait()) {
-					var contents = this.$fs.readText(filePath).wait();
-					var regExp = new RegExp(util.format("%s\\s+completion\\s+--\\s+", this.$staticConfig.CLIENT_NAME.toLowerCase()));
-					var matchCondition = contents.match(regExp);
+					let contents = this.$fs.readText(filePath).wait();
+					let regExp = new RegExp(util.format("%s\\s+completion\\s+--\\s+", this.$staticConfig.CLIENT_NAME.toLowerCase()));
+					let matchCondition = contents.match(regExp);
 					if(this.$staticConfig.CLIENT_NAME_ALIAS) {
 						matchCondition = matchCondition || contents.match(new RegExp(util.format("%s\\s+completion\\s+--\\s+", this.$staticConfig.CLIENT_NAME_ALIAS.toLowerCase())));
 					}

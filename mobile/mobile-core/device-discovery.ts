@@ -13,7 +13,7 @@ import Future = require("fibers/future");
 import child_process = require("child_process");
 import helpers = require("./../../helpers");
 import hostInfo = require("../../host-info");
-var options = require("./../../options");
+let options = require("./../../options");
 
 export class DeviceDiscovery implements Mobile.IDeviceDiscovery {
 	private devices: {[key: string]: Mobile.IDevice} = {};
@@ -32,7 +32,7 @@ export class DeviceDiscovery implements Mobile.IDeviceDiscovery {
 	}
 
 	public removeDevice(deviceIdentifier: string) {
-		var device = this.devices[deviceIdentifier];
+		let device = this.devices[deviceIdentifier];
 		if(!device) {
 			return;
 		}
@@ -74,26 +74,26 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 	public startLookingForDevices(): IFuture<void> {
 		return (() => {
 			this.subscribeForNotifications();
-			var defaultTimeoutInSeconds = options.timeout ? parseInt(options.timeout, 10)/1000 : 1;
+			let defaultTimeoutInSeconds = options.timeout ? parseInt(options.timeout, 10)/1000 : 1;
 			this.startRunLoopWithTimer(defaultTimeoutInSeconds);
 		}).future<void>()();
 	}
 
 	private static deviceNotificationCallback(devicePointer?: NodeBuffer, user?: number) : any {
-		var iOSDeviceDiscovery = $injector.resolve("iOSDeviceDiscovery");
-		var deviceInfo = ref.deref(devicePointer);
+		let iOSDeviceDiscovery = $injector.resolve("iOSDeviceDiscovery");
+		let deviceInfo = ref.deref(devicePointer);
 
 		if(deviceInfo.msg === IOSDeviceDiscovery.ADNCI_MSG_CONNECTED) {
 			iOSDeviceDiscovery.createAndAddDevice(deviceInfo.dev);
 		}
 		else if(deviceInfo.msg === IOSDeviceDiscovery.ADNCI_MSG_DISCONNECTED) {
-			var deviceIdentifier = iOSDeviceDiscovery.$coreFoundation.convertCFStringToCString(iOSDeviceDiscovery.$mobileDevice.deviceCopyDeviceIdentifier(deviceInfo.dev));
+			let deviceIdentifier = iOSDeviceDiscovery.$coreFoundation.convertCFStringToCString(iOSDeviceDiscovery.$mobileDevice.deviceCopyDeviceIdentifier(deviceInfo.dev));
 			iOSDeviceDiscovery.removeDevice(deviceIdentifier);
 		}
 	}
 
 	private static timerCallback(): void {
-		var iOSDeviceDiscovery = $injector.resolve("iOSDeviceDiscovery");
+		let iOSDeviceDiscovery = $injector.resolve("iOSDeviceDiscovery");
 		iOSDeviceDiscovery.$coreFoundation.runLoopStop(iOSDeviceDiscovery.$coreFoundation.runLoopGetCurrent());
 	}
 
@@ -104,21 +104,21 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 	}
 
 	private subscribeForNotifications() {
-		var notifyFunction = ref.alloc(CoreTypes.CoreTypes.amDeviceNotificationRef);
+		let notifyFunction = ref.alloc(CoreTypes.CoreTypes.amDeviceNotificationRef);
 
-		var result = this.$mobileDevice.deviceNotificationSubscribe(this.notificationCallbackPtr, 0, 0, 0, notifyFunction);
-		var error = IOSDeviceDiscovery.APPLE_SERVICE_NOT_STARTED_ERROR_CODE ?
+		let result = this.$mobileDevice.deviceNotificationSubscribe(this.notificationCallbackPtr, 0, 0, 0, notifyFunction);
+		let error = IOSDeviceDiscovery.APPLE_SERVICE_NOT_STARTED_ERROR_CODE ?
 			"Cannot run and complete operations on iOS devices because Apple Mobile Device Service is not started. Verify that iTunes is installed and running on your system." : "Unable to subscribe for notifications";
 		this.validateResult(result, error);
 		this.$errors.verifyHeap("subscribeForNotifications");
 	}
 
 	private startRunLoopWithTimer(timeout: number): void {
-		var kCFRunLoopDefaultMode = this.$coreFoundation.kCFRunLoopDefaultMode();
-		var timer: NodeBuffer = null;
+		let kCFRunLoopDefaultMode = this.$coreFoundation.kCFRunLoopDefaultMode();
+		let timer: NodeBuffer = null;
 
 		if(timeout > 0) {
-			var currentTime = this.$coreFoundation.absoluteTimeGetCurrent() + timeout;
+			let currentTime = this.$coreFoundation.absoluteTimeGetCurrent() + timeout;
 			timer = this.$coreFoundation.runLoopTimerCreate(null, currentTime , 0, 0, 0, this.timerCallbackPtr, null);
 			this.$coreFoundation.runLoopAddTimer(this.$coreFoundation.runLoopGetCurrent(), timer, kCFRunLoopDefaultMode);
 		}
@@ -133,7 +133,7 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 	}
 
 	private createAndAddDevice(devicePointer: NodeBuffer): void {
-		var device = this.$injector.resolve(IOSDevice.IOSDevice, {devicePointer: devicePointer});
+		let device = this.$injector.resolve(IOSDevice.IOSDevice, {devicePointer: devicePointer});
 		this.addDevice(device);
 	}
 }
@@ -157,8 +157,8 @@ class IOSDeviceDiscoveryStub extends DeviceDiscovery {
 }
 
 $injector.register("iOSDeviceDiscovery", ($errors: IErrors, $logger: ILogger, $fs: IFileSystem, $injector: IInjector, $iTunesValidator: Mobile.IiTunesValidator, $staticConfig: Config.IStaticConfig) => {
-	var error = $iTunesValidator.getError().wait();
-	var result: Mobile.IDeviceDiscovery = null;
+	let error = $iTunesValidator.getError().wait();
+	let result: Mobile.IDeviceDiscovery = null;
 
 	if(error || hostInfo.isLinux()) {
 		result = new IOSDeviceDiscoveryStub($logger, $staticConfig, error);
@@ -188,7 +188,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery {
 
 	private createAndAddDevice(deviceIdentifier: string): IFuture<void> {
 		return (() => {
-			var device = this.$injector.resolve(AndroidDevice.AndroidDevice, {
+			let device = this.$injector.resolve(AndroidDevice.AndroidDevice, {
 					identifier: deviceIdentifier, adb: this.Adb
 				});
 			this.addDevice(device);
@@ -199,16 +199,16 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery {
 		return(()=> {
 			this.ensureAdbServerStarted().wait();
 
-			var requestAllDevicesCommand = util.format("%s devices", this.Adb);
-			var result = this.$childProcess.exec(requestAllDevicesCommand).wait();
+			let requestAllDevicesCommand = util.format("%s devices", this.Adb);
+			let result = this.$childProcess.exec(requestAllDevicesCommand).wait();
 
-			var devices = result.toString().split(os.EOL).slice(1)
+			let devices = result.toString().split(os.EOL).slice(1)
 				.filter( (element:string) => !helpers.isNullOrWhitespace(element) )
 				.map((element: string) => {
 					// http://developer.android.com/tools/help/adb.html#devicestatus
-					var parts = element.split("\t");
-					var identifier = parts[0];
-					var state = parts[1];
+					let parts = element.split("\t");
+					let identifier = parts[0];
+					let state = parts[1];
 					if (state === "device"/*ready*/) {
 						this.createAndAddDevice(identifier).wait();
 					}
@@ -217,7 +217,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery {
 	}
 
 	private ensureAdbServerStarted(): IFuture<void> {
-		var startAdbServerCommand = util.format("%s start-server", this.Adb);
+		let startAdbServerCommand = util.format("%s start-server", this.Adb);
 		return this.$childProcess.exec(startAdbServerCommand);
 	}
 }

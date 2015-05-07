@@ -17,7 +17,7 @@ export class ProjectHelper implements IProjectHelper {
 		}
 		this.cachedProjectDir = null;
 
-		var projectDir = path.resolve(options.path || ".");
+		let projectDir = path.resolve(options.path || ".");
 		while (true) {
 			this.$logger.trace("Looking for project in '%s'", projectDir);
 
@@ -27,7 +27,7 @@ export class ProjectHelper implements IProjectHelper {
 				break;
 			}
 
-			var dir = path.dirname(projectDir);
+			let dir = path.dirname(projectDir);
 			if (dir === projectDir) {
 				this.$logger.debug("No project found at or above '%s'.", path.resolve("."));
 				break;
@@ -39,7 +39,7 @@ export class ProjectHelper implements IProjectHelper {
 	}
 
 	public generateDefaultAppId(appName: string, baseAppId: string): string {
-		var sanitizedName = this.sanitizeName(appName);
+		let sanitizedName = this.sanitizeName(appName);
 		if (sanitizedName) {
 			if (/^\d+$/.test(sanitizedName)) {
 				sanitizedName = "the" + sanitizedName;
@@ -52,7 +52,7 @@ export class ProjectHelper implements IProjectHelper {
 	}
 
 	public sanitizeName(appName: string): string {
-		var sanitizedName = _.filter(appName.split(""), (c) => /[a-zA-Z0-9]/.test(c)).join("");
+		let sanitizedName = _.filter(appName.split(""), (c) => /[a-zA-Z0-9]/.test(c)).join("");
 		return sanitizedName;
 	}
 }

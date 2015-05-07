@@ -3,13 +3,13 @@
 import fs = require("fs");
 import path = require("path");
 import util = require("util");
-var uuid = require("node-uuid");
+let uuid = require("node-uuid");
 import Future = require("fibers/future");
 import Fiber = require("fibers");
-var Table = require("cli-table");
+let Table = require("cli-table");
 
 export function createGUID(useBraces: boolean = true) {
-	var output: string;
+	let output: string;
 
 	if (useBraces) {
 		output = '{' + uuid.v4() + '}';
@@ -41,21 +41,21 @@ export function formatListOfNames(names: string[], conjunction = "or"): string {
 }
 
 export function getRelativeToRootPath(rootPath: string, filePath: string): string {
-	var relativeToRootPath = filePath.substr(rootPath.length);
+	let relativeToRootPath = filePath.substr(rootPath.length);
 	return relativeToRootPath;
 }
 
 export function versionCompare(version1: string, version2: string): number {
 	version1 = version1.split("-")[0];
 	version2 = version2.split("-")[0];
-	var v1array = _.map(version1.split("."), (x) => parseInt(x, 10)),
+	let v1array = _.map(version1.split("."), (x) => parseInt(x, 10)),
 		v2array = _.map(version2.split("."), (x) => parseInt(x, 10));
 
 	if (v1array.length !== v2array.length) {
 		throw new Error("Version strings are not in the same format");
 	}
 
-	for (var i = 0; i < v1array.length; ++i) {
+	for (let i = 0; i < v1array.length; ++i) {
 		if (v1array[i] !== v2array[i]) {
 			return v1array[i] > v2array[i] ? 1 : -1;
 		}
@@ -99,24 +99,24 @@ export function isNullOrWhitespace(input: string): boolean {
 }
 
 export function getCurrentEpochTime(): number {
-	var dateTime = new Date();
+	let dateTime = new Date();
 	return dateTime.getTime();
 }
 
 export function sleep(ms: number): void {
-  var fiber = Fiber.current;
+  let fiber = Fiber.current;
   setTimeout(() => fiber.run(), ms);
   Fiber.yield();
 }
 
 export function getPathToAdb(injector: IInjector): IFuture<string> {
 	return ((): string => {
-		try {
-			var childProcess: IChildProcess = injector.resolve("childProcess");
-			var logger: ILogger = injector.resolve("logger");
-			var staticConfig: Config.IStaticConfig = injector.resolve("staticConfig");
+		let childProcess: IChildProcess = injector.resolve("childProcess");
+		let logger: ILogger = injector.resolve("logger");
+		let staticConfig: Config.IStaticConfig = injector.resolve("staticConfig");
 
-			var proc = childProcess.spawnFromEvent("adb", ["version"], "exit", undefined, { throwError: false }).wait();
+		try {
+			let proc = childProcess.spawnFromEvent("adb", ["version"], "exit", undefined, { throwError: false }).wait();
 
 			if(proc.stderr) {
 				return staticConfig.adbFilePath;
@@ -132,7 +132,7 @@ export function getPathToAdb(injector: IInjector): IFuture<string> {
 }
 
 export function createTable(headers: string[], data: string[][]): any {
-	var table = new Table({
+	let table = new Table({
 		head: headers,
 		chars: { 'mid': '', 'left-mid': '', 'mid-mid': '', 'right-mid': '' }
 	});
@@ -143,7 +143,7 @@ export function createTable(headers: string[], data: string[][]): any {
 
 export function remove<T>(array: T[], predicate: (element: T) => boolean, numberOfElements?: number): T[] {
 	numberOfElements = numberOfElements || 1;
-	var index = _.findIndex(array, predicate);
+	let index = _.findIndex(array, predicate);
 	if (index === -1) {
 		return new Array<T>();
 	}

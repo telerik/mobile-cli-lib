@@ -11,15 +11,15 @@ export class DynamicHelpService implements IDynamicHelpService {
 	}
 
 	public isPlatform(...args: string[]): boolean {
-		var platform = os.platform().toLowerCase();
+		let platform = os.platform().toLowerCase();
 		return _.any(args, arg => arg.toLowerCase() === platform);
 	}
 
 	public getLocalVariables(options: { isHtml: boolean }): IFuture<IDictionary<any>> {
 		return ((): IDictionary<any> => {
-			var isHtml = options.isHtml;
+			let isHtml = options.isHtml;
 			//in html help we want to show all help. Only CONSOLE specific help(wrapped in if(isConsole) ) must be omitted
-			var localVariables = this.$dynamicHelpProvider.getLocalVariables(options).wait();
+			let localVariables = this.$dynamicHelpProvider.getLocalVariables(options).wait();
 			localVariables["isLinux"] = isHtml || this.isPlatform("linux");
 			localVariables["isWindows"] = isHtml || this.isPlatform("win32");
 			localVariables["isMacOS"] = isHtml || this.isPlatform("darwin");

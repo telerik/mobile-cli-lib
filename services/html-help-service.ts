@@ -5,8 +5,8 @@ import util = require("util");
 import Future = require("fibers/future");
 import path = require("path");
 import marked = require("marked");
-var TerminalRenderer = require('marked-terminal');
-var chalk = require("chalk");
+let TerminalRenderer = require('marked-terminal');
+let chalk = require("chalk");
 
 export class HtmlHelpService implements IHtmlHelpService {
 	private static MARKDOWN_FILE_EXTENSION = ".md";
@@ -47,9 +47,9 @@ export class HtmlHelpService implements IHtmlHelpService {
 
 	public generateHtmlPages(): IFuture<void> {
 		return (() => {
-			var mdFiles = this.$fs.enumerateFilesInDirectorySync(this.pathToManPages);
-			var basicHtmlPage = this.$fs.readFile(this.pathToBasicPage).wait().toString();
-			var futures = _.map(mdFiles, markdownFile => this.createHtmlPage(basicHtmlPage, markdownFile));
+			let mdFiles = this.$fs.enumerateFilesInDirectorySync(this.pathToManPages);
+			let basicHtmlPage = this.$fs.readFile(this.pathToBasicPage).wait().toString();
+			let futures = _.map(mdFiles, markdownFile => this.createHtmlPage(basicHtmlPage, markdownFile));
 			Future.wait(futures);
 			this.$logger.trace("Finished generating HTML files.");
 		}).future<void>()();
@@ -57,20 +57,20 @@ export class HtmlHelpService implements IHtmlHelpService {
 
 	private createHtmlPage(basicHtmlPage: string, pathToMdFile: string): IFuture<void> {
 		return (() => {
-			var mdFileName = path.basename(pathToMdFile);
-			var htmlFileName = mdFileName.replace(HtmlHelpService.MARKDOWN_FILE_EXTENSION, HtmlHelpService.HTML_FILE_EXTENSION);
+			let mdFileName = path.basename(pathToMdFile);
+			let htmlFileName = mdFileName.replace(HtmlHelpService.MARKDOWN_FILE_EXTENSION, HtmlHelpService.HTML_FILE_EXTENSION);
 			this.$logger.trace("Generating '%s' help topic.", htmlFileName);
 
-			var helpText = this.$fs.readText(pathToMdFile).wait();
-			var outputText = this.$microTemplateService.parseContent(helpText, { isHtml: true });
-			var htmlText = marked(outputText);
+			let helpText = this.$fs.readText(pathToMdFile).wait();
+			let outputText = this.$microTemplateService.parseContent(helpText, { isHtml: true });
+			let htmlText = marked(outputText);
 
-			var filePath = pathToMdFile
+			let filePath = pathToMdFile
 				.replace(path.basename(this.pathToManPages), path.basename(this.pathToHtmlPages))
 				.replace(mdFileName, htmlFileName);
 			this.$logger.trace("HTML file path for '%s' man page is: '%s'.", mdFileName, filePath);
 
-			var outputHtml = basicHtmlPage
+			let outputHtml = basicHtmlPage
 				.replace(HtmlHelpService.MAN_PAGE_NAME_REGEX, mdFileName.replace(HtmlHelpService.MARKDOWN_FILE_EXTENSION, ""))
 				.replace(HtmlHelpService.HTML_COMMAND_HELP_REGEX, htmlText)
 				.replace(HtmlHelpService.RELATIVE_PATH_TO_STYLES_CSS_REGEX, path.relative(path.dirname(filePath), this.pathToStylesCss))
@@ -84,7 +84,7 @@ export class HtmlHelpService implements IHtmlHelpService {
 
 	public openHelpForCommandInBrowser(commandName: string): IFuture<void> {
 		return ((): void => {
-			var htmlPage = this.convertCommandNameToFileName(commandName) + HtmlHelpService.HTML_FILE_EXTENSION;
+			let htmlPage = this.convertCommandNameToFileName(commandName) + HtmlHelpService.HTML_FILE_EXTENSION;
 			this.$logger.trace("Opening help for command '%s'. FileName is '%s'.", commandName, htmlPage);
 
 			this.$fs.ensureDirectoryExists(this.pathToHtmlPages).wait();
@@ -100,16 +100,16 @@ export class HtmlHelpService implements IHtmlHelpService {
 	}
 
 	private convertCommandNameToFileName(commandName: string): string {
-		var defaultCommandMatch = commandName.match(/(\w+?)\|\*/);
+		let defaultCommandMatch = commandName.match(/(\w+?)\|\*/);
 		if(defaultCommandMatch) {
 			this.$logger.trace("Default command found. Replace current command name '%s' with '%s'.", commandName, defaultCommandMatch[1]);
 			commandName = defaultCommandMatch[1];
 		}
 
-		var availableCommands = this.$injector.getRegisteredCommandsNames(false).sort();
+		let availableCommands = this.$injector.getRegisteredCommandsNames(false).sort();
 		this.$logger.trace("List of registered commands: %s", availableCommands.join(", "));
 		if(commandName && _.startsWith(commandName, this.$commandsServiceProvider.dynamicCommandsPrefix) && !_.contains(availableCommands, commandName)) {
-			var dynamicCommands = this.$commandsServiceProvider.getDynamicCommands().wait();
+			let dynamicCommands = this.$commandsServiceProvider.getDynamicCommands().wait();
 			if(!_.contains(dynamicCommands, commandName)) {
 				this.$errors.failWithoutHelp("Unknown command '%s'. Try '$ %s help' for a full list of supported commands.", commandName, this.$staticConfig.CLIENT_NAME.toLowerCase());
 			}
@@ -119,9 +119,9 @@ export class HtmlHelpService implements IHtmlHelpService {
 	}
 	
 	private tryOpeningSelectedPage(htmlPage: string): boolean {
-		var fileList = this.$fs.enumerateFilesInDirectorySync(this.pathToHtmlPages);
+		let fileList = this.$fs.enumerateFilesInDirectorySync(this.pathToHtmlPages);
 		this.$logger.trace("File list: " + fileList);
-		var pageToOpen = _.find(fileList, file => path.basename(file) === htmlPage);
+		let pageToOpen = _.find(fileList, file => path.basename(file) === htmlPage);
 		
 		if(pageToOpen) {
 			this.$logger.trace("Found page to open: '%s'", pageToOpen);
@@ -135,10 +135,10 @@ export class HtmlHelpService implements IHtmlHelpService {
 
 	private readMdFileForCommand(commandName: string): IFuture<string> {
 		return ((): string => {
-			var mdFileName = this.convertCommandNameToFileName(commandName) + HtmlHelpService.MARKDOWN_FILE_EXTENSION;
+			let mdFileName = this.convertCommandNameToFileName(commandName) + HtmlHelpService.MARKDOWN_FILE_EXTENSION;
 			this.$logger.trace("Reading help for command '%s'. FileName is '%s'.", commandName, mdFileName);
 
-			var markdownFile = _.find(this.$fs.enumerateFilesInDirectorySync(this.pathToManPages), file => path.basename(file) === mdFileName);
+			let markdownFile = _.find(this.$fs.enumerateFilesInDirectorySync(this.pathToManPages), file => path.basename(file) === mdFileName);
 			if(markdownFile) {
 				return this.$fs.readText(markdownFile).wait();
 			} 
@@ -149,12 +149,12 @@ export class HtmlHelpService implements IHtmlHelpService {
 
 	public getCommandLineHelpForCommand(commandName: string): IFuture<string> {
 		return ((): string => {
-			var helpText = this.readMdFileForCommand(commandName).wait();
-			var outputText = this.$microTemplateService.parseContent(helpText, { isHtml: false })
+			let helpText = this.readMdFileForCommand(commandName).wait();
+			let outputText = this.$microTemplateService.parseContent(helpText, { isHtml: false })
 				.replace(/&nbsp;/g, " ")
 				.replace(HtmlHelpService.MARKDOWN_LINK_REGEX, "$1");
 
-			var opts = {
+			let opts = {
 				unescape: true,
 				link: chalk.red,
 				tableOptions: {

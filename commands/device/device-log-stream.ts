@@ -22,7 +22,7 @@ export class OpenDeviceLogStreamCommand implements ICommand {
 				this.$errors.fail(OpenDeviceLogStreamCommand.NOT_SPECIFIED_DEVICE_ERROR_MESSAGE);
 			}
 
-			var action = (device: Mobile.IDevice) =>  { return (() => device.openDeviceLogStream()).future<void>()(); };
+			let action = (device: Mobile.IDevice) =>  { return (() => device.openDeviceLogStream()).future<void>()(); };
 			this.$devicesServices.execute(action).wait();
 		}).future<void>()();
 	}

@@ -14,8 +14,8 @@ export class MicroTemplateService implements IMicroTemplateService {
 	}
 
 	public parseContent(data: string, options: { isHtml: boolean }): string {
-		var localVariables = this.$dynamicHelpService.getLocalVariables(options).wait();
-		var compiledTemplate = _.template(data.replace(this.dynamicCallRegex, "this.$injector.dynamicCall(\"$1\").wait()"));
+		let localVariables = this.$dynamicHelpService.getLocalVariables(options).wait();
+		let compiledTemplate = _.template(data.replace(this.dynamicCallRegex, "this.$injector.dynamicCall(\"$1\").wait()"));
 		// When debugging parsing, uncomment the line below:
 		// console.log(compiledTemplate.source);
 		return compiledTemplate.apply(this, [localVariables]);

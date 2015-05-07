@@ -25,7 +25,7 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 				this.$errors.fail("iOS Simulator is available only on Mac OS X.");
 			}
 
-			var platform = this.$devicePlatformsConstants.iOS;
+			let platform = this.$devicePlatformsConstants.iOS;
 			if(dependsOnProject && !this.$emulatorSettingsService.canStart(platform).wait()) {
 				this.$errors.fail("The current project does not target iOS and cannot be run in the iOS Simulator.");
 			}
@@ -42,8 +42,8 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private killLaunchdSim(): IFuture<void> {
 		this.$logger.info("Cleaning up before starting the iOS Simulator");
 
-		var future = new Future<void>();
-		var killAllProc = this.$childProcess.spawn("killall", ["launchd_sim"]);
+		let future = new Future<void>();
+		let killAllProc = this.$childProcess.spawn("killall", ["launchd_sim"]);
 		killAllProc.on("close", (code: number) => {
 			future.return();
 		});
@@ -52,15 +52,15 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	private startEmulatorCore(app: string, emulatorOptions?: Mobile.IEmulatorOptions): void {
 		this.$logger.info("Starting iOS Simulator");
-		var iosSimPath = require.resolve("ios-sim-portable");
-		var nodeCommandName = process.argv[0];
+		let iosSimPath = require.resolve("ios-sim-portable");
+		let nodeCommandName = process.argv[0];
 
 		if(options.availableDevices) {
 			this.$childProcess.spawnFromEvent(nodeCommandName, [iosSimPath, "device-types"], "close", { stdio: "inherit" }).wait();
 			return;
 		}
 
-		var opts = [
+		let opts = [
 			iosSimPath,
 			"launch", app,
 			"--timeout", options.timeout

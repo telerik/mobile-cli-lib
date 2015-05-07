@@ -30,8 +30,8 @@ export class MobileHelper implements Mobile.IMobileHelper {
 	}
 
 	public getPlatformCapabilities(platform: string): Mobile.IPlatformCapabilities {
-		var platformNames = this.$mobilePlatformsCapabilities.getPlatformNames();
-		var validPlatformName = this.validatePlatformName(platform);
+		let platformNames = this.$mobilePlatformsCapabilities.getPlatformNames();
+		let validPlatformName = this.validatePlatformName(platform);
 		if(!_.any(platformNames, platformName => platformName === validPlatformName)) {
 			this.$errors.failWithoutHelp("'%s' is not a valid device platform. Valid platforms are %s.", platform, platformNames);
 		}
@@ -72,7 +72,7 @@ export class MobileHelper implements Mobile.IMobileHelper {
 			this.$errors.fail("No device platform specified.");
 		}
 
-		var normalizedPlatform = this.normalizePlatformName(platform);
+		let normalizedPlatform = this.normalizePlatformName(platform);
 		if(!normalizedPlatform || !_.contains(this.platformNames, normalizedPlatform)) {
 			this.$errors.fail("'%s' is not a valid device platform. Valid platforms are %s.",
 				platform, helpers.formatListOfNames(this.platformNames));

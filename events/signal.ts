@@ -80,8 +80,8 @@ export class SignalBinding implements ISignalBinding {
 	 */
 	public execute(paramsArr?: any[]): any {
 
-		var handlerReturn: any;
-		var params: any[];
+		let handlerReturn: any;
+		let params: any[];
 
 		if (this.active && !!this._listener)
 		{
@@ -238,8 +238,8 @@ export class Signal implements ISignal {
 	 */
 	private _registerListener(listener: Function, isOnce: boolean, listenerContext: any, priority: number): SignalBinding {
 
-		var prevIndex: number = this._indexOfListener(listener, listenerContext);
-		var binding: SignalBinding;
+		let prevIndex: number = this._indexOfListener(listener, listenerContext);
+		let binding: SignalBinding;
 
 		if (prevIndex !== -1)
 		{
@@ -275,7 +275,7 @@ export class Signal implements ISignal {
 
 		//simplified insertion sort
 
-		var n: number = this._bindings.length;
+		let n: number = this._bindings.length;
 
 		do { --n; } while (this._bindings[n] && binding.priority <= this._bindings[n].priority);
 
@@ -291,8 +291,8 @@ export class Signal implements ISignal {
 	 */
 	private _indexOfListener(listener: Function, context: any): number {
 
-		var n: number = this._bindings.length;
-		var cur: SignalBinding;
+		let n: number = this._bindings.length;
+		let cur: SignalBinding;
 
 		while (n--)
 		{
@@ -360,7 +360,7 @@ export class Signal implements ISignal {
 
 		this.validateListener(listener, 'remove');
 
-		var i: number = this._indexOfListener(listener, context);
+		let i: number = this._indexOfListener(listener, context);
 
 		if (i !== -1)
 		{
@@ -377,7 +377,7 @@ export class Signal implements ISignal {
 	 */
 	public removeAll(): void {
 
-		var n: number = this._bindings.length;
+		let n: number = this._bindings.length;
 
 		while (n--)
 		{
@@ -419,8 +419,8 @@ export class Signal implements ISignal {
 			return;
 		}
 
-		var n: number = this._bindings.length;
-		var bindings: SignalBinding[];
+		let n: number = this._bindings.length;
+		let bindings: SignalBinding[];
 
 		if (this.memorize)
 		{

@@ -4,7 +4,7 @@ import Signal = require("./../../events/signal");
 import util = require("util");
 import Future = require("fibers/future");
 import helpers = require("./../../helpers");
-var assert = require("assert");
+let assert = require("assert");
 import constants = require("../constants");
 
 export class DevicesServices implements Mobile.IDevicesServices {
@@ -47,8 +47,8 @@ export class DevicesServices implements Mobile.IDevicesServices {
 	}
 
 	private getPlatform(platform: string): string {
-		var allSupportedPlatforms = this.getAllPlatforms();
-		var normalizedPlatform = this.$mobileHelper.validatePlatformName(platform);
+		let allSupportedPlatforms = this.getAllPlatforms();
+		let normalizedPlatform = this.$mobileHelper.validatePlatformName(platform);
 		if(!_.contains(allSupportedPlatforms, normalizedPlatform)) {
 			this.$errors.failWithoutHelp("Deploying to %s connected devices is not supported. Build the " +
 				"app using the `build` command and deploy the package manually.", normalizedPlatform);
@@ -103,7 +103,7 @@ export class DevicesServices implements Mobile.IDevicesServices {
 	}
 
 	private getDeviceByIdentifier(identifier: string): Mobile.IDevice {
-		var searchedDevice = _.find(this.getDevices(), (device: Mobile.IDevice) => { return device.getIdentifier() === identifier; });
+		let searchedDevice = _.find(this.getDevices(), (device: Mobile.IDevice) => { return device.getIdentifier() === identifier; });
 		if(!searchedDevice) {
 			this.$errors.fail(DevicesServices.NOT_FOUND_DEVICE_BY_IDENTIFIER_ERROR_MESSAGE, identifier, this.$staticConfig.CLIENT_NAME.toLowerCase());
 		}
@@ -114,7 +114,7 @@ export class DevicesServices implements Mobile.IDevicesServices {
 	private getDevice(deviceOption: string): IFuture<Mobile.IDevice> {
 		return (() => {
 			this.startLookingForDevices().wait();
-			var device: Mobile.IDevice = null;
+			let device: Mobile.IDevice = null;
 
 			if(this.hasDevice(deviceOption)) {
 				device = this.getDeviceByIdentifier(deviceOption);
@@ -140,10 +140,10 @@ export class DevicesServices implements Mobile.IDevicesServices {
 
 	private executeOnAllConnectedDevices(action: (dev: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean): IFuture<void> {
 		return ((): void => {
-			var allConnectedDevices = this.getAllConnectedDevices();
-			var futures = _.map(allConnectedDevices, (device: Mobile.IDevice) => {
+			let allConnectedDevices = this.getAllConnectedDevices();
+			let futures = _.map(allConnectedDevices, (device: Mobile.IDevice) => {
 				if (!canExecute || canExecute(device)) {
-					var future = action(device);
+					let future = action(device);
 					Future.settle(future);
 					return future;
 				} else {
@@ -165,7 +165,7 @@ export class DevicesServices implements Mobile.IDevicesServices {
 					this.executeOnAllConnectedDevices(action, canExecute).wait();
 				}
 			} else {
-				var message = constants.ERROR_NO_DEVICES;
+				let message = constants.ERROR_NO_DEVICES;
 				if(options && options["allowNoDevices"]) {
 					this.$logger.info(message);
 				} else {
@@ -176,8 +176,8 @@ export class DevicesServices implements Mobile.IDevicesServices {
 	}
 
 	public initialize(data?: Mobile.IDevicesServicesInitializationOptions): IFuture<void> {
-		var platform = data.platform;
-		var deviceOption = data.deviceId;
+		let platform = data.platform;
+		let deviceOption = data.deviceId;
 
 		if (this._isInitialized) {
 			return Future.fromResult();
@@ -201,8 +201,8 @@ export class DevicesServices implements Mobile.IDevicesServices {
 				this.startLookingForDevices().wait();
 
 				if (!data.skipInferPlatform) {
-					var devices = this.getDevices();
-					var platforms = _.uniq(_.map(devices, (device) => device.getPlatform()));
+					let devices = this.getDevices();
+					let platforms = _.uniq(_.map(devices, (device) => device.getPlatform()));
 
 					if (platforms.length === 1) {
 						this._platform = platforms[0];

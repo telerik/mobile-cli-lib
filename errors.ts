@@ -10,9 +10,9 @@ function Exception() {}
 Exception.prototype = new Error();
 
 function resolveCallStack(error: Error): string {
-	var stackLines: string[]= error.stack.split("\n");
-	var parsed = _.map(stackLines, (line: string): any => {
-		var match = line.match(/^\s*at ([^(]*) \((.*?):([0-9]+):([0-9]+)\)$/);
+	let stackLines: string[]= error.stack.split("\n");
+	let parsed = _.map(stackLines, (line: string): any => {
+		let match = line.match(/^\s*at ([^(]*) \((.*?):([0-9]+):([0-9]+)\)$/);
 		if (match) {
 			return match;
 		}
@@ -26,35 +26,35 @@ function resolveCallStack(error: Error): string {
 		return line;
 	});
 
-	var SourceMapConsumer = require("./vendor/source-map").sourceMap.SourceMapConsumer;
-	var fs = require("fs");
+	let SourceMapConsumer = require("./vendor/source-map").sourceMap.SourceMapConsumer;
+	let fs = require("fs");
 
-	var remapped = _.map(parsed, (parsedLine) => {
+	let remapped = _.map(parsed, (parsedLine) => {
 		if (_.isString(parsedLine)) {
 			return parsedLine;
 		}
 
-		var functionName = parsedLine[1];
-		var fileName = parsedLine[2];
-		var line = +parsedLine[3];
-		var column = +parsedLine[4];
+		let functionName = parsedLine[1];
+		let fileName = parsedLine[2];
+		let line = +parsedLine[3];
+		let column = +parsedLine[4];
 
-		var mapFileName = fileName + ".map";
+		let mapFileName = fileName + ".map";
 		if (!fs.existsSync(mapFileName)) {
 			return parsedLine.input;
 		}
 
-		var mapData = JSON.parse(fs.readFileSync(mapFileName).toString());
+		let mapData = JSON.parse(fs.readFileSync(mapFileName).toString());
 
-		var consumer = new SourceMapConsumer(mapData);
-		var sourcePos = consumer.originalPositionFor({line: line, column: column});
+		let consumer = new SourceMapConsumer(mapData);
+		let sourcePos = consumer.originalPositionFor({line: line, column: column});
 
-		var source = path.join(path.dirname(fileName), sourcePos.source);
+		let source = path.join(path.dirname(fileName), sourcePos.source);
 
 		return util.format("    at %s (%s:%s:%s)", functionName, source, sourcePos.line, sourcePos.column);
 	});
 
-	var outputMessage = remapped.join("\n");
+	let outputMessage = remapped.join("\n");
 	if(outputMessage.indexOf(error.message) === -1) {
 		// when fibers throw error in node 0.12.x, the stack does NOT contain the message
 		outputMessage = outputMessage.replace(/Error/, "Error: " + error.message);
@@ -65,7 +65,7 @@ function resolveCallStack(error: Error): string {
 
 export function installUncaughtExceptionListener(): void {
 	process.on("uncaughtException", (err: Error) => {
-		var callstack = err.stack;
+		let callstack = err.stack;
 		if (callstack) {
 			callstack = resolveCallStack(err);
 		}
@@ -73,7 +73,7 @@ export function installUncaughtExceptionListener(): void {
 
 		if(!$injector.resolve("staticConfig").disableAnalytics) {
 			try {
-				var analyticsService = $injector.resolve("analyticsService");
+				let analyticsService = $injector.resolve("analyticsService");
 				analyticsService.trackException(err, callstack);
 			} catch (e) {
 				// Do not replace with logger due to cyclic dependency
@@ -90,14 +90,14 @@ export class Errors implements IErrors {
 	public printCallStack: boolean = false;
 
 	fail(optsOrFormatStr: any, ...args: any[]): void {
-		var opts = optsOrFormatStr;
+		let opts = optsOrFormatStr;
 		if (_.isString(opts)) {
 			opts = { formatStr: opts };
 		}
 
 		args.unshift(opts.formatStr);
 
-		var exception: any = new (<any>Exception)();
+		let exception: any = new (<any>Exception)();
 		exception.name = opts.name || "Exception";
 		exception.message = util.format.apply(null, args);
 		exception.stack = new Error(exception.message).stack;
@@ -152,8 +152,8 @@ export class Errors implements IErrors {
 	}
 
 	private getParsedOptions(options: any, shorthands: any, clientName: string): any {
-		var action = () => {
-			var yargs:any = require("yargs");
+		let action = () => {
+			let yargs:any = require("yargs");
 			_.each(options, (type, opt) => {
 				if (type === String) {
 					yargs.string(opt);
@@ -164,8 +164,8 @@ export class Errors implements IErrors {
 
 			Object.keys(shorthands).forEach(key => yargs.alias(key, shorthands[key]));
 
-			var argv = yargs.argv;
-			var parsed:any = {};
+			let argv = yargs.argv;
+			let parsed:any = {};
 			_.each(_.keys(argv), opt => parsed[opt] = (typeof argv[opt] === "number") ? argv[opt].toString() : argv[opt]);
 
 			this.validateYargsArguments(parsed, options, shorthands, clientName);
@@ -176,11 +176,11 @@ export class Errors implements IErrors {
 	}
 
 	public getYargsOriginalOption(option: string): string {
-		var matchUpperCaseLetters = option.match(/(.+?)([A-Z])(.*)/);
+		let matchUpperCaseLetters = option.match(/(.+?)([A-Z])(.*)/);
 		if(matchUpperCaseLetters) {
 			// get here if option with upperCase letter is specified, for example profileDir
 			// check if in knownOptions we have its kebabCase presentation
-			var secondaryPresentation = util.format("%s-%s%s", matchUpperCaseLetters[1], matchUpperCaseLetters[2].toLowerCase(), matchUpperCaseLetters[3] || '');
+			let secondaryPresentation = util.format("%s-%s%s", matchUpperCaseLetters[1], matchUpperCaseLetters[2].toLowerCase(), matchUpperCaseLetters[3] || '');
 			return this.getYargsOriginalOption(secondaryPresentation);
 		}
 
@@ -188,10 +188,10 @@ export class Errors implements IErrors {
 	}
 
 	public validateYargsArguments(parsed: any, knownOpts: any, shorthands: any, clientName?: string): void {
-		var knownOptionsKeys = _.keys(knownOpts);
+		let knownOptionsKeys = _.keys(knownOpts);
 		_.each(_.keys(parsed), (opt) => {
-			var option: string = shorthands[opt] || opt;
-			var secondaryPresentation = this.getYargsOriginalOption(option);
+			let option: string = shorthands[opt] || opt;
+			let secondaryPresentation = this.getYargsOriginalOption(option);
 			option = _.contains(knownOptionsKeys, secondaryPresentation) ? secondaryPresentation : option;
 
 			if (option !== "_" && option !== "$0" && !knownOpts[option]) {

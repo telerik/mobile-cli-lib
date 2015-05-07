@@ -9,7 +9,7 @@ export class PropertiesParser implements IPropertiesParser {
 	}
 
 	public createEditor(filePath: string) {
-		var future = new Future<any>();
+		let future = new Future<any>();
 		propertiesParser.createEditor(filePath,  (err, data) => {
 			if(err) {
 				future.throw(err);

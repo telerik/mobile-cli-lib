@@ -14,10 +14,10 @@ export class ListApplicationsCommand implements ICommand {
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
 			this.$devicesServices.initialize({ deviceId: options.device, skipInferPlatform: true }).wait();
-			var output: string[] = [];
+			let output: string[] = [];
 
-			var action = (device: Mobile.IDevice) =>  { return (() => {
-				var applications = device.getInstalledApplications().wait();
+			let action = (device: Mobile.IDevice) => { return (() => {
+				let applications = device.getInstalledApplications().wait();
 				output.push(util.format("%s=====Installed applications on device with UDID '%s' are:", os.EOL, device.getIdentifier()));
 				_.each(applications, (applicationId: string) => output.push(applicationId));
 			}).future<void>()(); };

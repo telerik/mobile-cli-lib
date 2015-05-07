@@ -22,14 +22,14 @@ export class HelpCommand implements ICommand {
 
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
-			var topic = (args[0] || "").toLowerCase();
-			var hierarchicalCommand = this.$injector.buildHierarchicalCommand(args[0], _.rest(args));
+			let topic = (args[0] || "").toLowerCase();
+			let hierarchicalCommand = this.$injector.buildHierarchicalCommand(args[0], _.rest(args));
 			if(hierarchicalCommand) {
 				topic = hierarchicalCommand.commandName;
 			}
 
 			if(options.help) {
-				var help = this.$htmlHelpService.getCommandLineHelpForCommand(topic).wait();
+				let help = this.$htmlHelpService.getCommandLineHelpForCommand(topic).wait();
 				this.$logger.out(help);
 			} else {
 				this.$htmlHelpService.openHelpForCommandInBrowser(topic).wait();

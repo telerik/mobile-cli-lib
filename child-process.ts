@@ -10,8 +10,8 @@ export class ChildProcess implements IChildProcess {
 		private $errors: IErrors) {}
 
 	public exec(command: string, options?: any): IFuture<any> {
-		var future = new Future<any>();
-		var callback = (error: Error, stdout: NodeBuffer, stderr: NodeBuffer) => {
+		let future = new Future<any>();
+		let callback = (error: Error, stdout: NodeBuffer, stderr: NodeBuffer) => {
 			this.$logger.trace("Exec %s \n stdout: %s \n stderr: %s", command, stdout.toString(), stderr.toString());
 
 			if(error) {
@@ -32,8 +32,8 @@ export class ChildProcess implements IChildProcess {
 
 	public execFile(command: string, args: string[]): IFuture<any> {
 		this.$logger.debug("execFile: %s %s", command, args.join(" "));
-		var future = new Future<any>();
-		var result = child_process.execFile(command, args, (error: any, stdout: NodeBuffer) => {
+		let future = new Future<any>();
+		let result = child_process.execFile(command, args, (error: any, stdout: NodeBuffer) => {
 			if(error) {
 				future.throw(error);
 			} else {
@@ -50,11 +50,11 @@ export class ChildProcess implements IChildProcess {
 	}
 
 	public spawnFromEvent(command: string, args: string[], event: string, options?: any, spawnFromEventOptions?: ISpawnFromEventOptions): IFuture<ISpawnResult> { // event should be exit or close
-		var future = new Future<ISpawnResult>();
-		var childProcess = this.spawn(command, args, options);
+		let future = new Future<ISpawnResult>();
+		let childProcess = this.spawn(command, args, options);
 
-		var capturedOut = '';
-		var capturedErr = '';
+		let capturedOut = '';
+		let capturedErr = '';
 
 		if(childProcess.stdout) {
 			childProcess.stdout.on("data", (data: string) => {
@@ -69,8 +69,8 @@ export class ChildProcess implements IChildProcess {
 		}
 
 		childProcess.on(event, (arg: any) => {
-			var exitCode = typeof arg === 'number' ? arg : arg && arg.code;
-			var result = {
+			let exitCode = typeof arg === 'number' ? arg : arg && arg.code;
+			let result = {
 				stdout: capturedOut,
 				stderr: capturedErr,
 				exitCode: exitCode
@@ -82,7 +82,7 @@ export class ChildProcess implements IChildProcess {
 				if (exitCode === 0) {
 					future.return(result);
 				} else {
-					var errorMessage = util.format('Command %s failed with exit code %d', command, exitCode);
+					let errorMessage = util.format('Command %s failed with exit code %d', command, exitCode);
 					if (capturedErr) {
 						errorMessage += util.format(' Error output: \n %s', capturedErr);
 					}
@@ -105,7 +105,7 @@ export class ChildProcess implements IChildProcess {
 
 	public tryExecuteApplication(command: string, args: string[], event: string, errorMessage: string, condition: (childProcess: any) => boolean): IFuture<any> {
 		return (() => {
-			var childProcess = this.tryExecuteApplicationCore(command, args, event, errorMessage).wait();
+			let childProcess = this.tryExecuteApplicationCore(command, args, event, errorMessage).wait();
 
 			if(condition && condition(childProcess)) {
 				this.$errors.fail(errorMessage);
@@ -117,7 +117,7 @@ export class ChildProcess implements IChildProcess {
 		try {
 			return this.spawnFromEvent(command, args, event, undefined, { throwError: false });
 		} catch(e) {
-			var message = (e.code === "ENOENT") ? errorMessage : e.message;
+			let message = (e.code === "ENOENT") ? errorMessage : e.message;
 			this.$errors.failWithoutHelp(message);
 		}
 	}

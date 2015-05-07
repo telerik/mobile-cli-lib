@@ -16,10 +16,10 @@ export class SysInfo implements ISysInfo {
 
 	getSysInfo(): ISysInfoData {
 		if (!this.sysInfoCache) {
-			var res: ISysInfoData = Object.create(null);
-			var procOutput: string;
+			let res: ISysInfoData = Object.create(null);
+			let procOutput: string;
 
-			var packageJson = require("../../package.json");
+			let packageJson = require("../../package.json");
 			res.procInfo = packageJson.name + "/" + packageJson.version;
 
 			// os stuff
@@ -71,11 +71,11 @@ export class SysInfo implements ISysInfo {
 
 	// `android -h` returns exit code 1 on successful invocation (Mac OS X for now, possibly Linux). Therefore, we cannot use $childProcess
 	private execAndroidH(): string {
-		var future = new Future<any>();
-		var callback = (error: Error, stdout: NodeBuffer, stderr: NodeBuffer) => {
+		let future = new Future<any>();
+		let callback = (error: Error, stdout: NodeBuffer, stderr: NodeBuffer) => {
 			this.$logger.trace("Exec android -h \n stdout: %s \n stderr: %s", stdout.toString(), stderr.toString());
 
-			var err: any = error;
+			let err: any = error;
 			if(error && err.code !== 1 && !err.killed && !err.signal) {
 				future.return(null);
 			} else {
@@ -85,7 +85,7 @@ export class SysInfo implements ISysInfo {
 
 		child_process.exec("android -h", callback);
 
-		var result = future.wait();
+		let result = future.wait();
 		return result;
 	}
 
@@ -96,9 +96,9 @@ export class SysInfo implements ISysInfo {
 	}
 
 	private readRegistryValue(valueName: string): IFuture<string> {
-		var future = new Future<string>();
-		var Winreg = require("winreg");
-		var regKey = new Winreg({
+		let future = new Future<string>();
+		let Winreg = require("winreg");
+		let regKey = new Winreg({
 			hive: Winreg.HKLM,
 			key:  '\\Software\\Microsoft\\Windows NT\\CurrentVersion'
 		});

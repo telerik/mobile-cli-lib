@@ -10,7 +10,7 @@ export class AnalyticsCommand implements ICommand {
 
 	execute(args: string[]): IFuture<void> {
 		return(() => {
-			var arg = args[0];
+			let arg = args[0];
 			switch(arg) {
 				case "enable":
 					this.$analyticsService.setAnalyticsStatus(true).wait();

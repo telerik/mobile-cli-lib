@@ -122,7 +122,7 @@ class IOSCore implements Mobile.IiOSCore {
 	}
 
 	private getForeignPointer(lib: ffi.DynamicLibrary, name: string, type: ref.Type): NodeBuffer {
-		var pointer = lib.get(name);
+		let pointer = lib.get(name);
 		pointer.type = ref.refType(type);
 		return pointer;
 	}
@@ -133,8 +133,8 @@ class IOSCore implements Mobile.IiOSCore {
 			process.env.PATH += ";" + this.MobileDeviceDir;
 		}
 
-		var coreFoundationDll = hostInfo.isWindows() ?  path.join(this.CoreFoundationDir, "CoreFoundation.dll") : this.CoreFoundationDir;
-		var lib = ffi.DynamicLibrary(coreFoundationDll);
+		let coreFoundationDll = hostInfo.isWindows() ?  path.join(this.CoreFoundationDir, "CoreFoundation.dll") : this.CoreFoundationDir;
+		let lib = ffi.DynamicLibrary(coreFoundationDll);
 
 		return {
 			"CFRunLoopRun": ffi.ForeignFunction(lib.get("CFRunLoopRun"), "void", []),
@@ -177,8 +177,8 @@ class IOSCore implements Mobile.IiOSCore {
 	}
 
 	public getMobileDeviceLibrary(): {[key: string]: any} {
-		var mobileDeviceDll = hostInfo.isWindows() ? path.join(this.MobileDeviceDir, "MobileDevice.dll") : this.MobileDeviceDir;
-		var lib = ffi.DynamicLibrary(mobileDeviceDll);
+		let mobileDeviceDll = hostInfo.isWindows() ? path.join(this.MobileDeviceDir, "MobileDevice.dll") : this.MobileDeviceDir;
+		let lib = ffi.DynamicLibrary(mobileDeviceDll);
 
 		return {
 			"AMDeviceNotificationSubscribe": ffi.ForeignFunction(lib.get("AMDeviceNotificationSubscribe"), "uint", [CoreTypes.am_device_notification_callback, "uint", "uint", "uint", CoreTypes.ptrToVoidPtr]),
@@ -218,7 +218,7 @@ class IOSCore implements Mobile.IiOSCore {
 	}
 
 	public static getWinSocketLibrary(): {[key: string]: any} {
-		var winSocketDll = path.join(process.env.SystemRoot, "System32", "ws2_32.dll");
+		let winSocketDll = path.join(process.env.SystemRoot, "System32", "ws2_32.dll");
 
 		return ffi.Library(winSocketDll, {
 			"closesocket": ["int", ["uint"]],
@@ -384,14 +384,14 @@ export class CoreFoundation implements  Mobile.ICoreFoundation {
 	}
 
 	public convertCFStringToCString(cfstr: NodeBuffer): string {
-		var result: string;
+		let result: string;
 		if (cfstr != null) {
-			var rawData = this.stringGetCStringPtr(cfstr, IOSCore.kCFStringEncodingUTF8);
+			let rawData = this.stringGetCStringPtr(cfstr, IOSCore.kCFStringEncodingUTF8);
 			if (ref.address(rawData) === 0) {
-				var cfstrLength = this.stringGetLength(cfstr);
-				var length = cfstrLength + 1;
-				var stringBuffer = new Buffer(length);
-				var status = this.stringGetCString(cfstr, stringBuffer, length, IOSCore.kCFStringEncodingUTF8 );
+				let cfstrLength = this.stringGetLength(cfstr);
+				let length = cfstrLength + 1;
+				let stringBuffer = new Buffer(length);
+				let status = this.stringGetCString(cfstr, stringBuffer, length, IOSCore.kCFStringEncodingUTF8 );
 				if (status) {
 					result = stringBuffer.toString("utf8", 0, cfstrLength);
 				} else {
@@ -405,18 +405,18 @@ export class CoreFoundation implements  Mobile.ICoreFoundation {
 	}
 
 	public cfTypeFrom(value: IDictionary<any>): NodeBuffer {
-		var keys = _.keys(value);
-		var values = _.values(value);
+		let keys = _.keys(value);
+		let values = _.values(value);
 
-		var len = keys.length;
-		var keysBuffer = new Buffer(CoreTypes.pointerSize * len);
-		var valuesBuffer = new Buffer(CoreTypes.pointerSize * len);
+		let len = keys.length;
+		let keysBuffer = new Buffer(CoreTypes.pointerSize * len);
+		let valuesBuffer = new Buffer(CoreTypes.pointerSize * len);
 
-		var offset = 0;
+		let offset = 0;
 
-		for(var i=0; i< len; i++) {
-			var cfKey = this.createCFString(keys[i]);
-			var cfValue: any;
+		for(let i=0; i< len; i++) {
+			let cfKey = this.createCFString(keys[i]);
+			let cfValue: any;
 
 			if(typeof values[i] === "string") {
 				cfValue = this.createCFString(values[i]);
@@ -435,31 +435,31 @@ export class CoreFoundation implements  Mobile.ICoreFoundation {
 	}
 
 	public cfTypeTo(dataRef: NodeBuffer): any {
-		var typeId = this.getTypeID(dataRef);
+		let typeId = this.getTypeID(dataRef);
 
 		if(typeId === this.stringGetTypeID()) {
 			return this.convertCFStringToCString(dataRef);
 		} else if(typeId === this.dataGetTypeID()) {
-			var len = this.dataGetLength(dataRef);
-			var retval = ref.reinterpret(this.dataGetBytePtr(dataRef), len);
+			let len = this.dataGetLength(dataRef);
+			let retval = ref.reinterpret(this.dataGetBytePtr(dataRef), len);
 			return retval;
 		} else if(typeId === this.dictionaryGetTypeID()) {
-			var count = this.dictionaryGetCount(dataRef);
+			let count = this.dictionaryGetCount(dataRef);
 
-			var keys = new Buffer(count * CoreTypes.pointerSize);
-			var values = new Buffer(count * CoreTypes.pointerSize);
+			let keys = new Buffer(count * CoreTypes.pointerSize);
+			let values = new Buffer(count * CoreTypes.pointerSize);
 			this.dictionaryGetKeysAndValues(dataRef, keys, values);
 
-			var jsDictionary = Object.create(null);
-			var offset = 0;
+			let jsDictionary = Object.create(null);
+			let offset = 0;
 
-			for(var i=0; i<count; i++) {
-				var keyPointer = ref.readPointer(keys, offset, CoreTypes.pointerSize);
-				var valuePointer = ref.readPointer(values, offset, CoreTypes.pointerSize);
+			for(let i=0; i<count; i++) {
+				let keyPointer = ref.readPointer(keys, offset, CoreTypes.pointerSize);
+				let valuePointer = ref.readPointer(values, offset, CoreTypes.pointerSize);
 				offset += CoreTypes.pointerSize;
 
-				var jsKey = this.cfTypeTo(keyPointer);
-				var jsValue = this.cfTypeTo(valuePointer);
+				let jsKey = this.cfTypeTo(keyPointer);
+				let jsValue = this.cfTypeTo(valuePointer);
 				jsDictionary[jsKey] = jsValue;
 			}
 
@@ -471,18 +471,18 @@ export class CoreFoundation implements  Mobile.ICoreFoundation {
 
 	public dictToPlistEncoding(dict: {[key: string]: {}}, format: number): NodeBuffer {
 
-		var cfDict = this.cfTypeFrom(dict);
-		var cfData = this.propertyListCreateData(null, cfDict, format, 0, null);
+		let cfDict = this.cfTypeFrom(dict);
+		let cfData = this.propertyListCreateData(null, cfDict, format, 0, null);
 
 		return this.cfTypeTo(cfData);
 	}
 
 	public dictFromPlistEncoding(str: NodeBuffer): NodeBuffer {
-		var retval: NodeBuffer = null;
+		let retval: NodeBuffer = null;
 
-		var cfData = this.dataCreate(null, str, str.length);
+		let cfData = this.dataCreate(null, str, str.length);
 		if(cfData) {
-			var cfDict = this.propertyListCreateWithData(null, cfData, CoreTypes.kCFPropertyListImmutable, null, null);
+			let cfDict = this.propertyListCreateWithData(null, cfData, CoreTypes.kCFPropertyListImmutable, null, null);
 			if(cfDict) {
 				retval = this.cfTypeTo(cfDict);
 			}
@@ -655,8 +655,8 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 	}
 
 	private read(bytes: number): NodeBuffer {
-		var data = new Buffer(bytes);
-		var result: Number;
+		let data = new Buffer(bytes);
+		let result: Number;
 		helpers.block(() => {
 			result = this.winSocketLibrary.recv(this.service, data, bytes, 0);
 		});
@@ -670,7 +670,7 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 	}
 
 	public readSystemLog(printData: any) {
-		var data = this.read(WinSocket.BYTES_TO_READ);
+		let data = this.read(WinSocket.BYTES_TO_READ);
 		while (data) {
 			printData(data);
 			data = this.read(WinSocket.BYTES_TO_READ);
@@ -680,9 +680,9 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 
 	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData> {
 		return (() => {
-			var message = this.receiveMessageCore();
+			let message = this.receiveMessageCore();
 			if(this.format === CoreTypes.kCFPropertyListXMLFormat_v1_0) {
-				var reply = plist.parse(message);
+				let reply = plist.parse(message);
 				return reply;
 			}
 
@@ -692,25 +692,25 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 	}
 
 	public sendMessage(data: any): void {
-		var message: NodeBuffer = null;
+		let message: NodeBuffer = null;
 
 		if(typeof(data) === "string") {
 			message = new Buffer(data);
 		}
 		else {
-			var payload:NodeBuffer = new Buffer(plistlib.toString(this.createPlist(data)));
-			var packed:any = bufferpack.pack(">i", [payload.length]);
+			let payload:NodeBuffer = new Buffer(plistlib.toString(this.createPlist(data)));
+			let packed:any = bufferpack.pack(">i", [payload.length]);
 			message = Buffer.concat([packed, payload]);
 		}
 
-		var writtenBytes = this.sendCore(message);
+		let writtenBytes = this.sendCore(message);
 		this.$logger.debug("WinSocket-> sending message: '%s', written bytes: '%s'", message.toString(), writtenBytes.toString());
 		this.$errors.verifyHeap("sendMessage");
 	}
 
 	public sendAll(data: NodeBuffer): void {
 		while(data.length !== 0) {
-			var result = this.sendCore(data);
+			let result = this.sendCore(data);
 			if(result < 0) {
 				this.$errors.fail("Error sending data: %s", result);
 			}
@@ -719,7 +719,7 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 	}
 
 	public receiveAll(handler: (data: NodeBuffer) => void): void {
-		var data = this.read(WinSocket.BYTES_TO_READ);
+		let data = this.read(WinSocket.BYTES_TO_READ);
 		while (data) {
 			handler(data);
 			data = this.read(WinSocket.BYTES_TO_READ);
@@ -738,14 +738,14 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 	}
 
 	private receiveMessageCore(): string {
-		var data = this.read(4);
-		var reply = "";
+		let data = this.read(4);
+		let reply = "";
 
 		if (data !== null && data.length === 4) {
-			var l = bufferpack.unpack(">i", data)[0];
-			var left = l;
+			let l = bufferpack.unpack(">i", data)[0];
+			let left = l;
 			while (left > 0) {
-				var r = this.read(left);
+				let r = this.read(left);
 				if (r === null) {
 					this.$errors.fail("Unable to read reply");
 				}
@@ -754,25 +754,25 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 			}
 		}
 
-		var result = reply.toString();
+		let result = reply.toString();
 		this.$errors.verifyHeap("receiveMessage");
 		return result;
 	}
 
 	private sendCore(data: NodeBuffer): number {
-		var writtenBytes = this.winSocketLibrary.send(this.service, data, data.length, 0);
+		let writtenBytes = this.winSocketLibrary.send(this.service, data, data.length, 0);
 		this.$logger.debug("WinSocket-> sendCore: writtenBytes '%s'", writtenBytes);
 		return writtenBytes;
 	}
 
 	private createPlist(data: IDictionary<any>) : {} {
-		var keys = _.keys(data);
-		var values = _.values(data);
-		var plistData: {type:string; value:any} = {type: "dict", value: {}};
+		let keys = _.keys(data);
+		let values = _.values(data);
+		let plistData: {type:string; value:any} = {type: "dict", value: {}};
 
-		for(var i=0; i<keys.length; i++) {
-			var type = "";
-			var value: any;
+		for(let i=0; i<keys.length; i++) {
+			let type = "";
+			let value: any;
 			if(values[i] instanceof Buffer) {
 				type = "data";
 				value = values[i].toString("base64")
@@ -821,7 +821,7 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 	}
 
 	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData> {
-		var result = new Future<Mobile.IiOSSocketResponseData>();
+		let result = new Future<Mobile.IiOSSocketResponseData>();
 
 		this.socket
 			.on("data", (data: NodeBuffer) => {
@@ -837,14 +837,14 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 									break;
 								case ReadState.Plist:
 									try {
-										var plistBuffer = this.buffer.slice(0, this.length);
-										var message = bplistParser.parseBuffer(plistBuffer);
+										let plistBuffer = this.buffer.slice(0, this.length);
+										let message = bplistParser.parseBuffer(plistBuffer);
 										this.$logger.trace("MESSAGE RECEIVING");
 										this.$logger.trace(message);
 										try {
 											if (message && typeof (message) === "object" && message[0]) {
 												message = message[0];
-												var output = "";
+												let output = "";
 												if (message.Status) {
 													output += util.format("Status: %s", message.Status);
 												}
@@ -859,8 +859,8 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 													}
 												}
 
-												var status = message[0].Status;
-												var percentComplete = message[0].PercentComplete;
+												let status = message[0].Status;
+												let percentComplete = message[0].PercentComplete;
 												this.$logger.trace("Status: " + status + " PercentComplete: " + percentComplete);
 											}
 										} catch (e) {
@@ -883,10 +883,10 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 						this.$logger.trace("Exception thrown: " + e);
 					}
 				} else if (this.format === CoreTypes.kCFPropertyListXMLFormat_v1_0) {
+					let parsedData: IDictionary<any> = {};
 					try {
-						var parsedData = plist.parse(this.buffer.toString());
+						parsedData = plist.parse(this.buffer.toString());
 					} catch (e) {
-						parsedData = {};
 					}
 
 					if (!result.isResolved()) {
@@ -921,8 +921,8 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 		if(typeof(message) === "string") {
 			this.socket.write(message);
 		} else {
-			var data = this.$coreFoundation.dictToPlistEncoding(message, format);
-			var payload = bufferpack.pack(">i", [data.length]);
+			let data = this.$coreFoundation.dictToPlistEncoding(message, format);
+			let payload = bufferpack.pack(">i", [data.length]);
 
 			this.$logger.trace("PlistService sending: ");
 			this.$logger.trace(data.toString());
@@ -996,7 +996,7 @@ export class PlistService implements Mobile.IiOSDeviceSocket {
 function getCharacterCodePoint(ch: string) {
 	assert.equal(ch.length, 1);
 
-	var code = ch.charCodeAt(0);
+	let code = ch.charCodeAt(0);
 
 	// Surrogate pair
 	assert.ok(!(0xD800 <= code && code <= 0xffff));
@@ -1013,16 +1013,16 @@ class GDBStandardOutputAdapter extends stream.Transform {
 
 	public _transform(packet:any, encoding:string, done:Function):void {
 		try {
-			var result = "";
+			let result = "";
 
-			for (var i = 0; i < packet.length; i++) {
+			for (let i = 0; i < packet.length; i++) {
 				if(packet[i] === getCharacterCodePoint("$")) {
-					var start = ++i;
+					let start = ++i;
 
 					while (packet[i] !== getCharacterCodePoint("#")) {
 						i++;
 					}
-					var end = i;
+					let end = i;
 
 					// Skip checksum
 					i++;
@@ -1033,8 +1033,8 @@ class GDBStandardOutputAdapter extends stream.Transform {
 					}
 					start++;
 
-					var hexString = packet.toString("ascii", start, end);
-					var hex = new Buffer(hexString, "hex");
+					let hexString = packet.toString("ascii", start, end);
+					let hex = new Buffer(hexString, "hex");
 					result += this.utf8StringDecoder.write(hex);
 				}
 			}
@@ -1053,7 +1053,7 @@ class GDBSignalWatcher extends stream.Writable {
 
 	public _write(packet:any, encoding:string, callback:Function) {
 		try {
-			for (var i = 0; i < packet.length - 2; i++) {
+			for (let i = 0; i < packet.length - 2; i++) {
 				if(packet[i] === getCharacterCodePoint("$") && (packet[i + 1] === getCharacterCodePoint("T") || packet[i + 1] === getCharacterCodePoint("S"))) {
 					// SIGKILL
 					if(packet[i + 2] === getCharacterCodePoint("9")) {
@@ -1072,7 +1072,7 @@ export class GDBServer implements Mobile.IGDBServer {
 	constructor(private socket: any, // socket is fd on Windows and net.Socket on mac
 		private $injector: IInjector) {
 		if(hostInfo.isWindows()) {
-			var winSocket = this.$injector.resolve(WinSocket, {service: this.socket, format: 0});
+			let winSocket = this.$injector.resolve(WinSocket, {service: this.socket, format: 0});
 			this.socket = {
 				write: (message: string): void => {
 					winSocket.sendMessage(message);
@@ -1087,7 +1087,7 @@ export class GDBServer implements Mobile.IGDBServer {
 		this.send("QEnvironmentHexEncoded:");
 		this.send("QSetDisableASLR:1");
 
-		var encodedArguments = _.map(argv, (arg, index) => util.format("%d,%d,%s", arg.length * 2, index, new Buffer(arg).toString("hex"))).join(",");
+		let encodedArguments = _.map(argv, (arg, index) => util.format("%d,%d,%s", arg.length * 2, index, new Buffer(arg).toString("hex"))).join(",");
 		this.send("A" + encodedArguments);
 
 		this.send("qLaunchSuccess");
@@ -1107,13 +1107,13 @@ export class GDBServer implements Mobile.IGDBServer {
 	}
 
 	private send(packet: string): void {
-		var sum = 0;
-		for(var i = 0; i < packet.length; i++) {
+		let sum = 0;
+		for(let i = 0; i < packet.length; i++) {
 			sum += getCharacterCodePoint(packet[i]);
 		}
 		sum = sum & 255;
 
-		var data = util.format("$%s#%s", packet, sum.toString(16));
+		let data = util.format("$%s#%s", packet, sum.toString(16));
 		this.socket.write(data);
 	}
 }

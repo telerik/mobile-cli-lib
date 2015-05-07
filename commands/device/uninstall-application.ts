@@ -12,7 +12,7 @@ export class UninstallApplicationCommand implements ICommand {
 		return (() => {
 			this.$devicesServices.initialize({ deviceId: options.device, skipInferPlatform: true }).wait();
 
-			var action = (device: Mobile.IDevice) =>  { return (() => device.uninstallApplication(args[0]).wait()).future<void>()(); };
+			let action = (device: Mobile.IDevice) =>  { return (() => device.uninstallApplication(args[0]).wait()).future<void>()(); };
 			this.$devicesServices.execute(action).wait();
 		}).future<void>()();
 	}

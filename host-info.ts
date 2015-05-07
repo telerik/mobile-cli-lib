@@ -29,9 +29,9 @@ export function isLinux64(): boolean {
 
 export function dotNetVersion(message: string) : IFuture<string> {
 	if (isWindows()) {
-		var result = new Future<string>();
-		var Winreg = require("winreg");
-		var regKey = new Winreg({
+		let result = new Future<string>();
+		let Winreg = require("winreg");
+		let regKey = new Winreg({
 			hive: Winreg.HKLM,
 			key:  '\\Software\\Microsoft\\NET Framework Setup\\NDP\\v4\\Client'
 		});
