@@ -264,14 +264,31 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public copyFile(sourceFileName: string, destinationFileName: string): IFuture<void> {
-		return (() => {
-			this.createDirectory(path.dirname(destinationFileName)).wait();
-			var source = this.createReadStream(sourceFileName);
-			var target = this.createWriteStream(destinationFileName);
-			source.pipe(target);
-			this.futureFromEvent(target, "finish").wait();
-		}).future<void>()();
-	}
+		var res = new Future<void>();
+
+		this.createDirectory(path.dirname(destinationFileName)).wait();
+		var source = this.createReadStream(sourceFileName);
+		var target = this.createWriteStream(destinationFileName);
+
+		source.on("error", (e: Error) => { 
+			if (!res.isResolved()) {
+				res.throw(e);
+			}
+		});
+		target.on("finish", () => { 
+			if (!res.isResolved()) {
+				res.return();
+			}
+		})
+		.on("error", (e: Error) => { 
+			if (!res.isResolved()) {
+				res.throw(e);
+			}
+		});
+
+		source.pipe(target);
+		return res;
+	 }
 
 	public createReadStream(path: string, options?: {
 		flags?: string;
