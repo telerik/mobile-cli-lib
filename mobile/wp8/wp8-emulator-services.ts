@@ -22,7 +22,7 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 				this.$errors.fail("Windows Phone Emulator is available only on Windows 8 or later.");
 			}
 
-			var platform = this.$devicePlatformsConstants.WP8;
+			let platform = this.$devicePlatformsConstants.WP8;
 			if (!this.$emulatorSettingsService.canStart(platform).wait()) {
 				this.$errors.fail("The current project does not target Windows Phone 8 and cannot be run in the Windows Phone emulator.");
 			}
@@ -32,7 +32,7 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 	startEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions) : IFuture<void> {
 		return (() => {
 			this.$logger.info("Starting Windows Phone Emulator");
-			var emulatorStarter = path.join(Wp8EmulatorServices.programFilesPath, Wp8EmulatorServices.WP8_LAUNCHER_PATH, Wp8EmulatorServices.WP8_LAUNCHER);
+			let emulatorStarter = path.join(Wp8EmulatorServices.programFilesPath, Wp8EmulatorServices.WP8_LAUNCHER_PATH, Wp8EmulatorServices.WP8_LAUNCHER);
 			this.$childProcess.spawn(emulatorStarter, ["/installlaunch", app, "/targetdevice:xd"], { stdio:  "ignore", detached: true }).unref();
 		}).future<void>()();
 	}

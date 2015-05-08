@@ -10,7 +10,7 @@ import path = require("path");
 import util = require("util");
 import options = require("../../options");
 import helpers = require("../../helpers");
-var net = require('net');
+let net = require('net');
 
 class VirtualMachine {
 	constructor(public name: string, public identifier: string) { }
@@ -59,13 +59,13 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	}
 
 	private checkGenymotionConfiguration(): IFuture<void> {
-		var condition = (childProcess: any) => childProcess.stderr && !_.startsWith(childProcess.stderr, "Usage:");
+		let condition = (childProcess: any) => childProcess.stderr && !_.startsWith(childProcess.stderr, "Usage:");
 		return this.$childProcess.tryExecuteApplication("player", [], "exit",  AndroidEmulatorServices.MISSING_GENYMOTION_MESSAGE, condition);
 	}
 
 	public checkAvailability(): IFuture<void> {
 		return (() => {
-			var platform = this.$devicePlatformsConstants.Android;
+			let platform = this.$devicePlatformsConstants.Android;
 			if(!this.$emulatorSettingsService.canStart(platform).wait()) {
 				this.$errors.fail("The current project does not target Android and cannot be run in the Android emulator.");
 			}
@@ -78,7 +78,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 				this.$errors.fail("You cannot specify both --avd and --geny options. Please use only one of them.");
 			}
 
-			var image = options.avd || options.geny || this.getBestFit().wait();
+			let image = options.avd || options.geny || this.getBestFit().wait();
 
 			if(image) {
 				this.startEmulatorCore(app, emulatorOptions.appId, image).wait();
@@ -91,7 +91,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private startEmulatorCore(app: string, appId: string, image: string): IFuture<void> {
 		return (() => {
 			// start the emulator, if needed
-			var emulatorId = this.startEmulatorInstance(image).wait();
+			let emulatorId = this.startEmulatorInstance(image).wait();
 
 			// waits for the boot animation property of the emulator to switch to 'stopped'
 			this.waitForEmulatorBootToComplete(emulatorId).wait();
@@ -101,7 +101,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 			// install the app
 			this.$logger.info("installing %s through adb", app);
-			var childProcess = this.$childProcess.spawn(this.adbFilePath, ["-s", emulatorId, 'install', '-r', app]);
+			let childProcess = this.$childProcess.spawn(this.adbFilePath, ["-s", emulatorId, 'install', '-r', app]);
 			this.$fs.futureFromEvent(childProcess, "close").wait();
 
 			// unlock screen again in cases when the installation is slow
@@ -120,21 +120,21 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	}
 
 	private unlockScreen(emulatorId: string): IFuture<void> {
-		var childProcess = this.$childProcess.spawn(this.adbFilePath, ["-s", emulatorId, "shell", "input", "keyevent", "82"]);
+		let childProcess = this.$childProcess.spawn(this.adbFilePath, ["-s", emulatorId, "shell", "input", "keyevent", "82"]);
 		return this.$fs.futureFromEvent(childProcess, "close");
 	}
 
 	private sleep(ms: number): void {
-		var fiber = Fiber.current;
+		let fiber = Fiber.current;
 		setTimeout(() => fiber.run(), ms);
 		Fiber.yield();
 	}
 
 	private getMilliSecondsTimeout(): number {
-		var timeout = AndroidEmulatorServices.TIMEOUT_SECONDS;
+		let timeout = AndroidEmulatorServices.TIMEOUT_SECONDS;
 
 		if(options && options.timeout) {
-			var parsedValue = parseInt(options.timeout);
+			let parsedValue = parseInt(options.timeout);
 			if(!isNaN(parsedValue) && parsedValue >= 0) {
 				timeout = parsedValue;
 			} else {
@@ -148,14 +148,14 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	private getRunningEmulatorId(image: string): IFuture<string> {
 		return ((): string => {
-			var runningEmulators = this.getRunningEmulators().wait();
+			let runningEmulators = this.getRunningEmulators().wait();
 			if(runningEmulators.length === 0) {
 				return "";
 			}
 
 			// if we get here, there's at least one running emulator
-			var getNameFunction = options.geny ? this.getNameFromGenymotionEmulatorId : this.getNameFromSDKEmulatorId;
-			var emulatorId = _(runningEmulators).find(emulator => getNameFunction.apply(this, [emulator]).wait() === image);
+			let getNameFunction = options.geny ? this.getNameFromGenymotionEmulatorId : this.getNameFromSDKEmulatorId;
+			let emulatorId = _(runningEmulators).find(emulator => getNameFunction.apply(this, [emulator]).wait() === image);
 
 			return emulatorId;
 		}).future<string>()();
@@ -163,25 +163,25 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	private getNameFromGenymotionEmulatorId(emulatorId: string): IFuture<string> {
 		return (() => {
-			var modelOutputLines: string = this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.model"]).wait();
+			let modelOutputLines: string = this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.model"]).wait();
 			this.$logger.trace(modelOutputLines);
-			var model = (<string>_.first(modelOutputLines.split(os.EOL))).trim();
+			let model = (<string>_.first(modelOutputLines.split(os.EOL))).trim();
 			return model;
 		}).future<string>()();
 	}
 
 	private getNameFromSDKEmulatorId(emulatorId: string): IFuture<string> {
-		var match = emulatorId.match(/^emulator-(\d+)/);
-		var portNumber: string;
+		let match = emulatorId.match(/^emulator-(\d+)/);
+		let portNumber: string;
 		if(match && match[1]) {
 			portNumber = match[1];
 		} else {
 			return Future.fromResult("");
 		}
 
-		var future = new Future<string>();
-		var output: string = "";
-		var client = net.connect({ port: portNumber }, () => { 
+		let future = new Future<string>();
+		let output: string = "";
+		let client = net.connect({ port: portNumber }, () => {
 			client.write(util.format("avd name%s", os.EOL));
 		});
 
@@ -196,9 +196,9 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 			//<Name of image>
 			//OK
 			//
-			var name: string;
-			var foundOK = false;
-			var lines: string[] = output.split(os.EOL);
+			let name: string;
+			let foundOK = false;
+			let lines: string[] = output.split(os.EOL);
 			// find line between OK
 			_(lines).each((line: string) => {
 				if(foundOK) {
@@ -216,7 +216,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	private startEmulatorInstance(image: string): IFuture<string> {
 		return (() => {
-			var emulatorId = this.getRunningEmulatorId(image).wait();
+			let emulatorId = this.getRunningEmulatorId(image).wait();
 			this.endTimeEpoch = helpers.getCurrentEpochTime() + this.getMilliSecondsTimeout();
 			if(emulatorId) {
 				// If there's already a running instance of this image, we'll just deploy the app to it.
@@ -234,8 +234,8 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 					{ stdio: "ignore", detached: true }).unref();
 			}
 			
-			var isInfiniteWait = this.getMilliSecondsTimeout() === 0;
-			var hasTimeLeft = helpers.getCurrentEpochTime() < this.endTimeEpoch;
+			let isInfiniteWait = this.getMilliSecondsTimeout() === 0;
+			let hasTimeLeft = helpers.getCurrentEpochTime() < this.endTimeEpoch;
 
 			while(hasTimeLeft || isInfiniteWait) {
 				emulatorId = this.getRunningEmulatorId(image).wait();
@@ -257,12 +257,12 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	private getRunningGenymotionEmulators(adbDevicesOutput: string[]): IFuture<string[]> {
 		return ((): string[]=> {
-			var futures = _(adbDevicesOutput).filter(r => !r.match(AndroidEmulatorServices.RUNNING_ANDROID_EMULATOR_REGEX))
+			let futures = _(adbDevicesOutput).filter(r => !r.match(AndroidEmulatorServices.RUNNING_ANDROID_EMULATOR_REGEX))
 				.map(row => {
-					var match = row.match(/^(.+?)\s+device$/);
+					let match = row.match(/^(.+?)\s+device$/);
 					if(match && match[1]) {
 						// possible genymotion emulator 
-						var emulatorId = match[1];
+						let emulatorId = match[1];
 						return this.checkForGenymotionProductManufacturer(emulatorId);
 					}
 
@@ -279,7 +279,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	private checkForGenymotionProductManufacturer(emulatorId: string): IFuture<string> {
 		return ((): string => {
-			var manufacturer = this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.manufacturer"]).wait();
+			let manufacturer = this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.manufacturer"]).wait();
 			if(manufacturer.match(/^Genymotion/i)) {
 				return emulatorId;
 			}
@@ -290,13 +290,13 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	private getRunningEmulators(): IFuture<string[]> {
 		return (() => {
-			var emulatorDevices: string[] = [];
-			var outputRaw: string[] = this.$childProcess.execFile(this.adbFilePath, ['devices']).wait().split(os.EOL);
+			let emulatorDevices: string[] = [];
+			let outputRaw: string[] = this.$childProcess.execFile(this.adbFilePath, ['devices']).wait().split(os.EOL);
 			if(options.geny) {
 				emulatorDevices = this.getRunningGenymotionEmulators(outputRaw).wait();
 			} else {
 				_.each(outputRaw, (device: string) => {
-					var rx = device.match(AndroidEmulatorServices.RUNNING_ANDROID_EMULATOR_REGEX);
+					let rx = device.match(AndroidEmulatorServices.RUNNING_ANDROID_EMULATOR_REGEX);
 
 					if(rx && rx[1]) {
 						emulatorDevices.push(rx[1]);
@@ -309,9 +309,9 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	private getBestFit(): IFuture<string> {
 		return (() => {
-			var minVersion = this.$emulatorSettingsService.minVersion;
+			let minVersion = this.$emulatorSettingsService.minVersion;
 
-			var best = _(this.getAvds().wait())
+			let best = _(this.getAvds().wait())
 				.map(avd => this.getInfoFromAvd(avd).wait())
 				.max(avd => avd.targetNum);
 
@@ -321,8 +321,8 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	private getInfoFromAvd(avdName: string): IFuture<Mobile.IAvdInfo> {
 		return (() => {
-			var iniFile = path.join(this.avdDir, avdName + ".ini");
-			var avdInfo: Mobile.IAvdInfo = this.parseAvdFile(avdName, iniFile).wait();
+			let iniFile = path.join(this.avdDir, avdName + ".ini");
+			let avdInfo: Mobile.IAvdInfo = this.parseAvdFile(avdName, iniFile).wait();
 			if (avdInfo.path && this.$fs.exists(avdInfo.path).wait()) {
 				iniFile = path.join(avdInfo.path, "config.ini");
 				avdInfo = this.parseAvdFile(avdName, iniFile, avdInfo).wait();
@@ -335,12 +335,12 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		return (() => {
 			// avd files can have different encoding, defined on the first line.
 			// find which one it is (if any) and use it to correctly read the file contents
-			var encoding = this.getAvdEncoding(avdFileName).wait();
-			var contents = this.$fs.readText(avdFileName, encoding).wait().split("\n");
+			let encoding = this.getAvdEncoding(avdFileName).wait();
+			let contents = this.$fs.readText(avdFileName, encoding).wait().split("\n");
 
 			avdInfo = _.reduce(contents, (result: Mobile.IAvdInfo, line:string) => {
-					var parsedLine = line.split("=");
-					var key = parsedLine[0];
+					let parsedLine = line.split("=");
+					let key = parsedLine[0];
 					switch(key) {
 						case "target":
 							result.target = parsedLine[1];
@@ -362,8 +362,8 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	// Android L is not written as a number in the .ini files, and we need to convert it
 	private readTargetNum(target: string): number {
-		var platform = target.replace('android-', '');
-		var platformNumber = +platform;
+		let platform = target.replace('android-', '');
+		let platformNumber = +platform;
 		if (isNaN(platformNumber)) {
 			// this might be a google image
 			platform = target.split(":")[2];
@@ -380,12 +380,12 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		return (() => {
 			// avd files can have different encoding, defined on the first line.
 			// find which one it is (if any) and use it to correctly read the file contents
-			var encoding = "utf8";
-			var contents = this.$fs.readText(avdName, "ascii").wait();
+			let encoding = "utf8";
+			let contents = this.$fs.readText(avdName, "ascii").wait();
 			if (contents.length > 0) {
 				contents = contents.split("\n", 1)[0];
 				if (contents.length > 0) {
-					var matches = contents.match(AndroidEmulatorServices.ENCODING_MASK);
+					let matches = contents.match(AndroidEmulatorServices.ENCODING_MASK);
 					if(matches) {
 						encoding = matches[1];
 					}
@@ -405,9 +405,9 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	private getAvds(): IFuture<string[]> {
 		return (() => {
-			var result:string[] = [];
+			let result:string[] = [];
 			if (this.$fs.exists(this.avdDir).wait()) {
-				var entries = this.$fs.readDirectory(this.avdDir).wait();
+				let entries = this.$fs.readDirectory(this.avdDir).wait();
 				result = _.select(entries, (e: string) => e.match(AndroidEmulatorServices.INI_FILES_MASK) !== null)
 					.map((e) => e.match(AndroidEmulatorServices.INI_FILES_MASK)[1]);
 			}
@@ -419,9 +419,9 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		return (() => {
 			this.$logger.printInfoMessageOnSameLine("Waiting for emulator device initialization...");
 
-			var isInfiniteWait = this.getMilliSecondsTimeout() === 0;
+			let isInfiniteWait = this.getMilliSecondsTimeout() === 0;
 			while(helpers.getCurrentEpochTime() < this.endTimeEpoch || isInfiniteWait) {
-				var isEmulatorBootCompleted = this.isEmulatorBootCompleted(emulatorId).wait();
+				let isEmulatorBootCompleted = this.isEmulatorBootCompleted(emulatorId).wait();
 
 				if(isEmulatorBootCompleted) {
 					this.$logger.printInfoMessageOnSameLine(os.EOL);
@@ -439,8 +439,8 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	private isEmulatorBootCompleted(emulatorId: string): IFuture<boolean> {
 		return (() => {
-			var output = this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "dev.bootcomplete"]).wait();
-			var matches = output.match("1");
+			let output = this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "dev.bootcomplete"]).wait();
+			let matches = output.match("1");
 			return matches && matches.length > 0;
 		}).future<boolean>()();
 	}

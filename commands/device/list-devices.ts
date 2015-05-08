@@ -14,10 +14,10 @@ export class ListDevicesCommand implements ICommand {
 
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
-			var index = 1;
+			let index = 1;
 			this.$devicesServices.initialize({platform: args[0], deviceId: null, skipInferPlatform: true}).wait();
 
-			var action: (device: Mobile.IDevice) => IFuture<void>;
+			let action: (device: Mobile.IDevice) => IFuture<void>;
 			if (options.json) {
 				this.$logger.setLevel("ERROR");
 				action = (device) => {
@@ -50,8 +50,8 @@ class ListAndroidDevicesCommand implements ICommand {
 
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
-			var listDevicesCommand: ICommand = this.$injector.resolve(ListDevicesCommand);
-			var platform = this.$devicePlatformsConstants.Android;
+			let listDevicesCommand: ICommand = this.$injector.resolve(ListDevicesCommand);
+			let platform = this.$devicePlatformsConstants.Android;
 			listDevicesCommand.execute([platform]).wait();
 		}).future<void>()();
 	}
@@ -66,8 +66,8 @@ class ListiOSDevicesCommand implements ICommand {
 
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
-			var listDevicesCommand: ICommand = this.$injector.resolve(ListDevicesCommand);
-			var platform = this.$devicePlatformsConstants.iOS;
+			let listDevicesCommand: ICommand = this.$injector.resolve(ListDevicesCommand);
+			let platform = this.$devicePlatformsConstants.iOS;
 			listDevicesCommand.execute([platform]).wait();
 		}).future<void>()();
 	}

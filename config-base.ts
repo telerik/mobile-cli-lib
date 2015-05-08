@@ -8,7 +8,7 @@ export class ConfigBase implements Config.IConfig {
 	constructor(protected $fs: IFileSystem) { }
 
 	protected loadConfig(name: string): IFuture<any> {
-		var configFileName = this.getConfigPath(name);
+		let configFileName = this.getConfigPath(name);
 		return this.$fs.readJson(configFileName);
 	}
 

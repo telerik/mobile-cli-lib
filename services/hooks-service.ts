@@ -35,9 +35,9 @@ export class HooksService implements IHooksService {
 
 		this.$logger.trace("BeforeHookName for command %s is %s", commandName, this.beforeHookName);
 		this.$logger.trace("AfterHookName for command %s is %s", commandName, this.afterHookName);
-		var customHooksDirectory: string = null;
-		var relativeToLibPath = path.join(__dirname, "../../");
-		var defaultHooksDirectories = [
+		let customHooksDirectory: string = null;
+		let relativeToLibPath = path.join(__dirname, "../../");
+		let defaultHooksDirectories = [
 			path.join(relativeToLibPath, HooksService.HOOKS_DIRECTORY_NAME),
 			path.join(relativeToLibPath, "common", HooksService.HOOKS_DIRECTORY_NAME)
 		];
@@ -67,19 +67,19 @@ export class HooksService implements IHooksService {
 
 	private executeHook(directoryPath: string, hookName: string): IFuture<void> {
 		return (() => {
-			var hook = this.getHookByName(directoryPath, hookName).wait();
+			let hook = this.getHookByName(directoryPath, hookName).wait();
 			if(hook) {
-				var command = this.getSheBangInterpreter(hook).wait();
+				let command = this.getSheBangInterpreter(hook).wait();
 				if(!command) {
 					command = hook.fullPath;
 					if(path.extname(hook.fullPath) === ".js") {
 						command = process.argv[0];
 					}
 				}
-				var environment = this.prepareEnvironment(hook.fullPath);
+				let environment = this.prepareEnvironment(hook.fullPath);
 				this.$logger.trace("Executing %s hook at location %s with environment ", hook.name, hook.fullPath, environment);
 
-				var output = this.$childProcess.spawnFromEvent(command, [hook.fullPath], "close", environment, { throwError: false}).wait();
+				let output = this.$childProcess.spawnFromEvent(command, [hook.fullPath], "close", environment, { throwError: false}).wait();
 				if(output.exitCode !== 0) {
 					this.$errors.fail(output.stdout + output.stderr);
 				}
@@ -89,8 +89,8 @@ export class HooksService implements IHooksService {
 
 	private getHookByName(directoryPath: string, hookName: string): IFuture<IHook> {
 		return (() => {
-			var hooks = this.getHooksInDirectory(directoryPath).wait();
-			var hook = _.find<IHook>(hooks, hook => hook.name === hookName);
+			let hooks = this.getHooksInDirectory(directoryPath).wait();
+			let hook = _.find<IHook>(hooks, hook => hook.name === hookName);
 			return hook;
 		}).future<IHook>()();
 	}
@@ -98,18 +98,18 @@ export class HooksService implements IHooksService {
 	private getHooksInDirectory(directoryPath: string): IFuture<IHook[]> {
 		return (() => {
 			if(!this.cachedHooks[directoryPath]) {
-				var hooks: IHook[] = [];
+				let hooks: IHook[] = [];
 				if(directoryPath && this.$fs.exists(directoryPath).wait() && this.$fs.getFsStats(directoryPath).wait().isDirectory()) {
-					var directoryContent = this.$fs.readDirectory(directoryPath).wait();
-					var files = _.filter(directoryContent, (entry: string) => {
-						var fullPath = path.join(directoryPath, entry);
-						var isFile = this.$fs.getFsStats(fullPath).wait().isFile();
-						var baseFilename = this.getBaseFilename(entry);
+					let directoryContent = this.$fs.readDirectory(directoryPath).wait();
+					let files = _.filter(directoryContent, (entry: string) => {
+						let fullPath = path.join(directoryPath, entry);
+						let isFile = this.$fs.getFsStats(fullPath).wait().isFile();
+						let baseFilename = this.getBaseFilename(entry);
 						return isFile && (baseFilename === this.beforeHookName || baseFilename === this.afterHookName);
 					});
 
 					hooks = _.map(files, file => {
-						var fullPath = path.join(directoryPath, file);
+						let fullPath = path.join(directoryPath, file);
 						return new Hook(this.getBaseFilename(file), fullPath);
 					});
 				}
@@ -123,9 +123,9 @@ export class HooksService implements IHooksService {
 	}
 
 	private prepareEnvironment(hookFullPath: string): any {
-		var clientName = this.$staticConfig.CLIENT_NAME.toUpperCase();
+		let clientName = this.$staticConfig.CLIENT_NAME.toUpperCase();
 
-		var environment: IStringDictionary = { };
+		let environment: IStringDictionary = { };
 		environment[util.format("%s-COMMANDLINE", clientName)] = process.argv.join(' ');
 		environment[util.format("%s-HOOK_FULL_PATH", clientName)] = hookFullPath;
 		environment[util.format("%s-VERSION", clientName)] = this.$staticConfig.version;
@@ -139,11 +139,11 @@ export class HooksService implements IHooksService {
 
 	private getSheBangInterpreter(hook: IHook): IFuture<string> {
 		return (() => {
-			var interpreter: string = null;
-			var shMatch: string[] = [];
-			var fileContent = this.$fs.readText(hook.fullPath).wait();
+			let interpreter: string = null;
+			let shMatch: string[] = [];
+			let fileContent = this.$fs.readText(hook.fullPath).wait();
 			if(fileContent) {
-				var sheBangMatch = fileContent.split('\n')[0].match(/^#!(?:\/usr\/bin\/env )?([^\r\n]+)/m);
+				let sheBangMatch = fileContent.split('\n')[0].match(/^#!(?:\/usr\/bin\/env )?([^\r\n]+)/m);
 				if (sheBangMatch) {
 					interpreter = sheBangMatch[1];
 				}

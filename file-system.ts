@@ -15,22 +15,22 @@ export class FileSystem implements IFileSystem {
 	//TODO: try 'archiver' module for zipping
 	public zipFiles(zipFile: string, files: string[], zipPathCallback: (path: string) => string): IFuture<void> {
 		//we are resolving it here instead of in the constructor, because config has dependency on file system and config shouldn't require logger
-		var $logger = this.$injector.resolve("logger");
-		var zipstream = require("zipstream");
-		var zip = zipstream.createZip({ level: 9 });
-		var outFile = fs.createWriteStream(zipFile);
+		let $logger = this.$injector.resolve("logger");
+		let zipstream = require("zipstream");
+		let zip = zipstream.createZip({ level: 9 });
+		let outFile = fs.createWriteStream(zipFile);
 		zip.pipe(outFile);
 
-		var result = new Future<void>();
+		let result = new Future<void>();
 		outFile.on("error", (err: Error) => result.throw(err));
 
-		var fileIdx = -1;
-		var zipCallback = () => {
+		let fileIdx = -1;
+		let zipCallback = () => {
 			fileIdx++;
 			if(fileIdx < files.length) {
-				var file = files[fileIdx];
+				let file = files[fileIdx];
 
-				var relativePath = zipPathCallback(file);
+				let relativePath = zipPathCallback(file);
 				relativePath = relativePath.replace(/\\/g, "/");
 				$logger.trace("zipping as '%s' file '%s'", relativePath, file);
 
@@ -54,12 +54,12 @@ export class FileSystem implements IFileSystem {
 
 	public unzip(zipFile: string, destinationDir: string, options?: { overwriteExisitingFiles?: boolean; caseSensitive?: boolean}, fileFilters?: string[]): IFuture<void> {
 		return (() => {
-			var shouldOverwriteFiles = !(options && options.overwriteExisitingFiles === false);
-			var isCaseSensitive = !(options && options.caseSensitive === false);
+			let shouldOverwriteFiles = !(options && options.overwriteExisitingFiles === false);
+			let isCaseSensitive = !(options && options.caseSensitive === false);
 
 			this.createDirectory(destinationDir).wait();
 
-			var proc: string;
+			let proc: string;
 			if (hostInfo.isWindows()) {
 				proc = path.join(__dirname, "resources/platform-tools/unzip/win32/unzip");
 			} else if (hostInfo.isDarwin()) {
@@ -72,24 +72,24 @@ export class FileSystem implements IFileSystem {
 				zipFile = this.findFileCaseInsensitive(zipFile);
 			}
 
-			var args =  <string[]>(_.flatten(['-b', shouldOverwriteFiles ? "-o" : "-n", isCaseSensitive ? [] : '-C', zipFile, fileFilters || [], '-d', destinationDir]));
+			let args =  <string[]>(_.flatten(['-b', shouldOverwriteFiles ? "-o" : "-n", isCaseSensitive ? [] : '-C', zipFile, fileFilters || [], '-d', destinationDir]));
 
-			var $childProcess = this.$injector.resolve("childProcess");
+			let $childProcess = this.$injector.resolve("childProcess");
 			$childProcess.spawnFromEvent(proc, args, "close", { stdio: "ignore", detached: true }).wait();
 		}).future<void>()();
 	}
 
 	private findFileCaseInsensitive(file: string): string {
-		var dir = path.dirname(file);
-		var basename = path.basename(file);
-		var entries = this.readDirectory(dir).wait();
-		var match = minimatch.match(entries, basename, {nocase:true, nonegate: true, nonull: true})[0];
-		var result = path.join(dir, match);
+		let dir = path.dirname(file);
+		let basename = path.basename(file);
+		let entries = this.readDirectory(dir).wait();
+		let match = minimatch.match(entries, basename, {nocase:true, nonegate: true, nonull: true})[0];
+		let result = path.join(dir, match);
 		return result;
 	}
 
 	public exists(path: string): IFuture<boolean> {
-		var future = new Future<boolean>();
+		let future = new Future<boolean>();
 		fs.exists(path, (exists: boolean) => future.return(exists));
 		return future;
 	}
@@ -101,7 +101,7 @@ export class FileSystem implements IFileSystem {
 			} catch(e) {
 				this.$injector.resolve("$logger").trace("tryExecuteFileOperation failed with error %s.", e);
 				if(enoentErrorMessage) {
-					var message = (e.code === "ENOENT") ? enoentErrorMessage : e.message;
+					let message = (e.code === "ENOENT") ? enoentErrorMessage : e.message;
 					this.$injector.resolve("$errors").failWithoutHelp(message);
 				}
 			}
@@ -109,7 +109,7 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public deleteFile(path: string): IFuture<void> {
-		var future = new Future<void>();
+		let future = new Future<void>();
 		fs.unlink(path, (err: any) => {
 			if(err && err.code !== "ENOENT") {  // ignore "file doesn't exist" error
 				future.throw(err);
@@ -121,7 +121,7 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public deleteDirectory(directory: string): IFuture<void> {
-		var future = new Future<void>();
+		let future = new Future<void>();
 		rimraf(directory, (err) => {
 			if(err) {
 				future.throw(err);
@@ -135,18 +135,18 @@ export class FileSystem implements IFileSystem {
 
 	public getFileSize(path: string): IFuture<number> {
 		return ((): number => {
-			var stat = this.getFsStats(path).wait();
+			let stat = this.getFsStats(path).wait();
 			return stat.size;
 		}).future<number>()();
 	}
 
 	public futureFromEvent(eventEmitter: any, event: string): IFuture<any> {
-		var future = new Future();
+		let future = new Future();
 		eventEmitter.once(event, function() {
-			var args = _.toArray(arguments);
+			let args = _.toArray(arguments);
 
 			if(event === "error") {
-				var err = <Error>args[0];
+				let err = <Error>args[0];
 				future.throw(err);
 				return;
 			}
@@ -167,7 +167,7 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public createDirectory(path: string): IFuture<void> {
-		var future = new Future<void>();
+		let future = new Future<void>();
 		(<any> require("mkdirp"))(path, (err: Error) => {
 			if(err) {
 				future.throw(err);
@@ -179,7 +179,7 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public readDirectory(path: string): IFuture<string[]> {
-		var future = new Future<string[]>();
+		let future = new Future<string[]>();
 		fs.readdir(path, (err: Error, files: string[]) => {
 			if(err) {
 				future.throw(err);
@@ -191,7 +191,7 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public readFile(filename: string): IFuture<NodeBuffer> {
-		var future = new Future<NodeBuffer>();
+		let future = new Future<NodeBuffer>();
 		fs.readFile(filename, (err: Error, data: NodeBuffer) => {
 			if(err) {
 				future.throw(err);
@@ -211,7 +211,7 @@ export class FileSystem implements IFileSystem {
 			options.encoding = "utf8";
 		}
 
-		var future = new Future<string>();
+		let future = new Future<string>();
 		fs.readFile(filename, options, (err: Error, data: string) => {
 			if(err) {
 				future.throw(err);
@@ -224,7 +224,7 @@ export class FileSystem implements IFileSystem {
 
 	public readJson(filename: string, encoding?: string): IFuture<any> {
 		return (() => {
-			var data = this.readText(filename, encoding).wait();
+			let data = this.readText(filename, encoding).wait();
 			if(data) {
 				return JSON.parse(data);
 			}
@@ -235,7 +235,7 @@ export class FileSystem implements IFileSystem {
 	public writeFile(filename: string, data: any, encoding?: string): IFuture<void> {
 		return (() => {
 			this.createDirectory(path.dirname(filename)).wait();
-			var future = new Future<void>();
+			let future = new Future<void>();
 			fs.writeFile(filename, data, { encoding: encoding }, (err: Error) => {
 				if(err) {
 					future.throw(err);
@@ -248,7 +248,7 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public appendFile(filename: string, data: any, encoding?: string): IFuture<void> {
-		var future = new Future<void>();
+		let future = new Future<void>();
 		fs.appendFile(filename, data, { encoding: encoding },(err: Error) => {
 			if(err) {
 				future.throw(err);
@@ -264,11 +264,11 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public copyFile(sourceFileName: string, destinationFileName: string): IFuture<void> {
-		var res = new Future<void>();
+		let res = new Future<void>();
 
 		this.createDirectory(path.dirname(destinationFileName)).wait();
-		var source = this.createReadStream(sourceFileName);
-		var target = this.createWriteStream(destinationFileName);
+		let source = this.createReadStream(sourceFileName);
+		let target = this.createWriteStream(destinationFileName);
 
 		source.on("error", (e: Error) => { 
 			if (!res.isResolved()) {
@@ -309,7 +309,7 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public chmod(path: string, mode: any): IFuture<void> {
-		var future = new Future<void>();
+		let future = new Future<void>();
 		fs.chmod(path, mode, (err: Error) => {
 			if(err) {
 				future.throw(err);
@@ -321,7 +321,7 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public getFsStats(path: string): IFuture<fs.Stats> {
-		var future = new Future<fs.Stats>();
+		let future = new Future<fs.Stats>();
 		fs.stat(path, (err: Error, data: fs.Stats) => {
 			if(err) {
 				future.throw(err);
@@ -337,11 +337,11 @@ export class FileSystem implements IFileSystem {
 			if(!this.exists(baseName).wait()) {
 				return baseName;
 			}
-			var extension = path.extname(baseName);
-			var prefix = path.basename(baseName, extension);
+			let extension = path.extname(baseName);
+			let prefix = path.basename(baseName, extension);
 
-			for(var i = 2; ; ++i) {
-				var numberedName = prefix + i + extension;
+			for(let i = 2; ; ++i) {
+				let numberedName = prefix + i + extension;
 				if(!this.exists(numberedName).wait()) {
 					return numberedName;
 				}
@@ -351,14 +351,14 @@ export class FileSystem implements IFileSystem {
 
 	public isEmptyDir(directoryPath: string): IFuture<boolean> {
 		return (() => {
-			var directoryContent = this.readDirectory(directoryPath).wait();
+			let directoryContent = this.readDirectory(directoryPath).wait();
 			return directoryContent.length === 0;
 		}).future<boolean>()();
 	}
 
 	public isRelativePath(p: string): boolean {
-		var normal = path.normalize(p);
-		var absolute = path.resolve(p);
+		let normal = path.normalize(p);
+		let absolute = path.resolve(p);
 		return normal !== absolute;
 	}
 
@@ -371,7 +371,7 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public rename(oldPath: string, newPath: string): IFuture<void> {
-		var future = new Future<void>();
+		let future = new Future<void>();
 		fs.rename(oldPath, newPath, (err: Error) => {
 			if(err) {
 				future.throw(err);
@@ -384,7 +384,7 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public symlink(sourcePath: string, destinationPath: string, type?: string): IFuture<void> {
-		var future = new Future<void>();
+		let future = new Future<void>();
 		fs.symlink(sourcePath, destinationPath, type, (err: Error) => {
 			if(err) {
 				future.throw(err);
@@ -396,7 +396,7 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public closeStream(stream: any): IFuture<void> {
-		var future = new Future<void>();
+		let future = new Future<void>();
 		stream.close((err: Error, data: any) => {
 			if(err) {
 				future.throw(err);
@@ -409,10 +409,10 @@ export class FileSystem implements IFileSystem {
 
 	public setCurrentUserAsOwner(path: string, owner: string): IFuture<void> {
 		return (() => {
-			var $childProcess = this.$injector.resolve("childProcess");
+			let $childProcess = this.$injector.resolve("childProcess");
 
 			if(!hostInfo.isWindows()) {
-				var chown = $childProcess.spawn('chown', ['-R', owner, path],
+				let chown = $childProcess.spawn('chown', ['-R', owner, path],
 					{ stdio: "ignore", detached: true });
 				this.futureFromEvent(chown, "close").wait();
 			}
@@ -423,10 +423,10 @@ export class FileSystem implements IFileSystem {
 // filterCallback: function(path: String, stat: fs.Stats): Boolean
 	public enumerateFilesInDirectorySync(directoryPath: string, filterCallback?: (file: string, stat: IFsStats) => boolean, foundFiles?: string[]): string[] {
 		foundFiles = foundFiles || [];
-		var contents = this.readDirectory(directoryPath).wait();
-		for (var i = 0; i < contents.length; ++i) {
-			var file = path.join(directoryPath, contents[i]);
-			var stat = this.getFsStats(file).wait();
+		let contents = this.readDirectory(directoryPath).wait();
+		for (let i = 0; i < contents.length; ++i) {
+			let file = path.join(directoryPath, contents[i]);
+			let stat = this.getFsStats(file).wait();
 			if (filterCallback && !filterCallback(file, stat)) {
 				continue;
 			}

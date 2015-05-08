@@ -14,7 +14,7 @@ import helpers = require("./../../helpers");
 import hostInfo = require("./../../host-info");
 import options = require("./../../options");
 
-var CoreTypes = iosCore.CoreTypes;
+let CoreTypes = iosCore.CoreTypes;
 
 export class IOSDevice implements Mobile.IIOSDevice {
 	private static IMAGE_ALREADY_MOUNTED_ERROR_CODE = 3892314230;
@@ -41,10 +41,10 @@ export class IOSDevice implements Mobile.IIOSDevice {
 	}
 
 	private static mountImageCallback(dictionary: NodeBuffer, user: NodeBuffer): void {
-		var coreFoundation: Mobile.ICoreFoundation = $injector.resolve("coreFoundation");
-		var logger: ILogger = $injector.resolve("logger");
+		let coreFoundation: Mobile.ICoreFoundation = $injector.resolve("coreFoundation");
+		let logger: ILogger = $injector.resolve("logger");
 
-		var jsDictionary = coreFoundation.cfTypeTo(dictionary);
+		let jsDictionary = coreFoundation.cfTypeTo(dictionary);
 		logger.info("[Mounting] %s", jsDictionary["Status"]);
 	}
 
@@ -53,13 +53,13 @@ export class IOSDevice implements Mobile.IIOSDevice {
 	}
 
 	private static showStatus(action: string, dictionary: NodeBuffer) {
-		var coreFoundation: Mobile.ICoreFoundation = $injector.resolve("coreFoundation");
-		var logger: ILogger = $injector.resolve("logger");
+		let coreFoundation: Mobile.ICoreFoundation = $injector.resolve("coreFoundation");
+		let logger: ILogger = $injector.resolve("logger");
 
-		var jsDictionary = coreFoundation.cfTypeTo(dictionary);
-		var output = [util.format("[%s]", action)];
+		let jsDictionary = coreFoundation.cfTypeTo(dictionary);
+		let output = [util.format("[%s]", action)];
 
-		var append = (value: string) => {
+		let append = (value: string) => {
 			if(jsDictionary[value]) {
 				output.push(util.format("%s: %s", value, jsDictionary[value]));
 			}
@@ -106,7 +106,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 		this.connect();
 		this.startSession();
 		try {
-			var cfValue =  this.$coreFoundation.createCFString(value);
+			let cfValue =  this.$coreFoundation.createCFString(value);
 			return this.$coreFoundation.convertCFStringToCString(this.$mobileDevice.deviceCopyValue(this.devicePointer, null, cfValue));
 		} finally {
 			this.stopSession();
@@ -125,19 +125,19 @@ export class IOSDevice implements Mobile.IIOSDevice {
 	}
 
 	private pair(): number {
-		var result = this.$mobileDevice.devicePair(this.devicePointer);
+		let result = this.$mobileDevice.devicePair(this.devicePointer);
 		this.validateResult(result, "If your phone is locked with a passcode, unlock then reconnect it");
 		return result;
 	}
 
 	private validatePairing() : number{
-		var result = this.$mobileDevice.deviceValidatePairing(this.devicePointer);
+		let result = this.$mobileDevice.deviceValidatePairing(this.devicePointer);
 		this.validateResult(result, "Unable to validate pairing");
 		return result;
 	}
 
 	private connect() : number {
-		var result = this.$mobileDevice.deviceConnect(this.devicePointer);
+		let result = this.$mobileDevice.deviceConnect(this.devicePointer);
 		this.validateResult(result, "Unable to connect to device");
 
 		if (!this.isPaired()) {
@@ -148,34 +148,34 @@ export class IOSDevice implements Mobile.IIOSDevice {
 	}
 
 	private disconnect() {
-		var result = this.$mobileDevice.deviceDisconnect(this.devicePointer);
+		let result = this.$mobileDevice.deviceDisconnect(this.devicePointer);
 		this.validateResult(result, "Unable to disconnect from device");
 	}
 
 	private startSession() {
-		var result = this.$mobileDevice.deviceStartSession(this.devicePointer);
+		let result = this.$mobileDevice.deviceStartSession(this.devicePointer);
 		this.validateResult(result, "Unable to start session");
 	}
 
 	private stopSession() {
-		var result = this.$mobileDevice.deviceStopSession(this.devicePointer);
+		let result = this.$mobileDevice.deviceStopSession(this.devicePointer);
 		this.validateResult(result, "Unable to stop session");
 	}
 
 	private getDeviceValue(value: string): string {
-		var deviceCopyValue = this.$mobileDevice.deviceCopyValue(this.devicePointer, null, this.$coreFoundation.createCFString(value));
+		let deviceCopyValue = this.$mobileDevice.deviceCopyValue(this.devicePointer, null, this.$coreFoundation.createCFString(value));
 		return this.$coreFoundation.convertCFStringToCString(deviceCopyValue);
 	}
 
 	private lookupApplications(): IDictionary<any> {
-		var func = () => {
-			var dictionaryPointer = ref.alloc(CoreTypes.cfDictionaryRef);
-			var result = this.$mobileDevice.deviceLookupApplications(this.devicePointer, 0, dictionaryPointer);
+		let func = () => {
+			let dictionaryPointer = ref.alloc(CoreTypes.cfDictionaryRef);
+			let result = this.$mobileDevice.deviceLookupApplications(this.devicePointer, 0, dictionaryPointer);
 			if(result !== 0) {
 				this.$errors.fail("Invalid result code %s from device lookup applications.", result);
 			}
-			var cfDictionary = dictionaryPointer.deref();
-			var jsDictionary = this.$coreFoundation.cfTypeTo(cfDictionary);
+			let cfDictionary = dictionaryPointer.deref();
+			let jsDictionary = this.$coreFoundation.cfTypeTo(cfDictionary);
 			return jsDictionary;
 		}
 
@@ -184,7 +184,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 
 	private findDeveloperDirectory(): IFuture<string> {
 		return (() => {
-			var childProcess = this.$childProcess.spawnFromEvent("xcode-select", ["-print-path"], "close").wait();
+			let childProcess = this.$childProcess.spawnFromEvent("xcode-select", ["-print-path"], "close").wait();
 			return childProcess.stdout.trim();
 		}).future<string>()();
 	}
@@ -205,24 +205,24 @@ export class IOSDevice implements Mobile.IIOSDevice {
 
 	private findDeveloperDiskImageDirectoryPath(): IFuture<string> {
 		return (() => {
-			var developerDirectory = this.findDeveloperDirectory().wait();
-			var buildVersion = this.getDeviceValue("BuildVersion");
-			var productVersion = this.getDeviceValue("ProductVersion");
-			var productVersionParts = productVersion.split(".");
-			var productMajorVersion = productVersionParts[0];
-			var productMinorVersion = productVersionParts[1];
+			let developerDirectory = this.findDeveloperDirectory().wait();
+			let buildVersion = this.getDeviceValue("BuildVersion");
+			let productVersion = this.getDeviceValue("ProductVersion");
+			let productVersionParts = productVersion.split(".");
+			let productMajorVersion = productVersionParts[0];
+			let productMinorVersion = productVersionParts[1];
 
-			var developerDiskImagePath = path.join(developerDirectory, "Platforms", "iPhoneOS.platform", "DeviceSupport");
-			var supportPaths = this.$fs.readDirectory(developerDiskImagePath).wait();
+			let developerDiskImagePath = path.join(developerDirectory, "Platforms", "iPhoneOS.platform", "DeviceSupport");
+			let supportPaths = this.$fs.readDirectory(developerDiskImagePath).wait();
 
-			var supportPath: any = null;
+			let supportPath: any = null;
 
 			_.each(supportPaths, (sp: string) => {
-				var parts = sp.split(' ');
-				var version = parts[0];
-				var versionParts = version.split(".");
+				let parts = sp.split(' ');
+				let version = parts[0];
+				let versionParts = version.split(".");
 
-				var supportPathData = {
+				let supportPathData = {
 					version: version,
 					majorVersion: versionParts[0],
 					minorVersion: versionParts[1],
@@ -260,19 +260,19 @@ export class IOSDevice implements Mobile.IIOSDevice {
 
 	private mountImage(): IFuture<void> {
 		return (() => {
-			var imagePath = options.ddi;
+			let imagePath = options.ddi;
 
 			if(hostInfo.isWindows()) {
 				if(!imagePath) {
 					this.$errors.fail("On windows operating system you must specify the path to developer disk image using --ddi option");
 				}
 
-				var imageSignature = this.$fs.readFile(util.format("%s.signature", imagePath)).wait();
-				var imageSize = this.$fs.getFsStats(imagePath).wait().size;
+				let imageSignature = this.$fs.readFile(util.format("%s.signature", imagePath)).wait();
+				let imageSize = this.$fs.getFsStats(imagePath).wait().size;
 
-				var imageMounterService = this.startService(iOSProxyServices.MobileServices.MOBILE_IMAGE_MOUNTER);
-				var plistService: Mobile.IiOSDeviceSocket = this.$injector.resolve(iosCore.PlistService, { service: imageMounterService, format: CoreTypes.kCFPropertyListXMLFormat_v1_0 });
-				var result = plistService.exchange({
+				let imageMounterService = this.startService(iOSProxyServices.MobileServices.MOBILE_IMAGE_MOUNTER);
+				let plistService: Mobile.IiOSDeviceSocket = this.$injector.resolve(iosCore.PlistService, { service: imageMounterService, format: CoreTypes.kCFPropertyListXMLFormat_v1_0 });
+				let result = plistService.exchange({
 					Command: "ReceiveBytes",
 					ImageSize: imageSize,
 					ImageType: "Developer",
@@ -280,11 +280,11 @@ export class IOSDevice implements Mobile.IIOSDevice {
 				}).wait();
 
 				if(result.Status === "ReceiveBytesAck") {
-					var fileData = this.$fs.readFile(imagePath).wait();
+					let fileData = this.$fs.readFile(imagePath).wait();
 					plistService.sendAll(fileData);
 				} else {
-					var afcService = this.startService(iOSProxyServices.MobileServices.APPLE_FILE_CONNECTION);
-					var afcClient = this.$injector.resolve(iOSProxyServices.AfcClient, {service: afcService});
+					let afcService = this.startService(iOSProxyServices.MobileServices.APPLE_FILE_CONNECTION);
+					let afcClient = this.$injector.resolve(iOSProxyServices.AfcClient, {service: afcService});
 					afcClient.transfer(imagePath, "PublicStaging/staging.dimage").wait();
 				}
 
@@ -293,7 +293,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 						Command: "MountImage",
 						ImageType: "Developer",
 						ImageSignature: imageSignature,
-						ImagePath: "/var/mobile/Media/PublicStaging/staging.dimage"
+						ImagePath: "/let/mobile/Media/PublicStaging/staging.dimage"
 					}).wait();
 
 					if(result.Error) {
@@ -306,20 +306,20 @@ export class IOSDevice implements Mobile.IIOSDevice {
 					plistService.close();
 				}
 			} else {
-				var func = () => {
-					var developerDiskImageDirectoryPath = this.findDeveloperDiskImageDirectoryPath().wait();
-					var imagePath = path.join(developerDiskImageDirectoryPath, "DeveloperDiskImage.dmg");
+				let func = () => {
+					let developerDiskImageDirectoryPath = this.findDeveloperDiskImageDirectoryPath().wait();
+					let imagePath = path.join(developerDiskImageDirectoryPath, "DeveloperDiskImage.dmg");
 					this.$logger.info("Mounting %s", imagePath);
 
-					var signature = this.$fs.readFile(util.format("%s.signature", imagePath)).wait();
-					var cfImagePath = this.$coreFoundation.createCFString(imagePath);
+					let signature = this.$fs.readFile(util.format("%s.signature", imagePath)).wait();
+					let cfImagePath = this.$coreFoundation.createCFString(imagePath);
 
-					var cfOptions = this.$coreFoundation.cfTypeFrom({
+					let cfOptions = this.$coreFoundation.cfTypeFrom({
 						ImageType: "Developer",
 						ImageSignature: signature
 					});
 
-					var result = this.$mobileDevice.deviceMountImage(this.devicePointer, cfImagePath, cfOptions, this.mountImageCallbackPtr);
+					let result = this.$mobileDevice.deviceMountImage(this.devicePointer, cfImagePath, cfOptions, this.mountImageCallbackPtr);
 
 					if (result !== 0 && result !== IOSDevice.IMAGE_ALREADY_MOUNTED_ERROR_CODE) { // 3892314230 - already mounted
 						if(result === IOSDevice.INCOMPATIBLE_IMAGE_SIGNATURE_ERROR_CODE) { // 3892314163
@@ -340,10 +340,10 @@ export class IOSDevice implements Mobile.IIOSDevice {
 	}
 
 	private startHouseArrestService(bundleId: string): number {
-		var func = () => {
-			var fdRef = ref.alloc("int");
-			var result = this.$mobileDevice.deviceStartHouseArrestService(this.devicePointer, this.$coreFoundation.createCFString(bundleId), null, fdRef);
-			var fd = fdRef.deref();
+		let func = () => {
+			let fdRef = ref.alloc("int");
+			let result = this.$mobileDevice.deviceStartHouseArrestService(this.devicePointer, this.$coreFoundation.createCFString(bundleId), null, fdRef);
+			let fd = fdRef.deref();
 
 			if(result !== 0) {
 				this.$errors.fail("AMDeviceStartHouseArrestService returned %s", result);
@@ -356,9 +356,9 @@ export class IOSDevice implements Mobile.IIOSDevice {
 	}
 
 	public startService(serviceName: string): number {
-		var func = () => {
-			var socket = ref.alloc("int");
-			var result = this.$mobileDevice.deviceStartService(this.devicePointer, this.$coreFoundation.createCFString(serviceName), socket);
+		let func = () => {
+			let socket = ref.alloc("int");
+			let result = this.$mobileDevice.deviceStartService(this.devicePointer, this.$coreFoundation.createCFString(serviceName), socket);
 			this.validateResult(result, "Unable to start service");
 			return ref.deref(socket);
 		}
@@ -368,7 +368,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 
 	public deploy(packageFile: string, packageName: string): IFuture<void> {
 		return (() => {
-			var installationProxy = this.$injector.resolve(iOSProxyServices.InstallationProxyClient, {device: this });
+			let installationProxy = this.$injector.resolve(iOSProxyServices.InstallationProxyClient, {device: this });
 			installationProxy.deployApplication(packageFile).wait();
 			installationProxy.closeSocket();
 		}).future<void>()();
@@ -377,17 +377,17 @@ export class IOSDevice implements Mobile.IIOSDevice {
 	public sync(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, liveSyncUrl: string, options: Mobile.ISyncOptions = {}): IFuture<void> {
 		return(() => {
 			//TODO: CloseSocket must be part of afcClient. Refactor it.
-			var houseArrestClient: Mobile.IHouseArrestClient = this.$injector.resolve(iOSProxyServices.HouseArrestClient, {device: this});
-			var afcClientForContainer = houseArrestClient.getAfcClientForAppContainer(appIdentifier.appIdentifier);
+			let houseArrestClient: Mobile.IHouseArrestClient = this.$injector.resolve(iOSProxyServices.HouseArrestClient, {device: this});
+			let afcClientForContainer = houseArrestClient.getAfcClientForAppContainer(appIdentifier.appIdentifier);
 			afcClientForContainer.transferCollection(localToDevicePaths).wait();
 			houseArrestClient.closeSocket();
 
 			if (!options.skipRefresh) {
-				var afcClientForContainer = houseArrestClient.getAfcClientForAppContainer(appIdentifier.appIdentifier);
+				let afcClientForContainer = houseArrestClient.getAfcClientForAppContainer(appIdentifier.appIdentifier);
 				afcClientForContainer.deleteFile("/Library/Preferences/ServerInfo.plist");
 				houseArrestClient.closeSocket();
 
-				var notificationProxyClient = this.$injector.resolve(iOSProxyServices.NotificationProxyClient, {device: this});
+				let notificationProxyClient = this.$injector.resolve(iOSProxyServices.NotificationProxyClient, {device: this});
 				notificationProxyClient.postNotification("com.telerik.app.refreshWebView");
 				notificationProxyClient.closeSocket();
 			}
@@ -398,7 +398,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 	}
 
 	public openDeviceLogStream() {
-		var iOSSystemLog = this.$injector.resolve(iOSProxyServices.IOSSyslog, {device: this});
+		let iOSSystemLog = this.$injector.resolve(iOSProxyServices.IOSSyslog, {device: this});
 		iOSSystemLog.read();
 	}
 
@@ -414,19 +414,19 @@ export class IOSDevice implements Mobile.IIOSDevice {
 				this.$errors.fail("$%s device run command is not supported on Windows for iOS devices.", this.$staticConfig.CLIENT_NAME.toLowerCase());
 			}
 
-			var applications = this.lookupApplications();
-			var application = applications[applicationId];
+			let applications = this.lookupApplications();
+			let application = applications[applicationId];
 			if(!application) {
-				var sortedKeys = _.sortBy(_.keys(applications));
+				let sortedKeys = _.sortBy(_.keys(applications));
 				this.$errors.fail("Invalid application id: %s. All available application ids are: %s%s ", applicationId, os.EOL, sortedKeys.join(os.EOL));
 			}
 
 			this.mountImage().wait();
 
-			var service = this.startService(iOSProxyServices.MobileServices.DEBUG_SERVER);
-			var socket = hostInfo.isWindows() ? service :  new net.Socket({ fd: service });
-			var gdbServer = this.$injector.resolve(iosCore.GDBServer, { socket: socket });
-			var executable = util.format("%s/%s", application.Path, application.CFBundleExecutable);
+			let service = this.startService(iOSProxyServices.MobileServices.DEBUG_SERVER);
+			let socket = hostInfo.isWindows() ? service :  new net.Socket({ fd: service });
+			let gdbServer = this.$injector.resolve(iosCore.GDBServer, { socket: socket });
+			let executable = util.format("%s/%s", application.Path, application.CFBundleExecutable);
 
 			gdbServer.run([executable]);
 
@@ -436,9 +436,9 @@ export class IOSDevice implements Mobile.IIOSDevice {
 
 	public uninstallApplication(applicationId: string): IFuture<void> {
 		return (() => {
-			var afc = this.startService(iOSProxyServices.MobileServices.INSTALLATION_PROXY);
+			let afc = this.startService(iOSProxyServices.MobileServices.INSTALLATION_PROXY);
 			try {
-				var result = this.$mobileDevice.deviceUninstallApplication(afc, this.$coreFoundation.createCFString(applicationId), null, this.uninstallApplicationCallbackPtr);
+				let result = this.$mobileDevice.deviceUninstallApplication(afc, this.$coreFoundation.createCFString(applicationId), null, this.uninstallApplicationCallbackPtr);
 				if(result !== 0) {
 					this.$errors.fail("AMDeviceUninstallApplication returned '%d'.", result);
 				}
@@ -451,13 +451,13 @@ export class IOSDevice implements Mobile.IIOSDevice {
 	}
 
 	public connectToPort(port: number): net.Socket {
-		var interfaceType = this.getInterfaceType();
+		let interfaceType = this.getInterfaceType();
 		if(interfaceType === IOSDevice.INTERFACE_USB) {
-			var connectionId = this.$mobileDevice.deviceGetConnectionId(this.devicePointer);
-			var socketRef = ref.alloc(CoreTypes.intType);
+			let connectionId = this.$mobileDevice.deviceGetConnectionId(this.devicePointer);
+			let socketRef = ref.alloc(CoreTypes.intType);
 
 			this.$mobileDevice.uSBMuxConnectByPort(connectionId, this.htons(port), socketRef);
-			var socketValue = socketRef.deref();
+			let socketValue = socketRef.deref();
 
 			return new net.Socket({ fd: socketValue });
 		}
@@ -469,26 +469,26 @@ export class IOSDevice implements Mobile.IIOSDevice {
 	 * Converts a little endian 16 bit int number to 16 bit int big endian number.
 	 */
 	private htons(port: number): number {
-		var result =  (port & 0xff00) >> 8 | (port & 0x00ff) << 8;
+		let result =  (port & 0xff00) >> 8 | (port & 0x00ff) << 8;
 		return result;
 	}
 
 	private resolveAfc(): Mobile.IAfcClient {
-		var service = options.app ? this.startHouseArrestService(options.app) : this.startService(iOSProxyServices.MobileServices.APPLE_FILE_CONNECTION);
-		var afcClient:Mobile.IAfcClient = this.$injector.resolve(iOSProxyServices.AfcClient, {service: service});
+		let service = options.app ? this.startHouseArrestService(options.app) : this.startService(iOSProxyServices.MobileServices.APPLE_FILE_CONNECTION);
+		let afcClient:Mobile.IAfcClient = this.$injector.resolve(iOSProxyServices.AfcClient, {service: service});
 		return afcClient;
 	}
 
 	public getFile(deviceFilePath: string): IFuture<void> {
 		return (() => {
-			var afcClient = this.resolveAfc();
-			var fileToRead = afcClient.open(deviceFilePath, "r");
-			var fileToWrite = options.file ? this.$fs.createWriteStream(options.file) : process.stdout;
-			var dataSizeToRead = 8192;
-			var size = 0;
+			let afcClient = this.resolveAfc();
+			let fileToRead = afcClient.open(deviceFilePath, "r");
+			let fileToWrite = options.file ? this.$fs.createWriteStream(options.file) : process.stdout;
+			let dataSizeToRead = 8192;
+			let size = 0;
 
 			while(true) {
-				var data = fileToRead.read(dataSizeToRead);
+				let data = fileToRead.read(dataSizeToRead);
 				if(!data || data.length === 0) {
 					break;
 				}
@@ -503,7 +503,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 	}
 
 	public putFile(localFilePath: string, deviceFilePath: string): IFuture<void> {
-		var afcClient = this.resolveAfc();
+		let afcClient = this.resolveAfc();
 		return afcClient.transfer(path.resolve(localFilePath), deviceFilePath);
 	}
 
@@ -515,11 +515,11 @@ export class IOSDevice implements Mobile.IIOSDevice {
 
 			this.$logger.info("Listing %s", devicePath);
 
-			var afcClient = this.resolveAfc();
+			let afcClient = this.resolveAfc();
 
-			var walk = (root:string, indent:number) => {
+			let walk = (root:string, indent:number) => {
 				this.$logger.info(util.format("%s %s", Array(indent).join(" "), root));
-				var children:string[] = [];
+				let children:string[] = [];
 				try {
 					children = afcClient.listDir(root);
 				} catch (e) {

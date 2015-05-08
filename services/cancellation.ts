@@ -1,10 +1,10 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 
-var gaze = require("gaze");
+let gaze = require("gaze");
 import path = require("path");
 import os = require("os");
-var options: any = require("../options");
+let options: any = require("../options");
 import Future = require("fibers/future");
 
 export class CancellationService implements ICancellationService {
@@ -19,17 +19,17 @@ export class CancellationService implements ICancellationService {
 
 	public begin(name: string): IFuture<void> {
 		return (() => {
-			var triggerFile = CancellationService.makeKillSwitchFileName(name);
+			let triggerFile = CancellationService.makeKillSwitchFileName(name);
 
-			var stream = this.$fs.createWriteStream(triggerFile);
-			var streamEnd = this.$fs.futureFromEvent(stream, "finish");
+			let stream = this.$fs.createWriteStream(triggerFile);
+			let streamEnd = this.$fs.futureFromEvent(stream, "finish");
 			stream.end();
 			streamEnd.wait();
 			this.$fs.chmod(triggerFile, "0777").wait();
 
 			this.$logger.trace("Starting watch on killswitch %s", triggerFile);
 
-			var watcherInitialized = new Future<IWatcherInstance>();
+			let watcherInitialized = new Future<IWatcherInstance>();
 
 			gaze(triggerFile, function(err: any, watcher: any) {
 				this.on("deleted", (filePath: string) => process.exit());
@@ -40,7 +40,7 @@ export class CancellationService implements ICancellationService {
 				}
 			});
 
-			var watcher = watcherInitialized.wait();
+			let watcher = watcherInitialized.wait();
 
 			if (watcher) {
 				this.watches[name] = watcher;
@@ -49,7 +49,7 @@ export class CancellationService implements ICancellationService {
 	}
 
 	public end(name: string): void {
-		var watcher = this.watches[name];
+		let watcher = this.watches[name];
 		delete this.watches[name];
 		watcher.close();
 	}

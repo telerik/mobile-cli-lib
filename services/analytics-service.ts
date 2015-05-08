@@ -32,9 +32,9 @@ export class AnalyticsService implements IAnalyticsService {
 						+ this.$analyticsSettingsService.getClientName()
 						+ " by automatically sending anonymous usage statistics? We will not use this information to identify or contact you."
 						+ " You can read our official Privacy Policy at");
-					var message = this.$analyticsSettingsService.getPrivacyPolicyLink();
+					let message = this.$analyticsSettingsService.getPrivacyPolicyLink();
 
-					var trackFeatureUsage = this.$prompter.confirm(message, () => true).wait();
+					let trackFeatureUsage = this.$prompter.confirm(message, () => true).wait();
 					this.setAnalyticsStatus(trackFeatureUsage).wait();
 				}
 			}
@@ -47,7 +47,7 @@ export class AnalyticsService implements IAnalyticsService {
 				try {
 					this.start().wait();
 					if(this._eqatecMonitor) {
-						var category = options.client ||
+						let category = options.client ||
 							(helpers.isInteractive() ? "CLI" : "Non-interactive");
 						this._eqatecMonitor.trackFeature(category + "." + featureName);
 					}
@@ -105,10 +105,10 @@ export class AnalyticsService implements IAnalyticsService {
 	private getAnalyticsStatus(): IFuture<AnalyticsStatus> {
 		return (() => {
 			if(!this.analyticsStatus) {
-				var trackFeatureUsage = this.$userSettingsService.getSettingValue<string>(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME).wait();
+				let trackFeatureUsage = this.$userSettingsService.getSettingValue<string>(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME).wait();
 
 				if(trackFeatureUsage) {
-					var isEnabled = helpers.toBoolean(trackFeatureUsage);
+					let isEnabled = helpers.toBoolean(trackFeatureUsage);
 					if(isEnabled) {
 						this.analyticsStatus = AnalyticsStatus.enabled;
 					} else {
@@ -131,7 +131,7 @@ export class AnalyticsService implements IAnalyticsService {
 
 			require("../vendor/EqatecMonitor");
 
-			var settings = global._eqatec.createSettings(this.$staticConfig.ANALYTICS_API_KEY);
+			let settings = global._eqatec.createSettings(this.$staticConfig.ANALYTICS_API_KEY);
 			settings.useHttps = false;
 			settings.userAgent = this.getUserAgentString();
 			settings.version = this.$staticConfig.version;
@@ -142,7 +142,7 @@ export class AnalyticsService implements IAnalyticsService {
 
 			this._eqatecMonitor = global._eqatec.createMonitor(settings);
 
-			var guid = this.$userSettingsService.getSettingValue(this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME).wait();
+			let guid = this.$userSettingsService.getSettingValue(this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME).wait();
 			if(!guid) {
 				guid = helpers.createGUID(false);
 				this.$userSettingsService.saveSetting(this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME, guid).wait();
@@ -163,13 +163,13 @@ export class AnalyticsService implements IAnalyticsService {
 	}
 
 	private reportNodeVersion() {
-		var reportedVersion: string = process.version.slice(1).replace(/[.]/g, "_");
+		let reportedVersion: string = process.version.slice(1).replace(/[.]/g, "_");
 		this._eqatecMonitor.trackFeature("NodeJSVersion." + reportedVersion);
 	}
 
 	private getUserAgentString(): string {
-		var userAgentString: string;
-		var osType = os.type();
+		let userAgentString: string;
+		let osType = os.type();
 		if(osType === "Windows_NT") {
 			userAgentString = "(Windows NT " + os.release() + ")";
 		} else if(osType === "Darwin") {
@@ -193,21 +193,21 @@ export class AnalyticsService implements IAnalyticsService {
 
 	public isEnabled(): IFuture<boolean> {
 		return (() => {
-			var analyticsStatus = this.getAnalyticsStatus().wait();
+			let analyticsStatus = this.getAnalyticsStatus().wait();
 			return analyticsStatus === AnalyticsStatus.enabled;
 		}).future<boolean>()();
 	}
 
 	private isDisabled(): IFuture<boolean> {
 		return (() => {
-			var analyticsStatus = this.getAnalyticsStatus().wait();
+			let analyticsStatus = this.getAnalyticsStatus().wait();
 			return analyticsStatus === AnalyticsStatus.disabled;
 		}).future<boolean>()();
 	}
 
 	private isNotConfirmed(): IFuture<boolean> {
 		return (() => {
-			var analyticsStatus = this.getAnalyticsStatus().wait();
+			let analyticsStatus = this.getAnalyticsStatus().wait();
 			return analyticsStatus === AnalyticsStatus.notConfirmed;
 		}).future<boolean>()();
 	}
@@ -222,7 +222,7 @@ export class AnalyticsService implements IAnalyticsService {
 
 	private getHumanReadableStatusMessage(): IFuture<string> {
 		return (() => {
-			var status: string = null;
+			let status: string = null;
 
 			if(this.isNotConfirmed().wait()) {
 				status = "disabled until confirmed";
@@ -236,8 +236,8 @@ export class AnalyticsService implements IAnalyticsService {
 
 	private getJsonStatusMessage(): IFuture<string> {
 		return (() => {
-			var status = this.getAnalyticsStatus().wait();
-			var enabled = status === AnalyticsStatus.notConfirmed ? null : status === AnalyticsStatus.disabled ? false : true;
+			let status = this.getAnalyticsStatus().wait();
+			let enabled = status === AnalyticsStatus.notConfirmed ? null : status === AnalyticsStatus.disabled ? false : true;
 			return JSON.stringify({ enabled: enabled });
 		}).future<string>()();
 	}

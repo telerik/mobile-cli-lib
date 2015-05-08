@@ -27,7 +27,7 @@ export class StringParameterBuilder implements IStringParameterBuilder {
 	constructor(private $injector: IInjector) { }
 
 	public createMandatoryParameter(errorMsg: string) : ICommandParameter {
-		var commandParameter = new StringCommandParameter(this.$injector);
+		let commandParameter = new StringCommandParameter(this.$injector);
 		commandParameter.mandatory = true;
 		commandParameter.errorMessage = errorMsg;
 

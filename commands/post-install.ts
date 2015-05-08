@@ -34,8 +34,8 @@ export class PostInstallCommand implements ICommand {
 
 			this.$htmlHelpService.generateHtmlPages().wait();
 
-			var sysInfo = this.$sysInfo.getSysInfo();
-			var isNativeScript = this.$staticConfig.CLIENT_NAME === "tns";
+			let sysInfo = this.$sysInfo.getSysInfo();
+			let isNativeScript = this.$staticConfig.CLIENT_NAME === "tns";
 			if (isNativeScript) {
 				this.printNSWarnings(sysInfo);
 			} else {

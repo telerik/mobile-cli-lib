@@ -15,7 +15,7 @@ export class Logger implements ILogger {
 	private requestBodyRegex = /^\"(.*?)\"$/;
 	
 	constructor($config: Config.IConfig) {
-		var appenders: log4js.IAppender[] = [];
+		let appenders: log4js.IAppender[] = [];
 
 		if (!$config.CI_LOGGER) {
 			appenders.push({
@@ -50,15 +50,15 @@ export class Logger implements ILogger {
 	}
 
 	error(...args: string[]): void {
-		var message = util.format.apply(null, args);
-		var colorizedMessage = message.red;
+		let message = util.format.apply(null, args);
+		let colorizedMessage = message.red;
 
 		this.log4jsLogger.error.apply(this.log4jsLogger, [colorizedMessage]);
 	}
 
 	warn(...args: string[]): void {
-		var message = util.format.apply(null, args);
-		var colorizedMessage = message.yellow;
+		let message = util.format.apply(null, args);
+		let colorizedMessage = message.yellow;
 
 		this.log4jsLogger.warn.apply(this.log4jsLogger, [colorizedMessage]);
 	}
@@ -68,12 +68,12 @@ export class Logger implements ILogger {
 	}
 
 	debug(...args: string[]): void {
-		var encodedArgs: string[] = this.getPasswordEncodedArguments(args);
+		let encodedArgs: string[] = this.getPasswordEncodedArguments(args);
 		this.log4jsLogger.debug.apply(this.log4jsLogger, encodedArgs);
 	}
 
 	trace(...args: string[]): void {
-		var encodedArgs: string[] = this.getPasswordEncodedArguments(args);
+		let encodedArgs: string[] = this.getPasswordEncodedArguments(args);
 		this.log4jsLogger.trace.apply(this.log4jsLogger, encodedArgs);
 	}
 
@@ -107,7 +107,7 @@ export class Logger implements ILogger {
 	}
 
 	public printMsgWithTimeout(message: string, timeout: number): IFuture <void> {
-		var printMsgFuture = new Future<void>();
+		let printMsgFuture = new Future<void>();
 		setTimeout(() => {
 			this.printInfoMessageOnSameLine(message);
 			printMsgFuture.return();
@@ -122,14 +122,14 @@ export class Logger implements ILogger {
 				return argument;
 			}
 
-			var passwordMatch = this.passwordRegex.exec(argument);
+			let passwordMatch = this.passwordRegex.exec(argument);
 			if (passwordMatch) {
-				var password = passwordMatch[1] || passwordMatch[3];
+				let password = passwordMatch[1] || passwordMatch[3];
 				return this.getHiddenPassword(password, argument);
 			}
 
 			if (this.encodeBody) {
-				var bodyMatch = this.requestBodyRegex.exec(argument);
+				let bodyMatch = this.requestBodyRegex.exec(argument);
 				if (bodyMatch) {
 					return this.getHiddenPassword(bodyMatch[1], argument);
 				}

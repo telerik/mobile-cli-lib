@@ -12,8 +12,8 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 
 	public start(deviceIdentifier: string, adbPath: string): any {
 		this.$childProcess.exec(util.format("%s -s %s logcat -c", adbPath, deviceIdentifier)).wait(); // remove cached logs
-		var adbLogcat = this.$childProcess.spawn(adbPath, ["-s", deviceIdentifier, "logcat"]);
-		var lineStream = byline(adbLogcat.stdout);
+		let adbLogcat = this.$childProcess.spawn(adbPath, ["-s", deviceIdentifier, "logcat"]);
+		let lineStream = byline(adbLogcat.stdout);
 
 		adbLogcat.stderr.on("data", (data: NodeBuffer) => {
 			this.$logger.trace("ADB logcat stderr: " + data.toString());
@@ -26,7 +26,7 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 		});
 
 		lineStream.on('data', (line: NodeBuffer) => {
-			var lineText = line.toString();
+			let lineText = line.toString();
 			this.$logcatPrinter.print(lineText);
 		});
 

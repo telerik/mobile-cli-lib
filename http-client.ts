@@ -24,10 +24,10 @@ export class HttpClient implements Server.IHttpClient {
 				}
 			}
 
-			var unmodifiedOptions = _.clone(options);
+			let unmodifiedOptions = _.clone(options);
 
 			if (options.url) {
-				var urlParts = Url.parse(options.url);
+				let urlParts = Url.parse(options.url);
 				if (urlParts.protocol) {
 					options.proto = urlParts.protocol.slice(0, -1);
 				}
@@ -37,18 +37,18 @@ export class HttpClient implements Server.IHttpClient {
 				delete options.url;
 			}
 
-			var requestProto = options.proto || "http";
+			let requestProto = options.proto || "http";
 			delete options.proto;
-			var body = options.body;
+			let body = options.body;
 			delete options.body;
-			var pipeTo = options.pipeTo;
+			let pipeTo = options.pipeTo;
 			delete options.pipeTo;
 
-			var proto = this.$config.USE_PROXY ? "http" : requestProto;
-			var http = require(proto);
+			let proto = this.$config.USE_PROXY ? "http" : requestProto;
+			let http = require(proto);
 
 			options.headers = options.headers || {};
-			var headers = options.headers;
+			let headers = options.headers;
 
 			if(this.$config.USE_PROXY) {
 				options.path = requestProto + "://" + options.host + options.path;
@@ -84,19 +84,19 @@ export class HttpClient implements Server.IHttpClient {
 				headers["Accept-Encoding"] = "gzip,deflate";
 			}
 
-			var result = new Future<Server.IResponse>();
+			let result = new Future<Server.IResponse>();
 
 			this.$logger.trace("httpRequest: %s", util.inspect(options));
 
-			var request = http.request(options, (response: Server.IRequestResponseData) => {
-				var data: string[] = [];
-				var isRedirect = helpers.isResponseRedirect(response);
-				var successful = helpers.isRequestSuccessful(response);
+			let request = http.request(options, (response: Server.IRequestResponseData) => {
+				let data: string[] = [];
+				let isRedirect = helpers.isResponseRedirect(response);
+				let successful = helpers.isRequestSuccessful(response);
 				if (!successful) {
 					pipeTo = undefined;
 				}
 
-				var responseStream = response;
+				let responseStream = response;
 				switch (response.headers['content-encoding']) {
 					case 'gzip':
 						responseStream = responseStream.pipe(zlib.createGunzip());
@@ -127,7 +127,7 @@ export class HttpClient implements Server.IHttpClient {
 
 					responseStream.on("end", () => {
 						this.$logger.trace("httpRequest: Done. code = %d", response.statusCode.toString());
-						var body = data.join("");
+						let body = data.join("");
 
 						if (successful || isRedirect) {
 							if(!result.isResolved()) {
@@ -138,8 +138,8 @@ export class HttpClient implements Server.IHttpClient {
 								});
 							}
 						} else {
-							var errorMessage = this.getErrorMessage(response, body);
-							var theError: any = new Error(errorMessage);
+							let errorMessage = this.getErrorMessage(response, body);
+							let theError: any = new Error(errorMessage);
 							theError.response = response;
 							theError.body = body;
 							result.throw(theError);
@@ -162,7 +162,7 @@ export class HttpClient implements Server.IHttpClient {
 				body.pipe(request);
 			}
 
-			var response = result.wait();
+			let response = result.wait();
 			if(helpers.isResponseRedirect(response.response)) {
 				if (response.response.statusCode == 303) {
 					unmodifiedOptions.method = "GET";
@@ -179,17 +179,17 @@ export class HttpClient implements Server.IHttpClient {
 
 	private trackDownloadProgress(pipeTo: NodeJS.WritableStream): NodeJS.ReadableStream {
 		// \r for carriage return doesn't work on windows in node for some reason so we have to use it's hex representation \x1B[0G
-		var lastMessageSize = 0,
+		let lastMessageSize = 0,
 			carriageReturn = "\x1B[0G",
 			timeElapsed = 0;
 
-		var progressStream = progress({ time: 1000 }, (progress: any) => {
+		let progressStream = progress({ time: 1000 }, (progress: any) => {
 			timeElapsed = progress.runtime;
 
 			if (timeElapsed >= 1) {
 				this.$logger.write("%s%s", carriageReturn, Array(lastMessageSize + 1).join(' '));
 
-				var message = util.format("%sDownload progress ... %s | %s | %s/s",
+				let message = util.format("%sDownload progress ... %s | %s | %s/s",
 					carriageReturn,
 						Math.floor(progress.percentage) + '%',
 					filesize(progress.transferred),
@@ -212,12 +212,12 @@ export class HttpClient implements Server.IHttpClient {
 
 	private getErrorMessage(response: Server.IRequestResponseData, body: string): string {
 		if (response.statusCode === 402) {
-			var subscriptionUrl = util.format("%s://%s/appbuilder/account/subscription", this.$config.AB_SERVER_PROTO, this.$config.AB_SERVER);
+			let subscriptionUrl = util.format("%s://%s/appbuilder/account/subscription", this.$config.AB_SERVER_PROTO, this.$config.AB_SERVER);
 			return util.format("Your subscription has expired. Go to %s to manage your subscription. Note: After you renew your subscription, " +
 				"log out and log back in for the changes to take effect.", subscriptionUrl);
 		} else {
 			try {
-				var err = JSON.parse(body);
+				let err = JSON.parse(body);
 
 				if (_.isString(err)) {
 					return err;

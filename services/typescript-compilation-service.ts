@@ -33,16 +33,16 @@ export class TypeScriptCompilationService implements ITypeScriptCompilationServi
 		return (() => {
 			if(this.typeScriptFiles.length > 0) {
 				// Create typeScript command file
-				var typeScriptCommandsFilePath = path.join(temp.mkdirSync("typeScript-compilation"), "tscommand.txt");
-				var typeScriptCompilerOptions = this.getTypeScriptCompilerOptions().wait();
-				var typeScriptDefinitionsFiles = this.getTypeScriptDefinitionsFiles().wait();
+				let typeScriptCommandsFilePath = path.join(temp.mkdirSync("typeScript-compilation"), "tscommand.txt");
+				let typeScriptCompilerOptions = this.getTypeScriptCompilerOptions().wait();
+				let typeScriptDefinitionsFiles = this.getTypeScriptDefinitionsFiles().wait();
 				this.$fs.writeFile(typeScriptCommandsFilePath, this.typeScriptFiles.concat(typeScriptDefinitionsFiles).concat(typeScriptCompilerOptions).join(' ')).wait();
 
 				// Get the path to tsc
-				var typeScriptModuleFilePath = require.resolve("typescript");
-				var typeScriptModuleDirPath = path.dirname(typeScriptModuleFilePath);
-				var typeScriptCompilerPath = path.join(typeScriptModuleDirPath, "tsc");
-				var typeScriptCompilerVersion = this.$fs.readJson(path.join(typeScriptModuleDirPath, "../", "package.json")).wait().version;
+				let typeScriptModuleFilePath = require.resolve("typescript");
+				let typeScriptModuleDirPath = path.dirname(typeScriptModuleFilePath);
+				let typeScriptCompilerPath = path.join(typeScriptModuleDirPath, "tsc");
+				let typeScriptCompilerVersion = this.$fs.readJson(path.join(typeScriptModuleDirPath, "../", "package.json")).wait().version;
 
 				// Log some messages
 				this.$logger.out("Compiling...".yellow);
@@ -59,17 +59,17 @@ export class TypeScriptCompilationService implements ITypeScriptCompilationServi
 
 	private runCompilation(typeScriptCompilerPath: string, typeScriptCommandsFilePath: string): IFuture<void> {
 		return (() => {
-			var startTime = new Date().getTime();
+			let startTime = new Date().getTime();
 
-			var output = this.$childProcess.spawnFromEvent("node", [typeScriptCompilerPath, "@" + typeScriptCommandsFilePath], "close", undefined, { throwError: false }).wait();
+			let output = this.$childProcess.spawnFromEvent("node", [typeScriptCompilerPath, "@" + typeScriptCommandsFilePath], "close", undefined, { throwError: false }).wait();
 			if (output.exitCode === 0) {
-				var endTime = new Date().getTime();
-				var time = (endTime - startTime) / 1000;
+				let endTime = new Date().getTime();
+				let time = (endTime - startTime) / 1000;
 
 				this.$logger.out(util.format("\n Success: %ss for %s typeScript files \n Done without errors.", time.toFixed(2), this.typeScriptFiles.length).green);
 			} else {
-				var compilerOutput = output.stderr || output.stdout;
-				var compilerMessages = this.getCompilerMessages(compilerOutput);
+				let compilerOutput = output.stderr || output.stdout;
+				let compilerMessages = this.getCompilerMessages(compilerOutput);
 				this.logCompilerMessages(compilerMessages, compilerOutput);
 			}
 		}).future<void>()();
@@ -81,12 +81,12 @@ export class TypeScriptCompilationService implements ITypeScriptCompilationServi
 		//   Level 2 errors = semantic errors - *not* prevents JS emit.
 		//   Level 5 errors = compiler flag misuse - prevents JS emit.
 
-		var level1ErrorCount = 0,
+		let level1ErrorCount = 0,
 			level5ErrorCount = 0,
 			nonEmitPreventingWarningCount = 0;
 
-		var hasPreventEmitErrors = _.reduce(compilerOutput.split("\n"), (memo: any, errorMsg: string) => {
-			var isPreventEmitError = false;
+		let hasPreventEmitErrors = _.reduce(compilerOutput.split("\n"), (memo: any, errorMsg: string) => {
+			let isPreventEmitError = false;
 			if (errorMsg.search(/error TS1\d+:/) >= 0) {
 				level1ErrorCount += 1;
 				isPreventEmitError = true;
@@ -108,16 +108,16 @@ export class TypeScriptCompilationService implements ITypeScriptCompilationServi
 	}
 
 	private logCompilerMessages(compilerMessages: ITypeScriptCompilerMessages, errorMessage: string): void {
-		var level1ErrorCount = compilerMessages.level1ErrorCount,
+		let level1ErrorCount = compilerMessages.level1ErrorCount,
 			level5ErrorCount = compilerMessages.level5ErrorCount,
 			nonEmitPreventingWarningCount = compilerMessages.nonEmitPreventingWarningCount,
 			hasPreventEmitErrors = compilerMessages.hasPreventEmitErrors;
 
 		if (level1ErrorCount + level5ErrorCount + nonEmitPreventingWarningCount > 0) {
-			var colorizedMessage = (level1ErrorCount + level5ErrorCount > 0) ? ">>>".red : ">>>".green;
+			let colorizedMessage = (level1ErrorCount + level5ErrorCount > 0) ? ">>>".red : ">>>".green;
 			this.$logger.out(colorizedMessage);
 
-			var errorTitle = "";
+			let errorTitle = "";
 			if (level5ErrorCount > 0) {
 				errorTitle = this.composeErrorTitle(level5ErrorCount, "compiler flag error");
 			}
@@ -146,8 +146,8 @@ export class TypeScriptCompilationService implements ITypeScriptCompilationServi
 
 	private getTypeScriptCompilerOptions(): IFuture<string[]> {
 		return (() => {
-			var compilerOptions: string[] = [];
-			var options = this.$config.TYPESCRIPT_COMPILER_OPTIONS;
+			let compilerOptions: string[] = [];
+			let options = this.$config.TYPESCRIPT_COMPILER_OPTIONS;
 
 			if(options) {
 				// string options
@@ -196,11 +196,11 @@ export class TypeScriptCompilationService implements ITypeScriptCompilationServi
 
 	private getTypeScriptDefinitionsFiles(): IFuture<string[]> {
 		return (() => {
-			var defaultTypeScriptDefinitionsFilesPath = path.join(__dirname, "../../../resources/typescript-definitions-files");
-			var defaultDefinitionsFiles = this.$fs.readDirectory(defaultTypeScriptDefinitionsFilesPath).wait();
+			let defaultTypeScriptDefinitionsFilesPath = path.join(__dirname, "../../../resources/typescript-definitions-files");
+			let defaultDefinitionsFiles = this.$fs.readDirectory(defaultTypeScriptDefinitionsFilesPath).wait();
 
 			// Exclude definition files from default path, which are already part of the project (check only the name of the file)
-			var remainingDefaultDefinitionFiles = _.filter(defaultDefinitionsFiles, defFile => !_.any(this.definitionFiles, f => path.basename(f) === defFile));
+			let remainingDefaultDefinitionFiles = _.filter(defaultDefinitionsFiles, defFile => !_.any(this.definitionFiles, f => path.basename(f) === defFile));
 			return _.map(remainingDefaultDefinitionFiles,(definitionFilePath: string) => {
 				return path.join(defaultTypeScriptDefinitionsFilesPath, definitionFilePath);
 			}).concat(this.definitionFiles);

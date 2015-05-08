@@ -7,15 +7,15 @@ import helpers = require("../helpers");
 import util = require("util");
 import querystring = require("querystring");
 
-var ANDROID_PROJECT_PATH = "mnt/sdcard/Icenium/";
-var ANDROID_NATIVESCRIPT_PROJECT_PATH = "/data/data/";
-var ANDROID_CHECK_LIVE_SYNC_INTENT = "com.telerik.IsLiveSyncSupported";
-var ANDROID_ION_APP_IDENTIFIER = "com.telerik.AppBuilder";
+let ANDROID_PROJECT_PATH = "mnt/sdcard/Icenium/";
+let ANDROID_NATIVESCRIPT_PROJECT_PATH = "/data/data/";
+let ANDROID_CHECK_LIVE_SYNC_INTENT = "com.telerik.IsLiveSyncSupported";
+let ANDROID_ION_APP_IDENTIFIER = "com.telerik.AppBuilder";
 
-var NATIVESCRIPT_ION_APP_IDENTIFIER = "com.telerik.NativeScript";
+let NATIVESCRIPT_ION_APP_IDENTIFIER = "com.telerik.NativeScript";
 
-var IOS_PROJECT_PATH = "/Documents/";
-var IOS_ION_APP_IDENTIFIER = "com.telerik.Icenium";
+let IOS_PROJECT_PATH = "/Documents/";
+let IOS_ION_APP_IDENTIFIER = "com.telerik.Icenium";
 
 export class AndroidAppIdentifier implements Mobile.IAppIdentifier {
 	constructor(private _appIdentifier: string) {}
@@ -71,7 +71,7 @@ export class AndroidCompanionAppIdentifier implements Mobile.IAppIdentifier {
 
 	isLiveSyncSupported(device: Mobile.IDevice): IFuture<boolean> {
 		return (() => {
-			var applications = device.getInstalledApplications().wait();
+			let applications = device.getInstalledApplications().wait();
 			return _.contains(applications, this.appIdentifier);
 		}).future<boolean>()();
 	}
@@ -102,7 +102,7 @@ export class AndroidNativeScriptCompanionAppIdentifier implements Mobile.IAppIde
 
 	isLiveSyncSupported(device: Mobile.IDevice): IFuture<boolean> {
 		return (() => {
-			var applications = device.getInstalledApplications().wait();
+			let applications = device.getInstalledApplications().wait();
 			return _.contains(applications, this.appIdentifier);
 		}).future<boolean>()();
 	}
@@ -219,7 +219,7 @@ export class WP8CompanionAppIdentifier implements Mobile.IAppIdentifier {
 	}
 }
 
-var factoryRules:IDictionary<any> = {
+let factoryRules:IDictionary<any> = {
 	iOS: {
 		Cordova: {
 			companion: IOSCompanionAppIdentifier,
@@ -246,7 +246,7 @@ var factoryRules:IDictionary<any> = {
 };
 
 export function createAppIdentifier(platform: string, appIdentifier: string, companion: boolean): Mobile.IAppIdentifier {
-	var project = $injector.resolve("project");
-	var ctor = factoryRules[platform][project.projectData.Framework][companion ? "companion" : "vanilla"];
+	let project = $injector.resolve("project");
+	let ctor = factoryRules[platform][project.projectData.Framework][companion ? "companion" : "vanilla"];
 	return new ctor(appIdentifier);
 }

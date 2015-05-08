@@ -6,7 +6,7 @@ import Future = require("fibers/future");
 import util = require("util");
 import queue = require("./queue");
 import path = require("path");
-var options = require("./options");
+let options = require("./options");
 
 export class CommandDispatcher implements ICommandDispatcher {
 	constructor(private $logger: ILogger,
@@ -23,14 +23,14 @@ export class CommandDispatcher implements ICommandDispatcher {
 			}
 
 			if (this.$logger.getLevel() === "TRACE") {
-				var sysInfo = this.$sysInfo.getSysInfo();
+				let sysInfo = this.$sysInfo.getSysInfo();
 				this.$logger.trace("System information:");
 				this.$logger.trace(sysInfo);
 			}
 
-			var commandName = this.getCommandName();
-			var commandArguments = this.getCommandArguments();
-			var lastArgument: string = _.last(commandArguments);
+			let commandName = this.getCommandName();
+			let commandArguments = this.getCommandArguments();
+			let lastArgument: string = _.last(commandArguments);
 
 			if(options.help) {
 				commandArguments.unshift(commandName);
@@ -52,7 +52,7 @@ export class CommandDispatcher implements ICommandDispatcher {
 	}
 
 	private getCommandName(): string {
-		var remaining: string[] = options._;
+		let remaining: string[] = options._;
 		if (remaining.length > 0) {
 			return remaining[0].toString().toLowerCase();
 		}
@@ -63,7 +63,7 @@ export class CommandDispatcher implements ICommandDispatcher {
 
 	// yargs convert parameters that are numbers to numbers, which we do not expect. undo its hard work.
 	private getCommandArguments(): string[] {
-		var remaining: string[] = options._.slice(1);
+		let remaining: string[] = options._.slice(1);
 		return _.map(remaining, (item) => (typeof item === "number") ? item.toString() : item);
 	}
 }
@@ -81,7 +81,7 @@ class FutureDispatcher implements IFutureDispatcher {
 		this.actions = new queue.Queue<any>();
 
 		while(true) {
-			var action = this.actions.dequeue().wait();
+			let action = this.actions.dequeue().wait();
 			action().wait();
 		}
 	}

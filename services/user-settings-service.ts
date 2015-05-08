@@ -18,7 +18,7 @@ export class UserSettingsServiceBase implements UserSettings.IUserSettingsServic
 	}
 
 	public saveSetting<T>(key: string, value: T): IFuture<void> {
-		var settingObject: any = {};
+		let settingObject: any = {};
 		settingObject[key] = value;
 
 		return	this.saveSettings(settingObject);

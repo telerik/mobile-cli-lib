@@ -31,17 +31,17 @@ export class AfcFile implements Mobile.IAfcFile {
 		private afcConnection: NodeBuffer,
 		private $mobileDevice: Mobile.IMobileDevice,
 		private $errors: IErrors) {
-		var modeValue = 0;
+		let modeValue = 0;
 		if (mode.indexOf("r") > -1) {
 			modeValue = 0x1;
 		}
 		if (mode.indexOf("w") > -1) {
 			modeValue = 0x2;
 		}
-		var afcFileRef = ref.alloc(ref.types.uint64);
+		let afcFileRef = ref.alloc(ref.types.uint64);
 		this.open = false;
 
-		var result = this.$mobileDevice.afcFileRefOpen(afcConnection, path, modeValue, afcFileRef);
+		let result = this.$mobileDevice.afcFileRefOpen(afcConnection, path, modeValue, afcFileRef);
 		if (result !== 0) {
 			this.$errors.fail("Unable to open file reference: '%s' with path '%s", result, path);
 		}
@@ -55,19 +55,19 @@ export class AfcFile implements Mobile.IAfcFile {
 	}
 
 	public read(len: number): any {
-		var readLengthRef = ref.alloc(iOSCore.CoreTypes.uintType, len);
-		var data = new Buffer(len * iOSCore.CoreTypes.pointerSize);
-		var result = this.$mobileDevice.afcFileRefRead(this.afcConnection, this.afcFile, data, readLengthRef);
+		let readLengthRef = ref.alloc(iOSCore.CoreTypes.uintType, len);
+		let data = new Buffer(len * iOSCore.CoreTypes.pointerSize);
+		let result = this.$mobileDevice.afcFileRefRead(this.afcConnection, this.afcFile, data, readLengthRef);
 		if(result !== 0) {
 			this.$errors.fail("Unable to read data from file '%s'. Result is: '%s'", this.afcFile, result);
 		}
 
-		var readLength = readLengthRef.deref();
+		let readLength = readLengthRef.deref();
 		return data.slice(0, readLength);
 	}
 
 	public write(buffer: any, byteLength?: any): boolean {
-		var result = this.$mobileDevice.afcFileRefWrite(this.afcConnection, this.afcFile, buffer, byteLength);
+		let result = this.$mobileDevice.afcFileRefWrite(this.afcConnection, this.afcFile, buffer, byteLength);
 		if (result !== 0) {
 			this.$errors.fail("Unable to write to file: '%s'. Result is: '%s'", this.afcFile, result);
 		}
@@ -77,7 +77,7 @@ export class AfcFile implements Mobile.IAfcFile {
 
 	public close(): void {
 		if (this.open) {
-			var result = this.$mobileDevice.afcFileRefClose(this.afcConnection, this.afcFile);
+			let result = this.$mobileDevice.afcFileRefClose(this.afcConnection, this.afcFile);
 			if (result !== 0) {
 				this.$errors.fail("Unable to close afc file connection: '%s'. Result is: '%s'", this.afcFile, result);
 			}
@@ -99,8 +99,8 @@ export class AfcClient implements Mobile.IAfcClient {
 		private $errors: IErrors,
 		private $logger: ILogger,
 		private $injector: IInjector) {
-		var afcConnection = ref.alloc(ref.refType(ref.types.void));
-		var result = $mobileDevice.afcConnectionOpen(this.service, 0, afcConnection);
+		let afcConnection = ref.alloc(ref.refType(ref.types.void));
+		let result = $mobileDevice.afcConnectionOpen(this.service, 0, afcConnection);
 		if (result !== 0) {
 			$errors.fail("Unable to open apple file connection: %s", result);
 		}
@@ -113,29 +113,29 @@ export class AfcClient implements Mobile.IAfcClient {
 	}
 
 	public mkdir(path: string) {
-		var result = this.$mobileDevice.afcDirectoryCreate(this.afcConnection, path);
+		let result = this.$mobileDevice.afcDirectoryCreate(this.afcConnection, path);
 		if (result !== 0) {
 			this.$errors.fail("Unable to make directory: %s. Result is %s", path, result);
 		}
 	}
 
 	public listDir(path: string): string[] {
-		var afcDirectoryRef = ref.alloc(ref.refType(ref.types.void));
-		var result = this.$mobileDevice.afcDirectoryOpen(this.afcConnection, path, afcDirectoryRef);
+		let afcDirectoryRef = ref.alloc(ref.refType(ref.types.void));
+		let result = this.$mobileDevice.afcDirectoryOpen(this.afcConnection, path, afcDirectoryRef);
 		if (result !== 0) {
 			this.$errors.fail("Unable to open AFC directory: '%s' %s ", path, result);
 		}
 
-		var afcDirectoryValue = ref.deref(afcDirectoryRef);
-		var name = ref.alloc(ref.refType(ref.types.char));
-		var entries: string[] = [];
+		let afcDirectoryValue = ref.deref(afcDirectoryRef);
+		let name = ref.alloc(ref.refType(ref.types.char));
+		let entries: string[] = [];
 
 		while (this.$mobileDevice.afcDirectoryRead(this.afcConnection, afcDirectoryValue, name) === 0) {
-			var value = ref.deref(name);
+			let value = ref.deref(name);
 			if (ref.address(value) === 0) {
 				break;
 			}
-			var filePath = ref.readCString(value, 0);
+			let filePath = ref.readCString(value, 0);
 			if (filePath !== "." && filePath !== "..") {
 				entries.push(filePath);
 			}
@@ -161,20 +161,20 @@ export class AfcClient implements Mobile.IAfcClient {
 	}
 
 	public deleteFile(devicePath: string): void {
-		var removeResult = this.$mobileDevice.afcRemovePath(this.afcConnection, devicePath);
+		let removeResult = this.$mobileDevice.afcRemovePath(this.afcConnection, devicePath);
 		this.$logger.trace("Removing device file '%s', result: %s", devicePath, removeResult.toString());
 	}
 
 	public transfer(localFilePath: string, devicePath: string): IFuture<void> {
 		return(() => {
 			this.ensureDevicePathExist(path.dirname(devicePath));
-			var reader = this.$fs.createReadStream(localFilePath);
+			let reader = this.$fs.createReadStream(localFilePath);
 			devicePath = helpers.fromWindowsRelativePathToUnix(devicePath);
 
 			this.deleteFile(devicePath);
 
-			var target = this.open(devicePath, "w");
-			var localFilePathSize = this.$fs.getFileSize(localFilePath).wait();
+			let target = this.open(devicePath, "w");
+			let localFilePathSize = this.$fs.getFileSize(localFilePath).wait();
 
 			reader.on("data", (data: NodeBuffer) => {
 				target.write(data, data.length);
@@ -192,8 +192,8 @@ export class AfcClient implements Mobile.IAfcClient {
 	}
 
 	private ensureDevicePathExist(deviceDirPath: string): void {
-		var filePathParts = deviceDirPath.split(path.sep);
-		var currentDevicePath = "";
+		let filePathParts = deviceDirPath.split(path.sep);
+		let currentDevicePath = "";
 
 		filePathParts.forEach((filePathPart: string) => {
 			if (filePathPart !== "") {
@@ -213,9 +213,9 @@ export class InstallationProxyClient {
 
 	public deployApplication(packageFile: string) : IFuture<void>  {
 		return(() => {
-			var service = this.device.startService(MobileServices.APPLE_FILE_CONNECTION);
-			var afcClient = this.$injector.resolve(AfcClient, {service: service});
-			var devicePath = path.join("PublicStaging", path.basename(packageFile));
+			let service = this.device.startService(MobileServices.APPLE_FILE_CONNECTION);
+			let afcClient = this.$injector.resolve(AfcClient, {service: service});
+			let devicePath = path.join("PublicStaging", path.basename(packageFile));
 
 			afcClient.transferPackage(packageFile, devicePath).wait();
 			this.plistService = this.$injector.resolve(iOSCore.PlistService, {service: this.device.startService(MobileServices.INSTALLATION_PROXY), format: iOSCore.CoreTypes.kCFPropertyListBinaryFormat_v1_0});
@@ -224,7 +224,7 @@ export class InstallationProxyClient {
 				Command: "Install",
 				PackagePath: helpers.fromWindowsRelativePathToUnix(devicePath)
 			});
-			var message = this.plistService.receiveMessage().wait();
+			let message = this.plistService.receiveMessage().wait();
 			this.$logger.info("Successfully deployed on device %s", this.device.getIdentifier());
 		}).future<void>()();
 	}
@@ -258,12 +258,12 @@ export class NotificationProxyClient implements Mobile.INotificationProxyClient 
 	public addObserver(name: string, callback: (name: string) => void) {
 		this.openSocket();
 
-		var result = this.plistService.sendMessage({
+		let result = this.plistService.sendMessage({
 			"Command": "ObserveNotification",
 			"Name": name
 		});
 
-		var array = this.observers[name];
+		let array = this.observers[name];
 		if (!array) {
 			array = new Array();
 			this.observers[name] = array;
@@ -274,9 +274,9 @@ export class NotificationProxyClient implements Mobile.INotificationProxyClient 
 	}
 
 	public removeObserver(name: string, callback: (name: string) => void) {
-		var array = this.observers[name];
+		let array = this.observers[name];
 		if (array) {
-			var index = array.indexOf(callback);
+			let index = array.indexOf(callback);
 			if (index !== -1) {
 				array.splice(index, 1);
 			}
@@ -295,14 +295,14 @@ export class NotificationProxyClient implements Mobile.INotificationProxyClient 
 	private handleData(data: NodeBuffer): void {
 		this.buffer += data.toString();
 
-		var PLIST_HEAD = "<plist";
-		var PLIST_TAIL = "</plist>";
+		let PLIST_HEAD = "<plist";
+		let PLIST_TAIL = "</plist>";
 
-		var start = this.buffer.indexOf(PLIST_HEAD);
-		var end = this.buffer.indexOf(PLIST_TAIL);
+		let start = this.buffer.indexOf(PLIST_HEAD);
+		let end = this.buffer.indexOf(PLIST_TAIL);
 
 		while (start >= 0 && end >= 0) {
-			var plist = this.buffer.substr(start, end + PLIST_TAIL.length);
+			let plist = this.buffer.substr(start, end + PLIST_TAIL.length);
 			this.buffer = this.buffer.substr(end + PLIST_TAIL.length);
 
 			plistlib.loadString(plist, (err: any, plist: any) => {
@@ -311,8 +311,8 @@ export class NotificationProxyClient implements Mobile.INotificationProxyClient 
 				}
 			});
 
-			var start = this.buffer.indexOf("<plist");
-			var end = this.buffer.indexOf("</plist>");
+			start = this.buffer.indexOf("<plist");
+			end = this.buffer.indexOf("</plist>");
 		}
 	}
 
@@ -331,15 +331,15 @@ export class NotificationProxyClient implements Mobile.INotificationProxyClient 
 	private handlePlistNotification(plist: any) {
 		if (plist.type !== "dict")
 			return;
-		var value = plist.value;
+		let value = plist.value;
 		if (!value)
 			return;
-		var command = value["Command"];
-		var name = value["Name"]
+		let command = value["Command"];
+		let name = value["Name"]
 		if (command.type !== "string" || command.value !== "RelayNotification" || name.type !== "string")
 			return;
-		var notification = name.value;
-		var observers = this.observers[notification];
+		let notification = name.value;
+		let observers = this.observers[notification];
 		if (!observers)
 			return;
 
@@ -359,7 +359,7 @@ export class HouseArrestClient implements Mobile.IHouseArrestClient {
 	}
 
 	private getAfcClientCore(command: string, applicationIdentifier: string): Mobile.IAfcClient {
-		var service = this.device.startService(MobileServices.HOUSE_ARREST);
+		let service = this.device.startService(MobileServices.HOUSE_ARREST);
 		this.plistService = this.$injector.resolve(iOSCore.PlistService, {service: service, format: iOSCore.CoreTypes.kCFPropertyListXMLFormat_v1_0});
 
 		this.plistService.sendMessage({
@@ -367,7 +367,7 @@ export class HouseArrestClient implements Mobile.IHouseArrestClient {
 			"Identifier": applicationIdentifier
 		});
 
-		var response = this.plistService.receiveMessage().wait();
+		let response = this.plistService.receiveMessage().wait();
 		if(response.Error) {
 			this.$errors.failWithoutHelp(HouseArrestClient.PREDEFINED_ERRORS[response.Error] || response.Error);
 		}
@@ -394,12 +394,12 @@ export class IOSSyslog {
 	}
 
 	public read(): void {
-		var shouldLog = false;
+		let shouldLog = false;
 		setTimeout(() => shouldLog = true, 2500);
 
-		var printData = (data: NodeBuffer) => {
+		let printData = (data: NodeBuffer) => {
 			if(shouldLog) {
-				var output = ref.readCString(data, 0);
+				let output = ref.readCString(data, 0);
 				this.$logger.write(output);
 			}
 		};

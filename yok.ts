@@ -24,13 +24,13 @@
 //	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //THE SOFTWARE.
 
-var FN_NAME_AND_ARGS = /^function\s*([^\(]*)\(\s*([^\)]*)\)/m;
-var FN_ARG_SPLIT = /,/;
-var FN_ARG = /^\s*(_?)(\S+?)\1\s*$/;
-var STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
+let FN_NAME_AND_ARGS = /^function\s*([^\(]*)\(\s*([^\)]*)\)/m;
+let FN_ARG_SPLIT = /,/;
+let FN_ARG = /^\s*(_?)(\S+?)\1\s*$/;
+let STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
 
 function annotate(fn: any) {
-	var $inject: any,
+	let $inject: any,
 		fnText: string,
 		argDecl: string[];
 
@@ -53,12 +53,12 @@ function annotate(fn: any) {
 
 //--- end part copied from AngularJS
 
-var util = require("util");
-var assert = require("assert");
-var Future = require("fibers/future");
-var path = require("path");
+let util = require("util");
+let assert = require("assert");
+let Future = require("fibers/future");
+let path = require("path");
 
-var indent = "";
+let indent = "";
 function trace(formatStr: string, ...args: any[]) {
 	formatStr = indent + formatStr;
 	args.unshift(formatStr);
@@ -105,14 +105,14 @@ export class Yok implements IInjector {
 
 	public requireCommand(names: any, file: string) {
 		forEachName(names, (commandName) => {
-			var commands = commandName.split("|");
+			let commands = commandName.split("|");
 
 			if(commands.length > 1) {
 				if(_.startsWith(commands[1], '*') && this.modules[this.createCommandName(commands[0])]) {
 					throw new Error("Default commands should be required before child commands");
 				}
 
-				var parentCommandName = commands[0];
+				let parentCommandName = commands[0];
 
 				if(!this.hierarchicalCommands[parentCommandName]) {
 					this.hierarchicalCommands[parentCommandName] = [];
@@ -137,7 +137,7 @@ export class Yok implements IInjector {
 	}
 
 	private requireOne(name: string, file: string): void {
-		var dependency: IDependency = {
+		let dependency: IDependency = {
 			require: path.join("../", file),
 			shared: true
 		};
@@ -150,7 +150,7 @@ export class Yok implements IInjector {
 
 	public registerCommand(names: any, resolver: any): void {
 		forEachName(names, (name) => {
-			var commands = name.split("|");
+			let commands = name.split("|");
 			this.register(this.createCommandName(name), resolver);
 
 			if(commands.length > 1) {
@@ -160,21 +160,21 @@ export class Yok implements IInjector {
 	}
 
 	private getDefaultCommand(name: string) {
-		var subCommands = this.hierarchicalCommands[name];
-		var defaultCommand = _.find(subCommands, (command) => _.startsWith(command, "*"));
+		let subCommands = this.hierarchicalCommands[name];
+		let defaultCommand = _.find(subCommands, (command) => _.startsWith(command, "*"));
 		return defaultCommand;
 	}
 
 	private isValidCommand(name: string): boolean {
-		var allCommands = this.getRegisteredCommandsNames(true);
+		let allCommands = this.getRegisteredCommandsNames(true);
 		return _.contains(allCommands, name);
 	}
 
 	public buildHierarchicalCommand(parentCommandName: string, commandLineArguments: string[]): any {
-		var subCommandName: string;
-		var subCommands = this.hierarchicalCommands[parentCommandName];
-		var remainingArguments = commandLineArguments;
-		var foundSubCommand = false;
+		let subCommandName: string;
+		let subCommands = this.hierarchicalCommands[parentCommandName];
+		let remainingArguments = commandLineArguments;
+		let foundSubCommand = false;
 		_.each(commandLineArguments, arg => {
 			subCommandName = subCommandName ? this.getHierarchicalCommandName(subCommandName, arg) : arg;
 			remainingArguments = _.rest(remainingArguments);
@@ -196,18 +196,18 @@ export class Yok implements IInjector {
 	}
 
 	private createHierarchicalCommand(name: string) {
-		var factory = () => {
+		let factory = () => {
 			return {
 				execute: (args: string[]): IFuture<void> => {
 					return (() => {
-						var commandsService = $injector.resolve("commandsService");
-						var commandName: string = null;
-						var defaultCommand = this.getDefaultCommand(name);
-						var commandArguments: ICommandArgument[] = [];
-						var allowedParams: ICommandParameter[];
+						let commandsService = $injector.resolve("commandsService");
+						let commandName: string = null;
+						let defaultCommand = this.getDefaultCommand(name);
+						let commandArguments: ICommandArgument[] = [];
+						let allowedParams: ICommandParameter[];
 
 						if(args.length > 0) {
-							var hierarchicalCommand = this.buildHierarchicalCommand(name, args);
+							let hierarchicalCommand = this.buildHierarchicalCommand(name, args);
 							if(hierarchicalCommand) {
 								commandName = hierarchicalCommand.commandName;
 								commandArguments = hierarchicalCommand.remainingArguments;
@@ -229,7 +229,7 @@ export class Yok implements IInjector {
 								commandName = "help";
 
 								// Show command-line help
-								var options = require("./options");
+								let options = require("./options");
 								options.help = true;
 							}
 						}
@@ -254,15 +254,15 @@ export class Yok implements IInjector {
 				return true;
 			}
 
-			var subCommands = this.hierarchicalCommands[commandName];
+			let subCommands = this.hierarchicalCommands[commandName];
 			if(subCommands) {
-				var fullCommandName = this.buildHierarchicalCommand(commandName, commandArguments);
-				var hasSubCommand = fullCommandName !== undefined;
+				let fullCommandName = this.buildHierarchicalCommand(commandName, commandArguments);
+				let hasSubCommand = fullCommandName !== undefined;
 				if(!fullCommandName) {
 					// The passed arguments are not one of the subCommands.
 					// Check if the default command accepts arguments - if no, return false;
-					var defaultCommandName = this.getDefaultCommand(commandName);
-					var defaultCommand = this.resolveCommand(util.format("%s|%s", commandName, defaultCommandName));
+					let defaultCommandName = this.getDefaultCommand(commandName);
+					let defaultCommand = this.resolveCommand(util.format("%s|%s", commandName, defaultCommandName));
 					if(defaultCommand) {
 						if (defaultCommand.canExecute) {
 							return defaultCommand.canExecute(commandArguments).wait();
@@ -273,7 +273,7 @@ export class Yok implements IInjector {
 						}
 					} 
 					
-					var errors = $injector.resolve("errors");
+					let errors = $injector.resolve("errors");
 					errors.fail("The input is not valid sub-command for '%s' command", commandName);
 				}
 
@@ -291,7 +291,7 @@ export class Yok implements IInjector {
 	public register(name: string, resolver: any, shared: boolean = true): void {
 		trace("registered '%s'", name);
 
-		var dependency: any = this.modules[name] || {};
+		let dependency: any = this.modules[name] || {};
 		dependency.shared = shared;
 
 		if(_.isFunction(resolver)) {
@@ -304,8 +304,8 @@ export class Yok implements IInjector {
 	}
 
 	public resolveCommand(name: string): ICommand {
-		var command: ICommand;
-		var commandModuleName = this.createCommandName(name);
+		let command: ICommand;
+		let commandModuleName = this.createCommandName(name);
 		if(!this.modules[commandModuleName]) {
 			return null;
 		}
@@ -334,13 +334,13 @@ export class Yok implements IInjector {
 
 	public dynamicCall(call: string, args?: any[]): IFuture<any> {
 		return (() => {
-			var parsed = call.match(this.dynamicCallRegex);
-			var module = this.resolve(parsed[1]);
+			let parsed = call.match(this.dynamicCallRegex);
+			let module = this.resolve(parsed[1]);
 			if(!args && parsed[3]) {
 				args = _.map(parsed[4].split(","), arg => arg.trim());
 			}
 
-			var data = module[parsed[2]].apply(module, args);
+			let data = module[parsed[2]].apply(module, args);
 			if(data && typeof data.wait === "function") {
 				return data.wait();
 			}
@@ -351,7 +351,7 @@ export class Yok implements IInjector {
 	private resolveConstructor(ctor: Function, ctorArguments?: { [key: string]: any }): any {
 		annotate(ctor);
 
-		var resolvedArgs = ctor.$inject.args.map(paramName => {
+		let resolvedArgs = ctor.$inject.args.map(paramName => {
 			if(ctorArguments && ctorArguments.hasOwnProperty(paramName)) {
 				return ctorArguments[paramName];
 			} else {
@@ -359,11 +359,11 @@ export class Yok implements IInjector {
 			}
 		});
 
-		var name = ctor.$inject.name;
+		let name = ctor.$inject.name;
 		if(name && name[0] === name[0].toUpperCase()) {
 			function EmptyCtor() { }
 			EmptyCtor.prototype = ctor.prototype;
-			var obj = new (<any>EmptyCtor)();
+			let obj = new (<any>EmptyCtor)();
 
 			ctor.apply(obj, resolvedArgs);
 			return obj;
@@ -385,8 +385,9 @@ export class Yok implements IInjector {
 		trace("resolving '%s'", name);
 		pushIndent();
 
+		let dependency: IDependency;
 		try {
-			var dependency = this.resolveDependency(name);
+			dependency = this.resolveDependency(name);
 
 			if(!dependency) {
 				throw new Error("unable to resolve " + name);
@@ -409,7 +410,7 @@ export class Yok implements IInjector {
 	}
 
 	private resolveDependency(name: string): IDependency {
-		var module = this.modules[name];
+		let module = this.modules[name];
 		if(!module) {
 			throw new Error("unable to resolve " + name);
 		}
@@ -421,9 +422,9 @@ export class Yok implements IInjector {
 	}
 
 	public getRegisteredCommandsNames(includeDev: boolean): string[] {
-		var modulesNames: string[] = _.keys(this.modules);
-		var commandsNames: string[] = _.filter(modulesNames, moduleName => _.startsWith(moduleName, util.format("%s.", this.COMMANDS_NAMESPACE)));
-		var commands = _.map(commandsNames, (commandName: string) => commandName.substr(this.COMMANDS_NAMESPACE.length + 1));
+		let modulesNames: string[] = _.keys(this.modules);
+		let commandsNames: string[] = _.filter(modulesNames, moduleName => _.startsWith(moduleName, util.format("%s.", this.COMMANDS_NAMESPACE)));
+		let commands = _.map(commandsNames, (commandName: string) => commandName.substr(this.COMMANDS_NAMESPACE.length + 1));
 		if(!includeDev) {
 			commands = _.reject(commands, (command) => _.startsWith(command, "dev-"));
 		}
@@ -440,7 +441,7 @@ export class Yok implements IInjector {
 
 	public dispose(): void {
 		Object.keys(this.modules).forEach((moduleName) => {
-			var instance = this.modules[moduleName].instance;
+			let instance = this.modules[moduleName].instance;
 			if(instance && instance.dispose && instance !== this) {
 				instance.dispose();
 			}
@@ -448,4 +449,4 @@ export class Yok implements IInjector {
 	}
 }
 
-export var injector = new Yok();
+export let injector = new Yok();
