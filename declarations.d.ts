@@ -126,7 +126,7 @@ interface ICommandOptions {
 	enableHooks?: boolean;
 }
 
-declare enum ErrorCodes {
+declare const enum ErrorCodes {
 	UNKNOWN = 127,
 	INVALID_ARGUMENT = 128
 }

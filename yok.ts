@@ -176,6 +176,7 @@ export class Yok implements IInjector {
 		let remainingArguments = commandLineArguments;
 		let foundSubCommand = false;
 		_.each(commandLineArguments, arg => {
+			arg = arg.toLowerCase();
 			subCommandName = subCommandName ? this.getHierarchicalCommandName(subCommandName, arg) : arg;
 			remainingArguments = _.rest(remainingArguments);
 			if(_.any(subCommands,(sc) => sc === subCommandName)) {
