@@ -198,7 +198,7 @@ export class Errors implements IErrors {
 				this.failWithoutHelp("The option '%s' is not supported. To see command's options, use '$ %s help %s'. To see all commands use '$ %s help'.", opt, clientName, process.argv[2], clientName);
 			} else if (knownOpts[option] !== Boolean && typeof (parsed[opt]) === 'boolean') {
 				this.failWithoutHelp("The option '%s' requires a value.", opt);
-			} else if (opt !== "_" && _.isArray(parsed[opt])) {
+			} else if (opt !== "_" && _.isArray(parsed[opt]) && knownOpts[option] !== Array) {
 				this.failWithoutHelp("You have set the %s option multiple times. Check the correct command syntax below and try again.", opt);
 			} else if (knownOpts[option] === String && helpers.isNullOrWhitespace(parsed[opt])) {
 				this.failWithoutHelp("The option '%s' requires non-empty value.", opt);
