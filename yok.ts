@@ -1,4 +1,5 @@
 ///<reference path="../.d.ts"/>
+"use strict";
 
 //--- begin part copied from AngularJS
 
@@ -362,7 +363,7 @@ export class Yok implements IInjector {
 
 		let name = ctor.$inject.name;
 		if(name && name[0] === name[0].toUpperCase()) {
-			function EmptyCtor() { }
+			let EmptyCtor = function() { }
 			EmptyCtor.prototype = ctor.prototype;
 			let obj = new (<any>EmptyCtor)();
 
