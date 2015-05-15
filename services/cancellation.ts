@@ -6,13 +6,13 @@ import path = require("path");
 import os = require("os");
 let options: any = require("../options");
 import Future = require("fibers/future");
+import hostInfo = require("../host-info");
 
-export class CancellationService implements ICancellationService {
+class CancellationService implements ICancellationService {
 	private watches: IDictionary<IWatcherInstance> = {};
 
 	constructor(private $fs: IFileSystem,
-			private $logger: ILogger,
-			private $errors: IErrors) {
+			private $logger: ILogger) {
 		this.$fs.createDirectory(CancellationService.killSwitchDir).wait();
 		this.$fs.chmod(CancellationService.killSwitchDir, "0777").wait();
 	}
@@ -55,9 +55,7 @@ export class CancellationService implements ICancellationService {
 	}
 
 	public dispose(): void {
-		Object.keys(this.watches).forEach((name) => {
-			this.end(name);
-		})
+		_(this.watches).keys().each(name => this.end(name)).values();
 	}
 
 	private static get killSwitchDir(): string {
@@ -68,4 +66,21 @@ export class CancellationService implements ICancellationService {
 		return path.join(CancellationService.killSwitchDir, name);
 	}
 }
-$injector.register("cancellation", CancellationService);
+
+class CancellationServiceDummy implements ICancellationService {
+	dispose():void {
+	}
+
+	begin(name:string):IFuture<void> {
+		return Future.fromResult();
+	}
+
+	end(name:string):void {
+	}
+}
+
+if (hostInfo.isWindows()) {
+	$injector.register("cancellation", CancellationService);
+} else {
+	$injector.register("cancellation", CancellationServiceDummy);
+}
