@@ -294,6 +294,8 @@ interface ISysInfoData {
 	itunesInstalled: boolean;
 	/** Whether `android` executable can be run */
 	androidInstalled: boolean;
+	/** mono version, relevant on Mac only **/
+	monoVer: string;
 }
 
 interface ISysInfo {
