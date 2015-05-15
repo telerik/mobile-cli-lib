@@ -10,7 +10,8 @@ export class PreUninstallCommand implements ICommand {
 
 	constructor(private $fs: IFileSystem,
 		private $childProcess: IChildProcess,
-		private $logger: ILogger) { }
+		private $logger: ILogger,
+		private $cancellationService: ICancellationService) { }
 	public disableAnalytics = true;
 
 	public allowedParameters: ICommandParameter[] = [];
