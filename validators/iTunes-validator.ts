@@ -8,6 +8,7 @@ import hostInfo = require("../host-info");
 export class ITunesValidator implements Mobile.IiTunesValidator {
 	private static NOT_INSTALLED_iTUNES_ERROR_MESSAGE = "iTunes is not installed. Install it on your system and run this command again.";
 	private static BITNESS_MISMATCH_ERROR_MESSAGE = "The bitness of Node.js and iTunes must match. Verify that both Node.js and iTunes are 32-bit or 64-bit and try again.";
+	private static UNSUPPORTED_OS_ERROR_MESSAGE = "iTunes is not available for this operating system. You will not be able to work with connected iOS devices.";
 
 	constructor(private $fs: IFileSystem) { }
 
@@ -38,6 +39,8 @@ export class ITunesValidator implements Mobile.IiTunesValidator {
 				if(!this.isiTunesInstalledOnWindows(commonProgramFiles).wait()) {
 					return ITunesValidator.NOT_INSTALLED_iTUNES_ERROR_MESSAGE;
 				}
+
+				return null;
 			} else if(hostInfo.isDarwin()) {
 				let coreFoundationDir = "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation";
 				let mobileDeviceDir = "/System/Library/PrivateFrameworks/MobileDevice.framework/MobileDevice";
@@ -45,13 +48,13 @@ export class ITunesValidator implements Mobile.IiTunesValidator {
 				if(!this.isiTunesInstalledCore(coreFoundationDir, mobileDeviceDir).wait()) {
 					return ITunesValidator.NOT_INSTALLED_iTUNES_ERROR_MESSAGE;
 				}
+
+				return null;
 			}
 
-			return null;
-
+			return ITunesValidator.UNSUPPORTED_OS_ERROR_MESSAGE;
 		}).future<string>()();
 	}
-
 
 	private isiTunesInstalledOnWindows(commonProgramFiles: string): IFuture<boolean> {
 		let coreFoundationDir = path.join(commonProgramFiles, "Apple", "Apple Application Support");
