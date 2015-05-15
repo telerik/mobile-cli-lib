@@ -12,6 +12,7 @@ export class SysInfo implements ISysInfo {
 				private $iTunesValidator: Mobile.IiTunesValidator,
 				private $logger: ILogger) { }
 
+	private static monoVerRegExp = /version (\d+[.]\d+[.]\d+) /gm;
 	private sysInfoCache: ISysInfoData = undefined;
 
 	getSysInfo(): ISysInfoData {
@@ -54,6 +55,14 @@ export class SysInfo implements ISysInfo {
 
 			procOutput = this.execAndroidH();
 			res.androidInstalled = procOutput ? _.contains(procOutput, "android") : false;
+
+			procOutput = this.exec("mono --version");
+			if (!!procOutput) {
+				let match = SysInfo.monoVerRegExp.exec(procOutput);
+				res.monoVer = match ? match[1] : null;
+			} else {
+				res.monoVer = null;
+			}
 
 			this.sysInfoCache = res;
 		}
