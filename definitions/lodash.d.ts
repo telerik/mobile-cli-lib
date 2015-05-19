@@ -1606,6 +1606,18 @@ declare module _ {
         union<T>(...arrays: List<T>[]): T[];
     }
 
+    interface LoDashArrayWrapper<T> {
+        /**
+        * @see _.union
+        **/
+        union<TResult>(...arrays: Array<TResult>[]): LoDashArrayWrapper<TResult>;
+
+        /**
+        * @see _.union
+        **/
+        union<TResult>(...arrays: List<TResult>[]): LoDashArrayWrapper<TResult>;
+    }
+
     //_.uniq
     interface LoDashStatic {
         /**
