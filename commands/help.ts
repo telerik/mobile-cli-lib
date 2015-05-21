@@ -29,7 +29,7 @@ export class HelpCommand implements ICommand {
 			}
 
 			if(this.$options.help) {
-				var help = this.$htmlHelpService.getCommandLineHelpForCommand(topic).wait();
+				let help = this.$htmlHelpService.getCommandLineHelpForCommand(topic).wait();
 				this.$logger.out(help);
 			} else {
 				this.$htmlHelpService.openHelpForCommandInBrowser(topic).wait();

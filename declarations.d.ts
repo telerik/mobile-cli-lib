@@ -343,9 +343,11 @@ interface ICommonOptions {
 	appid: string;
 	geny: string;
 	"debug-brk": boolean;
+	debugBrk: boolean;
 	"debug-port": number;
 	debugPort: number;
 	"get-port": boolean;
+	getPort: boolean;
 	start: boolean;
 	stop: boolean;
 	ddi: string; // the path to developer  disk image

@@ -133,8 +133,8 @@ class IOSCore implements Mobile.IiOSCore {
 			process.env.PATH += ";" + this.MobileDeviceDir;
 		}
 
-		var coreFoundationDll = this.$hostInfo.isWindows ?  path.join(this.CoreFoundationDir, "CoreFoundation.dll") : this.CoreFoundationDir;
-		var lib = ffi.DynamicLibrary(coreFoundationDll);
+		let coreFoundationDll = this.$hostInfo.isWindows ?  path.join(this.CoreFoundationDir, "CoreFoundation.dll") : this.CoreFoundationDir;
+		let lib = ffi.DynamicLibrary(coreFoundationDll);
 
 		return {
 			"CFRunLoopRun": ffi.ForeignFunction(lib.get("CFRunLoopRun"), "void", []),
@@ -1076,7 +1076,7 @@ export class GDBServer implements Mobile.IGDBServer {
 		private $hostInfo: IHostInfo,
 		private $options: IOptions) {
 		if(this.$hostInfo.isWindows) {
-			var winSocket = this.$injector.resolve(WinSocket, {service: this.socket, format: 0});
+			let winSocket = this.$injector.resolve(WinSocket, {service: this.socket, format: 0});
 			this.socket = {
 				write: (message: string): void => {
 					winSocket.sendMessage(message);

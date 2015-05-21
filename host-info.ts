@@ -3,7 +3,7 @@
 import Future = require("fibers/future");
 
 export class HostInfo implements IHostInfo {
-	private static WIN32 = "win32";
+	private static WIN32_NAME = "win32";
 	private static PROCESSOR_ARCHITEW6432 = "PROCESSOR_ARCHITEW6432";
 	private static DARWIN_OS_NAME = "darwin";
 	private static LINUX_OS_NAME = "linux";
@@ -12,7 +12,7 @@ export class HostInfo implements IHostInfo {
 	constructor(private $errors: IErrors) { }
 
 	public get isWindows() {
-		return process.platform === HostInfo.WIN32;
+		return process.platform === HostInfo.WIN32_NAME;
 	}
 
 	public get isWindows64() {
@@ -38,9 +38,9 @@ export class HostInfo implements IHostInfo {
 	public dotNetVersion(message: string, opts?: {throwErr?: boolean}): IFuture<string> {
 		if (this.isWindows) {
 			opts = opts || {};
-			var result = new Future<string>();
-			var Winreg = require("winreg");
-			var regKey = new Winreg({
+			let result = new Future<string>();
+			let Winreg = require("winreg");
+			let regKey = new Winreg({
 				hive: Winreg.HKLM,
 				key: HostInfo.DOT_NET_REGISTRY_PATH
 			});

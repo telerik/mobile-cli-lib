@@ -423,10 +423,10 @@ export class IOSDevice implements Mobile.IIOSDevice {
 
 			this.mountImage().wait();
 
-			var service = this.startService(iOSProxyServices.MobileServices.DEBUG_SERVER);
-			var socket = this.$hostInfo.isWindows ? service :  new net.Socket({ fd: service });
-			var gdbServer = this.$injector.resolve(iosCore.GDBServer, { socket: socket });
-			var executable = util.format("%s/%s", application.Path, application.CFBundleExecutable);
+			let service = this.startService(iOSProxyServices.MobileServices.DEBUG_SERVER);
+			let socket = this.$hostInfo.isWindows ? service :  new net.Socket({ fd: service });
+			let gdbServer = this.$injector.resolve(iosCore.GDBServer, { socket: socket });
+			let executable = util.format("%s/%s", application.Path, application.CFBundleExecutable);
 
 			gdbServer.run([executable]);
 

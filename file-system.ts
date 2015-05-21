@@ -59,7 +59,7 @@ export class FileSystem implements IFileSystem {
 
 			this.createDirectory(destinationDir).wait();
 
-			var proc: string;
+			let proc: string;
 			if (this.$hostInfo.isWindows) {
 				proc = path.join(__dirname, "resources/platform-tools/unzip/win32/unzip");
 			} else if (this.$hostInfo.isDarwin) {
@@ -412,7 +412,7 @@ export class FileSystem implements IFileSystem {
 			let $childProcess = this.$injector.resolve("childProcess");
 
 			if(!this.$hostInfo.isWindows) {
-				var chown = $childProcess.spawn('chown', ['-R', owner, path],
+				let chown = $childProcess.spawn('chown', ['-R', owner, path],
 					{ stdio: "ignore", detached: true });
 				this.futureFromEvent(chown, "close").wait();
 			}

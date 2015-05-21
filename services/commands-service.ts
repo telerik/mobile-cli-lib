@@ -80,7 +80,7 @@ export class CommandsService implements ICommandsService {
 
 	public tryExecuteCommand(commandName: string, commandArguments: string[]): IFuture<void> {
 		return (() => {
-			var  x = (commandName: string, commandArguments: string[]) => {
+			let action = (commandName: string, commandArguments: string[]) => {
 				this.$options.validateOptions();
 				
 				if(!this.areDynamicSubcommandsRegistered) {
@@ -89,7 +89,7 @@ export class CommandsService implements ICommandsService {
 				}
 				return this.canExecuteCommand(commandName, commandArguments);
 			}
-			if(this.executeCommandAction(commandName, commandArguments, x).wait()) {
+			if(this.executeCommandAction(commandName, commandArguments, action).wait()) {
 				this.executeCommandAction(commandName, commandArguments, this.executeCommandUnchecked).wait();
 			} else {
 				// If canExecuteCommand returns false, the command cannot be executed or there's no such command at all.

@@ -13,7 +13,7 @@ export enum OptionType {
 }
 
 export class OptionsBase {
-	private optionsWhiteList = ["ui", "recursive", "reporter", "require", "timeout", "_", "$0"]; // This options shouldn't be validated
+	private optionsWhiteList = ["ui", "recursive", "reporter", "require", "timeout", "_", "$0"]; // These options shouldn't be validated
 	private _parsed: any[];
 	public argv: IYargArgv;
 
@@ -74,11 +74,11 @@ export class OptionsBase {
 	}
 
 	private getOptionValue(optionName: string): any {
-		var secondaryOptionName = this.getSecondaryOptionName(optionName);
+		let secondaryOptionName = this.getSecondaryOptionName(optionName);
 		optionName = _.contains(this.optionNames, secondaryOptionName) ? secondaryOptionName : optionName;
-		var result = typeof this.argv[optionName] === "number" ? this.argv[optionName].toString() : this.argv[optionName];
-		var option = this.options[optionName] || this.tryGetOptionByAliasName(optionName);
-		var optionType = option ? option.type : "";
+		let result = typeof this.argv[optionName] === "number" ? this.argv[optionName].toString() : this.argv[optionName];
+		let option = this.options[optionName] || this.tryGetOptionByAliasName(optionName);
+		let optionType = option ? option.type : "";
 		if(optionType === OptionType.Array && typeof result === "string") {
 			return [result];
 		} 
@@ -87,17 +87,17 @@ export class OptionsBase {
 	}
 
 	private setProfileDir(): void {
-		var profileDir = this.argv["profile-dir"] || this.argv["profileDir"]|| this.defaultProfileDir;
+		let profileDir = this.argv["profile-dir"] || this.argv["profileDir"]|| this.defaultProfileDir;
 		this.argv["profile-dir"] = profileDir;
 		this.argv["profileDir"] = profileDir;
 	}
 
 	public validateOptions(): void {
-		var parsed = Object.create(null);
+		let parsed = Object.create(null);
 		_.each(_.keys(this.argv), optionName => parsed[optionName] = this.getOptionValue(optionName));
 		_.each(_.keys(parsed), (opt:string) => {
-			var secondaryOptionName = this.getSecondaryOptionName(opt);
-			var optionName = _.contains(this.optionNames, secondaryOptionName) ? secondaryOptionName : opt;
+			let secondaryOptionName = this.getSecondaryOptionName(opt);
+			let optionName = _.contains(this.optionNames, secondaryOptionName) ? secondaryOptionName : opt;
 
 			if (!_.contains(this.optionsWhiteList, optionName)) {
 				
@@ -105,10 +105,10 @@ export class OptionsBase {
 					this.$errors.failWithoutHelp("The option '%s' is not supported. To see command's options, use '$ %s help %s'. To see all commands use '$ %s help'.", optionName, this.$staticConfig.CLIENT_NAME.toLowerCase(), process.argv[2], this.$staticConfig.CLIENT_NAME.toLowerCase());
 				} 
 				
-				var option = this.options[optionName] || this.tryGetOptionByAliasName(optionName);
-				var optionType = option ? option.type : "";
-				var optionValue = parsed[optionName];
-				var parsedOptionType = typeof (optionValue);
+				let option = this.options[optionName] || this.tryGetOptionByAliasName(optionName);
+				let optionType = option ? option.type : "";
+				let optionValue = parsed[optionName];
+				let parsedOptionType = typeof (optionValue);
 				
 				if (_.isArray(optionValue) && optionType !== OptionType.Array) {
 					this.$errors.failWithoutHelp("You have set the %s option multiple times. Check the correct command syntax below and try again.", option);
@@ -124,13 +124,13 @@ export class OptionsBase {
 	}
 	
 	private tryGetOptionByAliasName(aliasName: string) {
-		var option = _.find(this.options, opt => opt.alias === aliasName);
+		let option = _.find(this.options, opt => opt.alias === aliasName);
 		return option;
 	}
 	
 	private isOptionSupported(option: string): boolean {
 		if(!this.options[option]) {
-			var opt = this.tryGetOptionByAliasName(option);
+			let opt = this.tryGetOptionByAliasName(option);
 			return !!opt;
 		}
 
@@ -147,11 +147,11 @@ export class OptionsBase {
 // IMPORTANT: In your code, it is better to use the value without dashes (profileDir in the example).
 // This way your code will work in case "$ <cli name> emulate android --profile-dir" or "$ <cli name> emulate android --profileDir" is used by user.
 	private getSecondaryOptionName(optionName: string): string {
-		var matchUpperCaseLetters = optionName.match(/(.+?)([A-Z])(.*)/);
+		let matchUpperCaseLetters = optionName.match(/(.+?)([A-Z])(.*)/);
 		if(matchUpperCaseLetters) {
 			// get here if option with upperCase letter is specified, for example profileDir
 			// check if in knownOptions we have its kebabCase presentation
-			var secondaryOptionName = util.format("%s-%s%s", matchUpperCaseLetters[1], matchUpperCaseLetters[2].toLowerCase(), matchUpperCaseLetters[3] || '');
+			let secondaryOptionName = util.format("%s-%s%s", matchUpperCaseLetters[1], matchUpperCaseLetters[2].toLowerCase(), matchUpperCaseLetters[3] || '');
 			return this.getSecondaryOptionName(secondaryOptionName);
 		}
 

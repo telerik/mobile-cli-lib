@@ -15,8 +15,8 @@ export class ITunesValidator implements Mobile.IiTunesValidator {
 	public getError(): IFuture<string> {
 		return (() => {
 			if(this.$hostInfo.isWindows) {
-				var commonProgramFiles = "";
-				var isNode64 =  process.arch === "x64";
+				let commonProgramFiles = "";
+				let isNode64 =  process.arch === "x64";
 
 				if(isNode64) { //x64-windows
 					commonProgramFiles = process.env.CommonProgramFiles;
@@ -40,8 +40,8 @@ export class ITunesValidator implements Mobile.IiTunesValidator {
 					return ITunesValidator.NOT_INSTALLED_iTUNES_ERROR_MESSAGE;
 				}
 			} else if(this.$hostInfo.isDarwin) {
-				var coreFoundationDir = "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation";
-				var mobileDeviceDir = "/System/Library/PrivateFrameworks/MobileDevice.framework/MobileDevice";
+				let coreFoundationDir = "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation";
+				let mobileDeviceDir = "/System/Library/PrivateFrameworks/MobileDevice.framework/MobileDevice";
 
 				if(!this.isiTunesInstalledCore(coreFoundationDir, mobileDeviceDir).wait()) {
 					return ITunesValidator.NOT_INSTALLED_iTUNES_ERROR_MESSAGE;

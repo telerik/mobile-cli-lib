@@ -290,8 +290,8 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private getRunningEmulators(): IFuture<string[]> {
 		return (() => {
 
-			var emulatorDevices: string[] = [];
-			var outputRaw: string[] = this.$childProcess.execFile(this.adbFilePath, ['devices']).wait().split(os.EOL);
+			let emulatorDevices: string[] = [];
+			let outputRaw: string[] = this.$childProcess.execFile(this.adbFilePath, ['devices']).wait().split(os.EOL);
 			if(this.$options.geny) {
 				emulatorDevices = this.getRunningGenymotionEmulators(outputRaw).wait();
 			} else {

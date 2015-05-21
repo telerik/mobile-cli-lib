@@ -222,7 +222,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
         let port = this.$options.debugPort;
 		
         if (port > 0) {
-            startDebuggerCommand += " --ei debuggerPort " + this.$options["debug-port"];
+            startDebuggerCommand += " --ei debuggerPort " + port;
             this.$childProcess.exec(startDebuggerCommand).wait();
         } else {
             let res = this.$childProcess.spawnFromEvent(this.adb, ["shell", "am", "broadcast", "-a", packageName + "-Debug", "--ez", "enable", "true"], "exit").wait();
@@ -254,14 +254,14 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
         let installCommand = this.composeCommand("install -r \"%s\"", packageFile);
         this.$childProcess.exec(installCommand).wait();
 
-        let port = this.$options["debug-port"];
+        let port = this.$options.debugPort;
 
         let packageDir = util.format(AndroidDevice.PACKAGE_EXTERNAL_DIR_TEMPLATE, packageName);
         let envDebugOutFullpath = packageDir + AndroidDevice.ENV_DEBUG_OUT_FILENAME;
         let clearDebugEnvironmentCommand = this.composeCommand('shell rm "%s"', envDebugOutFullpath);
         this.$childProcess.exec(clearDebugEnvironmentCommand).wait();
 
-        var setDebugBreakEnvironmentCommand = this.composeCommand('shell echo "" > "%s"', "debugbreak");
+        let setDebugBreakEnvironmentCommand = this.composeCommand('shell echo "" > "%s"', "debugbreak");
         this.$childProcess.exec(setDebugBreakEnvironmentCommand).wait();
 		
         this.startPackageOnDevice(packageName).wait();
@@ -277,13 +277,13 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 
     public debug(packageFile: string, packageName: string): IFuture<void> {
         return (() => {
-            if (this.$options["get-port"]) {
+            if (this.$options.getPort) {
                 this.printDebugPort(packageName);
             } else if (this.$options["start"]) {
                 this.attachDebugger(packageName);
             } else if (this.$options["stop"]) {
                 this.detachDebugger(packageName);
-            } else if (this.$options["debug-brk"]) {
+            } else if (this.$options.debugBrk) {
                 this.startAppWithDebugger(packageFile, packageName);
             } else {
                 this.$logger.info("Should specify at least one option: debug-brk, start, stop, get-port.");

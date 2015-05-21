@@ -15,7 +15,7 @@ export class ListApplicationsCommand implements ICommand {
 		return (() => {
 
 			this.$devicesServices.initialize({ deviceId: this.$options.device, skipInferPlatform: true }).wait();
-			var output: string[] = [];
+			let output: string[] = [];
 
 			let action = (device: Mobile.IDevice) => { return (() => {
 				let applications = device.getInstalledApplications().wait();

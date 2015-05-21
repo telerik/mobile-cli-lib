@@ -1,4 +1,5 @@
 ///<reference path="../.d.ts"/>
+"use strict";
 
 import path = require("path");
 import util = require("util");
@@ -18,10 +19,10 @@ export class ProjectHelper implements IProjectHelper {
 		}
 		this.cachedProjectDir = null;
 
-		var projectDir = path.resolve(this.$options.path || ".");
+		let projectDir = path.resolve(this.$options.path || ".");
 		while (true) {
 			this.$logger.trace("Looking for project in '%s'", projectDir);
-			var projectFilePath = path.join(projectDir, this.$staticConfig.PROJECT_FILE_NAME);
+			let projectFilePath = path.join(projectDir, this.$staticConfig.PROJECT_FILE_NAME);
 			
 
 			if (this.$fs.exists(projectFilePath).wait() && this.isProjectFileCorrect(projectFilePath)) {
@@ -62,8 +63,8 @@ export class ProjectHelper implements IProjectHelper {
 	private isProjectFileCorrect(projectFilePath: string): boolean {
 		if(this.$staticConfig.CLIENT_NAME_KEY_IN_PROJECT_FILE) {
 			try {
-				var fileContent = this.$fs.readJson(projectFilePath).wait();
-				var clientSpecificData = fileContent[this.$staticConfig.CLIENT_NAME_KEY_IN_PROJECT_FILE];
+				let fileContent = this.$fs.readJson(projectFilePath).wait();
+				let clientSpecificData = fileContent[this.$staticConfig.CLIENT_NAME_KEY_IN_PROJECT_FILE];
 				return !!clientSpecificData;
 			} catch(err) {
 				this.$errors.failWithoutHelp("The project file is corrupted. Additional technical information: %s", err);

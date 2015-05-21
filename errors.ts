@@ -64,7 +64,7 @@ function resolveCallStack(error: Error): string {
 }
 
 export function installUncaughtExceptionListener(): void {
-	process.on("uncaughtException", (err: Error) => {		
+	process.on("uncaughtException", (err: Error) => {
 		let callstack = err.stack;
 		if (callstack) {
 			callstack = resolveCallStack(err);

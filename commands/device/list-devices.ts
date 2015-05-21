@@ -17,7 +17,7 @@ export class ListDevicesCommand implements ICommand {
 			let index = 1;
 			this.$devicesServices.initialize({platform: args[0], deviceId: null, skipInferPlatform: true}).wait();
 
-			var action: (device: Mobile.IDevice) => IFuture<void>;
+			let action: (device: Mobile.IDevice) => IFuture<void>;
 			if (this.$options.json) {
 				this.$logger.setLevel("ERROR");
 				action = (device) => {

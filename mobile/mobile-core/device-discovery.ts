@@ -157,8 +157,8 @@ class IOSDeviceDiscoveryStub extends DeviceDiscovery {
 }
 
 $injector.register("iOSDeviceDiscovery", ($errors: IErrors, $logger: ILogger, $fs: IFileSystem, $injector: IInjector, $iTunesValidator: Mobile.IiTunesValidator, $staticConfig: Config.IStaticConfig, $hostInfo: IHostInfo) => {
-	var error = $iTunesValidator.getError().wait();
-	var result: Mobile.IDeviceDiscovery = null;
+	let error = $iTunesValidator.getError().wait();
+	let result: Mobile.IDeviceDiscovery = null;
 
 	if(error || this.$hostInfo.isLinux) {
 		result = new IOSDeviceDiscoveryStub($logger, $staticConfig, $hostInfo, error);
