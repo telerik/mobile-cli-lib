@@ -310,8 +310,8 @@ interface IHostInfo {
 	isDarwin: boolean;
 	isLinux: boolean;
 	isLinux64: boolean;
-	dotNetVersion(message: string, opts?: {throwErr?: boolean}): IFuture<string>;
-	isDotNet40Installed(message?: string) : IFuture<boolean>;
+	dotNetVersion(): IFuture<string>;
+	isDotNet40Installed(message: string) : IFuture<boolean>;
 }
 
 interface Function {

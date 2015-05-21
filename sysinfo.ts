@@ -28,7 +28,11 @@ export class SysInfo implements ISysInfo {
 			res.platform = os.platform();
 			res.os = this.$hostInfo.isWindows ? this.winVer() : this.unixVer();
 			res.shell = osenv.shell();
-			res.dotNetVer = this.$hostInfo.dotNetVersion(".Net is not installed").wait();
+			try {
+				res.dotNetVer = this.$hostInfo.dotNetVersion().wait();
+			} catch(err) {
+				res.dotNetVer = ".Net is not installed.";
+			}
 
 			// node stuff
 			res.procArch = process.arch;

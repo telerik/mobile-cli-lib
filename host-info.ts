@@ -35,9 +35,8 @@ export class HostInfo implements IHostInfo {
 		return this.isLinux && process.config.variables.host_arch === "x64";
 	}
 
-	public dotNetVersion(message: string, opts?: {throwErr?: boolean}): IFuture<string> {
+	public dotNetVersion(): IFuture<string> {
 		if (this.isWindows) {
-			opts = opts || {};
 			let result = new Future<string>();
 			let Winreg = require("winreg");
 			let regKey = new Winreg({
@@ -46,10 +45,7 @@ export class HostInfo implements IHostInfo {
 			});
 			regKey.get("Version", (err: Error, value: any) => {
 				if (err) {
-					if(opts.throwErr) {
-						this.$errors.failWithoutHelp(message);
-					}
-					result.throw(new Error(message));
+					result.throw(err);
 				} else {
 					result.return(value.value);
 				}
@@ -64,10 +60,10 @@ export class HostInfo implements IHostInfo {
 		return (() => {
 			if (this.isWindows) {
 				try {
-					this.dotNetVersion(message || "An error occurred while reading the registry.", { throwErr: true }).wait();
+					this.dotNetVersion().wait();
 					return true;
 				} catch (e) {
-					return false;
+					this.$errors.failWithoutHelp(message || "An error occurred while reading the registry.");
 				}
 			} else {
 				return false;
