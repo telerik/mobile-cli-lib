@@ -1,7 +1,6 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 
-import options = require("../options");
 import util = require("util");
 import os = require("os");
 import helpers = require("../helpers");
