@@ -5,7 +5,6 @@ let jaroWinklerDistance = require("../vendor/jaro-winkler_distance");
 import helpers = require("../helpers");
 import util = require("util");
 import os = require("os");
-let options: any = require("../options");
 
 class CommandArgumentsValidationHelper {
 	constructor(public isValid: boolean, _remainingArguments: string[]) {
@@ -68,7 +67,7 @@ export class CommandsService implements ICommandsService {
 	}
 
 	private printHelp(commandName: string): IFuture<boolean> {
-		options.help = true;
+		this.$options.help = true;
 		return this.executeCommandUnchecked("help", [this.beautifyCommandName(commandName)]);
 	}
 
@@ -249,11 +248,11 @@ export class CommandsService implements ICommandsService {
 				let childrenCommands = this.$injector.getChildrenCommandsNames(commandName);
 
 				if(data.last && _.startsWith(data.last, "--")) {
-					return tabtab.log(_.keys(options.knownOpts), data, "--");
+					return tabtab.log(_.keys(this.$options.options), data, "--");
 				}
 
 				if(data.last && _.startsWith(data.last, "-")) {
-					return tabtab.log(_.keys(options.shorthands), data, "-");
+					return tabtab.log(this.$options.shorthands, data, "-");
 				}
 
 				if(data.words === 1) {

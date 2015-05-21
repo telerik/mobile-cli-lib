@@ -336,23 +336,19 @@ interface ICommonOptions {
 	json: boolean;
 	watch: boolean;
 	avd: string;
-	"profile-dir": string;
+	profileDir: string;
 	timeout: string;
 	device: string;
 	availableDevices: boolean;
 	appid: string;
 	geny: string;
-	"debug-brk": boolean;
 	debugBrk: boolean;
-	"debug-port": number;
 	debugPort: number;
-	"get-port": boolean;
 	getPort: boolean;
 	start: boolean;
 	stop: boolean;
 	ddi: string; // the path to developer  disk image
 	justlaunch: boolean;
-	profileDir: string;
 	skipRefresh: boolean;
 	app: string;
 }

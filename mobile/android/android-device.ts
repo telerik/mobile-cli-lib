@@ -279,9 +279,9 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
         return (() => {
             if (this.$options.getPort) {
                 this.printDebugPort(packageName);
-            } else if (this.$options["start"]) {
+            } else if (this.$options.start) {
                 this.attachDebugger(packageName);
-            } else if (this.$options["stop"]) {
+            } else if (this.$options.stop) {
                 this.detachDebugger(packageName);
             } else if (this.$options.debugBrk) {
                 this.startAppWithDebugger(packageFile, packageName);
@@ -491,7 +491,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 			if (!syncOptions.skipRefresh) {
 				let commands: string[] = [];
 
-				if(this.$options.watch) {
+				if(this.$options.watch || this.$options.file) {
 					commands = [
 						LiveSyncCommands.SyncFilesCommand(),
 						LiveSyncCommands.RefreshCurrentViewCommand()
