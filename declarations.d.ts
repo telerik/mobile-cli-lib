@@ -326,7 +326,10 @@ interface Error {
 }
 
 interface ICommonOptions {
-	argv: IYargArgv
+	argv: IYargArgv;
+	validateOptions(): void;
+	options: IDictionary<any>;
+	shorthands: string[];
 
 	log: string;
 	verbose: boolean;
@@ -351,6 +354,7 @@ interface ICommonOptions {
 	justlaunch: boolean;
 	skipRefresh: boolean;
 	app: string;
+	file: string;
 }
 
 interface IYargArgv extends IDictionary<any> {
