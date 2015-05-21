@@ -4,7 +4,6 @@
 import util = require("util");
 import path = require("path");
 import helpers = require("../helpers");
-import options = require("../options");
 import os = require("os");
 // HACK
 global.XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
@@ -21,7 +20,8 @@ export class AnalyticsService implements IAnalyticsService {
 		private $errors: IErrors,
 		private $prompter: IPrompter,
 		private $userSettingsService: UserSettings.IUserSettingsService,
-		private $analyticsSettingsService: IAnalyticsSettingsService) { }
+		private $analyticsSettingsService: IAnalyticsSettingsService,
+		private $options: IOptions) { }
 
 	public checkConsent(featureName: string): IFuture<void> {
 		return ((): void => {
@@ -47,7 +47,8 @@ export class AnalyticsService implements IAnalyticsService {
 				try {
 					this.start().wait();
 					if(this._eqatecMonitor) {
-						let category = options.client ||
+						
+						let category = this.$options.client ||
 							(helpers.isInteractive() ? "CLI" : "Non-interactive");
 						this._eqatecMonitor.trackFeature(category + "." + featureName);
 					}
@@ -213,7 +214,7 @@ export class AnalyticsService implements IAnalyticsService {
 	}
 
 	public getStatusMessage(): IFuture<string> {
-		if(options.json) {
+		if(this.$options.json) {
 			return this.getJsonStatusMessage();
 		}
 

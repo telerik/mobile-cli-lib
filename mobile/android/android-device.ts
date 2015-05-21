@@ -6,7 +6,6 @@ import path = require("path");
 import temp = require("temp");
 import helpers = require("../../helpers");
 import os = require("os");
-import options = require("./../../options");
 import Fiber = require("fibers");
 
 interface IAndroidDeviceDetails {
@@ -64,8 +63,10 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		private $staticConfig: Config.IStaticConfig,
 		private $opener: IOpener,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
+		private $options: IOptions,
 		private $logcatHelper: Mobile.ILogcatHelper) {
 		let details: IAndroidDeviceDetails = this.getDeviceDetails().wait();
+
 		this.model = details.model;
 		this.name = details.name;
 		this.version = details.release;
@@ -174,7 +175,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 			let startPackageCommand = this.composeCommand("shell am start -a android.intent.action.MAIN -n %s/%s -c android.intent.category.LAUNCHER", packageName, this.$staticConfig.START_PACKAGE_ACTIVITY_NAME);
 			this.$childProcess.exec(startPackageCommand).wait();
 
-			if (!options.justlaunch) {
+			if (!this.$options.justlaunch) {
 				this.openDeviceLogStream();
 			}
 		}).future<void>()();
@@ -218,9 +219,10 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 
     private attachDebugger(packageName: string): void {
         let startDebuggerCommand = this.composeCommand("shell am broadcast -a \"%s-Debug\" --ez enable true", packageName);
-        let port = options.debugPort;
+        let port = this.$options.debugPort;
+		
         if (port > 0) {
-            startDebuggerCommand += " --ei debuggerPort " + options["debug-port"];
+            startDebuggerCommand += " --ei debuggerPort " + port;
             this.$childProcess.exec(startDebuggerCommand).wait();
         } else {
             let res = this.$childProcess.spawnFromEvent(this.adb, ["shell", "am", "broadcast", "-a", packageName + "-Debug", "--ez", "enable", "true"], "exit").wait();
@@ -252,14 +254,14 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
         let installCommand = this.composeCommand("install -r \"%s\"", packageFile);
         this.$childProcess.exec(installCommand).wait();
 
-        let port = options["debug-port"];
+        let port = this.$options.debugPort;
 
         let packageDir = util.format(AndroidDevice.PACKAGE_EXTERNAL_DIR_TEMPLATE, packageName);
         let envDebugOutFullpath = packageDir + AndroidDevice.ENV_DEBUG_OUT_FILENAME;
         let clearDebugEnvironmentCommand = this.composeCommand('shell rm "%s"', envDebugOutFullpath);
         this.$childProcess.exec(clearDebugEnvironmentCommand).wait();
 
-        var setDebugBreakEnvironmentCommand = this.composeCommand('shell echo "" > "%s"', "debugbreak");
+        let setDebugBreakEnvironmentCommand = this.composeCommand('shell echo "" > "%s"', "debugbreak");
         this.$childProcess.exec(setDebugBreakEnvironmentCommand).wait();
 		
         this.startPackageOnDevice(packageName).wait();
@@ -275,13 +277,13 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 
     public debug(packageFile: string, packageName: string): IFuture<void> {
         return (() => {
-            if (options["get-port"]) {
+            if (this.$options.getPort) {
                 this.printDebugPort(packageName);
-            } else if (options["start"]) {
+            } else if (this.$options.start) {
                 this.attachDebugger(packageName);
-            } else if (options["stop"]) {
+            } else if (this.$options.stop) {
                 this.detachDebugger(packageName);
-            } else if (options["debug-brk"]) {
+            } else if (this.$options.debugBrk) {
                 this.startAppWithDebugger(packageFile, packageName);
             } else {
                 this.$logger.info("Should specify at least one option: debug-brk, start, stop, get-port.");
@@ -489,7 +491,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 			if (!syncOptions.skipRefresh) {
 				let commands: string[] = [];
 
-				if(options.watch) {
+				if(this.$options.watch || this.$options.file) {
 					commands = [
 						LiveSyncCommands.SyncFilesCommand(),
 						LiveSyncCommands.RefreshCurrentViewCommand()

@@ -1,19 +1,20 @@
 ///<reference path="../../../.d.ts"/>
 "use strict";
 
-import options = require("./../../options");
 import os = require("os");
 import util = require("util");
 
 export class ListApplicationsCommand implements ICommand {
 	constructor(private $devicesServices: Mobile.IDevicesServices,
-		private $logger: ILogger) { }
+		private $logger: ILogger,
+		private $options: IOptions) { }
 
 	allowedParameters: ICommandParameter[] = [];
 
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
-			this.$devicesServices.initialize({ deviceId: options.device, skipInferPlatform: true }).wait();
+
+			this.$devicesServices.initialize({ deviceId: this.$options.device, skipInferPlatform: true }).wait();
 			let output: string[] = [];
 
 			let action = (device: Mobile.IDevice) => { return (() => {

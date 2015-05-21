@@ -6,18 +6,18 @@ import Future = require("fibers/future");
 import util = require("util");
 import queue = require("./queue");
 import path = require("path");
-let options = require("./options");
 
 export class CommandDispatcher implements ICommandDispatcher {
 	constructor(private $logger: ILogger,
 		private $cancellation: ICancellationService,
 		private $commandsService: ICommandsService,
 		private $staticConfig: Config.IStaticConfig,
-		private $sysInfo: ISysInfo) { }
+		private $sysInfo: ISysInfo,
+		private $options: IOptions) { }
 
 	public dispatchCommand(): IFuture<void> {
 		return(() => {
-			if (options.version) {
+			if (this.$options.version) {
 				this.$logger.out(this.$staticConfig.version);
 				return;
 			}
@@ -32,7 +32,7 @@ export class CommandDispatcher implements ICommandDispatcher {
 			let commandArguments = this.getCommandArguments();
 			let lastArgument: string = _.last(commandArguments);
 
-			if(options.help) {
+			if(this.$options.help) {
 				commandArguments.unshift(commandName);
 				commandName = "help";
 			} else if(lastArgument === "/?" || lastArgument === "?") {
@@ -52,18 +52,18 @@ export class CommandDispatcher implements ICommandDispatcher {
 	}
 
 	private getCommandName(): string {
-		let remaining: string[] = options._;
+		let remaining: string[] = this.$options.argv._;
 		if (remaining.length > 0) {
 			return remaining[0].toString().toLowerCase();
 		}
 		// if only <CLI_NAME> is specified on console, show console help
-		options.help = true;
+		this.$options.help = true;
 		return "";
 	}
 
 	// yargs convert parameters that are numbers to numbers, which we do not expect. undo its hard work.
 	private getCommandArguments(): string[] {
-		let remaining: string[] = options._.slice(1);
+		let remaining: string[] = this.$options.argv._.slice(1);
 		return _.map(remaining, (item) => (typeof item === "number") ? item.toString() : item);
 	}
 }

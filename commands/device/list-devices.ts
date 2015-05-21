@@ -2,13 +2,13 @@
 "use strict";
 
 import util = require("util");
-import options = require("./../../options");
 import commandParams = require("../../command-params");
 
 export class ListDevicesCommand implements ICommand {
 	constructor(private $devicesServices: Mobile.IDevicesServices,
 		private $logger: ILogger,
-		private $stringParameter: ICommandParameter) { }
+		private $stringParameter: ICommandParameter,
+		private $options: IOptions) { }
 
 	allowedParameters = [this.$stringParameter];
 
@@ -18,7 +18,7 @@ export class ListDevicesCommand implements ICommand {
 			this.$devicesServices.initialize({platform: args[0], deviceId: null, skipInferPlatform: true}).wait();
 
 			let action: (device: Mobile.IDevice) => IFuture<void>;
-			if (options.json) {
+			if (this.$options.json) {
 				this.$logger.setLevel("ERROR");
 				action = (device) => {
 					return (() => { this.$logger.out(JSON.stringify({

@@ -5,7 +5,6 @@ let jaroWinklerDistance = require("../vendor/jaro-winkler_distance");
 import helpers = require("../helpers");
 import util = require("util");
 import os = require("os");
-let options: any = require("../options");
 
 class CommandArgumentsValidationHelper {
 	constructor(public isValid: boolean, _remainingArguments: string[]) {
@@ -26,7 +25,8 @@ export class CommandsService implements ICommandsService {
 		private $injector: IInjector,
 		private $staticConfig: Config.IStaticConfig,
 		private $hooksService: IHooksService,
-		private $commandsServiceProvider: ICommandsServiceProvider) {
+		private $commandsServiceProvider: ICommandsServiceProvider,
+		private $options: IOptions) {
 	}
 
 	public allCommands(opts: {includeDevCommands: boolean}): string[] {
@@ -67,7 +67,7 @@ export class CommandsService implements ICommandsService {
 	}
 
 	private printHelp(commandName: string): IFuture<boolean> {
-		options.help = true;
+		this.$options.help = true;
 		return this.executeCommandUnchecked("help", [this.beautifyCommandName(commandName)]);
 	}
 
@@ -79,11 +79,16 @@ export class CommandsService implements ICommandsService {
 
 	public tryExecuteCommand(commandName: string, commandArguments: string[]): IFuture<void> {
 		return (() => {
-			if(!this.areDynamicSubcommandsRegistered) {
-				this.$commandsServiceProvider.registerDynamicSubCommands();
-				this.areDynamicSubcommandsRegistered = true;
+			let action = (commandName: string, commandArguments: string[]) => {
+				this.$options.validateOptions();
+				
+				if(!this.areDynamicSubcommandsRegistered) {
+					this.$commandsServiceProvider.registerDynamicSubCommands();
+					this.areDynamicSubcommandsRegistered = true;
+				}
+				return this.canExecuteCommand(commandName, commandArguments);
 			}
-			if(this.executeCommandAction(commandName, commandArguments, this.canExecuteCommand).wait()) {
+			if(this.executeCommandAction(commandName, commandArguments, action).wait()) {
 				this.executeCommandAction(commandName, commandArguments, this.executeCommandUnchecked).wait();
 			} else {
 				// If canExecuteCommand returns false, the command cannot be executed or there's no such command at all.
@@ -98,6 +103,7 @@ export class CommandsService implements ICommandsService {
 
 	private canExecuteCommand(commandName: string, commandArguments: string[], isDynamicCommand?: boolean): IFuture<boolean> {
 		return (() => {
+			
 			let command = this.$injector.resolveCommand(commandName);
 			let beautifiedName = helpers.stringReplaceAll(commandName, "|", " ");
 			if(command) {
@@ -242,11 +248,11 @@ export class CommandsService implements ICommandsService {
 				let childrenCommands = this.$injector.getChildrenCommandsNames(commandName);
 
 				if(data.last && _.startsWith(data.last, "--")) {
-					return tabtab.log(_.keys(options.knownOpts), data, "--");
+					return tabtab.log(_.keys(this.$options.options), data, "--");
 				}
 
 				if(data.last && _.startsWith(data.last, "-")) {
-					return tabtab.log(_.keys(options.shorthands), data, "-");
+					return tabtab.log(this.$options.shorthands, data, "-");
 				}
 
 				if(data.words === 1) {

@@ -3,7 +3,6 @@
 import osenv = require("osenv");
 import path = require("path");
 import util = require("util");
-import hostInfo = require("../host-info");
 
 export class AutoCompletionService implements IAutoCompletionService {
 	private scriptsOk = true;
@@ -19,7 +18,8 @@ export class AutoCompletionService implements IAutoCompletionService {
 	constructor(private $fs: IFileSystem,
 		private $childProcess: IChildProcess,
 		private $logger: ILogger,
-		private $staticConfig: Config.IStaticConfig) { }
+		private $staticConfig: Config.IStaticConfig,
+		private $hostInfo: IHostInfo) { }
 
 	public disableAnalytics = true;
 
@@ -37,7 +37,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 	private get cliRunCommandsFile(): string {
 		if(!this._cliRunCommandsFile) {
 			this._cliRunCommandsFile = this.getHomePath(util.format(".%src", this.$staticConfig.CLIENT_NAME.toLowerCase()));
-			if(hostInfo.isWindows()) {
+			if(this.$hostInfo.isWindows) {
 				// on Windows bash, file is incorrectly written as C:\Users\<username>, which leads to errors when trying to execute the script:
 				// $ source ~/.bashrc
 				// sh.exe": C:Usersusername.appbuilderrc: No such file or directory
@@ -184,7 +184,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 				this.$logger.out("Unable to update %s. Command-line completion might not work.", fileName);
 				// When npm is installed with sudo, in some cases the installation cannot write to shell profiles
 				// Advise the user how to enable autocompletion after the installation is completed.
-				if(err.code === "EPERM" && !hostInfo.isWindows() && process.env.SUDO_USER) {
+				if(err.code === "EPERM" && !this.$hostInfo.isWindows && process.env.SUDO_USER) {
 					this.$logger.out("To enable command-line completion, run '$ %s autocomplete enable'.", this.$staticConfig.CLIENT_NAME);
 				}
 

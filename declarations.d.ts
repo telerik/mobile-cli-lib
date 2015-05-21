@@ -115,9 +115,6 @@ interface IErrors {
 	failWithoutHelp(message: string, ...args: any[]): void;
 	beginCommand(action: () => IFuture<boolean>, printCommandHelp: () => IFuture<boolean>): IFuture<boolean>;
 	verifyHeap(message: string): void;
-	executeAction(action: Function): any;
-	validateArgs(client: string, knownOpts: any, shorthands: any): any;
-	validateYargsArguments(parsed: any, knownOpts: any, shorthands: any, clientName?: string): void;
 	printCallStack: boolean;
 }
 
@@ -210,6 +207,10 @@ interface IAnalyticsSettingsService {
 }
 
 interface IHostCapabilities {
+	capabilities: IDictionary<IHostCapability>;
+}
+
+interface IHostCapability {
 	debugToolsSupported: boolean;
 }
 
@@ -300,4 +301,63 @@ interface ISysInfoData {
 
 interface ISysInfo {
 	getSysInfo(): ISysInfoData;
+}
+
+interface IHostInfo {
+	isWindows: boolean;
+	isWindows64: boolean;
+	isWindows32: boolean;
+	isDarwin: boolean;
+	isLinux: boolean;
+	isLinux64: boolean;
+	dotNetVersion(): IFuture<string>;
+	isDotNet40Installed(message: string) : IFuture<boolean>;
+}
+
+interface Function {
+	$inject: {
+		args: string[];
+		name: string;
+	};
+}
+
+interface Error {
+	stack: string;
+}
+
+interface ICommonOptions {
+	argv: IYargArgv;
+	validateOptions(): void;
+	options: IDictionary<any>;
+	shorthands: string[];
+
+	log: string;
+	verbose: boolean;
+	path: string;
+	version: boolean;
+	help: boolean;
+	json: boolean;
+	watch: boolean;
+	avd: string;
+	profileDir: string;
+	timeout: string;
+	device: string;
+	availableDevices: boolean;
+	appid: string;
+	geny: string;
+	debugBrk: boolean;
+	debugPort: number;
+	getPort: boolean;
+	start: boolean;
+	stop: boolean;
+	ddi: string; // the path to developer  disk image
+	justlaunch: boolean;
+	skipRefresh: boolean;
+	app: string;
+	file: string;
+}
+
+interface IYargArgv extends IDictionary<any> {
+	_: string[];
+	$0: string;
 }

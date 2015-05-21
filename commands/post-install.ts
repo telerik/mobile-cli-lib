@@ -1,8 +1,6 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 
-import options = require("../options");
-import hostInfo = require("../host-info");
 import util = require("util");
 import os = require("os");
 import helpers = require("../helpers");
@@ -15,8 +13,10 @@ export class PostInstallCommand implements ICommand {
 		private $staticConfig: Config.IStaticConfig,
 		private $commandsService: ICommandsService,
 		private $htmlHelpService: IHtmlHelpService,
+		private $hostInfo: IHostInfo,
 		private $sysInfo: ISysInfo,
-		private $logger: ILogger) {
+		private $logger: ILogger,
+		private $options: IOptions) {
 	}
 
 	public disableAnalytics = true;
@@ -28,7 +28,7 @@ export class PostInstallCommand implements ICommand {
 				// when running under 'sudo' we create a working dir with wrong owner (root) and it is no longer accessible for the user initiating the installation
 				// patch the owner here
 				if (process.env.SUDO_USER) {
-					this.$fs.setCurrentUserAsOwner(options.profileDir, process.env.SUDO_USER).wait();
+					this.$fs.setCurrentUserAsOwner(this.$options.profileDir, process.env.SUDO_USER).wait();
 				}
 			}
 
@@ -47,9 +47,9 @@ export class PostInstallCommand implements ICommand {
 	}
 
 	private printPackageManagerTip() {
-		if (hostInfo.isWindows()) {
+		if (this.$hostInfo.isWindows) {
 			this.$logger.out("TIP: To avoid setting up the necessary environment variables, you can use the chocolatey package manager to install the Android SDK and its dependencies." + os.EOL);
-		} else if (hostInfo.isDarwin()) {
+		} else if (this.$hostInfo.isDarwin) {
 			this.$logger.out("TIP: To avoid setting up the necessary environment variables, you can use the Homebrew package manager to install the Android SDK and its dependencies." + os.EOL);
 		}
 	}
@@ -81,7 +81,7 @@ export class PostInstallCommand implements ICommand {
 
 			this.printPackageManagerTip();
 		}
-		if (hostInfo.isDarwin() && !sysInfo.xcodeVer) {
+		if (this.$hostInfo.isDarwin && !sysInfo.xcodeVer) {
 			this.$logger.warn("WARNING: Xcode is not installed or is not configured properly.");
 			this.$logger.out("You will not be able to build your projects for iOS or run them in the iOS Simulator." + os.EOL
 			+ "To be able to build for iOS and run apps in the native emulator, verify that you have installed Xcode." + os.EOL);
@@ -135,7 +135,7 @@ export class PostInstallCommand implements ICommand {
 			+ "described in http://docs.oracle.com/javase/8/docs/technotes/guides/install/install_overview.html (for JDK 8)" + os.EOL
 			+ "or http://docs.oracle.com/javase/7/docs/webnotes/install/ (for JDK 7)." + os.EOL);
 		}
-		if(hostInfo.isDarwin() && (!sysInfo.monoVer || helpers.versionCompare(sysInfo.monoVer, "3.12.0") < 0)) {
+		if(this.$hostInfo.isDarwin && (!sysInfo.monoVer || helpers.versionCompare(sysInfo.monoVer, "3.12.0") < 0)) {
 			this.$logger.warn("WARNING: Mono 3.12 or later is not installed or not configured properly.");
 			this.$logger.out("You will not be able to work with Android devices in the device simulator or debug on connected Android devices." + os.EOL
 			+ "To be able to work with Android in the device simulator and debug on connected Android devices," + os.EOL

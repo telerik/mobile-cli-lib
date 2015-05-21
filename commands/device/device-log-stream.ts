@@ -1,7 +1,6 @@
 ///<reference path="../../../.d.ts"/>
 "use strict";
 
-import options = require("./../../options");
 import helpers = require("./../../helpers");
 
 export class OpenDeviceLogStreamCommand implements ICommand {
@@ -9,13 +8,14 @@ export class OpenDeviceLogStreamCommand implements ICommand {
 
 	constructor(private $devicesServices: Mobile.IDevicesServices,
 		private $errors: IErrors,
-		private $commandsService: ICommandsService) { }
+		private $commandsService: ICommandsService,
+		private $options: IOptions) { }
 
 	allowedParameters: ICommandParameter[] = [];
 
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
-			this.$devicesServices.initialize({ deviceId: options.device, skipInferPlatform: true }).wait();
+			this.$devicesServices.initialize({ deviceId: this.$options.device, skipInferPlatform: true }).wait();
 
 			if (this.$devicesServices.deviceCount > 1) {
 				this.$commandsService.tryExecuteCommand("device", []).wait();

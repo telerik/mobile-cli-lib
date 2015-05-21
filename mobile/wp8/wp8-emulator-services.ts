@@ -9,7 +9,8 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
 		private $errors: IErrors,
 		private $childProcess: IChildProcess,
-		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) { }
+		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
+		private $hostInfo: IHostInfo) { }
 
 	public checkDependencies(): IFuture<void> {
 		return (() => {
@@ -18,7 +19,7 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	checkAvailability(): IFuture<void> {
 		return (() => {
-			if (!hostInfo.isWindows()) {
+			if (!this.$hostInfo.isWindows) {
 				this.$errors.fail("Windows Phone Emulator is available only on Windows 8 or later.");
 			}
 

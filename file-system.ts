@@ -7,10 +7,10 @@ import path = require("path");
 import util = require("util");
 import rimraf = require("rimraf");
 import minimatch = require("minimatch");
-import hostInfo = require("./host-info");
 
 export class FileSystem implements IFileSystem {
-	constructor(private $injector: IInjector) { }
+	constructor(private $injector: IInjector,
+		private $hostInfo: IHostInfo) { }
 
 	//TODO: try 'archiver' module for zipping
 	public zipFiles(zipFile: string, files: string[], zipPathCallback: (path: string) => string): IFuture<void> {
@@ -60,11 +60,11 @@ export class FileSystem implements IFileSystem {
 			this.createDirectory(destinationDir).wait();
 
 			let proc: string;
-			if (hostInfo.isWindows()) {
+			if (this.$hostInfo.isWindows) {
 				proc = path.join(__dirname, "resources/platform-tools/unzip/win32/unzip");
-			} else if (hostInfo.isDarwin()) {
+			} else if (this.$hostInfo.isDarwin) {
 				proc = "unzip"; // darwin unzip is info-zip
-			} else if (hostInfo.isLinux()) {
+			} else if (this.$hostInfo.isLinux) {
 				proc = "unzip"; // linux unzip is info-zip
 			}
 
@@ -411,7 +411,7 @@ export class FileSystem implements IFileSystem {
 		return (() => {
 			let $childProcess = this.$injector.resolve("childProcess");
 
-			if(!hostInfo.isWindows()) {
+			if(!this.$hostInfo.isWindows) {
 				let chown = $childProcess.spawn('chown', ['-R', owner, path],
 					{ stdio: "ignore", detached: true });
 				this.futureFromEvent(chown, "close").wait();

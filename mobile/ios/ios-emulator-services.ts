@@ -3,8 +3,6 @@
 
 import util = require("util");
 import Future = require("fibers/future");
-import hostInfo = require("../../host-info");
-import options = require("./../../options");
 
 class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	constructor(private $logger: ILogger,
@@ -12,7 +10,9 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		private $errors: IErrors,
 		private $childProcess: IChildProcess,
 		private $mobileHelper: Mobile.IMobileHelper,
-		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) { }
+		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
+		private $hostInfo: IHostInfo,
+		private $options: IOptions) { }
 
 	public checkDependencies(): IFuture<void> {
 		return (() => {
@@ -21,7 +21,7 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	checkAvailability(dependsOnProject: boolean = true): IFuture<void> {
 		return (() => {
-			if(!hostInfo.isDarwin()) {
+			if(!this.$hostInfo.isDarwin) {
 				this.$errors.fail("iOS Simulator is available only on Mac OS X.");
 			}
 
@@ -55,7 +55,7 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		let iosSimPath = require.resolve("ios-sim-portable");
 		let nodeCommandName = process.argv[0];
 
-		if(options.availableDevices) {
+		if(this.$options.availableDevices) {
 			this.$childProcess.spawnFromEvent(nodeCommandName, [iosSimPath, "device-types"], "close", { stdio: "inherit" }).wait();
 			return;
 		}
@@ -63,10 +63,10 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		let opts = [
 			iosSimPath,
 			"launch", app,
-			"--timeout", options.timeout
+			"--timeout", this.$options.timeout
 		];
 
-		if(!options.justlaunch) {
+		if(!this.$options.justlaunch) {
 			opts.push("--logging");
 		} else {
 			if(emulatorOptions) {
@@ -81,8 +81,8 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 			opts.push("--exit");
 		}
 
-		if(options.device) {
-			opts = opts.concat("--device", options.device);
+		if(this.$options.device) {
+			opts = opts.concat("--device", this.$options.device);
 		}
 
 		if(emulatorOptions.args) {

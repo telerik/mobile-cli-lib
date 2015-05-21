@@ -231,7 +231,7 @@ export class Yok implements IInjector {
 								commandName = "help";
 
 								// Show command-line help
-								let options = require("./options");
+								let options = this.resolve("options");
 								options.help = true;
 							}
 						}

@@ -10,7 +10,8 @@ import hostInfo = require("./host-info");
 export class SysInfo implements ISysInfo {
 	constructor(private $childProcess: IChildProcess,
 				private $iTunesValidator: Mobile.IiTunesValidator,
-				private $logger: ILogger) { }
+				private $logger: ILogger,
+		private $hostInfo: IHostInfo) { }
 
 	private static monoVerRegExp = /version (\d+[.]\d+[.]\d+) /gm;
 	private sysInfoCache: ISysInfoData = undefined;
@@ -25,9 +26,13 @@ export class SysInfo implements ISysInfo {
 
 			// os stuff
 			res.platform = os.platform();
-			res.os = hostInfo.isWindows() ? this.winVer() : this.unixVer();
+			res.os = this.$hostInfo.isWindows ? this.winVer() : this.unixVer();
 			res.shell = osenv.shell();
-			res.dotNetVer = hostInfo.dotNetVersion(".Net is not installed").wait();
+			try {
+				res.dotNetVer = this.$hostInfo.dotNetVersion().wait();
+			} catch(err) {
+				res.dotNetVer = ".Net is not installed.";
+			}
 
 			// node stuff
 			res.procArch = process.arch;
@@ -47,7 +52,7 @@ export class SysInfo implements ISysInfo {
 			res.antVer = procOutput ? procOutput.split(os.EOL)[0] : null;
 
 			res.nodeGypVer = this.exec("node-gyp -v");
-			res.xcodeVer = hostInfo.isDarwin() ? this.exec("xcodebuild -version") : null;
+			res.xcodeVer = this.$hostInfo.isDarwin ? this.exec("xcodebuild -version") : null;
 			res.itunesInstalled = this.$iTunesValidator.getError().wait() === null;
 
 			procOutput = this.exec("adb version");
