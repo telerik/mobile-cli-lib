@@ -160,7 +160,7 @@ $injector.register("iOSDeviceDiscovery", ($errors: IErrors, $logger: ILogger, $f
 	let error = $iTunesValidator.getError().wait();
 	let result: Mobile.IDeviceDiscovery = null;
 
-	if(error || this.$hostInfo.isLinux) {
+	if(error || $hostInfo.isLinux) {
 		result = new IOSDeviceDiscoveryStub($logger, $staticConfig, $hostInfo, error);
 	} else {
 		result = $injector.resolve(IOSDeviceDiscovery);
