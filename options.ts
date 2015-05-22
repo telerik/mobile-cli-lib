@@ -26,7 +26,16 @@ export class OptionsBase {
 
 		yargs.options(this.options);
 		this.argv = yargs.argv;
-
+		
+		// Check if some of the given options is alias and add its original name to argv
+		_.each(_.keys(this.argv), item => {
+			_.each(this.optionNames, optionName => {
+				if(this.options[optionName].alias === item) {
+					this.argv[optionName] = this.argv[item];
+				} 
+			});
+		});
+		
 		this.argv["profileDir"] = this.argv["profileDir"] || this.defaultProfileDir;		
 
 		_.each(this.optionNames, optionName => {
