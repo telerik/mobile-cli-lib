@@ -39,6 +39,19 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		}).future<void>()();
 	}
 
+	public postDarwinNotification(notification: string): IFuture<void> {
+		let iosSimPath = require.resolve("ios-sim-portable");
+		let nodeCommandName = process.argv[0];
+
+		let opts = [ "notify-post", notification ];
+
+		if (this.$options.device) {
+			opts.push("--device", this.$options.device);
+		}
+
+		return this.$childProcess.exec(`${nodeCommandName} ${iosSimPath} ${opts.join(' ')}`);
+	}
+
 	private killLaunchdSim(): IFuture<void> {
 		this.$logger.info("Cleaning up before starting the iOS Simulator");
 
@@ -93,3 +106,5 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	}
 }
 $injector.register("iOSEmulatorServices", IosEmulatorServices);
+
+export = IosEmulatorServices;
