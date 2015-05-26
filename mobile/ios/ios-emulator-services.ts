@@ -4,7 +4,7 @@
 import util = require("util");
 import Future = require("fibers/future");
 
-class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
+class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 	constructor(private $logger: ILogger,
 		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
 		private $errors: IErrors,
@@ -37,6 +37,19 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 			this.killLaunchdSim().wait();
 			this.startEmulatorCore(app, emulatorOptions);
 		}).future<void>()();
+	}
+
+	public postDarwinNotification(notification: string): IFuture<void> {
+		let iosSimPath = require.resolve("ios-sim-portable");
+		let nodeCommandName = process.argv[0];
+
+		let opts = [ "notify-post", notification ];
+
+		if (this.$options.device) {
+			opts.push("--device", this.$options.device);
+		}
+
+		return this.$childProcess.exec(`${nodeCommandName} ${iosSimPath} ${opts.join(' ')}`);
 	}
 
 	private killLaunchdSim(): IFuture<void> {

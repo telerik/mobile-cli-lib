@@ -241,6 +241,10 @@ declare module Mobile {
 		startEmulator(app: string, emulatorOptions?: IEmulatorOptions): IFuture<void>;
 	}
 
+	interface IiOSSimulatorService extends IEmulatorPlatformServices {
+		postDarwinNotification(notification: string): IFuture<void>;
+	}
+
 	interface IEmulatorSettingsService {
 		canStart(platform: string): IFuture<boolean>;
 		minVersion: number;
