@@ -58,7 +58,12 @@ class CancellationService implements ICancellationService {
 	}
 
 	private static get killSwitchDir(): string {
-		return path.join(os.tmpdir(), process.env.SUDO_USER || process.env.USER || process.env.USERNAME, "KillSwitches");
+        var tmp = process.env.SUDO_USER || process.env.USER || process.env.USERNAME;
+        if (tmp) {
+            return path.join(os.tmpdir(), tmp, "KillSwitches");
+        } else {
+            return path.join(os.tmpdir(), "KillSwitches");
+        }
 	}
 
 	private static makeKillSwitchFileName(name: string): string {
