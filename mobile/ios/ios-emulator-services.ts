@@ -4,7 +4,7 @@
 import util = require("util");
 import Future = require("fibers/future");
 
-class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
+class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 	constructor(private $logger: ILogger,
 		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
 		private $errors: IErrors,
@@ -106,5 +106,3 @@ class IosEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	}
 }
 $injector.register("iOSEmulatorServices", IosEmulatorServices);
-
-export = IosEmulatorServices;
