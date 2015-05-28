@@ -39,6 +39,8 @@ export class ITunesValidator implements Mobile.IiTunesValidator {
 				if(!this.isiTunesInstalledOnWindows(commonProgramFiles).wait()) {
 					return ITunesValidator.NOT_INSTALLED_iTUNES_ERROR_MESSAGE;
 				}
+				
+				return null;
 			} else if(this.$hostInfo.isDarwin) {
 				let coreFoundationDir = "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation";
 				let mobileDeviceDir = "/System/Library/PrivateFrameworks/MobileDevice.framework/MobileDevice";
