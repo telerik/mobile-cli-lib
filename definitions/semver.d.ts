@@ -83,6 +83,8 @@ declare module SemVerModule {
 	 * Return true if the version is outside the bounds of the range in either the high or low direction. The hilo argument must be either the string '>' or '<'. (This is the function called by gtr and ltr.)
 	 */
 	function outside(version: string, range: string, hilo: string, loose?: boolean): boolean;
+	
+	function major(version: string): number;
 
 	class SemVerBase {
 		raw: string;
