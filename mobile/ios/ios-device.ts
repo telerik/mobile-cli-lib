@@ -459,7 +459,16 @@ export class IOSDevice implements Mobile.IIOSDevice {
 			this.$mobileDevice.uSBMuxConnectByPort(connectionId, this.htons(port), socketRef);
 			let socketValue = socketRef.deref();
 
-			return new net.Socket({ fd: socketValue });
+			let socket: net.Socket;
+			if (socketValue < 0) {
+				socket = new net.Socket();
+				process.nextTick(() => socket.emit("error", new Error("USBMuxConnectByPort returned bad file descriptor")));
+			} else {
+				socket = new net.Socket({ fd: socketValue });
+				process.nextTick(() => socket.emit("connect"));
+			}
+
+			return socket;
 		}
 
 		return null;
