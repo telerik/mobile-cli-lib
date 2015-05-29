@@ -147,6 +147,7 @@ export class Logger implements ILogger {
 	}
 
 	private getHiddenPassword(password: string, originalString: string) {
+		password = password || '';
 		return originalString.replace(password, new Array(password.length + 1).join('*'));
 	}
 }
