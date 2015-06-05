@@ -19,12 +19,13 @@ class CancellationService implements ICancellationService {
 	public begin(name: string): IFuture<void> {
 		return (() => {
 			let triggerFile = CancellationService.makeKillSwitchFileName(name);
-
-			let stream = this.$fs.createWriteStream(triggerFile);
-			let streamEnd = this.$fs.futureFromEvent(stream, "finish");
-			stream.end();
-			streamEnd.wait();
-			this.$fs.chmod(triggerFile, "0777").wait();
+			if(!this.$fs.exists(triggerFile).wait()) { 
+				let stream = this.$fs.createWriteStream(triggerFile);
+				let streamEnd = this.$fs.futureFromEvent(stream, "finish");
+				stream.end();
+				streamEnd.wait();
+				this.$fs.chmod(triggerFile, "0777").wait();
+			}
 
 			this.$logger.trace("Starting watch on killswitch %s", triggerFile);
 
