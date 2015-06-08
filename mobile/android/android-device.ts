@@ -64,7 +64,8 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		private $opener: IOpener,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $options: IOptions,
-		private $logcatHelper: Mobile.ILogcatHelper) {
+		private $logcatHelper: Mobile.ILogcatHelper,
+		private $hostInfo: IHostInfo) {
 		let details: IAndroidDeviceDetails = this.getDeviceDetails().wait();
 
 		this.model = details.model;
@@ -209,7 +210,12 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
     }
 
     private openDebuggerClient(url: string): void {
-		this.$opener.open(url, "chrome");
+		let chrome = this.$hostInfo.isDarwin ? "Google\ Chrome" : "chrome";
+		let child = this.$opener.open(url, chrome);
+		if(!child) {
+			this.$errors.fail(`Unable to open ${chrome}.`);
+		}
+		return child;
     }
 
     private printDebugPort(packageName: string): void {
@@ -257,17 +263,20 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
         let port = this.$options.debugPort;
 
         let packageDir = util.format(AndroidDevice.PACKAGE_EXTERNAL_DIR_TEMPLATE, packageName);
-        let envDebugOutFullpath = packageDir + AndroidDevice.ENV_DEBUG_OUT_FILENAME;
+        let envDebugOutFullpath = this.buildDevicePath(packageDir, AndroidDevice.ENV_DEBUG_OUT_FILENAME);
         let clearDebugEnvironmentCommand = this.composeCommand('shell rm "%s"', envDebugOutFullpath);
         this.$childProcess.exec(clearDebugEnvironmentCommand).wait();
 
-        let setDebugBreakEnvironmentCommand = this.composeCommand('shell echo "" > "%s"', "debugbreak");
-        this.$childProcess.exec(setDebugBreakEnvironmentCommand).wait();
+		let createPackageDir = this.composeCommand('shell mkdir -p "%s"', packageDir);
+		this.$childProcess.exec(createPackageDir).wait();
+
+		let debugBreakPath = this.buildDevicePath(packageDir, "debugbreak");
+		let setDebugBreakEnvironmentCommand = this.composeCommand('shell "cat /dev/null > %s"', debugBreakPath);
+		this.$childProcess.exec(setDebugBreakEnvironmentCommand).wait();
 		
         this.startPackageOnDevice(packageName).wait();
 
         let dbgPort = this.startAndGetPort(packageName).wait();
-
         if (dbgPort > 0) {
             this.tcpForward(dbgPort, dbgPort);
             this.startDebuggerClient(dbgPort).wait();
@@ -310,6 +319,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
     private startAndGetPort(packageName: string): IFuture<number> {
         return (() => {
             let port = -1;
+			let timeout = 60;
 
             let packageDir = util.format(AndroidDevice.PACKAGE_EXTERNAL_DIR_TEMPLATE, packageName);
             let envDebugInFullpath = packageDir + AndroidDevice.ENV_DEBUG_IN_FILENAME;
@@ -317,18 +327,18 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
             this.$childProcess.exec(clearDebugEnvironmentCommand).wait();
 
             let isRunning = false;
-            for (let i = 0; i < 60; i++) {
+            for (let i = 0; i < timeout; i++) {
                 helpers.sleep(1000 /* ms */);
                 isRunning = this.checkIfRunning(packageName);
                 if (isRunning)
                     break;
             }
-
+			
             if (isRunning) {
                 let setEnvironmentCommand = this.composeCommand('shell "cat /dev/null > %s"', envDebugInFullpath);
                 this.$childProcess.exec(setEnvironmentCommand).wait();
 
-                for (let i = 0; i < 10; i++) {
+                for (let i = 0; i < timeout; i++) {
                     helpers.sleep(1000 /* ms */);
                     let envDebugOutFullpath = packageDir + AndroidDevice.ENV_DEBUG_OUT_FILENAME;
                     let exists = this.checkIfFileExists(envDebugOutFullpath).wait();

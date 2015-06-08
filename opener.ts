@@ -6,8 +6,8 @@ import xopen = require("open");
 
 export class Opener implements IOpener {
 	
-    public open(target: string, appname?: string): void {
-        xopen(target, appname);
+    public open(target: string, appname?: string): any {
+        return xopen(target, appname);
 	}
 }
 $injector.register("opener", Opener);
