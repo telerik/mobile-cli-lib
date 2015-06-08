@@ -98,7 +98,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 			opts = opts.concat("--device", this.$options.device);
 		}
 
-		if(emulatorOptions.args) {
+		if(emulatorOptions && emulatorOptions.args) {
 			opts.push(`--args=${emulatorOptions.args}`);
 		}
 
