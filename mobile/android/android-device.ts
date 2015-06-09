@@ -41,7 +41,6 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 
 	private static ENV_DEBUG_IN_FILENAME = "envDebug.in";
 	private static ENV_DEBUG_OUT_FILENAME = "envDebug.out";
-	private static PACKAGE_EXTERNAL_DIR_TEMPLATE = "/sdcard/Android/data/%s/files/";
 	private static DEVICE_TMP_DIR_FORMAT_V2 = "/data/local/tmp/12590FAA-5EDD-4B12-856D-F52A0A1599F2/%s";
 	private static DEVICE_TMP_DIR_FORMAT_V3 = "/mnt/sdcard/Android/data/%s/files/12590FAA-5EDD-4B12-856D-F52A0A1599F2";
 	private static COMMANDS_FILE = "telerik.livesync.commands";
@@ -210,10 +209,10 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
     }
 
     private openDebuggerClient(url: string): void {
-		let chrome = this.$hostInfo.isDarwin ? "Google\ Chrome" : "chrome";
-		let child = this.$opener.open(url, chrome);
+		let browser = this.$hostInfo.isDarwin ? "Safari" : "chrome";
+		let child = this.$opener.open(url, browser);
 		if(!child) {
-			this.$errors.fail(`Unable to open ${chrome}.`);
+			this.$errors.fail(`Unable to open ${browser}.`);
 		}
 		return child;
     }
@@ -262,16 +261,14 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 
         let port = this.$options.debugPort;
 
-        let packageDir = util.format(AndroidDevice.PACKAGE_EXTERNAL_DIR_TEMPLATE, packageName);
-        let envDebugOutFullpath = this.buildDevicePath(packageDir, AndroidDevice.ENV_DEBUG_OUT_FILENAME);
-        let clearDebugEnvironmentCommand = this.composeCommand('shell rm "%s"', envDebugOutFullpath);
+        let envDebugOutFullpath = "files/" + AndroidDevice.ENV_DEBUG_OUT_FILENAME);
+
+        let clearDebugEnvironmentCommand = this.composeCommand('shell run-as "%s" rm "%s"', packageName,  envDebugOutFullpath);
         this.$childProcess.exec(clearDebugEnvironmentCommand).wait();
 
-		let createPackageDir = this.composeCommand('shell mkdir -p "%s"', packageDir);
-		this.$childProcess.exec(createPackageDir).wait();
+		let debugBreakPath = "files/debugbreak";
 
-		let debugBreakPath = this.buildDevicePath(packageDir, "debugbreak");
-		let setDebugBreakEnvironmentCommand = this.composeCommand('shell "cat /dev/null > %s"', debugBreakPath);
+		let setDebugBreakEnvironmentCommand = this.composeCommand('shell run-as "%s" touch "%s"', packageName, debugBreakPath);
 		this.$childProcess.exec(setDebugBreakEnvironmentCommand).wait();
 		
         this.startPackageOnDevice(packageName).wait();
@@ -300,16 +297,15 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
         }).future<void>()();
     }
 
-    private checkIfRunning(packageName: string): boolean {
-        let packageDir = util.format(AndroidDevice.PACKAGE_EXTERNAL_DIR_TEMPLATE, packageName);
-        let envDebugOutFullpath = packageDir + AndroidDevice.ENV_DEBUG_OUT_FILENAME;
-        let isRunning = this.checkIfFileExists(envDebugOutFullpath).wait();
+    private checkIsRunning(packageName: string): boolean {
+        let envDebugOutFullpath = "files/" + AndroidDevice.ENV_DEBUG_OUT_FILENAME;
+        let isRunning = this.checkIfFileExists(envDebugOutFullpath, packageName).wait();
         return isRunning;
     }
 
-    private checkIfFileExists(filename: string): IFuture<boolean> {
+    private checkIfFileExists(filename: string, packageName: string): IFuture<boolean> {
         return (() => {
-            let args = ["shell", "test", "-f", filename, "&&", "echo 'yes'", "||", "echo 'no'"];
+            let args = ["shell", "run-as", packageName, "test", "-f", filename, "&&", "echo 'yes'", "||", "echo 'no'"];
             let res = this.$childProcess.spawnFromEvent(this.adb, args, "exit").wait();
             let exists = res.stdout.indexOf('yes') > -1;
             return exists;
@@ -321,29 +317,30 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
             let port = -1;
 			let timeout = 60;
 
-            let packageDir = util.format(AndroidDevice.PACKAGE_EXTERNAL_DIR_TEMPLATE, packageName);
-            let envDebugInFullpath = packageDir + AndroidDevice.ENV_DEBUG_IN_FILENAME;
-            let clearDebugEnvironmentCommand = this.composeCommand('shell rm "%s"', envDebugInFullpath);
+            let envDebugInFullpath = "files/" + AndroidDevice.ENV_DEBUG_IN_FILENAME;
+
+            let clearDebugEnvironmentCommand = this.composeCommand('shell run-as "%s" rm "%s"', packageName, envDebugInFullpath);
             this.$childProcess.exec(clearDebugEnvironmentCommand).wait();
 
             let isRunning = false;
             for (let i = 0; i < timeout; i++) {
                 helpers.sleep(1000 /* ms */);
-                isRunning = this.checkIfRunning(packageName);
+                isRunning = this.checkIsRunning(packageName);
                 if (isRunning)
                     break;
             }
 			
             if (isRunning) {
-                let setEnvironmentCommand = this.composeCommand('shell "cat /dev/null > %s"', envDebugInFullpath);
+                let setEnvironmentCommand = this.composeCommand('shell run-as "%s" touch "%s"', packageName, envDebugInFullpath);
                 this.$childProcess.exec(setEnvironmentCommand).wait();
 
                 for (let i = 0; i < timeout; i++) {
                     helpers.sleep(1000 /* ms */);
-                    let envDebugOutFullpath = packageDir + AndroidDevice.ENV_DEBUG_OUT_FILENAME;
-                    let exists = this.checkIfFileExists(envDebugOutFullpath).wait();
+                    let envDebugOutFullpath = "files/" + AndroidDevice.ENV_DEBUG_OUT_FILENAME);
+
+                    let exists = this.checkIfFileExists(envDebugOutFullpath, packageName).wait();
                     if (exists) {
-                        let res = this.$childProcess.spawnFromEvent(this.adb, ["shell", "cat", envDebugOutFullpath], "exit").wait();
+                        let res = this.$childProcess.spawnFromEvent(this.adb, ["shell", "run-as", packageName, "cat", envDebugOutFullpath], "exit").wait();
                         let match = res.stdout.match(/PORT=(\d)+/);
                         if (match) {
                             port = parseInt(match[0].substring(5), 10);
