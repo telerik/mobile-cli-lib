@@ -361,3 +361,17 @@ interface IYargArgv extends IDictionary<any> {
 	_: string[];
 	$0: string;
 }
+
+/**
+ * Verifies the host OS configuration and prints warnings to the users
+ * Code behind of the "doctor" command
+ * @interface
+ */
+interface IDoctorService {
+	/**
+	 * Verifies the host OS configuration and prints warnings to the users
+	 *
+	 * @returns {boolean} true if at least one warning was printed
+	 */
+	printWarnings(): boolean;
+}
