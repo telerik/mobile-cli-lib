@@ -9,7 +9,8 @@ export enum OptionType {
 	String,
 	Boolean,
 	Number,
-	Array
+	Array,
+	Object
 }
 
 export class OptionsBase {
@@ -111,17 +112,16 @@ export class OptionsBase {
 			let optionName = this.getCorrectOptionName(originalOptionName);
 
 			if (!_.contains(this.optionsWhiteList, optionName)) {
-				
 				if (!this.isOptionSupported(optionName)) {
 					this.$errors.failWithoutHelp("The option '%s' is not supported. To see command's options, use '$ %s help %s'. To see all commands use '$ %s help'.", originalOptionName, this.$staticConfig.CLIENT_NAME.toLowerCase(), process.argv[2], this.$staticConfig.CLIENT_NAME.toLowerCase());
 				} 
-				
+
 				let optionType = this.getOptionType(optionName);
 				let optionValue = parsed[optionName];
 				let parsedOptionType = typeof (optionValue);
-				
+
 				if (_.isArray(optionValue) && optionType !== OptionType.Array) {
-					this.$errors.failWithoutHelp("You have set the %s option multiple times. Check the correct command syntax below and try again.", originalOptionName);
+					this.$errors.fail("You have set the %s option multiple times. Check the correct command syntax below and try again.", originalOptionName);
 				} else if (this.doesOptionRequireValue(optionType, parsedOptionType)) {
 					this.$errors.failWithoutHelp("The option '%s' requires a value.", originalOptionName);
 				} else if (optionType === OptionType.String && helpers.isNullOrWhitespace(optionValue)) {
