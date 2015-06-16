@@ -42,15 +42,19 @@ export class AnalyticsService implements IAnalyticsService {
 	}
 
 	public trackFeature(featureName: string): IFuture<void> {
+		let category = this.$options.client ||
+						(helpers.isInteractive() ? "CLI" : "Non-interactive");
+		return this.track(category, featureName);
+	}
+
+	public track(featureName: string, featureValue: string): IFuture<void> {
 		return (() => {
+			this.$logger.trace(`Trying to track feature '${featureName}' with value '${featureValue}'.`);
 			if(this.$analyticsSettingsService.canDoRequest().wait()) {
 				try {
 					this.start().wait();
 					if(this._eqatecMonitor) {
-						
-						let category = this.$options.client ||
-							(helpers.isInteractive() ? "CLI" : "Non-interactive");
-						this._eqatecMonitor.trackFeature(category + "." + featureName);
+						this._eqatecMonitor.trackFeature(`${featureName}.${featureValue}`);
 					}
 				} catch(e) {
 					this.$logger.trace("Analytics exception: '%s'", e.toString());

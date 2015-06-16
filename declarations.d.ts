@@ -189,6 +189,7 @@ interface IAnalyticsService {
 	disableAnalytics(): IFuture<void>;
 	getStatusMessage(): IFuture<string>;
 	isEnabled(): IFuture<boolean>;
+	track(featureName: string, featureValue: string): IFuture<void>;
 }
 
 interface IPrompter extends IDisposable {
