@@ -422,7 +422,7 @@ export class FileSystem implements IFileSystem {
 	}
 
 // filterCallback: function(path: String, stat: fs.Stats): Boolean
-	public enumerateFilesInDirectorySync(directoryPath: string, filterCallback?: (file: string, stat: IFsStats) => boolean, foundFiles?: string[]): string[] {
+	public enumerateFilesInDirectorySync(directoryPath: string, filterCallback?: (file: string, stat: IFsStats) => boolean, opts?: { enumerateDirectories?: boolean }, foundFiles?: string[]): string[] {
 		foundFiles = foundFiles || [];
 		let contents = this.readDirectory(directoryPath).wait();
 		for (let i = 0; i < contents.length; ++i) {
@@ -433,7 +433,10 @@ export class FileSystem implements IFileSystem {
 			}
 
 			if (stat.isDirectory()) {
-				this.enumerateFilesInDirectorySync(file, filterCallback, foundFiles);
+				if(opts && opts.enumerateDirectories) {
+					foundFiles.push(file);
+				}
+				this.enumerateFilesInDirectorySync(file, filterCallback, opts, foundFiles);
 			} else {
 				foundFiles.push(file);
 			}

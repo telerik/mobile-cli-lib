@@ -42,7 +42,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		private $logcatHelper: Mobile.ILogcatHelper,
 		private $options: IOptions) {
 		iconv.extendNodeEncodings();
-		this.adbFilePath = helpers.getPathToAdb($injector).wait();
+		this.adbFilePath = this.$staticConfig.getAdbFilePath().wait();
 	}
 
 	public checkDependencies(): IFuture<void> {
@@ -113,7 +113,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 			this.$fs.futureFromEvent(childProcess, "close").wait();
 
 			if (!this.$options.justlaunch) {
-				this.$logcatHelper.start(emulatorId, this.adbFilePath);
+				this.$logcatHelper.start(emulatorId);
 			}
 		}).future<void>()();
 	}

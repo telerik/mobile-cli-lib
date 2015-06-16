@@ -17,6 +17,7 @@ import bplistParser = require("bplist-parser");
 import string_decoder = require("string_decoder");
 import stream = require("stream");
 import assert = require("assert");
+import readline = require("readline");
 
 export class CoreTypes {
 	public static pointerSize = ref.types.size_t.size;
@@ -198,6 +199,7 @@ class IOSCore implements Mobile.IiOSCore {
 			"AFCConnectionOpen": ffi.ForeignFunction(lib.get("AFCConnectionOpen"), "uint", ["int", "uint", ref.refType(CoreTypes.afcConnectionRef)]),
 			"AFCConnectionClose": ffi.ForeignFunction(lib.get("AFCConnectionClose"), "uint", [CoreTypes.afcConnectionRef]),
 			"AFCDirectoryCreate": ffi.ForeignFunction(lib.get("AFCDirectoryCreate"), "uint", [CoreTypes.afcConnectionRef, "string"]),
+			"AFCFileInfoOpen":  ffi.ForeignFunction(lib.get("AFCFileInfoOpen"), "uint", [CoreTypes.afcConnectionRef, "string", CoreTypes.cfDictionaryRef]),
 			"AFCFileRefOpen": (this.$hostInfo.isDarwin || process.arch === "x64") ? ffi.ForeignFunction(lib.get("AFCFileRefOpen"), "uint", [CoreTypes.afcConnectionRef, "string", "uint", ref.refType(CoreTypes.afcFileRef)]) : ffi.ForeignFunction(lib.get("AFCFileRefOpen"), "uint", [CoreTypes.afcConnectionRef, "string", "uint", "uint", ref.refType(CoreTypes.afcFileRef)]),
 			"AFCFileRefClose": ffi.ForeignFunction(lib.get("AFCFileRefClose"), "uint", [CoreTypes.afcConnectionRef, CoreTypes.afcFileRef]),
 			"AFCFileRefWrite": ffi.ForeignFunction(lib.get("AFCFileRefWrite"), "uint", [CoreTypes.afcConnectionRef, CoreTypes.afcFileRef, CoreTypes.voidPtr, "uint"]),
@@ -592,6 +594,10 @@ export class MobileDevice implements Mobile.IMobileDevice {
 
 	public afcDirectoryCreate(afcConnection: NodeBuffer, path: string): number {
 		return this.mobileDeviceLibrary.AFCDirectoryCreate(afcConnection, path);
+	}
+	
+	public afcFileInfoOpen(afcConnection: NodeBuffer, path: string, afcDirectory: NodeBuffer): number {
+		return this.mobileDeviceLibrary.AFCFileInfoOpen(afcConnection, path, afcDirectory);
 	}
 
 	public afcFileRefOpen(afcConnection: NodeBuffer, path: string,  mode: number, afcFileRef: NodeBuffer): number {
@@ -1084,33 +1090,71 @@ export class GDBServer implements Mobile.IGDBServer {
 			}
 		}
 	}
-
-	public run(argv: string[]): void {
-		this.send("QStartNoAckMode");
-		this.socket.write("+");
-		this.send("QEnvironmentHexEncoded:");
-		this.send("QSetDisableASLR:1");
-
-		let encodedArguments = _.map(argv, (arg, index) => util.format("%d,%d,%s", arg.length * 2, index, new Buffer(arg).toString("hex"))).join(",");
-		this.send("A" + encodedArguments);
-
-		this.send("qLaunchSuccess");
-
-		if(this.$hostInfo.isWindows) {
-			this.send("vCont;c");
-		} else {
-			if (!this.$options.justlaunch) {
-				this.socket.pipe(new GDBStandardOutputAdapter()).pipe(process.stdout);
-				this.socket.pipe(new GDBSignalWatcher());
+	
+	public init(): IFuture<void> {
+		return (() => {
+			this.send("QStartNoAckMode");
+			this.socket.write("+");
+			this.send("QEnvironmentHexEncoded:");
+			this.send("QSetDisableASLR:1");
+		}).future<void>()();
+	}
+	
+	public run(argv: string[]): IFuture<void> {
+		return (() => {
+			this.init().wait();
+			
+			let encodedArguments = _.map(argv, (arg, index) => util.format("%d,%d,%s", arg.length * 2, index, this.toHex(arg))).join(",");
+			this.send("A" + encodedArguments);
+	
+			this.send("qLaunchSuccess");
+	
+			if(this.$hostInfo.isWindows) {
 				this.send("vCont;c");
 			} else {
-				// Disconnecting the debugger closes the socket and allows the process to quit
-				this.send("D");
+				if (this.$options.justlaunch) {
+					// Disconnecting the debugger closes the socket and allows the process to quit
+					this.send("D");
+				} else {
+					this.socket.pipe(new GDBStandardOutputAdapter()).pipe(process.stdout);
+					this.socket.pipe(new GDBSignalWatcher());
+					this.send("vCont;c");
+				}
 			}
-		}
+		}).future<void>()();
+	}
+	
+	public kill(bundleExecutableName?: string): IFuture<void> {
+		return (() => {
+			this.init().wait();
+			
+			let bundleExecutableNameHex = this.toHex(bundleExecutableName);
+			this.send(`vAttachName;${bundleExecutableNameHex}`);	
+			this.send("k");					
+		}).future<void>()();
+	}
+	
+	private asyncSend(packet: string): IFuture<any> {
+		let future = new Future<any>();
+		let data = this.createData(packet);
+		
+		this.socket.write(data, "utf8", (err: Error, response: any) => {
+			if(err) {
+				future.throw(err);
+			} else {
+				future.return(response);
+			}
+		});
+		
+		return future;
 	}
 
 	private send(packet: string): void {
+		let data = this.createData(packet);
+		this.socket.write(data);
+	}
+	
+	private createData(packet: string): string {
 		let sum = 0;
 		for(let i = 0; i < packet.length; i++) {
 			sum += getCharacterCodePoint(packet[i]);
@@ -1118,7 +1162,11 @@ export class GDBServer implements Mobile.IGDBServer {
 		sum = sum & 255;
 
 		let data = util.format("$%s#%s", packet, sum.toString(16));
-		this.socket.write(data);
+		return data;
+	}
+	
+	private toHex(value: string): string {
+		return new Buffer(value).toString("hex");
 	}
 }
 $injector.register("gdbServer", GDBServer);

@@ -12,9 +12,12 @@ import iosCore = require("./ios-core");
 import iOSProxyServices = require("./ios-proxy-services");
 import helpers = require("./../../helpers");
 
+import applicationManagerPath = require("./ios-application-manager");
+import fileSystemPath = require("./ios-device-file-system");
+
 let CoreTypes = iosCore.CoreTypes;
 
-export class IOSDevice implements Mobile.IIOSDevice {
+export class IOSDevice implements Mobile.IiOSDevice {
 	private static IMAGE_ALREADY_MOUNTED_ERROR_CODE = 3892314230;
 	private static INCOMPATIBLE_IMAGE_SIGNATURE_ERROR_CODE = 3892314163;
 	private static INTERFACE_USB = 1;
@@ -22,7 +25,10 @@ export class IOSDevice implements Mobile.IIOSDevice {
 	private identifier: string = null;
 	private voidPtr = ref.refType(ref.types.void);
 	private mountImageCallbackPtr: NodeBuffer = null;
-	private uninstallApplicationCallbackPtr: NodeBuffer = null;
+	
+	public applicationManager: Mobile.IDeviceApplicationManager;
+	public fileSystem: Mobile.IDeviceFileSystem;
+	public deviceInfo: Mobile.IDeviceInfo;	
 
 	constructor(private devicePointer: NodeBuffer,
 		private $childProcess: IChildProcess,
@@ -37,7 +43,17 @@ export class IOSDevice implements Mobile.IIOSDevice {
 		private $hostInfo: IHostInfo,
 		private $options: IOptions) {
 		this.mountImageCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSDevice.mountImageCallback);
-		this.uninstallApplicationCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSDevice.uninstallCallback);
+		
+		this.applicationManager = this.$injector.resolve(applicationManagerPath.IOSApplicationManager, { device: this, devicePointer: this.devicePointer });
+		this.fileSystem = this.$injector.resolve(fileSystemPath.IOSDeviceFileSystem, { device: this,  devicePointer: this.devicePointer });
+		this.deviceInfo = {
+			identifier: this.$coreFoundation.convertCFStringToCString(this.$mobileDevice.deviceCopyDeviceIdentifier(this.devicePointer)),
+			displayName: this.getValue("ProductType"),
+			model: this.getValue("ProductType"),
+			version: this.getValue("ProductVersion"),
+			vendor: "Apple",
+			platform: this.$devicePlatformsConstants.iOS
+		}
 	}
 
 	private static mountImageCallback(dictionary: NodeBuffer, user: NodeBuffer): void {
@@ -46,10 +62,6 @@ export class IOSDevice implements Mobile.IIOSDevice {
 
 		let jsDictionary = coreFoundation.cfTypeTo(dictionary);
 		logger.info("[Mounting] %s", jsDictionary["Status"]);
-	}
-
-	private static uninstallCallback(dictionary: NodeBuffer, user: NodeBuffer): void {
-		IOSDevice.showStatus("Uninstalling", dictionary);
 	}
 
 	private static showStatus(action: string, dictionary: NodeBuffer) {
@@ -72,34 +84,6 @@ export class IOSDevice implements Mobile.IIOSDevice {
 		}
 
 		logger.info(output.join(" "));
-	}
-
-	public getPlatform(): string {
-		return this.$devicePlatformsConstants.iOS;
-	}
-
-	public getIdentifier(): string {
-		if (this.identifier == null) {
-			this.identifier = this.$coreFoundation.convertCFStringToCString(this.$mobileDevice.deviceCopyDeviceIdentifier(this.devicePointer));
-		}
-
-		return this.identifier;
-	}
-
-	public getDisplayName(): string {
-		return this.getValue("ProductType");
-	}
-
-	public getModel(): string {
-		return this.getValue("ProductType");
-	}
-
-	public getVersion(): string {
-		return this.getValue("ProductVersion");
-	}
-
-	public getVendor(): string {
-		return "Apple";
 	}
 
 	private getValue(value: string): string {
@@ -167,21 +151,6 @@ export class IOSDevice implements Mobile.IIOSDevice {
 		return this.$coreFoundation.convertCFStringToCString(deviceCopyValue);
 	}
 
-	private lookupApplications(): IDictionary<any> {
-		let func = () => {
-			let dictionaryPointer = ref.alloc(CoreTypes.cfDictionaryRef);
-			let result = this.$mobileDevice.deviceLookupApplications(this.devicePointer, 0, dictionaryPointer);
-			if(result !== 0) {
-				this.$errors.fail("Invalid result code %s from device lookup applications.", result);
-			}
-			let cfDictionary = dictionaryPointer.deref();
-			let jsDictionary = this.$coreFoundation.cfTypeTo(cfDictionary);
-			return jsDictionary;
-		}
-
-		return this.tryToExecuteFunction<IDictionary<any>>(func);
-	}
-
 	private findDeveloperDirectory(): IFuture<string> {
 		return (() => {
 			let childProcess = this.$childProcess.spawnFromEvent("xcode-select", ["-print-path"], "close").wait();
@@ -189,7 +158,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 		}).future<string>()();
 	}
 
-	private tryToExecuteFunction<TResult>(func: () => TResult): TResult {
+	public tryExecuteFunction<TResult>(func: () => TResult): TResult {
 		this.connect();
 		try {
 			this.startSession();
@@ -251,14 +220,14 @@ export class IOSDevice implements Mobile.IIOSDevice {
 			});
 
 			if(!supportPath) {
-				this.$errors.fail("Unable to find device support path.");
+				this.$errors.fail("Unable to find device support path. Verify that you have installed sdk compatible with your device version.");
 			}
 
 			return supportPath.path;
 		}).future<string>()();
 	}
 
-	private mountImage(): IFuture<void> {
+	public mountImage(): IFuture<void> {
 		return (() => {
 			let imagePath = this.$options.ddi;
 
@@ -330,7 +299,7 @@ export class IOSDevice implements Mobile.IIOSDevice {
 					}
 				};
 
-				this.tryToExecuteFunction<void>(func);
+				this.tryExecuteFunction<void>(func);
 			}
 		}).future<void>()();
 	}
@@ -339,117 +308,27 @@ export class IOSDevice implements Mobile.IIOSDevice {
 		return this.$mobileDevice.deviceGetInterfaceType(this.devicePointer);
 	}
 
-	private startHouseArrestService(bundleId: string): number {
-		let func = () => {
-			let fdRef = ref.alloc("int");
-			let result = this.$mobileDevice.deviceStartHouseArrestService(this.devicePointer, this.$coreFoundation.createCFString(bundleId), null, fdRef);
-			let fd = fdRef.deref();
-
-			if(result !== 0) {
-				this.$errors.fail("AMDeviceStartHouseArrestService returned %s", result);
-			}
-
-			return fd;
-		};
-
-		return this.tryToExecuteFunction<number>(func);
-	}
-
 	public startService(serviceName: string): number {
 		let func = () => {
 			let socket = ref.alloc("int");
 			let result = this.$mobileDevice.deviceStartService(this.devicePointer, this.$coreFoundation.createCFString(serviceName), socket);
-			this.validateResult(result, "Unable to start service");
+			this.validateResult(result, `Unable to start service ${serviceName}`);
 			return ref.deref(socket);
 		}
 
-		return this.tryToExecuteFunction<number>(func);
+		return this.tryExecuteFunction<number>(func);
 	}
 
-	public deploy(packageFile: string, packageName: string): IFuture<void> {
-		return (() => {
-			let installationProxy = this.$injector.resolve(iOSProxyServices.InstallationProxyClient, {device: this });
-			installationProxy.deployApplication(packageFile).wait();
-			installationProxy.closeSocket();
-		}).future<void>()();
+	public deploy(packageFile: string): IFuture<void> {
+		return this.applicationManager.installApplication(packageFile);
 	}
-
-	public sync(localToDevicePaths: Mobile.ILocalToDevicePathData[], appIdentifier: Mobile.IAppIdentifier, liveSyncUrl: string, options: Mobile.ISyncOptions = {}): IFuture<void> {
-		return(() => {
-			//TODO: CloseSocket must be part of afcClient. Refactor it.
-			let houseArrestClient: Mobile.IHouseArrestClient = this.$injector.resolve(iOSProxyServices.HouseArrestClient, {device: this});
-			let afcClientForContainer = houseArrestClient.getAfcClientForAppContainer(appIdentifier.appIdentifier);
-			afcClientForContainer.transferCollection(localToDevicePaths).wait();
-			houseArrestClient.closeSocket();
-
-			if (!this.$options.skipRefresh) {
-				let afcClientForContainer = houseArrestClient.getAfcClientForAppContainer(appIdentifier.appIdentifier);
-				afcClientForContainer.deleteFile("/Library/Preferences/ServerInfo.plist");
-				houseArrestClient.closeSocket();
-
-				let notificationProxyClient = this.$injector.resolve(iOSProxyServices.NotificationProxyClient, {device: this});
-				notificationProxyClient.postNotification("com.telerik.app.refreshWebView");
-				notificationProxyClient.closeSocket();
-			}
-
-			this.$logger.out("Successfully synced device with identifier '%s'", this.getIdentifier());
-
-		}).future<void>()();
-	}
-
+	
 	public openDeviceLogStream() {
 		let iOSSystemLog = this.$injector.resolve(iOSProxyServices.IOSSyslog, {device: this});
 		iOSSystemLog.read();
 	}
 
-	public getInstalledApplications():  IFuture<string[]> {
-		return (() => {
-			return _(this.lookupApplications()).keys().sortBy((identifier: string) => identifier.toLowerCase()).value();
-		}).future<string[]>()();
-	}
-
-	public runApplication(applicationId: string): IFuture<void> {
-		return (() => {
-			if(this.$hostInfo.isWindows && (this.$staticConfig.enableDeviceRunCommandOnWindows === null || this.$staticConfig.enableDeviceRunCommandOnWindows === undefined)) {
-				this.$errors.fail("$%s device run command is not supported on Windows for iOS devices.", this.$staticConfig.CLIENT_NAME.toLowerCase());
-			}
-
-			let applications = this.lookupApplications();
-			let application = applications[applicationId];
-			if(!application) {
-				let sortedKeys = _.sortBy(_.keys(applications));
-				this.$errors.fail("Invalid application id: %s. All available application ids are: %s%s ", applicationId, os.EOL, sortedKeys.join(os.EOL));
-			}
-
-			this.mountImage().wait();
-
-			let service = this.startService(iOSProxyServices.MobileServices.DEBUG_SERVER);
-			let socket = this.$hostInfo.isWindows ? service :  new net.Socket({ fd: service });
-			let gdbServer = this.$injector.resolve(iosCore.GDBServer, { socket: socket });
-			let executable = util.format("%s/%s", application.Path, application.CFBundleExecutable);
-
-			gdbServer.run([executable]);
-
-			this.$logger.info("Successfully run application %s on device with ID %s", applicationId, this.getIdentifier());
-		}).future<void>()();
-	}
-
-	public uninstallApplication(applicationId: string): IFuture<void> {
-		return (() => {
-			let afc = this.startService(iOSProxyServices.MobileServices.INSTALLATION_PROXY);
-			try {
-				let result = this.$mobileDevice.deviceUninstallApplication(afc, this.$coreFoundation.createCFString(applicationId), null, this.uninstallApplicationCallbackPtr);
-				if(result !== 0) {
-					this.$errors.fail("AMDeviceUninstallApplication returned '%d'.", result);
-				}
-			} finally {
-				//this.stopSession();
-			}
-
-			this.$logger.trace("Application %s has been uninstalled successfully.", applicationId);
-		}).future<void>()();
-	}
-
+	// This function works only on OSX
 	public connectToPort(port: number): net.Socket {
 		let interfaceType = this.getInterfaceType();
 		if(interfaceType === IOSDevice.INTERFACE_USB) {
@@ -473,75 +352,13 @@ export class IOSDevice implements Mobile.IIOSDevice {
 
 		return null;
 	}
-
+	
 	/**
 	 * Converts a little endian 16 bit int number to 16 bit int big endian number.
 	 */
 	private htons(port: number): number {
 		let result =  (port & 0xff00) >> 8 | (port & 0x00ff) << 8;
 		return result;
-	}
-
-	private resolveAfc(): Mobile.IAfcClient {
-		let service = this.$options.app ? this.startHouseArrestService(this.$options.app) : this.startService(iOSProxyServices.MobileServices.APPLE_FILE_CONNECTION);
-		let afcClient:Mobile.IAfcClient = this.$injector.resolve(iOSProxyServices.AfcClient, {service: service});
-		return afcClient;
-	}
-
-	public getFile(deviceFilePath: string): IFuture<void> {
-		return (() => {
-			let afcClient = this.resolveAfc();
-			let fileToRead = afcClient.open(deviceFilePath, "r");
-			let fileToWrite = this.$options.file ? this.$fs.createWriteStream(this.$options.file) : process.stdout;
-			let dataSizeToRead = 8192;
-			let size = 0;
-
-			while(true) {
-				let data = fileToRead.read(dataSizeToRead);
-				if(!data || data.length === 0) {
-					break;
-				}
-				fileToWrite.write(data);
-				size += data.length;
-			}
-
-			fileToRead.close();
-			this.$logger.trace("%s bytes read from %s", size.toString(), deviceFilePath);
-
-		}).future<void>()();
-	}
-
-	public putFile(localFilePath: string, deviceFilePath: string): IFuture<void> {
-		let afcClient = this.resolveAfc();
-		return afcClient.transfer(path.resolve(localFilePath), deviceFilePath);
-	}
-
-	public listFiles(devicePath: string): IFuture<void> {
-		return (() => {
-			if (!devicePath) {
-				devicePath = ".";
-			}
-
-			this.$logger.info("Listing %s", devicePath);
-
-			let afcClient = this.resolveAfc();
-
-			let walk = (root:string, indent:number) => {
-				this.$logger.info(util.format("%s %s", Array(indent).join(" "), root));
-				let children:string[] = [];
-				try {
-					children = afcClient.listDir(root);
-				} catch (e) {
-					children = [];
-				}
-
-				_.each(children, (child:string) => {
-					walk(root + "/" + child, indent + 1);
-				});
-			};
-
-			walk(devicePath, 0);
-		}).future<void>()();
 	}
 }
 $injector.register("iOSDevice", IOSDevice);

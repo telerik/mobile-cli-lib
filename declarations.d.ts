@@ -78,7 +78,7 @@ interface IFileSystem {
 	chmod(path: string, mode: string): IFuture<any>;
 
 	setCurrentUserAsOwner(path: string, owner: string): IFuture<void>;
-	enumerateFilesInDirectorySync(directoryPath: string, filterCallback?: (file: string, stat: IFsStats) => boolean): string[];
+	enumerateFilesInDirectorySync(directoryPath: string, filterCallback?: (file: string, stat: IFsStats) => boolean, opts?: { enumerateDirectories?: boolean }): string[];
 }
 
 // duplicated from fs.Stats, because I cannot import it here
@@ -261,6 +261,14 @@ interface IHtmlHelpService {
 	openHelpForCommandInBrowser(commandName: string): IFuture<void>;
 }
 
+interface IUsbLiveSyncServiceBase {
+	initialize(platform: string): IFuture<string>;
+	sync(platform: string, appIdentifier: string, localProjectRootPath: string, projectFilesPath: string, excludedProjectDirsAndFiles: string[], watchGlob: any,
+		restartAppOnDeviceAction: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData) => IFuture<void>,
+		notInstalledAppOnDeviceAction: (device: Mobile.IDevice) => IFuture<void>,
+		beforeBatchLiveSyncAction?: (filePath: string) => IFuture<void>): IFuture<void>;
+}
+
 interface ISysInfoData {
 	/** name and version of the CLI app itself */
 	procInfo: string;
@@ -360,6 +368,7 @@ interface ICommonOptions {
 	file: string;
 	analyticsClient: string;
 	force: boolean;
+	companion: boolean;
 }
 
 interface IYargArgv extends IDictionary<any> {

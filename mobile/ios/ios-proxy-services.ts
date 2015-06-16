@@ -95,6 +95,7 @@ export class AfcClient implements Mobile.IAfcClient {
 
 	constructor(private service: number,
 		private $mobileDevice: Mobile.IMobileDevice,
+		private $coreFoundation: Mobile.ICoreFoundation,
 		private $fs: IFileSystem,
 		private $errors: IErrors,
 		private $logger: ILogger,
@@ -145,18 +146,17 @@ export class AfcClient implements Mobile.IAfcClient {
 
 		return entries;
 	}
+	
+	public close(): void {
+		let result = this.$mobileDevice.afcConnectionClose(this.afcConnection);
+		if (result !== 0) {
+			this.$errors.failWithoutHelp(`Unable to close apple file connection: ${result}`);
+		}
+	}
 
 	public transferPackage(localFilePath: string, devicePath: string): IFuture<void> {
 		return (() => {
 			this.transfer(localFilePath, devicePath).wait();
-		}).future<void>()();
-	}
-
-	public transferCollection(localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void> {
-		return (() => {
-			localToDevicePaths.forEach((localToDevicePathData) => {
-				this.transfer(localToDevicePathData.getLocalPath(),  path.join("/Documents", localToDevicePathData.getRelativeToProjectBasePath())).wait();
-			});
 		}).future<void>()();
 	}
 
@@ -207,7 +207,7 @@ export class AfcClient implements Mobile.IAfcClient {
 export class InstallationProxyClient {
 	private plistService: Mobile.IiOSDeviceSocket = null;
 
-	constructor(private device: Mobile.IIOSDevice,
+	constructor(private device: Mobile.IiOSDevice,
 		private $logger: ILogger,
 		private $injector: IInjector) { }
 
@@ -225,7 +225,7 @@ export class InstallationProxyClient {
 				PackagePath: helpers.fromWindowsRelativePathToUnix(devicePath)
 			});
 			let message = this.plistService.receiveMessage().wait();
-			this.$logger.info("Successfully deployed on device %s", this.device.getIdentifier());
+			this.$logger.info("Successfully deployed on device %s", this.device.deviceInfo.identifier);
 		}).future<void>()();
 	}
 
@@ -242,7 +242,7 @@ export class NotificationProxyClient implements Mobile.INotificationProxyClient 
 
 	private buffer: string = "";
 
-	constructor(private device: Mobile.IIOSDevice,
+	constructor(private device: Mobile.IiOSDevice,
 		private $injector: IInjector) { }
 
 	public postNotification(notificationName: string): void {
@@ -353,7 +353,7 @@ export class HouseArrestClient implements Mobile.IHouseArrestClient {
 		ApplicationLookupFailed: "Unable to find the application on a connected device. Ensure that the application is installed and try again."
 	}
 
-	constructor(private device: Mobile.IIOSDevice,
+	constructor(private device: Mobile.IiOSDevice,
 		private $injector: IInjector,
 		private $errors: IErrors) {
 	}
@@ -387,7 +387,7 @@ export class HouseArrestClient implements Mobile.IHouseArrestClient {
 export class IOSSyslog {
 	private plistService: Mobile.IiOSDeviceSocket;
 
-	constructor(private device: Mobile.IIOSDevice,
+	constructor(private device: Mobile.IiOSDevice,
 		private $logger: ILogger,
 		private $injector: IInjector) {
 		this.plistService = this.$injector.resolve(iOSCore.PlistService, {service: this.device.startService(MobileServices.SYSLOG), format: undefined});

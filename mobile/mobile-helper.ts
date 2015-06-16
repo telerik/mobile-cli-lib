@@ -3,19 +3,8 @@
 
 import helpers = require("../helpers");
 
-export class LocalToDevicePathData implements Mobile.ILocalToDevicePathData {
-	constructor(private localPath: string, private devicePath: string, private relativeToProjectBasePath: string) { }
-
-	getLocalPath(): string { return this.localPath; }
-	getDevicePath(): string { return this.devicePath; }
-	getRelativeToProjectBasePath(): string { return this.relativeToProjectBasePath; }
-}
-
 export class MobileHelper implements Mobile.IMobileHelper {
-	public generateLocalToDevicePathData(localPath: string, devicePath: string, relativeToProjectBasePath: string): Mobile.ILocalToDevicePathData {
-		return new LocalToDevicePathData(localPath, devicePath, relativeToProjectBasePath);
-	}
-
+	private static DEVICE_PATH_SEPARATOR = "/";	
 	private platformNamesCache: string[];
 
 	constructor(private $mobilePlatformsCapabilities: Mobile.IPlatformsCapabilities,
@@ -79,6 +68,13 @@ export class MobileHelper implements Mobile.IMobileHelper {
 		}
 		return normalizedPlatform;
 	}
-
+	
+	public buildDevicePath(...args: string[]): string {
+		return this.correctDevicePath(args.join(MobileHelper.DEVICE_PATH_SEPARATOR));
+	}
+	
+	public correctDevicePath(filePath: string): string {
+		return helpers.stringReplaceAll(filePath, '\\', '/'); 
+	}
 }
 $injector.register("mobileHelper", MobileHelper);

@@ -42,6 +42,7 @@ $injector.requireCommand("device|ios", "./common/commands/device/list-devices");
 
 $injector.requireCommand("device|log", "./common/commands/device/device-log-stream");
 $injector.requireCommand("device|run", "./common/commands/device/run-application");
+$injector.requireCommand("device|stop", "./common/commands/device/stop-application");
 $injector.requireCommand("device|list-applications", "./common/commands/device/list-applications");
 $injector.requireCommand("device|uninstall", "./common/commands/device/uninstall-application");
 $injector.requireCommand("device|list-files", "./common/commands/device/list-files");
@@ -69,6 +70,9 @@ $injector.require("androidDeviceDiscovery", "./common/mobile/mobile-core/device-
 $injector.require("iOSDevice", "./common/mobile/ios/ios-device");
 $injector.require("androidDevice", "./common/mobile/android/android-device");
 $injector.require("logcatHelper", "./common/mobile/android/logcat-helper");
+
+$injector.require("localToDevicePathDataFactory", "./common/mobile/local-to-device-path-data-factory");
+$injector.require("deviceAppDataFactory", "./common/mobile/device-app-data/device-app-data-factory");
 
 $injector.require("devicesServices", "./common/mobile/mobile-core/devices-services");
 $injector.require("projectNameValidator", "./common/validators/project-name-validator");

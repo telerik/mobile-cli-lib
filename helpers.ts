@@ -109,28 +109,6 @@ export function sleep(ms: number): void {
 	Fiber.yield();
 }
 
-export function getPathToAdb(injector: IInjector): IFuture<string> {
-	return ((): string => {
-		let childProcess: IChildProcess = injector.resolve("childProcess");
-		let logger: ILogger = injector.resolve("logger");
-		let staticConfig: Config.IStaticConfig = injector.resolve("staticConfig");
-
-		try {
-			let proc = childProcess.spawnFromEvent("adb", ["version"], "exit", undefined, { throwError: false }).wait();
-
-			if(proc.stderr) {
-				return staticConfig.adbFilePath;
-			}
-		} catch(e) {
-			if(e.code === "ENOENT") {
-				return staticConfig.adbFilePath;
-			}
-		}
-
-		return "adb";
-	}).future<string>()();
-}
-
 export function createTable(headers: string[], data: string[][]): any {
 	let table = new Table({
 		head: headers,

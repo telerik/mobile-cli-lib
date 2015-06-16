@@ -12,7 +12,7 @@ declare module Config {
 		SYS_REQUIREMENTS_LINK: string;
 		version: string;
 		helpTextPath: string;
-		adbFilePath: string;
+		getAdbFilePath(): IFuture<string>;
 		disableAnalytics?: boolean;
 		disableHooks?: boolean;
 		enableDeviceRunCommandOnWindows?: boolean;
