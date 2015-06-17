@@ -356,6 +356,7 @@ interface ICommonOptions {
 	skipRefresh: boolean;
 	app: string;
 	file: string;
+	analyticsClient: string;
 }
 
 interface IYargArgv extends IDictionary<any> {

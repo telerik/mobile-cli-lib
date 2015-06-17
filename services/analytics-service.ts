@@ -42,7 +42,7 @@ export class AnalyticsService implements IAnalyticsService {
 	}
 
 	public trackFeature(featureName: string): IFuture<void> {
-		let category = this.$options.client ||
+		let category = this.$options.analyticsClient || 
 						(helpers.isInteractive() ? "CLI" : "Non-interactive");
 		return this.track(category, featureName);
 	}
