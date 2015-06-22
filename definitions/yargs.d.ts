@@ -45,13 +45,13 @@ declare module "yargs" {
 			describe(key: string, description: string): Argv;
 			describe(descriptions: { [key: string]: string }): Argv;
 
-			option(key: string, options: IOption): Argv;
-			option(options: { [key: string]: IOption }): Argv;
-			options(key: string, options: IOption): Argv;
-			options(options: { [key: string]: IOption }): Argv;
+			option(key: string, options: IDashedOption): Argv;
+			option(options: { [key: string]: IDashedOption }): Argv;
+			options(key: string, options: IDashedOption): Argv;
+			options(options: { [key: string]: IDashedOption }): Argv;
 
-			usage(message: string, options?: { [key: string]: IOption }): Argv;
-			usage(options?: { [key: string]: IOption }): Argv;
+			usage(message: string, options?: { [key: string]: IDashedOption }): Argv;
+			usage(options?: { [key: string]: IDashedOption }): Argv;
 
 			example(command: string, description: string): Argv;
 
@@ -92,22 +92,6 @@ declare module "yargs" {
 			count(keys: string[]): Argv;
 
 			fail(func: (msg: string) => any): void;
-		}
-
-		interface IOption {
-			type?: any;
-			alias?: any;
-			demand?: any;
-			required?: any;
-			require?: any;
-			default?: any;
-			boolean?: any;
-			string?: any;
-			count?: any;
-			describe?: any;
-			description?: any;
-			desc?: any;
-			requiresArg?: any;
 		}
 	}
 

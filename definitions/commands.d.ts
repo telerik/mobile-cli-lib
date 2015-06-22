@@ -1,3 +1,4 @@
+
 interface ICommand extends ICommandOptions {
 	execute(args: string[]): IFuture<void>;
 	allowedParameters: ICommandParameter[];
@@ -11,6 +12,7 @@ interface ICommand extends ICommandOptions {
 	// default validation in CommandsService is not applicable.
 	canExecute?(args: string[]): IFuture<boolean>;
 	completionData?: string[];
+	dashedOptions?: IDictionary<IDashedOption>;
 }
 
 interface IDynamicCommand extends ICommand { }

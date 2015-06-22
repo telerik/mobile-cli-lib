@@ -80,14 +80,15 @@ export class CommandsService implements ICommandsService {
 	public tryExecuteCommand(commandName: string, commandArguments: string[]): IFuture<void> {
 		return (() => {
 			let action = (commandName: string, commandArguments: string[]) => {
-				this.$options.validateOptions();
+				let command = this.$injector.resolveCommand(commandName);
+				this.$options.validateOptions(command ? command.dashedOptions : null);
 				
 				if(!this.areDynamicSubcommandsRegistered) {
 					this.$commandsServiceProvider.registerDynamicSubCommands();
 					this.areDynamicSubcommandsRegistered = true;
 				}
 				return this.canExecuteCommand(commandName, commandArguments);
-			}
+			};
 			if(this.executeCommandAction(commandName, commandArguments, action).wait()) {
 				this.executeCommandAction(commandName, commandArguments, this.executeCommandUnchecked).wait();
 			} else {
