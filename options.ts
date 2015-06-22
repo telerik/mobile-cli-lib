@@ -25,8 +25,7 @@ export class OptionsBase {
 			
 		_.extend(this.options, this.commonOptions);
 
-		yargs.options(this.options);
-		this.argv = yargs.argv;
+		this.argv = yargs.options(this.options).argv;
 		
 		// Check if some of the given options is alias and add its original name to argv
 		_.each(_.keys(this.argv), item => {
