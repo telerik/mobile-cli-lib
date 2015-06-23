@@ -16,7 +16,7 @@ export class HtmlHelpService implements IHtmlHelpService {
 	private static RELATIVE_PATH_TO_STYLES_CSS_REGEX = /@RELATIVE_PATH_TO_STYLES_CSS@/g;
 	private static RELATIVE_PATH_TO_IMAGES_REGEX = /@RELATIVE_PATH_TO_IMAGES@/g;
 	private static RELATIVE_PATH_TO_INDEX_REGEX = /@RELATIVE_PATH_TO_INDEX@/g;
-	private static MARKDOWN_LINK_REGEX = /\[([\w -`<>]+?)\]\([\s\S]*?\)/g;
+	private static MARKDOWN_LINK_REGEX = /\[([\w \-\`\<\>\*\:\\]+?)\]\([\s\S]+?\)/g;
 
 	private pathToManPages: string;
 	private pathToHtmlPages: string;
