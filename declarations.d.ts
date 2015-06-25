@@ -184,13 +184,12 @@ interface IDictionary<T> {
 }
 
 interface IAnalyticsService {
-	checkConsent(featureName: string): IFuture<void>;
+	checkConsent(): IFuture<void>;
 	trackFeature(featureName: string): IFuture<void>;
 	trackException(exception: any, message: string): IFuture<void>;
-	setAnalyticsStatus(enabled: boolean): IFuture<void>;
-	disableAnalytics(): IFuture<void>;
-	getStatusMessage(): IFuture<string>;
-	isEnabled(): IFuture<boolean>;
+	setStatus(settingName: string, enabled: boolean): IFuture<void>;
+	getStatusMessage(settingName: string, jsonFormat: boolean, readableSettingName: string): IFuture<string>;
+	isEnabled(settingName: string): IFuture<boolean>;
 	track(featureName: string, featureValue: string): IFuture<void>;
 }
 

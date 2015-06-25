@@ -41,7 +41,7 @@ export class CommandsService implements ICommandsService {
 			if(command) {
 				if(!this.$staticConfig.disableAnalytics && !command.disableAnalytics) {
 					let analyticsService = this.$injector.resolve("analyticsService"); // This should be resolved here due to cyclic dependency
-					analyticsService.checkConsent(commandName).wait();
+					analyticsService.checkConsent().wait();
 					analyticsService.trackFeature(commandName).wait();
 				}
 				if(!this.$staticConfig.disableHooks && (command.enableHooks === undefined || command.enableHooks === true)) {

@@ -1,52 +1,75 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 
-import util = require("util");
-
-export class AnalyticsCommand implements ICommand {
+class AnalyticsCommand implements ICommand {
 	constructor(private $analyticsService: IAnalyticsService,
 		private $logger: ILogger,
-		private $errors: IErrors) { }
+		private $errors: IErrors,
+		private $options: IOptions,
+		private $staticConfig: IStaticConfig,
+		private settingName: string,
+		private humanReadableSettingName: string) { }
+		
+	public disableAnalytics = true;
+	public allowedParameters = [new AnalyticsCommandParameter(this.$errors)];
 
-	execute(args: string[]): IFuture<void> {
+	public execute(args: string[]): IFuture<void> {
 		return(() => {
-			let arg = args[0];
-			switch(arg) {
+			let arg = args[0] || "";
+			switch(arg.toLowerCase()) {
 				case "enable":
-					this.$analyticsService.setAnalyticsStatus(true).wait();
-					this.$logger.info("Feature usage tracking is now enabled.");
+					this.$analyticsService.setStatus(this.settingName, true).wait();
+					this.$logger.info(`${this.humanReadableSettingName} is now enabled.`);
 					break;
 				case "disable":
-					this.$analyticsService.disableAnalytics().wait();
-					this.$logger.info("Feature usage tracking is now disabled.");
+					this.$analyticsService.setStatus(this.settingName, false).wait();
+					this.$logger.info(`${this.humanReadableSettingName} is now disabled.`);
 					break;
 				case "status":
-				case undefined:
-					this.$logger.out(this.$analyticsService.getStatusMessage().wait());
+				case "":
+					this.$logger.out(this.$analyticsService.getStatusMessage(this.settingName, this.$options.json, this.humanReadableSettingName).wait());
 					break;
-				default:
-					this.$errors.fail(util.format("The value '%s' is not valid. Valid values are 'enable', 'disable' and 'status'.", arg));
 			}
 		}).future<void>()();
 	}
-
-	allowedParameters = [new AnalyticsCommandParameter(this.$errors)];
 }
-$injector.registerCommand("feature-usage-tracking", AnalyticsCommand);
+
+export class UsageReportingCommand extends AnalyticsCommand {
+	constructor($analyticsService: IAnalyticsService,
+		 $logger: ILogger,
+		 $errors: IErrors,
+		 $options: IOptions,
+		 $staticConfig: IStaticConfig) {
+			super($analyticsService, $logger, $errors, $options, $staticConfig, $staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, "Usage reporting");
+		}
+}
+$injector.registerCommand("usage-reporting", UsageReportingCommand);
+
+export class ErrorReportingCommand extends AnalyticsCommand {
+	constructor($analyticsService: IAnalyticsService,
+		 $logger: ILogger,
+		 $errors: IErrors,
+		 $options: IOptions,
+		 $staticConfig: IStaticConfig) {
+			super($analyticsService, $logger, $errors, $options, $staticConfig, $staticConfig.ERROR_REPORT_SETTING_NAME, "Error reporting");
+		}
+}
+$injector.registerCommand("error-reporting", ErrorReportingCommand);
 
 export class AnalyticsCommandParameter implements ICommandParameter {
 	constructor(private $errors: IErrors) { }
 	mandatory = false;
 	validate(validationValue: string): IFuture<boolean> {
 		return (() => {
-			switch(validationValue) {
+			let val = validationValue || "";
+			switch(val.toLowerCase()) {
 				case "enable":
 				case "disable":
 				case "status":
-				case undefined:
+				case "":
 					return true;
 				default:
-					this.$errors.fail(util.format("The value '%s' is not valid. Valid values are 'enable', 'disable' and 'status'.", validationValue));
+					this.$errors.fail(`The value '${validationValue}' is not valid. Valid values are 'enable', 'disable' and 'status'.`);
 			}
 		}).future<boolean>()();
 	}
