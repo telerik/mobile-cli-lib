@@ -10,6 +10,19 @@ export class PropertiesParser implements IPropertiesParser {
 	public parse(text: string): any {
 		return propertiesParser.parse(text);
 	}
+	
+	public read(filePath: string): IFuture<IStringDictionary> {
+		let future = new Future<IStringDictionary>();
+		propertiesParser.read(filePath, (err, data) => {
+			if(err) {
+				future.throw(err);
+			} else {
+				future.return(data);
+			}
+		});
+		
+		return future;
+	}
 
 	public createEditor(filePath: string) {
 		let future = new Future<any>();
