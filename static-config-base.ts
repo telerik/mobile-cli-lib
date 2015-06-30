@@ -34,4 +34,5 @@ export class StaticConfigBase implements Config.IStaticConfig {
 	}
 
 	public HTML_CLI_HELPERS_DIR: string;
+	public pathToPackageJson: string;
 }
