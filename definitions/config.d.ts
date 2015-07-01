@@ -19,6 +19,7 @@ declare module Config {
 		HTML_PAGES_DIR: string;
 		HTML_COMMON_HELPERS_DIR: string;
 		HTML_CLI_HELPERS_DIR: string;
+		pathToPackageJson: string;
 	}
 
 	interface IConfig {

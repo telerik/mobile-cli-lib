@@ -13,13 +13,13 @@ export class CommandDispatcher implements ICommandDispatcher {
 		private $commandsService: ICommandsService,
 		private $staticConfig: Config.IStaticConfig,
 		private $sysInfo: ISysInfo,
-		private $options: IOptions) { }
+		private $options: IOptions,
+		private $fs: IFileSystem) { }
 
 	public dispatchCommand(): IFuture<void> {
 		return(() => {
 			if (this.$options.version) {
-				this.$logger.out(this.$staticConfig.version);
-				return;
+				return this.printVersion();
 			}
 
 			if (this.$logger.getLevel() === "TRACE") {
@@ -65,6 +65,16 @@ export class CommandDispatcher implements ICommandDispatcher {
 	private getCommandArguments(): string[] {
 		let remaining: string[] = this.$options.argv._.slice(1);
 		return _.map(remaining, (item) => (typeof item === "number") ? item.toString() : item);
+	}
+
+	private printVersion(): void {
+		let version = this.$staticConfig.version;
+
+		let json = require(this.$staticConfig.pathToPackageJson);
+		if(json && json.buildVersion) {
+			version = `${version}-${json.buildVersion}`;
+		}
+		this.$logger.out(version);
 	}
 }
 $injector.register("commandDispatcher", CommandDispatcher);
