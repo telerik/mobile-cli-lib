@@ -176,6 +176,7 @@ interface IPropertiesParser {
 	parse(text: string): any;
 	createEditor(filePath: string): IFuture<any>;
 	saveEditor(): IFuture<void>;
+	read(filePath: string): IFuture<any>;
 }
 
 interface IDictionary<T> {

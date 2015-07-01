@@ -1,5 +1,6 @@
 declare module "properties-parser" {
 	function parse(text: string): any;
+	function read(filePath: string, callback: (err: IErrors, data: any) => void): IStringDictionary;
 	function createEditor(path: string, callback: (err: IErrors, data: any) => void): IPropertiesParserEditor;
 }
 
