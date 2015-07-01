@@ -68,13 +68,17 @@ export class Prompter implements IPrompter {
 		}).future<string>()();
 	}
 
-	public getString(prompt: string): IFuture<string> {
+	public getString(prompt: string, defaultAction?: () => string): IFuture<string> {
 		return (() => {
 			let schema: IPromptSchema = {
 				message: prompt,
 				type: "input",
 				name: "inputString"
 			};
+			
+			if(defaultAction) {
+				schema.default = defaultAction;
+			}
 
 			let result = this.get([schema]).wait();
 			return result.inputString;
