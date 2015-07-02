@@ -63,7 +63,8 @@ export class OptionsBase {
 			"stop": { type: OptionType.Boolean },
 			"ddi": { type: OptionType.String }, // the path to developer  disk image
 			"justlaunch": { type: OptionType.Boolean },
-			"file": { type: OptionType.String }
+			"file": { type: OptionType.String },
+			"force": { type: OptionType.Boolean, alias: "f" }
 		}
 	}
 
