@@ -14,6 +14,8 @@ export class HelpCommand implements ICommand {
 		private $options: IOptions) { }
 
 	public enableHooks = false;
+	public disableAnalytics = true;
+
 	public canExecute(args: string[]): IFuture<boolean> {
 		return Future.fromResult(true);
 	}

@@ -11,9 +11,9 @@ global.XMLHttpRequest.prototype.withCredentials = false;
 // HACK -end
 
 export class AnalyticsService implements IAnalyticsService {
-	private excluded = ["help", "feature-usage-tracking"];
-	private analyticsStatus: AnalyticsStatus = null;
 	private _eqatecMonitor: any;
+	private analyticsStatuses: IDictionary<AnalyticsStatus> = {};
+	private isAnalyticsStatusesInitialized = false;
 
 	constructor(private $staticConfig: Config.IStaticConfig,
 		private $logger: ILogger,
@@ -21,13 +21,13 @@ export class AnalyticsService implements IAnalyticsService {
 		private $prompter: IPrompter,
 		private $userSettingsService: UserSettings.IUserSettingsService,
 		private $analyticsSettingsService: IAnalyticsSettingsService,
-		private $options: IOptions) { }
+		private $options: IOptions) {}
 
-	public checkConsent(featureName: string): IFuture<void> {
+	public checkConsent(): IFuture<void> {
 		return ((): void => {
 			if(this.$analyticsSettingsService.canDoRequest().wait()) {
 
-				if(this.isNotConfirmed().wait() && helpers.isInteractive() && !_.contains(this.excluded, featureName)) {
+				if(this.isNotConfirmed(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME).wait() && helpers.isInteractive()) {
 					this.$logger.out("Do you want to help us improve "
 						+ this.$analyticsSettingsService.getClientName()
 						+ " by automatically sending anonymous usage statistics? We will not use this information to identify or contact you."
@@ -35,7 +35,12 @@ export class AnalyticsService implements IAnalyticsService {
 					let message = this.$analyticsSettingsService.getPrivacyPolicyLink();
 
 					let trackFeatureUsage = this.$prompter.confirm(message, () => true).wait();
-					this.setAnalyticsStatus(trackFeatureUsage).wait();
+					this.setStatus(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, trackFeatureUsage).wait();
+				}
+
+				if(this.isNotConfirmed(this.$staticConfig.ERROR_REPORT_SETTING_NAME).wait()) {
+					this.$logger.out(`Error reporting will be enabled. You can disable it by running '$ ${this.$staticConfig.CLIENT_NAME.toLowerCase()} error-reporting disable'.`);
+					this.setStatus(this.$staticConfig.ERROR_REPORT_SETTING_NAME, true).wait();
 				}
 			}
 		}).future<void>()();
@@ -49,8 +54,11 @@ export class AnalyticsService implements IAnalyticsService {
 
 	public track(featureName: string, featureValue: string): IFuture<void> {
 		return (() => {
+			this.initAnalyticsStatuses().wait();
 			this.$logger.trace(`Trying to track feature '${featureName}' with value '${featureValue}'.`);
-			if(this.$analyticsSettingsService.canDoRequest().wait()) {
+
+			if(this.analyticsStatuses[this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME] !== AnalyticsStatus.disabled &&
+				this.$analyticsSettingsService.canDoRequest().wait()) {
 				try {
 					this.start().wait();
 					if(this._eqatecMonitor) {
@@ -65,7 +73,11 @@ export class AnalyticsService implements IAnalyticsService {
 
 	public trackException(exception: any, message: string): IFuture<void> {
 		return (() => {
-			if(this.$analyticsSettingsService.canDoRequest().wait()) {
+			this.initAnalyticsStatuses().wait();
+			this.$logger.trace(`Trying to track exception with message '${message}'.`);
+
+			if(this.analyticsStatuses[this.$staticConfig.ERROR_REPORT_SETTING_NAME] !== AnalyticsStatus.disabled &&
+				this.$analyticsSettingsService.canDoRequest().wait()) {
 				try {
 					this.start().wait();
 
@@ -80,57 +92,42 @@ export class AnalyticsService implements IAnalyticsService {
 		}).future<void>()();
 	}
 
-	public analyticsCommand(arg: string): IFuture<any> {
+	public setStatus(settingName: string, enabled: boolean): IFuture<void> {
 		return (() => {
-			switch(arg) {
-				case "enable":
-					this.setAnalyticsStatus(true).wait();
-					this.$logger.info("Feature usage tracking is now enabled.");
-					break;
-				case "disable":
-					this.disableAnalytics().wait();
-					this.$logger.info("Feature usage tracking is now disabled.");
-					break;
-				case "status":
-				case undefined:
-					this.$logger.out(this.getStatusMessage().wait());
-					break;
-				default:
-					this.$errors.fail("Invalid parameter");
-					break;
+			this.analyticsStatuses[settingName] = enabled ? AnalyticsStatus.enabled : AnalyticsStatus.disabled;
+			this.$userSettingsService.saveSetting(settingName, enabled.toString()).wait();
+			if(this.analyticsStatuses[settingName] === AnalyticsStatus.disabled
+				&& this.analyticsStatuses[settingName] === AnalyticsStatus.disabled
+				&& this._eqatecMonitor) {
+				this._eqatecMonitor.stop();
 			}
-		}).future<any>()();
+		}).future<void>()();
 	}
 
-	public setAnalyticsStatus(enabled: boolean): IFuture<void> {
-		this.analyticsStatus = enabled ? AnalyticsStatus.enabled : AnalyticsStatus.disabled;
-		return this.$userSettingsService.saveSetting(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, enabled.toString());
-	}
-
-	private getAnalyticsStatus(): IFuture<AnalyticsStatus> {
+	private getStatus(settingName: string): IFuture<AnalyticsStatus> {
 		return (() => {
-			if(!this.analyticsStatus) {
-				let trackFeatureUsage = this.$userSettingsService.getSettingValue<string>(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME).wait();
+			if(!this.analyticsStatuses[settingName]) {
+				let settingValue = this.$userSettingsService.getSettingValue<string>(settingName).wait();
 
-				if(trackFeatureUsage) {
-					let isEnabled = helpers.toBoolean(trackFeatureUsage);
+				if(settingValue) {
+					let isEnabled = helpers.toBoolean(settingValue);
 					if(isEnabled) {
-						this.analyticsStatus = AnalyticsStatus.enabled;
+						this.analyticsStatuses[settingName] = AnalyticsStatus.enabled;
 					} else {
-						this.analyticsStatus = AnalyticsStatus.disabled;
+						this.analyticsStatuses[settingName] = AnalyticsStatus.disabled;
 					}
 				} else {
-					this.analyticsStatus = AnalyticsStatus.notConfirmed;
+					this.analyticsStatuses[settingName] = AnalyticsStatus.notConfirmed;
 				}
 			}
 
-			return this.analyticsStatus;
+			return this.analyticsStatuses[settingName];
 		}).future<AnalyticsStatus>()();
 	}
 
 	private start(): IFuture<void> {
 		return (() => {
-			if(this._eqatecMonitor || this.isDisabled().wait()) {
+			if(this._eqatecMonitor || this.isEverythingDisabled()) {
 				return;
 			}
 
@@ -186,70 +183,75 @@ export class AnalyticsService implements IAnalyticsService {
 		return userAgentString;
 	}
 
-	public disableAnalytics(): IFuture<void> {
+	public isEnabled(settingName: string): IFuture<boolean> {
 		return (() => {
-			this.setAnalyticsStatus(false).wait();
-
-			if(this._eqatecMonitor) {
-				this._eqatecMonitor.stop();
-			}
-		}).future<void>()();
-	}
-
-	public isEnabled(): IFuture<boolean> {
-		return (() => {
-			let analyticsStatus = this.getAnalyticsStatus().wait();
+			let analyticsStatus = this.getStatus(settingName).wait();
 			return analyticsStatus === AnalyticsStatus.enabled;
 		}).future<boolean>()();
 	}
 
-	private isDisabled(): IFuture<boolean> {
+	private isNotConfirmed(settingName: string): IFuture<boolean> {
 		return (() => {
-			let analyticsStatus = this.getAnalyticsStatus().wait();
-			return analyticsStatus === AnalyticsStatus.disabled;
-		}).future<boolean>()();
-	}
-
-	private isNotConfirmed(): IFuture<boolean> {
-		return (() => {
-			let analyticsStatus = this.getAnalyticsStatus().wait();
+			let analyticsStatus = this.getStatus(settingName).wait();
 			return analyticsStatus === AnalyticsStatus.notConfirmed;
 		}).future<boolean>()();
 	}
 
-	public getStatusMessage(): IFuture<string> {
-		if(this.$options.json) {
-			return this.getJsonStatusMessage();
+	public getStatusMessage(settingName: string, jsonFormat: boolean, readableSettingName: string): IFuture<string> {
+		if(jsonFormat) {
+			return this.getJsonStatusMessage(settingName);
 		}
 
-		return this.getHumanReadableStatusMessage();
+		return this.getHumanReadableStatusMessage(settingName, readableSettingName);
 	}
 
-	private getHumanReadableStatusMessage(): IFuture<string> {
+	private getHumanReadableStatusMessage(settingName: string, readableSettingName: string): IFuture<string> {
 		return (() => {
 			let status: string = null;
 
-			if(this.isNotConfirmed().wait()) {
+			if(this.isNotConfirmed(settingName).wait()) {
 				status = "disabled until confirmed";
 			} else {
-				status = AnalyticsStatus[this.getAnalyticsStatus().wait()];
+				status = AnalyticsStatus[this.getStatus(settingName).wait()];
 			}
 
-			return util.format("Feature usage tracking is %s.", status);
+			return `${readableSettingName} is ${status}.`;
 		}).future<string>()();
 	}
 
-	private getJsonStatusMessage(): IFuture<string> {
+	private getJsonStatusMessage(settingName: string): IFuture<string> {
 		return (() => {
-			let status = this.getAnalyticsStatus().wait();
+			let status = this.getStatus(settingName).wait();
 			let enabled = status === AnalyticsStatus.notConfirmed ? null : status === AnalyticsStatus.disabled ? false : true;
 			return JSON.stringify({ enabled: enabled });
 		}).future<string>()();
 	}
+
+	private isEverythingDisabled(): boolean {
+		let statuses = _(this.analyticsStatuses)
+						.values()
+						.groupBy(p => _.identity(p))
+						.keys()
+						.value();
+		return statuses.length === 1 && _.first(statuses) === AnalyticsStatus.disabled.toString();
+	}
+	
+	private initAnalyticsStatuses(): IFuture<void> {
+		return (() => {
+			if(!this.isAnalyticsStatusesInitialized) {
+				this.$logger.trace("Initializing analytics statuses.");
+				let settingsNames = [this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, this.$staticConfig.ERROR_REPORT_SETTING_NAME];
+				settingsNames.forEach(settingName => this.getStatus(settingName).wait());
+				this.isAnalyticsStatusesInitialized = true;
+			}
+			this.$logger.trace("Analytics statuses: ");
+			this.$logger.trace(this.analyticsStatuses);
+		}).future<void>()();
+	}
 }
 $injector.register("analyticsService", AnalyticsService);
 
-enum AnalyticsStatus {
+export enum AnalyticsStatus {
 	enabled,
 	disabled,
 	notConfirmed
