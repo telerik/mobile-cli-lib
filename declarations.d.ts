@@ -121,6 +121,7 @@ interface IErrors {
 interface ICommandOptions {
 	disableAnalytics?: boolean;
 	enableHooks?: boolean;
+	disableAnalyticsConsentCheck?: boolean;
 }
 
 declare const enum ErrorCodes {

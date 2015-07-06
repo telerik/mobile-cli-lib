@@ -238,14 +238,16 @@ export class AnalyticsService implements IAnalyticsService {
 	
 	private initAnalyticsStatuses(): IFuture<void> {
 		return (() => {
-			if(!this.isAnalyticsStatusesInitialized) {
-				this.$logger.trace("Initializing analytics statuses.");
-				let settingsNames = [this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, this.$staticConfig.ERROR_REPORT_SETTING_NAME];
-				settingsNames.forEach(settingName => this.getStatus(settingName).wait());
-				this.isAnalyticsStatusesInitialized = true;
+			if(this.$analyticsSettingsService.canDoRequest().wait()) {
+				if(!this.isAnalyticsStatusesInitialized) {
+					this.$logger.trace("Initializing analytics statuses.");
+					let settingsNames = [this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, this.$staticConfig.ERROR_REPORT_SETTING_NAME];
+					settingsNames.forEach(settingName => this.getStatus(settingName).wait());
+					this.isAnalyticsStatusesInitialized = true;
+				}
+				this.$logger.trace("Analytics statuses: ");
+				this.$logger.trace(this.analyticsStatuses);
 			}
-			this.$logger.trace("Analytics statuses: ");
-			this.$logger.trace(this.analyticsStatuses);
 		}).future<void>()();
 	}
 }
