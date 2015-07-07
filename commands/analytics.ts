@@ -9,9 +9,9 @@ class AnalyticsCommand implements ICommand {
 		private $staticConfig: IStaticConfig,
 		private settingName: string,
 		private humanReadableSettingName: string) { }
-		
-	public disableAnalytics = true;
+
 	public allowedParameters = [new AnalyticsCommandParameter(this.$errors)];
+	public disableAnalyticsConsentCheck = true;
 
 	public execute(args: string[]): IFuture<void> {
 		return(() => {
