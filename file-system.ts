@@ -226,7 +226,8 @@ export class FileSystem implements IFileSystem {
 		return (() => {
 			let data = this.readText(filename, encoding).wait();
 			if(data) {
-				return JSON.parse(data);
+				// Replace BOM from the header of the file if it exists
+				return JSON.parse(data.replace(/^\uFEFF/, ''));
 			}
 			return null;
 		}).future()();
