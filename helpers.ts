@@ -104,9 +104,9 @@ export function getCurrentEpochTime(): number {
 }
 
 export function sleep(ms: number): void {
-  let fiber = Fiber.current;
-  setTimeout(() => fiber.run(), ms);
-  Fiber.yield();
+	let fiber = Fiber.current;
+	setTimeout(() => fiber.run(), ms);
+	Fiber.yield();
 }
 
 export function getPathToAdb(injector: IInjector): IFuture<string> {
@@ -148,5 +148,17 @@ export function remove<T>(array: T[], predicate: (element: T) => boolean, number
 		return new Array<T>();
 	}
 
-    return <T[]>array.splice(index, numberOfElements);
+	return <T[]>array.splice(index, numberOfElements);
+}
+
+export function trimSymbol(str: string, symbol: string) {
+	while (str.charAt(0) === symbol) {
+		str = str.substr(1);
+	}
+	
+	while (str.charAt(str.length - 1) === symbol) {
+		str = str.substr(0, str.length - 1);
+	}
+	
+	return str;
 }
