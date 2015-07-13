@@ -300,6 +300,8 @@ interface ISysInfoData {
 	androidInstalled: boolean;
 	/** mono version, relevant on Mac only **/
 	monoVer: string;
+	/** git version string, as retunrnes by `git --version` **/
+	gitVer: string;
 }
 
 interface ISysInfo {
