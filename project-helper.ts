@@ -1,4 +1,4 @@
-///<reference path="../.d.ts"/>
+///<reference path=".d.ts"/>
 "use strict";
 
 import path = require("path");
@@ -9,7 +9,7 @@ export class ProjectHelper implements IProjectHelper {
 		private $fs: IFileSystem,
 		private $staticConfig: Config.IStaticConfig,
 		private $errors: IErrors,
-		private $options: IOptions) { }
+		private $options: ICommonOptions) { }
 
 	private cachedProjectDir = "";
 

@@ -1,4 +1,4 @@
-///<reference path="../../.d.ts"/>
+///<reference path="../.d.ts"/>
 "use strict";
 
 import util = require("util");
@@ -11,7 +11,7 @@ export class PostInstallCommand implements ICommand {
 		private $staticConfig: Config.IStaticConfig,
 		private $commandsService: ICommandsService,
 		private $htmlHelpService: IHtmlHelpService,
-		private $options: IOptions,
+		private $options: ICommonOptions,
 		private $doctorService: IDoctorService) {
 	}
 

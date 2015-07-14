@@ -1,4 +1,4 @@
-///<reference path="../../.d.ts"/>
+///<reference path="../.d.ts"/>
 "use strict";
 
 import os = require("os");
@@ -8,7 +8,7 @@ export class DoctorCommand implements ICommand {
 
 	constructor(private $doctorService: IDoctorService,
 		private $logger: ILogger,
-		private $staticConfig: IStaticConfig) { }
+		private $staticConfig: Config.IStaticConfig) { }
 
 	public canExecute(args: string[]): IFuture<boolean> {
 		return future.fromResult(true);

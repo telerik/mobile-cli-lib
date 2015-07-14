@@ -1,4 +1,4 @@
-///<reference path="../../../.d.ts"/>
+///<reference path="../../.d.ts"/>
 "use strict";
 
 import util = require("util");
@@ -12,7 +12,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		private $mobileHelper: Mobile.IMobileHelper,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $hostInfo: IHostInfo,
-		private $options: IOptions) { }
+		private $options: ICommonOptions) { }
 
 	public checkDependencies(): IFuture<void> {
 		return (() => {
