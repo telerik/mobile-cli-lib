@@ -65,7 +65,8 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $options: IOptions,
 		private $logcatHelper: Mobile.ILogcatHelper,
-		private $hostInfo: IHostInfo) {
+		private $hostInfo: IHostInfo,
+		private $config: IConfiguration) {
 		let details: IAndroidDeviceDetails = this.getDeviceDetails().wait();
 
 		this.model = details.model;
@@ -210,7 +211,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
     }
 
     private openDebuggerClient(url: string): void {
-		let chrome = this.$hostInfo.isDarwin ? "Google\ Chrome" : "chrome";
+		let chrome = this.$hostInfo.isDarwin ? this.$config.ANDROID_DEBUG_UI_MAC : "chrome";
 		let child = this.$opener.open(url, chrome);
 		if(!child) {
 			this.$errors.fail(`Unable to open ${chrome}.`);
