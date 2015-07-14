@@ -1,4 +1,4 @@
-///<reference path="../../../.d.ts"/>
+///<reference path="../../.d.ts"/>
 "use strict";
 import util = require("util");
 import Future = require("fibers/future");
@@ -63,7 +63,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		private $staticConfig: Config.IStaticConfig,
 		private $opener: IOpener,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
-		private $options: IOptions,
+		private $options: ICommonOptions,
 		private $logcatHelper: Mobile.ILogcatHelper,
 		private $hostInfo: IHostInfo) {
 		let details: IAndroidDeviceDetails = this.getDeviceDetails().wait();

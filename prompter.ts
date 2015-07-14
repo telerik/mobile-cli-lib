@@ -1,4 +1,4 @@
-///<reference path="../.d.ts"/>
+///<reference path=".d.ts"/>
 
 import Future = require("fibers/future");
 import prompt = require("inquirer");

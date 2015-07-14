@@ -1,4 +1,4 @@
-﻿///<reference path="../../.d.ts"/>
+﻿///<reference path="../.d.ts"/>
 "use strict";
 
 import path = require("path");
@@ -10,7 +10,7 @@ export class PreUninstallCommand implements ICommand {
 	constructor(private $fs: IFileSystem,
 		private $childProcess: IChildProcess,
 		private $logger: ILogger,
-		private $options: IOptions) { }
+		private $options: ICommonOptions) { }
 	public disableAnalytics = true;
 
 	public allowedParameters: ICommandParameter[] = [];

@@ -1,4 +1,4 @@
-///<reference path="../.d.ts"/>
+///<reference path=".d.ts"/>
 "use strict";
 import path = require("path");
 import util = require("util");
@@ -30,7 +30,7 @@ export class OptionsBase {
 	constructor(public options: IDictionary<IDashedOption>,
 		public defaultProfileDir: string,
 		private $errors: IErrors,
-		private $staticConfig: IStaticConfig) {
+		private $staticConfig: Config.IStaticConfig) {
 			
 		_.extend(this.options, this.commonOptions, OptionsBase.GLOBAL_OPTIONS);
 		this.setArgv();
