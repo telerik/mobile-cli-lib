@@ -1,4 +1,4 @@
-///<reference path="../.d.ts"/>
+///<reference path=".d.ts"/>
 "use strict";
 
 import Fiber = require("fibers");
@@ -13,7 +13,7 @@ export class CommandDispatcher implements ICommandDispatcher {
 		private $commandsService: ICommandsService,
 		private $staticConfig: Config.IStaticConfig,
 		private $sysInfo: ISysInfo,
-		private $options: IOptions,
+		private $options: ICommonOptions,
 		private $fs: IFileSystem) { }
 
 	public dispatchCommand(): IFuture<void> {

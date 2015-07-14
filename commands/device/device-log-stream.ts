@@ -1,4 +1,4 @@
-///<reference path="../../../.d.ts"/>
+///<reference path="../../.d.ts"/>
 "use strict";
 
 import helpers = require("./../../helpers");
@@ -9,7 +9,7 @@ export class OpenDeviceLogStreamCommand implements ICommand {
 	constructor(private $devicesServices: Mobile.IDevicesServices,
 		private $errors: IErrors,
 		private $commandsService: ICommandsService,
-		private $options: IOptions) { }
+		private $options: ICommonOptions) { }
 
 	allowedParameters: ICommandParameter[] = [];
 

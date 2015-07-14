@@ -1,4 +1,4 @@
-///<reference path="../.d.ts"/>
+///<reference path=".d.ts"/>
 
 import propertiesParser = require("properties-parser");
 import Future = require("fibers/future");

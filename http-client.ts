@@ -1,4 +1,4 @@
-///<reference path="../.d.ts"/>
+///<reference path=".d.ts"/>
 
 import Url = require("url");
 import Future = require("fibers/future");

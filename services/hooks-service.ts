@@ -1,4 +1,4 @@
-///<reference path="../../.d.ts"/>
+///<reference path="../.d.ts"/>
 
 import helpers = require("./../helpers");
 import path = require("path");

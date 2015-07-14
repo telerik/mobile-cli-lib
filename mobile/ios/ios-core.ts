@@ -1,4 +1,4 @@
-///<reference path="../../../.d.ts"/>
+///<reference path="../../.d.ts"/>
 "use strict";
 
 import path = require("path");
@@ -1080,7 +1080,7 @@ export class GDBServer implements Mobile.IGDBServer {
 	constructor(private socket: any, // socket is fd on Windows and net.Socket on mac
 		private $injector: IInjector,
 		private $hostInfo: IHostInfo,
-		private $options: IOptions,
+		private $options: ICommonOptions,
 		private $logger: ILogger) {
 		if(this.$hostInfo.isWindows) {
 			let winSocket = this.$injector.resolve(WinSocket, {service: this.socket, format: 0});

@@ -1,4 +1,4 @@
-///<reference path="../../.d.ts"/>
+///<reference path="../.d.ts"/>
 "use strict";
 
 import path = require("path");
@@ -11,7 +11,7 @@ export class HelpCommand implements ICommand {
 	constructor(private $logger: ILogger,
 		private $injector: IInjector,
 		private $htmlHelpService: IHtmlHelpService,
-		private $options: IOptions) { }
+		private $options: ICommonOptions) { }
 
 	public enableHooks = false;
 	public disableAnalyticsConsentCheck = true;
