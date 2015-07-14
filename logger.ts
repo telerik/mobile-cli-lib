@@ -1,4 +1,4 @@
-///<reference path="../.d.ts"/>
+///<reference path=".d.ts"/>
 "use strict";
 
 import log4js = require("log4js");
@@ -14,7 +14,7 @@ export class Logger implements ILogger {
 	private requestBodyRegex = /^\"(.*?)\"$/;
 	
 	constructor($config: Config.IConfig,
-		private $options: IOptions) {
+		private $options: ICommonOptions) {
 		let appenders: log4js.IAppender[] = [];
 
 		if (!$config.CI_LOGGER) {

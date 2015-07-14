@@ -1,4 +1,4 @@
-///<reference path="./../../../.d.ts"/>
+///<reference path="./../../.d.ts"/>
 
 import Signal = require("./../../events/signal");
 import util = require("util");

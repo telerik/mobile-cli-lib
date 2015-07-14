@@ -1,4 +1,4 @@
-///<reference path="../../.d.ts"/>
+///<reference path="../.d.ts"/>
 "use strict";
 
 import util = require("util");

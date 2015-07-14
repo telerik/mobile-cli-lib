@@ -1,4 +1,4 @@
-///<reference path="../../.d.ts"/>
+///<reference path="../.d.ts"/>
 "use strict";
 
 let jaroWinklerDistance = require("../vendor/jaro-winkler_distance");
@@ -26,7 +26,7 @@ export class CommandsService implements ICommandsService {
 		private $staticConfig: Config.IStaticConfig,
 		private $hooksService: IHooksService,
 		private $commandsServiceProvider: ICommandsServiceProvider,
-		private $options: IOptions) {
+		private $options: ICommonOptions) {
 	}
 
 	public allCommands(opts: {includeDevCommands: boolean}): string[] {

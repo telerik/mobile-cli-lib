@@ -1,4 +1,4 @@
-///<reference path="../../../.d.ts"/>
+///<reference path="../../.d.ts"/>
 "use strict";
 
 import os = require("os");
@@ -7,7 +7,7 @@ import util = require("util");
 export class ListApplicationsCommand implements ICommand {
 	constructor(private $devicesServices: Mobile.IDevicesServices,
 		private $logger: ILogger,
-		private $options: IOptions) { }
+		private $options: ICommonOptions) { }
 
 	allowedParameters: ICommandParameter[] = [];
 
