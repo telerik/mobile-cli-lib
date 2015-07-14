@@ -28,3 +28,5 @@ scratch/
 
 npm-debug.log
 node_modules
+!Gruntfile.js
+.d.ts
