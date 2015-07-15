@@ -29,7 +29,7 @@ let FN_NAME_AND_ARGS = /^function\s*([^\(]*)\(\s*([^\)]*)\)/m;
 let FN_ARG_SPLIT = /,/;
 let FN_ARG = /^\s*(_?)(\S+?)\1\s*$/;
 let STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
-
+var Promise = require("bluebird");
 function annotate(fn: any) {
 	let $inject: any,
 		fnText: string,
@@ -137,9 +137,29 @@ export class Yok implements IInjector {
 		forEachName(names, (name) => this.requireOne(name, file));
 	}
 
+	public publicApi: any = {};
+	public _publicApi: any = {};
+
+	public requirePublic(names: any, file: string): void {
+		forEachName(names, (name) => {
+			this.requireOne(name, file);
+			this.resolvePublicApi(name, file);
+		});
+	}
+
+	private resolvePublicApi(name: string, file: string): void {
+		Object.defineProperty(this.publicApi, name, {
+			get: () => {
+				let obj: any = {};
+				let originalModule = this.resolve(name);
+				return this._publicApi[name];
+			}
+		});
+	}
+
 	private requireOne(name: string, file: string): void {
 		let dependency: IDependency = {
-			require: path.join("../", file),
+			require: file,
 			shared: true
 		};
 		if(!this.modules[name]) {
@@ -291,6 +311,7 @@ export class Yok implements IInjector {
 	}
 
 	public register(name: string, resolver: any, shared: boolean = true): void {
+
 		trace("registered '%s'", name);
 
 		let dependency: any = this.modules[name] || {};
