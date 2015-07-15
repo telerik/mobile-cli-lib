@@ -31,7 +31,7 @@ export class AndroidApplicationManager implements Mobile.IDeviceApplicationManag
 	}
 
 	public uninstallApplication(appIdentifier: string): IFuture<void> {
-		return Future.fromResult();
+		return this.adb.executeShellCommand(`pm uninstall "${appIdentifier}"`);
 	}
 	
 	public startApplication(appIdentifier: string): IFuture<void> {

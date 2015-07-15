@@ -37,17 +37,20 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 	public sync(platform: string, appIdentifier: string, localProjectRootPath: string, projectFilesPath: string, excludedProjectDirsAndFiles: string[], watchGlob: any,
 		restartAppOnDeviceAction: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData, localToDevicePaths?: Mobile.ILocalToDevicePathData[]) => IFuture<void>,
 		notInstalledAppOnDeviceAction: (device: Mobile.IDevice) => IFuture<void>,
-		beforeBatchLiveSyncAction?: (filePath: string) => IFuture<void>): IFuture<void> {
+		beforeBatchLiveSyncAction?: (filePath: string) => IFuture<string>): IFuture<void> {
 		return (() => {
 			if(!this._initialized) {
 				this.initialize(platform).wait();
 			}
 			
+			let projectFiles = this.$fs.enumerateFilesInDirectorySync(projectFilesPath, (filePath, stat) => !this.isFileExcluded(path.relative(projectFilesPath, filePath), excludedProjectDirsAndFiles, projectFilesPath), { enumerateDirectories: true});
+			this.syncCore(projectFiles, appIdentifier, localProjectRootPath, restartAppOnDeviceAction, notInstalledAppOnDeviceAction).wait();
+			
 			if(this.$options.watch) {
 				let __this = this;
 				
 				gaze(watchGlob, function(err: any, watcher: any) {
-					this.on('changed',(filePath: string) => {
+					this.on('changed', (filePath: string) => {
 						if(!_.contains(excludedProjectDirsAndFiles, filePath)) {
 							__this.batchLiveSync(filePath, appIdentifier, localProjectRootPath, restartAppOnDeviceAction, notInstalledAppOnDeviceAction, beforeBatchLiveSyncAction);
 						}
@@ -55,10 +58,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 				});
 				
 				this.$dispatcher.run();
-			} else {
-				let projectFiles = this.$fs.enumerateFilesInDirectorySync(projectFilesPath, (filePath, stat) => !this.isFileExcluded(path.relative(projectFilesPath, filePath), excludedProjectDirsAndFiles, projectFilesPath), { enumerateDirectories: true});
-				this.syncCore(projectFiles, appIdentifier, localProjectRootPath, restartAppOnDeviceAction, notInstalledAppOnDeviceAction).wait();
-			}
+			} 
 		}).future<void>()();
 	}
 	
@@ -103,7 +103,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 	private batchLiveSync(filePath: string, appIdentifier: string, localProjectRootPath: string, 
 		restartAppOnDeviceAction: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData, localToDevicePaths?: Mobile.ILocalToDevicePathData[]) => IFuture<void>,
 		notInstalledAppOnDeviceAction: (device: Mobile.IDevice) => IFuture<void>,
-		beforeBatchLiveSyncAction?: (filePath: string) => IFuture<void>) : void {
+		beforeBatchLiveSyncAction?: (filePath: string) => IFuture<string>) : void {
 		if(!this.timer) {
 			this.timer = setInterval(() => {
 				let filesToSync = this.syncQueue;
@@ -112,16 +112,13 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 					this.$logger.trace("Syncing %s", filesToSync.join(", "));
 					this.$dispatcher.dispatch( () => {
 						return (() => {
-							if(beforeBatchLiveSyncAction) {
-								beforeBatchLiveSyncAction(filePath).wait();
-							}
-							this.syncCore([filePath], appIdentifier, localProjectRootPath, restartAppOnDeviceAction, notInstalledAppOnDeviceAction).wait();
+							this.syncCore(filesToSync, appIdentifier, localProjectRootPath, restartAppOnDeviceAction, notInstalledAppOnDeviceAction).wait();
 						}).future<void>()();
 					});
 				}
 			}, 500);
 		}
-		this.syncQueue.push(filePath);
+		this.$dispatcher.dispatch( () => (() => { this.syncQueue.push(beforeBatchLiveSyncAction(filePath).wait()) }).future<void>()());
 	} 
 	
 	private isFileExcluded(path: string, exclusionList: string[], projectDir: string): boolean {
