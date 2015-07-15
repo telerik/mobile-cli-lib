@@ -25,7 +25,7 @@ export class DeviceDiscovery implements Mobile.IDeviceDiscovery {
 	}
 
 	public addDevice(device: Mobile.IDevice) {
-		this.devices[device.getIdentifier()] = device;
+		this.devices[device.deviceInfo.identifier] = device;
 		this.raiseOnDeviceFound(device);
 	}
 
@@ -170,27 +170,15 @@ $injector.register("iOSDeviceDiscovery", ($errors: IErrors, $logger: ILogger, $f
 });
 
 export class AndroidDeviceDiscovery extends DeviceDiscovery {
-	private static adb: string;
-
 	constructor(private $childProcess: IChildProcess,
 		private $injector: IInjector,
-		private $staticConfig: Config.IStaticConfig){
+		private $staticConfig: Config.IStaticConfig) {
 		super();
-	}
-
-	private get Adb() {
-		if(!AndroidDeviceDiscovery.adb) {
-			AndroidDeviceDiscovery.adb = helpers.getPathToAdb($injector).wait();
-		}
-
-		return AndroidDeviceDiscovery.adb;
 	}
 
 	private createAndAddDevice(deviceIdentifier: string): IFuture<void> {
 		return (() => {
-			let device = this.$injector.resolve(AndroidDevice.AndroidDevice, {
-					identifier: deviceIdentifier, adb: this.Adb
-				});
+			let device = this.$injector.resolve(AndroidDevice.AndroidDevice, { identifier: deviceIdentifier });
 			this.addDevice(device);
 		}).future<void>()();
 	}
@@ -199,7 +187,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery {
 		return(()=> {
 			this.ensureAdbServerStarted().wait();
 
-			let requestAllDevicesCommand = util.format("%s devices", this.Adb);
+			let requestAllDevicesCommand = `${this.$staticConfig.getAdbFilePath().wait()} devices`;
 			let result = this.$childProcess.exec(requestAllDevicesCommand).wait();
 
 			let devices = result.toString().split(os.EOL).slice(1)
@@ -217,7 +205,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery {
 	}
 
 	private ensureAdbServerStarted(): IFuture<void> {
-		let startAdbServerCommand = util.format("%s start-server", this.Adb);
+		let startAdbServerCommand = `${this.$staticConfig.getAdbFilePath().wait()} start-server`;
 		return this.$childProcess.exec(startAdbServerCommand);
 	}
 }

@@ -6,48 +6,87 @@ declare module Mobile {
 		skipRefresh?: boolean;
 	}
 
+	interface IDeviceInfo {
+		identifier: string;
+		displayName: string;
+		model: string;
+		version: string;
+		vendor: string;
+		platform: string;
+	}
+	
 	interface IDevice {
-		getIdentifier(): string;
-		getInstalledApplications(): IFuture<string[]>;
-		getDisplayName(): string;
-		getModel(): string;
-		getVersion(): string;
-		getVendor(): string;
-		getPlatform(): string;
+		deviceInfo: Mobile.IDeviceInfo;
+		applicationManager: Mobile.IDeviceApplicationManager;
+		fileSystem: Mobile.IDeviceFileSystem;
 		deploy(packageFile: string, packageName: string): IFuture<void>;
-		sync(localToDevicePaths: ILocalToDevicePathData[], appIdentifier: IAppIdentifier, liveSyncUrl: string): IFuture<void>;
-		sync(localToDevicePaths: ILocalToDevicePathData[], appIdentifier: IAppIdentifier, liveSyncUrl: string, options: ISyncOptions): IFuture<void>;
 		openDeviceLogStream(): void;
-		runApplication(applicationId: string): IFuture<void>;
-		uninstallApplication(applicationId: string): IFuture<void>;
-		listFiles(devicePath: string): IFuture<void>;
-		getFile(deviceFilePath: string): IFuture<void>;
-		putFile(localFilePath: string, deviceFilePath: string): IFuture<void>;
 	}
-
-	interface IAppIdentifier {
-		appIdentifier: string;
-		deviceProjectPath: string;
-		liveSyncFormat: string;
-		encodeLiveSyncHostUri(hostUri: string): string;
-		isLiveSyncSupported(device: any): IFuture<boolean>;
-		getLiveSyncNotSupportedError(device: any): string;
-	}
-
+	
 	interface IAndroidDevice extends IDevice {
-		debug(packageFile: string, packageName: string, debuggerSetup?: any): IFuture<void>;
+		adb: Mobile.IAndroidDebugBridge;		
 	}
 
-	interface IIOSDevice extends IDevice {
+	interface IiOSDevice extends IDevice {
 		startService(serviceName: string): number;
+		mountImage(): IFuture<void>;
+		tryExecuteFunction<TResult>(func: () => TResult): TResult;
+	}
+	
+	interface IDeviceAppData {
+		appIdentifier: string;		
+		deviceProjectRootPath: string;
+		isLiveSyncSupported(device: Mobile.IDevice): IFuture<boolean>;
+	}
+	
+	interface IDeviceAppDataFactory {
+		create(appIdentifier: string, platform: string): Mobile.IDeviceAppData;
+	}
+	
+	interface IDeviceAppDataFactoryRule {
+		vanilla: any;
+		companion?: any;
+	}
+	
+	interface IDeviceAppDataProvider {
+		createFactoryRules(): IDictionary<Mobile.IDeviceAppDataFactoryRule>;
+	}
+
+	interface IAndroidLiveSyncService {
+		liveSyncCommands: any;
+		livesync(appIdentifier: string, liveSyncRoot: string, commands: string[]): IFuture<void>;
+		createCommandsFileOnDevice(commandsFileDevicePath: string, commands: string[]): IFuture<void>;
 	}
 
 	interface ILogcatHelper {
-		start(deviceIdentifier: string, adbPath: string): any;
+		start(deviceIdentifier: string): any;
 	}
 
 	interface ILogcatPrinter {
 		print(line: string): void;
+	}
+	
+	interface IDeviceApplicationManager {
+		getInstalledApplications(): IFuture<string[]>;
+		installApplication(packageFilePath: string): IFuture<void>;
+		uninstallApplication(appIdentifier: string): IFuture<void>; 
+		startApplication(appIdentifier: string): IFuture<void>;
+		stopApplication(appIdentifier: string): IFuture<void>;
+		restartApplication(applicationId: string): IFuture<void>;		
+	}
+	
+	interface IDeviceFileSystem {
+		listFiles(devicePath: string): IFuture<void>;
+		getFile(deviceFilePath: string): IFuture<void>;
+		putFile(localFilePath: string, deviceFilePath: string): IFuture<void>;
+		transferFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void>;
+		transferFile?(localFilePath: string, deviceFilePath: string): IFuture<void>;
+	}
+	
+	interface IAndroidDebugBridge {
+		executeCommand(...args: string[]): IFuture<any>;
+		executeShellCommand(...args: string[]): IFuture<any>;
+		sendBroadcastToDevice(action: string, extras?: IStringDictionary): IFuture<number>;
 	}
 
 	interface IDebugOnDeviceSetup {
@@ -144,6 +183,7 @@ declare module Mobile {
 		afcConnectionOpen(service: number, timeout: number, afcConnection: NodeBuffer): number;
 		afcConnectionClose(afcConnection: NodeBuffer): number;
 		afcDirectoryCreate(afcConnection: NodeBuffer, path: string): number;
+		afcFileInfoOpen(afcConnection: NodeBuffer, path: string, afcDirectory: NodeBuffer): number;		
 		afcFileRefOpen(afcConnection: NodeBuffer, path: string, mode: number, afcFileRef: NodeBuffer): number;
 		afcFileRefClose(afcConnection: NodeBuffer, afcFileRef: number): number;
 		afcFileRefWrite(afcConnection: NodeBuffer, afcFileRef: number, buffer: NodeBuffer, byteLength: number): number;
@@ -172,7 +212,6 @@ declare module Mobile {
 	interface IAfcClient {
 		open(path: string, mode: string): Mobile.IAfcFile;
 		transfer(localFilePath: string, devicePath: string): IFuture<void>;
-		transferCollection(localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void>;
 		deleteFile(devicePath: string): void;
 		mkdir(path: string): void;
 		listDir(path: string): string[];
@@ -188,6 +227,10 @@ declare module Mobile {
 		getLocalPath(): string;
 		getDevicePath(): string;
 		getRelativeToProjectBasePath(): string;
+	}
+	
+	interface ILocalToDevicePathDataFactory {
+		create(fileName: string, localProjectRootPath: string, onDeviceFileName: string, deviceProjectRootPath: string):  Mobile.ILocalToDevicePathData; 
 	}
 
 	interface IiOSSocketResponseData {
@@ -209,7 +252,8 @@ declare module Mobile {
 	}
 
 	interface IGDBServer {
-		run(argv: string[]): void;
+		run(argv: string[]): IFuture<void>;
+		kill(bundleExecutableName: string): IFuture<void>;
 	}
 
 	interface INotificationProxyClient {
@@ -271,12 +315,18 @@ declare module Mobile {
 		isPlatformSupported(platform: string): boolean;
 		validatePlatformName(platform: string): string;
 		getPlatformCapabilities(platform: string): Mobile.IPlatformCapabilities;
-		generateLocalToDevicePathData(localPath: string, devicePath: string, relativeToProjectBasePath: string): Mobile.ILocalToDevicePathData;
+		buildDevicePath(...args: string[]): string;
+		correctDevicePath(filePath: string): string;
 	}
 
 	interface IDevicePlatformsConstants {
 		iOS: string;
 		Android: string;
 		WP8: string;
+	}
+	
+	interface IDeviceApplication {
+		CFBundleExecutable: string;
+		Path: string;
 	}
 }

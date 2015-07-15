@@ -12,7 +12,7 @@ export class ListFilesCommand implements ICommand {
 		return (() => {
 			this.$devicesServices.initialize({ deviceId: this.$options.device, skipInferPlatform: true }).wait();
 
-			let action = (device: Mobile.IDevice) =>  { return (() => device.listFiles(args[0]).wait()).future<void>()(); };
+			let action = (device: Mobile.IDevice) =>  { return (() => device.fileSystem.listFiles(args[0]).wait()).future<void>()(); };
 			this.$devicesServices.execute(action).wait();
 		}).future<void>()();
 	}

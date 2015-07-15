@@ -66,13 +66,13 @@ export class DevicesServices implements Mobile.IDevicesServices {
 	}
 
 	private onDeviceFound(device: Mobile.IDevice): void {
-		this.$logger.trace("Found device with identifier '%s'", device.getIdentifier());
-		this.devices[device.getIdentifier()] = device;
+		this.$logger.trace("Found device with identifier '%s'", device.deviceInfo.identifier);
+		this.devices[device.deviceInfo.identifier] = device;
 	}
 
 	private onDeviceLost(device: Mobile.IDevice): void {
-		this.$logger.trace("Lost device with identifier '%s'", device.getIdentifier());
-		delete this.devices[device.getIdentifier()];
+		this.$logger.trace("Lost device with identifier '%s'", device.deviceInfo.identifier);
+		delete this.devices[device.deviceInfo.identifier];
 	}
 
 	private startLookingForDevices(): IFuture<void> {
@@ -103,7 +103,7 @@ export class DevicesServices implements Mobile.IDevicesServices {
 	}
 
 	private getDeviceByIdentifier(identifier: string): Mobile.IDevice {
-		let searchedDevice = _.find(this.getDevices(), (device: Mobile.IDevice) => { return device.getIdentifier() === identifier; });
+		let searchedDevice = _.find(this.getDevices(), (device: Mobile.IDevice) => { return device.deviceInfo.identifier === identifier; });
 		if(!searchedDevice) {
 			this.$errors.fail(DevicesServices.NOT_FOUND_DEVICE_BY_IDENTIFIER_ERROR_MESSAGE, identifier, this.$staticConfig.CLIENT_NAME.toLowerCase());
 		}
@@ -185,7 +185,7 @@ export class DevicesServices implements Mobile.IDevicesServices {
 		return(() => {
 			if(platform && deviceOption) {
 				this._device = this.getDevice(deviceOption).wait();
-				this._platform = this._device.getPlatform();
+				this._platform = this._device.deviceInfo.platform;
 				if(this._platform !== this.getPlatform(platform)) {
 					this.$errors.fail("Cannot resolve the specified connected device. The provided platform does not match the provided index or identifier." +
 						"To list currently connected devices and verify that the specified pair of platform and index or identifier exists, run 'device'.");
@@ -193,7 +193,7 @@ export class DevicesServices implements Mobile.IDevicesServices {
 				this.$logger.warn("Your application will be deployed only on the device specified by the provided index or identifier.");
 			} else if(!platform && deviceOption) {
 				this._device = this.getDevice(deviceOption).wait();
-				this._platform = this._device.getPlatform();
+				this._platform = this._device.deviceInfo.platform;
 			} else if(platform && !deviceOption) {
 				this._platform = this.getPlatform(platform);
 				this.startLookingForDevices().wait();
@@ -202,7 +202,7 @@ export class DevicesServices implements Mobile.IDevicesServices {
 
 				if (!data.skipInferPlatform) {
 					let devices = this.getDevices();
-					let platforms = _.uniq(_.map(devices, (device) => device.getPlatform()));
+					let platforms = _.uniq(_.map(devices, (device) => device.deviceInfo.platform));
 
 					if (platforms.length === 1) {
 						this._platform = platforms[0];
@@ -229,11 +229,11 @@ export class DevicesServices implements Mobile.IDevicesServices {
 	}
 
 	private hasDevice(identifier: string): boolean {
-		return _.some(this.getDevices(), (device: Mobile.IDevice) => { return device.getIdentifier() === identifier });
+		return _.some(this.getDevices(), (device: Mobile.IDevice) => { return device.deviceInfo.identifier === identifier });
 	}
 
 	private filterDevicesByPlatform(): Mobile.IDevice[] {
-		return _.filter(this.getDevices(), (device: Mobile.IDevice) => { return device.getPlatform() === this._platform; });
+		return _.filter(this.getDevices(), (device: Mobile.IDevice) => { return device.deviceInfo.platform === this._platform; });
 	}
 
 	private validateIndex(index: number): void {

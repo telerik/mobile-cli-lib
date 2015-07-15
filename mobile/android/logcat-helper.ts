@@ -6,11 +6,11 @@ import util = require("util");
 export class LogcatHelper implements Mobile.ILogcatHelper {
 	constructor(private $childProcess: IChildProcess,
 		    private $logcatPrinter: Mobile.ILogcatPrinter,
-			private $logger: ILogger){
+			private $logger: ILogger,
+			private $staticConfig: IStaticConfig) { }
 
-	}
-
-	public start(deviceIdentifier: string, adbPath: string): any {
+	public start(deviceIdentifier: string): any {
+		let adbPath = this.$staticConfig.getAdbFilePath().wait();
 		this.$childProcess.exec(util.format("%s -s %s logcat -c", adbPath, deviceIdentifier)).wait(); // remove cached logs
 		let adbLogcat = this.$childProcess.spawn(adbPath, ["-s", deviceIdentifier, "logcat"]);
 		let lineStream = byline(adbLogcat.stdout);

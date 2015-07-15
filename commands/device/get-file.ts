@@ -12,7 +12,7 @@ export class GetFileCommand implements ICommand {
 		return (() => {
 			this.$devicesServices.initialize({ deviceId: this.$options.device, skipInferPlatform: true }).wait();
 
-			let action = (device: Mobile.IDevice) =>  { return (() => device.getFile(args[0]).wait()).future<void>()(); };
+			let action = (device: Mobile.IDevice) =>  { return (() => device.fileSystem.getFile(args[0]).wait()).future<void>()(); };
 			this.$devicesServices.execute(action).wait();
 		}).future<void>()();
 	}

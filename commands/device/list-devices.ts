@@ -22,17 +22,17 @@ export class ListDevicesCommand implements ICommand {
 				this.$logger.setLevel("ERROR");
 				action = (device) => {
 					return (() => { this.$logger.out(JSON.stringify({
-						identifier: device.getIdentifier(),
-						platform: device.getPlatform(),
-						model: device.getModel(),
-						name: device.getDisplayName(),
-						version: device.getVersion(),
-						vendor: device.getVendor()
+						identifier: device.deviceInfo.identifier,
+						platform: device.deviceInfo.platform,
+						model: device.deviceInfo.model,
+						name: device.deviceInfo.displayName,
+						version: device.deviceInfo.version,
+						vendor: device.deviceInfo.vendor
 					}))}).future<void>()();
 				};
 			} else {
 				action = (device) => {
-					return (() => { this.$logger.out("%s: '%s'", (index++).toString(), device.getDisplayName(), device.getPlatform(), device.getIdentifier()); }).future<void>()();
+					return (() => { this.$logger.out("%s: '%s'", (index++).toString(), device.deviceInfo.displayName, device.deviceInfo.platform, device.deviceInfo.identifier) }).future<void>()();
 				};
 			}
 
