@@ -2,90 +2,91 @@ global._ = require("lodash");
 global.$injector = require("./yok").injector;
 
 require("colors");
-$injector.require("errors", "./common/errors");
-$injector.require("fs", "./common/file-system");
-$injector.require("logger", "./common/logger");
-$injector.require("sysInfo", "./common/sysinfo");
-$injector.require("hostInfo", "./common/host-info");
 
-$injector.require("dispatcher", "./common/dispatchers");
-$injector.require("commandDispatcher", "./common/dispatchers");
+$injector.require("errors", "./errors");
+$injector.requirePublic("fs", "./file-system");
+$injector.require("logger", "./logger");
+$injector.require("sysInfo", "./sysinfo");
+$injector.require("hostInfo", "./host-info");
 
-$injector.require("stringParameter", "./common/command-params");
-$injector.require("stringParameterBuilder", "./common/command-params");
+$injector.require("dispatcher", "./dispatchers");
+$injector.require("commandDispatcher", "./dispatchers");
 
-$injector.require("commandsService", "./common/services/commands-service");
+$injector.require("stringParameter", "./command-params");
+$injector.require("stringParameterBuilder", "./command-params");
 
-$injector.require("cancellation", "./common/services/cancellation");
-$injector.require("analyticsService", "./common/services/analytics-service");
-$injector.require("hooksService", "./common/services/hooks-service");
+$injector.require("commandsService", "./services/commands-service");
 
-$injector.require("httpClient", "./common/http-client");
-$injector.require("childProcess", "./common/child-process");
-$injector.require("prompter", "./common/prompter");
-$injector.require("projectHelper", "./common/project-helper");
-$injector.require("propertiesParser", "./common/properties-parser");
+$injector.require("cancellation", "./services/cancellation");
+$injector.require("analyticsService", "./services/analytics-service");
+$injector.require("hooksService", "./services/hooks-service");
 
-$injector.requireCommand(["help", "/?"], "./common/commands/help");
-$injector.requireCommand("usage-reporting", "./common/commands/analytics");
-$injector.requireCommand("error-reporting", "./common/commands/analytics");
+$injector.require("httpClient", "./http-client");
+$injector.require("childProcess", "./child-process");
+$injector.require("prompter", "./prompter");
+$injector.require("projectHelper", "./project-helper");
+$injector.require("propertiesParser", "./properties-parser");
 
-$injector.requireCommand("dev-post-install", "./common/commands/post-install");
-$injector.requireCommand("autocomplete|*default", "./common/commands/autocompletion");
-$injector.requireCommand("autocomplete|enable", "./common/commands/autocompletion");
-$injector.requireCommand("autocomplete|disable", "./common/commands/autocompletion");
-$injector.requireCommand("autocomplete|status", "./common/commands/autocompletion");
+$injector.requireCommand(["help", "/?"], "./commands/help");
+$injector.requireCommand("usage-reporting", "./commands/analytics");
+$injector.requireCommand("error-reporting", "./commands/analytics");
 
-$injector.requireCommand("device|*list", "./common/commands/device/list-devices");
-$injector.requireCommand("device|android", "./common/commands/device/list-devices");
-$injector.requireCommand("device|ios", "./common/commands/device/list-devices");
+$injector.requireCommand("dev-post-install", "./commands/post-install");
+$injector.requireCommand("autocomplete|*default", "./commands/autocompletion");
+$injector.requireCommand("autocomplete|enable", "./commands/autocompletion");
+$injector.requireCommand("autocomplete|disable", "./commands/autocompletion");
+$injector.requireCommand("autocomplete|status", "./commands/autocompletion");
 
-$injector.requireCommand("device|log", "./common/commands/device/device-log-stream");
-$injector.requireCommand("device|run", "./common/commands/device/run-application");
-$injector.requireCommand("device|stop", "./common/commands/device/stop-application");
-$injector.requireCommand("device|list-applications", "./common/commands/device/list-applications");
-$injector.requireCommand("device|uninstall", "./common/commands/device/uninstall-application");
-$injector.requireCommand("device|list-files", "./common/commands/device/list-files");
-$injector.requireCommand("device|get-file", "./common/commands/device/get-file");
-$injector.requireCommand("device|put-file", "./common/commands/device/put-file");
+$injector.requireCommand("device|*list", "./commands/device/list-devices");
+$injector.requireCommand("device|android", "./commands/device/list-devices");
+$injector.requireCommand("device|ios", "./commands/device/list-devices");
 
-$injector.require("iOSCore", "./common/mobile/ios/ios-core");
-$injector.require("coreFoundation", "./common/mobile/ios/ios-core");
-$injector.require("mobileDevice", "./common/mobile/ios/ios-core");
-$injector.require("plistService", "./common/mobile/ios/ios-core");
+$injector.requireCommand("device|log", "./commands/device/device-log-stream");
+$injector.requireCommand("device|run", "./commands/device/run-application");
+$injector.requireCommand("device|stop", "./commands/device/stop-application");
+$injector.requireCommand("device|list-applications", "./commands/device/list-applications");
+$injector.requireCommand("device|uninstall", "./commands/device/uninstall-application");
+$injector.requireCommand("device|list-files", "./commands/device/list-files");
+$injector.requireCommand("device|get-file", "./commands/device/get-file");
+$injector.requireCommand("device|put-file", "./commands/device/put-file");
 
-$injector.require("installationProxyClient", "./common/mobile/ios/ios-proxy-services");
-$injector.require("notificationProxyClient", "./common/mobile/ios/ios-proxy-services");
-$injector.require("houseArrestClient", "./common/mobile/ios/ios-proxy-services");
-$injector.require("gdbServer", "./common/mobile/ios/ios-core");
+$injector.require("iOSCore", "./mobile/ios/ios-core");
+$injector.require("coreFoundation", "./mobile/ios/ios-core");
+$injector.require("mobileDevice", "./mobile/ios/ios-core");
+$injector.require("plistService", "./mobile/ios/ios-core");
 
-$injector.require("deviceFound", "./common/mobile/mobile-core/device-discovery");
-$injector.require("deviceLost", "./common/mobile/mobile-core/device-discovery");
+$injector.require("installationProxyClient", "./mobile/ios/ios-proxy-services");
+$injector.require("notificationProxyClient", "./mobile/ios/ios-proxy-services");
+$injector.require("houseArrestClient", "./mobile/ios/ios-proxy-services");
+$injector.require("gdbServer", "./mobile/ios/ios-core");
 
-$injector.require("iTunesValidator", "./common/validators/iTunes-validator");
-$injector.require("deviceDiscovery", "./common/mobile/mobile-core/device-discovery");
-$injector.require("iOSDeviceDiscovery", "./common/mobile/mobile-core/device-discovery");
-$injector.require("androidDeviceDiscovery", "./common/mobile/mobile-core/device-discovery");
-$injector.require("iOSDevice", "./common/mobile/ios/ios-device");
-$injector.require("androidDevice", "./common/mobile/android/android-device");
-$injector.require("logcatHelper", "./common/mobile/android/logcat-helper");
+$injector.require("deviceFound", "./mobile/mobile-core/device-discovery");
+$injector.require("deviceLost", "./mobile/mobile-core/device-discovery");
 
-$injector.require("localToDevicePathDataFactory", "./common/mobile/local-to-device-path-data-factory");
-$injector.require("deviceAppDataFactory", "./common/mobile/device-app-data/device-app-data-factory");
+$injector.require("iTunesValidator", "./validators/iTunes-validator");
+$injector.require("deviceDiscovery", "./mobile/mobile-core/device-discovery");
+$injector.require("iOSDeviceDiscovery", "./mobile/mobile-core/device-discovery");
+$injector.require("androidDeviceDiscovery", "./mobile/mobile-core/device-discovery");
+$injector.require("iOSDevice", "./mobile/ios/ios-device");
+$injector.require("androidDevice", "./mobile/android/android-device");
+$injector.require("logcatHelper", "./mobile/android/logcat-helper");
 
-$injector.require("devicesServices", "./common/mobile/mobile-core/devices-services");
-$injector.require("projectNameValidator", "./common/validators/project-name-validator");
+$injector.require("localToDevicePathDataFactory", "./mobile/local-to-device-path-data-factory");
+$injector.require("deviceAppDataFactory", "./mobile/device-app-data/device-app-data-factory");
 
-$injector.require("androidEmulatorServices", "./common/mobile/android/android-emulator-services");
-$injector.require("iOSEmulatorServices", "./common/mobile/ios/ios-emulator-services");
-$injector.require("wp8EmulatorServices", "./common/mobile/wp8/wp8-emulator-services");
+$injector.require("devicesServices", "./mobile/mobile-core/devices-services");
+$injector.require("projectNameValidator", "./validators/project-name-validator");
 
-$injector.require("autoCompletionService", "./common/services/auto-completion-service");
-$injector.require("opener", "./common/opener");
-$injector.require("dynamicHelpService", "./common/services/dynamic-help-service");
-$injector.require("microTemplateService", "./common/services/micro-templating-service");
-$injector.require("mobileHelper", "./common/mobile/mobile-helper");
-$injector.require("devicePlatformsConstants", "./common/mobile/device-platforms-constants");
-$injector.require("htmlHelpService", "./common/services/html-help-service");
-$injector.requireCommand("dev-preuninstall", "./common/commands/preuninstall");
-$injector.requireCommand("doctor", "./common/commands/doctor");
+$injector.require("androidEmulatorServices", "./mobile/android/android-emulator-services");
+$injector.require("iOSEmulatorServices", "./mobile/ios/ios-emulator-services");
+$injector.require("wp8EmulatorServices", "./mobile/wp8/wp8-emulator-services");
+
+$injector.require("autoCompletionService", "./services/auto-completion-service");
+$injector.require("opener", "./opener");
+$injector.require("dynamicHelpService", "./services/dynamic-help-service");
+$injector.require("microTemplateService", "./services/micro-templating-service");
+$injector.require("mobileHelper", "./mobile/mobile-helper");
+$injector.require("devicePlatformsConstants", "./mobile/device-platforms-constants");
+$injector.require("htmlHelpService", "./services/html-help-service");
+$injector.requireCommand("dev-preuninstall", "./commands/preuninstall");
+$injector.requireCommand("doctor", "./commands/doctor");

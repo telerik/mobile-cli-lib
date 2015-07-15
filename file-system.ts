@@ -1,5 +1,4 @@
 ///<reference path=".d.ts"/>
-"use strict";
 
 import fs = require("fs");
 import Future = require("fibers/future");
@@ -7,7 +6,9 @@ import path = require("path");
 import util = require("util");
 import rimraf = require("rimraf");
 import minimatch = require("minimatch");
+import decorators = require("./decorators");
 
+@decorators.register("fs")
 export class FileSystem implements IFileSystem {
 	constructor(private $injector: IInjector,
 		private $hostInfo: IHostInfo) { }
@@ -132,7 +133,8 @@ export class FileSystem implements IFileSystem {
 
 		return future;
 	}
-
+	
+	@decorators.promisify("fs")
 	public getFileSize(path: string): IFuture<number> {
 		return ((): number => {
 			let stat = this.getFsStats(path).wait();
@@ -444,4 +446,4 @@ export class FileSystem implements IFileSystem {
 		return foundFiles;
 	}
 }
-$injector.register("fs", FileSystem);
+

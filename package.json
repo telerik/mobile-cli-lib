@@ -5,9 +5,9 @@
   "author": "Telerik <support@telerik.com>",
   "description": "common lib used by different CLI",
   "bin": {
-    "appbuilder": "./bin/commonLib.js"
+    "mobile-cli-lib": "./bin/common-lib.js"
   },
-  "main": "./lib/common-lib.js",
+  "main": "./common-lib.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/telerik/mobile-cli-lib.git"
@@ -17,10 +17,11 @@
     "appbuilder",
     "telerik",
     "mobile",
-	"nativescript",
-	"Proton"
+    "nativescript",
+    "Proton"
   ],
   "dependencies": {
+    "bluebird": "2.9.33",
     "bplist-parser": "0.0.6",
     "bufferpack": "0.0.6",
     "byline": "4.2.1",
