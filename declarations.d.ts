@@ -266,7 +266,7 @@ interface IUsbLiveSyncServiceBase {
 	sync(platform: string, appIdentifier: string, localProjectRootPath: string, projectFilesPath: string, excludedProjectDirsAndFiles: string[], watchGlob: any,
 		restartAppOnDeviceAction: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData) => IFuture<void>,
 		notInstalledAppOnDeviceAction: (device: Mobile.IDevice) => IFuture<void>,
-		beforeBatchLiveSyncAction?: (filePath: string) => IFuture<void>): IFuture<void>;
+		beforeBatchLiveSyncAction?: (filePath: string) => IFuture<string>): IFuture<void>;
 }
 
 interface ISysInfoData {
