@@ -29,7 +29,7 @@ export class CommandDispatcher implements ICommandDispatcher {
 			}
 
 			let commandName = this.getCommandName();
-			let commandArguments = this.getCommandArguments();
+			let commandArguments = this.$options.argv._.slice(1);
 			let lastArgument: string = _.last(commandArguments);
 
 			if(this.$options.help) {
@@ -59,12 +59,6 @@ export class CommandDispatcher implements ICommandDispatcher {
 		// if only <CLI_NAME> is specified on console, show console help
 		this.$options.help = true;
 		return "";
-	}
-
-	// yargs convert parameters that are numbers to numbers, which we do not expect. undo its hard work.
-	private getCommandArguments(): string[] {
-		let remaining: string[] = this.$options.argv._.slice(1);
-		return _.map(remaining, (item) => (typeof item === "number") ? item.toString() : item);
 	}
 
 	private printVersion(): void {
