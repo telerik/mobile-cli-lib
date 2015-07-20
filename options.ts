@@ -24,7 +24,9 @@ export class OptionsBase {
 		"help": { type: OptionType.Boolean, alias: "h" },
 		"profileDir": { type: OptionType.String },
 		"analyticsClient": {type: OptionType.String},
-		"path": { type: OptionType.String, alias: "p" }
+		"path": { type: OptionType.String, alias: "p" },
+		// This will parse all non-hyphenated values as strings.
+		"_": { type: OptionType.String }
 	};
 
 	constructor(public options: IDictionary<IDashedOption>,
