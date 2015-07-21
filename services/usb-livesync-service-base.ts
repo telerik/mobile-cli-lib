@@ -83,7 +83,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 							return;
 						}
 						
-						this.$logger.info("Transfering project files..");
+						this.$logger.info("Transfering project files...");
 						device.fileSystem.transferFiles(deviceAppData.appIdentifier, localToDevicePaths).wait();
 						this.$logger.info("Successfully transfered all project files.");
 						
