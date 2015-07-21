@@ -55,12 +55,27 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	}
 
 	private checkAndroidSDKConfiguration(): IFuture<void> {
-		return this.$childProcess.tryExecuteApplication('emulator', ['-help'], "exit", AndroidEmulatorServices.MISSING_SDK_MESSAGE);
+		return (() => {
+			try {
+				this.$childProcess.tryExecuteApplication('emulator', ['-help'], "exit", AndroidEmulatorServices.MISSING_SDK_MESSAGE).wait();
+			} catch (err) {
+				this.$logger.trace(`Error while checking Android SDK configuration: ${err}`);
+				this.$errors.failWithoutHelp("Android SDK is not configured properly. Make sure you have added tools and platform-tools to your PATH environment variable.");
+			}
+		}).future<void>()();
+		return 
 	}
 
 	private checkGenymotionConfiguration(): IFuture<void> {
-		let condition = (childProcess: any) => childProcess.stderr && !_.startsWith(childProcess.stderr, "Usage:");
-		return this.$childProcess.tryExecuteApplication("player", [], "exit",  AndroidEmulatorServices.MISSING_GENYMOTION_MESSAGE, condition);
+		return (() => {
+			try {
+				let condition = (childProcess: any) => childProcess.stderr && !_.startsWith(childProcess.stderr, "Usage:");
+				this.$childProcess.tryExecuteApplication("player", [], "exit",  AndroidEmulatorServices.MISSING_GENYMOTION_MESSAGE, condition).wait();
+			} catch(err) {
+				this.$logger.trace(`Error while checking Genymotion configuration: ${err}`);
+				this.$errors.failWithoutHelp("Genymotion is not configured properly. Make sure you have added its installation directory to your PATH environment variable.");
+			}
+		}).future<void>()();
 	}
 
 	public checkAvailability(): IFuture<void> {
