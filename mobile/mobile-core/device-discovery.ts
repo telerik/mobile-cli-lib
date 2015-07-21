@@ -2,7 +2,6 @@
 "use strict";
 
 import ref = require("ref");
-import util = require("util");
 import os = require("os");
 import path = require("path");
 import IOSDevice = require("./../ios/ios-device");
@@ -187,7 +186,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery {
 		return(()=> {
 			this.ensureAdbServerStarted().wait();
 
-			let requestAllDevicesCommand = `${this.$staticConfig.getAdbFilePath().wait()} devices`;
+			let requestAllDevicesCommand = `"${this.$staticConfig.getAdbFilePath().wait()}" devices`;
 			let result = this.$childProcess.exec(requestAllDevicesCommand).wait();
 
 			let devices = result.toString().split(os.EOL).slice(1)
@@ -205,7 +204,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery {
 	}
 
 	private ensureAdbServerStarted(): IFuture<void> {
-		let startAdbServerCommand = `${this.$staticConfig.getAdbFilePath().wait()} start-server`;
+		let startAdbServerCommand = `"${this.$staticConfig.getAdbFilePath().wait()}" start-server`;
 		return this.$childProcess.exec(startAdbServerCommand);
 	}
 }
