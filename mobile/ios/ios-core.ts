@@ -1080,7 +1080,8 @@ export class GDBServer implements Mobile.IGDBServer {
 	constructor(private socket: any, // socket is fd on Windows and net.Socket on mac
 		private $injector: IInjector,
 		private $hostInfo: IHostInfo,
-		private $options: IOptions) {
+		private $options: IOptions,
+		private $logger: ILogger) {
 		if(this.$hostInfo.isWindows) {
 			let winSocket = this.$injector.resolve(WinSocket, {service: this.socket, format: 0});
 			this.socket = {
@@ -1151,6 +1152,7 @@ export class GDBServer implements Mobile.IGDBServer {
 
 	private send(packet: string): void {
 		let data = this.createData(packet);
+		this.$logger.trace(`GDB: sending ${data}`);
 		this.socket.write(data);
 	}
 	
