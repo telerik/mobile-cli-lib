@@ -1,3 +1,6 @@
+///<reference path=".d.ts"/>
+"use strict";
+
 import Fiber = require("fibers");
 import Future = require("fibers/future");
 import errors = require("./errors");

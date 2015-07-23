@@ -103,7 +103,7 @@ module.exports = function(grunt) {
 					execOptions: {
 						env: (function() {
 							var env = shallowCopy(process.env);
-							env["APPBUILDER_SKIP_POSTINSTALL_TASKS"] = "1";
+							env["COMMON_LIB_SKIP_POSTINSTALL_TASKS"] = "1";
 							return env;
 						})()
 					}
@@ -112,7 +112,7 @@ module.exports = function(grunt) {
 		},
 
 		clean: {
-			src: ["test/**/*.js*", "**/*.js*", "!vendor/*.js", "!hooks/**/*.js", "*.tgz"]
+			src: ["test/**/*.js*", "**/*.js*", "!vendor/*.js", "*.tgz"]
 		}
 	});
 

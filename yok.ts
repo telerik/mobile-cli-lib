@@ -29,7 +29,7 @@ let FN_NAME_AND_ARGS = /^function\s*([^\(]*)\(\s*([^\)]*)\)/m;
 let FN_ARG_SPLIT = /,/;
 let FN_ARG = /^\s*(_?)(\S+?)\1\s*$/;
 let STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
-var Promise = require("bluebird");
+
 function annotate(fn: any) {
 	let $inject: any,
 		fnText: string,
@@ -81,6 +81,13 @@ function forEachName(names: any, action: (name: string) => void): void {
 		action(names);
 	} else {
 		names.forEach(action);
+	}
+}
+
+export function register(...rest: any[]) {
+	return function(target: any): void {
+		// TODO: Check if 'rest' has more arguments that have to be registered
+		$injector.register(rest[0], target);
 	}
 }
 
@@ -150,8 +157,7 @@ export class Yok implements IInjector {
 	private resolvePublicApi(name: string, file: string): void {
 		Object.defineProperty(this.publicApi, name, {
 			get: () => {
-				let obj: any = {};
-				let originalModule = this.resolve(name);
+				this.resolve(name);
 				return this._publicApi[name];
 			}
 		});
