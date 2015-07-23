@@ -7,8 +7,9 @@ import util = require("util");
 import rimraf = require("rimraf");
 import minimatch = require("minimatch");
 import decorators = require("./decorators");
+import injector = require("./yok");
 
-@decorators.register("fs")
+@injector.register("fs")
 export class FileSystem implements IFileSystem {
 	constructor(private $injector: IInjector,
 		private $hostInfo: IHostInfo) { }

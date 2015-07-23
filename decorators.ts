@@ -1,15 +1,8 @@
 ///<reference path=".d.ts"/>
+"use strict";
 
-// TODO: Add bluebird .d.ts and use import instead of let
-let Promise = require("bluebird");
+import Promise = require("bluebird");
 import fiberBootstrap = require("./fiber-bootstrap");
-
-export function register(...rest: any[]) {
-	return function(target: any): void {
-		// TODO: Check if 'rest' has more arguments that have to be registered
-		$injector.register(rest[0], target);
-	}
-}
 
 export function promisify(moduleName: string) {
 	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>) => {
