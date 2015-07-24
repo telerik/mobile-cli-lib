@@ -5,7 +5,7 @@ export class DeviceAppDataFactory implements Mobile.IDeviceAppDataFactory {
 	constructor(private $deviceAppDataProvider: Mobile.IDeviceAppDataProvider,
 		private $options: IOptions) { }
 			
-	create(appIdentifier: string, platform: string): Mobile.IDeviceAppData {
+	create<T>(appIdentifier: string, platform: string): T {
 		let factoryRules = this.$deviceAppDataProvider.createFactoryRules();
 		let ctor = (<any>factoryRules[platform])[this.$options.companion ? "companion" : "vanilla"];
 		return new ctor(appIdentifier);
