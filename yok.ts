@@ -144,8 +144,9 @@ export class Yok implements IInjector {
 		forEachName(names, (name) => this.requireOne(name, file));
 	}
 
-	public publicApi: any = {};
-	public _publicApi: any = {};
+	public publicApi: any = {
+		__modules__: {}
+	};
 
 	public requirePublic(names: any, file: string): void {
 		forEachName(names, (name) => {
@@ -158,7 +159,7 @@ export class Yok implements IInjector {
 		Object.defineProperty(this.publicApi, name, {
 			get: () => {
 				this.resolve(name);
-				return this._publicApi[name];
+				return this.publicApi.__modules__[name];
 			}
 		});
 	}
