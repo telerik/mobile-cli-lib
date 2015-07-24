@@ -23,7 +23,15 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	
 	public transferFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void> {
 		return (() => {
-			_.each(localToDevicePaths, (localToDevicePathData) => this.transferFile(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()).wait());
+			_(localToDevicePaths)
+				.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).wait().isFile())
+				.each(localToDevicePathData => this.adb.executeCommand(`push "${localToDevicePathData.getLocalPath()}" "${localToDevicePathData.getDevicePath()}"`).wait())
+				.value();
+			
+			_(localToDevicePaths)
+				.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).wait().isDirectory())
+				.each(localToDevicePathData => this.adb.executeShellCommand(`chmod 0777 "${localToDevicePathData.getDevicePath()}"`).wait())
+				.value();
 		}).future<void>()();
 	}
 

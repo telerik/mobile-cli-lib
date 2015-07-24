@@ -21,7 +21,8 @@ export class IOSApplicationManager implements Mobile.IDeviceApplicationManager {
 		private $mobileDevice: Mobile.IMobileDevice,
 		private $logger: ILogger,
 		private $hostInfo: IHostInfo,
-		private $staticConfig: IStaticConfig) {
+		private $staticConfig: IStaticConfig,
+		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
 			this.uninstallApplicationCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSApplicationManager.uninstallCallback); 
 		}
 		
@@ -80,7 +81,7 @@ export class IOSApplicationManager implements Mobile.IDeviceApplicationManager {
 	public restartApplication(applicationId: string): IFuture<void> {
 		return (() => {
 			// This must be executed in separate process because ddb sometimes fails and the cli crashes.
-			this.$childProcess.exec(`${process.argv[0]} ${process.argv[1]} device stop ${applicationId}`).wait();
+			this.$childProcess.exec(`${process.argv[0]} ${process.argv[1]} device stop ${applicationId} ${this.$devicePlatformsConstants.iOS}`).wait();
 			this.runApplicationCore(applicationId).wait();
 		}).future<void>()();
 	}

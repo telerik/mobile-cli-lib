@@ -13,17 +13,13 @@ export class StopApplicationOnDeviceCommand implements ICommand {
 		private $staticConfig: Config.IStaticConfig,
 		private $options: IOptions) { }
 
-	allowedParameters: ICommandParameter[] = [this.$stringParameter];
+	allowedParameters: ICommandParameter[] = [this.$stringParameter, this.$stringParameter];
 
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
-			this.$devicesServices.initialize({ deviceId: this.$options.device, skipInferPlatform: true }).wait();
-
-			if (this.$devicesServices.deviceCount > 1) {
-				this.$errors.failWithoutHelp("More than one device found. Specify device explicitly with --device option.To discover device ID, use $%s device command.", this.$staticConfig.CLIENT_NAME.toLowerCase());
-			}
-
-			let action = (device: Mobile.IDevice) =>  { return (() => device.applicationManager.stopApplication(args[0]).wait()).future<void>()(); };
+			this.$devicesServices.initialize({ deviceId: this.$options.device, skipInferPlatform: true, platform: args[1] }).wait();
+			
+			let action = (device: Mobile.IDevice) => device.applicationManager.stopApplication(args[0]);
 			this.$devicesServices.execute(action).wait();
 		}).future<void>()();
 	}
