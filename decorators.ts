@@ -6,8 +6,8 @@ import fiberBootstrap = require("./fiber-bootstrap");
 
 export function promisify(moduleName: string) {
 	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>) => {
-		$injector._publicApi[moduleName] = $injector._publicApi[moduleName] || {};
-		$injector._publicApi[moduleName][propertyKey] =  (...args: any[]): any => {
+		$injector.publicApi.__modules__[moduleName] = $injector.publicApi.__modules__[moduleName] || {};
+		$injector.publicApi.__modules__[moduleName][propertyKey] =  (...args: any[]): any => {
 				return new Promise(function(resolve: any, reject: any) {
 						let originalModule = $injector.resolve(moduleName);
 						fiberBootstrap.run(function () {

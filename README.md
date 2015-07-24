@@ -15,9 +15,11 @@ In order to expose public API, we use TypeScript decorators and some "magic" in 
 	$injector.requirePublic("a", "./pathToFileWhereAClassIs")
 	```
 * On the method which you want to expose, just add the promisify decorator: `@decorators.promisify('a')`, where decorators are imported from the root of the project: `import decorators = require("./decorators");`
+
 > IMPORTANT: `promisify` decorator requires one parameter which MUST be the first parameter passed to `requirePublic` method. This is the name of the module that will be publicly exposed.
 
 After you have executed these two steps, you can start using your publicly available method:
+
 ```JavaScript
 var common = require("mobile-cli-lib");
 common.a.B() /* NOTE: here we are not using the class name A, but the module name - a */
@@ -34,9 +36,9 @@ common.a.B() /* NOTE: here we are not using the class name A, but the module nam
 #### Behind the scenes of generating public API
 `requirePublic` method of the `injector` is doing some "magic" in order to support lazy loading, correct dependency resolving and exposing only some of the methods, not the whole power that is available.
 When you require `mobile-cli-lib` module, you receive $injector's publicApi - it is the "exported one". `requirePublic` method defines getter for each module that is passed, for example when you say:
-	```TypeScript
+```TypeScript
 	$injector.requirePublic("a", "./pathToFileWhereAClassIs")
-	```
+```
 a new property is added to publicApi - `a` and a getter is added for it. When you try to access this module, `require("mobile-cli-lib").a.<smth>`, the getter is called. It resolves the module, by parsing the provided file (`./pathToFileWhereAClassIs`)
 and that's the time when decorators are executed. For each decorated method, a new entry in `$injector._publicApi` is created. This is not the same method that you've decorated - it's entirely new method, that returns Promise.
 The new method will be used in the publicApi, while original implementation will still be used in all other places in the code. The promisified method will call the original one (in a separate Fiber) and will resolve the Promise with the result of the method.
