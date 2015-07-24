@@ -1,4 +1,4 @@
-///<reference path="../../../.d.ts"/>
+///<reference path="../../.d.ts"/>
 "use strict";
 import os = require("os");
 import Future = require("fibers/future");
@@ -8,7 +8,7 @@ export class AndroidApplicationManager implements Mobile.IDeviceApplicationManag
 	
 	constructor(private adb: Mobile.IAndroidDebugBridge,
 		private identifier: string,
-		private $options: IOptions,
+		private $options: ICommonOptions,
 		private $staticConfig: Config.IStaticConfig) { }
 	
 	public getInstalledApplications(): IFuture<string[]> {

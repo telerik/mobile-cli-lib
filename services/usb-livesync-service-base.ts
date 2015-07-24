@@ -1,4 +1,4 @@
-///<reference path="../../.d.ts"/>
+///<reference path="../.d.ts"/>
 "use strict";
 
 import helpers = require("./../helpers");
@@ -21,7 +21,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 		protected $mobileHelper: Mobile.IMobileHelper,
 		private $localToDevicePathDataFactory: Mobile.ILocalToDevicePathDataFactory,
 		protected $logger: ILogger,
-		protected $options: IOptions,
+		protected $options: ICommonOptions,
 		private $deviceAppDataFactory: Mobile.IDeviceAppDataFactory,
 		private $fs: IFileSystem,
 		private $dispatcher: IFutureDispatcher,
