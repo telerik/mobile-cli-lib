@@ -50,10 +50,12 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 			if(this.$options.watch) {
 				let __this = this;
 				
-				gaze(watchGlob, function(err: any, watcher: any) {
-					this.on('changed', (filePath: string) => {
-						if(!_.contains(excludedProjectDirsAndFiles, filePath)) {
-							__this.batchLiveSync(filePath, appIdentifier, localProjectRootPath, restartAppOnDeviceAction, notInstalledAppOnDeviceAction, beforeBatchLiveSyncAction);
+				gaze("**/*", { cwd: watchGlob }, function(err: any, watcher: any) {
+					this.on('all', (event: string, filePath: string) => {
+						if(event === "added" || event === "changed") {
+							if(!_.contains(excludedProjectDirsAndFiles, filePath)) {
+								__this.batchLiveSync(filePath, appIdentifier, localProjectRootPath, restartAppOnDeviceAction, notInstalledAppOnDeviceAction, beforeBatchLiveSyncAction);
+							}
 						}
 					});
 				});
