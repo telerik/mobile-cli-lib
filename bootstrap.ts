@@ -59,7 +59,6 @@ $injector.require("notificationProxyClient", "./common/mobile/ios/ios-proxy-serv
 $injector.require("houseArrestClient", "./common/mobile/ios/ios-proxy-services");
 $injector.require("gdbServer", "./common/mobile/ios/ios-core");
 
-$injector.require("signal", "./events/signal");
 $injector.require("deviceFound", "./common/mobile/mobile-core/device-discovery");
 $injector.require("deviceLost", "./common/mobile/mobile-core/device-discovery");
 

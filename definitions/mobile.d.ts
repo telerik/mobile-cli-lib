@@ -94,9 +94,7 @@ declare module Mobile {
 		frontEndPath?: string;
 	}
 
-	interface IDeviceDiscovery {
-		deviceFound: ISignal;
-		deviceLost: ISignal;
+	interface IDeviceDiscovery extends NodeJS.EventEmitter {
 		startLookingForDevices(): IFuture<void>;
 	}
 
