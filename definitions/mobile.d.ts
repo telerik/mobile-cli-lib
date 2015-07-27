@@ -40,7 +40,7 @@ declare module Mobile {
 	}
 	
 	interface IDeviceAppDataFactory {
-		create(appIdentifier: string, platform: string): Mobile.IDeviceAppData;
+		create<T extends Mobile.IDeviceAppData>(appIdentifier: string, platform: string): T;
 	}
 	
 	interface IDeviceAppDataFactoryRule {
@@ -79,6 +79,7 @@ declare module Mobile {
 		listFiles(devicePath: string): IFuture<void>;
 		getFile(deviceFilePath: string): IFuture<void>;
 		putFile(localFilePath: string, deviceFilePath: string): IFuture<void>;
+		deleteFile?(deviceFilePath: string, appIdentifier: string): void;		
 		transferFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void>;
 		transferFile?(localFilePath: string, deviceFilePath: string): IFuture<void>;
 	}

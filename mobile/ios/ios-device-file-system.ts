@@ -16,6 +16,34 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		private $logger: ILogger,
 		private $mobileDevice: Mobile.IMobileDevice,
 		private $options: IOptions) { }
+
+	public listFiles(devicePath: string): IFuture<void> {
+		return (() => {
+			if (!devicePath) {
+				devicePath = ".";
+			}
+
+			this.$logger.info("Listing %s", devicePath);
+
+			let afcClient = this.resolveAfc();
+
+			let walk = (root:string, indent:number) => {
+				this.$logger.info(util.format("%s %s", Array(indent).join(" "), root));
+				let children:string[] = [];
+				try {
+					children = afcClient.listDir(root);
+				} catch (e) {
+					children = [];
+				}
+
+				_.each(children, (child:string) => {
+					walk(root + "/" + child, indent + 1);
+				});
+			};
+
+			walk(devicePath, 0);
+		}).future<void>()();
+	}
 	
 	public getFile(deviceFilePath: string): IFuture<void> {
 		return (() => {
@@ -44,33 +72,12 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		let afcClient = this.resolveAfc();
 		return afcClient.transfer(path.resolve(localFilePath), deviceFilePath);
 	}
-
-	public listFiles(devicePath: string): IFuture<void> {
-		return (() => {
-			if (!devicePath) {
-				devicePath = ".";
-			}
-
-			this.$logger.info("Listing %s", devicePath);
-
-			let afcClient = this.resolveAfc();
-
-			let walk = (root:string, indent:number) => {
-				this.$logger.info(util.format("%s %s", Array(indent).join(" "), root));
-				let children:string[] = [];
-				try {
-					children = afcClient.listDir(root);
-				} catch (e) {
-					children = [];
-				}
-
-				_.each(children, (child:string) => {
-					walk(root + "/" + child, indent + 1);
-				});
-			};
-
-			walk(devicePath, 0);
-		}).future<void>()();
+	
+	public deleteFile(deviceFilePath: string, appIdentifier: string): void {
+		let houseArrestClient: Mobile.IHouseArrestClient = this.$injector.resolve(iOSProxyServices.HouseArrestClient, {device: this.device});
+		let afcClientForContainer = houseArrestClient.getAfcClientForAppContainer(appIdentifier);
+		afcClientForContainer.deleteFile(deviceFilePath);
+		houseArrestClient.closeSocket();
 	}
 	
 	public transferFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void> {
