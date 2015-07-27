@@ -1,4 +1,4 @@
-///<reference path="../../.d.ts"/>
+///<reference path="../.d.ts"/>
 "use strict";
 
 import Future = require("fibers/future");

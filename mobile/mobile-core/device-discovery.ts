@@ -1,4 +1,4 @@
-///<reference path="./../../../.d.ts"/>
+///<reference path="./../../.d.ts"/>
 "use strict";
 
 import ref = require("ref");
@@ -64,7 +64,7 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 		private $mobileDevice: Mobile.IMobileDevice,
 		private $errors: IErrors,
 		private $injector: IInjector,
-		private $options: IOptions) {
+		private $options: ICommonOptions) {
 		super();
 		this.timerCallbackPtr = CoreTypes.CoreTypes.cf_run_loop_timer_callback.toPointer(IOSDeviceDiscovery.timerCallback);
 		this.notificationCallbackPtr = CoreTypes.CoreTypes.am_device_notification_callback.toPointer(IOSDeviceDiscovery.deviceNotificationCallback);

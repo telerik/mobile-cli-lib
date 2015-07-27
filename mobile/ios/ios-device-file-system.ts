@@ -1,4 +1,4 @@
-///<reference path="../../../.d.ts"/>
+///<reference path="../../.d.ts"/>
 "use strict";
 
 import iOSProxyServices = require("./ios-proxy-services");
@@ -15,7 +15,7 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		private $injector: IInjector,
 		private $logger: ILogger,
 		private $mobileDevice: Mobile.IMobileDevice,
-		private $options: IOptions) { }
+		private $options: ICommonOptions) { }
 	
 	public getFile(deviceFilePath: string): IFuture<void> {
 		return (() => {

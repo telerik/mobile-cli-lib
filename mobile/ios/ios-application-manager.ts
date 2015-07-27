@@ -1,4 +1,4 @@
-///<reference path="../../../.d.ts"/>
+///<reference path="../../.d.ts"/>
 "use strict";
 
 import net = require("net");
@@ -21,7 +21,7 @@ export class IOSApplicationManager implements Mobile.IDeviceApplicationManager {
 		private $mobileDevice: Mobile.IMobileDevice,
 		private $logger: ILogger,
 		private $hostInfo: IHostInfo,
-		private $staticConfig: IStaticConfig,
+		private $staticConfig: Config.IStaticConfig,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
 			this.uninstallApplicationCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSApplicationManager.uninstallCallback); 
 		}

@@ -1,4 +1,4 @@
-///<reference path="../.d.ts"/>
+///<reference path=".d.ts"/>
 "use strict";
 
 //--- begin part copied from AngularJS
@@ -84,6 +84,13 @@ function forEachName(names: any, action: (name: string) => void): void {
 	}
 }
 
+export function register(...rest: any[]) {
+	return function(target: any): void {
+		// TODO: Check if 'rest' has more arguments that have to be registered
+		$injector.register(rest[0], target);
+	}
+}
+
 export interface IDependency {
 	require?: string;
 	resolver?: () => any;
@@ -137,9 +144,29 @@ export class Yok implements IInjector {
 		forEachName(names, (name) => this.requireOne(name, file));
 	}
 
+	public publicApi: any = {
+		__modules__: {}
+	};
+
+	public requirePublic(names: any, file: string): void {
+		forEachName(names, (name) => {
+			this.requireOne(name, file);
+			this.resolvePublicApi(name, file);
+		});
+	}
+
+	private resolvePublicApi(name: string, file: string): void {
+		Object.defineProperty(this.publicApi, name, {
+			get: () => {
+				this.resolve(name);
+				return this.publicApi.__modules__[name];
+			}
+		});
+	}
+
 	private requireOne(name: string, file: string): void {
 		let dependency: IDependency = {
-			require: path.join("../", file),
+			require: file,
 			shared: true
 		};
 		if(!this.modules[name]) {
@@ -291,6 +318,7 @@ export class Yok implements IInjector {
 	}
 
 	public register(name: string, resolver: any, shared: boolean = true): void {
+
 		trace("registered '%s'", name);
 
 		let dependency: any = this.modules[name] || {};

@@ -1,4 +1,4 @@
-///<reference path="../../.d.ts"/>
+///<reference path="../.d.ts"/>
 "use strict";
 
 import util = require("util");
@@ -21,7 +21,7 @@ export class AnalyticsService implements IAnalyticsService {
 		private $prompter: IPrompter,
 		private $userSettingsService: UserSettings.IUserSettingsService,
 		private $analyticsSettingsService: IAnalyticsSettingsService,
-		private $options: IOptions) {}
+		private $options: ICommonOptions) {}
 
 	public checkConsent(): IFuture<void> {
 		return ((): void => {
