@@ -112,7 +112,7 @@ module.exports = function(grunt) {
 		},
 
 		clean: {
-			src: ["test/**/*.js*", "**/*.js*", "!vendor/*.js", "*.tgz"]
+			src: ["test/**/*.js*", "**/*.js*", "!**/*.json", "!Gruntfile.js", "!node_modules/**/*", "!bin/common-lib.js",  "!vendor/*.js", "*.tgz"]
 		}
 	});
 
@@ -133,9 +133,14 @@ module.exports = function(grunt) {
 		var fileExtension = ".tgz";
 		var buildVersion = getBuildVersion(version);
 		var packageJson = grunt.file.readJSON("package.json");
-		var oldFileName = packageJson.name + "-" + packageJson.version;
-		var newFileName = oldFileName + "-" + buildVersion;
-		fs.renameSync(oldFileName + fileExtension, newFileName + fileExtension);
+		var oldFileName = packageJson.name + "-" + packageJson.version + fileExtension;
+		if(buildVersion) {
+			var newFileName = oldFileName + "-" + buildVersion + fileExtension;
+			fs.renameSync(oldFileName, newFileName);
+			console.log("Renamed " + oldFileName + " to " + newFileName);
+		} else {
+			console.log("Packed file is: " + oldFileName);
+		}
 	});
 
 	grunt.registerTask("delete_coverage_dir", function() {
