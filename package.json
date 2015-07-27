@@ -7,6 +7,9 @@
   "bin": {
     "mobile-cli-lib": "./bin/common-lib.js"
   },
+  "scripts": {
+    "test": "node_modules/.bin/istanbul cover node_modules/mocha/bin/_mocha -- --ui mocha-fibers --recursive --reporter spec-xunit-file --require test/test-bootstrap.js --timeout 15000 test/unit-tests/"
+  },
   "main": "./common-lib.js",
   "repository": {
     "type": "git",

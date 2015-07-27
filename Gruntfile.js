@@ -52,7 +52,7 @@ module.exports = function(grunt) {
 			},
 
 			devall: {
-				src: ["**/*.ts", "!node_modules/**/*.ts", "test/**/*.ts", ],
+				src: ["**/*.ts", "!node_modules/**/*.ts", "test/**/*.ts"],
 				reference: ".d.ts"
 			},
 
