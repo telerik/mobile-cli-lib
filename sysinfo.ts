@@ -43,7 +43,8 @@ export class SysInfo implements ISysInfo {
 
 			// dependencies
 			try {
-				res.javaVer = this.$childProcess.spawnFromEvent("java", ["-version"], "exit").wait().stderr.split(os.EOL)[2];
+				let output = this.$childProcess.spawnFromEvent("java", ["-version"], "exit").wait().stderr.split(os.EOL)[0];
+				res.javaVer = /^java version \"((?:\d+\.)+(?:\d+))/i.exec(output)[1];
 			} catch(e) {
 				res.javaVer = null;
 			}
