@@ -1,14 +1,13 @@
-///<reference path="./../../../.d.ts"/>
-
-import Signal = require("./../../events/signal");
+///<reference path="../../../.d.ts"/>
+"use strict";
 import util = require("util");
 import Future = require("fibers/future");
-import helpers = require("./../../helpers");
+import helpers = require("../../helpers");
 let assert = require("assert");
 import constants = require("../constants");
 
 export class DevicesServices implements Mobile.IDevicesServices {
-	private devices: { [key: string]: Mobile.IDevice } = {};
+	private devices: IDictionary<Mobile.IDevice> = {};
 	private platforms: string[] = [];
 	private static NOT_FOUND_DEVICE_BY_IDENTIFIER_ERROR_MESSAGE = "Could not find device by specified identifier '%s'. To list currently connected devices and verify that the specified identifier exists, run '%s device'.";
 	private static NOT_FOUND_DEVICE_BY_INDEX_ERROR_MESSAGE = "Could not find device by specified index %d. To list currently connected devices and verify that the specified index exists, run '%s device'.";
@@ -58,11 +57,11 @@ export class DevicesServices implements Mobile.IDevicesServices {
 	}
 
 	private attachToDeviceDiscoveryEvents() {
-		this.$iOSDeviceDiscovery.deviceFound.add(this.onDeviceFound, this);
-		this.$iOSDeviceDiscovery.deviceLost.add(this.onDeviceLost, this);
+		this.$iOSDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => this.onDeviceFound(device));
+		this.$iOSDeviceDiscovery.on("deviceLost", (device: Mobile.IDevice) => this.onDeviceLost(device));
 
-		this.$androidDeviceDiscovery.deviceFound.add(this.onDeviceFound, this);
-		this.$androidDeviceDiscovery.deviceLost.add(this.onDeviceLost, this);
+		this.$androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => this.onDeviceFound(device));
+		this.$androidDeviceDiscovery.on("deviceLost", (device: Mobile.IDevice) => this.onDeviceLost(device));
 	}
 
 	private onDeviceFound(device: Mobile.IDevice): void {
@@ -169,7 +168,7 @@ export class DevicesServices implements Mobile.IDevicesServices {
 				if(options && options["allowNoDevices"]) {
 					this.$logger.info(message);
 				} else {
-					this.$errors.fail({formatStr: message, suppressCommandHelp: true});
+					this.$errors.failWithoutHelp(message);
 				}
 			}
 		}).future<void>()();

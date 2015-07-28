@@ -1,28 +1,20 @@
-///<reference path="./../../../.d.ts"/>
+///<reference path="../../../.d.ts"/>
 "use strict";
 
 import ref = require("ref");
 import util = require("util");
 import os = require("os");
 import path = require("path");
-import IOSDevice = require("./../ios/ios-device");
-import AndroidDevice = require("./../android/android-device");
-import CoreTypes = require("./../ios/ios-core");
-import Signal = require("./../../events/signal");
+import IOSDevice = require("../ios/ios-device");
+import AndroidDevice = require("../android/android-device");
+import CoreTypes = require("../ios/ios-core");
 import Future = require("fibers/future");
 import child_process = require("child_process");
-import helpers = require("./../../helpers");
+import helpers = require("../../helpers");
+import { EventEmitter } from "events";
 
-export class DeviceDiscovery implements Mobile.IDeviceDiscovery {
+export class DeviceDiscovery extends EventEmitter implements Mobile.IDeviceDiscovery {
 	private devices: {[key: string]: Mobile.IDevice} = {};
-
-	public deviceFound :ISignal= null;
-	public deviceLost: ISignal = null;
-
-	constructor() {
-		this.deviceFound =  new Signal.Signal();
-		this.deviceLost =  new Signal.Signal();
-	}
 
 	public addDevice(device: Mobile.IDevice) {
 		this.devices[device.deviceInfo.identifier] = device;
@@ -43,11 +35,11 @@ export class DeviceDiscovery implements Mobile.IDeviceDiscovery {
 	}
 
 	private raiseOnDeviceFound(device: Mobile.IDevice) {
-		this.deviceFound.dispatch(device);
+		this.emit("deviceFound", device);
 	}
 
 	private raiseOnDeviceLost(device: Mobile.IDevice) {
-		this.deviceLost.dispatch(device);
+		this.emit("deviceLost", device);
 	}
 }
 $injector.register("deviceDiscovery", DeviceDiscovery);
