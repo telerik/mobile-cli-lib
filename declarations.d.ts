@@ -79,6 +79,7 @@ interface IFileSystem {
 
 	setCurrentUserAsOwner(path: string, owner: string): IFuture<void>;
 	enumerateFilesInDirectorySync(directoryPath: string, filterCallback?: (file: string, stat: IFsStats) => boolean, opts?: { enumerateDirectories?: boolean }): string[];
+	getFileShasum(fileName: string): IFuture<string>;
 }
 
 // duplicated from fs.Stats, because I cannot import it here
