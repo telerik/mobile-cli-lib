@@ -92,3 +92,4 @@ $injector.requireCommand("dev-preuninstall", "./common/commands/preuninstall");
 $injector.requireCommand("doctor", "./common/commands/doctor");
 
 $injector.require("utils", "./common/utils");
+$injector.require("bplistParser", "./common/bplist-parser");
