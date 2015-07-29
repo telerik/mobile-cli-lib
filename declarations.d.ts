@@ -450,3 +450,8 @@ interface IDoctorService {
 	 */
 	printWarnings(): boolean;
 }
+
+interface IUtils {
+	getParsedTimeout(defaultTimeout: number): number;
+	getMilliSecondsTimeout(defaultTimeout: number): number;
+}
