@@ -12,7 +12,7 @@ export class Utils implements IUtils {
 			if(!isNaN(parsedValue) && parsedValue >= 0) {
 				timeout = parsedValue;
 			} else {
-				this.$logger.info("Specify timeout in a number of seconds to wait. Default value: " + timeout + " seconds will be used.");
+				this.$logger.warn("Specify timeout in a number of seconds to wait. Default value: " + timeout + " seconds will be used.");
 			}
 		}
 		
