@@ -69,6 +69,9 @@ export class SysInfo implements ISysInfo {
 				res.monoVer = null;
 			}
 
+			procOutput = this.exec("git --version");
+			res.gitVer = procOutput ? /^git version (.*)/.exec(procOutput)[1]  : null
+
 			this.sysInfoCache = res;
 		}
 

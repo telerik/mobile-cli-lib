@@ -2,7 +2,6 @@
 "use strict";
 
 import ref = require("ref");
-import util = require("util");
 import os = require("os");
 import path = require("path");
 import IOSDevice = require("../ios/ios-device");
