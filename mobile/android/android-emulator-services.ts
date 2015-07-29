@@ -40,7 +40,8 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		private $staticConfig: Config.IStaticConfig,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $logcatHelper: Mobile.ILogcatHelper,
-		private $options: IOptions) {
+		private $options: IOptions,
+		private $utils: IUtils) {
 		iconv.extendNodeEncodings();
 		this.adbFilePath = this.$staticConfig.getAdbFilePath().wait();
 	}
@@ -144,22 +145,6 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		Fiber.yield();
 	}
 
-	private getMilliSecondsTimeout(): number {
-		let timeout = AndroidEmulatorServices.TIMEOUT_SECONDS;
-
-		if(this.$options && this.$options.timeout) {
-			let parsedValue = parseInt(this.$options.timeout);
-			if(!isNaN(parsedValue) && parsedValue >= 0) {
-				timeout = parsedValue;
-			} else {
-				this.$logger.info("Specify timeout in a number of seconds to wait. Set it to 0 to wait indefinitely. Default value: " + timeout + " seconds will be used.");
-			}
-		}
-
-		return timeout * 1000;
-	}
-
-
 	private getRunningEmulatorId(image: string): IFuture<string> {
 		return ((): string => {
 			let runningEmulators = this.getRunningEmulators().wait();
@@ -231,7 +216,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private startEmulatorInstance(image: string): IFuture<string> {
 		return (() => {
 			let emulatorId = this.getRunningEmulatorId(image).wait();
-			this.endTimeEpoch = helpers.getCurrentEpochTime() + this.getMilliSecondsTimeout();
+			this.endTimeEpoch = helpers.getCurrentEpochTime() + this.$utils.getMilliSecondsTimeout(AndroidEmulatorServices.TIMEOUT_SECONDS);
 			if(emulatorId) {
 				// If there's already a running instance of this image, we'll just deploy the app to it.
 				return emulatorId;
@@ -248,7 +233,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 					{ stdio: "ignore", detached: true }).unref();
 			}
 			
-			let isInfiniteWait = this.getMilliSecondsTimeout() === 0;
+			let isInfiniteWait = this.$utils.getMilliSecondsTimeout(AndroidEmulatorServices.TIMEOUT_SECONDS) === 0;
 			let hasTimeLeft = helpers.getCurrentEpochTime() < this.endTimeEpoch;
 
 			while(hasTimeLeft || isInfiniteWait) {
@@ -436,7 +421,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		return (() => {
 			this.$logger.printInfoMessageOnSameLine("Waiting for emulator device initialization...");
 
-			let isInfiniteWait = this.getMilliSecondsTimeout() === 0;
+			let isInfiniteWait = this.$utils.getMilliSecondsTimeout(AndroidEmulatorServices.TIMEOUT_SECONDS) === 0;
 			while(helpers.getCurrentEpochTime() < this.endTimeEpoch || isInfiniteWait) {
 				let isEmulatorBootCompleted = this.isEmulatorBootCompleted(emulatorId).wait();
 
