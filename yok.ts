@@ -251,7 +251,8 @@ export class Yok implements IInjector {
 
 	public isValidHierarchicalCommand(commandName: string, commandArguments: string[]): boolean {
 		if(_.contains(Object.keys(this.hierarchicalCommands), commandName)) {
-			if(!commandArguments || commandArguments.length === 0) {
+			let defaultCommandName = this.getDefaultCommand(commandName);
+			if(defaultCommandName && (!commandArguments || commandArguments.length === 0)) {
 				// Will execute default command as there aren't passed arguments.
 				return true;
 			}
@@ -263,7 +264,7 @@ export class Yok implements IInjector {
 				if(!fullCommandName) {
 					// The passed arguments are not one of the subCommands.
 					// Check if the default command accepts arguments - if no, return false;
-					let defaultCommandName = this.getDefaultCommand(commandName);
+					
 					let defaultCommand = this.resolveCommand(util.format("%s|%s", commandName, defaultCommandName));
 					if(defaultCommand) {
 						if (defaultCommand.canExecute) {
