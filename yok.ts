@@ -165,10 +165,12 @@ export class Yok implements IInjector {
 	}
 
 	private requireOne(name: string, file: string): void {
+		let relativePath = path.join("../", file)
 		let dependency: IDependency = {
-			require: file,
+			require: require("fs").existsSync(path.join(__dirname, relativePath + ".js")) ? relativePath : file,
 			shared: true
 		};
+
 		if(!this.modules[name]) {
 			this.modules[name] = dependency;
 		} else {
