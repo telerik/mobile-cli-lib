@@ -34,18 +34,18 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 		}).future<string>()();
 	}	
 		
-	public sync(platform: string, appIdentifier: string, localProjectRootPath: string, projectFilesPath: string, excludedProjectDirsAndFiles: string[], watchGlob: any,
+	public sync(platform: string, appIdentifier: string, projectFilesPath: string, excludedProjectDirsAndFiles: string[], watchGlob: any,
 		restartAppOnDeviceAction: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData, localToDevicePaths?: Mobile.ILocalToDevicePathData[]) => IFuture<void>,
 		notInstalledAppOnDeviceAction: (device: Mobile.IDevice) => IFuture<void>,
-		beforeBatchLiveSyncAction?: (filePath: string) => IFuture<string>,
-		canLiveSyncAction?: (device: Mobile.IDevice, appIdentifier: string) => IFuture<boolean>): IFuture<void> {
+		beforeLiveSyncAction?: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData) => IFuture<void>,
+		beforeBatchLiveSyncAction?: (filePath: string) => IFuture<string>): IFuture<void> {
 		return (() => {
 			if(!this._initialized) {
 				this.initialize(platform).wait();
 			}
 			
 			let projectFiles = this.$fs.enumerateFilesInDirectorySync(projectFilesPath, (filePath, stat) => !this.isFileExcluded(path.relative(projectFilesPath, filePath), excludedProjectDirsAndFiles, projectFilesPath), { enumerateDirectories: true});
-			this.syncCore(projectFiles, appIdentifier, localProjectRootPath, restartAppOnDeviceAction, notInstalledAppOnDeviceAction, canLiveSyncAction).wait();
+			this.syncCore(projectFiles, appIdentifier, projectFilesPath, restartAppOnDeviceAction, notInstalledAppOnDeviceAction).wait();
 			
 			if(this.$options.watch) {
 				let __this = this;
@@ -54,7 +54,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 					this.on('all', (event: string, filePath: string) => {
 						if(event === "added" || event === "changed") {
 							if(!_.contains(excludedProjectDirsAndFiles, filePath)) {
-								__this.batchLiveSync(filePath, appIdentifier, localProjectRootPath, restartAppOnDeviceAction, notInstalledAppOnDeviceAction, beforeBatchLiveSyncAction);
+								__this.batchLiveSync(filePath, appIdentifier, projectFilesPath, restartAppOnDeviceAction, notInstalledAppOnDeviceAction, beforeLiveSyncAction, beforeBatchLiveSyncAction);
 							}
 						}
 					});
@@ -65,29 +65,30 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 		}).future<void>()();
 	}
 	
-	private syncCore(projectFiles: string[], appIdentifier: string, localProjectRootPath: string, 
+	private syncCore(projectFiles: string[], appIdentifier: string, projectFilesPath: string, 
 		restartAppOnDeviceAction: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData, localToDevicePaths?: Mobile.ILocalToDevicePathData[]) => IFuture<void>,
 		notInstalledAppOnDeviceAction: (device: Mobile.IDevice) => IFuture<void>,
-		canLiveSyncAction: (device: Mobile.IDevice, appIdentifier: string) => IFuture<boolean>): IFuture<void> {
+		beforeLiveSyncAction?: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData) => IFuture<void>): IFuture<void> {
 		return (() => {
 			let deviceAppData = this.$deviceAppDataFactory.create(appIdentifier, this.$devicesServices.platform);
 			let localToDevicePaths = _(projectFiles)
 				.map(projectFile => this.getProjectFileInfo(projectFile))
 				.filter(projectFileInfo => projectFileInfo.shouldIncludeFile)
-				.map(projectFileInfo => this.$localToDevicePathDataFactory.create(projectFileInfo.fileName, localProjectRootPath, projectFileInfo.onDeviceName, deviceAppData.deviceProjectRootPath))
+				.map(projectFileInfo => this.$localToDevicePathDataFactory.create(projectFileInfo.fileName, projectFilesPath, projectFileInfo.onDeviceName, deviceAppData.deviceProjectRootPath))
 				.value();	
 				
 			let action = (device: Mobile.IDevice) => {
 				return (() => { 
 					if(deviceAppData.isLiveSyncSupported(device).wait()) {
+						
+						if(beforeLiveSyncAction) {
+							beforeLiveSyncAction(device, deviceAppData).wait();
+						}
+					
 						let applications = device.applicationManager.getInstalledApplications().wait();
 						if(!_.contains(applications, deviceAppData.appIdentifier)) {
 							this.$logger.warn(`The application with id "${deviceAppData.appIdentifier}" is not installed on the device yet.`);
 							notInstalledAppOnDeviceAction(device).wait();
-							return;
-						}
-						
-						if(canLiveSyncAction && !canLiveSyncAction(device, appIdentifier).wait()) {
 							return;
 						}
 						
@@ -108,11 +109,11 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 
 	private timer: any= null;
 	private syncQueue: string[] = [];
-	private batchLiveSync(filePath: string, appIdentifier: string, localProjectRootPath: string, 
+	private batchLiveSync(filePath: string, appIdentifier: string, projectFilesPath: string, 
 		restartAppOnDeviceAction: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData, localToDevicePaths?: Mobile.ILocalToDevicePathData[]) => IFuture<void>,
 		notInstalledAppOnDeviceAction: (device: Mobile.IDevice) => IFuture<void>,
-		beforeBatchLiveSyncAction?: (filePath: string) => IFuture<string>,
-		canLiveSyncAction?: (device: Mobile.IDevice, appIdentifier: string) => IFuture<boolean>) : void {
+		beforeLiveSyncAction?: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData) => IFuture<void>,
+		beforeBatchLiveSyncAction?: (filePath: string) => IFuture<string>) : void {
 		if(!this.timer) {
 			this.timer = setInterval(() => {
 				let filesToSync = this.syncQueue;
@@ -121,7 +122,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 					this.$logger.trace("Syncing %s", filesToSync.join(", "));
 					this.$dispatcher.dispatch( () => {
 						return (() => {
-							this.syncCore(filesToSync, appIdentifier, localProjectRootPath, restartAppOnDeviceAction, notInstalledAppOnDeviceAction, canLiveSyncAction).wait();
+							this.syncCore(filesToSync, appIdentifier, projectFilesPath, restartAppOnDeviceAction, notInstalledAppOnDeviceAction, beforeLiveSyncAction).wait();
 						}).future<void>()();
 					});
 				}
