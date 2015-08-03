@@ -4,19 +4,36 @@
 import Promise = require("bluebird");
 import fiberBootstrap = require("./fiber-bootstrap");
 
-export function promisify(moduleName: string) {
+export function exported(moduleName: string) {
 	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>) => {
 		$injector.publicApi.__modules__[moduleName] = $injector.publicApi.__modules__[moduleName] || {};
 		$injector.publicApi.__modules__[moduleName][propertyKey] =  (...args: any[]): any => {
-				return new Promise(function(resolve: any, reject: any) {
-						let originalModule = $injector.resolve(moduleName);
+			return new Promise(function(resolve: Function, reject: Function) {
+					let originalModule = $injector.resolve(moduleName);
+					let originalMethod: Function = originalModule[propertyKey];
+					let result: any;
+					try {
+						result = originalMethod.apply(originalModule, args)
+					} catch(err) {
+						reject(err);
+						return;
+					}
+
+					if(result && typeof result.wait === "function") {
 						fiberBootstrap.run(function () {
-							// TODO: Handle cases when function does not return IFuture
-							// TODO: Handle cases when function throws error
-							resolve(originalModule[propertyKey].apply(originalModule, args).wait());
+							try {
+								let realResult = result.wait();
+								resolve(realResult);
+							} catch(err) {
+								reject(err);
+							}
 						});
-					});
-			}
+					} else {
+						resolve(result);
+					}
+				});
+		}
+
 		return descriptor;
 	}
 }

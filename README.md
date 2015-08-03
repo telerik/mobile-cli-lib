@@ -14,9 +14,9 @@ In order to expose public API, we use TypeScript decorators and some "magic" in 
 	```TypeScript
 	$injector.requirePublic("a", "./pathToFileWhereAClassIs")
 	```
-* On the method which you want to expose, just add the promisify decorator: `@decorators.promisify('a')`, where decorators are imported from the root of the project: `import decorators = require("./decorators");`
+* On the method which you want to expose, just add the exported decorator: `@decorators.exported('a')`, where decorators are imported from the root of the project: `import decorators = require("./decorators");`
 
-> IMPORTANT: `promisify` decorator requires one parameter which MUST be the first parameter passed to `requirePublic` method. This is the name of the module that will be publicly exposed.
+> IMPORTANT: `exported` decorator requires one parameter which MUST be the first parameter passed to `requirePublic` method. This is the name of the module that will be publicly exposed.
 
 After you have executed these two steps, you can start using your publicly available method:
 
@@ -40,7 +40,7 @@ When you require `mobile-cli-lib` module, you receive $injector's publicApi - it
 	$injector.requirePublic("a", "./pathToFileWhereAClassIs")
 ```
 a new property is added to publicApi - `a` and a getter is added for it. When you try to access this module, `require("mobile-cli-lib").a.<smth>`, the getter is called. It resolves the module, by parsing the provided file (`./pathToFileWhereAClassIs`)
-and that's the time when decorators are executed. For each decorated method, a new entry in `$injector._publicApi` is created. This is not the same method that you've decorated - it's entirely new method, that returns Promise.
+and that's the time when decorators are executed. For each decorated method, a new entry in `$injector.publicApi.__modules__` is created. This is not the same method that you've decorated - it's entirely new method, that returns Promise.
 The new method will be used in the publicApi, while original implementation will still be used in all other places in the code. The promisified method will call the original one (in a separate Fiber) and will resolve the Promise with the result of the method.
 
 ### Module fs
@@ -68,14 +68,6 @@ common.fs.getFileSize("D:\\Work\\t.txt")
 Issues
 ==
 
-### `grunt clean` deletes all javascript files
-
-Currently grunt clean is not working as expected - it deletes all javascript files, not only the ones which have corresponding TypeScript.
-
-### Handle Promisification of methods, which do not return future
-
-Currently we can promisify only methods, which return IFuture<T>. We should be able to promisify all kind of methods, no matter of their return type.
-
 ### Better error handling
 
 Currently all promises are `resolved` - add logic to `reject` them.
@@ -83,3 +75,7 @@ Currently all promises are `resolved` - add logic to `reject` them.
 ### Missing dependencies
 
 Some of our modules must be added: staticConfig, config, analyticsService, etc.
+
+### Tests for injector
+
+Add more tests for yok and for register decorator.

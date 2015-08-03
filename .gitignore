@@ -31,3 +31,6 @@ node_modules
 !Gruntfile.js
 .d.ts
 !bin/**/*
+coverage/**/*
+xunit.xml
+test-reports.xml
