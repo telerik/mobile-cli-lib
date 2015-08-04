@@ -264,11 +264,11 @@ interface IHtmlHelpService {
 
 interface IUsbLiveSyncServiceBase {
 	initialize(platform: string): IFuture<string>;
-	sync(platform: string, appIdentifier: string, localProjectRootPath: string, projectFilesPath: string, excludedProjectDirsAndFiles: string[], watchGlob: any,
+	sync(platform: string, appIdentifier: string, projectFilesPath: string, excludedProjectDirsAndFiles: string[], watchGlob: any,
 		restartAppOnDeviceAction: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData) => IFuture<void>,
 		notInstalledAppOnDeviceAction: (device: Mobile.IDevice) => IFuture<void>,
-		beforeBatchLiveSyncAction?: (filePath: string) => IFuture<string>,
-		canLiveSyncAction?: (device: Mobile.IDevice, appIdentifier: string) => IFuture<boolean>): IFuture<void>;
+		beforeLiveSyncAction?: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData) => IFuture<void>,
+		beforeBatchLiveSyncAction?: (filePath: string) => IFuture<string>): IFuture<void>;
 }
 
 interface ISysInfoData {
