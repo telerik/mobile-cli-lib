@@ -1,6 +1,7 @@
 interface IInjector extends IDisposable {
 	require(name: string, file: string): void;
 	require(names: string[], file: string): void;
+	requirePublic(names: string | string[], file: string): void;
 	requireCommand(name: string, file: string): void;
 	requireCommand(names: string[], file: string): void;
 	/**
@@ -24,6 +25,7 @@ interface IInjector extends IDisposable {
 	isValidHierarchicalCommand(commandName: string, commandArguments: string[]): boolean;
 	getChildrenCommandsNames(commandName: string): string[];
 	buildHierarchicalCommand(parentCommandName: string, commandLineArguments: string[]): any;
+	publicApi: any;
 }
 
 declare var $injector: IInjector;

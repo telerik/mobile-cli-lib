@@ -1,12 +1,12 @@
-///<reference path="../../.d.ts"/>
+///<reference path="../.d.ts"/>
 "use strict";
 
 class AnalyticsCommand implements ICommand {
 	constructor(private $analyticsService: IAnalyticsService,
 		private $logger: ILogger,
 		private $errors: IErrors,
-		private $options: IOptions,
-		private $staticConfig: IStaticConfig,
+		private $options: ICommonOptions,
+		private $staticConfig: Config.IStaticConfig,
 		private settingName: string,
 		private humanReadableSettingName: string) { }
 
@@ -38,8 +38,8 @@ export class UsageReportingCommand extends AnalyticsCommand {
 	constructor($analyticsService: IAnalyticsService,
 		 $logger: ILogger,
 		 $errors: IErrors,
-		 $options: IOptions,
-		 $staticConfig: IStaticConfig) {
+		 $options: ICommonOptions,
+		 $staticConfig: Config.IStaticConfig) {
 			super($analyticsService, $logger, $errors, $options, $staticConfig, $staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, "Usage reporting");
 		}
 }
@@ -49,8 +49,8 @@ export class ErrorReportingCommand extends AnalyticsCommand {
 	constructor($analyticsService: IAnalyticsService,
 		 $logger: ILogger,
 		 $errors: IErrors,
-		 $options: IOptions,
-		 $staticConfig: IStaticConfig) {
+		 $options: ICommonOptions,
+		 $staticConfig: Config.IStaticConfig) {
 			super($analyticsService, $logger, $errors, $options, $staticConfig, $staticConfig.ERROR_REPORT_SETTING_NAME, "Error reporting");
 		}
 }

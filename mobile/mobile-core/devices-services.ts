@@ -1,5 +1,6 @@
-///<reference path="../../../.d.ts"/>
+///<reference path="./../../.d.ts"/>
 "use strict";
+
 import util = require("util");
 import Future = require("fibers/future");
 import helpers = require("../../helpers");

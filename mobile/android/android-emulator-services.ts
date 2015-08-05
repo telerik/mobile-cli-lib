@@ -1,4 +1,4 @@
-///<reference path="../../../.d.ts"/>
+///<reference path="../../.d.ts"/>
 "use strict";
 
 import Fiber = require("fibers");
@@ -40,7 +40,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		private $staticConfig: Config.IStaticConfig,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $logcatHelper: Mobile.ILogcatHelper,
-		private $options: IOptions) {
+		private $options: ICommonOptions) {
 		iconv.extendNodeEncodings();
 		this.adbFilePath = this.$staticConfig.getAdbFilePath().wait();
 	}

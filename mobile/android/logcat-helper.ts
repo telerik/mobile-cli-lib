@@ -1,4 +1,4 @@
-///<reference path="../../../.d.ts"/>
+///<reference path="../../.d.ts"/>
 "use strict";
 import byline = require("byline");
 import util = require("util");
@@ -7,7 +7,7 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 	constructor(private $childProcess: IChildProcess,
 		    private $logcatPrinter: Mobile.ILogcatPrinter,
 			private $logger: ILogger,
-			private $staticConfig: IStaticConfig) { }
+			private $staticConfig: Config.IStaticConfig) { }
 
 	public start(deviceIdentifier: string): any {
 		let adbPath = this.$staticConfig.getAdbFilePath().wait();

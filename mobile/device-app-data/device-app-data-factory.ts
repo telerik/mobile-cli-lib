@@ -1,9 +1,9 @@
-///<reference path="../../../.d.ts"/>
+///<reference path="../../.d.ts"/>
 "use strict";
 
 export class DeviceAppDataFactory implements Mobile.IDeviceAppDataFactory {
 	constructor(private $deviceAppDataProvider: Mobile.IDeviceAppDataProvider,
-		private $options: IOptions) { }
+		private $options: ICommonOptions) { }
 			
 	create<T>(appIdentifier: string, platform: string): T {
 		let factoryRules = this.$deviceAppDataProvider.createFactoryRules();

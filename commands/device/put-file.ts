@@ -1,10 +1,10 @@
-///<reference path="../../../.d.ts"/>
+///<reference path="../../.d.ts"/>
 "use strict";
 
 export class PutFileCommand implements ICommand {
 	constructor(private $devicesServices: Mobile.IDevicesServices,
 				private $stringParameter: ICommandParameter,
-				private $options: IOptions) { }
+				private $options: ICommonOptions) { }
 
 	allowedParameters: ICommandParameter[] = [this.$stringParameter, this.$stringParameter];
 

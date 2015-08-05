@@ -1,4 +1,4 @@
-///<reference path="../../../.d.ts"/>
+///<reference path="../../.d.ts"/>
 "use strict";
 
 import androidDebugBridgePath = require("./android-debug-bridge");
@@ -26,7 +26,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		private $errors: IErrors,
 		private $staticConfig: Config.IStaticConfig,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
-		private $options: IOptions,
+		private $options: ICommonOptions,
 		private $logcatHelper: Mobile.ILogcatHelper,
 		private $hostInfo: IHostInfo,
 		private $mobileHelper: Mobile.IMobileHelper,

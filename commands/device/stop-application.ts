@@ -1,5 +1,4 @@
-
-///<reference path="../../../.d.ts"/>
+///<reference path="../../.d.ts"/>
 "use strict";
 
 import helpers = require("./../../helpers");
@@ -11,7 +10,7 @@ export class StopApplicationOnDeviceCommand implements ICommand {
 		private $errors: IErrors,
 		private $stringParameter: ICommandParameter,
 		private $staticConfig: Config.IStaticConfig,
-		private $options: IOptions) { }
+		private $options: ICommonOptions) { }
 
 	allowedParameters: ICommandParameter[] = [this.$stringParameter, this.$stringParameter];
 

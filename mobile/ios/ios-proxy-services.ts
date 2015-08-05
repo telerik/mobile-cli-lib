@@ -1,4 +1,4 @@
-///<reference path="../../../.d.ts"/>
+///<reference path="../../.d.ts"/>
 
 import ref = require("ref");
 import ffi = require("ffi");
