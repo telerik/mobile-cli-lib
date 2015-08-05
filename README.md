@@ -1,6 +1,6 @@
 mobile-cli-lib
 ==============
-
+test
 Provides an easy way for working with devices.
 Contains common infrastructure for CLIs - mainly AppBuilder and NativeScript.
 
@@ -160,8 +160,7 @@ common.fs.getFileSize("D:\\Work\\t.txt")
     	console.log("File size is: ");
     	console.log(a);
     	return a;
-	})
-    .catch(function (err) {
+	}, function (err) {
     	console.log("Error happened:");
     	console.log(err);
 	});
