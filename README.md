@@ -1,6 +1,5 @@
 mobile-cli-lib
 ==============
-
 Provides an easy way for working with devices.
 Contains common infrastructure for CLIs - mainly AppBuilder and NativeScript.
 
