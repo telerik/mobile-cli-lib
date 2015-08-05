@@ -43,6 +43,7 @@ module.exports = function(grunt) {
 				declaration: false,
 				removeComments: false,
 				noImplicitAny: true,
+				experimentalDecorators: true,
 				emitDecoratorMetadata: true
 			},
 
