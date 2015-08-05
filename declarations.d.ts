@@ -267,6 +267,8 @@ interface IUsbLiveSyncServiceBase {
 	sync(platform: string, appIdentifier: string, projectFilesPath: string, excludedProjectDirsAndFiles: string[], watchGlob: any,
 		restartAppOnDeviceAction: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData) => IFuture<void>,
 		notInstalledAppOnDeviceAction: (device: Mobile.IDevice) => IFuture<void>,
+		notRunningiOSSimulatorAction: () => IFuture<void>,
+		localProjectRootPath?: string,
 		beforeLiveSyncAction?: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData) => IFuture<void>,
 		beforeBatchLiveSyncAction?: (filePath: string) => IFuture<string>): IFuture<void>;
 }
@@ -454,4 +456,7 @@ interface IDoctorService {
 interface IUtils {
 	getParsedTimeout(defaultTimeout: number): number;
 	getMilliSecondsTimeout(defaultTimeout: number): number;
+}
+interface IBinaryPlistParser {
+	parseFile(plistFilePath: string): IFuture<any>;
 }

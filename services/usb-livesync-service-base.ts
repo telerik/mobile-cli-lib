@@ -24,28 +24,41 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 		protected $options: IOptions,
 		private $deviceAppDataFactory: Mobile.IDeviceAppDataFactory,
 		private $fs: IFileSystem,
-		private $dispatcher: IFutureDispatcher) { }
+		private $dispatcher: IFutureDispatcher,
+		protected $childProcess: IChildProcess,
+		protected $iOSEmulatorServices: Mobile.IiOSSimulatorService) { }
 		
 	public initialize(platform: string): IFuture<string> {
 		return (() => {
-			this.$devicesServices.initialize({ platform: platform, deviceId: this.$options.device }).wait();
-			this._initialized = true;
-			return this.$devicesServices.platform;			
+			if(!this.$options.emulator) {
+				this.$devicesServices.initialize({ platform: platform, deviceId: this.$options.device }).wait();
+				this._initialized = true;
+				return this.$devicesServices.platform;
+			}			
 		}).future<string>()();
 	}	
 		
 	public sync(platform: string, appIdentifier: string, projectFilesPath: string, excludedProjectDirsAndFiles: string[], watchGlob: any,
 		restartAppOnDeviceAction: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData, localToDevicePaths?: Mobile.ILocalToDevicePathData[]) => IFuture<void>,
 		notInstalledAppOnDeviceAction: (device: Mobile.IDevice) => IFuture<void>,
+		notRunningiOSSimulatorAction: () => IFuture<void>,
+		localProjectRootPath?: string,
 		beforeLiveSyncAction?: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData) => IFuture<void>,
 		beforeBatchLiveSyncAction?: (filePath: string) => IFuture<string>): IFuture<void> {
 		return (() => {
-			if(!this._initialized) {
+			if(!this._initialized && !this.$options.emulator) {
 				this.initialize(platform).wait();
 			}
 			
-			let projectFiles = this.$fs.enumerateFilesInDirectorySync(projectFilesPath, (filePath, stat) => !this.isFileExcluded(path.relative(projectFilesPath, filePath), excludedProjectDirsAndFiles, projectFilesPath), { enumerateDirectories: true});
-			this.syncCore(projectFiles, appIdentifier, projectFilesPath, restartAppOnDeviceAction, notInstalledAppOnDeviceAction).wait();
+			let isiOSSimulatorRunning = this.$iOSEmulatorServices.isSimulatorRunning().wait();
+			if(isiOSSimulatorRunning || this.$options.emulator) {
+				this.$iOSEmulatorServices.sync(appIdentifier, projectFilesPath, notRunningiOSSimulatorAction).wait();
+			}
+			
+			if(!this.$options.emulator) {
+				let projectFiles = this.$fs.enumerateFilesInDirectorySync(projectFilesPath, (filePath, stat) => !this.isFileExcluded(path.relative(projectFilesPath, filePath), excludedProjectDirsAndFiles, projectFilesPath), { enumerateDirectories: true});
+				this.syncCore(projectFiles, appIdentifier, localProjectRootPath || projectFilesPath, restartAppOnDeviceAction, notInstalledAppOnDeviceAction).wait();
+			}
 			
 			if(this.$options.watch) {
 				let __this = this;
@@ -54,14 +67,20 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 					this.on('all', (event: string, filePath: string) => {
 						if(event === "added" || event === "changed") {
 							if(!_.contains(excludedProjectDirsAndFiles, filePath)) {
-								__this.batchLiveSync(filePath, appIdentifier, projectFilesPath, restartAppOnDeviceAction, notInstalledAppOnDeviceAction, beforeLiveSyncAction, beforeBatchLiveSyncAction);
+								if(isiOSSimulatorRunning || __this.$options.emulator) {
+									__this.$dispatcher.dispatch(() => __this.$iOSEmulatorServices.syncFiles(appIdentifier, projectFilesPath, [filePath], notRunningiOSSimulatorAction)); 
+								}
+								
+								if(!__this.$options.emulator) {
+									__this.batchLiveSync(filePath, appIdentifier, projectFilesPath, restartAppOnDeviceAction, notInstalledAppOnDeviceAction, beforeLiveSyncAction, beforeBatchLiveSyncAction);
+								}
 							}
 						}
 					});
 				});
 				
 				this.$dispatcher.run();
-			} 
+			}
 		}).future<void>()();
 	}
 	
@@ -129,7 +148,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 			}, 500);
 		}
 		this.$dispatcher.dispatch( () => (() => { this.syncQueue.push(beforeBatchLiveSyncAction(filePath).wait()) }).future<void>()());
-	} 
+	}
 	
 	private isFileExcluded(path: string, exclusionList: string[], projectDir: string): boolean {
 		return !!_.find(exclusionList, (pattern) => minimatch(path, pattern, { nocase: true }));
