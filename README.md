@@ -160,8 +160,7 @@ common.fs.getFileSize("D:\\Work\\t.txt")
     	console.log("File size is: ");
     	console.log(a);
     	return a;
-	})
-    .catch(function (err) {
+	}, function (err) {
     	console.log("Error happened:");
     	console.log(err);
 	});
