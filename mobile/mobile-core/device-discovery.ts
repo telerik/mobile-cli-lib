@@ -55,7 +55,8 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 		private $mobileDevice: Mobile.IMobileDevice,
 		private $errors: IErrors,
 		private $injector: IInjector,
-		private $options: ICommonOptions) {
+		private $options: ICommonOptions,
+		private $utils: IUtils) {
 		super();
 		this.timerCallbackPtr = CoreTypes.CoreTypes.cf_run_loop_timer_callback.toPointer(IOSDeviceDiscovery.timerCallback);
 		this.notificationCallbackPtr = CoreTypes.CoreTypes.am_device_notification_callback.toPointer(IOSDeviceDiscovery.deviceNotificationCallback);
@@ -64,8 +65,10 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 	public startLookingForDevices(): IFuture<void> {
 		return (() => {
 			this.subscribeForNotifications();
-			let defaultTimeoutInSeconds = this.$options.timeout ? parseInt(this.$options.timeout, 10)/1000 : 1;
-			this.startRunLoopWithTimer(defaultTimeoutInSeconds);
+			let defaultTimeoutInSeconds = 1;
+			let parsedTimeout =  this.$utils.getParsedTimeout(1);
+			let timeout = parsedTimeout > defaultTimeoutInSeconds ? parsedTimeout/1000 : defaultTimeoutInSeconds;
+			this.startRunLoopWithTimer(timeout);
 		}).future<void>()();
 	}
 
@@ -178,7 +181,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery {
 		return(()=> {
 			this.ensureAdbServerStarted().wait();
 
-			let requestAllDevicesCommand = `${this.$staticConfig.getAdbFilePath().wait()} devices`;
+			let requestAllDevicesCommand = `"${this.$staticConfig.getAdbFilePath().wait()}" devices`;
 			let result = this.$childProcess.exec(requestAllDevicesCommand).wait();
 
 			let devices = result.toString().split(os.EOL).slice(1)
@@ -196,7 +199,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery {
 	}
 
 	private ensureAdbServerStarted(): IFuture<void> {
-		let startAdbServerCommand = `${this.$staticConfig.getAdbFilePath().wait()} start-server`;
+		let startAdbServerCommand = `"${this.$staticConfig.getAdbFilePath().wait()}" start-server`;
 		return this.$childProcess.exec(startAdbServerCommand);
 	}
 }

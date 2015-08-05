@@ -67,7 +67,8 @@ export class OptionsBase {
 			"justlaunch": { type: OptionType.Boolean },
 			"file": { type: OptionType.String },
 			"force": { type: OptionType.Boolean, alias: "f" },
-			"companion": { type: OptionType.Boolean }
+			"companion": { type: OptionType.Boolean },
+			"emulator": { type: OptionType.Boolean }
 		}
 	}
 

@@ -90,3 +90,6 @@ $injector.require("devicePlatformsConstants", "./mobile/device-platforms-constan
 $injector.require("htmlHelpService", "./services/html-help-service");
 $injector.requireCommand("dev-preuninstall", "./commands/preuninstall");
 $injector.requireCommand("doctor", "./commands/doctor");
+
+$injector.require("utils", "./utils");
+$injector.require("bplistParser", "./bplist-parser");
