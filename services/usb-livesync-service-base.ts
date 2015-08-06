@@ -74,7 +74,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 								}
 								
 								if(!__this.$options.emulator || platform.toLowerCase() === "android") {
-									__this.batchLiveSync(platform, filePath, appIdentifier, projectFilesPath, restartAppOnDeviceAction, notInstalledAppOnDeviceAction, beforeLiveSyncAction, beforeBatchLiveSyncAction);
+									__this.batchLiveSync(platform, filePath, appIdentifier, localProjectRootPath || projectFilesPath, restartAppOnDeviceAction, notInstalledAppOnDeviceAction, beforeLiveSyncAction, beforeBatchLiveSyncAction);
 								}
 							}
 						}
