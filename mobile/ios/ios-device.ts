@@ -22,7 +22,6 @@ export class IOSDevice implements Mobile.IiOSDevice {
 	private static INCOMPATIBLE_IMAGE_SIGNATURE_ERROR_CODE = 3892314163;
 	private static INTERFACE_USB = 1;
 
-	private identifier: string = null;
 	private voidPtr = ref.refType(ref.types.void);
 	private mountImageCallbackPtr: NodeBuffer = null;
 	
@@ -292,7 +291,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 
 					if (result !== 0 && result !== IOSDevice.IMAGE_ALREADY_MOUNTED_ERROR_CODE) { // 3892314230 - already mounted
 						if(result === IOSDevice.INCOMPATIBLE_IMAGE_SIGNATURE_ERROR_CODE) { // 3892314163
-							this.$logger.warn("Unable to mount image %s on device %s.", imagePath, this.identifier);
+							this.$logger.warn("Unable to mount image %s on device %s.", imagePath, this.deviceInfo.identifier);
 						} else {
 							this.$errors.fail("Unable to mount image on device.");
 						}

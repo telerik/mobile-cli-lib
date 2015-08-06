@@ -8,6 +8,7 @@ import rimraf = require("rimraf");
 import minimatch = require("minimatch");
 import decorators = require("./decorators");
 import injector = require("./yok");
+import crypto = require('crypto');
 
 @injector.register("fs")
 export class FileSystem implements IFileSystem {
@@ -445,6 +446,29 @@ export class FileSystem implements IFileSystem {
 			}
 		}
 		return foundFiles;
+	}
+
+	public getFileShasum(fileName: string, encoding?: string): IFuture<string> {
+		let future = new Future<string>();
+		encoding = encoding || "sha1";
+		let logger: ILogger = this.$injector.resolve("$logger");
+		let shasumData = crypto.createHash(encoding);
+		let fileStream = this.createReadStream(fileName);
+		fileStream.on('data',(data: NodeBuffer | string) => {
+			shasumData.update(data);
+		});
+
+		fileStream.on('end', () => {
+			let shasum: string = shasumData.digest('hex');
+			logger.trace(`Shasum of file ${fileName} is ${shasum}`);
+			future.return(shasum);
+		});
+
+		fileStream.on('error', (err: Error) => {
+			future.throw(err);
+		});
+
+		return future;
 	}
 }
 
