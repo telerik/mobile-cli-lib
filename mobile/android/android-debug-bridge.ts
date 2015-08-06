@@ -3,6 +3,11 @@
 
 import util = require("util");
 
+interface IComposeCommandResult {
+	command: string;
+	args: string[]
+}
+
 export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 	constructor(private identifier: string,
 		private $childProcess: IChildProcess,
@@ -14,7 +19,7 @@ export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 	public executeCommand(...args: string[]): IFuture<any> {
 		return (() => {
 			let command = this.composeCommand(args).wait();
-			return this.$childProcess.exec(command).wait();
+			return this.$childProcess.spawnFromEvent(command.command, command.args, "close").wait().stdout;
 		}).future<any>()();
 	}
 	
@@ -23,7 +28,7 @@ export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 			args.unshift("shell");
 			let shellCommand = this.composeCommand(args).wait();
 			this.$logger.trace(`Shell command ${shellCommand}`);
-			return this.$childProcess.exec(shellCommand).wait();
+			return this.$childProcess.spawnFromEvent(shellCommand.command, shellCommand.args, "close").wait().stdout;
 		}).future<any>()();
 	}
 	
@@ -44,11 +49,11 @@ export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 		}).future<number>()();
 	}
 	
-	private composeCommand(args: string[]): IFuture<string> {
+	private composeCommand(args: string[]): IFuture<IComposeCommandResult> {
 		return (() => {
-			let command = util.format.apply(null, args);
-			let result = `"${this.$staticConfig.getAdbFilePath().wait()}" -s ${this.identifier} ${command}`;
+			let params: string[] = ["-s", `${this.identifier}`].concat(args);
+			let result = {command:`${this.$staticConfig.getAdbFilePath().wait()}`, args: params };
 			return result;
-		}).future<string>()();
+		}).future<IComposeCommandResult>()();
 	}
 }
