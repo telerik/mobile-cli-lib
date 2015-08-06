@@ -155,8 +155,9 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 				}
 			}, 500);
 		}
-		this.$dispatcher.dispatch( () => (() => { this.syncQueue.push(beforeBatchLiveSyncAction(filePath).wait()) }).future<void>()());
-	}
+
+		this.$dispatcher.dispatch( () => (() => { this.syncQueue.push(beforeBatchLiveSyncAction ? beforeBatchLiveSyncAction(filePath).wait() : filePath) }).future<void>()());
+	} 
 	
 	private isFileExcluded(path: string, exclusionList: string[], projectDir: string): boolean {
 		return !!_.find(exclusionList, (pattern) => minimatch(path, pattern, { nocase: true }));
