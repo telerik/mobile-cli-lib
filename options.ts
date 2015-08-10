@@ -1,7 +1,7 @@
 ///<reference path=".d.ts"/>
 "use strict";
-import path = require("path");
-import util = require("util");
+import * as path from "path";
+import * as util from "util";
 import helpers = require("./helpers");
 import yargs = require("yargs");
 
@@ -33,7 +33,7 @@ export class OptionsBase {
 		public defaultProfileDir: string,
 		private $errors: IErrors,
 		private $staticConfig: Config.IStaticConfig) {
-			
+
 		_.extend(this.options, this.commonOptions, OptionsBase.GLOBAL_OPTIONS);
 		this.setArgv();
 	}
@@ -105,7 +105,7 @@ export class OptionsBase {
 			if (!_.contains(this.optionsWhiteList, optionName)) {
 				if (!this.isOptionSupported(optionName)) {
 					this.$errors.failWithoutHelp(`The option '${originalOptionName}' is not supported. To see command's options, use '$ ${this.$staticConfig.CLIENT_NAME.toLowerCase()} help ${process.argv[2]}'. To see all commands use '$ ${this.$staticConfig.CLIENT_NAME.toLowerCase()} help'.`);
-				} 
+				}
 				let optionType = this.getOptionType(optionName);
 				let optionValue = parsed[optionName];
 				if (_.isArray(optionValue) && optionType !== OptionType.Array) {
@@ -118,12 +118,12 @@ export class OptionsBase {
 			}
 		});
 	}
-	
+
 	private getCorrectOptionName(optionName: string): string {
 		let secondaryOptionName = this.getSecondaryOptionName(optionName);
 		return _.contains(this.optionNames, secondaryOptionName) ? secondaryOptionName : optionName;
 	}
-	
+
 	private getOptionType(optionName: string): string {
 		let option = this.options[optionName] || this.tryGetOptionByAliasName(optionName);
 		return option ? option.type : ""
@@ -133,7 +133,7 @@ export class OptionsBase {
 		let option = _.find(this.options, opt => opt.alias === aliasName);
 		return option;
 	}
-	
+
 	private isOptionSupported(option: string): boolean {
 		if(!this.options[option]) {
 			let opt = this.tryGetOptionByAliasName(option);
@@ -166,7 +166,7 @@ export class OptionsBase {
 	}
 
 	private adjustDashedOptions(): void {
-		this.argv["profileDir"] = this.argv["profileDir"] || this.defaultProfileDir;		
+		this.argv["profileDir"] = this.argv["profileDir"] || this.defaultProfileDir;
 
 		_.each(this.optionNames, optionName => {
 			Object.defineProperty(OptionsBase.prototype, optionName, {
