@@ -1,9 +1,9 @@
 ///<reference path="../.d.ts"/>
 "use strict";
 
-import path = require("path");
-import util = require("util");
-import os = require("os");
+import * as path from "path";
+import * as util from "util";
+import * as os from "os";
 import commandParams = require("../command-params");
 import Future = require("fibers/future");
 

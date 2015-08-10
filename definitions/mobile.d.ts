@@ -14,7 +14,7 @@ declare module Mobile {
 		vendor: string;
 		platform: string;
 	}
-	
+
 	interface IDevice {
 		deviceInfo: Mobile.IDeviceInfo;
 		applicationManager: Mobile.IDeviceApplicationManager;
@@ -22,9 +22,9 @@ declare module Mobile {
 		deploy(packageFile: string, packageName: string): IFuture<void>;
 		openDeviceLogStream(): void;
 	}
-	
+
 	interface IAndroidDevice extends IDevice {
-		adb: Mobile.IAndroidDebugBridge;		
+		adb: Mobile.IAndroidDebugBridge;
 	}
 
 	interface IiOSDevice extends IDevice {
@@ -32,22 +32,22 @@ declare module Mobile {
 		mountImage(): IFuture<void>;
 		tryExecuteFunction<TResult>(func: () => TResult): TResult;
 	}
-	
+
 	interface IDeviceAppData {
-		appIdentifier: string;		
+		appIdentifier: string;
 		deviceProjectRootPath: string;
 		isLiveSyncSupported(device: Mobile.IDevice): IFuture<boolean>;
 	}
-	
+
 	interface IDeviceAppDataFactory {
 		create<T extends Mobile.IDeviceAppData>(appIdentifier: string, platform: string): T;
 	}
-	
+
 	interface IDeviceAppDataFactoryRule {
 		vanilla: any;
 		companion?: any;
 	}
-	
+
 	interface IDeviceAppDataProvider {
 		createFactoryRules(): IDictionary<Mobile.IDeviceAppDataFactoryRule>;
 	}
@@ -65,25 +65,25 @@ declare module Mobile {
 	interface ILogcatPrinter {
 		print(line: string): void;
 	}
-	
+
 	interface IDeviceApplicationManager {
 		getInstalledApplications(): IFuture<string[]>;
 		installApplication(packageFilePath: string): IFuture<void>;
-		uninstallApplication(appIdentifier: string): IFuture<void>; 
+		uninstallApplication(appIdentifier: string): IFuture<void>;
 		startApplication(appIdentifier: string): IFuture<void>;
 		stopApplication(appIdentifier: string): IFuture<void>;
 		restartApplication(applicationId: string): IFuture<void>;
 	}
-	
+
 	interface IDeviceFileSystem {
 		listFiles(devicePath: string): IFuture<void>;
 		getFile(deviceFilePath: string): IFuture<void>;
 		putFile(localFilePath: string, deviceFilePath: string): IFuture<void>;
-		deleteFile?(deviceFilePath: string, appIdentifier: string): void;		
+		deleteFile?(deviceFilePath: string, appIdentifier: string): void;
 		transferFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void>;
 		transferFile?(localFilePath: string, deviceFilePath: string): IFuture<void>;
 	}
-	
+
 	interface IAndroidDebugBridge {
 		executeCommand(...args: string[]): IFuture<any>;
 		executeShellCommand(...args: string[]): IFuture<any>;
@@ -182,7 +182,7 @@ declare module Mobile {
 		afcConnectionOpen(service: number, timeout: number, afcConnection: NodeBuffer): number;
 		afcConnectionClose(afcConnection: NodeBuffer): number;
 		afcDirectoryCreate(afcConnection: NodeBuffer, path: string): number;
-		afcFileInfoOpen(afcConnection: NodeBuffer, path: string, afcDirectory: NodeBuffer): number;		
+		afcFileInfoOpen(afcConnection: NodeBuffer, path: string, afcDirectory: NodeBuffer): number;
 		afcFileRefOpen(afcConnection: NodeBuffer, path: string, mode: number, afcFileRef: NodeBuffer): number;
 		afcFileRefClose(afcConnection: NodeBuffer, afcFileRef: number): number;
 		afcFileRefWrite(afcConnection: NodeBuffer, afcFileRef: number, buffer: NodeBuffer, byteLength: number): number;
@@ -227,9 +227,9 @@ declare module Mobile {
 		getDevicePath(): string;
 		getRelativeToProjectBasePath(): string;
 	}
-	
+
 	interface ILocalToDevicePathDataFactory {
-		create(fileName: string, localProjectRootPath: string, onDeviceFileName: string, deviceProjectRootPath: string):  Mobile.ILocalToDevicePathData; 
+		create(fileName: string, localProjectRootPath: string, onDeviceFileName: string, deviceProjectRootPath: string):  Mobile.ILocalToDevicePathData;
 	}
 
 	interface IiOSSocketResponseData {
@@ -300,7 +300,8 @@ declare module Mobile {
 		stderrFilePath?: string;
 		stdoutFilePath?: string;
 		appId?: string;
-		args?: string
+		args?: string;
+		deviceType?: string;
 	}
 
 	interface IPlatformsCapabilities {
@@ -326,7 +327,7 @@ declare module Mobile {
 		Android: string;
 		WP8: string;
 	}
-	
+
 	interface IDeviceApplication {
 		CFBundleExecutable: string;
 		Path: string;

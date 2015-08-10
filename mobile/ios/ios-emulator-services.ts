@@ -9,12 +9,11 @@ import util = require("util");
 
 class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 	private _cachedSimulatorId: string;
-	
+
 	constructor(private $logger: ILogger,
 		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
 		private $errors: IErrors,
 		private $childProcess: IChildProcess,
-		private $mobileHelper: Mobile.IMobileHelper,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $hostInfo: IHostInfo,
 		private $options: ICommonOptions,
@@ -22,8 +21,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		private $bplistParser: IBinaryPlistParser) { }
 
 	public checkDependencies(): IFuture<void> {
-		return (() => {
-		}).future<void>()();
+		return Future.fromResult();
 	}
 
 	public checkAvailability(dependsOnProject: boolean = true): IFuture<void> {
@@ -58,20 +56,20 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 
 		return this.$childProcess.exec(`${nodeCommandName} ${iosSimPath} ${opts.join(' ')}`);
 	}
-		
+
 	public sync(appIdentifier: string, projectFilesPath: string, notRunningSimulatorAction: () => IFuture<void>): IFuture<void> {
-		let syncAction = (applicationPath: string) => shell.cp("-Rf", projectFilesPath, applicationPath);	
+		let syncAction = (applicationPath: string) => shell.cp("-Rf", projectFilesPath, applicationPath);
 		return this.syncCore(appIdentifier, notRunningSimulatorAction, syncAction);
 	}
-	
+
 	public syncFiles(appIdentifier: string, projectFilesPath: string,  projectFiles: string[], notRunningSimulatorAction: () => IFuture<void>): IFuture<void> {
 		let syncAction = (applicationPath: string) => _.each(projectFiles, projectFile => {
 			this.$logger.trace(`Transfering ${projectFile} to ${path.join(applicationPath, "app")}`);
 			shell.cp("-Rf", projectFile, path.join(applicationPath, "app"));
-		});	
-		return this.syncCore(appIdentifier, notRunningSimulatorAction, syncAction);	
+		});
+		return this.syncCore(appIdentifier, notRunningSimulatorAction, syncAction);
 	}
-	
+
 	public isSimulatorRunning(): IFuture<boolean> {
 		return (() => {
 			try {
@@ -85,13 +83,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 
 	private killLaunchdSim(): IFuture<void> {
 		this.$logger.info("Cleaning up before starting the iOS Simulator");
-
-		let future = new Future<void>();
-		let killAllProc = this.$childProcess.spawn("killall", ["launchd_sim"]);
-		killAllProc.on("close", (code: number) => {
-			future.return();
-		});
-		return future;
+		return this.$childProcess.spawnFromEvent("killall", ["launchd_sim"], "close");
 	}
 
 	private startEmulatorCore(app: string, emulatorOptions?: Mobile.IEmulatorOptions): void {
@@ -106,9 +98,12 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 
 		let opts = [
 			iosSimPath,
-			"launch", app,
-			"--timeout", this.$options.timeout
+			"launch", app
 		];
+
+		if (this.$options.timeout) {
+			opts = opts.concat("--timeout", this.$options.timeout);
+		}
 
 		if(!this.$options.justlaunch) {
 			opts.push("--logging");
@@ -125,8 +120,11 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 			opts.push("--exit");
 		}
 
+
 		if(this.$options.device) {
 			opts = opts.concat("--device", this.$options.device);
+		} else if (emulatorOptions && emulatorOptions.deviceType) {
+			opts = opts.concat("--device", emulatorOptions.deviceType);
 		}
 
 		if(emulatorOptions && emulatorOptions.args) {
@@ -135,16 +133,16 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 
 		this.$childProcess.spawn(nodeCommandName, opts, { stdio: "inherit" });
 	}
-	
+
 	private getRunningSimulatorId(appIdentifier: string): IFuture<string> {
 		return ((): string => {
 			if(this.$options.device) {
 				this._cachedSimulatorId = this.$options.device;
 			}
-			
+
 			if(!this._cachedSimulatorId) {
 				let output = this.$childProcess.exec("xcrun simctl list").wait();
-				let lines = output.split("\n");			
+				let lines = output.split("\n");
 				let regex = /[\s\S]+?\(([0-9A-F\-]+?)\)\s+?\(Booted\)/;
 				_.each(lines, (line: string) => {
 					let match: any = regex.exec(line);
@@ -153,7 +151,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 						return false;
 					}
 				});
-				
+
 				if(!this._cachedSimulatorId) {
 					regex = /[\s\S]+?\(([0-9A-F\-]+?)\)\s+?\(Shutdown\)/;
 					_.each(lines, (line: string) => {
@@ -165,11 +163,11 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 					});
 				}
 			}
-			
+
 			return this._cachedSimulatorId;
 		}).future<string>()();
 	}
-	
+
 	private getApplicationPath(appIdentifier: string, runningSimulatorId: string): IFuture<string> {
 		return (() => {
 			let rootApplicationsPath = path.join(osenv.home(), `/Library/Developer/CoreSimulator/Devices/${runningSimulatorId}/data/Containers/Bundle/Application`);
@@ -186,28 +184,28 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 					return false;
 				}
 			});
-			
+
 			return result;
 		}).future<string>()();
 	}
-	
+
 	private syncCore(appIdentifier: string, notRunningSimulatorAction: () => IFuture<void>, syncAction: (applicationPath: string) => void): IFuture<void> {
 		return (() => {
-			if(!this.isSimulatorRunning().wait()) {				
+			if(!this.isSimulatorRunning().wait()) {
 				notRunningSimulatorAction().wait();
 			}
-			
+
 			let runningSimulatorId = this.getRunningSimulatorId(appIdentifier).wait();
 			let applicationPath = this.getApplicationPath(appIdentifier, runningSimulatorId).wait();
 			syncAction(applicationPath);
-		
+
 			try {
 				this.$childProcess.exec("killall -KILL launchd_sim").wait();
-				this.$childProcess.exec(`xcrun simctl launch ${runningSimulatorId} ${appIdentifier}`).wait();				
+				this.$childProcess.exec(`xcrun simctl launch ${runningSimulatorId} ${appIdentifier}`).wait();
 			} catch(e) {
 				this.$logger.trace("Unable to kill simulator: " + e);
 			}
-			
+
 		}).future<void>()();
 	}
 }
