@@ -72,7 +72,7 @@ declare module Mobile {
 		uninstallApplication(appIdentifier: string): IFuture<void>; 
 		startApplication(appIdentifier: string): IFuture<void>;
 		stopApplication(appIdentifier: string): IFuture<void>;
-		restartApplication(applicationId: string): IFuture<void>;		
+		restartApplication(applicationId: string): IFuture<void>;
 	}
 	
 	interface IDeviceFileSystem {
