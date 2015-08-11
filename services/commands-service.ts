@@ -18,14 +18,17 @@ export class CommandsService implements ICommandsService {
 	private static HIERARCHICAL_COMMANDS_DEFAULT_COMMAND_DELIMITER = "|*";
 	private static HOOKS_COMMANDS_DELIMITER = "-";
 	private areDynamicSubcommandsRegistered = false;
+	private cachedCommandHelp: any = null;
 
-	constructor(private $errors: IErrors,
-		private $logger: ILogger,
-		private $injector: IInjector,
-		private $staticConfig: Config.IStaticConfig,
+	constructor(private $commandsServiceProvider: ICommandsServiceProvider,
+		private $errors: IErrors,
+		private $fs: IFileSystem,
 		private $hooksService: IHooksService,
-		private $commandsServiceProvider: ICommandsServiceProvider,
-		private $options: ICommonOptions) {
+		private $injector: IInjector,
+		private $logger: ILogger,
+		private $options: ICommonOptions,
+		private $resources: IResourceLoader,
+		private $staticConfig: Config.IStaticConfig) {
 	}
 
 	public allCommands(opts: {includeDevCommands: boolean}): string[] {
@@ -50,7 +53,7 @@ export class CommandsService implements ICommandsService {
 					let hierarchicalCommandName = this.$injector.buildHierarchicalCommand(commandName, commandArguments);
 					if(hierarchicalCommandName) {
 						commandName = helpers.stringReplaceAll(hierarchicalCommandName.commandName, CommandsService.HIERARCHICAL_COMMANDS_DEFAULT_COMMAND_DELIMITER, CommandsService.HOOKS_COMMANDS_DELIMITER);
-						commandName = helpers.stringReplaceAll(commandName, CommandsService.HIERARCHICAL_COMMANDS_DELIMITER, CommandsService.HOOKS_COMMANDS_DELIMITER); 
+						commandName = helpers.stringReplaceAll(commandName, CommandsService.HIERARCHICAL_COMMANDS_DELIMITER, CommandsService.HOOKS_COMMANDS_DELIMITER);
 					}
 
 					this.$hooksService.initialize(commandName);
@@ -61,6 +64,12 @@ export class CommandsService implements ICommandsService {
 				} else {
 					command.execute(commandArguments).wait();
 				}
+
+				let commandHelp = this.getCommandHelp().wait();
+				if (commandHelp && commandHelp[commandName]) {
+					this.$logger.info(commandHelp[commandName]);
+				}
+
 				return true;
 			}
 			return false;
@@ -83,7 +92,7 @@ export class CommandsService implements ICommandsService {
 			let action = (commandName: string, commandArguments: string[]) => {
 				let command = this.$injector.resolveCommand(commandName);
 				this.$options.validateOptions(command ? command.dashedOptions : null);
-				
+
 				if(!this.areDynamicSubcommandsRegistered) {
 					this.$commandsServiceProvider.registerDynamicSubCommands();
 					this.areDynamicSubcommandsRegistered = true;
@@ -105,7 +114,7 @@ export class CommandsService implements ICommandsService {
 
 	private canExecuteCommand(commandName: string, commandArguments: string[], isDynamicCommand?: boolean): IFuture<boolean> {
 		return (() => {
-			
+
 			let command = this.$injector.resolveCommand(commandName);
 			let beautifiedName = helpers.stringReplaceAll(commandName, "|", " ");
 			if(command) {
@@ -168,7 +177,7 @@ export class CommandsService implements ICommandsService {
 					}
 				});
 			}
-			
+
 			return commandArgsHelper;
 		}).future<CommandArgumentsValidationHelper>()();
 	}
@@ -292,6 +301,16 @@ export class CommandsService implements ICommandsService {
 
 			return true;
 		}).future<boolean>()();
+	}
+
+	private getCommandHelp(): IFuture<any> {
+		return (() => {
+			if (!this.cachedCommandHelp && this.$fs.exists(this.$resources.resolvePath(this.$staticConfig.COMMAND_HELP_FILE_NAME)).wait()) {
+				this.cachedCommandHelp = this.$resources.readJson(this.$staticConfig.COMMAND_HELP_FILE_NAME).wait();
+			}
+
+			return this.cachedCommandHelp;
+		}).future<any>()();
 	}
 
 	private beautifyCommandName(commandName: string): string {
