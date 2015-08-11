@@ -21,6 +21,7 @@ declare module Config {
 		HTML_COMMON_HELPERS_DIR: string;
 		HTML_CLI_HELPERS_DIR: string;
 		pathToPackageJson: string;
+		APP_RESOURCES_DIR_NAME: string;
 	}
 
 	interface IConfig {

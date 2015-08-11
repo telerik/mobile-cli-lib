@@ -67,7 +67,7 @@ interface IFileSystem {
 		bufferSize?: number;
 		start?: number;
 		end?: number;
-	}): any;
+	}): NodeJS.ReadableStream;
 	createWriteStream(path: string, options?: {
 		flags?: string;
 		encoding?: string;
@@ -265,7 +265,7 @@ interface IHtmlHelpService {
 interface IUsbLiveSyncServiceBase {
 	initialize(platform: string): IFuture<string>;
 	sync(platform: string, appIdentifier: string, projectFilesPath: string, excludedProjectDirsAndFiles: string[], watchGlob: any,
-		platformSpecificLiveSyncServices: IDictionary<any>,		
+		platformSpecificLiveSyncServices: IDictionary<any>,
 		restartAppOnDeviceAction: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData) => IFuture<void>,
 		notInstalledAppOnDeviceAction: (device: Mobile.IDevice) => IFuture<void>,
 		notRunningiOSSimulatorAction: () => IFuture<void>,
@@ -468,3 +468,33 @@ interface IBinaryPlistParser {
 	parseFile(plistFilePath: string): IFuture<any>;
 }
 
+/**
+ *	Used for interaction with various resources located in a resources folder.
+ *	@interface
+ */
+interface IResourceLoader {
+	/**
+	 * Get an absolute path to a resource based on a relative one.
+	 * @param  {string} path Relative path to resource
+	 * @return {string}      Absolute path to resource
+	 */
+	resolvePath(path: string): string;
+	/**
+	 * Opens a resource file for reading.
+	 * @param  {string} path Relative path to resource
+	 * @return {NodeJS.ReadableStream} Read stream to the resource file
+	 */
+	openFile(path: string): NodeJS.ReadableStream;
+	/**
+	 * Reads the contents of a resource file in JSON format.
+	 * @param  {string}       path Relative path to resource
+	 * @return {IFuture<any>}      Object based on the JSON contents of the resource file.
+	 */
+	readJson(path: string): IFuture<any>;
+	/**
+	 * Returns the path to App_Resources folder, which contains all resources for a given application.
+	 * @param  {string} framework The application's framework name
+	 * @return {string}           The absolute path to App_Resources folder
+	 */
+	getPathToAppResources(framework: string): string;
+}

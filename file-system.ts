@@ -135,7 +135,7 @@ export class FileSystem implements IFileSystem {
 
 		return future;
 	}
-	
+
 	@decorators.exported("fs")
 	public getFileSize(path: string): IFuture<number> {
 		return ((): number => {
@@ -275,17 +275,17 @@ export class FileSystem implements IFileSystem {
 		let source = this.createReadStream(sourceFileName);
 		let target = this.createWriteStream(destinationFileName);
 
-		source.on("error", (e: Error) => { 
+		source.on("error", (e: Error) => {
 			if (!res.isResolved()) {
 				res.throw(e);
 			}
 		});
-		target.on("finish", () => { 
+		target.on("finish", () => {
 			if (!res.isResolved()) {
 				res.return();
 			}
 		})
-		.on("error", (e: Error) => { 
+		.on("error", (e: Error) => {
 			if (!res.isResolved()) {
 				res.throw(e);
 			}
@@ -301,7 +301,7 @@ export class FileSystem implements IFileSystem {
 		fd?: string;
 		mode?: number;
 		bufferSize?: number;
-	}): any {
+	}): NodeJS.ReadableStream {
 		return fs.createReadStream(path, options);
 	}
 
