@@ -1,2 +1,5 @@
 **/*.ts
 **/*.js.map
+coverage
+.tscache
+test-reports.xml
