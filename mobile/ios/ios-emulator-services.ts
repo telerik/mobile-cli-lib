@@ -171,6 +171,9 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 	private getApplicationPath(appIdentifier: string, runningSimulatorId: string): IFuture<string> {
 		return (() => {
 			let rootApplicationsPath = path.join(osenv.home(), `/Library/Developer/CoreSimulator/Devices/${runningSimulatorId}/data/Containers/Bundle/Application`);
+			if(!this.$fs.exists(rootApplicationsPath).wait()) {
+				rootApplicationsPath = path.join(osenv.home(), `/Library/Developer/CoreSimulator/Devices/${runningSimulatorId}/data/Applications`);
+			}
 			let applicationGuids = this.$fs.readDirectory(rootApplicationsPath).wait();
 			let result: string = null;
 			_.each(applicationGuids, applicationGuid => {
@@ -197,15 +200,16 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 
 			let runningSimulatorId = this.getRunningSimulatorId(appIdentifier).wait();
 			let applicationPath = this.getApplicationPath(appIdentifier, runningSimulatorId).wait();
+			let applicationName = path.basename(applicationPath);
 			syncAction(applicationPath);
 
 			try {
-				this.$childProcess.exec("killall -KILL launchd_sim").wait();
-				this.$childProcess.exec(`xcrun simctl launch ${runningSimulatorId} ${appIdentifier}`).wait();
+				this.$childProcess.exec(`killall ${applicationName.split(".")[0]}`).wait();					
 			} catch(e) {
 				this.$logger.trace("Unable to kill simulator: " + e);
 			}
-
+			
+			this.$childProcess.exec(`xcrun simctl launch ${runningSimulatorId} ${appIdentifier}`).wait();				
 		}).future<void>()();
 	}
 }
