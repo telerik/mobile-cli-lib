@@ -1,9 +1,9 @@
 ///<reference path=".d.ts"/>
 "use strict";
 
-import log4js = require("log4js");
-import util = require("util");
-import stream = require("stream");
+import * as log4js from "log4js";
+import * as util from "util";
+import * as stream from "stream";
 import Future = require("fibers/future");
 
 export class Logger implements ILogger {
@@ -12,7 +12,7 @@ export class Logger implements ILogger {
 	private encodeBody: boolean = false;
 	private passwordRegex = /[Pp]assword=(.*?)(['&,]|$)|\"[Pp]assword\":\"(.*?)\"/;
 	private requestBodyRegex = /^\"(.*?)\"$/;
-	
+
 	constructor($config: Config.IConfig,
 		private $options: ICommonOptions) {
 		let appenders: log4js.IAppender[] = [];
@@ -87,7 +87,7 @@ export class Logger implements ILogger {
 
 	prepare(item: any): string {
 		if (typeof item === "undefined" || item === null) {
-			return "[nothing]";
+			return "[no content]";
 		}
 		if (typeof item  === "string") {
 			return item;

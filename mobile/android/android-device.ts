@@ -4,7 +4,7 @@
 import androidDebugBridgePath = require("./android-debug-bridge");
 import applicationManagerPath = require("./android-application-manager");
 import fileSystemPath = require("./android-device-file-system");
-import util = require("util");
+import * as util from "util";
 
 interface IAndroidDeviceDetails {
 	model: string;
@@ -17,8 +17,8 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 	public adb: Mobile.IAndroidDebugBridge;
 	public applicationManager: Mobile.IDeviceApplicationManager;
 	public fileSystem: Mobile.IDeviceFileSystem;
-	public deviceInfo: Mobile.IDeviceInfo;	
-	
+	public deviceInfo: Mobile.IDeviceInfo;
+
 	constructor(private identifier: string,
 		private $logger: ILogger,
 		private $fs: IFileSystem,
@@ -31,12 +31,12 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		private $hostInfo: IHostInfo,
 		private $mobileHelper: Mobile.IMobileHelper,
 		private $injector: IInjector) {
-		
+
 		this.adb = this.$injector.resolve(androidDebugBridgePath.AndroidDebugBridge, { identifier: this.identifier });
 		this.applicationManager = this.$injector.resolve(applicationManagerPath.AndroidApplicationManager, { adb: this.adb, identifier: this.identifier });
 		this.fileSystem = this.$injector.resolve(fileSystemPath.AndroidDeviceFileSystem, { adb: this.adb, identifier: this.identifier });
-		
-		let details: IAndroidDeviceDetails = this.getDeviceDetails().wait();		
+
+		let details: IAndroidDeviceDetails = this.getDeviceDetails().wait();
 		this.deviceInfo = {
 			identifier: this.identifier,
 			displayName: details.name,
@@ -46,7 +46,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 			platform: this.$devicePlatformsConstants.Android
 		}
 	}
-	
+
 	public deploy(packageFile: string, packageName: string): IFuture<void> {
 		return (() => {
 			this.applicationManager.uninstallApplication(packageName).wait();
@@ -59,10 +59,10 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 	public openDeviceLogStream(): void {
 		this.$logcatHelper.start(this.identifier);
 	}
-	
+
 	private getDeviceDetails(): IFuture<IAndroidDeviceDetails> {
 		return (() => {
-			let details = this.adb.executeShellCommand("cat /system/build.prop").wait();
+			let details = this.adb.executeShellCommand(["cat", "/system/build.prop"]).wait();
 			let parsedDetails: any = {};
 			details.split(/\r?\n|\r/).forEach((value: any) => {
 				//sample line is "ro.build.version.release=4.4"

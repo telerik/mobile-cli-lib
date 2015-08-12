@@ -2,8 +2,8 @@
 "use strict";
 
 import Future = require("fibers/future");
-import child_process = require("child_process");
-import util = require("util");
+import * as child_process from "child_process";
+import * as util from "util";
 
 export class ChildProcess implements IChildProcess {
 	constructor(private $logger: ILogger,

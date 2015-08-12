@@ -85,8 +85,8 @@ declare module Mobile {
 	}
 
 	interface IAndroidDebugBridge {
-		executeCommand(...args: string[]): IFuture<any>;
-		executeShellCommand(...args: string[]): IFuture<any>;
+		executeCommand(args: string[]): IFuture<any>;
+		executeShellCommand(args: string[]): IFuture<any>;
 		sendBroadcastToDevice(action: string, extras?: IStringDictionary): IFuture<number>;
 	}
 
