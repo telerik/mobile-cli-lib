@@ -34,7 +34,7 @@ export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 	public sendBroadcastToDevice(action: string, extras: IStringDictionary = {}): IFuture<number> {
 		return (() => {
 			let broadcastCommand = ["am", "broadcast", "-a", `${action}`];
-			_.each(extras, (value,key) => broadcastCommand.concat(["-e", `${key}`, `${value}`]));
+			_.each(extras, (value,key) => broadcastCommand.push("-e", key, value));
 
 			let result = this.executeShellCommand(broadcastCommand).wait();
 			this.$logger.trace(`Broadcast result ${result} from ${broadcastCommand}`);
@@ -48,11 +48,11 @@ export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 		}).future<number>()();
 	}
 
-	private composeCommand(args: string[]): IFuture<IComposeCommandResult> {
+	private composeCommand(params: string[]): IFuture<IComposeCommandResult> {
 		return (() => {
-			let params: string[] = ["-s", `${this.identifier}`].concat(args);
-			let result = {command:`${this.$staticConfig.getAdbFilePath().wait()}`, args: params };
-			return result;
+			let command = this.$staticConfig.getAdbFilePath().wait();
+			let args: string[] = ["-s", `${this.identifier}`].concat(params);
+			return { command, args };
 		}).future<IComposeCommandResult>()();
 	}
 }
