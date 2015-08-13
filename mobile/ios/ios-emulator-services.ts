@@ -64,10 +64,11 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		return this.syncCore(appIdentifier, notRunningSimulatorAction, syncAction);
 	}
 	
-	public syncFiles(appIdentifier: string, projectFilesPath: string,  projectFiles: string[], notRunningSimulatorAction: () => IFuture<void>): IFuture<void> {
+	public syncFiles(appIdentifier: string, projectFilesPath: string,  projectFiles: string[], notRunningSimulatorAction: () => IFuture<void>, relativeToProjectBasePathAction?: (projectFile: string) => string): IFuture<void> {
 		let syncAction = (applicationPath: string) => _.each(projectFiles, projectFile => {
-			this.$logger.trace(`Transfering ${projectFile} to ${path.join(applicationPath, "app")}`);
-			shell.cp("-Rf", projectFile, path.join(applicationPath, "app"));
+			let destinationPath = path.join(applicationPath, relativeToProjectBasePathAction(projectFile));
+			this.$logger.trace(`Transfering ${projectFile} to ${destinationPath}`);
+			shell.cp("-Rf", projectFile, destinationPath);
 		});	
 		return this.syncCore(appIdentifier, notRunningSimulatorAction, syncAction);	
 	}
