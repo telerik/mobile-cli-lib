@@ -1,14 +1,14 @@
 ///<reference path=".d.ts"/>
+"use strict";
 
-import fs = require("fs");
+import * as fs from "fs";
 import Future = require("fibers/future");
-import path = require("path");
-import util = require("util");
+import * as path from "path";
 import rimraf = require("rimraf");
-import minimatch = require("minimatch");
-import decorators = require("./decorators");
-import injector = require("./yok");
-import crypto = require('crypto');
+import * as minimatch from "minimatch";
+import * as decorators from "./decorators";
+import * as injector from "./yok";
+import * as crypto from "crypto";
 
 @injector.register("fs")
 export class FileSystem implements IFileSystem {
@@ -125,7 +125,7 @@ export class FileSystem implements IFileSystem {
 
 	public deleteDirectory(directory: string): IFuture<void> {
 		let future = new Future<void>();
-		rimraf(directory, (err) => {
+		rimraf(directory, (err:Error) => {
 			if(err) {
 				future.throw(err);
 			} else {
@@ -471,4 +471,3 @@ export class FileSystem implements IFileSystem {
 		return future;
 	}
 }
-
