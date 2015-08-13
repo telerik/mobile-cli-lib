@@ -1,8 +1,8 @@
 ///<reference path=".d.ts"/>
 "use strict";
 
-import util = require("util");
-import path = require("path");
+import * as util from "util";
+import * as path from "path";
 import helpers = require("./helpers");
 
 // we need this to overwrite .stack property (read-only in Error)
