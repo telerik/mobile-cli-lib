@@ -54,18 +54,15 @@ function annotate(fn: any) {
 
 //--- end part copied from AngularJS
 
-let util = require("util");
-let assert = require("assert");
+import * as util from "util";
+import * as assert from "assert";
+import * as path from "path";
 let Future = require("fibers/future");
-let path = require("path");
 
 let indent = "";
 function trace(formatStr: string, ...args: any[]) {
-	formatStr = indent + formatStr;
-	args.unshift(formatStr);
-
 	// uncomment following line when debugging dependency injection
-	//console.log(util.format.apply(null, args));
+	//console.log(util.format(indent + formatStr, ...args));
 }
 
 function pushIndent() {
@@ -165,7 +162,7 @@ export class Yok implements IInjector {
 	}
 
 	private requireOne(name: string, file: string): void {
-		let relativePath = path.join("../", file)
+		let relativePath = path.join("../", file);
 		let dependency: IDependency = {
 			require: require("fs").existsSync(path.join(__dirname, relativePath + ".js")) ? relativePath : file,
 			shared: true
@@ -174,7 +171,7 @@ export class Yok implements IInjector {
 		if(!this.modules[name]) {
 			this.modules[name] = dependency;
 		} else {
-			throw new Error(util.format("module '%s' require'd twice.", name));
+			throw new Error(`module '${name}' require'd twice.`);
 		}
 	}
 
@@ -294,7 +291,7 @@ export class Yok implements IInjector {
 					// The passed arguments are not one of the subCommands.
 					// Check if the default command accepts arguments - if no, return false;
 					
-					let defaultCommand = this.resolveCommand(util.format("%s|%s", commandName, defaultCommandName));
+					let defaultCommand = this.resolveCommand(`${commandName}|${defaultCommandName}`);
 					if(defaultCommand) {
 						if (defaultCommand.canExecute) {
 							return defaultCommand.canExecute(commandArguments).wait();
@@ -394,7 +391,7 @@ export class Yok implements IInjector {
 
 		let name = ctor.$inject.name;
 		if(name && name[0] === name[0].toUpperCase()) {
-			let EmptyCtor = function() { }
+			let EmptyCtor = function() { };
 			EmptyCtor.prototype = ctor.prototype;
 			let obj = new (<any>EmptyCtor)();
 
@@ -411,7 +408,7 @@ export class Yok implements IInjector {
 		}
 
 		if(this.resolutionProgress[name]) {
-			throw new Error(util.format("cyclic dependency detected on dependency '%s'", name));
+			throw new Error(`Cyclic dependency detected on dependency '${name}'`);
 		}
 		this.resolutionProgress[name] = true;
 
@@ -456,7 +453,7 @@ export class Yok implements IInjector {
 
 	public getRegisteredCommandsNames(includeDev: boolean): string[] {
 		let modulesNames: string[] = _.keys(this.modules);
-		let commandsNames: string[] = _.filter(modulesNames, moduleName => _.startsWith(moduleName, util.format("%s.", this.COMMANDS_NAMESPACE)));
+		let commandsNames: string[] = _.filter(modulesNames, moduleName => _.startsWith(moduleName, `${this.COMMANDS_NAMESPACE}.`));
 		let commands = _.map(commandsNames, (commandName: string) => commandName.substr(this.COMMANDS_NAMESPACE.length + 1));
 		if(!includeDev) {
 			commands = _.reject(commands, (command) => _.startsWith(command, "dev-"));
@@ -469,7 +466,7 @@ export class Yok implements IInjector {
 	}
 
 	private createCommandName(name: string) {
-		return util.format("%s.%s", this.COMMANDS_NAMESPACE, name);
+		return `${this.COMMANDS_NAMESPACE}.${name}`;
 	}
 
 	public dispose(): void {

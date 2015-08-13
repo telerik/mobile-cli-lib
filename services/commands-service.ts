@@ -3,8 +3,7 @@
 
 let jaroWinklerDistance = require("../vendor/jaro-winkler_distance");
 import helpers = require("../helpers");
-import util = require("util");
-import os = require("os");
+import { EOL } from "os";
 
 class CommandArgumentsValidationHelper {
 	constructor(public isValid: boolean, _remainingArguments: string[]) {
@@ -154,7 +153,7 @@ export class CommandsService implements ICommandsService {
 				if(mandatoryParams.length > commandArguments.length) {
 					let customErrorMessages = _.map(mandatoryParams, mp => mp.errorMessage);
 					customErrorMessages.splice(0, 0, "You need to provide all the required parameters.");
-					this.$errors.fail(customErrorMessages.join(os.EOL));
+					this.$errors.fail(customErrorMessages.join(EOL));
 				}
 
 				// If we reach here, the commandArguments are at least as much as mandatoryParams. Now we should verify that we have each of them.
@@ -267,7 +266,7 @@ export class CommandsService implements ICommandsService {
 				}
 
 				if(data.words >= 3) { // Hierarchical command
-					commandName = util.format("%s|%s", line[1], line[2]);
+					commandName = `${line[1]}|${line[2]}`;
 				}
 
 				let command = this.$injector.resolveCommand(commandName);
