@@ -270,7 +270,8 @@ interface IUsbLiveSyncServiceBase {
 		notRunningiOSSimulatorAction: () => IFuture<void>,
 		localProjectRootPath?: string,
 		beforeLiveSyncAction?: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData) => IFuture<void>,
-		beforeBatchLiveSyncAction?: (filePath: string) => IFuture<string>): IFuture<void>;
+		beforeBatchLiveSyncAction?: (filePath: string) => IFuture<string>,
+		iOSSimulatorRelativeToProjectBasePathAction?: (projectFile: string) => string): IFuture<void>;
 }
 
 interface ISysInfoData {
