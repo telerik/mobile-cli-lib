@@ -2,6 +2,7 @@
 "use strict";
 
 import * as Fiber from "fibers";
+import child_process = require("child_process"); // used only for type imports
 import Future = require("fibers/future");
 import * as iconv from "iconv-lite";
 import {EOL} from "os";
@@ -22,6 +23,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private static TIMEOUT_SECONDS = 120;
 	private static UNABLE_TO_START_EMULATOR_MESSAGE = "Cannot run your app in the native emulator. Increase the timeout of the operation with the --timeout option or try to restart your adb server with 'adb kill-server' command. Alternatively, run the Android Virtual Device manager and increase the allocated RAM for the virtual device.";
 	private static RUNNING_ANDROID_EMULATOR_REGEX = /^(emulator-\d+)\s+device$/;
+	private static EMULATOR_EXITED_MESSAGE = "The emulator has stopped unexpectedly. Verify its configuration and try again.";
 
 	private static MISSING_SDK_MESSAGE = "The Android SDK is not configured properly. " +
 		"Verify that you have installed the Android SDK and that you have added its `platform-tools` and `tools` directories to your PATH environment variable.";
@@ -223,19 +225,33 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 			// have to start new emulator
 			this.$logger.info("Starting Android emulator with image %s", image);
+			let emulatorProc: child_process.ChildProcess = null;
+			let emulatorProcEnded = false;
 			if(this.$options.geny) {
 				//player is part of Genymotion, it should be part of the PATH.
-				this.$childProcess.spawn("player", ["--vm-name", image],
-					{ stdio: "ignore", detached: true }).unref();
+				emulatorProc = this.$childProcess.spawn("player", ["--vm-name", image],
+					{ stdio: "ignore", detached: true });
 			} else {
-				this.$childProcess.spawn('emulator', ['-avd', image],
-					{ stdio: "ignore", detached: true }).unref();
+				emulatorProc = this.$childProcess.spawn('emulator', ['-avd', image],
+					{ stdio: "ignore", detached: true });
 			}
+			emulatorProc.on("error", (err:Error) => {
+				this.$logger.trace("An error occured while starting the android emulator: %s", err.toString()); 
+				emulatorProcEnded = true;
+			});
+			emulatorProc.on("exit", () => {
+				this.$logger.trace("XXX EXIT EVENT!!!!");
+				emulatorProcEnded = true; 
+				});
+			(<any>emulatorProc).unref();
 			
 			let isInfiniteWait = this.$utils.getMilliSecondsTimeout(AndroidEmulatorServices.TIMEOUT_SECONDS) === 0;
 			let hasTimeLeft = helpers.getCurrentEpochTime() < this.endTimeEpoch;
 
 			while(hasTimeLeft || isInfiniteWait) {
+				if (emulatorProcEnded) {
+					//this.$errors.fail(AndroidEmulatorServices.EMULATOR_EXITED_MESSAGE);
+				}
 				emulatorId = this.getRunningEmulatorId(image).wait();
 				if(emulatorId) {
 					return emulatorId;
