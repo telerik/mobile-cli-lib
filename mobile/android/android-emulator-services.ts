@@ -1,15 +1,14 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 
-import Fiber = require("fibers");
+import * as Fiber from "fibers";
 import Future = require("fibers/future");
-import iconv = require("iconv-lite");
-import os = require("os");
-import osenv = require("osenv");
-import path = require("path");
-import util = require("util");
-import helpers = require("../../helpers");
-let net = require('net');
+import * as iconv from "iconv-lite";
+import {EOL} from "os";
+import * as osenv from "osenv";
+import * as path from "path";
+import * as helpers from "../../helpers";
+import * as net from "net";
 
 class VirtualMachine {
 	constructor(public name: string, public identifier: string) { }
@@ -164,7 +163,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		return (() => {
 			let modelOutputLines: string = this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.model"]).wait();
 			this.$logger.trace(modelOutputLines);
-			let model = (<string>_.first(modelOutputLines.split(os.EOL))).trim();
+			let model = (<string>_.first(modelOutputLines.split(EOL))).trim();
 			return model;
 		}).future<string>()();
 	}
@@ -181,7 +180,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		let future = new Future<string>();
 		let output: string = "";
 		let client = net.connect({ port: portNumber }, () => {
-			client.write(util.format("avd name%s", os.EOL));
+			client.write(`avd name${EOL}`);
 		});
 
 		client.on('data', (data: any) => {
@@ -197,7 +196,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 			//
 			let name: string;
 			let foundOK = false;
-			let lines: string[] = output.split(os.EOL);
+			let lines: string[] = output.split(EOL);
 			// find line between OK
 			_(lines).each((line: string) => {
 				if(foundOK) {
@@ -291,7 +290,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		return (() => {
 
 			let emulatorDevices: string[] = [];
-			let outputRaw: string[] = this.$childProcess.execFile(this.adbFilePath, ['devices']).wait().split(os.EOL);
+			let outputRaw: string[] = this.$childProcess.execFile(this.adbFilePath, ['devices']).wait().split(EOL);
 			if(this.$options.geny) {
 				emulatorDevices = this.getRunningGenymotionEmulators(outputRaw).wait();
 			} else {
@@ -426,7 +425,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 				let isEmulatorBootCompleted = this.isEmulatorBootCompleted(emulatorId).wait();
 
 				if(isEmulatorBootCompleted) {
-					this.$logger.printInfoMessageOnSameLine(os.EOL);
+					this.$logger.printInfoMessageOnSameLine(EOL);
 					return;
 				}
 
@@ -434,7 +433,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 				this.sleep(10000);
 			}
 
-			this.$logger.printInfoMessageOnSameLine(os.EOL);
+			this.$logger.printInfoMessageOnSameLine(EOL);
 			this.$errors.fail(AndroidEmulatorServices.UNABLE_TO_START_EMULATOR_MESSAGE);
 		}).future<void>()();
 	}
