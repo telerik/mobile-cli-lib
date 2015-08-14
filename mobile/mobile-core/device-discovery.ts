@@ -41,6 +41,30 @@ export class DeviceDiscovery extends EventEmitter implements Mobile.IDeviceDisco
 }
 $injector.register("deviceDiscovery", DeviceDiscovery);
 
+class ProtonDeviceDiscovery extends EventEmitter {
+	// TODO: add devicesServices as dependency
+	// TODO: fix all dependencies of devicesServices
+	constructor(private $iOSDeviceDiscovery:Mobile.IDeviceDiscovery) {
+		super();
+	}
+	
+	public initialize(): IFuture<void> {
+		return (() => {
+			this.$iOSDeviceDiscovery.startLookingForDevices().wait();
+			this.$iOSDeviceDiscovery.on("deviceFound", (data: Mobile.IDevice) => {
+				this.emit("deviceFound", data.deviceInfo);
+			});
+			
+			this.$iOSDeviceDiscovery.on("deviceLost", (data: Mobile.IDevice) => {
+				this.emit("deviceLost", data.deviceInfo);
+			});
+		}).future<void>()();
+	}
+
+	// TODO: Expose list of all devices (use deviceInfo for each device in devicesServices.devices)
+}
+$injector.register("prdd", ProtonDeviceDiscovery);
+
 class IOSDeviceDiscovery extends DeviceDiscovery {
 	private static ADNCI_MSG_CONNECTED = 1;
 	private static ADNCI_MSG_DISCONNECTED = 2;
@@ -67,6 +91,7 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 			let parsedTimeout =  this.$utils.getParsedTimeout(1);
 			let timeout = parsedTimeout > defaultTimeoutInSeconds ? parsedTimeout/1000 : defaultTimeoutInSeconds;
 			this.startRunLoopWithTimer(timeout);
+			setInterval(() => this.startRunLoopWithTimer(timeout), 1000); // I think we should unref this as it will block CLI's execution and will hold the console.
 		}).future<void>()();
 	}
 
@@ -76,7 +101,8 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 
 		if(deviceInfo.msg === IOSDeviceDiscovery.ADNCI_MSG_CONNECTED) {
 			iOSDeviceDiscovery.createAndAddDevice(deviceInfo.dev);
-		} else if(deviceInfo.msg === IOSDeviceDiscovery.ADNCI_MSG_DISCONNECTED) {
+		}
+		else if(deviceInfo.msg === IOSDeviceDiscovery.ADNCI_MSG_DISCONNECTED) {
 			let deviceIdentifier = iOSDeviceDiscovery.$coreFoundation.convertCFStringToCString(iOSDeviceDiscovery.$mobileDevice.deviceCopyDeviceIdentifier(deviceInfo.dev));
 			iOSDeviceDiscovery.removeDevice(deviceIdentifier);
 		}
@@ -129,77 +155,80 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 	}
 	/* tslint:enable:no-unused-variable */
 }
+$injector.register("iOSDeviceDiscovery", IOSDeviceDiscovery);
 
-class IOSDeviceDiscoveryStub extends DeviceDiscovery {
-	constructor(private $logger: ILogger,
-		private $staticConfig: Config.IStaticConfig,
-		private $hostInfo: IHostInfo,
-		private error: string) {
-		super();
-	}
+// class IOSDeviceDiscoveryStub extends DeviceDiscovery {
+// 	constructor(private $logger: ILogger,
+// 		private $staticConfig: Config.IStaticConfig,
+// 		private $hostInfo: IHostInfo,
+// 		private error: string) {
+// 		super();
+// 	}
 
-	public startLookingForDevices(): IFuture<void> {
-		if(this.error) {
-			this.$logger.warn(this.error);
-		} else if(this.$hostInfo.isLinux) {
-			this.$logger.warn("In this version of the %s command-line interface, you cannot use connected iOS devices.", this.$staticConfig.CLIENT_NAME.toLowerCase());
-		}
+// 	public startLookingForDevices(): IFuture<void> {
+// 		if(this.error) {
+// 			this.$logger.warn(this.error);
+// 		} else if(this.$hostInfo.isLinux) {
+// 			this.$logger.warn("In this version of the %s command-line interface, you cannot use connected iOS devices.", this.$staticConfig.CLIENT_NAME.toLowerCase());
+// 		}
+		
+	// 	return Future.fromResult();
+	// }
+// }
 
-		return Future.fromResult();
-	}
-}
+// $injector.register("iOSDeviceDiscovery", ($errors: IErrors, $logger: ILogger, $fs: IFileSystem, $injector: IInjector, $iTunesValidator: Mobile.IiTunesValidator, $staticConfig: Config.IStaticConfig, $hostInfo: IHostInfo) => {
+// 	let error = $iTunesValidator.getError().wait();
+// 	let result: Mobile.IDeviceDiscovery = null;
+// 
+// 	if(error || $hostInfo.isLinux) {
+// 		result = new IOSDeviceDiscoveryStub($logger, $staticConfig, $hostInfo, error);
+// 	} else {
+// 		result = $injector.resolve(IOSDeviceDiscovery);
+// 	}
+// 
+// 	return result;
+// });
+// 
+// export class AndroidDeviceDiscovery extends DeviceDiscovery {
+// 	constructor(private $childProcess: IChildProcess,
+// 		private $injector: IInjector,
+// 		private $staticConfig: Config.IStaticConfig) {
+// 		super();
+// 	}
+// 
+// 	private createAndAddDevice(deviceIdentifier: string): IFuture<void> {
+// 		return (() => {
+// 			let device = this.$injector.resolve(AndroidDevice.AndroidDevice, { identifier: deviceIdentifier });
+// 			this.addDevice(device);
+// 		}).future<void>()();
+// 	}
+// 
+// 	public startLookingForDevices(): IFuture<void> {
+// 		return(()=> {
+// 			this.ensureAdbServerStarted().wait();
+// 
+// 			let requestAllDevicesCommand = `"${this.$staticConfig.getAdbFilePath().wait()}" devices`;
+// 			let result = this.$childProcess.exec(requestAllDevicesCommand).wait();
+// 
+// 			let devices = result.toString().split(os.EOL).slice(1)
+// 				.filter( (element:string) => !helpers.isNullOrWhitespace(element) )
+// 				.map((element: string) => {
+// 					// http://developer.android.com/tools/help/adb.html#devicestatus
+// 					let parts = element.split("\t");
+// 					let identifier = parts[0];
+// 					let state = parts[1];
+// 					if (state === "device"/*ready*/) {
+// 						this.createAndAddDevice(identifier).wait();
+// 					}
+// 				});
+// 		}).future<void>()();
+// 	}
+// 
+// 	private ensureAdbServerStarted(): IFuture<void> {
+// 		let startAdbServerCommand = `"${this.$staticConfig.getAdbFilePath().wait()}" start-server`;
+// 		return this.$childProcess.exec(startAdbServerCommand);
+// 	}
+// }
+// $injector.register("androidDeviceDiscovery", AndroidDeviceDiscovery);
+$injector.register("androidDeviceDiscovery", {});
 
-$injector.register("iOSDeviceDiscovery", ($errors: IErrors, $logger: ILogger, $fs: IFileSystem, $injector: IInjector, $iTunesValidator: Mobile.IiTunesValidator, $staticConfig: Config.IStaticConfig, $hostInfo: IHostInfo) => {
-	let error = $iTunesValidator.getError().wait();
-	let result: Mobile.IDeviceDiscovery = null;
-
-	if(error || $hostInfo.isLinux) {
-		result = new IOSDeviceDiscoveryStub($logger, $staticConfig, $hostInfo, error);
-	} else {
-		result = $injector.resolve(IOSDeviceDiscovery);
-	}
-
-	return result;
-});
-
-export class AndroidDeviceDiscovery extends DeviceDiscovery {
-	constructor(private $childProcess: IChildProcess,
-		private $injector: IInjector,
-		private $staticConfig: Config.IStaticConfig) {
-		super();
-	}
-
-	private createAndAddDevice(deviceIdentifier: string): IFuture<void> {
-		return (() => {
-			let device = this.$injector.resolve(AndroidDevice.AndroidDevice, { identifier: deviceIdentifier });
-			this.addDevice(device);
-		}).future<void>()();
-	}
-
-	public startLookingForDevices(): IFuture<void> {
-		return(()=> {
-			this.ensureAdbServerStarted().wait();
-
-			let requestAllDevicesCommand = `"${this.$staticConfig.getAdbFilePath().wait()}" devices`;
-			let result = this.$childProcess.exec(requestAllDevicesCommand).wait();
-
-			result.toString().split(os.EOL).slice(1)
-				.filter( (element:string) => !helpers.isNullOrWhitespace(element) )
-				.map((element: string) => {
-					// http://developer.android.com/tools/help/adb.html#devicestatus
-					let parts = element.split("\t");
-					let identifier = parts[0];
-					let state = parts[1];
-					if (state === "device"/*ready*/) {
-						this.createAndAddDevice(identifier).wait();
-					}
-				});
-		}).future<void>()();
-	}
-
-	private ensureAdbServerStarted(): IFuture<void> {
-		let startAdbServerCommand = `"${this.$staticConfig.getAdbFilePath().wait()}" start-server`;
-		return this.$childProcess.exec(startAdbServerCommand);
-	}
-}
-$injector.register("androidDeviceDiscovery", AndroidDeviceDiscovery);

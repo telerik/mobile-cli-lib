@@ -8,7 +8,7 @@ import * as assert from "assert";
 import * as constants from "../constants";
 
 export class DevicesServices implements Mobile.IDevicesServices {
-	private devices: IDictionary<Mobile.IDevice> = {};
+	public devices: IDictionary<Mobile.IDevice> = {};
 	private platforms: string[] = [];
 	private static NOT_FOUND_DEVICE_BY_IDENTIFIER_ERROR_MESSAGE = "Could not find device by specified identifier '%s'. To list currently connected devices and verify that the specified identifier exists, run '%s device'.";
 	private static NOT_FOUND_DEVICE_BY_INDEX_ERROR_MESSAGE = "Could not find device by specified index %d. To list currently connected devices and verify that the specified index exists, run '%s device'.";
@@ -57,7 +57,7 @@ export class DevicesServices implements Mobile.IDevicesServices {
 		return normalizedPlatform;
 	}
 
-	private attachToDeviceDiscoveryEvents() {
+	private attachToDeviceDiscoveryEvents(): void {
 		this.$iOSDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => this.onDeviceFound(device));
 		this.$iOSDeviceDiscovery.on("deviceLost", (device: Mobile.IDevice) => this.onDeviceLost(device));
 

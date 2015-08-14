@@ -1,8 +1,8 @@
 global._ = require("lodash");
 global.$injector = require("./yok").injector;
+$injector.require("options", "./options");
 
 require("colors");
-
 $injector.require("errors", "./errors");
 $injector.requirePublic("fs", "./file-system");
 $injector.require("logger", "./logger");
@@ -69,6 +69,7 @@ $injector.require("deviceLost", "./mobile/mobile-core/device-discovery");
 $injector.require("iTunesValidator", "./validators/iTunes-validator");
 $injector.require("deviceDiscovery", "./mobile/mobile-core/device-discovery");
 $injector.require("iOSDeviceDiscovery", "./mobile/mobile-core/device-discovery");
+$injector.requirePublicClass("prdd", "./mobile/mobile-core/device-discovery");
 $injector.require("androidDeviceDiscovery", "./mobile/mobile-core/device-discovery");
 $injector.require("iOSDevice", "./mobile/ios/ios-device");
 $injector.require("androidDevice", "./mobile/android/android-device");
