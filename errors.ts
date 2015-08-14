@@ -69,7 +69,7 @@ export function installUncaughtExceptionListener(): void {
 		if (callstack) {
 			callstack = resolveCallStack(err);
 		}
-		console.error(callstack || err.toString());
+		console.log(callstack || err.toString());
 
 		if(!$injector.resolve("staticConfig").disableAnalytics) {
 			try {
@@ -77,7 +77,7 @@ export function installUncaughtExceptionListener(): void {
 				analyticsService.trackException(err, callstack);
 			} catch (e) {
 				// Do not replace with logger due to cyclic dependency
-				console.error("Error while reporting exception: " + e);
+				console.log("Error while reporting exception: " + e);
 			}
 		}
 
@@ -117,7 +117,7 @@ export class Errors implements IErrors {
 			try {
 				return action().wait();
 			} catch(ex) {
-				console.error(this.printCallStack
+				console.log(this.printCallStack
 					? resolveCallStack(ex)
 					: "\x1B[31;1m" + ex.message + "\x1B[0m");
 
