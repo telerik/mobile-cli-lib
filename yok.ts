@@ -149,6 +149,36 @@ export class Yok implements IInjector {
 		});
 	}
 
+	public requirePublicClass(names: any, file: string): void {
+		forEachName(names, (name) => {
+			this.requireOne(name, file);
+			this.addClassToPublicApi(name, file);
+		});
+	}
+	
+	private addClassToPublicApi(name: string, file: string): void {
+		Object.defineProperty(this.publicApi, name, {
+			get: () => {
+				let classInstance = this.modules[name].instance;
+				if(!classInstance) {
+					classInstance = this.resolve(name);
+					// We'll call initialize method of the class directly
+					// This is in order to remove .wait() from constructors
+					// as we cannot wait without fiber.
+					// TODO: Consider checking if initialize has wait property
+					if(classInstance.initialize) {
+						let fiberBootstrap = require("./fiber-bootstrap");
+						fiberBootstrap.run(() => { 
+							classInstance.initialize().wait();
+						});
+					}
+				}
+				
+				return classInstance;
+			}
+		});
+	}
+	
 	private resolvePublicApi(name: string, file: string): void {
 		Object.defineProperty(this.publicApi, name, {
 			get: () => {
