@@ -8,7 +8,7 @@ export class ResourceLoader implements IResourceLoader {
 		private $staticConfig: Config.IStaticConfig) { }
 
 	resolvePath(resourcePath: string): string {
-		return path.join(__dirname, "../../resources", resourcePath);
+		return path.join(this.$staticConfig.RESOURCE_DIR_PATH, resourcePath);
 	}
 
 	openFile(resourcePath: string): NodeJS.ReadableStream {

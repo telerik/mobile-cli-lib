@@ -13,6 +13,7 @@ export class StaticConfigBase implements Config.IStaticConfig {
 	public ERROR_REPORT_SETTING_NAME: string = null;
 	public APP_RESOURCES_DIR_NAME = "App_Resources";
 	public COMMAND_HELP_FILE_NAME = 'command-help.json';
+	public RESOURCE_DIR_PATH = __dirname;
 	public START_PACKAGE_ACTIVITY_NAME: string;
 	public SYS_REQUIREMENTS_LINK: string;
 	public HTML_CLI_HELPERS_DIR: string;
