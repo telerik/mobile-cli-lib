@@ -12,6 +12,8 @@ $injector.require("hostInfo", "./host-info");
 $injector.require("dispatcher", "./dispatchers");
 $injector.require("commandDispatcher", "./dispatchers");
 
+$injector.require("resources", "./resource-loader");
+
 $injector.require("stringParameter", "./command-params");
 $injector.require("stringParameterBuilder", "./command-params");
 
