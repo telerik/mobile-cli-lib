@@ -47,7 +47,8 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 		notRunningiOSSimulatorAction: () => IFuture<void>,
 		localProjectRootPath?: string,
 		beforeLiveSyncAction?: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData) => IFuture<void>,
-		beforeBatchLiveSyncAction?: (filePath: string) => IFuture<string>): IFuture<void> {
+		beforeBatchLiveSyncAction?: (filePath: string) => IFuture<string>,
+		iOSSimulatorRelativeToProjectBasePathAction?: (projectFile: string) => string): IFuture<void> {
 		return (() => {
 			let synciOSSimulator = this.$hostInfo.isDarwin ? this.$iOSEmulatorServices.isSimulatorRunning().wait() || (this.$options.emulator && platform.toLowerCase() === "ios") : false;
 			
@@ -72,7 +73,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 						if(event === "added" || event === "changed") {
 							if(!_.contains(excludedProjectDirsAndFiles, filePath)) {
 								if(synciOSSimulator) {
-									__this.$dispatcher.dispatch(() => __this.$iOSEmulatorServices.syncFiles(appIdentifier, projectFilesPath, [filePath], notRunningiOSSimulatorAction)); 
+									__this.$dispatcher.dispatch(() => __this.$iOSEmulatorServices.syncFiles(appIdentifier, projectFilesPath, [filePath], notRunningiOSSimulatorAction, iOSSimulatorRelativeToProjectBasePathAction)); 
 								}
 								
 								if(!__this.$options.emulator || platform.toLowerCase() === "android") {
@@ -117,7 +118,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 							return;
 						}
 						
-						this.$logger.info("Transfering project files...");
+						this.$logger.info("Transferring project files...");
 						device.fileSystem.transferFiles(deviceAppData.appIdentifier, localToDevicePaths).wait();
 						this.$logger.info("Successfully transferred all project files.");
 						
