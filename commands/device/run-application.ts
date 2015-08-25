@@ -1,8 +1,6 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 
-import helpers = require("./../../helpers");
-
 export class RunApplicationOnDeviceCommand implements ICommand {
 
 	constructor(private $devicesServices: Mobile.IDevicesServices,

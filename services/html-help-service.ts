@@ -1,11 +1,10 @@
 ///<reference path="../.d.ts"/>
 "use strict";
 
-import util = require("util");
 import Future = require("fibers/future");
-import path = require("path");
+import * as path from "path";
 import marked = require("marked");
-let TerminalRenderer = require('marked-terminal');
+let TerminalRenderer = require("marked-terminal");
 let chalk = require("chalk");
 
 export class HtmlHelpService implements IHtmlHelpService {

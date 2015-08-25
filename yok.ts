@@ -35,7 +35,7 @@ function annotate(fn: any) {
 		fnText: string,
 		argDecl: string[];
 
-	if(typeof fn == 'function') {
+	if(typeof fn === "function") {
 		if(!($inject = fn.$inject)) {
 			$inject = { args: [], name: "" };
 			fnText = fn.toString().replace(STRIP_COMMENTS, '');
@@ -54,10 +54,7 @@ function annotate(fn: any) {
 
 //--- end part copied from AngularJS
 
-import * as util from "util";
-import * as assert from "assert";
 import * as path from "path";
-let Future = require("fibers/future");
 
 let indent = "";
 function trace(formatStr: string, ...args: any[]) {
@@ -85,7 +82,7 @@ export function register(...rest: any[]) {
 	return function(target: any): void {
 		// TODO: Check if 'rest' has more arguments that have to be registered
 		$injector.register(rest[0], target);
-	}
+	};
 }
 
 export interface IDependency {
@@ -192,11 +189,6 @@ export class Yok implements IInjector {
 		return defaultCommand;
 	}
 
-	private isValidCommand(name: string): boolean {
-		let allCommands = this.getRegisteredCommandsNames(true);
-		return _.contains(allCommands, name);
-	}
-
 	public buildHierarchicalCommand(parentCommandName: string, commandLineArguments: string[]): any {
 		let subCommandName: string;
 		let subCommands = this.hierarchicalCommands[parentCommandName];
@@ -232,7 +224,6 @@ export class Yok implements IInjector {
 						let commandName: string = null;
 						let defaultCommand = this.getDefaultCommand(name);
 						let commandArguments: ICommandArgument[] = [];
-						let allowedParams: ICommandParameter[];
 
 						if(args.length > 0) {
 							let hierarchicalCommand = this.buildHierarchicalCommand(name, args);
@@ -272,7 +263,7 @@ export class Yok implements IInjector {
 	}
 
 	private getHierarchicalCommandName(parentCommandName: string, subCommandName: string) {
-		return [parentCommandName, subCommandName].join("|")
+		return [parentCommandName, subCommandName].join("|");
 	}
 
 	public isValidHierarchicalCommand(commandName: string, commandArguments: string[]): boolean {
@@ -286,7 +277,6 @@ export class Yok implements IInjector {
 			let subCommands = this.hierarchicalCommands[commandName];
 			if(subCommands) {
 				let fullCommandName = this.buildHierarchicalCommand(commandName, commandArguments);
-				let hasSubCommand = fullCommandName !== undefined;
 				if(!fullCommandName) {
 					// The passed arguments are not one of the subCommands.
 					// Check if the default command accepts arguments - if no, return false;
@@ -391,7 +381,7 @@ export class Yok implements IInjector {
 
 		let name = ctor.$inject.name;
 		if(name && name[0] === name[0].toUpperCase()) {
-			let EmptyCtor = function() { };
+			let EmptyCtor = function() { /* intentionally left blank */ };
 			EmptyCtor.prototype = ctor.prototype;
 			let obj = new (<any>EmptyCtor)();
 
@@ -475,7 +465,7 @@ export class Yok implements IInjector {
 			if(instance && instance.dispose && instance !== this) {
 				instance.dispose();
 			}
-		})
+		});
 	}
 }
 

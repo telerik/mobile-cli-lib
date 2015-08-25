@@ -1,5 +1,5 @@
 ///<reference path=".d.ts"/>
-
+"use strict";
 import Future = require("fibers/future");
 
 export class Queue<T> implements IQueue<T> {

@@ -1,8 +1,8 @@
-///<reference path="./../../.d.ts"/>
+///<reference path="../../.d.ts"/>
 "use strict";
 
-import path = require("path");
-import hostInfo = require("../../host-info");
+import * as path from "path";
+import future = require("fibers/future");
 
 class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 	constructor(private $logger: ILogger,
@@ -13,8 +13,7 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 		private $hostInfo: IHostInfo) { }
 
 	public checkDependencies(): IFuture<void> {
-		return (() => {
-		}).future<void>()();
+		return future.fromResult();
 	}
 
 	checkAvailability(): IFuture<void> {

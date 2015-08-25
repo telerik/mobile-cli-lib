@@ -1,8 +1,8 @@
 ///<reference path=".d.ts"/>
-
+"use strict";
 import propertiesParser = require("properties-parser");
 import Future = require("fibers/future");
-import assert = require("assert");
+import * as assert from "assert";
 
 export class PropertiesParser implements IPropertiesParser {
 	private _editor: any = null;

@@ -3,10 +3,11 @@
 
 import * as util from "util";
 import * as path from "path";
-import helpers = require("./helpers");
 
 // we need this to overwrite .stack property (read-only in Error)
-function Exception() {}
+function Exception() {
+	/* intentionally left blank */ 
+}
 Exception.prototype = new Error();
 
 function resolveCallStack(error: Error): string {

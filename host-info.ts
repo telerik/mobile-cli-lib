@@ -72,5 +72,3 @@ export class HostInfo implements IHostInfo {
 	}
 }
 $injector.register("hostInfo", HostInfo);
-
-

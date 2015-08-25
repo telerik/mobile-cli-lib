@@ -1,8 +1,8 @@
 ///<reference path=".d.ts"/>
-
+"use strict";
 import Future = require("fibers/future");
 import prompt = require("inquirer");
-import helpers = require("./helpers");
+import * as helpers from "./helpers";
 import readline = require("readline");
 let MuteStream = require("mute-stream");
 

@@ -1,10 +1,8 @@
 ///<reference path="../.d.ts"/>
 "use strict";
 
-import util = require("util");
-import path = require("path");
-import helpers = require("../helpers");
-import os = require("os");
+import * as helpers from "../helpers";
+import * as os from "os";
 // HACK
 global.XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 global.XMLHttpRequest.prototype.withCredentials = false;

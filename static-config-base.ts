@@ -1,8 +1,7 @@
 ///<reference path=".d.ts"/>
 "use strict";
 
-import path = require("path");
-import util = require("util");
+import * as path from "path";
 
 export class StaticConfigBase implements Config.IStaticConfig {
 	public PROJECT_FILE_NAME: string = null;

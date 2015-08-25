@@ -1,11 +1,10 @@
 ///<reference path=".d.ts"/>
 "use strict";
 
-import os = require("os");
-import child_process = require("child_process");
-import osenv = require("osenv");
+import * as os from "os";
+import * as child_process from "child_process";
+import * as osenv from "osenv";
 import Future = require("fibers/future");
-import hostInfo = require("./host-info");
 
 export class SysInfo implements ISysInfo {
 	constructor(private $childProcess: IChildProcess,
@@ -71,7 +70,7 @@ export class SysInfo implements ISysInfo {
 			}
 
 			procOutput = this.exec("git --version");
-			res.gitVer = procOutput ? /^git version (.*)/.exec(procOutput)[1]  : null
+			res.gitVer = procOutput ? /^git version (.*)/.exec(procOutput)[1]  : null;
 
 			this.sysInfoCache = res;
 		}

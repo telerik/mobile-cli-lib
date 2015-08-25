@@ -1,10 +1,6 @@
 ///<reference path="../.d.ts"/>
 "use strict";
 
-import * as path from "path";
-import * as util from "util";
-import * as os from "os";
-import commandParams = require("../command-params");
 import Future = require("fibers/future");
 
 export class HelpCommand implements ICommand {

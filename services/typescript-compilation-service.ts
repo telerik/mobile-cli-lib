@@ -1,10 +1,9 @@
 ///<reference path="../.d.ts"/>
 "use strict";
 
-import Future = require("fibers/future");
-import path = require("path");
-import os = require("os");
-import util = require("util");
+import * as path from "path";
+import * as os from "os";
+import * as util from "util";
 import temp = require("temp");
 temp.track();
 
@@ -104,7 +103,7 @@ export class TypeScriptCompilationService implements ITypeScriptCompilationServi
 			"level5ErrorCount": level5ErrorCount,
 			"nonEmitPreventingWarningCount": nonEmitPreventingWarningCount,
 			"hasPreventEmitErrors": hasPreventEmitErrors
-		}
+		};
 	}
 
 	private logCompilerMessages(compilerMessages: ITypeScriptCompilerMessages, errorMessage: string): void {

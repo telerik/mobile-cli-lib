@@ -140,7 +140,7 @@ export class Logger implements ILogger {
 						this.encodeBody = argument.indexOf(path) > -1;
 						return false;
 					}
-				})
+				});
 
 			return argument;
 		});

@@ -1,9 +1,6 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 
-import helpers = require("./../../helpers");
-import Future = require("fibers/future");
-
 export class StopApplicationOnDeviceCommand implements ICommand {
 
 	constructor(private $devicesServices: Mobile.IDevicesServices,

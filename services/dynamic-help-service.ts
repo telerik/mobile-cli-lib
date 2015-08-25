@@ -1,7 +1,7 @@
 ///<reference path="../.d.ts"/>
 "use strict";
 
-import os = require("os");
+import * as os from "os";
 
 export class DynamicHelpService implements IDynamicHelpService {
 	constructor(private $dynamicHelpProvider: IDynamicHelpProvider) { }

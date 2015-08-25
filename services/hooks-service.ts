@@ -1,8 +1,8 @@
 ///<reference path="../.d.ts"/>
+"use strict";
 
-import helpers = require("./../helpers");
-import path = require("path");
-import util = require("util");
+import * as path from "path";
+import * as util from "util";
 
 class Hook implements IHook {
 	constructor(public name: string,
@@ -90,8 +90,8 @@ export class HooksService implements IHooksService {
 	private getHookByName(directoryPath: string, hookName: string): IFuture<IHook> {
 		return (() => {
 			let hooks = this.getHooksInDirectory(directoryPath).wait();
-			let hook = _.find<IHook>(hooks, hook => hook.name === hookName);
-			return hook;
+			let res = _.find<IHook>(hooks, hook => hook.name === hookName);
+			return res;
 		}).future<IHook>()();
 	}
 

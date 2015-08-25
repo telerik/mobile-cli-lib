@@ -1,10 +1,6 @@
 ///<reference path="../.d.ts"/>
 "use strict";
 
-import util = require("util");
-import os = require("os");
-import helpers = require("../helpers");
-
 export class PostInstallCommand implements ICommand {
 
 	constructor(private $fs: IFileSystem,

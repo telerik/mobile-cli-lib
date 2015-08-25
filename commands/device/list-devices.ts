@@ -1,8 +1,6 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 
-import util = require("util");
-import commandParams = require("../../command-params");
 import { createTable } from "../../helpers";
 
 export class ListDevicesCommand implements ICommand {
@@ -19,18 +17,13 @@ export class ListDevicesCommand implements ICommand {
 			this.$devicesServices.initialize({platform: args[0], deviceId: null, skipInferPlatform: true}).wait();
 
 			let table: any = createTable(["#", "Device Name", "Platform", "Device Identifier"], []);
-			let action: (device: Mobile.IDevice) => IFuture<void>;
+			let action: (_device: Mobile.IDevice) => IFuture<void>;
 			if (this.$options.json) {
 				this.$logger.setLevel("ERROR");
 				action = (device) => {
-					return (() => { this.$logger.out(JSON.stringify({
-						identifier: device.deviceInfo.identifier,
-						platform: device.deviceInfo.platform,
-						model: device.deviceInfo.model,
-						name: device.deviceInfo.displayName,
-						version: device.deviceInfo.version,
-						vendor: device.deviceInfo.vendor
-					}))}).future<void>()();
+					return (() => { 
+						this.$logger.out(JSON.stringify(device.deviceInfo));
+					}).future<void>()();
 				};
 			} else {
 				action = (device) => {

@@ -1,12 +1,13 @@
 ///<reference path=".d.ts"/>
+"use strict";
 
-import Url = require("url");
+import * as url from "url";
 import Future = require("fibers/future");
-import helpers = require("./helpers");
-import zlib = require("zlib");
-import util = require("util");
-import progress = require('progress-stream');
-import filesize = require('filesize');
+import * as helpers from "./helpers";
+import * as zlib from "zlib";
+import * as util from "util";
+import progress = require("progress-stream");
+import filesize = require("filesize");
 
 export class HttpClient implements Server.IHttpClient {
 	private defaultUserAgent: string;
@@ -21,13 +22,13 @@ export class HttpClient implements Server.IHttpClient {
 				options = {
 					url: options,
 					method: "GET"
-				}
+				};
 			}
 
 			let unmodifiedOptions = _.clone(options);
 
 			if (options.url) {
-				let urlParts = Url.parse(options.url);
+				let urlParts = url.parse(options.url);
 				if (urlParts.protocol) {
 					options.proto = urlParts.protocol.slice(0, -1);
 				}
@@ -97,11 +98,11 @@ export class HttpClient implements Server.IHttpClient {
 				}
 
 				let responseStream = response;
-				switch (response.headers['content-encoding']) {
-					case 'gzip':
+				switch (response.headers["content-encoding"]) {
+					case "gzip":
 						responseStream = responseStream.pipe(zlib.createGunzip());
 						break;
-					case 'deflate':
+					case "deflate":
 						responseStream = responseStream.pipe(zlib.createInflate());
 						break;
 				}
@@ -127,21 +128,21 @@ export class HttpClient implements Server.IHttpClient {
 
 					responseStream.on("end", () => {
 						this.$logger.trace("httpRequest: Done. code = %d", response.statusCode.toString());
-						let body = data.join("");
+						let responseBody = data.join("");
 
 						if (successful || isRedirect) {
 							if(!result.isResolved()) {
 								result.return({
-									body: body,
+									body: responseBody,
 									response: response,
 									headers: response.headers
 								});
 							}
 						} else {
-							let errorMessage = this.getErrorMessage(response, body);
+							let errorMessage = this.getErrorMessage(response, responseBody);
 							let theError: any = new Error(errorMessage);
 							theError.response = response;
-							theError.body = body;
+							theError.body = responseBody;
 							result.throw(theError);
 						}
 					});
@@ -164,7 +165,7 @@ export class HttpClient implements Server.IHttpClient {
 
 			let response = result.wait();
 			if(helpers.isResponseRedirect(response.response)) {
-				if (response.response.statusCode == 303) {
+				if (response.response.statusCode === 303) {
 					unmodifiedOptions.method = "GET";
 				}
 
@@ -187,11 +188,11 @@ export class HttpClient implements Server.IHttpClient {
 			timeElapsed = progress.runtime;
 
 			if (timeElapsed >= 1) {
-				this.$logger.write("%s%s", carriageReturn, Array(lastMessageSize + 1).join(' '));
+				this.$logger.write("%s%s", carriageReturn, Array(lastMessageSize + 1).join(" "));
 
 				let message = util.format("%sDownload progress ... %s | %s | %s/s",
 					carriageReturn,
-						Math.floor(progress.percentage) + '%',
+					Math.floor(progress.percentage) + "%",
 					filesize(progress.transferred),
 					filesize(progress.speed));
 
@@ -202,7 +203,7 @@ export class HttpClient implements Server.IHttpClient {
 
 		progressStream.on("finish", () => {
 			if (timeElapsed >= 1) {
-				this.$logger.out("%s%s%s%s", carriageReturn, Array(lastMessageSize + 1).join(' '), carriageReturn, "Download completed.");
+				this.$logger.out("%s%s%s%s", carriageReturn, Array(lastMessageSize + 1).join(" "), carriageReturn, "Download completed.");
 			}
 		});
 
@@ -229,7 +230,9 @@ export class HttpClient implements Server.IHttpClient {
 				if (err.Message) {
 					return err.Message;
 				}
-			} catch (parsingFailed) {}
+			} catch (parsingFailed) {
+				return `The server returned unexpected response: ${parsingFailed.toString()}`;
+			}
 
 			return body;
 		}

@@ -81,16 +81,14 @@ export class CommandsService implements ICommandsService {
 		return this.executeCommandUnchecked("help", [this.beautifyCommandName(commandName)]);
 	}
 
-	private executeCommandAction(commandName: string, commandArguments: string[], action: (commandName: string, commandArguments: string[]) => IFuture<boolean>): IFuture<boolean> {
+	private executeCommandAction(commandName: string, commandArguments: string[], action: (_commandName: string, _commandArguments: string[]) => IFuture<boolean>): IFuture<boolean> {
 		return this.$errors.beginCommand(
 			() => action.apply(this, [commandName, commandArguments]),
 			() => this.printHelp(commandName));
 	}
-
-	public tryExecuteCommand(commandName: string, commandArguments: string[]): IFuture<void> {
-		return (() => {
-			let action = (commandName: string, commandArguments: string[]) => {
-				let command = this.$injector.resolveCommand(commandName);
+	
+	private tryExecuteCommandAction(commandName: string, commandArguments: string[]): IFuture<boolean> {
+		let command = this.$injector.resolveCommand(commandName);
 				this.$options.validateOptions(command ? command.dashedOptions : null);
 
 				if(!this.areDynamicSubcommandsRegistered) {
@@ -98,8 +96,11 @@ export class CommandsService implements ICommandsService {
 					this.areDynamicSubcommandsRegistered = true;
 				}
 				return this.canExecuteCommand(commandName, commandArguments);
-			};
-			if(this.executeCommandAction(commandName, commandArguments, action).wait()) {
+	}
+
+	public tryExecuteCommand(commandName: string, commandArguments: string[]): IFuture<void> {
+		return (() => {
+			if(this.executeCommandAction(commandName, commandArguments, this.tryExecuteCommandAction).wait()) {
 				this.executeCommandAction(commandName, commandArguments, this.executeCommandUnchecked).wait();
 			} else {
 				// If canExecuteCommand returns false, the command cannot be executed or there's no such command at all.
@@ -222,7 +223,7 @@ export class CommandsService implements ICommandsService {
 			if(!this.$injector.isDefaultCommand(command)) {
 				command = helpers.stringReplaceAll(command, "|", " ");
 				let distance = jaroWinklerDistance(commandName, command);
-				if(commandName.length > 3 && command.indexOf(commandName) != -1) {
+				if(commandName.length > 3 && command.indexOf(commandName) !== -1) {
 					similarCommands.push({ rating: 1, name: command });
 				} else if(distance >= 0.65) {
 					similarCommands.push({ rating: distance, name: command });
@@ -282,7 +283,7 @@ export class CommandsService implements ICommandsService {
 				if(command) {
 					let completionData = command.completionData;
 					if(completionData) {
-						return tabtab.log(completionData, data)
+						return tabtab.log(completionData, data);
 					}
 				}
 

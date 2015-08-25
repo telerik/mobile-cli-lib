@@ -7,13 +7,13 @@ import fiberBootstrap = require("./fiber-bootstrap");
 export function exported(moduleName: string) {
 	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>) => {
 		$injector.publicApi.__modules__[moduleName] = $injector.publicApi.__modules__[moduleName] || {};
-		$injector.publicApi.__modules__[moduleName][propertyKey] =  (...args: any[]): any => {
+		$injector.publicApi.__modules__[moduleName][propertyKey] = (...args: any[]): any => {
 			return new Promise(function(onFulfilled : Function, onRejected: Function) {
 					let originalModule = $injector.resolve(moduleName);
 					let originalMethod: Function = originalModule[propertyKey];
 					let result: any;
 					try {
-						result = originalMethod.apply(originalModule, args)
+						result = originalMethod.apply(originalModule, args);
 					} catch(err) {
 						onRejected(err);
 						return;
@@ -32,8 +32,8 @@ export function exported(moduleName: string) {
 						onFulfilled(result);
 					}
 				});
-		}
+		};
 
 		return descriptor;
-	}
+	};
 }

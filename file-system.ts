@@ -75,7 +75,7 @@ export class FileSystem implements IFileSystem {
 				zipFile = this.findFileCaseInsensitive(zipFile);
 			}
 
-			let args =  <string[]>(_.flatten(['-b', shouldOverwriteFiles ? "-o" : "-n", isCaseSensitive ? [] : '-C', zipFile, fileFilters || [], '-d', destinationDir]));
+			let args =  <string[]>(_.flatten(["-b", shouldOverwriteFiles ? "-o" : "-n", isCaseSensitive ? [] : "-C", zipFile, fileFilters || [], "-d", destinationDir]));
 
 			let $childProcess = this.$injector.resolve("childProcess");
 			$childProcess.spawnFromEvent(proc, args, "close", { stdio: "ignore", detached: true }).wait();
@@ -209,7 +209,7 @@ export class FileSystem implements IFileSystem {
 	public readText(filename: string, options?: any): IFuture<string> {
 		options = options || { encoding: "utf8" };
 		if (_.isString(options)) {
-			options = { encoding: options }
+			options = { encoding: options };
 		}
 		if (!options.encoding) {
 			options.encoding = "utf8";
@@ -231,7 +231,7 @@ export class FileSystem implements IFileSystem {
 			let data = this.readText(filename, encoding).wait();
 			if(data) {
 				// Replace BOM from the header of the file if it exists
-				return JSON.parse(data.replace(/^\uFEFF/, ''));
+				return JSON.parse(data.replace(/^\uFEFF/, ""));
 			}
 			return null;
 		}).future()();
@@ -417,7 +417,7 @@ export class FileSystem implements IFileSystem {
 			let $childProcess = this.$injector.resolve("childProcess");
 
 			if(!this.$hostInfo.isWindows) {
-				let chown = $childProcess.spawn('chown', ['-R', owner, path],
+				let chown = $childProcess.spawn("chown", ["-R", owner, path],
 					{ stdio: "ignore", detached: true });
 				this.futureFromEvent(chown, "close").wait();
 			}
@@ -426,7 +426,7 @@ export class FileSystem implements IFileSystem {
 	}
 
 // filterCallback: function(path: String, stat: fs.Stats): Boolean
-	public enumerateFilesInDirectorySync(directoryPath: string, filterCallback?: (file: string, stat: IFsStats) => boolean, opts?: { enumerateDirectories?: boolean }, foundFiles?: string[]): string[] {
+	public enumerateFilesInDirectorySync(directoryPath: string, filterCallback?: (_file: string, _stat: IFsStats) => boolean, opts?: { enumerateDirectories?: boolean }, foundFiles?: string[]): string[] {
 		foundFiles = foundFiles || [];
 		let contents = this.readDirectory(directoryPath).wait();
 		for (let i = 0; i < contents.length; ++i) {
@@ -454,17 +454,17 @@ export class FileSystem implements IFileSystem {
 		let logger: ILogger = this.$injector.resolve("$logger");
 		let shasumData = crypto.createHash(encoding);
 		let fileStream = this.createReadStream(fileName);
-		fileStream.on('data',(data: NodeBuffer | string) => {
+		fileStream.on("data", (data: NodeBuffer | string) => {
 			shasumData.update(data);
 		});
 
-		fileStream.on('end', () => {
-			let shasum: string = shasumData.digest('hex');
+		fileStream.on("end", () => {
+			let shasum: string = shasumData.digest("hex");
 			logger.trace(`Shasum of file ${fileName} is ${shasum}`);
 			future.return(shasum);
 		});
 
-		fileStream.on('error', (err: Error) => {
+		fileStream.on("error", (err: Error) => {
 			future.throw(err);
 		});
 
