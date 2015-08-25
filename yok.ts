@@ -59,7 +59,7 @@ import * as path from "path";
 let indent = "";
 function trace(formatStr: string, ...args: any[]) {
 	// uncomment following line when debugging dependency injection
-	//console.log(util.format(indent + formatStr, ...args));
+	// console.log(require('util').format(indent + formatStr, ...args));
 }
 
 function pushIndent() {

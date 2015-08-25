@@ -99,6 +99,10 @@ declare module Mobile {
 		startLookingForDevices(): IFuture<void>;
 	}
 
+	interface IAndroidDeviceDiscovery extends IDeviceDiscovery {
+		ensureAdbServerStarted(): IFuture<void>;
+	}
+
 	interface IDevicesServicesInitializationOptions {
 		platform?: string;
 		deviceId?: string;
