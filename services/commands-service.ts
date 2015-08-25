@@ -86,7 +86,7 @@ export class CommandsService implements ICommandsService {
 			() => action.apply(this, [commandName, commandArguments]),
 			() => this.printHelp(commandName));
 	}
-	
+
 	private tryExecuteCommandAction(commandName: string, commandArguments: string[]): IFuture<boolean> {
 		let command = this.$injector.resolveCommand(commandName);
 				this.$options.validateOptions(command ? command.dashedOptions : null);
@@ -172,8 +172,7 @@ export class CommandsService implements ICommandsService {
 
 					if(argument) {
 						helpers.remove(commandArgsHelper.remainingArguments, arg => arg === argument);
-					}
-					else {
+					} else {
 						this.$errors.fail("Missing mandatory parameter.");
 					}
 				});

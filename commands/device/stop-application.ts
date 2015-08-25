@@ -14,7 +14,7 @@ export class StopApplicationOnDeviceCommand implements ICommand {
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
 			this.$devicesServices.initialize({ deviceId: this.$options.device, skipInferPlatform: true, platform: args[1] }).wait();
-			
+
 			let action = (device: Mobile.IDevice) => device.applicationManager.stopApplication(args[0]);
 			this.$devicesServices.execute(action).wait();
 		}).future<void>()();

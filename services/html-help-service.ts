@@ -116,18 +116,18 @@ export class HtmlHelpService implements IHtmlHelpService {
 
 		return commandName.replace(/\|/g, "-") || "index";
 	}
-	
+
 	private tryOpeningSelectedPage(htmlPage: string): boolean {
 		let fileList = this.$fs.enumerateFilesInDirectorySync(this.pathToHtmlPages);
 		this.$logger.trace("File list: " + fileList);
 		let pageToOpen = _.find(fileList, file => path.basename(file) === htmlPage);
-		
+
 		if(pageToOpen) {
 			this.$logger.trace("Found page to open: '%s'", pageToOpen);
 			this.$opener.open(pageToOpen);
 			return true;
-		} 
-		
+		}
+
 		this.$logger.trace("Unable to find file: '%s'", htmlPage);
 		return false;
 	}
@@ -140,7 +140,7 @@ export class HtmlHelpService implements IHtmlHelpService {
 			let markdownFile = _.find(this.$fs.enumerateFilesInDirectorySync(this.pathToManPages), file => path.basename(file) === mdFileName);
 			if(markdownFile) {
 				return this.$fs.readText(markdownFile).wait();
-			} 
+			}
 
 			this.$errors.failWithoutHelp("Unknown command '%s'. Try '$ %s help' for a full list of supported commands.", mdFileName.replace(".md", ""), this.$staticConfig.CLIENT_NAME.toLowerCase());
 		}).future<string>()();

@@ -280,18 +280,17 @@ export class Yok implements IInjector {
 				if(!fullCommandName) {
 					// The passed arguments are not one of the subCommands.
 					// Check if the default command accepts arguments - if no, return false;
-					
 					let defaultCommand = this.resolveCommand(`${commandName}|${defaultCommandName}`);
 					if(defaultCommand) {
 						if (defaultCommand.canExecute) {
 							return defaultCommand.canExecute(commandArguments).wait();
-						} 
+						}
 
 						if (defaultCommand.allowedParameters.length > 0) {
 							return true;
 						}
-					} 
-					
+					}
+
 					let errors = $injector.resolve("errors");
 					errors.fail("The input is not valid sub-command for '%s' command", commandName);
 				}
@@ -345,7 +344,7 @@ export class Yok implements IInjector {
 	/* Regex to match dynamic calls in the following format:
 		#{moduleName.functionName} or
 		#{moduleName.functionName(param1)} or
-		#{moduleName.functionName(param1, param2)} - multiple parameters separated with comma are supported 
+		#{moduleName.functionName(param1, param2)} - multiple parameters separated with comma are supported
 		Check dynamicCall method for sample usage of this regular expression and see how to determine the passed parameters
 	*/
 	public get dynamicCallRegex(): RegExp {

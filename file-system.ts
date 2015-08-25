@@ -55,7 +55,8 @@ export class FileSystem implements IFileSystem {
 		return result;
 	}
 
-	public unzip(zipFile: string, destinationDir: string, options?: { overwriteExisitingFiles?: boolean; caseSensitive?: boolean}, fileFilters?: string[]): IFuture<void> {
+	public unzip(zipFile: string, destinationDir: string, options?: { overwriteExisitingFiles?: boolean; caseSensitive?: boolean},
+			fileFilters?: string[]): IFuture<void> {
 		return (() => {
 			let shouldOverwriteFiles = !(options && options.overwriteExisitingFiles === false);
 			let isCaseSensitive = !(options && options.caseSensitive === false);
@@ -75,7 +76,13 @@ export class FileSystem implements IFileSystem {
 				zipFile = this.findFileCaseInsensitive(zipFile);
 			}
 
-			let args =  <string[]>(_.flatten(["-b", shouldOverwriteFiles ? "-o" : "-n", isCaseSensitive ? [] : "-C", zipFile, fileFilters || [], "-d", destinationDir]));
+			let args =  _.flatten<string>(["-b",
+				shouldOverwriteFiles ? "-o" : "-n",
+				isCaseSensitive ? [] : "-C",
+				zipFile,
+				fileFilters || [],
+				"-d",
+				destinationDir]);
 
 			let $childProcess = this.$injector.resolve("childProcess");
 			$childProcess.spawnFromEvent(proc, args, "close", { stdio: "ignore", detached: true }).wait();
@@ -426,7 +433,9 @@ export class FileSystem implements IFileSystem {
 	}
 
 // filterCallback: function(path: String, stat: fs.Stats): Boolean
-	public enumerateFilesInDirectorySync(directoryPath: string, filterCallback?: (_file: string, _stat: IFsStats) => boolean, opts?: { enumerateDirectories?: boolean }, foundFiles?: string[]): string[] {
+	public enumerateFilesInDirectorySync(directoryPath: string,
+			filterCallback?: (_file: string, _stat: IFsStats) => boolean,
+			opts?: { enumerateDirectories?: boolean }, foundFiles?: string[]): string[] {
 		foundFiles = foundFiles || [];
 		let contents = this.readDirectory(directoryPath).wait();
 		for (let i = 0; i < contents.length; ++i) {

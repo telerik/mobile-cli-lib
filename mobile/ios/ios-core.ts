@@ -5,15 +5,15 @@ import * as path from "path";
 import ref = require("ref");
 import ffi = require("ffi");
 import struct = require("ref-struct");
-import bufferpack = require("bufferpack");
-import plistlib = require("plistlib");
-import plist = require("plist");
+import * as bufferpack from "bufferpack";
+import * as plistlib from "plistlib";
+import * as plist from "plist";
 import * as helpers from "../../helpers";
 import * as net from "net";
 import * as util from "util";
 import Future = require("fibers/future");
-import bplistParser = require("bplist-parser");
-import string_decoder = require("string_decoder");
+import * as bplistParser from "bplist-parser";
+import * as string_decoder from "string_decoder";
 import * as stream from "stream";
 import * as assert from "assert";
 
@@ -588,7 +588,7 @@ export class MobileDevice implements Mobile.IMobileDevice {
 	public afcDirectoryCreate(afcConnection: NodeBuffer, path: string): number {
 		return this.mobileDeviceLibrary.AFCDirectoryCreate(afcConnection, path);
 	}
-	
+
 	public afcFileInfoOpen(afcConnection: NodeBuffer, path: string, afcDirectory: NodeBuffer): number {
 		return this.mobileDeviceLibrary.AFCFileInfoOpen(afcConnection, path, afcDirectory);
 	}
@@ -696,8 +696,7 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 
 		if(typeof(data) === "string") {
 			message = new Buffer(data);
-		}
-		else {
+		} else {
 			let payload:NodeBuffer = new Buffer(plistlib.toString(this.createPlist(data)));
 			let packed:any = bufferpack.pack(">i", [payload.length]);
 			message = Buffer.concat([packed, payload]);
@@ -865,8 +864,7 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 										} catch (e) {
 											this.$logger.trace("Failed to retreive state: " + e);
 										}
-									}
-									catch (e) {
+									} catch (e) {
 										this.$logger.trace("Failed to parse bplist: " + e);
 									}
 
@@ -1084,7 +1082,7 @@ export class GDBServer implements Mobile.IGDBServer {
 			};
 		}
 	}
-	
+
 	public init(): IFuture<void> {
 		return (() => {
 			this.send("QStartNoAckMode");
@@ -1093,16 +1091,16 @@ export class GDBServer implements Mobile.IGDBServer {
 			this.send("QSetDisableASLR:1");
 		}).future<void>()();
 	}
-	
+
 	public run(argv: string[]): IFuture<void> {
 		return (() => {
 			this.init().wait();
-			
+
 			let encodedArguments = _.map(argv, (arg, index) => util.format("%d,%d,%s", arg.length * 2, index, this.toHex(arg))).join(",");
 			this.send("A" + encodedArguments);
-	
+
 			this.send("qLaunchSuccess");
-	
+
 			if(this.$hostInfo.isWindows) {
 				this.send("vCont;c");
 			} else {
@@ -1117,14 +1115,14 @@ export class GDBServer implements Mobile.IGDBServer {
 			}
 		}).future<void>()();
 	}
-	
+
 	public kill(bundleExecutableName?: string): IFuture<void> {
 		return (() => {
 			this.init().wait();
-			
+
 			let bundleExecutableNameHex = this.toHex(bundleExecutableName);
-			this.send(`vAttachName;${bundleExecutableNameHex}`);	
-			this.send("k");					
+			this.send(`vAttachName;${bundleExecutableNameHex}`);
+			this.send("k");
 		}).future<void>()();
 	}
 
@@ -1133,7 +1131,7 @@ export class GDBServer implements Mobile.IGDBServer {
 		this.$logger.trace(`GDB: sending ${data}`);
 		this.socket.write(data);
 	}
-	
+
 	private createData(packet: string): string {
 		let sum = 0;
 		for(let i = 0; i < packet.length; i++) {
@@ -1144,7 +1142,7 @@ export class GDBServer implements Mobile.IGDBServer {
 		let data = util.format("$%s#%s", packet, sum.toString(16));
 		return data;
 	}
-	
+
 	private toHex(value: string): string {
 		return new Buffer(value).toString("hex");
 	}

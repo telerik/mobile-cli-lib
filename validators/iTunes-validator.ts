@@ -1,8 +1,7 @@
 ///<reference path="../.d.ts"/>
-
 "use strict";
 
-import path = require("path");
+import * as path from "path";
 
 export class ITunesValidator implements Mobile.IiTunesValidator {
 	private static NOT_INSTALLED_iTUNES_ERROR_MESSAGE = "iTunes is not installed. Install it on your system and run this command again.";
@@ -39,7 +38,7 @@ export class ITunesValidator implements Mobile.IiTunesValidator {
 				if(!this.isiTunesInstalledOnWindows(commonProgramFiles).wait()) {
 					return ITunesValidator.NOT_INSTALLED_iTUNES_ERROR_MESSAGE;
 				}
-				
+
 				return null;
 			} else if(this.$hostInfo.isDarwin) {
 				let coreFoundationDir = "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation";

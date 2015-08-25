@@ -34,7 +34,10 @@ export class AndroidApplicationManager implements Mobile.IDeviceApplicationManag
 	}
 
 	public startApplication(appIdentifier: string): IFuture<void> {
-		return this.adb.executeShellCommand(["am", "start", "-a", "android.intent.action.MAIN", "-n", `${appIdentifier}/${this.$staticConfig.START_PACKAGE_ACTIVITY_NAME}`, "-c", "android.intent.category.LAUNCHER"]);
+		return this.adb.executeShellCommand(["am", "start",
+			"-a", "android.intent.action.MAIN",
+			"-n", `${appIdentifier}/${this.$staticConfig.START_PACKAGE_ACTIVITY_NAME}`,
+			"-c", "android.intent.category.LAUNCHER"]);
 	}
 
 	public stopApplication(appIdentifier: string): IFuture<void> {

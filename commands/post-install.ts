@@ -17,7 +17,8 @@ export class PostInstallCommand implements ICommand {
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
 			if(process.platform !== "win32") {
-				// when running under 'sudo' we create a working dir with wrong owner (root) and it is no longer accessible for the user initiating the installation
+				// when running under 'sudo' we create a working dir with wrong owner (root) and
+				// it is no longer accessible for the user initiating the installation
 				// patch the owner here
 				if (process.env.SUDO_USER) {
 					this.$fs.setCurrentUserAsOwner(this.$options.profileDir, process.env.SUDO_USER).wait();

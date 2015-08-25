@@ -1,8 +1,7 @@
 ///<reference path=".d.ts"/>
 "use strict";
 
-import path = require("path");
-import util = require("util");
+import * as path from "path";
 
 export class ProjectHelper implements IProjectHelper {
 	constructor(private $logger: ILogger,
@@ -23,7 +22,6 @@ export class ProjectHelper implements IProjectHelper {
 		while (true) {
 			this.$logger.trace("Looking for project in '%s'", projectDir);
 			let projectFilePath = path.join(projectDir, this.$staticConfig.PROJECT_FILE_NAME);
-			
 
 			if (this.$fs.exists(projectFilePath).wait() && this.isProjectFileCorrect(projectFilePath)) {
 				this.$logger.debug("Project directory is '%s'.", projectDir);
@@ -52,14 +50,14 @@ export class ProjectHelper implements IProjectHelper {
 			sanitizedName = "the";
 		}
 
-		return util.format("%s.%s", baseAppId, sanitizedName);
+		return `${baseAppId}.${sanitizedName}`;
 	}
 
 	public sanitizeName(appName: string): string {
 		let sanitizedName = _.filter(appName.split(""), (c) => /[a-zA-Z0-9]/.test(c)).join("");
 		return sanitizedName;
 	}
-	
+
 	private isProjectFileCorrect(projectFilePath: string): boolean {
 		if(this.$staticConfig.CLIENT_NAME_KEY_IN_PROJECT_FILE) {
 			try {
@@ -70,7 +68,7 @@ export class ProjectHelper implements IProjectHelper {
 				this.$errors.failWithoutHelp("The project file is corrupted. Additional technical information: %s", err);
 			}
 		}
-		
+
 		return true;
 	}
 }

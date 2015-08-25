@@ -4,7 +4,7 @@
 export class Utils implements IUtils {
 	constructor(private $options: ICommonOptions,
 		private $logger: ILogger) { }
-		
+
 	public getParsedTimeout(defaultTimeout: number): number {
 		let timeout = defaultTimeout;
 		if(this.$options.timeout) {
@@ -15,10 +15,10 @@ export class Utils implements IUtils {
 				this.$logger.warn("Specify timeout in a number of seconds to wait. Default value: " + timeout + " seconds will be used.");
 			}
 		}
-		
+
 		return timeout;
 	}
-	
+
 	public getMilliSecondsTimeout(defaultTimeout: number): number {
 		let timeout = this.getParsedTimeout(defaultTimeout);
 		return timeout * 1000;

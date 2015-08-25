@@ -72,14 +72,14 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		let afcClient = this.resolveAfc();
 		return afcClient.transfer(path.resolve(localFilePath), deviceFilePath);
 	}
-	
+
 	public deleteFile(deviceFilePath: string, appIdentifier: string): void {
 		let houseArrestClient: Mobile.IHouseArrestClient = this.$injector.resolve(iOSProxyServices.HouseArrestClient, {device: this.device});
 		let afcClientForContainer = houseArrestClient.getAfcClientForAppContainer(appIdentifier);
 		afcClientForContainer.deleteFile(deviceFilePath);
 		houseArrestClient.closeSocket();
 	}
-	
+
 	public transferFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void> {
 		return (() => {
 			let houseArrestClient: Mobile.IHouseArrestClient = this.$injector.resolve(iOSProxyServices.HouseArrestClient, { device: this.device });
@@ -92,14 +92,14 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 			});
 			houseArrestClient.closeSocket();
 		}).future<void>()();
-	}	
-	
+	}
+
 	private resolveAfc(): Mobile.IAfcClient {
 		let service = this.$options.app ? this.startHouseArrestService(this.$options.app) : this.device.startService(iOSProxyServices.MobileServices.APPLE_FILE_CONNECTION);
 		let afcClient:Mobile.IAfcClient = this.$injector.resolve(iOSProxyServices.AfcClient, {service: service});
 		return afcClient;
 	}
-	
+
 	private startHouseArrestService(bundleId: string): number {
 		let func = () => {
 			let fdRef = ref.alloc("int");

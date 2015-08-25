@@ -230,7 +230,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 				this.$childProcess.spawn('emulator', ['-avd', image],
 					{ stdio: "ignore", detached: true }).unref();
 			}
-			
+
 			let isInfiniteWait = this.$utils.getMilliSecondsTimeout(AndroidEmulatorServices.TIMEOUT_SECONDS) === 0;
 			let hasTimeLeft = helpers.getCurrentEpochTime() < this.endTimeEpoch;
 
@@ -258,7 +258,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 				.map(row => {
 					let match = row.match(/^(.+?)\s+device$/);
 					if(match && match[1]) {
-						// possible genymotion emulator 
+						// possible genymotion emulator
 						let emulatorId = match[1];
 						return this.checkForGenymotionProductManufacturer(emulatorId);
 					}
