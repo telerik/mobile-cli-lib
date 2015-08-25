@@ -1,15 +1,9 @@
 ///<reference path="../../.d.ts"/>
-
+"use strict";
 import ref = require("ref");
-import ffi = require("ffi");
-import os = require("os");
-import path = require("path");
-import iOSCore = require("./ios-core");
-import Future = require("fibers/future");
-import util = require("util");
-import helpers = require("./../../helpers");
-import net = require("net");
-import MobileHelpers = require("./../mobile-helper");
+import * as path from "path";
+import * as iOSCore from "./ios-core";
+import * as helpers from "../../helpers";
 import plistlib = require("plistlib");
 
 export class MobileServices {
@@ -224,7 +218,7 @@ export class InstallationProxyClient {
 				Command: "Install",
 				PackagePath: helpers.fromWindowsRelativePathToUnix(devicePath)
 			});
-			let message = this.plistService.receiveMessage().wait();
+			this.plistService.receiveMessage().wait();
 			this.$logger.info("Successfully deployed on device %s", this.device.deviceInfo.identifier);
 		}).future<void>()();
 	}
@@ -255,7 +249,7 @@ export class NotificationProxyClient implements Mobile.INotificationProxyClient 
 		this.postNotificationCore(notificationName);
 	}
 
-	public addObserver(name: string, callback: (name: string) => void) {
+	public addObserver(name: string, callback: (_name: string) => void) {
 		this.openSocket();
 
 		let result = this.plistService.sendMessage({
@@ -273,7 +267,7 @@ export class NotificationProxyClient implements Mobile.INotificationProxyClient 
 		return result;
 	}
 
-	public removeObserver(name: string, callback: (name: string) => void) {
+	public removeObserver(name: string, callback: (_name: string) => void) {
 		let array = this.observers[name];
 		if (array) {
 			let index = array.indexOf(callback);
@@ -329,19 +323,23 @@ export class NotificationProxyClient implements Mobile.INotificationProxyClient 
 	}
 
 	private handlePlistNotification(plist: any) {
-		if (plist.type !== "dict")
+		if (plist.type !== "dict") {
 			return;
+		}
 		let value = plist.value;
-		if (!value)
+		if (!value) {
 			return;
+		}
 		let command = value["Command"];
-		let name = value["Name"]
-		if (command.type !== "string" || command.value !== "RelayNotification" || name.type !== "string")
+		let name = value["Name"];
+		if (command.type !== "string" || command.value !== "RelayNotification" || name.type !== "string") {
 			return;
+		}
 		let notification = name.value;
 		let observers = this.observers[notification];
-		if (!observers)
+		if (!observers) {
 			return;
+		}
 
 		observers.forEach(observer => observer(notification));
 	}
@@ -351,7 +349,7 @@ export class HouseArrestClient implements Mobile.IHouseArrestClient {
 	private plistService: Mobile.IiOSDeviceSocket = null;
 	private static PREDEFINED_ERRORS: IStringDictionary = {
 		ApplicationLookupFailed: "Unable to find the application on a connected device. Ensure that the application is installed and try again."
-	}
+	};
 
 	constructor(private device: Mobile.IiOSDevice,
 		private $injector: IInjector,
@@ -403,7 +401,6 @@ export class IOSSyslog {
 				this.$logger.write(output);
 			}
 		};
-
 
 		this.plistService.readSystemLog(printData);
 	}

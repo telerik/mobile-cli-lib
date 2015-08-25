@@ -1,11 +1,9 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 
-import * as util from "util";
-
 interface IComposeCommandResult {
 	command: string;
-	args: string[]
+	args: string[];
 }
 
 export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
@@ -14,7 +12,6 @@ export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 		private $errors: IErrors,
 		private $logger: ILogger,
 		private $staticConfig: Config.IStaticConfig) { }
-
 
 	public executeCommand(args: string[]): IFuture<any> {
 		return (() => {

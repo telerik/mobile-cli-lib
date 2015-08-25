@@ -26,7 +26,7 @@ export class IOSApplicationManager implements Mobile.IDeviceApplicationManager {
 			this.uninstallApplicationCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSApplicationManager.uninstallCallback); 
 		}
 		
-	private static uninstallCallback(dictionary: NodeBuffer, user: NodeBuffer): void { }
+	private static uninstallCallback(dictionary: NodeBuffer, user: NodeBuffer): void { /* intentionally empty body */ }
 		
 	public getInstalledApplications():  IFuture<string[]> {
 		return (() => {
@@ -96,7 +96,7 @@ export class IOSApplicationManager implements Mobile.IDeviceApplicationManager {
 			let cfDictionary = dictionaryPointer.deref();
 			let jsDictionary = this.$coreFoundation.cfTypeTo(cfDictionary);
 			return jsDictionary;
-		}
+		};
 
 		return this.device.tryExecuteFunction<IDictionary<Mobile.IDeviceApplication>>(func);
 	}

@@ -2,8 +2,8 @@
 "use strict";
 
 let gaze = require("gaze");
-import path = require("path");
-import os = require("os");
+import * as path from "path";
+import * as os from "os";
 import Future = require("fibers/future");
 let hostInfo = $injector.resolve("hostInfo");
 
@@ -69,6 +69,7 @@ class CancellationService implements ICancellationService {
 
 class CancellationServiceDummy implements ICancellationService {
 	dispose():void {
+		/* intentionally left blank */
 	}
 
 	begin(name:string):IFuture<void> {
@@ -76,6 +77,7 @@ class CancellationServiceDummy implements ICancellationService {
 	}
 
 	end(name:string):void {
+		/* intentionally left blank */
 	}
 }
 

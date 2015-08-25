@@ -1,11 +1,7 @@
 ///<reference path=".d.ts"/>
 "use strict";
 
-import Fiber = require("fibers");
-import Future = require("fibers/future");
-import util = require("util");
 import queue = require("./queue");
-import path = require("path");
 
 export class CommandDispatcher implements ICommandDispatcher {
 	constructor(private $logger: ILogger,

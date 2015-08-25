@@ -1,7 +1,6 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 import * as os from "os";
-import Future = require("fibers/future");
 
 export class AndroidApplicationManager implements Mobile.IDeviceApplicationManager {
 	private _installedApplications: string[];

@@ -1,11 +1,9 @@
 ///<reference path="../.d.ts"/>
 "use strict";
 
-import helpers = require("./../helpers");
 import minimatch = require("minimatch");
-import path = require("path");
-import util = require("util");
-
+import * as path from "path";
+import * as util from "util";
 let gaze = require("gaze");
 
 interface IProjectFileInfo {
@@ -42,12 +40,12 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 		
 	public sync(platform: string, appIdentifier: string, projectFilesPath: string, excludedProjectDirsAndFiles: string[], watchGlob: any,
 		platformSpecificLiveSyncServices: IDictionary<any>,		
-		restartAppOnDeviceAction: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData, localToDevicePaths?: Mobile.ILocalToDevicePathData[]) => IFuture<void>,
-		notInstalledAppOnDeviceAction: (device: Mobile.IDevice) => IFuture<void>,
+		restartAppOnDeviceAction: (_device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData, localToDevicePaths?: Mobile.ILocalToDevicePathData[]) => IFuture<void>,
+		notInstalledAppOnDeviceAction: (_device1: Mobile.IDevice) => IFuture<void>,
 		notRunningiOSSimulatorAction: () => IFuture<void>,
 		localProjectRootPath?: string,
-		beforeLiveSyncAction?: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData) => IFuture<void>,
-		beforeBatchLiveSyncAction?: (filePath: string) => IFuture<string>,
+		beforeLiveSyncAction?: (_device2: Mobile.IDevice, _deviceAppData: Mobile.IDeviceAppData) => IFuture<void>,
+		beforeBatchLiveSyncAction?: (_filePath: string) => IFuture<string>,
 		iOSSimulatorRelativeToProjectBasePathAction?: (projectFile: string) => string): IFuture<void> {
 		return (() => {
 			let synciOSSimulator = this.$hostInfo.isDarwin ? this.$iOSEmulatorServices.isSimulatorRunning().wait() || (this.$options.emulator && platform.toLowerCase() === "ios") : false;
@@ -61,7 +59,10 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 			}
 			
 			if(!this.$options.emulator || platform.toLowerCase() === "android") {
-				let projectFiles = this.$fs.enumerateFilesInDirectorySync(projectFilesPath, (filePath, stat) => !this.isFileExcluded(path.relative(projectFilesPath, filePath), excludedProjectDirsAndFiles, projectFilesPath), { enumerateDirectories: true});
+				let projectFiles = this.$fs.enumerateFilesInDirectorySync(projectFilesPath, 
+					(filePath, stat) => !this.isFileExcluded(path.relative(projectFilesPath, filePath), excludedProjectDirsAndFiles, projectFilesPath),
+					{ enumerateDirectories: true }
+				);
 				this.syncCore(platform, projectFiles, appIdentifier, localProjectRootPath || projectFilesPath, platformSpecificLiveSyncServices, restartAppOnDeviceAction, notInstalledAppOnDeviceAction, beforeLiveSyncAction).wait();
 			}
 			
@@ -91,9 +92,9 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 	
 	private syncCore(platform: string, projectFiles: string[], appIdentifier: string, projectFilesPath: string, 
 		platformSpecificLiveSyncServices: IDictionary<any>,
-		restartAppOnDeviceAction: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData, localToDevicePaths?: Mobile.ILocalToDevicePathData[]) => IFuture<void>,
-		notInstalledAppOnDeviceAction: (device: Mobile.IDevice) => IFuture<void>,
-		beforeLiveSyncAction?: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData) => IFuture<void>): IFuture<void> {
+		restartAppOnDeviceAction: (_device: Mobile.IDevice, _deviceAppData: Mobile.IDeviceAppData, _localToDevicePaths?: Mobile.ILocalToDevicePathData[]) => IFuture<void>,
+		notInstalledAppOnDeviceAction: (_device1: Mobile.IDevice) => IFuture<void>,
+		beforeLiveSyncAction?: (_device2: Mobile.IDevice, _deviceAppData1: Mobile.IDeviceAppData) => IFuture<void>): IFuture<void> {
 		return (() => {
 			platform = platform ? this.$mobileHelper.normalizePlatformName(platform) : this.$devicesServices.platform;
 			let deviceAppData = this.$deviceAppDataFactory.create(appIdentifier, platform);
@@ -123,25 +124,25 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 						this.$logger.info("Successfully transferred all project files.");
 						
 						this.$logger.info("Applying changes...");
-						let platformSpecificLiveSyncService = this.resolvePlatformSpecificLiveSyncService(platform, device, platformSpecificLiveSyncServices)
+						let platformSpecificLiveSyncService = this.resolvePlatformSpecificLiveSyncService(platform, device, platformSpecificLiveSyncServices);
 						platformSpecificLiveSyncService.restartApplication(deviceAppData, localToDevicePaths).wait();
 						this.$logger.info(`Successfully synced application ${deviceAppData.appIdentifier}.`);
 					}
 				}).future<void>()();
-			}
+			};
 			
 			this.$devicesServices.execute(action).wait();
 		}).future<void>()();
 	}
 
-	private timer: any= null;
+	private timer: NodeJS.Timer = null;
 	private syncQueue: string[] = [];
 	private batchLiveSync(platform: string, filePath: string, appIdentifier: string, projectFilesPath: string, 
 		platformSpecificLiveSyncServices: IDictionary<any>,
 		restartAppOnDeviceAction: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData, localToDevicePaths?: Mobile.ILocalToDevicePathData[]) => IFuture<void>,
-		notInstalledAppOnDeviceAction: (device: Mobile.IDevice) => IFuture<void>,
-		beforeLiveSyncAction?: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData) => IFuture<void>,
-		beforeBatchLiveSyncAction?: (filePath: string) => IFuture<string>) : void {
+		notInstalledAppOnDeviceAction: (_device: Mobile.IDevice) => IFuture<void>,
+		beforeLiveSyncAction?: (_device1: Mobile.IDevice, _deviceAppData: Mobile.IDeviceAppData) => IFuture<void>,
+		beforeBatchLiveSyncAction?: (_filePath: string) => IFuture<string>) : void {
 		if(!this.timer) {
 			this.timer = setInterval(() => {
 				let filesToSync = this.syncQueue;
@@ -157,7 +158,9 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 			}, 500);
 		}
 
-		this.$dispatcher.dispatch( () => (() => { this.syncQueue.push(beforeBatchLiveSyncAction ? beforeBatchLiveSyncAction(filePath).wait() : filePath) }).future<void>()());
+		this.$dispatcher.dispatch( () => (() => { 
+			this.syncQueue.push(beforeBatchLiveSyncAction ? beforeBatchLiveSyncAction(filePath).wait() : filePath); 
+		}).future<void>()());
 	} 
 	
 	private isFileExcluded(path: string, exclusionList: string[], projectDir: string): boolean {

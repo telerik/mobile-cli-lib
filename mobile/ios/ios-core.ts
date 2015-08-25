@@ -1,23 +1,21 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 
-import path = require("path");
+import * as path from "path";
 import ref = require("ref");
 import ffi = require("ffi");
 import struct = require("ref-struct");
 import bufferpack = require("bufferpack");
 import plistlib = require("plistlib");
 import plist = require("plist");
-import helpers = require("../../helpers");
-import hostInfo = require("../../host-info");
-import net = require("net");
-import util = require("util");
+import * as helpers from "../../helpers";
+import * as net from "net";
+import * as util from "util";
 import Future = require("fibers/future");
 import bplistParser = require("bplist-parser");
 import string_decoder = require("string_decoder");
-import stream = require("stream");
-import assert = require("assert");
-import readline = require("readline");
+import * as stream from "stream";
+import * as assert from "assert";
 
 export class CoreTypes {
 	public static pointerSize = ref.types.size_t.size;
@@ -116,10 +114,6 @@ class IOSCore implements Mobile.IiOSCore {
 
 	private get CommonProgramFilesPath(): string {
 		return process.env.CommonProgramFiles;
-	}
-
-	private is32BitProcess(): boolean {
-		return ref.types.size_t.size === 4;
 	}
 
 	private getForeignPointer(lib: ffi.DynamicLibrary, name: string, type: ref.Type): NodeBuffer {
@@ -396,7 +390,6 @@ export class CoreFoundation implements  Mobile.ICoreFoundation {
 				let status = this.stringGetCString(cfstr, stringBuffer, length, IOSCore.kCFStringEncodingUTF8 );
 				if (status) {
 					result = stringBuffer.toString("utf8", 0, cfstrLength);
-				} else {
 				}
 			} else {
 				result = ref.readCString(rawData, 0);
@@ -725,7 +718,7 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 		}
 	}
 
-	public receiveAll(handler: (data: NodeBuffer) => void): void {
+	public receiveAll(handler: (_data: NodeBuffer) => void): void {
 		let data = this.read(WinSocket.BYTES_TO_READ);
 		while (data) {
 			handler(data);
@@ -782,7 +775,7 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 			let value: any;
 			if(values[i] instanceof Buffer) {
 				type = "data";
-				value = values[i].toString("base64")
+				value = values[i].toString("base64");
 			} else if(values[i] instanceof Object) {
 				type = "dict";
 				value = {};
@@ -802,7 +795,6 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 		return plistData;
 	}
 }
-
 
 enum ReadState {
     Length,
@@ -894,6 +886,7 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 					try {
 						parsedData = plist.parse(this.buffer.toString());
 					} catch (e) {
+						this.$logger.trace(`An error has occured: ${e.toString()}`);
 					}
 
 					if (!result.isResolved()) {
@@ -910,7 +903,7 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 		return result;
 	}
 
-	public readSystemLog(action: (data: NodeBuffer) => void) {
+	public readSystemLog(action: (_data: NodeBuffer) => void) {
 		this.socket
 			.on("data", (data: NodeBuffer) => {
 				action(data);
@@ -1047,7 +1040,7 @@ class GDBStandardOutputAdapter extends stream.Transform {
 				}
 			}
 
-			done(null, result)
+			done(null, result);
 		} catch (e) {
 			done(e);
 		}
@@ -1088,7 +1081,7 @@ export class GDBServer implements Mobile.IGDBServer {
 				write: (message: string): void => {
 					winSocket.sendMessage(message);
 				}
-			}
+			};
 		}
 	}
 	
@@ -1133,21 +1126,6 @@ export class GDBServer implements Mobile.IGDBServer {
 			this.send(`vAttachName;${bundleExecutableNameHex}`);	
 			this.send("k");					
 		}).future<void>()();
-	}
-	
-	private asyncSend(packet: string): IFuture<any> {
-		let future = new Future<any>();
-		let data = this.createData(packet);
-		
-		this.socket.write(data, "utf8", (err: Error, response: any) => {
-			if(err) {
-				future.throw(err);
-			} else {
-				future.return(response);
-			}
-		});
-		
-		return future;
 	}
 
 	private send(packet: string): void {

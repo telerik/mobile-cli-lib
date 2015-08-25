@@ -3,7 +3,6 @@
 
 import Future = require("fibers/future");
 import * as child_process from "child_process";
-import * as util from "util";
 
 export class ChildProcess implements IChildProcess {
 	constructor(private $logger: ILogger,
@@ -33,7 +32,7 @@ export class ChildProcess implements IChildProcess {
 	public execFile(command: string, args: string[]): IFuture<any> {
 		this.$logger.debug("execFile: %s %s", command, args.join(" "));
 		let future = new Future<any>();
-		let result = child_process.execFile(command, args, (error: any, stdout: NodeBuffer) => {
+		child_process.execFile(command, args, (error: any, stdout: NodeBuffer) => {
 			if(error) {
 				future.throw(error);
 			} else {
@@ -53,8 +52,8 @@ export class ChildProcess implements IChildProcess {
 		let future = new Future<ISpawnResult>();
 		let childProcess = this.spawn(command, args, options);
 
-		let capturedOut = '';
-		let capturedErr = '';
+		let capturedOut = "";
+		let capturedErr = "";
 
 		if(childProcess.stdout) {
 			childProcess.stdout.on("data", (data: string) => {
@@ -69,7 +68,7 @@ export class ChildProcess implements IChildProcess {
 		}
 
 		childProcess.on(event, (arg: any) => {
-			let exitCode = typeof arg === 'number' ? arg : arg && arg.code;
+			let exitCode = typeof arg === "number" ? arg : arg && arg.code;
 			let result = {
 				stdout: capturedOut,
 				stderr: capturedErr,
@@ -82,9 +81,9 @@ export class ChildProcess implements IChildProcess {
 				if (exitCode === 0) {
 					future.return(result);
 				} else {
-					let errorMessage = util.format('Command %s failed with exit code %d', command, exitCode);
+					let errorMessage = `Command ${command} failed with exit code ${exitCode}`;
 					if (capturedErr) {
-						errorMessage += util.format(' Error output: \n %s', capturedErr);
+						errorMessage += ` Error output: \n ${capturedErr}`;
 					}
 
 					if(!future.isResolved()) {
@@ -103,7 +102,7 @@ export class ChildProcess implements IChildProcess {
 		return future;
 	}
 
-	public tryExecuteApplication(command: string, args: string[], event: string, errorMessage: string, condition: (childProcess: any) => boolean): IFuture<any> {
+	public tryExecuteApplication(command: string, args: string[], event: string, errorMessage: string, condition: (_childProcess: any) => boolean): IFuture<any> {
 		return (() => {
 			let childProcess = this.tryExecuteApplicationCore(command, args, event, errorMessage).wait();
 

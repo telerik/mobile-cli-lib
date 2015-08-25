@@ -1,8 +1,7 @@
 ///<reference path=".d.ts"/>
 "use strict";
-import * as path from "path";
 import * as util from "util";
-import helpers = require("./helpers");
+import * as helpers from "./helpers";
 import yargs = require("yargs");
 
 export class OptionType {
@@ -15,7 +14,6 @@ export class OptionType {
 
 export class OptionsBase {
 	private optionsWhiteList = ["ui", "recursive", "reporter", "require", "timeout", "_", "$0"]; // These options shouldn't be validated
-	private _parsed: any[];
 	public argv: IYargArgv;
 	private static GLOBAL_OPTIONS: IDictionary<IDashedOption> = {
 		"log": { type: OptionType.String },
@@ -39,10 +37,10 @@ export class OptionsBase {
 	}
 
 	public get shorthands(): string[] {
-		var result: string[] = [];
+		let result: string[] = [];
 		_.each(_.keys(this.options), optionName => {
 			if(this.options[optionName].alias) {
-				result.push(this.options[optionName].alias)
+				result.push(this.options[optionName].alias);
 			}
 		});
 		return result;
@@ -69,7 +67,7 @@ export class OptionsBase {
 			"force": { type: OptionType.Boolean, alias: "f" },
 			"companion": { type: OptionType.Boolean },
 			"emulator": { type: OptionType.Boolean }
-		}
+		};
 	}
 
 	private get optionNames(): string[] {
@@ -126,7 +124,7 @@ export class OptionsBase {
 
 	private getOptionType(optionName: string): string {
 		let option = this.options[optionName] || this.tryGetOptionByAliasName(optionName);
-		return option ? option.type : ""
+		return option ? option.type : "";
 	}
 
 	private tryGetOptionByAliasName(aliasName: string) {

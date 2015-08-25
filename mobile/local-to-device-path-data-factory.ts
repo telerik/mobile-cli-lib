@@ -1,10 +1,9 @@
 ///<reference path="../.d.ts"/>
 "use strict";
-import helpers = require("./../helpers");
-import path = require("path");
+import * as helpers from "../helpers";
+import * as path from "path";
 
 export class LocalToDevicePathData implements Mobile.ILocalToDevicePathData {
-	private localPath: string;
 	private devicePath: string;
 	private relativeToProjectBasePath: string;
 	

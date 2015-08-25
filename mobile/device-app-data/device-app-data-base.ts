@@ -1,9 +1,8 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 
-import path = require("path");
-import helpers = require("../../helpers");
-import constants = require("../constants");
+import * as helpers from "../../helpers";
+import * as constants from "../constants";
 
 export class DeviceAppDataBase {
 	constructor(private _appIdentifier: string) { }

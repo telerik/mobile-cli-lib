@@ -1,19 +1,14 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 
-import Future = require("fibers/future");
-import net = require("net");
+import * as net from "net";
 import ref = require("ref");
-import os = require("os");
-import path = require("path");
-import util = require("util");
-
-import iosCore = require("./ios-core");
-import iOSProxyServices = require("./ios-proxy-services");
-import helpers = require("./../../helpers");
-
-import applicationManagerPath = require("./ios-application-manager");
-import fileSystemPath = require("./ios-device-file-system");
+import * as path from "path";
+import * as util from "util";
+import * as iosCore from "./ios-core";
+import * as iOSProxyServices from "./ios-proxy-services";
+import * as applicationManagerPath from "./ios-application-manager";
+import * as fileSystemPath from "./ios-device-file-system";
 
 let CoreTypes = iosCore.CoreTypes;
 
@@ -22,7 +17,6 @@ export class IOSDevice implements Mobile.IiOSDevice {
 	private static INCOMPATIBLE_IMAGE_SIGNATURE_ERROR_CODE = 3892314163;
 	private static INTERFACE_USB = 1;
 
-	private voidPtr = ref.refType(ref.types.void);
 	private mountImageCallbackPtr: NodeBuffer = null;
 	
 	public applicationManager: Mobile.IDeviceApplicationManager;
@@ -52,7 +46,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 			version: this.getValue("ProductVersion"),
 			vendor: "Apple",
 			platform: this.$devicePlatformsConstants.iOS
-		}
+		};
 	}
 
 	private static mountImageCallback(dictionary: NodeBuffer, user: NodeBuffer): void {
@@ -61,28 +55,6 @@ export class IOSDevice implements Mobile.IiOSDevice {
 
 		let jsDictionary = coreFoundation.cfTypeTo(dictionary);
 		logger.info("[Mounting] %s", jsDictionary["Status"]);
-	}
-
-	private static showStatus(action: string, dictionary: NodeBuffer) {
-		let coreFoundation: Mobile.ICoreFoundation = $injector.resolve("coreFoundation");
-		let logger: ILogger = $injector.resolve("logger");
-
-		let jsDictionary = coreFoundation.cfTypeTo(dictionary);
-		let output = [util.format("[%s]", action)];
-
-		let append = (value: string) => {
-			if(jsDictionary[value]) {
-				output.push(util.format("%s: %s", value, jsDictionary[value]));
-			}
-		};
-
-		if(jsDictionary) {
-			append("PercentComplete");
-			append("Status");
-			append("Path");
-		}
-
-		logger.info(output.join(" "));
 	}
 
 	private getValue(value: string): string {
@@ -104,7 +76,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 	}
 
 	private isPaired(): boolean {
-		return this.$mobileDevice.deviceIsPaired(this.devicePointer) != 0;
+		return this.$mobileDevice.deviceIsPaired(this.devicePointer) !== 0;
 	}
 
 	private pair(): number {
@@ -276,7 +248,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 			} else {
 				let func = () => {
 					let developerDiskImageDirectoryPath = this.findDeveloperDiskImageDirectoryPath().wait();
-					let imagePath = path.join(developerDiskImageDirectoryPath, "DeveloperDiskImage.dmg");
+					imagePath = path.join(developerDiskImageDirectoryPath, "DeveloperDiskImage.dmg");
 					this.$logger.info("Mounting %s", imagePath);
 
 					let signature = this.$fs.readFile(util.format("%s.signature", imagePath)).wait();
@@ -313,7 +285,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 			let result = this.$mobileDevice.deviceStartService(this.devicePointer, this.$coreFoundation.createCFString(serviceName), socket);
 			this.validateResult(result, `Unable to start service ${serviceName}`);
 			return ref.deref(socket);
-		}
+		};
 
 		return this.tryExecuteFunction<number>(func);
 	}

@@ -2,10 +2,9 @@
 "use strict";
 
 import Future = require("fibers/future");
-import osenv = require("osenv");
-import path = require("path");
-import shell = require("shelljs");
-import util = require("util");
+import * as osenv from "osenv";
+import * as path from "path";
+import * as shell from "shelljs";
 
 class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 	private _cachedSimulatorId: string;
@@ -62,11 +61,11 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		return this.syncCore(appIdentifier, notRunningSimulatorAction, syncAction);
 	}
 	
-	public syncFiles(appIdentifier: string, projectFilesPath: string,  projectFiles: string[], notRunningSimulatorAction: () => IFuture<void>, relativeToProjectBasePathAction?: (projectFile: string) => string): IFuture<void> {
+	public syncFiles(appIdentifier: string, projectFilesPath: string,  projectFiles: string[], notRunningSimulatorAction: () => IFuture<void>, relativeToProjectBasePathAction?: (_projectFile: string) => string): IFuture<void> {
 		let syncAction = (applicationPath: string) => _.each(projectFiles, projectFile => {
 			let destinationPath = path.join(applicationPath, relativeToProjectBasePathAction(projectFile));
-			this.$logger.trace(`Transfering ${projectFile} to ${path.join(applicationPath, "app")}`);
-			shell.cp("-Rf", projectFile, path.join(applicationPath, "app"));
+			this.$logger.trace(`Transfering ${projectFile} to ${destinationPath}`);
+			shell.cp("-Rf", projectFile, destinationPath);
 		});	
 		return this.syncCore(appIdentifier, notRunningSimulatorAction, syncAction);	
 	}
@@ -120,7 +119,6 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 
 			opts.push("--exit");
 		}
-
 
 		if(this.$options.device) {
 			opts = opts.concat("--device", this.$options.device);
@@ -193,7 +191,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		}).future<string>()();
 	}
 
-	private syncCore(appIdentifier: string, notRunningSimulatorAction: () => IFuture<void>, syncAction: (applicationPath: string) => void): IFuture<void> {
+	private syncCore(appIdentifier: string, notRunningSimulatorAction: () => IFuture<void>, syncAction: (_applicationPath: string) => void): IFuture<void> {
 		return (() => {
 			if(!this.isSimulatorRunning().wait()) {
 				notRunningSimulatorAction().wait();

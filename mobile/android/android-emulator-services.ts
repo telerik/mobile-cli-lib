@@ -63,7 +63,6 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 				this.$errors.failWithoutHelp("Android SDK is not configured properly. Make sure you have added tools and platform-tools to your PATH environment variable.");
 			}
 		}).future<void>()();
-		return 
 	}
 
 	private checkGenymotionConfiguration(): IFuture<void> {

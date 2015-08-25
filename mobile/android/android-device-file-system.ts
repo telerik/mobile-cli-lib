@@ -2,6 +2,7 @@
 "use strict";
 
 import * as path from "path";
+import future = require("fibers/future");
 
 export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	constructor(private adb: Mobile.IAndroidDebugBridge,
@@ -10,15 +11,15 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		private $logger: ILogger) { }
 
 	public listFiles(devicePath: string): IFuture<void> {
-		return (() => { }).future<void>()();
+		return future.fromResult();
 	}
 
 	public getFile(deviceFilePath: string): IFuture<void> {
-		return (() => { }).future<void>()();
+		return future.fromResult();
 	}
 
 	public putFile(localFilePath: string, deviceFilePath: string): IFuture<void> {
-		return (() => { }).future<void>()();
+		return future.fromResult();
 	}
 
 	public transferFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void> {

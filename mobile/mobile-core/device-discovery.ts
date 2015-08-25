@@ -1,15 +1,13 @@
-///<reference path="./../../.d.ts"/>
+///<reference path="../../.d.ts"/>
 "use strict";
 
-import ref = require("ref");
-import os = require("os");
-import path = require("path");
-import IOSDevice = require("../ios/ios-device");
-import AndroidDevice = require("../android/android-device");
-import CoreTypes = require("../ios/ios-core");
+import * as ref from "ref";
+import * as os from "os";
+import * as IOSDevice from "../ios/ios-device";
+import * as AndroidDevice from "../android/android-device";
+import * as CoreTypes from "../ios/ios-core";
 import Future = require("fibers/future");
-import child_process = require("child_process");
-import helpers = require("../../helpers");
+import * as helpers from "../../helpers";
 import { EventEmitter } from "events";
 
 export class DeviceDiscovery extends EventEmitter implements Mobile.IDeviceDiscovery {
@@ -125,10 +123,12 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 		this.$errors.verifyHeap("startRunLoopWithTimer");
 	}
 
+	/* tslint:disable:no-unused-variable */
 	private createAndAddDevice(devicePointer: NodeBuffer): void {
 		let device = this.$injector.resolve(IOSDevice.IOSDevice, {devicePointer: devicePointer});
 		this.addDevice(device);
 	}
+	/* tslint:enable:no-unused-variable */
 }
 
 class IOSDeviceDiscoveryStub extends DeviceDiscovery {
@@ -184,7 +184,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery {
 			let requestAllDevicesCommand = `"${this.$staticConfig.getAdbFilePath().wait()}" devices`;
 			let result = this.$childProcess.exec(requestAllDevicesCommand).wait();
 
-			let devices = result.toString().split(os.EOL).slice(1)
+			result.toString().split(os.EOL).slice(1)
 				.filter( (element:string) => !helpers.isNullOrWhitespace(element) )
 				.map((element: string) => {
 					// http://developer.android.com/tools/help/adb.html#devicestatus
@@ -204,4 +204,3 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery {
 	}
 }
 $injector.register("androidDeviceDiscovery", AndroidDeviceDiscovery);
-

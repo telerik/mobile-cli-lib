@@ -1,10 +1,7 @@
 ///<reference path=".d.ts"/>
 "use strict";
 
-import path = require("path");
-import util = require("util");
 let uuid = require("node-uuid");
-import Future = require("fibers/future");
 import Fiber = require("fibers");
 let Table = require("cli-table");
 
@@ -12,7 +9,7 @@ export function createGUID(useBraces: boolean = true) {
 	let output: string;
 
 	if (useBraces) {
-		output = '{' + uuid.v4() + '}';
+		output = "{" + uuid.v4() + "}";
 	} else {
 		output = uuid.v4();
 	}
@@ -95,7 +92,7 @@ export function isNullOrWhitespace(input: string): boolean {
 		return true;
 	}
 
-	return input.replace(/\s/gi, '').length < 1;
+	return input.replace(/\s/gi, "").length < 1;
 }
 
 export function getCurrentEpochTime(): number {
@@ -112,7 +109,7 @@ export function sleep(ms: number): void {
 export function createTable(headers: string[], data: string[][]): any {
 	let table = new Table({
 		head: headers,
-		chars: { 'mid': '', 'left-mid': '', 'mid-mid': '', 'right-mid': '' }
+		chars: { "mid": "", "left-mid": "", "mid-mid": "", "right-mid": "" }
 	});
 
 	_.forEach(data, row => table.push(row));

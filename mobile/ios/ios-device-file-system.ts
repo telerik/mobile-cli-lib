@@ -2,9 +2,9 @@
 "use strict";
 
 import iOSProxyServices = require("./ios-proxy-services");
-import path = require("path");
+import * as path from "path";
 import ref = require("ref");
-import util = require("util");
+import * as util from "util";
 
 export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	constructor(private device: Mobile.IiOSDevice,

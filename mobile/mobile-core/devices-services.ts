@@ -130,7 +130,7 @@ export class DevicesServices implements Mobile.IDevicesServices {
 		}).future<Mobile.IDevice>()();
 	}
 
-	private executeOnDevice(action: (dev: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean): IFuture<void> {
+	private executeOnDevice(action: (dev: Mobile.IDevice) => IFuture<void>, canExecute?: (_dev: Mobile.IDevice) => boolean): IFuture<void> {
 		return ((): void => {
 			if(!canExecute || canExecute(this._device)) {
 				action(this._device).wait();
@@ -138,7 +138,7 @@ export class DevicesServices implements Mobile.IDevicesServices {
 		}).future<void>()();
 	}
 
-	private executeOnAllConnectedDevices(action: (dev: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean): IFuture<void> {
+	private executeOnAllConnectedDevices(action: (dev: Mobile.IDevice) => IFuture<void>, canExecute?: (_dev: Mobile.IDevice) => boolean): IFuture<void> {
 		return ((): void => {
 			let allConnectedDevices = this.getAllConnectedDevices();
 			let futures = _.map(allConnectedDevices, (device: Mobile.IDevice) => {
@@ -229,7 +229,7 @@ export class DevicesServices implements Mobile.IDevicesServices {
 	}
 
 	private hasDevice(identifier: string): boolean {
-		return _.some(this.getDevices(), (device: Mobile.IDevice) => { return device.deviceInfo.identifier === identifier });
+		return _.some(this.getDevices(), (device: Mobile.IDevice) => { return device.deviceInfo.identifier === identifier; });
 	}
 
 	private filterDevicesByPlatform(): Mobile.IDevice[] {

@@ -3,13 +3,11 @@
 
 import decoratorsLib = require("../../decorators");
 import yokLib = require("../../yok");
-import chai = require("chai");
-import Promise = require("bluebird");
+import {assert} from "chai";
 import Future = require("fibers/future");
 
-let originalInjector:any = {}
+let originalInjector:any = {};
 _.extend(originalInjector, $injector);
-let assert: chai.Assert = chai.assert;
 
 describe("decorators", () => {
 	afterEach(() => {
@@ -25,7 +23,6 @@ describe("decorators", () => {
 		});
 
 		it("does not change original method", () => {
-			let testInjector = new yokLib.Yok();
 			let promisifiedResult: any = decoratorsLib.exported("moduleName");
 			let expectedResult = {"originalObject": "originalValue"};
 			let actualResult = promisifiedResult({}, "myTest1", expectedResult);
@@ -33,10 +30,9 @@ describe("decorators", () => {
 		});
 
 		it("adds method to public api", () => {
-			let testInjector = new yokLib.Yok();
 			assert.deepEqual($injector.publicApi.__modules__["moduleName"], undefined);
 			let promisifiedResult: any = decoratorsLib.exported("moduleName");
-			let actualResult = promisifiedResult({}, "propertyName", {});
+			/* actualResult is */ promisifiedResult({}, "propertyName", {});
 			assert.deepEqual(typeof($injector.publicApi.__modules__["moduleName"]["propertyName"]), "function");
 		});
 
@@ -116,7 +112,7 @@ describe("decorators", () => {
 			promisifiedResultFunction({}, "propertyName", {});
 			let promise: any = $injector.publicApi.__modules__["moduleName"]["propertyName"]();
 			promise.then((result: any) => {
-					throw new Error("Then method MUST not be called when promise is rejected!")
+					throw new Error("Then method MUST not be called when promise is rejected!");
 				}, (err: Error) => {
 					assert.deepEqual(err, expectedError);
 				});
@@ -131,7 +127,7 @@ describe("decorators", () => {
 			promisifiedResultFunction({}, "propertyName", {});
 			let promise: any = $injector.publicApi.__modules__["moduleName"]["propertyName"]();
 			promise.then((result: any) => {
-					throw new Error("Then method MUST not be called when promise is rejected!")
+					throw new Error("Then method MUST not be called when promise is rejected!");
 				}, (err: Error) => {
 					// We cannot compare promise.reason() with error directly as node-fibers modify the error.stack property, so deepEqual method fails.
 					assert.deepEqual(err.message, expectedError.message);

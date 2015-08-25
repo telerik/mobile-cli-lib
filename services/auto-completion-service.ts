@@ -1,8 +1,8 @@
 ///<reference path="../.d.ts"/>
 "use strict";
 import osenv = require("osenv");
-import path = require("path");
-import util = require("util");
+import * as path from "path";
+import * as util from "util";
 
 export class AutoCompletionService implements IAutoCompletionService {
 	private scriptsOk = true;
@@ -10,8 +10,8 @@ export class AutoCompletionService implements IAutoCompletionService {
 	private _completionShellScriptContent: string;
 	private _shellProfiles: string[];
 	private _cliRunCommandsFile: string;
-	private static COMPLETION_START_COMMENT_PATTERN = "###-%s-completion-start-###"
-	private static COMPLETION_END_COMMENT_PATTERN = "###-%s-completion-end-###"
+	private static COMPLETION_START_COMMENT_PATTERN = "###-%s-completion-start-###";
+	private static COMPLETION_END_COMMENT_PATTERN = "###-%s-completion-end-###";
 	private static TABTAB_COMPLETION_START_REGEX_PATTERN = "###-begin-%s-completion-###";
 	private static TABTAB_COMPLETION_END_REGEX_PATTERN = "###-end-%s-completion-###";
 
@@ -85,7 +85,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 	private get completionShellScriptContent() {
 		if(!this._completionShellScriptContent) {
 			let startText = util.format(AutoCompletionService.COMPLETION_START_COMMENT_PATTERN, this.$staticConfig.CLIENT_NAME.toLowerCase());
-			let content = util.format("if [ -f %s ]; then \n    source %s \nfi", this.cliRunCommandsFile, this.cliRunCommandsFile)
+			let content = util.format("if [ -f %s ]; then \n    source %s \nfi", this.cliRunCommandsFile, this.cliRunCommandsFile);
 			let endText = util.format(AutoCompletionService.COMPLETION_END_COMMENT_PATTERN, this.$staticConfig.CLIENT_NAME.toLowerCase());
 			this._completionShellScriptContent = util.format("\n%s\n%s\n%s\n", startText, content, endText);
 		}
@@ -235,7 +235,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 				}
 
 				if(doUpdate) {
-					let clientExecutableFileName = (this.$staticConfig.CLIENT_NAME_ALIAS || this.$staticConfig.CLIENT_NAME).toLowerCase()
+					let clientExecutableFileName = (this.$staticConfig.CLIENT_NAME_ALIAS || this.$staticConfig.CLIENT_NAME).toLowerCase();
 					let pathToExecutableFile = path.join(__dirname, `../../../bin/${clientExecutableFileName}.js`);
 					this.$childProcess.exec(`${process.argv[0]} ${pathToExecutableFile} completion >> ${filePath}`).wait();
 					this.$fs.chmod(filePath, "0644").wait();

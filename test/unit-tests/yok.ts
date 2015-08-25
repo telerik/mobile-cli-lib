@@ -124,7 +124,7 @@ describe("yok", () => {
 	it("throws when it can't resolve a registered command", () => {
 		let injector = new yok.Yok();
 
-		function Command(whatever:any) {}
+		function Command(whatever:any) { /* intentionally left blank */ }
 
 		injector.registerCommand("command", Command);
 
@@ -134,7 +134,7 @@ describe("yok", () => {
 	it("disposes", () => {
 		let injector = new yok.Yok();
 
-		function Thing() {}
+		function Thing() { /* intentionally left blank */ }
 
 		Thing.prototype.dispose = function() {
 			this.disposed = true;

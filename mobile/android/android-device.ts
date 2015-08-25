@@ -4,11 +4,10 @@
 import androidDebugBridgePath = require("./android-debug-bridge");
 import applicationManagerPath = require("./android-application-manager");
 import fileSystemPath = require("./android-device-file-system");
-import * as util from "util";
 
 interface IAndroidDeviceDetails {
 	model: string;
-	name: string
+	name: string;
 	release: string;
 	brand: string;
 }
@@ -44,7 +43,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 			version: details.release,
 			vendor: details.brand,
 			platform: this.$devicePlatformsConstants.Android
-		}
+		};
 	}
 
 	public deploy(packageFile: string, packageName: string): IFuture<void> {
