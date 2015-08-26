@@ -48,7 +48,8 @@ export class ChildProcess implements IChildProcess {
 		return child_process.spawn(command, args, options);
 	}
 
-	public spawnFromEvent(command: string, args: string[], event: string, options?: any, spawnFromEventOptions?: ISpawnFromEventOptions): IFuture<ISpawnResult> { // event should be exit or close
+	public spawnFromEvent(command: string, args: string[], event: string,
+			options?: any, spawnFromEventOptions?: ISpawnFromEventOptions): IFuture<ISpawnResult> { // event should be exit or close
 		let future = new Future<ISpawnResult>();
 		let childProcess = this.spawn(command, args, options);
 
@@ -102,7 +103,8 @@ export class ChildProcess implements IChildProcess {
 		return future;
 	}
 
-	public tryExecuteApplication(command: string, args: string[], event: string, errorMessage: string, condition: (_childProcess: any) => boolean): IFuture<any> {
+	public tryExecuteApplication(command: string, args: string[], event: string,
+			errorMessage: string, condition: (_childProcess: any) => boolean): IFuture<any> {
 		return (() => {
 			let childProcess = this.tryExecuteApplicationCore(command, args, event, errorMessage).wait();
 

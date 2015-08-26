@@ -18,10 +18,10 @@ export class IOSDevice implements Mobile.IiOSDevice {
 	private static INTERFACE_USB = 1;
 
 	private mountImageCallbackPtr: NodeBuffer = null;
-	
+
 	public applicationManager: Mobile.IDeviceApplicationManager;
 	public fileSystem: Mobile.IDeviceFileSystem;
-	public deviceInfo: Mobile.IDeviceInfo;	
+	public deviceInfo: Mobile.IDeviceInfo;
 
 	constructor(private devicePointer: NodeBuffer,
 		private $childProcess: IChildProcess,
@@ -36,7 +36,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		private $hostInfo: IHostInfo,
 		private $options: ICommonOptions) {
 		this.mountImageCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSDevice.mountImageCallback);
-		
+
 		this.applicationManager = this.$injector.resolve(applicationManagerPath.IOSApplicationManager, { device: this, devicePointer: this.devicePointer });
 		this.fileSystem = this.$injector.resolve(fileSystemPath.IOSDeviceFileSystem, { device: this,  devicePointer: this.devicePointer });
 		this.deviceInfo = {
@@ -293,7 +293,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 	public deploy(packageFile: string): IFuture<void> {
 		return this.applicationManager.installApplication(packageFile);
 	}
-	
+
 	public openDeviceLogStream() {
 		let iOSSystemLog = this.$injector.resolve(iOSProxyServices.IOSSyslog, {device: this});
 		iOSSystemLog.read();
@@ -323,7 +323,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 
 		return null;
 	}
-	
+
 	/**
 	 * Converts a little endian 16 bit int number to 16 bit int big endian number.
 	 */

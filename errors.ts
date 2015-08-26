@@ -6,7 +6,7 @@ import * as path from "path";
 
 // we need this to overwrite .stack property (read-only in Error)
 function Exception() {
-	/* intentionally left blank */ 
+	/* intentionally left blank */
 }
 Exception.prototype = new Error();
 

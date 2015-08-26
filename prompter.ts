@@ -3,7 +3,7 @@
 import Future = require("fibers/future");
 import prompt = require("inquirer");
 import * as helpers from "./helpers";
-import readline = require("readline");
+import * as readline from "readline";
 let MuteStream = require("mute-stream");
 
 export class Prompter implements IPrompter {
@@ -79,7 +79,7 @@ export class Prompter implements IPrompter {
 				type: "input",
 				name: "inputString"
 			};
-			
+
 			if(defaultAction) {
 				schema.default = defaultAction;
 			}

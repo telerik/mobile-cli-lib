@@ -140,7 +140,7 @@ export class AfcClient implements Mobile.IAfcClient {
 
 		return entries;
 	}
-	
+
 	public close(): void {
 		let result = this.$mobileDevice.afcConnectionClose(this.afcConnection);
 		if (result !== 0) {

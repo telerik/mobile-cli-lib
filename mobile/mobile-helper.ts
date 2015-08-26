@@ -4,7 +4,7 @@
 import helpers = require("../helpers");
 
 export class MobileHelper implements Mobile.IMobileHelper {
-	private static DEVICE_PATH_SEPARATOR = "/";	
+	private static DEVICE_PATH_SEPARATOR = "/";
 	private platformNamesCache: string[];
 
 	constructor(private $mobilePlatformsCapabilities: Mobile.IPlatformsCapabilities,
@@ -68,13 +68,13 @@ export class MobileHelper implements Mobile.IMobileHelper {
 		}
 		return normalizedPlatform;
 	}
-	
+
 	public buildDevicePath(...args: string[]): string {
 		return this.correctDevicePath(args.join(MobileHelper.DEVICE_PATH_SEPARATOR));
 	}
-	
+
 	public correctDevicePath(filePath: string): string {
-		return helpers.stringReplaceAll(filePath, '\\', '/'); 
+		return helpers.stringReplaceAll(filePath, '\\', '/');
 	}
 }
 $injector.register("mobileHelper", MobileHelper);

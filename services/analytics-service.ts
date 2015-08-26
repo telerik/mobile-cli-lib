@@ -45,7 +45,7 @@ export class AnalyticsService implements IAnalyticsService {
 	}
 
 	public trackFeature(featureName: string): IFuture<void> {
-		let category = this.$options.analyticsClient || 
+		let category = this.$options.analyticsClient ||
 						(helpers.isInteractive() ? "CLI" : "Non-interactive");
 		return this.track(category, featureName);
 	}
@@ -233,7 +233,7 @@ export class AnalyticsService implements IAnalyticsService {
 						.value();
 		return statuses.length === 1 && _.first(statuses) === AnalyticsStatus.disabled.toString();
 	}
-	
+
 	private initAnalyticsStatuses(): IFuture<void> {
 		return (() => {
 			if(this.$analyticsSettingsService.canDoRequest().wait()) {

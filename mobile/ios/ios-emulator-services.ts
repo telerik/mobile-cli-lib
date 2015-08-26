@@ -60,14 +60,14 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		let syncAction = (applicationPath: string) => shell.cp("-Rf", projectFilesPath, applicationPath);
 		return this.syncCore(appIdentifier, notRunningSimulatorAction, syncAction);
 	}
-	
+
 	public syncFiles(appIdentifier: string, projectFilesPath: string,  projectFiles: string[], notRunningSimulatorAction: () => IFuture<void>, relativeToProjectBasePathAction?: (_projectFile: string) => string): IFuture<void> {
 		let syncAction = (applicationPath: string) => _.each(projectFiles, projectFile => {
 			let destinationPath = path.join(applicationPath, relativeToProjectBasePathAction(projectFile));
 			this.$logger.trace(`Transfering ${projectFile} to ${destinationPath}`);
 			shell.cp("-Rf", projectFile, destinationPath);
-		});	
-		return this.syncCore(appIdentifier, notRunningSimulatorAction, syncAction);	
+		});
+		return this.syncCore(appIdentifier, notRunningSimulatorAction, syncAction);
 	}
 
 	public isSimulatorRunning(): IFuture<boolean> {
@@ -203,12 +203,12 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 			syncAction(applicationPath);
 
 			try {
-				this.$childProcess.exec(`killall ${applicationName.split(".")[0]}`).wait();					
+				this.$childProcess.exec(`killall ${applicationName.split(".")[0]}`).wait();
 			} catch(e) {
 				this.$logger.trace("Unable to kill simulator: " + e);
 			}
-			
-			this.$childProcess.exec(`xcrun simctl launch ${runningSimulatorId} ${appIdentifier}`).wait();				
+
+			this.$childProcess.exec(`xcrun simctl launch ${runningSimulatorId} ${appIdentifier}`).wait();
 		}).future<void>()();
 	}
 }

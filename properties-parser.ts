@@ -1,16 +1,16 @@
 ///<reference path=".d.ts"/>
 "use strict";
-import propertiesParser = require("properties-parser");
+import * as propertiesParser from "properties-parser";
 import Future = require("fibers/future");
 import * as assert from "assert";
 
 export class PropertiesParser implements IPropertiesParser {
 	private _editor: any = null;
-	
+
 	public parse(text: string): any {
 		return propertiesParser.parse(text);
 	}
-	
+
 	public read(filePath: string): IFuture<IStringDictionary> {
 		let future = new Future<IStringDictionary>();
 		propertiesParser.read(filePath, (err, data) => {
@@ -20,7 +20,7 @@ export class PropertiesParser implements IPropertiesParser {
 				future.return(data);
 			}
 		});
-		
+
 		return future;
 	}
 
@@ -37,12 +37,12 @@ export class PropertiesParser implements IPropertiesParser {
 
 		return future;
 	}
-	
+
 	public saveEditor(): IFuture<void> {
 		assert.ok(this._editor, "Editor is undefied. Ensure that createEditor is called.");
-		
+
 		let future = new Future<void>();
-		
+
 		this._editor.save((err:any) => {
 			if (err) {
 				future.throw(err);
@@ -50,8 +50,8 @@ export class PropertiesParser implements IPropertiesParser {
 				future.return();
 			}
 		});
-		
+
 		return future;
-	}	
+	}
 }
 $injector.register("propertiesParser", PropertiesParser);

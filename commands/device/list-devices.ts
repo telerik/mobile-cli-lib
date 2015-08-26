@@ -21,7 +21,7 @@ export class ListDevicesCommand implements ICommand {
 			if (this.$options.json) {
 				this.$logger.setLevel("ERROR");
 				action = (device) => {
-					return (() => { 
+					return (() => {
 						this.$logger.out(JSON.stringify(device.deviceInfo));
 					}).future<void>()();
 				};

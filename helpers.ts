@@ -130,10 +130,10 @@ export function trimSymbol(str: string, symbol: string) {
 	while (str.charAt(0) === symbol) {
 		str = str.substr(1);
 	}
-	
+
 	while (str.charAt(str.length - 1) === symbol) {
 		str = str.substr(0, str.length - 1);
 	}
-	
+
 	return str;
 }
