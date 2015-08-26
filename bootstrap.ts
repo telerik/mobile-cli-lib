@@ -67,9 +67,9 @@ $injector.require("deviceLost", "./mobile/mobile-core/device-discovery");
 
 $injector.require("iTunesValidator", "./validators/iTunes-validator");
 $injector.require("deviceDiscovery", "./mobile/mobile-core/device-discovery");
-$injector.require("iOSDeviceDiscovery", "./mobile/mobile-core/device-discovery");
-$injector.requirePublicClass("prdd", "./mobile/mobile-core/device-discovery");
-$injector.require("androidDeviceDiscovery", "./mobile/mobile-core/device-discovery");
+$injector.require("iOSDeviceDiscovery", "./mobile/mobile-core/ios-device-discovery");
+$injector.requirePublicClass("devices", "./mobile/mobile-core/devices");
+$injector.require("androidDeviceDiscovery", "./mobile/mobile-core/android-device-discovery");
 $injector.require("iOSDevice", "./mobile/ios/ios-device");
 $injector.require("androidDevice", "./mobile/android/android-device");
 $injector.require("logcatHelper", "./mobile/android/logcat-helper");
