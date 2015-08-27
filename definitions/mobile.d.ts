@@ -109,7 +109,7 @@ declare module Mobile {
 		skipInferPlatform?: boolean;
 	}
 
-	interface IDevicesServices {
+	interface IDevicesService {
 		hasDevices: boolean;
 		deviceCount: number;
 		execute(action: (device: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: {allowNoDevices?: boolean}): IFuture<void>;

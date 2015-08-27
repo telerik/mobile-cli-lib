@@ -155,37 +155,42 @@ export class Yok implements IInjector {
 			this.addClassToPublicApi(name, file);
 		});
 	}
-	
+
 	private addClassToPublicApi(name: string, file: string): void {
 		Object.defineProperty(this.publicApi, name, {
 			get: () => {
-				let classInstance = this.modules[name].instance;
-				if(!classInstance) {
-					classInstance = this.resolve(name);
-					// We'll call initialize method of the class directly
-					// This is in order to remove .wait() from constructors
-					// as we cannot wait without fiber.
-					// TODO: Consider checking if initialize has wait property
-					if(classInstance.initialize) {
-						let fiberBootstrap = require("./fiber-bootstrap");
-						fiberBootstrap.run(() => { 
-							classInstance.initialize().wait();
-						});
-					}
-				}
-				
-				return classInstance;
+				return this.tryCallInitializeMethod(name);
 			}
 		});
 	}
-	
+
 	private resolvePublicApi(name: string, file: string): void {
 		Object.defineProperty(this.publicApi, name, {
 			get: () => {
-				this.resolve(name);
+				this.tryCallInitializeMethod(name);
 				return this.publicApi.__modules__[name];
 			}
 		});
+	}
+
+	private tryCallInitializeMethod(name: string): any {
+		let classInstance = this.modules[name].instance;
+		if(!classInstance) {
+			classInstance = this.resolve(name);
+			// This is in order to remove .wait() from constructors
+			// as we cannot wait without fiber.
+			if(classInstance.initialize) {
+				let result = classInstance.initialize.apply(classInstance);
+				if(typeof result.wait === "function") {
+					let fiberBootstrap = require("./fiber-bootstrap");
+					fiberBootstrap.run(() => {
+						classInstance.initialize().wait();
+					});
+				}
+			}
+		}
+
+		return classInstance;
 	}
 
 	private requireOne(name: string, file: string): void {
@@ -308,6 +313,7 @@ export class Yok implements IInjector {
 				if(!fullCommandName) {
 					// The passed arguments are not one of the subCommands.
 					// Check if the default command accepts arguments - if no, return false;
+
 					let defaultCommand = this.resolveCommand(`${commandName}|${defaultCommandName}`);
 					if(defaultCommand) {
 						if (defaultCommand.canExecute) {

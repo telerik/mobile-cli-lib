@@ -5,12 +5,18 @@ import Fiber = require("fibers");
 import Future = require("fibers/future");
 import errors = require("./errors");
 
-export function run(action: Function) {
-	Fiber(() => {
-		errors.installUncaughtExceptionListener();
+export function run(action: any) {
+	if(Fiber.current) {
+		// Use the already existing fiber, we do not need new one.
 		action();
-		$injector.dispose();
-		Future.assertNoFutureLeftBehind();
-	}).run();
+	} else {
+		Fiber(() => {
+			// TODO: Think about correct place for this.
+			// errors.installUncaughtExceptionListener();
+			action();
+			// Call dispose method of $injector modules, which implement IDisposable.
+			$injector.dispose();
+			Future.assertNoFutureLeftBehind();
+		}).run();
+	}
 }
-

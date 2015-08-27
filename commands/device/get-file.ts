@@ -2,7 +2,7 @@
 "use strict";
 
 export class GetFileCommand implements ICommand {
-	constructor(private $devicesServices: Mobile.IDevicesServices,
+	constructor(private $devicesService: Mobile.IDevicesService,
 				private $stringParameter: ICommandParameter,
 		private $options: ICommonOptions) { }
 
@@ -10,10 +10,10 @@ export class GetFileCommand implements ICommand {
 
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
-			this.$devicesServices.initialize({ deviceId: this.$options.device, skipInferPlatform: true }).wait();
+			this.$devicesService.initialize({ deviceId: this.$options.device, skipInferPlatform: true }).wait();
 
 			let action = (device: Mobile.IDevice) =>  { return (() => device.fileSystem.getFile(args[0]).wait()).future<void>()(); };
-			this.$devicesServices.execute(action).wait();
+			this.$devicesService.execute(action).wait();
 		}).future<void>()();
 	}
 }
