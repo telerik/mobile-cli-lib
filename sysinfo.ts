@@ -75,8 +75,8 @@ export class SysInfo implements ISysInfo {
 			procOutput = this.exec("gradle -v");
 			res.gradleVer = procOutput ? /Gradle (.*)/i.exec(procOutput)[1] : null;
 
-			procOutput = this.exec("javac -version", { showStderr: true }).stderr;
-			res.javacVersion = procOutput ? /^javac (.*)/i.exec(procOutput)[1]: null;
+			let output = this.exec("javac -version", { showStderr: true });
+			res.javacVersion = output ? /^javac (.*)/i.exec(output.stderr)[1]: null;
 
 			this.sysInfoCache = res;
 		}
