@@ -8,7 +8,7 @@ export class ChildProcess implements IChildProcess {
 	constructor(private $logger: ILogger,
 		private $errors: IErrors) {}
 
-	public exec(command: string, options?: any): IFuture<any> {
+	public exec(command: string, options?: any, execOptions?: IExecOptions): IFuture<any> {
 		let future = new Future<any>();
 		let callback = (error: Error, stdout: NodeBuffer, stderr: NodeBuffer) => {
 			this.$logger.trace("Exec %s \n stdout: %s \n stderr: %s", command, stdout.toString(), stderr.toString());
@@ -16,7 +16,8 @@ export class ChildProcess implements IChildProcess {
 			if(error) {
 				future.throw(error);
 			} else {
-				future.return(stdout);
+				let output = execOptions && execOptions.showStderr ?  { sdtout: stdout, stderr: stderr } : stdout;
+				future.return(output);
 			}
 		};
 
