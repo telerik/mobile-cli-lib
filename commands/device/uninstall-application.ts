@@ -2,7 +2,7 @@
 "use strict";
 
 export class UninstallApplicationCommand implements ICommand {
-	constructor(private $devicesServices: Mobile.IDevicesServices,
+	constructor(private $devicesService: Mobile.IDevicesService,
 				private $stringParameter: ICommandParameter,
 				private $options: ICommonOptions) { }
 
@@ -10,12 +10,10 @@ export class UninstallApplicationCommand implements ICommand {
 
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
-			this.$devicesServices.initialize({ deviceId: this.$options.device, skipInferPlatform: true }).wait();
+			this.$devicesService.initialize({ deviceId: this.$options.device, skipInferPlatform: true }).wait();
 
-			let action = (device: Mobile.IDevice) =>  {
-				return (() => device.applicationManager.uninstallApplication(args[0]).wait()).future<void>()();
-			};
-			this.$devicesServices.execute(action).wait();
+			let action = (device: Mobile.IDevice) =>  { return (() => device.applicationManager.uninstallApplication(args[0]).wait()).future<void>()(); };
+			this.$devicesService.execute(action).wait();
 		}).future<void>()();
 	}
 }

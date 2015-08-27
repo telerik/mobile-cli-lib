@@ -82,7 +82,8 @@ export function installUncaughtExceptionListener(): void {
 			}
 		}
 
-		process.exit(ErrorCodes.UNKNOWN);
+		// TODO: Find what to do here for CLIs
+		// process.exit(ErrorCodes.UNKNOWN);
 	});
 }
 

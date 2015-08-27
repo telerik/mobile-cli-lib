@@ -1,14 +1,15 @@
 ///<reference path="./../../.d.ts"/>
 "use strict";
 
-import * as util from "util";
+import util = require("util");
 import Future = require("fibers/future");
-import * as helpers from "../../helpers";
-import * as assert from "assert";
-import * as constants from "../constants";
+import helpers = require("../../helpers");
+let assert = require("assert");
+import constants = require("../constants");
+import {exported} from "../../decorators";
 
-export class DevicesServices implements Mobile.IDevicesServices {
-	public devices: IDictionary<Mobile.IDevice> = {};
+export class DevicesService implements Mobile.IDevicesService {
+	private _devices: IDictionary<Mobile.IDevice> = {};
 	private platforms: string[] = [];
 	private static NOT_FOUND_DEVICE_BY_IDENTIFIER_ERROR_MESSAGE = "Could not find device by specified identifier '%s'. To list currently connected devices and verify that the specified identifier exists, run '%s device'.";
 	private static NOT_FOUND_DEVICE_BY_INDEX_ERROR_MESSAGE = "Could not find device by specified index %d. To list currently connected devices and verify that the specified index exists, run '%s device'.";
@@ -18,13 +19,16 @@ export class DevicesServices implements Mobile.IDevicesServices {
 
 	constructor(private $logger: ILogger,
 		private $errors: IErrors,
-		private $iOSDeviceDiscovery: Mobile.IDeviceDiscovery,
+		//private $iOSDeviceDiscovery: Mobile.IDeviceDiscovery,
 		private $androidDeviceDiscovery: Mobile.IDeviceDiscovery,
 		private $staticConfig: Config.IStaticConfig,
 		private $mobileHelper: Mobile.IMobileHelper) {
 		this.attachToDeviceDiscoveryEvents();
 	}
 
+	public get devices(): IDictionary<Mobile.IDevice> {
+		return this._devices;
+	}
 	public get platform(): string {
 		return this._platform;
 	}
@@ -34,7 +38,7 @@ export class DevicesServices implements Mobile.IDevicesServices {
 	}
 
 	private getDevices(): Mobile.IDevice[] {
-		return _.values(this.devices);
+		return _.values(this._devices);
 	}
 
 	private getAllPlatforms(): Array<string> {
@@ -58,8 +62,8 @@ export class DevicesServices implements Mobile.IDevicesServices {
 	}
 
 	private attachToDeviceDiscoveryEvents(): void {
-		this.$iOSDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => this.onDeviceFound(device));
-		this.$iOSDeviceDiscovery.on("deviceLost", (device: Mobile.IDevice) => this.onDeviceLost(device));
+		// this.$iOSDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => this.onDeviceFound(device));
+		// this.$iOSDeviceDiscovery.on("deviceLost", (device: Mobile.IDevice) => this.onDeviceLost(device));
 
 		this.$androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => this.onDeviceFound(device));
 		this.$androidDeviceDiscovery.on("deviceLost", (device: Mobile.IDevice) => this.onDeviceLost(device));
@@ -67,22 +71,22 @@ export class DevicesServices implements Mobile.IDevicesServices {
 
 	private onDeviceFound(device: Mobile.IDevice): void {
 		this.$logger.trace("Found device with identifier '%s'", device.deviceInfo.identifier);
-		this.devices[device.deviceInfo.identifier] = device;
+		this._devices[device.deviceInfo.identifier] = device;
 	}
 
 	private onDeviceLost(device: Mobile.IDevice): void {
 		this.$logger.trace("Lost device with identifier '%s'", device.deviceInfo.identifier);
-		delete this.devices[device.deviceInfo.identifier];
+		delete this._devices[device.deviceInfo.identifier];
 	}
 
 	private startLookingForDevices(): IFuture<void> {
 		return (() => {
 			this.$logger.trace("startLookingForDevices; platform is %s", this._platform);
 			if(!this._platform) {
-				this.$iOSDeviceDiscovery.startLookingForDevices().wait();
+				// this.$iOSDeviceDiscovery.startLookingForDevices().wait();
 				this.$androidDeviceDiscovery.startLookingForDevices().wait();
 			} else if(this.$mobileHelper.isiOSPlatform(this._platform)) {
-				this.$iOSDeviceDiscovery.startLookingForDevices().wait();
+				// this.$iOSDeviceDiscovery.startLookingForDevices().wait();
 			} else if(this.$mobileHelper.isAndroidPlatform(this._platform)) {
 				this.$androidDeviceDiscovery.startLookingForDevices().wait();
 			}
@@ -105,7 +109,7 @@ export class DevicesServices implements Mobile.IDevicesServices {
 	private getDeviceByIdentifier(identifier: string): Mobile.IDevice {
 		let searchedDevice = _.find(this.getDevices(), (device: Mobile.IDevice) => { return device.deviceInfo.identifier === identifier; });
 		if(!searchedDevice) {
-			this.$errors.fail(DevicesServices.NOT_FOUND_DEVICE_BY_IDENTIFIER_ERROR_MESSAGE, identifier, this.$staticConfig.CLIENT_NAME.toLowerCase());
+			this.$errors.fail(DevicesService.NOT_FOUND_DEVICE_BY_IDENTIFIER_ERROR_MESSAGE, identifier, this.$staticConfig.CLIENT_NAME.toLowerCase());
 		}
 
 		return searchedDevice;
@@ -151,8 +155,13 @@ export class DevicesServices implements Mobile.IDevicesServices {
 				}
 			});
 
-			Future.wait(futures); //SAFE: all futures settled serially by the above Future.settle call
+			Future.wait(futures);
 		}).future<void>()();
+	}
+
+	@exported("devicesService")
+	public deployOnDevices(deviceIdentifiers: string[], packageFile: string, packageName: string): IFuture<void>[] {
+		return _.map(deviceIdentifiers, deviceIdentifier => this.devices[deviceIdentifier].deploy(packageFile, packageName));
 	}
 
 	public execute(action: (device: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: {[key: string]: boolean}): IFuture<void> {
@@ -178,7 +187,6 @@ export class DevicesServices implements Mobile.IDevicesServices {
 	public initialize(data?: Mobile.IDevicesServicesInitializationOptions): IFuture<void> {
 		let platform = data.platform;
 		let deviceOption = data.deviceId;
-
 		if (this._isInitialized) {
 			return Future.fromResult();
 		}
@@ -238,9 +246,9 @@ export class DevicesServices implements Mobile.IDevicesServices {
 
 	private validateIndex(index: number): void {
 		if (index < 0 || index > this.getDevices().length) {
-			throw new Error(util.format(DevicesServices.NOT_FOUND_DEVICE_BY_INDEX_ERROR_MESSAGE, index, this.$staticConfig.CLIENT_NAME.toLowerCase()));
+			throw new Error(util.format(DevicesService.NOT_FOUND_DEVICE_BY_INDEX_ERROR_MESSAGE, index, this.$staticConfig.CLIENT_NAME.toLowerCase()));
 		}
 	}
 }
 
-$injector.register("devicesServices", DevicesServices);
+$injector.register("devicesService", DevicesService);

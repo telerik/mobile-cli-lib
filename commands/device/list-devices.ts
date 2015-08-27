@@ -4,7 +4,7 @@
 import { createTable } from "../../helpers";
 
 export class ListDevicesCommand implements ICommand {
-	constructor(private $devicesServices: Mobile.IDevicesServices,
+	constructor(private $devicesService: Mobile.IDevicesService,
 		private $logger: ILogger,
 		private $stringParameter: ICommandParameter,
 		private $options: ICommonOptions) { }
@@ -14,7 +14,7 @@ export class ListDevicesCommand implements ICommand {
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
 			let index = 1;
-			this.$devicesServices.initialize({platform: args[0], deviceId: null, skipInferPlatform: true}).wait();
+			this.$devicesService.initialize({platform: args[0], deviceId: null, skipInferPlatform: true}).wait();
 
 			let table: any = createTable(["#", "Device Name", "Platform", "Device Identifier"], []);
 			let action: (_device: Mobile.IDevice) => IFuture<void>;
@@ -33,7 +33,7 @@ export class ListDevicesCommand implements ICommand {
 				};
 			}
 
-			this.$devicesServices.execute(action, undefined, {allowNoDevices: true}).wait();
+			this.$devicesService.execute(action, undefined, {allowNoDevices: true}).wait();
 
 			if (!this.$options.json) {
 				this.$logger.out(table.toString());
