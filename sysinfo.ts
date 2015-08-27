@@ -72,15 +72,21 @@ export class SysInfo implements ISysInfo {
 			procOutput = this.exec("git --version");
 			res.gitVer = procOutput ? /^git version (.*)/.exec(procOutput)[1]  : null;
 
+			procOutput = this.exec("gradle -v");
+			res.gradleVer = procOutput ? /Gradle (.*)/i.exec(procOutput)[1] : null;
+
+			procOutput = this.exec("javac -version", { showStderr: true }).stderr;
+			res.javacVersion = procOutput ? /^javac (.*)/i.exec(procOutput)[1]: null;
+
 			this.sysInfoCache = res;
 		}
 
 		return this.sysInfoCache;
 	}
 
-	private exec(cmd: string): string {
+	private exec(cmd: string, execOptions?: IExecOptions): string | any {
 		try {
-			return this.$childProcess.exec(cmd).wait();
+			return this.$childProcess.exec(cmd, null, execOptions).wait();
 		} catch(e) {
 			return null;
 		} // if we got an error, assume not working

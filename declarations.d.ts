@@ -151,11 +151,15 @@ interface IQueue<T> {
 }
 
 interface IChildProcess {
-	exec(command: string, options?: any): IFuture<any>;
+	exec(command: string, options?: any, execOptions?: IExecOptions): IFuture<any>;
 	execFile(command: string, args: string[]): IFuture<any>;
 	spawn(command: string, args?: string[], options?: any): any; // it returns child_process.ChildProcess you can safely cast to it
 	spawnFromEvent(command: string, args: string[], event: string, options?: any, spawnFromEventOptions?: ISpawnFromEventOptions): IFuture<any>;
 	tryExecuteApplication(command: string, args: string[], event: string, errorMessage: string, condition?: (childProcess: any) => boolean): IFuture<any>;
+}
+
+interface IExecOptions {
+	showStderr: boolean;
 }
 
 interface ISpawnResult {
@@ -316,6 +320,10 @@ interface ISysInfoData {
 	monoVer: string;
 	/** git version string, as retunrnes by `git --version` **/
 	gitVer: string;
+	/** gradle version string as retunrnes by `gradle -v` **/
+	gradleVer: string;
+	/** javac version string as retunrnes by `javac -version` **/
+	javacVersion: string;
 }
 
 interface ISysInfo {
