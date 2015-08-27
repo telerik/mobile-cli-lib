@@ -1,6 +1,5 @@
 global._ = require("lodash");
 global.$injector = require("./yok").injector;
-$injector.require("options", "./options");
 
 require("colors");
 $injector.require("errors", "./errors");
@@ -69,7 +68,6 @@ $injector.require("deviceLost", "./mobile/mobile-core/device-discovery");
 $injector.require("iTunesValidator", "./validators/iTunes-validator");
 $injector.require("deviceDiscovery", "./mobile/mobile-core/device-discovery");
 $injector.require("iOSDeviceDiscovery", "./mobile/mobile-core/ios-device-discovery");
-$injector.requirePublicClass("devices", "./mobile/mobile-core/devices");
 $injector.require("androidDeviceDiscovery", "./mobile/mobile-core/android-device-discovery");
 $injector.require("iOSDevice", "./mobile/ios/ios-device");
 $injector.require("androidDevice", "./mobile/android/android-device");
@@ -78,7 +76,7 @@ $injector.require("logcatHelper", "./mobile/android/logcat-helper");
 $injector.require("localToDevicePathDataFactory", "./mobile/local-to-device-path-data-factory");
 $injector.require("deviceAppDataFactory", "./mobile/device-app-data/device-app-data-factory");
 
-$injector.require("devicesServices", "./mobile/mobile-core/devices-services");
+$injector.requirePublic("devicesService", "./mobile/mobile-core/devices-service");
 $injector.require("projectNameValidator", "./validators/project-name-validator");
 
 $injector.require("androidEmulatorServices", "./mobile/android/android-emulator-services");
@@ -97,3 +95,6 @@ $injector.requireCommand("doctor", "./commands/doctor");
 
 $injector.require("utils", "./utils");
 $injector.require("bplistParser", "./bplist-parser");
+
+import errors = require("./errors");
+errors.installUncaughtExceptionListener();

@@ -20,7 +20,11 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 		private $errors: IErrors,
 		private $injector: IInjector,
 		private $options: ICommonOptions,
-		private $utils: IUtils) {
+		private $utils: IUtils,
+		private $logger: ILogger,
+		private $iTunesValidator: Mobile.IiTunesValidator,
+		private $hostInfo: IHostInfo,
+		private $staticConfig: Config.IStaticConfig) {
 		super();
 		this.timerCallbackPtr = CoreTypes.cf_run_loop_timer_callback.toPointer(IOSDeviceDiscovery.timerCallback);
 		this.notificationCallbackPtr = CoreTypes.am_device_notification_callback.toPointer(IOSDeviceDiscovery.deviceNotificationCallback);
@@ -28,12 +32,20 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 
 	public startLookingForDevices(): IFuture<void> {
 		return (() => {
-			this.subscribeForNotifications();
-			let defaultTimeoutInSeconds = 1;
-			let parsedTimeout =  this.$utils.getParsedTimeout(1);
-			let timeout = parsedTimeout > defaultTimeoutInSeconds ? parsedTimeout/1000 : defaultTimeoutInSeconds;
-			this.startRunLoopWithTimer(timeout);
-			setInterval(() => this.startRunLoopWithTimer(timeout), 1000); // I think we should unref this as it will block CLI's execution and will hold the console.
+			let error = this.$iTunesValidator.getError().wait();
+
+			if(error) {
+				this.$logger.warn(error);
+			} else if(this.$hostInfo.isLinux) {
+				this.$logger.warn("In this version of the %s command-line interface, you cannot use connected iOS devices.", this.$staticConfig.CLIENT_NAME.toLowerCase());
+			} else {
+				this.subscribeForNotifications();
+				let defaultTimeoutInSeconds = 1;
+				let parsedTimeout =  this.$utils.getParsedTimeout(1);
+				let timeout = parsedTimeout > defaultTimeoutInSeconds ? parsedTimeout/1000 : defaultTimeoutInSeconds;
+				// TODO: Refactor this and call both startLookingForDevices in setInterval in order to support event-based device operations
+				this.startRunLoopWithTimer(timeout);
+			}
 		}).future<void>()();
 	}
 
@@ -96,36 +108,3 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 	}
 }
 $injector.register("iOSDeviceDiscovery", IOSDeviceDiscovery);
-
-class IOSDeviceDiscoveryStub extends DeviceDiscovery {
-	constructor(private $logger: ILogger,
-		private $staticConfig: Config.IStaticConfig,
-		private $hostInfo: IHostInfo,
-		private error: string) {
-		super();
-	}
-
-	public startLookingForDevices(): IFuture<void> {
-		if(this.error) {
-			this.$logger.warn(this.error);
-		} else if(this.$hostInfo.isLinux) {
-			this.$logger.warn("In this version of the %s command-line interface, you cannot use connected iOS devices.", this.$staticConfig.CLIENT_NAME.toLowerCase());
-		}
-		
-		return Future.fromResult();
-	}
-}
-
-$injector.register("iOSDeviceDiscovery", ($errors: IErrors, $logger: ILogger, $fs: IFileSystem, $injector: IInjector, $iTunesValidator: Mobile.IiTunesValidator, $staticConfig: Config.IStaticConfig, $hostInfo: IHostInfo) => {
-	let error = $iTunesValidator.getError().wait();
-	let result: Mobile.IDeviceDiscovery = null;
-
-	if(error || $hostInfo.isLinux) {
-		result = new IOSDeviceDiscoveryStub($logger, $staticConfig, $hostInfo, error);
-	} else {
-		result = $injector.resolve(IOSDeviceDiscovery);
-	}
-
-	return result;
-});
-

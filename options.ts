@@ -179,6 +179,4 @@ export class OptionsBase {
 			});
 		});
 	}
-
 }
-$injector.register("options", {});

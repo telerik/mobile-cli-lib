@@ -3,7 +3,7 @@
 
 export class StopApplicationOnDeviceCommand implements ICommand {
 
-	constructor(private $devicesServices: Mobile.IDevicesServices,
+	constructor(private $devicesService: Mobile.IDevicesService,
 		private $errors: IErrors,
 		private $stringParameter: ICommandParameter,
 		private $staticConfig: Config.IStaticConfig,
@@ -13,10 +13,10 @@ export class StopApplicationOnDeviceCommand implements ICommand {
 
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
-			this.$devicesServices.initialize({ deviceId: this.$options.device, skipInferPlatform: true, platform: args[1] }).wait();
+			this.$devicesService.initialize({ deviceId: this.$options.device, skipInferPlatform: true, platform: args[1] }).wait();
 
 			let action = (device: Mobile.IDevice) => device.applicationManager.stopApplication(args[0]);
-			this.$devicesServices.execute(action).wait();
+			this.$devicesService.execute(action).wait();
 		}).future<void>()();
 	}
 }
