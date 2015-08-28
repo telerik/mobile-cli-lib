@@ -1,11 +1,11 @@
 ///<reference path="./../../.d.ts"/>
 "use strict";
 
-import util = require("util");
+import * as util from "util";
 import Future = require("fibers/future");
-import helpers = require("../../helpers");
+import * as helpers from "../../helpers";
 let assert = require("assert");
-import constants = require("../constants");
+import * as constants from "../constants";
 
 export class DevicesServices implements Mobile.IDevicesServices {
 	private devices: IDictionary<Mobile.IDevice> = {};

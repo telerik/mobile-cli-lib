@@ -1,7 +1,7 @@
 ///<reference path="../.d.ts"/>
 "use strict";
 
-import os = require("os");
+import {EOL} from "os";
 import future = require("fibers/future");
 
 export class DoctorCommand implements ICommand {
@@ -22,7 +22,7 @@ export class DoctorCommand implements ICommand {
 			if (warningsPrinted) {
 				let client = this.$staticConfig.CLIENT_NAME_ALIAS || this.$staticConfig.CLIENT_NAME;
 				this.$logger.out(`These warnings are just used to help the ${client} maintainers with debugging if you file an issue.`.bold
-					+ os.EOL + `Please ignore them if everything you use ${client} for is working fine.`.bold + os.EOL);
+					+ EOL + `Please ignore them if everything you use ${client} for is working fine.`.bold + EOL);
 			} else {
 				this.$logger.out("No issues were detected.".bold);
 			}
