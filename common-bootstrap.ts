@@ -8,7 +8,9 @@ import {StaticConfigBase} from "./static-config-base";
 import {OptionsBase} from "./options";
 
 // TODO: Add real dependencies
-$injector.register("logcatPrinter", {print: (str: string) => {}});
+$injector.register("logcatPrinter", {print: (str: string) => {
+	// logcatPrinter should be implemented
+}});
 $injector.register("mobilePlatformsCapabilities", {});
 $injector.register("config", {});
 $injector.register("analyiticsService", {});

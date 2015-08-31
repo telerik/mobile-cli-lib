@@ -33,7 +33,8 @@ export function exported(moduleName: string): any {
 			} else {
 				return getPromise(result);
 			}
-		}
+		};
+
 		return descriptor;
 	};
 }

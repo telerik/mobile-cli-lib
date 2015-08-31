@@ -133,5 +133,50 @@ describe("decorators", () => {
 					assert.deepEqual(err.message, expectedError.message);
 				});
 		});
+
+		it("returns Promises, which are resolved to correct value (function returning IFuture<T>[] without arguments)", () => {
+			$injector = new yokLib.Yok();
+			let expectedResults = ["result1", "result2", "result3"];
+			$injector.register("moduleName", { propertyName: () => _.map(expectedResults, expectedResult => Future.fromResult(expectedResult)) });
+			let promisifiedResultFunction: any = decoratorsLib.exported("moduleName");
+			// Call this line in order to generate publicApi and get the real Promises
+			promisifiedResultFunction({}, "propertyName", {});
+			let promises: Promise<string>[] = $injector.publicApi.__modules__["moduleName"]["propertyName"]();
+			_.each(promises, (promise, index) => promise.then((val: string) => {
+				assert.deepEqual(val, expectedResults[index]);
+			}));
+		});
+
+		it("rejects Promises, which are resolved to correct error (function returning IFuture<T>[] without arguments throws)", () => {
+			$injector = new yokLib.Yok();
+			let expectedErrors = [new Error("result1"), new Error("result2"), new Error("result3")];
+			$injector.register("moduleName", { propertyName: () => _.map(expectedErrors, expectedError => { return (() => { throw expectedError; }).future<void>()(); })});
+			let promisifiedResultFunction: any = decoratorsLib.exported("moduleName");
+			// Call this line in order to generate publicApi and get the real Promises
+			promisifiedResultFunction({}, "propertyName", {});
+			let promises: Promise<string>[] = $injector.publicApi.__modules__["moduleName"]["propertyName"]();
+			_.each(promises, (promise, index) => promise.then((result: any) => {
+					throw new Error("Then method MUST not be called when promise is rejected!");
+				}, (err: Error) => {
+					// We cannot compare promise.reason() with error directly as node-fibers modify the error.stack property, so deepEqual method fails.
+					assert.deepEqual(err.message, expectedErrors[index].message);
+				}));
+		});
+
+		it("rejects only Promises which throw, resolves the others correctly (function returning IFuture<T>[] without arguments)", () => {
+			$injector = new yokLib.Yok();
+			let expectedResults: any[] = ["result1", new Error("result2")];
+			$injector.register("moduleName", { propertyName: () => _.map(expectedResults, expectedResult => Future.fromResult(expectedResult)) });
+			let promisifiedResultFunction: any = decoratorsLib.exported("moduleName");
+			// Call this line in order to generate publicApi and get the real Promises
+			promisifiedResultFunction({}, "propertyName", {});
+			let promises: Promise<string>[] = $injector.publicApi.__modules__["moduleName"]["propertyName"]();
+			_.each(promises, (promise, index) => promise.then((val: string) => {
+				assert.deepEqual(val, expectedResults[index]);
+			}, (err: Error) => {
+				// We cannot compare promise.reason() with error directly as node-fibers modify the error.stack property, so deepEqual method fails.
+				assert.deepEqual(err.message, expectedResults[index].message);
+			}));
+		});
 	});
 });
