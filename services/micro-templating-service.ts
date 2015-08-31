@@ -1,7 +1,7 @@
 ///<reference path="../.d.ts"/>
 "use strict";
 
-import util = require("util");
+import * as util from "util";
 
 export class MicroTemplateService implements IMicroTemplateService {
 	private dynamicCallRegex: RegExp;

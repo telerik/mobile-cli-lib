@@ -1,6 +1,6 @@
 ///<reference path="../.d.ts"/>
 "use strict";
-import path = require("path");
+import * as path from "path";
 import helpers = require("../helpers");
 import ValidationResult = require("./validation-result");
 

@@ -1,8 +1,8 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 
-import os = require("os");
-import util = require("util");
+import {EOL} from "os";
+import * as util from "util";
 
 export class ListApplicationsCommand implements ICommand {
 	constructor(private $devicesServices: Mobile.IDevicesServices,
@@ -19,12 +19,12 @@ export class ListApplicationsCommand implements ICommand {
 
 			let action = (device: Mobile.IDevice) => { return (() => {
 				let applications = device.applicationManager.getInstalledApplications().wait();
-				output.push(util.format("%s=====Installed applications on device with UDID '%s' are:", os.EOL, device.deviceInfo.identifier));
+				output.push(util.format("%s=====Installed applications on device with UDID '%s' are:", EOL, device.deviceInfo.identifier));
 				_.each(applications, (applicationId: string) => output.push(applicationId));
 			}).future<void>()(); };
 			this.$devicesServices.execute(action).wait();
 
-			this.$logger.out(output.join(os.EOL));
+			this.$logger.out(output.join(EOL));
 		}).future<void>()();
 	}
 }

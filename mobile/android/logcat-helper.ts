@@ -1,7 +1,7 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 import byline = require("byline");
-import util = require("util");
+import * as util from "util";
 
 export class LogcatHelper implements Mobile.ILogcatHelper {
 	constructor(private $childProcess: IChildProcess,

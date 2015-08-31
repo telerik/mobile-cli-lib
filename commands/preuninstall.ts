@@ -1,8 +1,8 @@
 ﻿///<reference path="../.d.ts"/>
 "use strict";
 
-import path = require("path");
-import util = require("util");
+import * as path from "path";
+import * as util from "util";
 
 export class PreUninstallCommand implements ICommand {
 	private static ADB_RELATIVE_PATH = "../resources/platform-tools/android/%s/adb";
