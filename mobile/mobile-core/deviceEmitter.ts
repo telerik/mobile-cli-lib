@@ -2,10 +2,11 @@
 "use strict";
 
 import { EventEmitter } from "events";
-
 import fiberBootstrap = require("../../fiber-bootstrap");
 
 class DeviceEmitter extends EventEmitter {
+	private static DEVICE_DISCOVERY_TIMEOUT = 500;
+
 	// TODO: add iOSDeviceDiscovery as a dependency too
 	constructor(private $androidDeviceDiscovery:Mobile.IAndroidDeviceDiscovery,
 		private $devicesService: Mobile.IDevicesService) {
@@ -27,7 +28,7 @@ class DeviceEmitter extends EventEmitter {
 				fiberBootstrap.run(() => {
 					this.$androidDeviceDiscovery.startLookingForDevices().wait();
 				}),
-			500).unref();
+			DeviceEmitter.DEVICE_DISCOVERY_TIMEOUT).unref();
 
 		}).future<void>()();
 	}

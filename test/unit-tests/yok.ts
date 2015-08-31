@@ -5,15 +5,7 @@ import {Yok} from "../../yok";
 import * as path from "path";
 import * as fs from "fs";
 import rimraf = require("rimraf");
-import Future = require("fibers/future");
-let isInitalizedCalled = false;
-// class Person {
-// 	public initialize() {
-// 		console.log("initialized calledddd");
-// 		isInitalizedCalled = true;
-// 		return Future.fromResult();
-// 	}
-// }
+import * as classesWithInitMethod from "./mocks/mockClassesWithInitializeMethod";
 
 class MyClass {
 	constructor(private x:string, public y:any) {
@@ -169,7 +161,7 @@ describe("yok", () => {
 		injector.requirePublic("foo", "test");
 		assert.isTrue(_.contains(Object.getOwnPropertyNames(injector.publicApi), "foo"));
 	});
-	
+
 	it("adds whole class to public api when requirePublicClass is used", () => {
 		let injector = new Yok();
 		let dataObject =  {
@@ -185,7 +177,7 @@ describe("yok", () => {
 		// Call to requirePublicClass will add the class to publicApi object.
 		injector.requirePublicClass("foo", "./temp");
 		injector.register("foo", dataObject);
-		// Get the real instance here, so we can delete the file before asserts. 
+		// Get the real instance here, so we can delete the file before asserts.
 		// This way we'll keep the directory clean, even if assert fails.
 		let resultFooObject = injector.publicApi.foo;
 		rimraf(filepath, (err: Error) => {
@@ -197,34 +189,23 @@ describe("yok", () => {
 		assert.deepEqual(resultFooObject, dataObject);
 	});
 
-// This test is currently not working, 
-// 	it("automatically calls initialize method of a class", () => {
-// 		let injector = new Yok();
-// 		let future = new Future<void>();
-// 		// let isInitalizedCalled = false;
-// 
-// 		let filepath = path.join(__dirname, "..", "..", "temp.js");
-// 		fs.writeFileSync(filepath, "");
-// 
-// 		// Call to requirePublicClass will add the class to publicApi object.
-// 		injector.requirePublicClass("foo", "./temp");
-// 		console.log("register it");
-// 		injector.register("foo", Person);
-// 		console.log("now lets get it");
-// 		// Get the real instance here, so we can delete the file before asserts. 
-// 		// This way we'll keep the directory clean, even if assert fails.
-// 		let resultFooObject = injector.publicApi.foo;
-// 		console.log("before rimraf")
-// 		rimraf(filepath, (err: Error) => {
-// 			if(err) {
-// 				console.log(`Unable to delete ${filepath}.`);
-// 			}
-// 		});
-// 		console.log("before first assert");
-// 		assert.isTrue(_.contains(Object.getOwnPropertyNames(injector.publicApi), "foo"));
-// 		// Use setTimeout in order to allow the fiber in yok's requirePublicClass to be executed.
-// 		// future.wait();
-// 		console.log("after set timeout"); 
-// 		assert.isFalse(isInitalizedCalled, "isInitalizedCalled is not set to true, so method had not been called");
-// 	});
+	it("automatically calls initialize method of a class when initialize returns IFuture", () => {
+		let injector = new Yok();
+		// Call to requirePublicClass will add the class to publicApi object.
+		injector.requirePublicClass("classWithInitMethod", "./test/unit-tests/mocks/mockClassesWithInitializeMethod");
+		injector.register("classWithInitMethod", classesWithInitMethod.ClassWithFuturizedInitializeMethod);
+		let resultClassWithInitMethod = injector.publicApi.classWithInitMethod;
+		assert.isTrue(_.contains(Object.getOwnPropertyNames(injector.publicApi), "classWithInitMethod"));
+		assert.isTrue(resultClassWithInitMethod.isInitializedCalled, "isInitalizedCalled is not set to true, so method had not been called");
+	});
+
+	it("automatically calls initialize method of a class when initialize does NOT return IFuture", () => {
+		let injector = new Yok();
+		// Call to requirePublicClass will add the class to publicApi object.
+		injector.requirePublicClass("classWithInitMethod", "./test/unit-tests/mocks/mockClassesWithInitializeMethod");
+		injector.register("classWithInitMethod", classesWithInitMethod.ClassWithInitializeMethod);
+		let resultClassWithInitMethod = injector.publicApi.classWithInitMethod;
+		assert.isTrue(_.contains(Object.getOwnPropertyNames(injector.publicApi), "classWithInitMethod"));
+		assert.isTrue(resultClassWithInitMethod.isInitializedCalled, "isInitalizedCalled is not set to true, so method had not been called");
+	});
 });

@@ -161,7 +161,7 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	@exported("devicesService")
 	public deployOnDevices(deviceIdentifiers: string[], packageFile: string, packageName: string): IFuture<void>[] {
-		return _.map(deviceIdentifiers, deviceIdentifier => this.devices[deviceIdentifier].deploy(packageFile, packageName));
+		return _.map(deviceIdentifiers, deviceIdentifier => this.deployOnDevice(deviceIdentifier, packageFile, packageName));
 	}
 
 	public execute(action: (device: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: {[key: string]: boolean}): IFuture<void> {
@@ -234,6 +234,16 @@ export class DevicesService implements Mobile.IDevicesService {
 		} else {
 			return this.filterDevicesByPlatform().length !== 0;
 		}
+	}
+
+	private deployOnDevice(deviceIdentifier: string, packageFile: string, packageName: string): IFuture<void> {
+		return (() => {
+			if(_(this.devices).keys().find(d => d === deviceIdentifier)) {
+				this.devices[deviceIdentifier].deploy(packageFile, packageName).wait();
+			} else {
+				throw new Error(`Cannot find device with identifier ${deviceIdentifier}.`);
+			}
+		}).future<void>()();
 	}
 
 	private hasDevice(identifier: string): boolean {

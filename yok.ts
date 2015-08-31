@@ -181,7 +181,7 @@ export class Yok implements IInjector {
 			// as we cannot wait without fiber.
 			if(classInstance.initialize) {
 				let result = classInstance.initialize.apply(classInstance);
-				if(typeof result.wait === "function") {
+				if(result && typeof result.wait === "function") {
 					let fiberBootstrap = require("./fiber-bootstrap");
 					fiberBootstrap.run(() => {
 						classInstance.initialize().wait();
