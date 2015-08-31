@@ -1,11 +1,10 @@
 ///<reference path="./../../.d.ts"/>
 "use strict";
 
-import {DeviceDiscovery} from "./device-discovery"
+import {DeviceDiscovery} from "./device-discovery";
 import {CoreTypes} from "../ios/ios-core";
 import * as ref from "ref";
 import {IOSDevice} from "../ios/ios-device";
-import Future = require("fibers/future");
 
 class IOSDeviceDiscovery extends DeviceDiscovery {
 	private static ADNCI_MSG_CONNECTED = 1;
@@ -50,13 +49,12 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 	}
 
 	private static deviceNotificationCallback(devicePointer?: NodeBuffer, user?: number) : any {
-		let iOSDeviceDiscovery = $injector.resolve("iOSDeviceDiscovery");
+		let iOSDeviceDiscovery: IOSDeviceDiscovery = $injector.resolve("iOSDeviceDiscovery");
 		let deviceInfo = ref.deref(devicePointer);
 
 		if(deviceInfo.msg === IOSDeviceDiscovery.ADNCI_MSG_CONNECTED) {
 			iOSDeviceDiscovery.createAndAddDevice(deviceInfo.dev);
-		}
-		else if(deviceInfo.msg === IOSDeviceDiscovery.ADNCI_MSG_DISCONNECTED) {
+		} else if(deviceInfo.msg === IOSDeviceDiscovery.ADNCI_MSG_DISCONNECTED) {
 			let deviceIdentifier = iOSDeviceDiscovery.$coreFoundation.convertCFStringToCString(iOSDeviceDiscovery.$mobileDevice.deviceCopyDeviceIdentifier(deviceInfo.dev));
 			iOSDeviceDiscovery.removeDevice(deviceIdentifier);
 		}
