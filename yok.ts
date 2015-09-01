@@ -58,8 +58,13 @@ import * as path from "path";
 
 let indent = "";
 function trace(formatStr: string, ...args: any[]) {
-	// uncomment following line when debugging dependency injection
-	// console.log(require('util').format(indent + formatStr, ...args));
+	// uncomment following lines when debugging dependency injection
+	// var args = [];
+	// for (var _i = 1; _i < arguments.length; _i++) {
+	// 	args[_i - 1] = arguments[_i];
+	// }
+	// var util = require("util");
+	// console.log(util.format.apply(util, [indent + formatStr].concat(args)));
 }
 
 function pushIndent() {
@@ -184,7 +189,7 @@ export class Yok implements IInjector {
 				if(result && typeof result.wait === "function") {
 					let fiberBootstrap = require("./fiber-bootstrap");
 					fiberBootstrap.run(() => {
-						classInstance.initialize().wait();
+						result.wait();
 					});
 				}
 			}

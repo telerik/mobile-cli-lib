@@ -115,7 +115,7 @@ declare module Mobile {
 		execute(action: (device: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: {allowNoDevices?: boolean}): IFuture<void>;
 		initialize(data: IDevicesServicesInitializationOptions): IFuture<void>;
 		platform: string;
-		devices: IDictionary<Mobile.IDevice>;
+		getDevices(): IDeviceInfo[];
 	}
 
 	interface IiTunesValidator {

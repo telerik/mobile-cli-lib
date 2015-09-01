@@ -6,7 +6,7 @@ import Future = require("fibers/future");
 import helpers = require("../../helpers");
 let assert = require("assert");
 import constants = require("../constants");
-import {exported} from "../../decorators";
+import {exportedPromise, exported} from "../../decorators";
 
 export class DevicesService implements Mobile.IDevicesService {
 	private _devices: IDictionary<Mobile.IDevice> = {};
@@ -26,18 +26,20 @@ export class DevicesService implements Mobile.IDevicesService {
 		this.attachToDeviceDiscoveryEvents();
 	}
 
-	public get devices(): IDictionary<Mobile.IDevice> {
-		return this._devices;
-	}
 	public get platform(): string {
 		return this._platform;
 	}
 
 	public get deviceCount(): number {
-		return this._device ? 1 : this.getDevices().length;
+		return this._device ? 1 : this.getDeviceInstances().length;
 	}
 
-	private getDevices(): Mobile.IDevice[] {
+	@exported("devicesService")
+	public getDevices(): Mobile.IDeviceInfo[] {
+		return this.getDeviceInstances().map(deviceInstance => deviceInstance.deviceInfo);
+	}
+
+	private getDeviceInstances(): Mobile.IDevice[] {
 		return _.values(this._devices);
 	}
 
@@ -95,7 +97,7 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	private getAllConnectedDevices(): Mobile.IDevice[] {
 		if(!this._platform) {
-			return this.getDevices();
+			return this.getDeviceInstances();
 		} else {
 			return this.filterDevicesByPlatform();
 		}
@@ -103,11 +105,11 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	private getDeviceByIndex(index: number): Mobile.IDevice {
 		this.validateIndex(index-1);
-		return this.getDevices()[index-1];
+		return this.getDeviceInstances()[index-1];
 	}
 
 	private getDeviceByIdentifier(identifier: string): Mobile.IDevice {
-		let searchedDevice = _.find(this.getDevices(), (device: Mobile.IDevice) => { return device.deviceInfo.identifier === identifier; });
+		let searchedDevice = _.find(this.getDeviceInstances(), (device: Mobile.IDevice) => { return device.deviceInfo.identifier === identifier; });
 		if(!searchedDevice) {
 			this.$errors.fail(DevicesService.NOT_FOUND_DEVICE_BY_IDENTIFIER_ERROR_MESSAGE, identifier, this.$staticConfig.CLIENT_NAME.toLowerCase());
 		}
@@ -159,7 +161,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		}).future<void>()();
 	}
 
-	@exported("devicesService")
+	@exportedPromise("devicesService")
 	public deployOnDevices(deviceIdentifiers: string[], packageFile: string, packageName: string): IFuture<void>[] {
 		return _.map(deviceIdentifiers, deviceIdentifier => this.deployOnDevice(deviceIdentifier, packageFile, packageName));
 	}
@@ -185,12 +187,14 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	public initialize(data?: Mobile.IDevicesServicesInitializationOptions): IFuture<void> {
-		let platform = data.platform;
-		let deviceOption = data.deviceId;
 		if (this._isInitialized) {
 			return Future.fromResult();
 		}
 		return(() => {
+			data = data || {};
+			let platform =  data.platform;
+			let deviceOption = data.deviceId;
+
 			if(platform && deviceOption) {
 				this._device = this.getDevice(deviceOption).wait();
 				this._platform = this._device.deviceInfo.platform;
@@ -207,20 +211,17 @@ export class DevicesService implements Mobile.IDevicesService {
 				this.startLookingForDevices().wait();
 			} else if(!platform && !deviceOption) {
 				this.startLookingForDevices().wait();
-
 				if (!data.skipInferPlatform) {
-					let devices = this.getDevices();
+					let devices = this.getDeviceInstances();
 					let platforms = _.uniq(_.map(devices, (device) => device.deviceInfo.platform));
 
 					if (platforms.length === 1) {
 						this._platform = platforms[0];
+					} else if (platforms.length === 0) {
+						this.$errors.fail({formatStr: constants.ERROR_NO_DEVICES, suppressCommandHelp: true});
 					} else {
-						if (platforms.length === 0) {
-							this.$errors.fail({formatStr: constants.ERROR_NO_DEVICES, suppressCommandHelp: true});
-						} else {
-							this.$errors.fail("Multiple device platforms detected (%s). Specify platform or device on command line.",
-								helpers.formatListOfNames(platforms, "and"));
-						}
+						this.$errors.fail("Multiple device platforms detected (%s). Specify platform or device on command line.",
+							helpers.formatListOfNames(platforms, "and"));
 					}
 				}
 			}
@@ -230,7 +231,7 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	public get hasDevices(): boolean {
 		if (!this._platform) {
-			return this.getDevices().length !== 0;
+			return this.getDeviceInstances().length !== 0;
 		} else {
 			return this.filterDevicesByPlatform().length !== 0;
 		}
@@ -238,8 +239,8 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	private deployOnDevice(deviceIdentifier: string, packageFile: string, packageName: string): IFuture<void> {
 		return (() => {
-			if(_(this.devices).keys().find(d => d === deviceIdentifier)) {
-				this.devices[deviceIdentifier].deploy(packageFile, packageName).wait();
+			if(_(this._devices).keys().find(d => d === deviceIdentifier)) {
+				this._devices[deviceIdentifier].deploy(packageFile, packageName).wait();
 			} else {
 				throw new Error(`Cannot find device with identifier ${deviceIdentifier}.`);
 			}
@@ -247,15 +248,15 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	private hasDevice(identifier: string): boolean {
-		return _.some(this.getDevices(), (device: Mobile.IDevice) => { return device.deviceInfo.identifier === identifier; });
+		return _.some(this.getDeviceInstances(), (device: Mobile.IDevice) => { return device.deviceInfo.identifier === identifier; });
 	}
 
 	private filterDevicesByPlatform(): Mobile.IDevice[] {
-		return _.filter(this.getDevices(), (device: Mobile.IDevice) => { return device.deviceInfo.platform === this._platform; });
+		return _.filter(this.getDeviceInstances(), (device: Mobile.IDevice) => { return device.deviceInfo.platform === this._platform; });
 	}
 
 	private validateIndex(index: number): void {
-		if (index < 0 || index > this.getDevices().length) {
+		if (index < 0 || index > this.getDeviceInstances().length) {
 			throw new Error(util.format(DevicesService.NOT_FOUND_DEVICE_BY_INDEX_ERROR_MESSAGE, index, this.$staticConfig.CLIENT_NAME.toLowerCase()));
 		}
 	}

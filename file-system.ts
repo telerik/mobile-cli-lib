@@ -143,7 +143,7 @@ export class FileSystem implements IFileSystem {
 		return future;
 	}
 
-	@decorators.exported("fs")
+	@decorators.exportedPromise("fs")
 	public getFileSize(path: string): IFuture<number> {
 		return ((): number => {
 			let stat = this.getFsStats(path).wait();

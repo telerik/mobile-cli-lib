@@ -3,8 +3,9 @@
 
 import Promise = require("bluebird");
 import fiberBootstrap = require("./fiber-bootstrap");
+import * as assert from "assert";
 
-export function exported(moduleName: string): any {
+export function exportedPromise(moduleName: string): any {
 	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> => {
 		$injector.publicApi.__modules__[moduleName] = $injector.publicApi.__modules__[moduleName] || {};
 		$injector.publicApi.__modules__[moduleName][propertyKey] = (...args: any[]): Promise<any>[] | Promise<any>=> {
@@ -54,4 +55,19 @@ function getPromise(originalValue: any): Promise<any> {
 			onFulfilled(originalValue);
 		}
 	});
+}
+
+export function exported(moduleName: string): any {
+	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> => {
+		$injector.publicApi.__modules__[moduleName] = $injector.publicApi.__modules__[moduleName] || {};
+		$injector.publicApi.__modules__[moduleName][propertyKey] = (...args: any[]): any => {
+			let originalModule = $injector.resolve(moduleName);
+			let originalMethod: any = target[propertyKey];
+			let result = originalMethod.apply(originalModule, args);
+			assert.strictEqual(result && typeof(result.wait) === "function", false, "Cannot use exported decorator with function returning IFuture<T>.");
+			return result;
+		};
+
+		return descriptor;
+	};
 }
