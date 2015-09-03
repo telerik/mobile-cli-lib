@@ -1,13 +1,11 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
-import * as os from "os";
+import {EOL} from "os";
 
 export class AndroidApplicationManager implements Mobile.IDeviceApplicationManager {
 	private _installedApplications: string[];
 
 	constructor(private adb: Mobile.IAndroidDebugBridge,
-		private identifier: string,
-		private $options: ICommonOptions,
 		private $staticConfig: Config.IStaticConfig) { }
 
 	public getInstalledApplications(): IFuture<string[]> {
@@ -15,10 +13,10 @@ export class AndroidApplicationManager implements Mobile.IDeviceApplicationManag
 			if (!this._installedApplications) {
 				let result = this.adb.executeShellCommand(["pm", "list", "packages"]).wait();
 				let regex = /package:(.+)/;
-				this._installedApplications = _.map(result.split(os.EOL), (packageString: string) => {
+				this._installedApplications = _.map(result.split(EOL), (packageString: string) => {
 					let match = packageString.match(regex);
 					return match ? match[1] : null;
-				}).filter(parsedPackage => parsedPackage != null);
+				}).filter(parsedPackage => parsedPackage !== null);
 			}
 
 			return this._installedApplications;
