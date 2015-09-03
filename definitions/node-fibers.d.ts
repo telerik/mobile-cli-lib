@@ -65,6 +65,8 @@ declare module "fibers/future" {
 		throw (error: any): void;
 		wait(): T;
 
+		static task<T>(fn: Function): IFuture<T>;
+
 		static wait<T>(future: IFuture<T>): void;
 		static wait(future_list: IFuture<any>[]): void;
 		static wait(...future_list: IFuture<any>[]): void;
