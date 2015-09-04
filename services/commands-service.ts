@@ -66,7 +66,7 @@ export class CommandsService implements ICommandsService {
 				}
 
 				let commandHelp = this.getCommandHelp().wait();
-				if (commandHelp && commandHelp[commandName]) {
+				if (!command.disableCommandHelpSuggestion && commandHelp && commandHelp[commandName]) {
 					this.$logger.info(commandHelp[commandName]);
 				}
 
