@@ -123,6 +123,7 @@ interface ICommandOptions {
 	disableAnalytics?: boolean;
 	enableHooks?: boolean;
 	disableAnalyticsConsentCheck?: boolean;
+	disableCommandHelpSuggestion?: boolean;
 }
 
 declare const enum ErrorCodes {
