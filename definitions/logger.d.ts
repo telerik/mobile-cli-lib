@@ -7,6 +7,7 @@ interface ILogger {
 	info(formatStr?: any, ...args: string[]): void;
 	debug(formatStr?: any, ...args: string[]): void;
 	trace(formatStr?: any, ...args: string[]): void;
+	printMarkdown(message: string): void;
 
 	out(formatStr?: any, ...args: string[]): void;
 	write(...args: string[]): void;

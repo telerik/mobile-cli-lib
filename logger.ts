@@ -5,6 +5,9 @@ import * as log4js from "log4js";
 import * as util from "util";
 import * as stream from "stream";
 import Future = require("fibers/future");
+import marked = require("marked");
+let TerminalRenderer = require("marked-terminal");
+let chalk = require("chalk");
 
 export class Logger implements ILogger {
 	private log4jsLogger: log4js.ILogger = null;
@@ -114,6 +117,27 @@ export class Logger implements ILogger {
 		}, timeout);
 
 		return printMsgFuture;
+	}
+
+	public printMarkdown(message: string): void {
+		let opts = {
+			unescape: true,
+			link: chalk.red,
+			tableOptions: {
+				chars: { 'mid': '', 'left-mid': '', 'mid-mid': '', 'right-mid': '' },
+				style: {
+					'padding-left': 1,
+					'padding-right': 1,
+					head: ['green', 'bold'],
+					border: ['grey'],
+					compact: false
+				}
+			}
+		};
+
+		marked.setOptions({ renderer: new TerminalRenderer(opts) });
+		let formattedMessage = marked(message);
+		this.write(formattedMessage);
 	}
 
 	private getPasswordEncodedArguments(args: string[]): string[] {
