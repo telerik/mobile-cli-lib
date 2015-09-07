@@ -3,6 +3,7 @@
 
 import Future = require("fibers/future");
 import * as path from "path";
+import marked = require("marked");
 
 export class HtmlHelpService implements IHtmlHelpService {
 	private static MARKDOWN_FILE_EXTENSION = ".md";
