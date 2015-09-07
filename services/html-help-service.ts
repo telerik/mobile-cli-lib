@@ -3,9 +3,6 @@
 
 import Future = require("fibers/future");
 import * as path from "path";
-import marked = require("marked");
-let TerminalRenderer = require("marked-terminal");
-let chalk = require("chalk");
 
 export class HtmlHelpService implements IHtmlHelpService {
 	private static MARKDOWN_FILE_EXTENSION = ".md";
@@ -153,23 +150,7 @@ export class HtmlHelpService implements IHtmlHelpService {
 				.replace(/&nbsp;/g, " ")
 				.replace(HtmlHelpService.MARKDOWN_LINK_REGEX, "$1");
 
-			let opts = {
-				unescape: true,
-				link: chalk.red,
-				tableOptions: {
-					chars: { 'mid': '', 'left-mid': '', 'mid-mid': '', 'right-mid': '' },
-					style: {
-						'padding-left': 1,
-						'padding-right': 1,
-						head: ['green', 'bold'],
-						border: ['grey'],
-						compact: false
-					}
-				}
-			};
-
-			marked.setOptions({ renderer: new TerminalRenderer(opts) });
-			return marked(outputText);
+			return outputText;
 		}).future<string>()();
 	}
 }
