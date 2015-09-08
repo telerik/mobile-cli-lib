@@ -178,7 +178,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 		let future = new Future<string>();
 		let output: string = "";
-		let client = net.connect({ port: portNumber }, () => {
+		let client = net.connect(portNumber, () => {
 			client.write(`avd name${EOL}`);
 		});
 

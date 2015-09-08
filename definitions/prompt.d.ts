@@ -6,6 +6,7 @@ interface IPromptSchema {
 	choices?: any[];
 	filter?: (userInput: any) => any;
 	when?: (userAnswers: any) => boolean;
+	validate?: (userInput: any) => string|boolean;
 }
 
 interface IPrompt {

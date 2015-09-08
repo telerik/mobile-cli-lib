@@ -16,7 +16,7 @@ export class ChildProcess implements IChildProcess {
 			if(error) {
 				future.throw(error);
 			} else {
-				let output = execOptions && execOptions.showStderr ?  { sdtout: stdout, stderr: stderr } : stdout;
+				let output = execOptions && execOptions.showStderr ?  { stdout, stderr } : stdout;
 				future.return(output);
 			}
 		};
