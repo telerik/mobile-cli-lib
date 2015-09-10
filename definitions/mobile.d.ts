@@ -70,6 +70,7 @@ declare module Mobile {
 		getInstalledApplications(): IFuture<string[]>;
 		installApplication(packageFilePath: string): IFuture<void>;
 		uninstallApplication(appIdentifier: string): IFuture<void>;
+		reinstallApplication(applicationId: string, packageFilePath: string): IFuture<void>;
 		startApplication(appIdentifier: string): IFuture<void>;
 		stopApplication(appIdentifier: string): IFuture<void>;
 		restartApplication(applicationId: string): IFuture<void>;

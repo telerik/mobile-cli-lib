@@ -58,6 +58,13 @@ export class IOSApplicationManager implements Mobile.IDeviceApplicationManager {
 		}).future<void>()();
 	}
 
+	public reinstallApplication(applicationId: string, packageFilePath: string): IFuture<void> {
+		return (() => {
+			this.uninstallApplication(applicationId).wait();
+			this.installApplication(packageFilePath).wait();
+		}).future<void>()();
+	}
+
 	public startApplication(applicationId: string): IFuture<void> {
 		return (() => {
 			if(this.$hostInfo.isWindows && !this.$staticConfig.enableDeviceRunCommandOnWindows) {
