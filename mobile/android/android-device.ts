@@ -48,8 +48,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 
 	public deploy(packageFile: string, packageName: string): IFuture<void> {
 		return (() => {
-			this.applicationManager.uninstallApplication(packageName).wait();
-			this.applicationManager.installApplication(packageFile).wait();
+			this.applicationManager.reinstallApplication(packageName, packageFile).wait();
 			this.applicationManager.startApplication(packageName).wait();
 			this.$logger.info("Successfully deployed on device with identifier '%s'", this.identifier);
 		}).future<void>()();

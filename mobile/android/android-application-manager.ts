@@ -31,6 +31,13 @@ export class AndroidApplicationManager implements Mobile.IDeviceApplicationManag
 		return this.adb.executeShellCommand(["pm", "uninstall", `${appIdentifier}`]);
 	}
 
+	public reinstallApplication(applicationId: string, packageFilePath: string): IFuture<void> {
+		return (() => {
+			this.uninstallApplication(applicationId).wait();
+			this.installApplication(packageFilePath).wait();
+		}).future<void>()();
+	}
+
 	public startApplication(appIdentifier: string): IFuture<void> {
 		return this.adb.executeShellCommand(["am", "start",
 			"-a", "android.intent.action.MAIN",
