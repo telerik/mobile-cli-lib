@@ -4,7 +4,7 @@
 import * as util from "util";
 import Future = require("fibers/future");
 import * as helpers from "../../helpers";
-let assert = require("assert");
+import * as assert from "assert";
 import * as constants from "../constants";
 
 export class DevicesServices implements Mobile.IDevicesServices {
