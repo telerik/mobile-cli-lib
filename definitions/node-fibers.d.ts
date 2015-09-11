@@ -76,6 +76,7 @@ declare module "fibers/future" {
 		static settle(...future_list: IFuture<any>[]): void;
 
 		static fromResult<T>(value: T): IFuture<T>;
+		static fromResult<T>(value: any): IFuture<T>;
 		static fromResult(): IFuture<void>;
 
 		static assertNoFutureLeftBehind(): void;
