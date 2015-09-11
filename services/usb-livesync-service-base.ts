@@ -40,7 +40,6 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 
 	public sync(platform: string, appIdentifier: string, projectFilesPath: string, excludedProjectDirsAndFiles: string[], watchGlob: any,
 		platformSpecificLiveSyncServices: IDictionary<any>,
-		restartAppOnDeviceAction: (_device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData, localToDevicePaths?: Mobile.ILocalToDevicePathData[]) => IFuture<void>,
 		notInstalledAppOnDeviceAction: (_device1: Mobile.IDevice) => IFuture<void>,
 		notRunningiOSSimulatorAction: () => IFuture<void>,
 		localProjectRootPath?: string,
@@ -48,7 +47,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 		beforeBatchLiveSyncAction?: (_filePath: string) => IFuture<string>,
 		iOSSimulatorRelativeToProjectBasePathAction?: (projectFile: string) => string): IFuture<void> {
 		return (() => {
-			let synciOSSimulator = this.$hostInfo.isDarwin ? this.$iOSEmulatorServices.isSimulatorRunning().wait() || (this.$options.emulator && platform.toLowerCase() === "ios") : false;
+			let synciOSSimulator = this.$hostInfo.isDarwin && (this.$iOSEmulatorServices.isSimulatorRunning().wait() || (this.$options.emulator && platform.toLowerCase() === "ios"));
 
 			if(synciOSSimulator) {
 				this.$iOSEmulatorServices.sync(appIdentifier, projectFilesPath, notRunningiOSSimulatorAction).wait();
@@ -67,18 +66,18 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 			}
 
 			if(this.$options.watch) {
-				let __this = this;
+				let that = this;
 
 				gaze("**/*", { cwd: watchGlob }, function(err: any, watcher: any) {
 					this.on('all', (event: string, filePath: string) => {
 						if(event === "added" || event === "changed") {
 							if(!_.contains(excludedProjectDirsAndFiles, filePath)) {
 								if(synciOSSimulator) {
-									__this.$dispatcher.dispatch(() => __this.$iOSEmulatorServices.syncFiles(appIdentifier, projectFilesPath, [filePath], notRunningiOSSimulatorAction, iOSSimulatorRelativeToProjectBasePathAction));
+									that.$dispatcher.dispatch(() => that.$iOSEmulatorServices.syncFiles(appIdentifier, projectFilesPath, [filePath], notRunningiOSSimulatorAction, iOSSimulatorRelativeToProjectBasePathAction));
 								}
 
-								if(!__this.$options.emulator || platform.toLowerCase() === "android") {
-									__this.batchLiveSync(platform, filePath, appIdentifier, localProjectRootPath || projectFilesPath,  platformSpecificLiveSyncServices, notInstalledAppOnDeviceAction, beforeLiveSyncAction, beforeBatchLiveSyncAction);
+								if(!that.$options.emulator || platform.toLowerCase() === "android") {
+									that.batchLiveSync(platform, filePath, appIdentifier, localProjectRootPath || projectFilesPath,  platformSpecificLiveSyncServices, notInstalledAppOnDeviceAction, beforeLiveSyncAction, beforeBatchLiveSyncAction);
 								}
 							}
 						}
@@ -141,10 +140,11 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 		notInstalledAppOnDeviceAction: (_device: Mobile.IDevice) => IFuture<void>,
 		beforeLiveSyncAction?: (_device1: Mobile.IDevice, _deviceAppData: Mobile.IDeviceAppData) => IFuture<void>,
 		beforeBatchLiveSyncAction?: (_filePath: string) => IFuture<string>) : void {
-		if(!this.timer) {
+
+		if (!this.timer) {
 			this.timer = setInterval(() => {
 				let filesToSync = this.syncQueue;
-				if(filesToSync.length > 0) {
+				if (filesToSync.length > 0) {
 					this.syncQueue = [];
 					this.$logger.trace("Syncing %s", filesToSync.join(", "));
 					this.$dispatcher.dispatch( () => {
