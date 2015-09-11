@@ -290,8 +290,8 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		return this.tryExecuteFunction<number>(func);
 	}
 
-	public deploy(packageFile: string): IFuture<void> {
-		return this.applicationManager.installApplication(packageFile);
+	public deploy(packageFile: string, packageName: string): IFuture<void> {
+		return this.applicationManager.reinstallApplication(packageName, packageFile);
 	}
 
 	public openDeviceLogStream() {
