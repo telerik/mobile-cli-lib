@@ -149,6 +149,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 					this.$logger.trace("Syncing %s", filesToSync.join(", "));
 					this.$dispatcher.dispatch( () => {
 						return (() => {
+							this.preparePlatformForSync(platform);
 							this.syncCore(platform, filesToSync, appIdentifier, projectFilesPath, platformSpecificLiveSyncServices, notInstalledAppOnDeviceAction, beforeLiveSyncAction).wait();
 						}).future<void>()();
 					});
@@ -159,6 +160,9 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 		this.$dispatcher.dispatch( () => (() => {
 			this.syncQueue.push(beforeBatchLiveSyncAction ? beforeBatchLiveSyncAction(filePath).wait() : filePath);
 		}).future<void>()());
+	}
+
+	protected preparePlatformForSync(platform: string) {
 	}
 
 	private isFileExcluded(path: string, exclusionList: string[], projectDir: string): boolean {
