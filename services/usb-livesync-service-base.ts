@@ -47,7 +47,8 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 		beforeBatchLiveSyncAction?: (_filePath: string) => IFuture<string>,
 		iOSSimulatorRelativeToProjectBasePathAction?: (projectFile: string) => string): IFuture<void> {
 		return (() => {
-			let synciOSSimulator = this.$hostInfo.isDarwin && (this.$iOSEmulatorServices.isSimulatorRunning().wait() || (this.$options.emulator && platform.toLowerCase() === "ios"));
+			let platformLowerCase = platform.toLowerCase();
+			let synciOSSimulator = this.$hostInfo.isDarwin && platformLowerCase === "ios" && (this.$options.emulator || this.$iOSEmulatorServices.isSimulatorRunning().wait());
 
 			if(synciOSSimulator) {
 				this.$iOSEmulatorServices.sync(appIdentifier, projectFilesPath, notRunningiOSSimulatorAction).wait();
