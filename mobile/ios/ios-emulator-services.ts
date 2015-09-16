@@ -208,7 +208,12 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 				this.$logger.trace("Unable to kill simulator: " + e);
 			}
 
-			this.$childProcess.exec(`xcrun simctl launch ${runningSimulatorId} ${appIdentifier}`).wait();
+			setTimeout(() => {
+				// Killall doesn't always finish immediately, and the subsequent
+				// start fails since the app is already running.
+				// Give it some time to die before we attempt restarting.
+				this.$childProcess.exec(`xcrun simctl launch ${runningSimulatorId} ${appIdentifier}`);
+			}, 500);
 		}).future<void>()();
 	}
 }
