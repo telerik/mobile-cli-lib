@@ -164,6 +164,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 	}
 
 	protected preparePlatformForSync(platform: string) {
+        //Overridden in platform-specific services.
 	}
 
 	private isFileExcluded(path: string, exclusionList: string[], projectDir: string): boolean {
