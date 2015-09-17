@@ -190,7 +190,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 		notInstalledAppOnDeviceAction: (_device: Mobile.IDevice) => IFuture<void>,
 		beforeLiveSyncAction?: (_device1: Mobile.IDevice, _deviceAppData: Mobile.IDeviceAppData) => IFuture<void>,
 		beforeBatchLiveSyncAction?: (_filePath: string) => IFuture<string>) : void {
-			if (this.batch == null || !this.batch.syncPending) {
+			if (!this.batch || !this.batch.syncPending) {
 				this.batch = new SyncBatch(
 					this.$logger, this.$dispatcher, (filesToSync) => {
 						this.preparePlatformForSync(platform);
@@ -219,7 +219,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 		filePath: string,
 		notRunningiOSSimulatorAction: () => IFuture<void>,
 		iOSSimulatorRelativeToProjectBasePathAction:(projectFile: string) => string): void {
-			if (this.batch == null || !this.batch.syncPending) {
+			if (!this.batch || !this.batch.syncPending) {
 				this.batch = new SyncBatch(
 					this.$logger, this.$dispatcher, (filesToSync) => {
 						this.$iOSEmulatorServices.syncFiles(appIdentifier, projectFilesPath, filesToSync, notRunningiOSSimulatorAction, iOSSimulatorRelativeToProjectBasePathAction);
