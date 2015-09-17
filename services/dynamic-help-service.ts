@@ -2,6 +2,7 @@
 "use strict";
 
 import * as os from "os";
+import {formatListOfNames} from '../helpers';
 
 export class DynamicHelpService implements IDynamicHelpService {
 	constructor(private $dynamicHelpProvider: IDynamicHelpProvider) { }
@@ -25,7 +26,7 @@ export class DynamicHelpService implements IDynamicHelpService {
 			localVariables["isMacOS"] = isHtml || this.isPlatform("darwin");
 			localVariables["isConsole"] = !isHtml;
 			localVariables["isHtml"] = isHtml;
-
+			localVariables["formatListOfNames"] = formatListOfNames;
 			return localVariables;
 		}).future<IDictionary<any>>()();
 	}

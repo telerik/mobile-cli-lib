@@ -75,7 +75,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 
 	public sync(platform: string, appIdentifier: string, projectFilesPath: string, excludedProjectDirsAndFiles: string[], watchGlob: any,
 		platformSpecificLiveSyncServices: IDictionary<any>,
-		notInstalledAppOnDeviceAction: (_device1: Mobile.IDevice) => IFuture<void>,
+		notInstalledAppOnDeviceAction: (_device1: Mobile.IDevice) => IFuture<boolean>,
 		notRunningiOSSimulatorAction: () => IFuture<void>,
 		localProjectRootPath?: string,
 		beforeLiveSyncAction?: (_device2: Mobile.IDevice, _deviceAppData: Mobile.IDeviceAppData) => IFuture<void>,
@@ -141,7 +141,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 
 	private syncCore(platform: string, projectFiles: string[], appIdentifier: string, projectFilesPath: string,
 		platformSpecificLiveSyncServices: IDictionary<any>,
-		notInstalledAppOnDeviceAction: (_device1: Mobile.IDevice) => IFuture<void>,
+		notInstalledAppOnDeviceAction: (_device1: Mobile.IDevice) => IFuture<boolean>,
 		beforeLiveSyncAction?: (_device2: Mobile.IDevice, _deviceAppData1: Mobile.IDeviceAppData) => IFuture<void>): IFuture<void> {
 		return (() => {
 			platform = platform ? this.$mobileHelper.normalizePlatformName(platform) : this.$devicesServices.platform;
@@ -163,17 +163,20 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 						let applications = device.applicationManager.getInstalledApplications().wait();
 						if(!_.contains(applications, deviceAppData.appIdentifier)) {
 							this.$logger.warn(`The application with id "${deviceAppData.appIdentifier}" is not installed on the device yet.`);
-							notInstalledAppOnDeviceAction(device).wait();
-							return;
+							if (!notInstalledAppOnDeviceAction(device).wait()) {
+								return;
+							}
 						}
 
 						this.$logger.info("Transferring project files...");
 						device.fileSystem.transferFiles(deviceAppData.appIdentifier, localToDevicePaths).wait();
 						this.$logger.info("Successfully transferred all project files.");
 
-						this.$logger.info("Applying changes...");
-						let platformSpecificLiveSyncService = this.resolvePlatformSpecificLiveSyncService(platform, device, platformSpecificLiveSyncServices);
-						platformSpecificLiveSyncService.restartApplication(deviceAppData, localToDevicePaths).wait();
+						if (!this.$options.debugBrk) {
+							this.$logger.info("Applying changes...");
+							let platformSpecificLiveSyncService = this.resolvePlatformSpecificLiveSyncService(platform, device, platformSpecificLiveSyncServices);
+							platformSpecificLiveSyncService.restartApplication(deviceAppData, localToDevicePaths).wait();
+						}
 						this.$logger.info(`Successfully synced application ${deviceAppData.appIdentifier}.`);
 					}
 				}).future<void>()();
@@ -187,7 +190,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 
 	private batchLiveSync(platform: string, filePath: string, appIdentifier: string, projectFilesPath: string,
 		platformSpecificLiveSyncServices: IDictionary<any>,
-		notInstalledAppOnDeviceAction: (_device: Mobile.IDevice) => IFuture<void>,
+		notInstalledAppOnDeviceAction: (_device: Mobile.IDevice) => IFuture<boolean>,
 		beforeLiveSyncAction?: (_device1: Mobile.IDevice, _deviceAppData: Mobile.IDeviceAppData) => IFuture<void>,
 		beforeBatchLiveSyncAction?: (_filePath: string) => IFuture<string>) : void {
 			if (!this.batch || !this.batch.syncPending) {
@@ -272,3 +275,4 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 		return this.$injector.resolve(platformSpecificLiveSyncServices[platform.toLowerCase()], {_device: device});
 	}
 }
+$injector.register('usbLiveSyncServiceBase', UsbLiveSyncServiceBase);
