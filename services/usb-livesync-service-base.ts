@@ -43,7 +43,7 @@ class SyncBatch {
 		}
 
 		public get syncPending() {
-			return this.syncQueue.length > 0
+			return this.syncQueue.length > 0;
 		}
 }
 
@@ -204,11 +204,11 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 							beforeLiveSyncAction
 						).wait();
 					}
-				)
+				);
 			}
 
 		this.$dispatcher.dispatch( () => (() => {
-			let fileToSync = beforeBatchLiveSyncAction ? beforeBatchLiveSyncAction(filePath).wait() : filePath
+			let fileToSync = beforeBatchLiveSyncAction ? beforeBatchLiveSyncAction(filePath).wait() : filePath;
 			this.batch.addFile(fileToSync);
 		}).future<void>()());
 	}
@@ -222,9 +222,9 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 			if (this.batch == null || !this.batch.syncPending) {
 				this.batch = new SyncBatch(
 					this.$logger, this.$dispatcher, (filesToSync) => {
-						this.$iOSEmulatorServices.syncFiles(appIdentifier, projectFilesPath, filesToSync, notRunningiOSSimulatorAction, iOSSimulatorRelativeToProjectBasePathAction)
+						this.$iOSEmulatorServices.syncFiles(appIdentifier, projectFilesPath, filesToSync, notRunningiOSSimulatorAction, iOSSimulatorRelativeToProjectBasePathAction);
 					}
-				)
+				);
 			}
 
 			this.batch.addFile(filePath);
