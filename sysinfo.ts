@@ -77,7 +77,9 @@ export class SysInfo implements ISysInfo {
 			res.gradleVer = procOutput ? /Gradle (.*)/i.exec(procOutput)[1] : null;
 
 			let output = this.exec("javac -version", { showStderr: true });
-			res.javacVersion = output ? /^javac (.*)/i.exec(output.stderr)[1]: null;
+            // for other versions of java javac version output is not on first line
+            // thus can't use ^ for starts with in regex
+			res.javacVersion = output ? /javac (.*)/i.exec(output.stderr)[1]: null;
 
 			this.sysInfoCache = res;
 		}
