@@ -306,8 +306,6 @@ interface ISysInfoData {
 	// dependencies
 	/** version of java, as returned by `java -version` */
 	javaVer: string;
-	/** version string of ant, as returned by `ant -version` */
-	antVer: string;
 	/** Xcode version string as returned by `xcodebuild -version`. Valid only on Mac */
 	xcodeVer: string;
 	/** Version string of adb, as returned by `adb version` */
