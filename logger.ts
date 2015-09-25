@@ -119,7 +119,7 @@ export class Logger implements ILogger {
 		return printMsgFuture;
 	}
 
-	public printMarkdown(message: string): void {
+	public printMarkdown(...args: string[]): void {
 		let opts = {
 			unescape: true,
 			link: chalk.red,
@@ -136,7 +136,7 @@ export class Logger implements ILogger {
 		};
 
 		marked.setOptions({ renderer: new TerminalRenderer(opts) });
-		let formattedMessage = marked(message);
+		let formattedMessage = marked(util.format.apply(null, args));
 		this.write(formattedMessage);
 	}
 
