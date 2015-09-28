@@ -42,15 +42,12 @@ export class SysInfo implements ISysInfo {
 
 			// dependencies
 			try {
-                // different java has different format for `java -version` command
+				// different java has different format for `java -version` command
 				let output = this.$childProcess.spawnFromEvent("java", ["-version"], "exit").wait().stderr;
 				res.javaVer = /(?:openjdk|java) version \"((?:\d+\.)+(?:\d+))/i.exec(output)[1];
 			} catch(e) {
 				res.javaVer = null;
 			}
-
-			procOutput = this.exec("ant -version");
-			res.antVer = procOutput ? procOutput.split(os.EOL)[0] : null;
 
 			res.nodeGypVer = this.exec("node-gyp -v");
 			res.xcodeVer = this.$hostInfo.isDarwin ? this.exec("xcodebuild -version") : null;
