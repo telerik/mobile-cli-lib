@@ -2,6 +2,7 @@
 "use strict";
 
 import { EventEmitter } from "events";
+import byline = require("byline");
 import fiberBootstrap = require("../../fiber-bootstrap");
 
 class DeviceEmitter extends EventEmitter {
@@ -9,7 +10,9 @@ class DeviceEmitter extends EventEmitter {
 
 	// TODO: add iOSDeviceDiscovery as a dependency too
 	constructor(private $androidDeviceDiscovery:Mobile.IAndroidDeviceDiscovery,
-		private $devicesService: Mobile.IDevicesService) {
+		private $childProcess: IChildProcess,
+		private $devicesService: Mobile.IDevicesService,
+		private $staticConfig: Config.IStaticConfig) {
 		super();
 	}
 
@@ -29,6 +32,31 @@ class DeviceEmitter extends EventEmitter {
 					this.$androidDeviceDiscovery.startLookingForDevices().wait();
 				}),
 			DeviceEmitter.DEVICE_DISCOVERY_TIMEOUT).unref();
+
+			this.startAdbLogcat().wait();
+
+		}).future<void>()();
+	}
+
+	private startAdbLogcat(): IFuture<void> {
+		return (() => {
+			let adbPath = this.$staticConfig.getAdbFilePath().wait();
+
+			let adbLogcat = this.$childProcess.spawn(adbPath, ["logcat"]);
+			let lineStream = byline(adbLogcat.stdout);
+
+			adbLogcat.stderr.on("data", (data: NodeBuffer) => {
+				this.emit("adbError", data);
+			});
+
+			adbLogcat.on("adbClose", (code: number) => {
+				this.emit("adbClose", code.toString());
+			});
+
+			lineStream.on('data', (line: NodeBuffer) => {
+				let lineText = line.toString();
+				this.emit("adbData", lineText);
+			});
 
 		}).future<void>()();
 	}
