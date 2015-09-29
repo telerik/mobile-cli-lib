@@ -36,7 +36,7 @@ function annotate(fn: any) {
 		argDecl: string[];
 
 	if(typeof fn === "function") {
-		if(!($inject = fn.$inject)) {
+		if(!($inject = fn.$inject) || $inject.name !== fn.name) {
 			$inject = { args: [], name: "" };
 			fnText = fn.toString().replace(STRIP_COMMENTS, '');
 			argDecl = fnText.match(FN_NAME_AND_ARGS);
