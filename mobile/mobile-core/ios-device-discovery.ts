@@ -43,7 +43,7 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 				let parsedTimeout =  this.$utils.getParsedTimeout(1);
 				let timeout = parsedTimeout > defaultTimeoutInSeconds ? parsedTimeout/1000 : defaultTimeoutInSeconds;
 				// TODO: Refactor this and call both startLookingForDevices in setInterval in order to support event-based device operations
-				this.startRunLoopWithTimer(timeout);
+				setInterval(() => this.startRunLoopWithTimer(timeout), 500);
 			}
 		}).future<void>()();
 	}
