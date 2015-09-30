@@ -10,6 +10,7 @@ class DeviceEmitter extends EventEmitter {
 
 	// TODO: add iOSDeviceDiscovery as a dependency too
 	constructor(private $androidDeviceDiscovery:Mobile.IAndroidDeviceDiscovery,
+		private $iOSDeviceDiscovery: Mobile.IDeviceDiscovery,
 		private $childProcess: IChildProcess,
 		private $devicesService: Mobile.IDevicesService,
 		private $staticConfig: Config.IStaticConfig) {
@@ -27,6 +28,15 @@ class DeviceEmitter extends EventEmitter {
 				this.emit("deviceLost", data.deviceInfo);
 			});
 
+			this.$iOSDeviceDiscovery.on("deviceFound", (data: Mobile.IDevice) => {
+				this.emit("deviceFound", data.deviceInfo);
+			});
+
+			this.$iOSDeviceDiscovery.on("deviceLost", (data: Mobile.IDevice) => {
+				this.emit("deviceLost", data.deviceInfo);
+			});
+
+			this.$iOSDeviceDiscovery.startLookingForDevices().wait();
 			setInterval(() =>
 				fiberBootstrap.run(() => {
 					this.$androidDeviceDiscovery.startLookingForDevices().wait();

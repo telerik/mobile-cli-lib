@@ -19,7 +19,7 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	constructor(private $logger: ILogger,
 		private $errors: IErrors,
-		//private $iOSDeviceDiscovery: Mobile.IDeviceDiscovery,
+		private $iOSDeviceDiscovery: Mobile.IDeviceDiscovery,
 		private $androidDeviceDiscovery: Mobile.IDeviceDiscovery,
 		private $staticConfig: Config.IStaticConfig,
 		private $mobileHelper: Mobile.IMobileHelper) {
@@ -64,8 +64,8 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	private attachToDeviceDiscoveryEvents(): void {
-		// this.$iOSDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => this.onDeviceFound(device));
-		// this.$iOSDeviceDiscovery.on("deviceLost", (device: Mobile.IDevice) => this.onDeviceLost(device));
+		this.$iOSDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => this.onDeviceFound(device));
+		this.$iOSDeviceDiscovery.on("deviceLost", (device: Mobile.IDevice) => this.onDeviceLost(device));
 
 		this.$androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => this.onDeviceFound(device));
 		this.$androidDeviceDiscovery.on("deviceLost", (device: Mobile.IDevice) => this.onDeviceLost(device));
@@ -85,10 +85,10 @@ export class DevicesService implements Mobile.IDevicesService {
 		return (() => {
 			this.$logger.trace("startLookingForDevices; platform is %s", this._platform);
 			if(!this._platform) {
-				// this.$iOSDeviceDiscovery.startLookingForDevices().wait();
+				this.$iOSDeviceDiscovery.startLookingForDevices().wait();
 				this.$androidDeviceDiscovery.startLookingForDevices().wait();
 			} else if(this.$mobileHelper.isiOSPlatform(this._platform)) {
-				// this.$iOSDeviceDiscovery.startLookingForDevices().wait();
+				this.$iOSDeviceDiscovery.startLookingForDevices().wait();
 			} else if(this.$mobileHelper.isAndroidPlatform(this._platform)) {
 				this.$androidDeviceDiscovery.startLookingForDevices().wait();
 			}
