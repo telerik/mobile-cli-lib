@@ -316,12 +316,14 @@ interface ISysInfoData {
 	androidInstalled: boolean;
 	/** mono version, relevant on Mac only **/
 	monoVer: string;
-	/** git version string, as retunrnes by `git --version` **/
+	/** git version string, as returned by `git --version` **/
 	gitVer: string;
-	/** gradle version string as retunrnes by `gradle -v` **/
+	/** gradle version string as returned by `gradle -v` **/
 	gradleVer: string;
-	/** javac version string as retunrnes by `javac -version` **/
+	/** javac version string as returned by `javac -version` **/
 	javacVersion: string;
+	/** pod version string, as returned by `pod --version` **/
+	cocoapodVer: string;
 }
 
 interface ISysInfo {

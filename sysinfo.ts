@@ -53,6 +53,8 @@ export class SysInfo implements ISysInfo {
 			res.xcodeVer = this.$hostInfo.isDarwin ? this.exec("xcodebuild -version") : null;
 			res.itunesInstalled = this.$iTunesValidator.getError().wait() === null;
 
+			res.cocoapodVer = this.$hostInfo.isDarwin ? this.exec("pod --version") : null;
+
 			procOutput = this.exec("adb version");
 			res.adbVer = procOutput ? procOutput.split(os.EOL)[0] : null;
 
