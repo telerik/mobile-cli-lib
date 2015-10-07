@@ -386,6 +386,7 @@ interface ICommonOptions {
 	force: boolean;
 	companion: boolean;
 	emulator: boolean;
+	var: Object;
 }
 
 interface IYargArgv extends IDictionary<any> {
@@ -506,4 +507,9 @@ interface IResourceLoader {
 	 * @return {string}           The absolute path to App_Resources folder
 	 */
 	getPathToAppResources(framework: string): string;
+}
+
+interface IPluginVariablesHelper {
+	getPluginVariableFromVarOption(variableName: string, configuration?: string): any;
+	simplifyYargsObject(obj: any, configuration?: string): any;
 }

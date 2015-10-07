@@ -66,7 +66,8 @@ export class OptionsBase {
 			"file": { type: OptionType.String },
 			"force": { type: OptionType.Boolean, alias: "f" },
 			"companion": { type: OptionType.Boolean },
-			"emulator": { type: OptionType.Boolean }
+			"emulator": { type: OptionType.Boolean },
+			var: {type: OptionType.Object},
 		};
 	}
 

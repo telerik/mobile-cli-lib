@@ -27,6 +27,7 @@ $injector.require("httpClient", "./http-client");
 $injector.require("childProcess", "./child-process");
 $injector.require("prompter", "./prompter");
 $injector.require("projectHelper", "./project-helper");
+$injector.require("pluginVariablesHelper", "./plugin-variables-helper");
 $injector.require("propertiesParser", "./properties-parser");
 
 $injector.requireCommand(["help", "/?"], "./commands/help");
