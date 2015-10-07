@@ -4,6 +4,7 @@
 let uuid = require("node-uuid");
 import Fiber = require("fibers");
 let Table = require("cli-table");
+import Future = require("fibers/future");
 
 export function createGUID(useBraces: boolean = true) {
 	let output: string;
@@ -136,4 +137,14 @@ export function trimSymbol(str: string, symbol: string) {
 	}
 
 	return str;
+}
+
+// TODO: Use generic for predicatе predicate: (element: T|T[]) when TypeScript support this.
+export function getFuturesResults<T>(futures: IFuture<T|T[]>[], predicate: (element: any) => boolean): T[] {
+	Future.wait(futures);
+	return _(futures)
+			.map(f => f.get())
+			.filter(predicate)
+			.flatten<T>()
+			.value();
 }
