@@ -184,7 +184,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 				this.$logger.out("Unable to update %s. Command-line completion might not work.", fileName);
 				// When npm is installed with sudo, in some cases the installation cannot write to shell profiles
 				// Advise the user how to enable autocompletion after the installation is completed.
-				if(err.code === "EPERM" && !this.$hostInfo.isWindows && process.env.SUDO_USER) {
+				if((err.code === "EPERM" || err.code === "EACCES") && !this.$hostInfo.isWindows && process.env.SUDO_USER) {
 					this.$logger.out("To enable command-line completion, run '$ %s autocomplete enable'.", this.$staticConfig.CLIENT_NAME);
 				}
 
