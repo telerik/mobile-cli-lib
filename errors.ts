@@ -118,7 +118,9 @@ export class Errors implements IErrors {
 			try {
 				return action().wait();
 			} catch(ex) {
-				console.error(this.printCallStack
+				let loggerLevel: string = $injector.resolve("logger").getLevel().toUpperCase();
+				let printCallStack = this.printCallStack || loggerLevel === "TRACE" || loggerLevel === "DEBUG";
+				console.error(printCallStack
 					? resolveCallStack(ex)
 					: "\x1B[31;1m" + ex.message + "\x1B[0m");
 
