@@ -39,12 +39,17 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 				this.$logger.warn("In this version of the %s command-line interface, you cannot use connected iOS devices.", this.$staticConfig.CLIENT_NAME.toLowerCase());
 			} else {
 				this.subscribeForNotifications();
-				let defaultTimeoutInSeconds = 1;
-				let parsedTimeout =  this.$utils.getParsedTimeout(1);
-				let timeout = parsedTimeout > defaultTimeoutInSeconds ? parsedTimeout/1000 : defaultTimeoutInSeconds;
-				// TODO: Refactor this and call both startLookingForDevices in setInterval in order to support event-based device operations
-				setInterval(() => this.startRunLoopWithTimer(timeout), 500);
+				this.checkForDevices().wait();
 			}
+		}).future<void>()();
+	}
+
+	public checkForDevices(): IFuture<void> {
+		return ((): void => {
+			let defaultTimeoutInSeconds = 1;
+			let parsedTimeout =  this.$utils.getParsedTimeout(defaultTimeoutInSeconds);
+			let timeout = parsedTimeout > defaultTimeoutInSeconds ? parsedTimeout/1000 : defaultTimeoutInSeconds;
+			this.startRunLoopWithTimer(timeout);
 		}).future<void>()();
 	}
 

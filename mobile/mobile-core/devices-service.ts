@@ -8,11 +8,14 @@ let assert = require("assert");
 import constants = require("../constants");
 import {exportedPromise, exported} from "../../decorators";
 
+import fiberBootstrap = require("../../fiber-bootstrap");
+
 export class DevicesService implements Mobile.IDevicesService {
 	private _devices: IDictionary<Mobile.IDevice> = {};
 	private platforms: string[] = [];
 	private static NOT_FOUND_DEVICE_BY_IDENTIFIER_ERROR_MESSAGE = "Could not find device by specified identifier '%s'. To list currently connected devices and verify that the specified identifier exists, run '%s device'.";
 	private static NOT_FOUND_DEVICE_BY_INDEX_ERROR_MESSAGE = "Could not find device by specified index %d. To list currently connected devices and verify that the specified index exists, run '%s device'.";
+	private static DEVICE_LOOKING_INTERVAL = 1000;
 	private _platform: string;
 	private _device: Mobile.IDevice;
 	private _isInitialized = false;
@@ -87,6 +90,11 @@ export class DevicesService implements Mobile.IDevicesService {
 			if(!this._platform) {
 				this.$iOSDeviceDiscovery.startLookingForDevices().wait();
 				this.$androidDeviceDiscovery.startLookingForDevices().wait();
+				setInterval(() => {
+					fiberBootstrap.run(() => {
+						Future.wait([this.$iOSDeviceDiscovery.checkForDevices(), this.$androidDeviceDiscovery.checkForDevices()])
+					});
+				}, DevicesService.DEVICE_LOOKING_INTERVAL);
 			} else if(this.$mobileHelper.isiOSPlatform(this._platform)) {
 				this.$iOSDeviceDiscovery.startLookingForDevices().wait();
 			} else if(this.$mobileHelper.isAndroidPlatform(this._platform)) {

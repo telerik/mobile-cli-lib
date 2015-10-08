@@ -62,8 +62,8 @@ declare module Mobile {
 		start(deviceIdentifier: string): any;
 	}
 
-	interface ILogcatPrinter {
-		print(line: string): void;
+	interface IDeviceLogProvider {
+		logData(line: string, deviceIdentifier?: string): void;
 	}
 
 	interface IDeviceApplicationManager {
@@ -97,6 +97,7 @@ declare module Mobile {
 
 	interface IDeviceDiscovery extends NodeJS.EventEmitter {
 		startLookingForDevices(): IFuture<void>;
+		checkForDevices(): IFuture<void>;
 	}
 
 	interface IAndroidDeviceDiscovery extends IDeviceDiscovery {

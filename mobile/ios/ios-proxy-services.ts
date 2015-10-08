@@ -387,7 +387,8 @@ export class IOSSyslog {
 
 	constructor(private device: Mobile.IiOSDevice,
 		private $logger: ILogger,
-		private $injector: IInjector) {
+		private $injector: IInjector,
+		private $deviceLogProvider: Mobile.IDeviceLogProvider) {
 		this.plistService = this.$injector.resolve(iOSCore.PlistService, {service: this.device.startService(MobileServices.SYSLOG), format: undefined});
 	}
 
@@ -398,10 +399,9 @@ export class IOSSyslog {
 		let printData = (data: NodeBuffer) => {
 			if(shouldLog) {
 				let output = ref.readCString(data, 0);
-				this.$logger.write(output);
+				this.$deviceLogProvider.logData(output, this.device.deviceInfo.identifier);
 			}
 		};
-
 		this.plistService.readSystemLog(printData);
 	}
 }

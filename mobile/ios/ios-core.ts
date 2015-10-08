@@ -646,6 +646,7 @@ $injector.register("mobileDevice", MobileDevice);
 class WinSocket implements Mobile.IiOSDeviceSocket {
 	private winSocketLibrary: any = null;
 	private static BYTES_TO_READ = 1024;
+	private static READ_SYSTEM_LOG_INTERVAL = 500;
 
 	constructor(private service: number,
 		private format: number,
@@ -670,12 +671,15 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 	}
 
 	public readSystemLog(printData: any) {
-		let data = this.read(WinSocket.BYTES_TO_READ);
-		while (data) {
-			printData(data);
-			data = this.read(WinSocket.BYTES_TO_READ);
-		}
-		this.close();
+		let timer = setInterval(() => {
+			let data = this.read(WinSocket.BYTES_TO_READ);
+			if(data) {
+				printData(data);
+			} else {
+				this.close();
+				clearInterval(timer);
+			}
+		}, WinSocket.READ_SYSTEM_LOG_INTERVAL);
 	}
 
 	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData> {
