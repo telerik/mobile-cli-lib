@@ -5,6 +5,8 @@ import {DeviceDiscovery} from "./device-discovery";
 import * as helpers from "../../helpers";
 import {AndroidDevice} from "../android/android-device";
 import {EOL} from "os";
+import Future = require("fibers/future");
+import fiberBootstrap = require("../../fiber-bootstrap");
 
 export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IAndroidDeviceDiscovery {
 	private _devices: string[] = [];
@@ -27,10 +29,30 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 	}
 
 	public startLookingForDevices(): IFuture<void> {
-		return(()=> {
-			let requestAllDevicesCommand = `"${this.$staticConfig.getAdbFilePath().wait()}" devices`;
-			let result = this.$childProcess.exec(requestAllDevicesCommand).wait();
+		return this.checkForDevices();
+	}
 
+	public checkForDevices(): IFuture<void> {
+		return (() => {
+			let result = this.$childProcess.spawn(this.$staticConfig.getAdbFilePath().wait(), ["devices"], { stdio: 'pipe' });
+			result.stdout.on("data", (data: NodeBuffer) => {
+				fiberBootstrap.run(() => {
+					this.checkCurrentData(data).wait();
+				});
+			});
+
+			result.stderr.on("data", (data: NodeBuffer) => {
+				throw(new Error(data.toString()));
+			});
+
+			result.on("error", (err: Error) => {
+				throw(err);
+			});
+		}).future<void>()();
+	}
+
+	private checkCurrentData(result: any): IFuture<void> {
+		return (() => {
 			let currentDevices = result.toString().split(EOL).slice(1)
 				.filter( (element:string) => !helpers.isNullOrWhitespace(element) )
 				.map((element: string) => {

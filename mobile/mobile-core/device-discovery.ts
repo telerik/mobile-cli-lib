@@ -2,6 +2,7 @@
 "use strict";
 
 import { EventEmitter } from "events";
+import Future = require("fibers/future");
 
 export class DeviceDiscovery extends EventEmitter implements Mobile.IDeviceDiscovery {
 	private devices: {[key: string]: Mobile.IDevice} = {};
@@ -21,7 +22,11 @@ export class DeviceDiscovery extends EventEmitter implements Mobile.IDeviceDisco
 	}
 
 	public startLookingForDevices(): IFuture<void> {
-		return undefined;
+		return Future.fromResult();
+	}
+
+	public checkForDevices(): IFuture<void> {
+		return Future.fromResult();
 	}
 
 	private raiseOnDeviceFound(device: Mobile.IDevice) {
