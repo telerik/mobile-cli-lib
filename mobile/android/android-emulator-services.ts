@@ -45,6 +45,18 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		this.adbFilePath = this.$staticConfig.getAdbFilePath().wait();
 	}
 
+	public getEmulatorId(): IFuture<string> {
+		return (() => {
+			let image = this.getEmulatorImage().wait();
+			if(!image) {
+				this.$errors.fail("Could not find an emulator image to run your project.");
+			}
+
+			let emulatorId = this.startEmulatorInstance(image).wait();
+			return emulatorId;
+		}).future<string>()();
+	}
+
 	public checkDependencies(): IFuture<void> {
 		return (() => {
 			this.checkAndroidSDKConfiguration().wait();
@@ -77,6 +89,13 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		}).future<void>()();
 	}
 
+	private getEmulatorImage(): IFuture<string> {
+		return (() => {
+			let image = this.$options.avd || this.$options.geny || this.getBestFit().wait();
+			return image;
+		}).future<string>()();
+	}
+
 	public checkAvailability(): IFuture<void> {
 		return (() => {
 			let platform = this.$devicePlatformsConstants.Android;
@@ -92,7 +111,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 				this.$errors.fail("You cannot specify both --avd and --geny options. Please use only one of them.");
 			}
 
-			let image = this.$options.avd || this.$options.geny || this.getBestFit().wait();
+			let image = this.getEmulatorImage().wait();
 			if(image) {
 				this.startEmulatorCore(app, emulatorOptions.appId, image).wait();
 			} else {
