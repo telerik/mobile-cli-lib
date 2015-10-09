@@ -209,7 +209,9 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 
 		this.$dispatcher.dispatch( () => (() => {
 			let fileToSync = beforeBatchLiveSyncAction ? beforeBatchLiveSyncAction(filePath).wait() : filePath;
-			this.batch.addFile(fileToSync);
+			if(fileToSync) {
+				this.batch.addFile(fileToSync);
+			}
 		}).future<void>()());
 	}
 

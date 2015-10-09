@@ -24,10 +24,12 @@ export class AndroidApplicationManager implements Mobile.IDeviceApplicationManag
 	}
 
 	public installApplication(packageFilePath: string): IFuture<void> {
+		this._installedApplications = null;
 		return this.adb.executeCommand(["install", "-r", `${packageFilePath}`]);
 	}
 
 	public uninstallApplication(appIdentifier: string): IFuture<void> {
+		this._installedApplications = null;
 		return this.adb.executeShellCommand(["pm", "uninstall", `${appIdentifier}`]);
 	}
 
