@@ -148,3 +148,12 @@ export function getFuturesResults<T>(futures: IFuture<T|T[]>[], predicate: (elem
 			.flatten<T>()
 			.value();
 }
+
+export function appendZeroesToVersion(version: string, requiredVersionLength: number): string {
+	let zeroesToAppend = requiredVersionLength - version.split(".").length;
+	for (let index = 0; index < zeroesToAppend; index++) {
+		version += ".0";
+	}
+
+	return version;
+}
