@@ -576,3 +576,22 @@ interface IMessagesService {
 	 */
 	getMessage(id: string, ...args: string[]): string;
 }
+
+/**
+ * Describes generated code parts.
+ */
+interface IServiceContractClientCode {
+	interfaceFile: string;
+	implementationFile: string;
+}
+
+/**
+ * Used for code generation.
+ */
+interface IServiceContractGenerator {
+	/**
+	 * Generate code implementation along with interface
+	 * @return {IFuture<IServiceContractClientCode>} The generated code parts
+	 */
+	generate(): IFuture<IServiceContractClientCode>;
+}
