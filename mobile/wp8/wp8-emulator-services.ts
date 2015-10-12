@@ -12,6 +12,10 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $hostInfo: IHostInfo) { }
 
+	public getEmulatorId(): IFuture<string> {
+		return future.fromResult("");
+	}
+
 	public checkDependencies(): IFuture<void> {
 		return future.fromResult();
 	}
