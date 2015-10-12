@@ -282,7 +282,7 @@ declare module Mobile {
 	interface IEmulatorPlatformServices {
 		checkDependencies(): IFuture<void>;
 		checkAvailability(dependsOnProject?: boolean): IFuture<void>;
-		startEmulator(app: string, emulatorOptions?: IEmulatorOptions): IFuture<void>;
+		startEmulator(app: string, emulatorOptions?: IEmulatorOptions): IFuture<any>;
 		getEmulatorId?(): IFuture<string>;
 	}
 
@@ -304,6 +304,8 @@ declare module Mobile {
 		appId?: string;
 		args?: string;
 		deviceType?: string;
+		waitForDebugger?: boolean;
+		captureStdin?: boolean;
 	}
 
 	interface IPlatformsCapabilities {

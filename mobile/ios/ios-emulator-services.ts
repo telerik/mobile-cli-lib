@@ -36,11 +36,11 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		}).future<void>()();
 	}
 
-	public startEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): IFuture<void> {
+	public startEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): IFuture<any> {
 		return (() => {
 			this.killLaunchdSim().wait();
-			this.startEmulatorCore(app, emulatorOptions);
-		}).future<void>()();
+			return this.startEmulatorCore(app, emulatorOptions);
+		}).future<any>()();
 	}
 
 	public postDarwinNotification(notification: string): IFuture<void> {
@@ -86,7 +86,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		return this.$childProcess.spawnFromEvent("killall", ["launchd_sim"], "close", undefined, { throwError: false });
 	}
 
-	private startEmulatorCore(app: string, emulatorOptions?: Mobile.IEmulatorOptions): void {
+	private startEmulatorCore(app: string, emulatorOptions?: Mobile.IEmulatorOptions): any {
 		this.$logger.info("Starting iOS Simulator");
 		let iosSimPath = require.resolve("ios-sim-portable");
 		let nodeCommandName = process.argv[0];
@@ -130,7 +130,16 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 			opts.push(`--args=${emulatorOptions.args}`);
 		}
 
-		this.$childProcess.spawn(nodeCommandName, opts, { stdio: "inherit" });
+		if(emulatorOptions && emulatorOptions.waitForDebugger) {
+			opts.push("--waitForDebugger");
+		}
+
+		let options = { stdio: "inherit" };
+		if(emulatorOptions.captureStdin) {
+			options = { stdio: "pipe" };
+		}
+
+		return this.$childProcess.spawn(nodeCommandName, opts, options);
 	}
 
 	private getRunningSimulatorId(appIdentifier: string): IFuture<string> {
