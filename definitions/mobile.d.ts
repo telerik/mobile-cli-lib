@@ -283,7 +283,7 @@ declare module Mobile {
 		checkDependencies(): IFuture<void>;
 		checkAvailability(dependsOnProject?: boolean): IFuture<void>;
 		startEmulator(app: string, emulatorOptions?: IEmulatorOptions): IFuture<any>;
-		getEmulatorId?(): IFuture<string>;
+		getEmulatorId(): IFuture<string>;
 	}
 
 	interface IiOSSimulatorService extends IEmulatorPlatformServices {
