@@ -19,6 +19,10 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		private $fs: IFileSystem,
 		private $bplistParser: IBinaryPlistParser) { }
 
+	public getEmulatorId(): IFuture<string> {
+		return Future.fromResult("");
+	}
+
 	public checkDependencies(): IFuture<void> {
 		return Future.fromResult();
 	}
