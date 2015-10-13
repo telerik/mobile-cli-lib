@@ -248,7 +248,7 @@ declare module Mobile {
 
 	interface IiOSDeviceSocket {
 		receiveMessage(): IFuture<IiOSSocketResponseData>;
-		readSystemLog(action: (data: NodeBuffer) => void): void;
+		readSystemLog(action: (data: string) => void): void;
 		sendMessage(message: {[key: string]: {}}, format?: number): void;
 		sendMessage(message: string): void;
 		sendAll? (data: NodeBuffer): void;

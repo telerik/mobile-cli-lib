@@ -643,7 +643,7 @@ export class MobileDevice implements Mobile.IMobileDevice {
  }
 $injector.register("mobileDevice", MobileDevice);
 
-class WinSocket implements Mobile.IiOSDeviceSocket {
+export class WinSocket implements Mobile.IiOSDeviceSocket {
 	private winSocketLibrary: any = null;
 	private static BYTES_TO_READ = 1024;
 	private static READ_SYSTEM_LOG_INTERVAL = 500;
@@ -670,16 +670,24 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 		return data;
 	}
 
+	public readSystemLogBlocking() {
+		let data = this.read(WinSocket.BYTES_TO_READ);
+		while (data) {
+			let output = ref.readCString(data, 0);
+			process.send(output);
+			data = this.read(WinSocket.BYTES_TO_READ);
+		}
+		this.close();
+	}
+
 	public readSystemLog(printData: any) {
-		let timer = setInterval(() => {
-			let data = this.read(WinSocket.BYTES_TO_READ);
-			if(data) {
-				printData(data);
-			} else {
-				this.close();
-				clearInterval(timer);
-			}
-		}, WinSocket.READ_SYSTEM_LOG_INTERVAL);
+		let ch = require("child_process");
+		let serviceArg: number|string = this.service || '';
+		let formatArg: number|string = this.format || '';
+		let sysLog = ch.fork(path.join(__dirname, "ios-sys-log.js"), [serviceArg.toString(), formatArg.toString()], {silent: true});
+		sysLog.on('message', (data: any) => {
+			printData(data);
+		});
 	}
 
 	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData> {
@@ -905,10 +913,11 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 		return result;
 	}
 
-	public readSystemLog(action: (_data: NodeBuffer) => void) {
+	public readSystemLog(action: (_data: string) => void) {
 		this.socket
 			.on("data", (data: NodeBuffer) => {
-				action(data);
+				let output = ref.readCString(data, 0);
+				action(output);
 			})
 			.on("end", () => {
 				this.close();
@@ -969,7 +978,7 @@ export class PlistService implements Mobile.IiOSDeviceSocket {
 		return this.socket.receiveMessage();
 	}
 
-	public readSystemLog(action: (data: NodeBuffer) => void): any {
+	public readSystemLog(action: (data: string) => void): any {
 		this.socket.readSystemLog(action);
 	}
 

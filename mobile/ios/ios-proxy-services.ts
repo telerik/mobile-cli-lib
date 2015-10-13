@@ -394,12 +394,10 @@ export class IOSSyslog {
 
 	public read(): void {
 		let shouldLog = false;
-		setTimeout(() => shouldLog = true, 2500);
-
-		let printData = (data: NodeBuffer) => {
+		setTimeout(() => shouldLog = true, 5000);
+		let printData = (data: string) => {
 			if(shouldLog) {
-				let output = ref.readCString(data, 0);
-				this.$deviceLogProvider.logData(output, this.device.deviceInfo.identifier);
+				this.$deviceLogProvider.logData(data, this.device.deviceInfo.identifier);
 			}
 		};
 		this.plistService.readSystemLog(printData);
