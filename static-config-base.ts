@@ -71,3 +71,4 @@ export class StaticConfigBase implements Config.IStaticConfig {
 		}).future<string>()();
 	}
 }
+$injector.register("staticConfig", StaticConfigBase);

@@ -1,6 +1,6 @@
 ///<reference path=".d.ts"/>
 "use strict";
 
-require("./common-bootstrap");
+require("./bootstrap");
 
 module.exports = $injector.publicApi;

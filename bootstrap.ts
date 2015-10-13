@@ -97,5 +97,12 @@ $injector.requireCommand("doctor", "./commands/doctor");
 $injector.require("utils", "./utils");
 $injector.require("bplistParser", "./bplist-parser");
 
-import errors = require("./errors");
-errors.installUncaughtExceptionListener();
+$injector.requirePublicClass("deviceEmitter", "./mobile/mobile-core/deviceEmitter");
+
+$injector.register("mobilePlatformsCapabilities", {});
+$injector.register("config", {});
+$injector.register("analyiticsService", {});
+$injector.require("staticConfig", "./static-config-base");
+$injector.requirePublicClass("deviceLogProvider", "./mobile/mobile-core/device-log-provider");
+import {OptionsBase} from "./options";
+$injector.register("options", $injector.resolve(OptionsBase, {options: {}, defaultProfileDir: ""}));

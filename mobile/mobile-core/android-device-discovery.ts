@@ -79,4 +79,3 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 	}
 }
 $injector.register("androidDeviceDiscovery", AndroidDeviceDiscovery);
-
