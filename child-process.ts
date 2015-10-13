@@ -49,6 +49,11 @@ export class ChildProcess implements IChildProcess {
 		return child_process.spawn(command, args, options);
 	}
 
+	public fork(modulePath: string, args?: string[], options?: any): child_process.ChildProcess {
+		this.$logger.debug("fork: %s %s", modulePath, args.join(" "));
+		return child_process.fork(modulePath, args, options);
+	}
+
 	public spawnFromEvent(command: string, args: string[], event: string,
 			options?: any, spawnFromEventOptions?: ISpawnFromEventOptions): IFuture<ISpawnResult> { // event should be exit or close
 		let future = new Future<ISpawnResult>();

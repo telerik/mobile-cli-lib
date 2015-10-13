@@ -16,10 +16,10 @@ export class RunApplicationOnDeviceCommand implements ICommand {
 			this.$devicesService.initialize({ deviceId: this.$options.device, skipInferPlatform: true }).wait();
 
 			if (this.$devicesService.deviceCount > 1) {
-				this.$errors.fail("More than one device found. Specify device explicitly with --device option.To discover device ID, use $%s device command.", this.$staticConfig.CLIENT_NAME.toLowerCase());
+				this.$errors.failWithoutHelp("More than one device found. Specify device explicitly with --device option. To discover device ID, use $%s device command.", this.$staticConfig.CLIENT_NAME.toLowerCase());
 			}
 
-			let action = (device: Mobile.IDevice) =>  { return (() => device.applicationManager.startApplication(args[0]).wait()).future<void>()(); };
+			let action = (device: Mobile.IDevice) => device.applicationManager.startApplication(args[0]);
 			this.$devicesService.execute(action).wait();
 		}).future<void>()();
 	}

@@ -1,11 +1,11 @@
 ///<reference path="./../../.d.ts"/>
 "use strict";
 
-import util = require("util");
+import * as util from "util";
 import Future = require("fibers/future");
-import helpers = require("../../helpers");
-let assert = require("assert");
-import constants = require("../constants");
+import * as helpers from "../../helpers";
+import * as assert from "assert";
+import * as constants from "../constants";
 import {exportedPromise, exported} from "../../decorators";
 
 import fiberBootstrap = require("../../fiber-bootstrap");

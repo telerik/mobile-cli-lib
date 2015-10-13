@@ -55,6 +55,7 @@ function annotate(fn: any) {
 //--- end part copied from AngularJS
 
 import * as path from "path";
+import {isFuture} from "./helpers";
 
 let indent = "";
 function trace(formatStr: string, ...args: any[]) {
@@ -186,7 +187,7 @@ export class Yok implements IInjector {
 			// as we cannot wait without fiber.
 			if(classInstance.initialize) {
 				let result = classInstance.initialize.apply(classInstance);
-				if(result && typeof result.wait === "function") {
+				if(isFuture(result)) {
 					let fiberBootstrap = require("./fiber-bootstrap");
 					fiberBootstrap.run(() => {
 						result.wait();
@@ -401,7 +402,7 @@ export class Yok implements IInjector {
 			}
 
 			let data = module[parsed[2]].apply(module, args);
-			if(data && typeof data.wait === "function") {
+			if(isFuture(data)) {
 				return data.wait();
 			}
 			return data;

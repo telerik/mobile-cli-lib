@@ -7,8 +7,9 @@ Contains common infrastructure for CLIs - mainly AppBuilder and NativeScript.
 Installation
 ===
 
-Latest version: 0.0.1 
-Release date: To be determined
+Latest version: 0.0.2
+
+Release date: 2015, October 14
 
 ### System Requirements
 
@@ -73,7 +74,7 @@ Before installing the `mobile-cli-lib`, verify that your system meets the follow
 
 #### Linux Systems
 
-**Minimum Software Requirements** 
+**Minimum Software Requirements**
 
 * Ubuntu 14.04 LTS<br/>The `mobile-cli-lib` is tested and verified to run on Ubuntu 14.04 LTS. You might be able to run the `mobile-cli-lib` on other Linux distributions.
 * Node.js 0.10.26 or a later stable official release except 0.10.34<br/>A [known issue](http://docs.telerik.com/platform/appbuilder/troubleshooting/known-issues/known-issues-cli-and-sp#the-appbuilder-command-line-interface-and-appbuilder-package-for-sublime-text-27-have-introduced-the-following-known-issues) prevents the `mobile-cli-lib` from working properly with Node.js 0.10.34.
@@ -83,7 +84,7 @@ Before installing the `mobile-cli-lib`, verify that your system meets the follow
 * An Internet browser (latest official release)
 * (64-bit systems) The runtime libraries for the ia32/i386 architecture
    * In the terminal, run the following command.
-      
+
       ```
       sudo apt-get install lib32z1 lib32ncurses5 lib32bz2-1.0 libstdc++6:i386
       ```
@@ -116,7 +117,7 @@ Usage
 In order to use mobile-cli-lib, just add a reference to it in your package.json:
 ```JSON
 dependencies: {
-	"mobile-cli-lib": "https://github.com/telerik/mobile-cli-lib/tarball/master"
+	"mobile-cli-lib": "0.0.2"
 }
 ```
 
@@ -144,6 +145,100 @@ Public API
 ==
 
 This section contains information about each public method. All methods return Promise.
+
+### Module deviceEmitter
+> Stability 2 - Stable
+
+`deviceEmitter` module is used to emit different events related to devices attached to the system.
+You can use `deviceEmitter` to add handles for the following events:
+
+* `deviceFound` - Raised when a new device is attached to the system. The callback function will receive one argument - deviceInfoData. It contains the following information:
+```TypeScript
+interface IDeviceInfo {
+	identifier: string;
+	displayName: string;
+	model: string;
+	version: string;
+	vendor: string;
+	platform: string;
+}
+```
+Sample usage:
+```JavaScript
+require("mobile-cli-lib").deviceEmitter.on("deviceFound",  function(deviceInfoData) {
+	console.log("Found device with identifier: " + deviceInfoData.identifier);
+});
+```
+
+* `deviceLost` - Raised when a device is detached from the system. The callback function will receive one argument - deviceInfoData. It contains the following information:
+```TypeScript
+interface IDeviceInfo {
+	identifier: string;
+	displayName: string;
+	model: string;
+	version: string;
+	vendor: string;
+	platform: string;
+}
+```
+Sample usage:
+```JavaScript
+require("mobile-cli-lib").deviceEmitter.on("deviceLost",  function(deviceInfoData) {
+	console.log("Detached device with identifier: " + deviceInfoData.identifier);
+});
+```
+
+* `deviceLogData` - Raised when attached device sends reports any information. This is the output of `adb logcat` for Android devices. For iOS this si the `iOS SysLog`.
+The event is raised for any device that reports data. The callback function has two arguments - `deviceIdentifier` and `reportedData`. <br/><br/>
+Sample usage:
+```JavaScript
+require("mobile-cli-lib").deviceEmitter.on("deviceLogData",  function(identifier, reportedData) {
+	console.log("Device " + identifier + " reports: " + reportedData);
+});
+```
+
+### Module devicesService
+> Stability: 2 - Stable
+
+This modules allows interaction with devices. You can get a list of the attached devices or deploy on specific devices.
+
+* `getDevices()` - This function returns array of all connected devices. For each of them the following information is provided:
+```TypeScript
+interface IDeviceInfo {
+	identifier: string;
+	displayName: string;
+	model: string;
+	version: string;
+	vendor: string;
+	platform: string;
+}
+```
+Sample usage:
+```JavaScript
+var devices = require("mobile-cli-lib").devicesService.getDevices();
+devices.forEach(function(device) {
+	console.log("Device " + device.identifier + " is connected.");
+});
+```
+
+* `deployOnDevices(deviceIdentifiers: string[], packageFile: string, packageName: string)` - Deploys the specified package to the specified devices.
+Returns array of Promises. Each of them will be rejected in case the file cannot be deployed on the device or in case there's no device with such identifier.
+The function accepts three arguments:
+	* `deviceIdentifiers` - array of the unique identifiers of the devices where the application will be deployed.
+	* `packageFile` - path to the specified package (`.apk` or `.ipa`);
+	* `packageName` - the identifier of the package. This corresponds to appId from `.abproject`.
+
+Sample usage:
+```JavaScript
+Promise.all(require("mobile-cli-lib")
+				.devicesService
+				.deployOnDevices(["129604ab96a4d0053023b4bf5b288cf34a9ed5fa", "153544fa45f4a5646543b5bf1b221fe31a8fa6bc"], "./app.ipa", "com.telerik.testApp"))
+			.then(function(data) {
+				console.log(data);
+			}, function(err) {
+				console.log(err);
+			});
+```
 
 ### Module fs
 > Stability: 0 - Only for testing purposes. Will be removed.

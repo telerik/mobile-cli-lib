@@ -157,3 +157,7 @@ export function appendZeroesToVersion(version: string, requiredVersionLength: nu
 
 	return version;
 }
+
+export function isFuture(candidateFuture: any): boolean {
+	return candidateFuture && typeof(candidateFuture.wait) === "function";
+}
