@@ -167,6 +167,16 @@ interface IChildProcess {
 	spawn(command: string, args?: string[], options?: any): any; // it returns child_process.ChildProcess you can safely cast to it
 	spawnFromEvent(command: string, args: string[], event: string, options?: any, spawnFromEventOptions?: ISpawnFromEventOptions): IFuture<any>;
 	tryExecuteApplication(command: string, args: string[], event: string, errorMessage: string, condition?: (childProcess: any) => boolean): IFuture<any>;
+	/**
+	 * This is a special case of the child_process.spawn() functionality for spawning Node.js processes.
+	 * In addition to having all the methods in a normal ChildProcess instance, the returned object has a communication channel built-in.
+	 * Note: Unlike the fork() POSIX system call, child_process.fork() does not clone the current process.
+	 * @param {string} modulePath String The module to run in the child
+	 * @param {string[]} args Array List of string arguments You can access them in the child with 'process.argv'.
+	 * @param {string} options Object
+	 * @return {child_process} ChildProcess object.
+	 */
+	fork(modulePath: string, args?: string[], options?: {cwd?: string, env?: any, execPath?: string, execArgv?: string[], silent?: boolean, uid?: number, gid?: number}): any;
 }
 
 interface IExecOptions {

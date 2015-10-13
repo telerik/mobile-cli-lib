@@ -651,7 +651,8 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 	constructor(private service: number,
 		private format: number,
 		private $logger: ILogger,
-		private $errors: IErrors) {
+		private $errors: IErrors,
+		private $childProcess: IChildProcess) {
 		this.winSocketLibrary = IOSCore.getWinSocketLibrary();
 	}
 
@@ -670,7 +671,7 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 		return data;
 	}
 
-	public readSystemLogBlocking() {
+	public readSystemLogBlocking(): void {
 		let data = this.read(WinSocket.BYTES_TO_READ);
 		while (data) {
 			let output = ref.readCString(data, 0);
@@ -680,11 +681,10 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 		this.close();
 	}
 
-	public readSystemLog(printData: any) {
-		let ch = require("child_process");
+	public readSystemLog(printData: any): void {
 		let serviceArg: number|string = this.service || '';
 		let formatArg: number|string = this.format || '';
-		let sysLog = ch.fork(path.join(__dirname, "ios-sys-log.js"), [serviceArg.toString(), formatArg.toString()], {silent: true});
+		let sysLog = this.$childProcess.fork(path.join(__dirname, "ios-sys-log.js"), [serviceArg.toString(), formatArg.toString()], {silent: true});
 		sysLog.on('message', (data: any) => {
 			printData(data);
 		});

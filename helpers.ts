@@ -197,3 +197,7 @@ export function hook(commandName: string) {
 			return Future.fromResult(result);
 		});
 }
+
+export function isFuture(candidateFuture: any): boolean {
+	return candidateFuture && typeof(candidateFuture.wait) === "function";
+}

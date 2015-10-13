@@ -8,7 +8,6 @@ import fiberBootstrap = require("../../fiber-bootstrap");
 class DeviceEmitter extends EventEmitter {
 	private static DEVICE_DISCOVERY_TIMEOUT = 500;
 
-	// TODO: add iOSDeviceDiscovery as a dependency too
 	constructor(private $androidDeviceDiscovery:Mobile.IAndroidDeviceDiscovery,
 		private $iOSDeviceDiscovery: Mobile.IDeviceDiscovery,
 		private $childProcess: IChildProcess,
@@ -39,7 +38,7 @@ class DeviceEmitter extends EventEmitter {
 			});
 
 			fiberBootstrap.run(() => {
-				this.$devicesService.initialize(null).wait();
+				this.$devicesService.initialize({skipInferPlatform: true}).wait();
 			});
 
 			this.$deviceLogProvider.on("data", (identifier: string, data: any) => {

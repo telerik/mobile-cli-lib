@@ -50,7 +50,7 @@ class SyncBatch {
 export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 	private _initialized = false;
 
-	constructor(protected $devicesServices: Mobile.IDevicesServices,
+	constructor(protected $devicesServices: Mobile.IDevicesService,
 		protected $mobileHelper: Mobile.IMobileHelper,
 		private $localToDevicePathDataFactory: Mobile.ILocalToDevicePathDataFactory,
 		protected $logger: ILogger,
