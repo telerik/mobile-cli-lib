@@ -102,11 +102,15 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 
 		let opts = [
 			iosSimPath,
-			"launch", app
+			"launch", app, emulatorOptions.appId // TODO: Refactor this -> should be separate parameter
 		];
 
 		if (this.$options.timeout) {
 			opts = opts.concat("--timeout", this.$options.timeout);
+		}
+
+		if(this.$options.sdk) {
+			opts = opts.concat("--sdkVersion", this.$options.sdk);
 		}
 
 		if(!this.$options.justlaunch) {
