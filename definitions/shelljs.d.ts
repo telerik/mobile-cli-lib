@@ -1,4 +1,5 @@
 declare module "shelljs" {
+	function mkdir(arg: string, destinationPath: string): void;
 	function cp(arg: string, sourcePath: string, destinationPath: string): void;
 	function cp(arg: string, sourcePath: string[], destinationPath: string): void;
 	function sed(arg: string, oldValue: any, newValue: string, filePath: string): void;
