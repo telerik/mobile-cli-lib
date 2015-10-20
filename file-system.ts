@@ -479,4 +479,12 @@ export class FileSystem implements IFileSystem {
 
 		return future;
 	}
+
+	public readStdin(): IFuture<string> {
+		let future = new Future<string>();
+		let buffer = '';
+		process.stdin.on('data', (data: string) => buffer += data);
+		process.stdin.on('end', () => future.return(buffer));
+		return future;
+	}
 }
