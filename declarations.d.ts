@@ -202,7 +202,7 @@ interface IAnalyticsService {
 }
 
 interface IPrompter extends IDisposable {
-	get(schema: IPromptSchema[]): IFuture<any>;
+	get(schemas: IPromptSchema[]): IFuture<any>;
 	getPassword(prompt: string, options?: {allowEmpty?: boolean}): IFuture<string>;
 	getString(prompt: string, defaultAction?: () => string): IFuture<string>;
 	promptForChoice(promptMessage: string, choices: any[]): IFuture<string>;

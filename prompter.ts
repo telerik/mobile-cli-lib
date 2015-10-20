@@ -39,12 +39,23 @@ export class Prompter implements IPrompter {
 		}
 	}
 
-	public get(schema: IPromptSchema[]): IFuture<any> {
+	public get(schemas: IPromptSchema[]): IFuture<any> {
 		let future = new Future;
-		if (!helpers.isInteractive() && _.any(schema, s => !s.default)) {
-			future.throw(new Error('Console is not interactive'));
+		if (!helpers.isInteractive()) {
+			if (_.any(schemas, s => !s.default)) {
+				future.throw(new Error("Console is not interactive and no default action specified."));
+			} else {
+				let result: any = {};
+
+				_.each(schemas, s => {
+					// Curly brackets needed because s.default() may return false and break the loop
+					result[s.name] = s.default();
+				});
+
+				future.return(result);
+			}
 		} else {
-			prompt.prompt(schema, (result: any) => {
+			prompt.prompt(schemas, (result: any) => {
 				if(result) {
 					future.return(result);
 				} else {
