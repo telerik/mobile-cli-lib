@@ -43,6 +43,7 @@ interface IFileSystem {
 	readFile(filename: string): IFuture<NodeBuffer>;
 	readText(filename: string, encoding?: string): IFuture<string>;
 	readJson(filename: string, encoding?: string): IFuture<any>;
+	readStdin(): IFuture<string>;
 	writeFile(filename: string, data: any, encoding?: string): IFuture<void>;
 	appendFile(filename: string, data: any, encoding?: string): IFuture<void>;
 	writeJson(filename: string, data: any, space?: string, encoding?: string): IFuture<void>;
@@ -271,7 +272,7 @@ interface IUsbLiveSyncServiceBase {
 	initialize(platform: string): IFuture<string>;
 	sync(platform: string, appIdentifier: string, projectFilesPath: string, excludedProjectDirsAndFiles: string[], watchGlob: any,
 		platformSpecificLiveSyncServices: IDictionary<any>,
-		notInstalledAppOnDeviceAction: (device: Mobile.IDevice) => IFuture<void>,
+		notInstalledAppOnDeviceAction: (device: Mobile.IDevice) => IFuture<boolean>,
 		notRunningiOSSimulatorAction: () => IFuture<void>,
 		localProjectRootPath?: string,
 		beforeLiveSyncAction?: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData) => IFuture<void>,
@@ -495,6 +496,9 @@ interface IResourceLoader {
 	 * @return {NodeJS.ReadableStream} Read stream to the resource file
 	 */
 	openFile(path: string): NodeJS.ReadableStream;
+
+	readText(path: string): IFuture<string>;
+
 	/**
 	 * Reads the contents of a resource file in JSON format.
 	 * @param  {string}       path Relative path to resource

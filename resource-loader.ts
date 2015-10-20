@@ -15,6 +15,10 @@ export class ResourceLoader implements IResourceLoader {
 		return this.$fs.createReadStream(this.resolvePath(resourcePath));
 	}
 
+	readText(resourcePath: string): IFuture<string> {
+		return this.$fs.readText(this.resolvePath(resourcePath));
+	}
+
 	readJson(resourcePath: string): IFuture<any> {
 		return this.$fs.readJson(this.resolvePath(resourcePath));
 	}
