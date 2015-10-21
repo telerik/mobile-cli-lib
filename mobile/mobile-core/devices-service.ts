@@ -92,9 +92,10 @@ export class DevicesService implements Mobile.IDevicesService {
 				this.$androidDeviceDiscovery.startLookingForDevices().wait();
 				setInterval(() => {
 					fiberBootstrap.run(() => {
-						Future.wait([this.$iOSDeviceDiscovery.checkForDevices(), this.$androidDeviceDiscovery.checkForDevices()])
+						Future.wait([this.$iOSDeviceDiscovery.checkForDevices(),
+									 this.$androidDeviceDiscovery.checkForDevices()]);
 					});
-				}, DevicesService.DEVICE_LOOKING_INTERVAL);
+				}, DevicesService.DEVICE_LOOKING_INTERVAL).unref();
 			} else if(this.$mobileHelper.isiOSPlatform(this._platform)) {
 				this.$iOSDeviceDiscovery.startLookingForDevices().wait();
 			} else if(this.$mobileHelper.isAndroidPlatform(this._platform)) {
@@ -171,6 +172,7 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	@exportedPromise("devicesService")
 	public deployOnDevices(deviceIdentifiers: string[], packageFile: string, packageName: string): IFuture<void>[] {
+		this.$logger.trace(`Called deployOnDevices for identifiers ${deviceIdentifiers} for packageFile: ${packageFile}. packageName is ${packageName}.`);
 		return _.map(deviceIdentifiers, deviceIdentifier => this.deployOnDevice(deviceIdentifier, packageFile, packageName));
 	}
 

@@ -5,7 +5,8 @@ import * as util from "util";
 
 export class LogcatHelper implements Mobile.ILogcatHelper {
 	constructor(private $childProcess: IChildProcess,
-		    private $deviceLogProvider: Mobile.IDeviceLogProvider,
+			private $deviceLogProvider: Mobile.IDeviceLogProvider,
+			private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 			private $logger: ILogger,
 			private $staticConfig: Config.IStaticConfig) { }
 
@@ -27,7 +28,7 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 
 		lineStream.on('data', (line: NodeBuffer) => {
 			let lineText = line.toString();
-			this.$deviceLogProvider.logData(lineText, deviceIdentifier);
+			this.$deviceLogProvider.logData(lineText, this.$devicePlatformsConstants.Android, deviceIdentifier);
 		});
 
 		return adbLogcat;

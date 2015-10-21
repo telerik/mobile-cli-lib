@@ -646,13 +646,13 @@ $injector.register("mobileDevice", MobileDevice);
 export class WinSocket implements Mobile.IiOSDeviceSocket {
 	private winSocketLibrary: any = null;
 	private static BYTES_TO_READ = 1024;
-	private static READ_SYSTEM_LOG_INTERVAL = 500;
 
 	constructor(private service: number,
 		private format: number,
 		private $logger: ILogger,
 		private $errors: IErrors,
-		private $childProcess: IChildProcess) {
+		private $childProcess: IChildProcess,
+		private $staticConfig: Config.IStaticConfig) {
 		this.winSocketLibrary = IOSCore.getWinSocketLibrary();
 	}
 
@@ -684,7 +684,9 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 	public readSystemLog(printData: any): void {
 		let serviceArg: number|string = this.service || '';
 		let formatArg: number|string = this.format || '';
-		let sysLog = this.$childProcess.fork(path.join(__dirname, "ios-sys-log.js"), [serviceArg.toString(), formatArg.toString()], {silent: true});
+		let sysLog = this.$childProcess.fork(path.join(__dirname, "ios-sys-log.js"),
+												[this.$staticConfig.PATH_TO_BOOTSTRAP, serviceArg.toString(), formatArg.toString()],
+												{silent: true});
 		sysLog.on('message', (data: any) => {
 			printData(data);
 		});

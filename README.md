@@ -117,7 +117,7 @@ Usage
 In order to use mobile-cli-lib, just add a reference to it in your package.json:
 ```JSON
 dependencies: {
-	"mobile-cli-lib": "0.0.2"
+	"mobile-cli-lib": "0.0.4"
 }
 ```
 

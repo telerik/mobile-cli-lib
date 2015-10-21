@@ -64,38 +64,32 @@ function resolveCallStack(error: Error): string {
 	return outputMessage;
 }
 
-let attachUncaughtExceptionHandler: any;
-export function installUncaughtExceptionListener(): void {
-	if(!attachUncaughtExceptionHandler) {
-		attachUncaughtExceptionHandler = _.once(() => {
-			process.on("uncaughtException", (err: Error) => {
-				let callstack = err.stack;
-				if (callstack) {
-					try {
-						callstack = resolveCallStack(err);
-					} catch(err) {
-						console.error("Error while resolving callStack:", err);
-					}
-				}
-				console.error(callstack || err.toString());
+export function installUncaughtExceptionListener(actionOnException?: () => void): void {
+	process.on("uncaughtException", (err: Error) => {
+		let callstack = err.stack;
+		if (callstack) {
+			try {
+				callstack = resolveCallStack(err);
+			} catch(err) {
+				console.error("Error while resolving callStack:", err);
+			}
+		}
+		console.error(callstack || err.toString());
 
-				if(!$injector.resolve("staticConfig").disableAnalytics) {
-					try {
-						let analyticsService = $injector.resolve("analyticsService");
-						analyticsService.trackException(err, callstack);
-					} catch (e) {
-						// Do not replace with logger due to cyclic dependency
-						console.error("Error while reporting exception: " + e);
-					}
-				}
+		if(!$injector.resolve("staticConfig").disableAnalytics) {
+			try {
+				let analyticsService = $injector.resolve("analyticsService");
+				analyticsService.trackException(err, callstack);
+			} catch (e) {
+				// Do not replace with logger due to cyclic dependency
+				console.error("Error while reporting exception: " + e);
+			}
+		}
 
-				// TODO: Find what to do here for CLIs
-				// process.exit(ErrorCodes.UNKNOWN);
-			});
-		});
-	}
-
-	attachUncaughtExceptionHandler();
+		if(actionOnException) {
+			actionOnException();
+		}
+	});
 }
 
 export class Errors implements IErrors {

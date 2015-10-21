@@ -1,6 +1,6 @@
 ///<reference path=".d.ts"/>
 "use strict";
 
-require("./bootstrap");
+require("./appbuilder/proton-bootstrap");
 
 module.exports = $injector.publicApi;

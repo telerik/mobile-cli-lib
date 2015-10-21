@@ -31,7 +31,7 @@ export class ChildProcess implements IChildProcess {
 	}
 
 	public execFile(command: string, args: string[]): IFuture<any> {
-		this.$logger.debug("execFile: %s %s", command, args.join(" "));
+		this.$logger.debug("execFile: %s %s", command, this.getArgumentsAsQuotedString(args));
 		let future = new Future<any>();
 		child_process.execFile(command, args, (error: any, stdout: NodeBuffer) => {
 			if(error) {
@@ -45,12 +45,12 @@ export class ChildProcess implements IChildProcess {
 	}
 
 	public spawn(command: string, args?: string[], options?: any): child_process.ChildProcess {
-		this.$logger.debug("spawn: %s %s", command, args.join(" "));
+		this.$logger.debug("spawn: %s %s", command, this.getArgumentsAsQuotedString(args));
 		return child_process.spawn(command, args, options);
 	}
 
 	public fork(modulePath: string, args?: string[], options?: any): child_process.ChildProcess {
-		this.$logger.debug("fork: %s %s", modulePath, args.join(" "));
+		this.$logger.debug("fork: %s %s", modulePath, this.getArgumentsAsQuotedString(args));
 		return child_process.fork(modulePath, args, options);
 	}
 
@@ -127,6 +127,10 @@ export class ChildProcess implements IChildProcess {
 			let message = (e.code === "ENOENT") ? errorMessage : e.message;
 			this.$errors.failWithoutHelp(message);
 		}
+	}
+
+	private getArgumentsAsQuotedString(args: string[]): string {
+		return args.map(argument => `"${argument}"`).join(" ");
 	}
 }
 $injector.register("childProcess", ChildProcess);

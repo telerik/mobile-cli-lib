@@ -63,7 +63,7 @@ declare module Mobile {
 	}
 
 	interface IDeviceLogProvider {
-		logData(line: string, deviceIdentifier?: string): void;
+		logData(line: string, platform: string, deviceIdentifier: string): void;
 	}
 
 	interface IDeviceApplicationManager {

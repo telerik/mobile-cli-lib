@@ -6,15 +6,24 @@ import * as helpers from "../../helpers";
 import {AndroidDevice} from "../android/android-device";
 import {EOL} from "os";
 import Future = require("fibers/future");
-import fiberBootstrap = require("../../fiber-bootstrap");
+import * as fiberBootstrap from "../../fiber-bootstrap";
 
 export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IAndroidDeviceDiscovery {
 	private _devices: string[] = [];
+	private _pathToAdb: string;
+	private get pathToAdb(): string {
+		if(!this._pathToAdb) {
+			this._pathToAdb = this.$staticConfig.getAdbFilePath().wait();
+		}
+
+		return this._pathToAdb;
+	}
 
 	constructor(private $childProcess: IChildProcess,
 		private $injector: IInjector,
 		private $staticConfig: Config.IStaticConfig) {
 		super();
+		this.ensureAdbServerStarted().wait();
 	}
 
 	private createAndAddDevice(deviceIdentifier: string): void {
@@ -29,26 +38,39 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 	}
 
 	public startLookingForDevices(): IFuture<void> {
-		return this.checkForDevices();
+		let blockingFuture = new Future<void>();
+		return this.checkForDevices(blockingFuture);
 	}
 
-	public checkForDevices(): IFuture<void> {
-		return (() => {
-			let result = this.$childProcess.spawn(this.$staticConfig.getAdbFilePath().wait(), ["devices"], { stdio: 'pipe' });
-			result.stdout.on("data", (data: NodeBuffer) => {
-				fiberBootstrap.run(() => {
-					this.checkCurrentData(data).wait();
-				});
+	public checkForDevices(future?: IFuture<void>): IFuture<void> {
+		let result = this.$childProcess.spawn(this.pathToAdb, ["devices"], { stdio: 'pipe' });
+		result.stdout.on("data", (data: NodeBuffer) => {
+			fiberBootstrap.run(() => {
+				this.checkCurrentData(data).wait();
+				if(future) {
+					future.return();
+				}
 			});
+		});
 
-			result.stderr.on("data", (data: NodeBuffer) => {
-				throw(new Error(data.toString()));
-			});
+		result.stderr.on("data", (data: NodeBuffer) => {
+			let error = new Error(data.toString());
+			if(future) {
+				return future.throw(error);
+			} else {
+				throw(error);
+			}
+		});
 
-			result.on("error", (err: Error) => {
+		result.on("error", (err: Error) => {
+			if(future) {
+				return future.throw(err);
+			} else {
 				throw(err);
-			});
-		}).future<void>()();
+			}
+		});
+
+		return future || Future.fromResult();
 	}
 
 	private checkCurrentData(result: any): IFuture<void> {
@@ -57,7 +79,6 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 				.filter( (element:string) => !helpers.isNullOrWhitespace(element) )
 				.map((element: string) => {
 					// http://developer.android.com/tools/help/adb.html#devicestatus
-					let parts = element.split("\t");
 					let [identifier, state] = element.split('\t');
 					if (state === "device"/*ready*/) {
 						return identifier;
@@ -73,8 +94,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 	}
 
 	public ensureAdbServerStarted(): IFuture<void> {
-		let startAdbServerCommand = `"${this.$staticConfig.getAdbFilePath().wait()}" start-server`;
-		return this.$childProcess.exec(startAdbServerCommand);
+		return this.$childProcess.spawnFromEvent(this.$staticConfig.getAdbFilePath().wait(), ["start-server"], "close");
 	}
 }
 $injector.register("androidDeviceDiscovery", AndroidDeviceDiscovery);

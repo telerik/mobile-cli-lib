@@ -165,7 +165,7 @@ describe("yok", () => {
 	describe("buildHierarchicalCommand", () => {
 		let injector: IInjector;
 		beforeEach(() => {
-			injector = new yok.Yok();
+			injector = new Yok();
 		});
 
 		describe("returns undefined", () => {

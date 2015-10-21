@@ -50,7 +50,7 @@ class SyncBatch {
 export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 	private _initialized = false;
 
-	constructor(protected $devicesServices: Mobile.IDevicesService,
+	constructor(protected $devicesService: Mobile.IDevicesService,
 		protected $mobileHelper: Mobile.IMobileHelper,
 		private $localToDevicePathDataFactory: Mobile.ILocalToDevicePathDataFactory,
 		protected $logger: ILogger,
@@ -66,9 +66,9 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 	public initialize(platform: string): IFuture<string> {
 		return (() => {
 			if(!(this.$options.emulator && platform && platform.toLowerCase() === "ios")) {
-				this.$devicesServices.initialize({ platform: platform, deviceId: this.$options.device }).wait();
+				this.$devicesService.initialize({ platform: platform, deviceId: this.$options.device }).wait();
 				this._initialized = true;
-				return this.$devicesServices.platform;
+				return this.$devicesService.platform;
 			}
 		}).future<string>()();
 	}
@@ -144,7 +144,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 		notInstalledAppOnDeviceAction: (_device1: Mobile.IDevice) => IFuture<boolean>,
 		beforeLiveSyncAction?: (_device2: Mobile.IDevice, _deviceAppData1: Mobile.IDeviceAppData) => IFuture<void>): IFuture<void> {
 		return (() => {
-			platform = platform ? this.$mobileHelper.normalizePlatformName(platform) : this.$devicesServices.platform;
+			platform = platform ? this.$mobileHelper.normalizePlatformName(platform) : this.$devicesService.platform;
 			let deviceAppData = this.$deviceAppDataFactory.create(appIdentifier, platform);
 			let localToDevicePaths = _(projectFiles)
 				.map(projectFile => this.getProjectFileInfo(projectFile))
@@ -182,7 +182,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 				}).future<void>()();
 			};
 
-			this.$devicesServices.execute(action).wait();
+			this.$devicesService.execute(action).wait();
 		}).future<void>()();
 	}
 
@@ -244,7 +244,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 	}
 
 	protected getProjectFileInfo(fileName: string): IProjectFileInfo {
-		let parsed = this.parseFile(fileName, this.$mobileHelper.platformNames, this.$devicesServices.platform);
+		let parsed = this.parseFile(fileName, this.$mobileHelper.platformNames, this.$devicesService.platform);
 		if(!parsed) {
 			parsed = this.parseFile(fileName, ["debug", "release"], "debug"); // TODO: This should be refactored !!!!
 		}

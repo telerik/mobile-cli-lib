@@ -1,12 +1,10 @@
-///<reference path="./../../.d.ts"/>
+///<reference path="../.d.ts"/>
 "use strict";
 
 import { EventEmitter } from "events";
-import byline = require("byline");
-import fiberBootstrap = require("../../fiber-bootstrap");
 
 export class DeviceLogProvider extends EventEmitter implements Mobile.IDeviceLogProvider {
-	public logData(line: string, deviceIdentifier?: string): void {
+	public logData(line: string, platform: string, deviceIdentifier?: string): void {
 		this.emit('data', deviceIdentifier, line);
 	}
 }

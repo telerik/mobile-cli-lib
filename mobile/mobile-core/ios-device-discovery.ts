@@ -13,10 +13,25 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 
 	private timerCallbackPtr: NodeBuffer = null;
 	private notificationCallbackPtr: NodeBuffer = null;
+	private _coreFoundation: Mobile.ICoreFoundation;
+	private get $coreFoundation(): Mobile.ICoreFoundation {
+		if(!this._coreFoundation) {
+			this._coreFoundation = this.$injector.resolve("$coreFoundation");
+		}
 
-	constructor(private $coreFoundation: Mobile.ICoreFoundation,
-		private $mobileDevice: Mobile.IMobileDevice,
-		private $errors: IErrors,
+		return this._coreFoundation;
+	}
+
+	private _mobileDevice: Mobile.IMobileDevice;
+	private get $mobileDevice(): Mobile.IMobileDevice {
+		if(!this._mobileDevice) {
+			this._mobileDevice = this.$injector.resolve("$mobileDevice");
+		}
+
+		return this._mobileDevice;
+	}
+
+	constructor(private $errors: IErrors,
 		private $injector: IInjector,
 		private $options: ICommonOptions,
 		private $utils: IUtils,

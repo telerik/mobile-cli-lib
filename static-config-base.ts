@@ -13,7 +13,7 @@ export class StaticConfigBase implements Config.IStaticConfig {
 	public APP_RESOURCES_DIR_NAME = "App_Resources";
 	public COMMAND_HELP_FILE_NAME = 'command-help.json';
 	public RESOURCE_DIR_PATH = __dirname;
-	public START_PACKAGE_ACTIVITY_NAME = ".TelerikCallbackActivity";
+	public START_PACKAGE_ACTIVITY_NAME: string;
 	public SYS_REQUIREMENTS_LINK: string;
 	public HTML_CLI_HELPERS_DIR: string;
 	public version: string = null;
@@ -52,7 +52,7 @@ export class StaticConfigBase implements Config.IStaticConfig {
 
 	private getAdbFilePathCore(): IFuture<string> {
 		return ((): string => {
-			let defaultAdbFilePath = path.join(__dirname, `resources/platform-tools/android/${process.platform}/adb`).replace("app.asar", "app.asar.unpacked");
+			let defaultAdbFilePath = path.join(__dirname, `resources/platform-tools/android/${process.platform}/adb`);
 			let $childProcess: IChildProcess = this.$injector.resolve("$childProcess");
 
 			try {
@@ -70,5 +70,6 @@ export class StaticConfigBase implements Config.IStaticConfig {
 			return "adb";
 		}).future<string>()();
 	}
+
+	public PATH_TO_BOOTSTRAP: string;
 }
-$injector.register("staticConfig", StaticConfigBase);

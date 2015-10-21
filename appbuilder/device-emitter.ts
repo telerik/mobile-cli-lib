@@ -1,16 +1,12 @@
-///<reference path="./../../.d.ts"/>
+///<reference path="../.d.ts"/>
 "use strict";
 
 import { EventEmitter } from "events";
-import byline = require("byline");
-import fiberBootstrap = require("../../fiber-bootstrap");
+import * as fiberBootstrap from "../fiber-bootstrap";
 
 class DeviceEmitter extends EventEmitter {
-	private static DEVICE_DISCOVERY_TIMEOUT = 500;
-
 	constructor(private $androidDeviceDiscovery:Mobile.IAndroidDeviceDiscovery,
 		private $iOSDeviceDiscovery: Mobile.IDeviceDiscovery,
-		private $childProcess: IChildProcess,
 		private $devicesService: Mobile.IDevicesService,
 		private $deviceLogProvider: EventEmitter) {
 		super();

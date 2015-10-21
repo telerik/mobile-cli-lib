@@ -3,7 +3,6 @@
 
 import Fiber = require("fibers");
 import Future = require("fibers/future");
-import errors = require("./errors");
 
 export function run(action: any) {
 	if(Fiber.current) {
@@ -11,7 +10,6 @@ export function run(action: any) {
 		action();
 	} else {
 		Fiber(() => {
-			errors.installUncaughtExceptionListener();
 			action();
 			// Call dispose method of $injector modules, which implement IDisposable.
 			$injector.dispose();
