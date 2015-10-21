@@ -138,12 +138,9 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 			opts.push("--waitForDebugger");
 		}
 
-		let options = { stdio: "inherit" };
-		if(emulatorOptions.captureStdin) {
-			options = { stdio: "pipe" };
-		}
+		let stdioOpts = { stdio: (emulatorOptions && emulatorOptions.captureStdin) ? "pipe" : "inherit" };
 
-		return this.$childProcess.spawn(nodeCommandName, opts, options);
+		return this.$childProcess.spawn(nodeCommandName, opts, stdioOpts);
 	}
 
 	private getRunningSimulatorId(appIdentifier: string): IFuture<string> {
