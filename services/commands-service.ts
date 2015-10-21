@@ -56,10 +56,9 @@ export class CommandsService implements ICommandsService {
 						commandName = helpers.stringReplaceAll(commandName, CommandsService.HIERARCHICAL_COMMANDS_DELIMITER, CommandsService.HOOKS_COMMANDS_DELIMITER);
 					}
 
-					this.$hooksService.initialize(commandName);
-					this.$hooksService.executeBeforeHooks().wait();
+					this.$hooksService.executeBeforeHooks(commandName).wait();
 					command.execute(commandArguments).wait();
-					this.$hooksService.executeAfterHooks().wait();
+					this.$hooksService.executeAfterHooks(commandName).wait();
 
 				} else {
 					command.execute(commandArguments).wait();

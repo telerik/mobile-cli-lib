@@ -241,9 +241,8 @@ interface IAutoCompletionService {
 }
 
 interface IHooksService {
-	initialize(commandName: string): void;
-	executeBeforeHooks(): IFuture<void>;
-	executeAfterHooks(): IFuture<void>;
+	executeBeforeHooks(commandName: string): IFuture<void>;
+	executeAfterHooks(commandName: string): IFuture<void>;
 }
 
 interface IHook {
