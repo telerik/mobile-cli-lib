@@ -190,26 +190,24 @@ export class Yok implements IInjector {
 	}
 
 	public buildHierarchicalCommand(parentCommandName: string, commandLineArguments: string[]): any {
-		let subCommandName: string;
+		let currentSubCommandName: string, finalSubCommandName: string, matchingSubCommandName: string;
 		let subCommands = this.hierarchicalCommands[parentCommandName];
 		let remainingArguments = commandLineArguments;
+		let finalRemainingArguments = commandLineArguments;
 		let foundSubCommand = false;
 		_.each(commandLineArguments, arg => {
 			arg = arg.toLowerCase();
-			subCommandName = subCommandName ? this.getHierarchicalCommandName(subCommandName, arg) : arg;
+			currentSubCommandName = currentSubCommandName ? this.getHierarchicalCommandName(currentSubCommandName, arg) : arg;
 			remainingArguments = _.rest(remainingArguments);
-			if(_.any(subCommands,(sc) => sc === subCommandName)) {
+			if(matchingSubCommandName = _.find(subCommands, (sc) => sc === currentSubCommandName || sc === "*" + currentSubCommandName)) {
+				finalSubCommandName = matchingSubCommandName;
+				finalRemainingArguments = remainingArguments;
 				foundSubCommand = true;
-				return false;
-			} else if(_.any(subCommands, sc => sc === "*" + subCommandName)) {
-				subCommandName = "*" + subCommandName;
-				foundSubCommand = true;
-				return false;
 			}
 		});
 
 		if(foundSubCommand) {
-			return { commandName: this.getHierarchicalCommandName(parentCommandName, subCommandName), remainingArguments: remainingArguments };
+			return { commandName: this.getHierarchicalCommandName(parentCommandName, finalSubCommandName), remainingArguments: finalRemainingArguments };
 		}
 
 		return undefined;
