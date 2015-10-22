@@ -129,7 +129,8 @@ interface ICommandOptions {
 
 declare const enum ErrorCodes {
 	UNKNOWN = 127,
-	INVALID_ARGUMENT = 128
+	INVALID_ARGUMENT = 128,
+	RESOURCE_PROBLEM = 129
 }
 
 interface IFutureDispatcher	 {
