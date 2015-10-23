@@ -388,6 +388,7 @@ interface ICommonOptions {
 	force: boolean;
 	companion: boolean;
 	emulator: boolean;
+	sdk: string;
 	var: Object;
 }
 
