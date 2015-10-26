@@ -106,7 +106,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 				gaze("**/*", { cwd: watchGlob }, function(err: any, watcher: any) {
 					this.on('all', (event: string, filePath: string) => {
 						if(event === "added" || event === "changed") {
-							if(!_.contains(excludedProjectDirsAndFiles, filePath)) {
+							if(!that.isFileExcluded(filePath, excludedProjectDirsAndFiles, projectFilesPath)) {
 								if(synciOSSimulator) {
 									that.batchSimulatorLiveSync(
 										appIdentifier,
