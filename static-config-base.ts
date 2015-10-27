@@ -52,7 +52,7 @@ export class StaticConfigBase implements Config.IStaticConfig {
 
 	private getAdbFilePathCore(): IFuture<string> {
 		return ((): string => {
-			let defaultAdbFilePath = path.join(__dirname, `resources/platform-tools/android/${process.platform}/adb`);
+			let defaultAdbFilePath = path.join(__dirname, `resources/platform-tools/android/${process.platform}/adb`).replace("app.asar", "app.asar.unpacked");
 			let $childProcess: IChildProcess = this.$injector.resolve("$childProcess");
 
 			try {
