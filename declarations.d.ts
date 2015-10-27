@@ -53,6 +53,14 @@ interface IFileSystem {
 	isRelativePath(path: string): boolean /* feels so lonely here, I don't have a Future */;
 	ensureDirectoryExists(directoryPath: string): IFuture<void>;
 	rename(oldPath: string, newPath: string): IFuture<void>;
+	/**
+	 * Renames specified file to the specified name only in case it exists.
+	 * Used to skip ENOENT errors when rename is called directly.
+	 * @param {string} oldPath Path to original file that has to be renamed. If this file does not exists, no operation is executed.
+	 * @param {string} newPath The path where the file will be moved.
+	 * @return {boolean} True in case of successful rename. False in case the file does not exist.
+	 */
+	renameIfExists(oldPath: string, newPath: string): IFuture<boolean>
 	getFsStats(path: string): IFuture<IFsStats>;
 	symlink(sourcePath: string, destinationPath: string, type: "file"): IFuture<void>;
 	symlink(sourcePath: string, destinationPath: string, type: "dir"): IFuture<void>;

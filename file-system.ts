@@ -395,6 +395,20 @@ export class FileSystem implements IFileSystem {
 		return future;
 	}
 
+	public renameIfExists(oldPath: string, newPath: string): IFuture<boolean> {
+		return ((): boolean => {
+			try {
+				this.rename(oldPath, newPath).wait();
+				return true;
+			} catch(e) {
+				if (e.code === "ENOENT") {
+					return false;
+				}
+				throw e;
+			}
+		}).future<boolean>()();
+	}
+
 	public symlink(sourcePath: string, destinationPath: string, type?: string): IFuture<void> {
 		let future = new Future<void>();
 		fs.symlink(sourcePath, destinationPath, type, (err: Error) => {
