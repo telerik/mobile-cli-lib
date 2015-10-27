@@ -31,6 +31,7 @@ declare module Mobile {
 		startService(serviceName: string): number;
 		mountImage(): IFuture<void>;
 		tryExecuteFunction<TResult>(func: () => TResult): TResult;
+		connectToPort(port: number): any;
 	}
 
 	interface IDeviceAppData {
@@ -116,7 +117,8 @@ declare module Mobile {
 		execute(action: (device: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: {allowNoDevices?: boolean}): IFuture<void>;
 		initialize(data: IDevicesServicesInitializationOptions): IFuture<void>;
 		platform: string;
-		getDevices(): IDeviceInfo[];
+		getDevices(): Mobile.IDeviceInfo[];
+		getDeviceInstances(): Mobile.IDevice[];
 	}
 
 	interface IiTunesValidator {
@@ -265,6 +267,8 @@ declare module Mobile {
 	interface INotificationProxyClient {
 		postNotification(notificationName: string): void;
 		postNotificationAndAttachForData(notificationName: string): void;
+		addObserver(name: string, callback: (_name: string) => void): any;
+		removeObserver(name: string, callback: (_name: string) => void): void;
 	}
 
 	interface IPlatformCapabilities {

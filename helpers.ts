@@ -201,3 +201,26 @@ export function hook(commandName: string) {
 export function isFuture(candidateFuture: any): boolean {
 	return candidateFuture && typeof(candidateFuture.wait) === "function";
 }
+
+export function whenAny<T>(...futures: IFuture<T>[]): IFuture<IFuture<T>> {
+	let resultFuture = new Future<IFuture<T>>();
+	let futuresLeft = futures.length;
+	let futureLocal: IFuture<T>;
+
+	for (let future of futures) {
+		futureLocal = future;
+		future.resolve((error, result?) => {
+			futuresLeft--;
+
+			if (!resultFuture.isResolved()) {
+				if (typeof error === "undefined") {
+					resultFuture.return(futureLocal);
+				} else if (futuresLeft === 0) {
+					resultFuture.throw(new Error("None of the futures succeeded."));
+				}
+			}
+		});
+	}
+
+	return resultFuture;
+}

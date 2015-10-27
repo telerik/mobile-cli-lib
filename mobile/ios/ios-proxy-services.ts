@@ -249,7 +249,7 @@ export class NotificationProxyClient implements Mobile.INotificationProxyClient 
 		this.postNotificationCore(notificationName);
 	}
 
-	public addObserver(name: string, callback: (_name: string) => void) {
+	public addObserver(name: string, callback: (_name: string) => void): any {
 		this.openSocket();
 
 		let result = this.plistService.sendMessage({
@@ -267,7 +267,7 @@ export class NotificationProxyClient implements Mobile.INotificationProxyClient 
 		return result;
 	}
 
-	public removeObserver(name: string, callback: (_name: string) => void) {
+	public removeObserver(name: string, callback: (_name: string) => void): void {
 		let array = this.observers[name];
 		if (array) {
 			let index = array.indexOf(callback);
