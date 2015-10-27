@@ -1262,6 +1262,7 @@ declare module "util" {
     }
 
     export function format(format: any, ...param: any[]): string;
+    export function format(...param: any[]): string;
     export function deprecate(fn: Function, msg: string): Function;
     export function debuglog(set: string): Function;
     export function inspect(object: any, showHidden?: boolean, depth?: number, color?: boolean): string;
