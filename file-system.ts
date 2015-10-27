@@ -276,6 +276,10 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public copyFile(sourceFileName: string, destinationFileName: string): IFuture<void> {
+		if(path.resolve(sourceFileName) === path.resolve(destinationFileName)) {
+			return Future.fromResult();
+		}
+
 		let res = new Future<void>();
 
 		this.createDirectory(path.dirname(destinationFileName)).wait();
