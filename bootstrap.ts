@@ -1,6 +1,10 @@
 global._ = require("lodash");
 global.$injector = require("./yok").injector;
 
+if (!global.Promise) {
+	global.Promise = require("bluebird");
+}
+
 require("colors");
 $injector.require("errors", "./errors");
 $injector.requirePublic("fs", "./file-system");
