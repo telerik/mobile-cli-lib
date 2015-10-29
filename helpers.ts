@@ -157,3 +157,43 @@ export function appendZeroesToVersion(version: string, requiredVersionLength: nu
 
 	return version;
 }
+
+export function decorateMethod(before: (self1: any, args1: any[]) => void, after: (self2: any, result2: any, args2: any[]) => any) {
+	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<Function>) => {
+		let sink = descriptor.value;
+		descriptor.value = function(...args: any[]): any {
+			if (before) {
+				before(this, args);
+			}
+			let result = sink.apply(this, args);
+			if (after) {
+				return after(this, result, args);
+			}
+			return result;
+		};
+	};
+}
+
+export function hook(commandName: string) {
+	function getHooksService(self: any): IHooksService {
+		let hooksService: IHooksService = self.$hooksService;
+		if (!hooksService) {
+			let injector = self.$injector;
+			if (!injector) {
+				throw Error('Type with hooks needs to have either $hooksService or $injector injected.');
+			}
+			hooksService = injector.resolve('hooksService');
+		}
+		return hooksService;
+	}
+
+	return decorateMethod(
+		(self: any, args: any[]) => {
+			getHooksService(self).executeBeforeHooks(commandName).wait();
+		},
+		(self: any, resultPromise: any, args: any[]) => {
+			let result = resultPromise.wait();
+			getHooksService(self).executeAfterHooks(commandName).wait();
+			return Future.fromResult(result);
+		});
+}

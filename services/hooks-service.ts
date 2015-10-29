@@ -12,9 +12,6 @@ class Hook implements IHook {
 export class HooksService implements IHooksService {
 	private static HOOKS_DIRECTORY_NAME = "hooks";
 
-	private commandName: string;
-	private beforeHookName: string;
-	private afterHookName: string;
 	private cachedHooks: IDictionary<IHook[]>;
 
 	private hooksDirectories: string[];
@@ -26,15 +23,9 @@ export class HooksService implements IHooksService {
 		private $staticConfig: Config.IStaticConfig,
 		private $projectHelper: IProjectHelper) { }
 
-	public initialize(commandName: string): void {
-		// Remove everything after | (including the pipe)
-		this.commandName = commandName.replace(/\|[\s\S]*$/, "");
-		this.beforeHookName = util.format("before-%s", this.commandName);
-		this.afterHookName = util.format("after-%s", this.commandName);
+	private initialize(): void {
 		this.cachedHooks = {};
 
-		this.$logger.trace("BeforeHookName for command %s is %s", commandName, this.beforeHookName);
-		this.$logger.trace("AfterHookName for command %s is %s", commandName, this.afterHookName);
 		let customHooksDirectory: string = null;
 		let relativeToLibPath = path.join(__dirname, "../../");
 		let defaultHooksDirectories = [
@@ -49,50 +40,67 @@ export class HooksService implements IHooksService {
 		this.hooksDirectories = defaultHooksDirectories.concat([customHooksDirectory]);
 	}
 
-	public executeBeforeHooks(): IFuture<void> {
-		return this.executeHooks(this.beforeHookName);
+	private static formatHookName(commandName: string): string {
+		// Remove everything after | (including the pipe)
+		return commandName.replace(/\|[\s\S]*$/, "");
 	}
 
-	public executeAfterHooks(): IFuture<void> {
-		return this.executeHooks(this.afterHookName);
+	public executeBeforeHooks(commandName: string): IFuture<void> {
+		if (!this.hooksDirectories) {
+			this.initialize();
+		}
+		let beforeHookName = `before-${HooksService.formatHookName(commandName)}`;
+		this.$logger.trace("BeforeHookName for command %s is %s", commandName, beforeHookName);
+		return this.executeHooks(beforeHookName);
+	}
+
+	public executeAfterHooks(commandName: string): IFuture<void> {
+		if (!this.hooksDirectories) {
+			this.initialize();
+		}
+		let afterHookName = `after-${HooksService.formatHookName(commandName)}`;
+		this.$logger.trace("AfterHookName for command %s is %s", commandName, afterHookName);
+		return this.executeHooks(afterHookName);
 	}
 
 	private executeHooks(hookName: string): IFuture<void> {
 		return (() => {
 			_.each(this.hooksDirectories, hooksDirectory => {
-				this.executeHook(hooksDirectory, hookName).wait();
+				this.executeHooksInDirectory(hooksDirectory, hookName).wait();
 			});
 		}).future<void>()();
 	}
 
-	private executeHook(directoryPath: string, hookName: string): IFuture<void> {
+	private executeHooksInDirectory(directoryPath: string, hookName: string): IFuture<void> {
 		return (() => {
-			let hook = this.getHookByName(directoryPath, hookName).wait();
-			if(hook) {
+			let hooks = this.getHooksByName(directoryPath, hookName).wait();
+			hooks.forEach(hook => {
 				let command = this.getSheBangInterpreter(hook).wait();
-				if(!command) {
+				if (!command) {
 					command = hook.fullPath;
-					if(path.extname(hook.fullPath) === ".js") {
+					if (path.extname(hook.fullPath) === ".js") {
 						command = process.argv[0];
 					}
 				}
 				let environment = this.prepareEnvironment(hook.fullPath);
-				this.$logger.trace("Executing %s hook at location %s with environment ", hook.name, hook.fullPath, environment);
+				this.$logger.info("Executing %s hook from %s", hookName, hook.fullPath);
+				this.$logger.trace("Executing %s hook at location %s with environment ", hookName, hook.fullPath, environment);
 
-				let output = this.$childProcess.spawnFromEvent(command, [hook.fullPath], "close", environment, { throwError: false}).wait();
-				if(output.exitCode !== 0) {
+				let output = this.$childProcess.spawnFromEvent(command, [hook.fullPath], "close", environment, { throwError: false }).wait();
+				if (output.exitCode !== 0) {
 					this.$errors.fail(output.stdout + output.stderr);
 				}
-			}
+			});
 		}).future<void>()();
 	}
 
-	private getHookByName(directoryPath: string, hookName: string): IFuture<IHook> {
+	private getHooksByName(directoryPath: string, hookName: string): IFuture<IHook[]> {
 		return (() => {
-			let hooks = this.getHooksInDirectory(directoryPath).wait();
-			let res = _.find<IHook>(hooks, hook => hook.name === hookName);
-			return res;
-		}).future<IHook>()();
+			let allBaseHooks = this.getHooksInDirectory(directoryPath).wait();
+			let baseHooks = _.filter(allBaseHooks, hook => hook.name.toLowerCase() === hookName.toLowerCase());
+			let moreHooks = this.getHooksInDirectory(path.join(directoryPath, hookName)).wait();
+			return baseHooks.concat(moreHooks);
+		}).future<IHook[]>()();
 	}
 
 	private getHooksInDirectory(directoryPath: string): IFuture<IHook[]> {
@@ -104,8 +112,7 @@ export class HooksService implements IHooksService {
 					let files = _.filter(directoryContent, (entry: string) => {
 						let fullPath = path.join(directoryPath, entry);
 						let isFile = this.$fs.getFsStats(fullPath).wait().isFile();
-						let baseFilename = this.getBaseFilename(entry);
-						return isFile && (baseFilename === this.beforeHookName || baseFilename === this.afterHookName);
+						return isFile;
 					});
 
 					hooks = _.map(files, file => {
