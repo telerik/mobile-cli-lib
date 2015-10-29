@@ -26,18 +26,17 @@ export class HooksService implements IHooksService {
 	private initialize(): void {
 		this.cachedHooks = {};
 
-		let customHooksDirectory: string = null;
 		let relativeToLibPath = path.join(__dirname, "../../");
-		let defaultHooksDirectories = [
+		this.hooksDirectories = [
 			path.join(relativeToLibPath, HooksService.HOOKS_DIRECTORY_NAME),
 			path.join(relativeToLibPath, "common", HooksService.HOOKS_DIRECTORY_NAME)
 		];
 
 		if(this.$projectHelper.projectDir) {
-			customHooksDirectory = path.join(this.$projectHelper.projectDir, HooksService.HOOKS_DIRECTORY_NAME);
+			this.hooksDirectories.push(path.join(this.$projectHelper.projectDir, HooksService.HOOKS_DIRECTORY_NAME));
 		}
 
-		this.hooksDirectories = defaultHooksDirectories.concat([customHooksDirectory]);
+		this.$logger.trace("Hooks directories: " + util.inspect(this.hooksDirectories));
 	}
 
 	private static formatHookName(commandName: string): string {
