@@ -6,7 +6,6 @@ import {EOL} from "os";
 
 export function verifyNodeVersion(version: string): void {
 	require("colors");
-	let process = require("process");
 	let nodeVer = process.version.substr(1);
 	let checkSatisfied = require("semver").satisfies(nodeVer, version);
 	if (!checkSatisfied) {
