@@ -15,7 +15,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	private platforms: string[] = [];
 	private static NOT_FOUND_DEVICE_BY_IDENTIFIER_ERROR_MESSAGE = "Could not find device by specified identifier '%s'. To list currently connected devices and verify that the specified identifier exists, run '%s device'.";
 	private static NOT_FOUND_DEVICE_BY_INDEX_ERROR_MESSAGE = "Could not find device by specified index %d. To list currently connected devices and verify that the specified index exists, run '%s device'.";
-	private static DEVICE_LOOKING_INTERVAL = 1000;
+	private static DEVICE_LOOKING_INTERVAL = 2200;
 	private _platform: string;
 	private _device: Mobile.IDevice;
 	private _isInitialized = false;
