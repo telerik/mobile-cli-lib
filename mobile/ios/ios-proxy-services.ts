@@ -392,14 +392,9 @@ export class IOSSyslog {
 	}
 
 	public read(): void {
-		let shouldLog = false;
-		setTimeout(() => shouldLog = true, 2500);
-
 		let printData = (data: NodeBuffer) => {
-			if(shouldLog) {
-				let output = ref.readCString(data, 0);
-				this.$logger.write(output);
-			}
+			let output = ref.readCString(data, 0);
+			this.$logger.write(output);
 		};
 
 		this.plistService.readSystemLog(printData);
