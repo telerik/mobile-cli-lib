@@ -42,7 +42,6 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 
 	public startEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): IFuture<any> {
 		return (() => {
-			this.killLaunchdSim().wait();
 			return this.startEmulatorCore(app, emulatorOptions);
 		}).future<any>()();
 	}
@@ -83,11 +82,6 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 				return false;
 			}
 		}).future<boolean>()();
-	}
-
-	private killLaunchdSim(): IFuture<void> {
-		this.$logger.info("Cleaning up before starting the iOS Simulator");
-		return this.$childProcess.spawnFromEvent("killall", ["launchd_sim"], "close", undefined, { throwError: false });
 	}
 
 	private startEmulatorCore(app: string, emulatorOptions?: Mobile.IEmulatorOptions): any {
