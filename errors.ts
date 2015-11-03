@@ -64,11 +64,15 @@ function resolveCallStack(error: Error): string {
 	return outputMessage;
 }
 
-export function installUncaughtExceptionListener(): void {
+export function installUncaughtExceptionListener(actionOnException?: () => void): void {
 	process.on("uncaughtException", (err: Error) => {
 		let callstack = err.stack;
 		if (callstack) {
-			callstack = resolveCallStack(err);
+			try {
+				callstack = resolveCallStack(err);
+			} catch(err) {
+				console.error("Error while resolving callStack:", err);
+			}
 		}
 		console.error(callstack || err.toString());
 
@@ -82,7 +86,9 @@ export function installUncaughtExceptionListener(): void {
 			}
 		}
 
-		process.exit(ErrorCodes.UNKNOWN);
+		if(actionOnException) {
+			actionOnException();
+		}
 	});
 }
 

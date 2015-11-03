@@ -643,14 +643,16 @@ export class MobileDevice implements Mobile.IMobileDevice {
  }
 $injector.register("mobileDevice", MobileDevice);
 
-class WinSocket implements Mobile.IiOSDeviceSocket {
+export class WinSocket implements Mobile.IiOSDeviceSocket {
 	private winSocketLibrary: any = null;
 	private static BYTES_TO_READ = 1024;
 
 	constructor(private service: number,
 		private format: number,
 		private $logger: ILogger,
-		private $errors: IErrors) {
+		private $errors: IErrors,
+		private $childProcess: IChildProcess,
+		private $staticConfig: Config.IStaticConfig) {
 		this.winSocketLibrary = IOSCore.getWinSocketLibrary();
 	}
 
@@ -669,13 +671,25 @@ class WinSocket implements Mobile.IiOSDeviceSocket {
 		return data;
 	}
 
-	public readSystemLog(printData: any) {
+	public readSystemLogBlocking(): void {
 		let data = this.read(WinSocket.BYTES_TO_READ);
 		while (data) {
-			printData(data);
+			let output = ref.readCString(data, 0);
+			process.send(output);
 			data = this.read(WinSocket.BYTES_TO_READ);
 		}
 		this.close();
+	}
+
+	public readSystemLog(printData: any): void {
+		let serviceArg: number|string = this.service || '';
+		let formatArg: number|string = this.format || '';
+		let sysLog = this.$childProcess.fork(path.join(__dirname, "ios-sys-log.js"),
+												[this.$staticConfig.PATH_TO_BOOTSTRAP, serviceArg.toString(), formatArg.toString()],
+												{silent: true});
+		sysLog.on('message', (data: any) => {
+			printData(data);
+		});
 	}
 
 	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData> {
@@ -901,10 +915,11 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 		return result;
 	}
 
-	public readSystemLog(action: (_data: NodeBuffer) => void) {
+	public readSystemLog(action: (_data: string) => void) {
 		this.socket
 			.on("data", (data: NodeBuffer) => {
-				action(data);
+				let output = ref.readCString(data, 0);
+				action(output);
 			})
 			.on("end", () => {
 				this.close();
@@ -965,7 +980,7 @@ export class PlistService implements Mobile.IiOSDeviceSocket {
 		return this.socket.receiveMessage();
 	}
 
-	public readSystemLog(action: (data: NodeBuffer) => void): any {
+	public readSystemLog(action: (data: string) => void): any {
 		this.socket.readSystemLog(action);
 	}
 

@@ -387,16 +387,16 @@ export class IOSSyslog {
 
 	constructor(private device: Mobile.IiOSDevice,
 		private $logger: ILogger,
-		private $injector: IInjector) {
+		private $injector: IInjector,
+		private $deviceLogProvider: Mobile.IDeviceLogProvider,
+		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
 		this.plistService = this.$injector.resolve(iOSCore.PlistService, {service: this.device.startService(MobileServices.SYSLOG), format: undefined});
 	}
 
 	public read(): void {
-		let printData = (data: NodeBuffer) => {
-			let output = ref.readCString(data, 0);
-			this.$logger.write(output);
+		let printData = (data: string) => {
+			this.$deviceLogProvider.logData(data, this.$devicePlatformsConstants.iOS, this.device.deviceInfo.identifier);
 		};
-
 		this.plistService.readSystemLog(printData);
 	}
 }

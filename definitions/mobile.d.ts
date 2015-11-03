@@ -62,8 +62,8 @@ declare module Mobile {
 		start(deviceIdentifier: string): any;
 	}
 
-	interface ILogcatPrinter {
-		print(line: string): void;
+	interface IDeviceLogProvider {
+		logData(line: string, platform: string, deviceIdentifier: string): void;
 	}
 
 	interface IDeviceApplicationManager {
@@ -97,6 +97,11 @@ declare module Mobile {
 
 	interface IDeviceDiscovery extends NodeJS.EventEmitter {
 		startLookingForDevices(): IFuture<void>;
+		checkForDevices(): IFuture<void>;
+	}
+
+	interface IAndroidDeviceDiscovery extends IDeviceDiscovery {
+		ensureAdbServerStarted(): IFuture<void>;
 	}
 
 	interface IDevicesServicesInitializationOptions {
@@ -105,12 +110,13 @@ declare module Mobile {
 		skipInferPlatform?: boolean;
 	}
 
-	interface IDevicesServices {
+	interface IDevicesService {
 		hasDevices: boolean;
 		deviceCount: number;
 		execute(action: (device: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: {allowNoDevices?: boolean}): IFuture<void>;
 		initialize(data: IDevicesServicesInitializationOptions): IFuture<void>;
 		platform: string;
+		getDevices(): IDeviceInfo[];
 	}
 
 	interface IiTunesValidator {
@@ -242,7 +248,7 @@ declare module Mobile {
 
 	interface IiOSDeviceSocket {
 		receiveMessage(): IFuture<IiOSSocketResponseData>;
-		readSystemLog(action: (data: NodeBuffer) => void): void;
+		readSystemLog(action: (data: string) => void): void;
 		sendMessage(message: {[key: string]: {}}, format?: number): void;
 		sendMessage(message: string): void;
 		sendAll? (data: NodeBuffer): void;

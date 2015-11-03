@@ -1,8 +1,11 @@
 ///<reference path="../.d.ts"/>
 "use strict";
-import chai = require("chai");
-let assert:chai.Assert = chai.assert;
-import yok = require("../../yok");
+import {assert} from "chai";
+import {Yok} from "../../yok";
+import * as path from "path";
+import * as fs from "fs";
+import rimraf = require("rimraf");
+import * as classesWithInitMethod from "./mocks/mockClassesWithInitializeMethod";
 
 class MyClass {
 	constructor(private x:string, public y:any) {
@@ -15,7 +18,7 @@ class MyClass {
 
 describe("yok", () => {
 	it("resolves pre-constructed singleton", () => {
-		let injector = new yok.Yok();
+		let injector = new Yok();
 		let obj = {};
 		injector.register("foo", obj);
 
@@ -25,7 +28,7 @@ describe("yok", () => {
 	});
 
 	it("resolves given constructor", () => {
-		let injector = new yok.Yok();
+		let injector = new Yok();
 		let obj:any;
 		injector.register("foo", () => {
 			obj = {foo:"foo"};
@@ -38,7 +41,7 @@ describe("yok", () => {
 	});
 
 	it("resolves constructed singleton", () => {
-		let injector = new yok.Yok();
+		let injector = new Yok();
 		injector.register("foo", {foo:"foo"});
 
 		let r1 = injector.resolve("foo");
@@ -48,7 +51,7 @@ describe("yok", () => {
 	});
 
 	it("injects directly into passed constructor", () => {
-		let injector = new yok.Yok();
+		let injector = new Yok();
 		let obj = {};
 		injector.register("foo", obj);
 
@@ -62,7 +65,7 @@ describe("yok", () => {
 	});
 
 	it("inject dependency into registered constructor", () => {
-		let injector = new yok.Yok();
+		let injector = new Yok();
 		let obj = {};
 		injector.register("foo", obj);
 
@@ -78,7 +81,7 @@ describe("yok", () => {
 	});
 
 	it("inject dependency with $ prefix", () => {
-		let injector = new yok.Yok();
+		let injector = new Yok();
 		let obj = {};
 		injector.register("foo", obj);
 
@@ -92,7 +95,7 @@ describe("yok", () => {
 	});
 
 	it("inject into TS constructor", () => {
-		let injector = new yok.Yok();
+		let injector = new Yok();
 
 		injector.register("x", "foo");
 		injector.register("y", 123);
@@ -104,7 +107,7 @@ describe("yok", () => {
 	});
 
 	it("resolves a parameterless constructor", () => {
-		let injector = new yok.Yok();
+		let injector = new Yok();
 
 		function Test() {
 			this.foo = "foo";
@@ -116,13 +119,13 @@ describe("yok", () => {
 	});
 
 	it("returns null when it can't resolve a command", () => {
-		let injector = new yok.Yok();
+		let injector = new Yok();
 		let command = injector.resolveCommand("command");
 		assert.isNull(command);
 	});
 
 	it("throws when it can't resolve a registered command", () => {
-		let injector = new yok.Yok();
+		let injector = new Yok();
 
 		function Command(whatever:any) { /* intentionally left blank */ }
 
@@ -132,7 +135,7 @@ describe("yok", () => {
 	});
 
 	it("disposes", () => {
-		let injector = new yok.Yok();
+		let injector = new Yok();
 
 		function Thing() { /* intentionally left blank */ }
 
@@ -148,13 +151,13 @@ describe("yok", () => {
 	});
 
 	it("throws error when module is required more than once", () => {
-		let injector = new yok.Yok();
+		let injector = new Yok();
 		injector.require("foo", "test");
 		assert.throws(() => injector.require("foo", "test2"));
 	});
 
 	it("adds module to public api when requirePublic is used", () => {
-		let injector = new yok.Yok();
+		let injector = new Yok();
 		injector.requirePublic("foo", "test");
 		assert.isTrue(_.contains(Object.getOwnPropertyNames(injector.publicApi), "foo"));
 	});
@@ -162,7 +165,7 @@ describe("yok", () => {
 	describe("buildHierarchicalCommand", () => {
 		let injector: IInjector;
 		beforeEach(() => {
-			injector = new yok.Yok();
+			injector = new Yok();
 		});
 
 		describe("returns undefined", () => {
@@ -316,5 +319,52 @@ describe("yok", () => {
 				});
 			});
 		});
+	});
+
+	it("adds whole class to public api when requirePublicClass is used", () => {
+		let injector = new Yok();
+		let dataObject =  {
+			a: "testA",
+			b: {
+				c: "testC"
+			}
+		};
+
+		let filepath = path.join(__dirname, "..", "..", "temp.js");
+		fs.writeFileSync(filepath, "");
+
+		// Call to requirePublicClass will add the class to publicApi object.
+		injector.requirePublicClass("foo", "./temp");
+		injector.register("foo", dataObject);
+		// Get the real instance here, so we can delete the file before asserts.
+		// This way we'll keep the directory clean, even if assert fails.
+		let resultFooObject = injector.publicApi.foo;
+		rimraf(filepath, (err: Error) => {
+			if(err) {
+				console.log(`Unable to delete file used for tests: ${filepath}.`);
+			}
+		});
+		assert.isTrue(_.contains(Object.getOwnPropertyNames(injector.publicApi), "foo"));
+		assert.deepEqual(resultFooObject, dataObject);
+	});
+
+	it("automatically calls initialize method of a class when initialize returns IFuture", () => {
+		let injector = new Yok();
+		// Call to requirePublicClass will add the class to publicApi object.
+		injector.requirePublicClass("classWithInitMethod", "./test/unit-tests/mocks/mockClassesWithInitializeMethod");
+		injector.register("classWithInitMethod", classesWithInitMethod.ClassWithFuturizedInitializeMethod);
+		let resultClassWithInitMethod = injector.publicApi.classWithInitMethod;
+		assert.isTrue(_.contains(Object.getOwnPropertyNames(injector.publicApi), "classWithInitMethod"));
+		assert.isTrue(resultClassWithInitMethod.isInitializedCalled, "isInitalizedCalled is not set to true, so method had not been called");
+	});
+
+	it("automatically calls initialize method of a class when initialize does NOT return IFuture", () => {
+		let injector = new Yok();
+		// Call to requirePublicClass will add the class to publicApi object.
+		injector.requirePublicClass("classWithInitMethod", "./test/unit-tests/mocks/mockClassesWithInitializeMethod");
+		injector.register("classWithInitMethod", classesWithInitMethod.ClassWithInitializeMethod);
+		let resultClassWithInitMethod = injector.publicApi.classWithInitMethod;
+		assert.isTrue(_.contains(Object.getOwnPropertyNames(injector.publicApi), "classWithInitMethod"));
+		assert.isTrue(resultClassWithInitMethod.isInitializedCalled, "isInitalizedCalled is not set to true, so method had not been called");
 	});
 });

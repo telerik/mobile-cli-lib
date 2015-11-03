@@ -180,5 +180,4 @@ export class OptionsBase {
 			});
 		});
 	}
-
 }

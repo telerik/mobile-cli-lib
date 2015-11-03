@@ -3,7 +3,7 @@
 
 export class RunApplicationOnDeviceCommand implements ICommand {
 
-	constructor(private $devicesServices: Mobile.IDevicesServices,
+	constructor(private $devicesService: Mobile.IDevicesService,
 		private $errors: IErrors,
 		private $stringParameter: ICommandParameter,
 		private $staticConfig: Config.IStaticConfig,
@@ -13,17 +13,14 @@ export class RunApplicationOnDeviceCommand implements ICommand {
 
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
-			this.$devicesServices.initialize({ deviceId: this.$options.device, skipInferPlatform: true }).wait();
+			this.$devicesService.initialize({ deviceId: this.$options.device, skipInferPlatform: true }).wait();
 
-			if (this.$devicesServices.deviceCount > 1) {
-				this.$errors.fail("More than one device found. Specify device explicitly with --device option. " +
-					"To discover device ID, use $%s device command.", this.$staticConfig.CLIENT_NAME.toLowerCase());
+			if (this.$devicesService.deviceCount > 1) {
+				this.$errors.failWithoutHelp("More than one device found. Specify device explicitly with --device option. To discover device ID, use $%s device command.", this.$staticConfig.CLIENT_NAME.toLowerCase());
 			}
 
-			let action = (device: Mobile.IDevice) => {
-				return (() => device.applicationManager.startApplication(args[0]).wait()).future<void>()();
-			};
-			this.$devicesServices.execute(action).wait();
+			let action = (device: Mobile.IDevice) => device.applicationManager.startApplication(args[0]);
+			this.$devicesService.execute(action).wait();
 		}).future<void>()();
 	}
 }

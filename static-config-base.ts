@@ -70,4 +70,6 @@ export class StaticConfigBase implements Config.IStaticConfig {
 			return "adb";
 		}).future<string>()();
 	}
+
+	public PATH_TO_BOOTSTRAP: string;
 }

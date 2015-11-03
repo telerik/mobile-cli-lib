@@ -55,11 +55,17 @@ function annotate(fn: any) {
 //--- end part copied from AngularJS
 
 import * as path from "path";
+import {isFuture} from "./helpers";
 
 let indent = "";
 function trace(formatStr: string, ...args: any[]) {
-	// uncomment following line when debugging dependency injection
-	//console.log(util.format(indent + formatStr, ...args));
+	// uncomment following lines when debugging dependency injection
+	// var args = [];
+	// for (var _i = 1; _i < arguments.length; _i++) {
+	// 	args[_i - 1] = arguments[_i];
+	// }
+	// var util = require("util");
+	// console.log(util.format.apply(util, [indent + formatStr].concat(args)));
 }
 
 function pushIndent() {
@@ -149,13 +155,48 @@ export class Yok implements IInjector {
 		});
 	}
 
+	public requirePublicClass(names: any, file: string): void {
+		forEachName(names, (name) => {
+			this.requireOne(name, file);
+			this.addClassToPublicApi(name, file);
+		});
+	}
+
+	private addClassToPublicApi(name: string, file: string): void {
+		Object.defineProperty(this.publicApi, name, {
+			get: () => {
+				return this.tryCallInitializeMethod(name);
+			}
+		});
+	}
+
 	private resolvePublicApi(name: string, file: string): void {
 		Object.defineProperty(this.publicApi, name, {
 			get: () => {
-				this.resolve(name);
+				this.tryCallInitializeMethod(name);
 				return this.publicApi.__modules__[name];
 			}
 		});
+	}
+
+	private tryCallInitializeMethod(name: string): any {
+		let classInstance = this.modules[name].instance;
+		if(!classInstance) {
+			classInstance = this.resolve(name);
+			// This is in order to remove .wait() from constructors
+			// as we cannot wait without fiber.
+			if(classInstance.initialize) {
+				let result = classInstance.initialize.apply(classInstance);
+				if(isFuture(result)) {
+					let fiberBootstrap = require("./fiber-bootstrap");
+					fiberBootstrap.run(() => {
+						result.wait();
+					});
+				}
+			}
+		}
+
+		return classInstance;
 	}
 
 	private requireOne(name: string, file: string): void {
@@ -278,6 +319,7 @@ export class Yok implements IInjector {
 				if(!fullCommandName) {
 					// The passed arguments are not one of the subCommands.
 					// Check if the default command accepts arguments - if no, return false;
+
 					let defaultCommand = this.resolveCommand(`${commandName}|${defaultCommandName}`);
 					if(defaultCommand) {
 						if (defaultCommand.canExecute) {
@@ -358,7 +400,7 @@ export class Yok implements IInjector {
 			}
 
 			let data = module[parsed[2]].apply(module, args);
-			if(data && typeof data.wait === "function") {
+			if(isFuture(data)) {
 				return data.wait();
 			}
 			return data;

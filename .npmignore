@@ -3,3 +3,4 @@
 coverage
 .tscache
 test-reports.xml
+*.tgz
