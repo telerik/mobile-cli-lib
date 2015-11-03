@@ -291,7 +291,7 @@ interface IUsbLiveSyncServiceBase {
 	sync(platform: string, appIdentifier: string, projectFilesPath: string, excludedProjectDirsAndFiles: string[], watchGlob: any,
 		platformSpecificLiveSyncServices: IDictionary<any>,
 		notInstalledAppOnDeviceAction: (device: Mobile.IDevice) => IFuture<boolean>,
-		notRunningiOSSimulatorAction: () => IFuture<void>,
+		notRunningiOSSimulatorAction: () => IFuture<boolean>,
 		localProjectRootPath?: string,
 		beforeLiveSyncAction?: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData) => IFuture<void>,
 		beforeBatchLiveSyncAction?: (filePath: string) => IFuture<string>,
