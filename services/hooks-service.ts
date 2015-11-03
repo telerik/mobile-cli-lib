@@ -3,6 +3,7 @@
 
 import * as path from "path";
 import * as util from "util";
+import Future = require("fibers/future");
 
 class Hook implements IHook {
 	constructor(public name: string,
@@ -21,6 +22,7 @@ export class HooksService implements IHooksService {
 		private $logger: ILogger,
 		private $errors: IErrors,
 		private $staticConfig: Config.IStaticConfig,
+		private $injector: IInjector,
 		private $projectHelper: IProjectHelper) { }
 
 	private initialize(): void {
@@ -44,50 +46,66 @@ export class HooksService implements IHooksService {
 		return commandName.replace(/\|[\s\S]*$/, "");
 	}
 
-	public executeBeforeHooks(commandName: string): IFuture<void> {
+	public executeBeforeHooks(commandName: string, hookArguments?: IDictionary<any>): IFuture<void> {
 		if (!this.hooksDirectories) {
 			this.initialize();
 		}
 		let beforeHookName = `before-${HooksService.formatHookName(commandName)}`;
 		this.$logger.trace("BeforeHookName for command %s is %s", commandName, beforeHookName);
-		return this.executeHooks(beforeHookName);
+		return this.executeHooks(beforeHookName, hookArguments);
 	}
 
-	public executeAfterHooks(commandName: string): IFuture<void> {
+	public executeAfterHooks(commandName: string, hookArguments?: IDictionary<any>): IFuture<void> {
 		if (!this.hooksDirectories) {
 			this.initialize();
 		}
 		let afterHookName = `after-${HooksService.formatHookName(commandName)}`;
 		this.$logger.trace("AfterHookName for command %s is %s", commandName, afterHookName);
-		return this.executeHooks(afterHookName);
+		return this.executeHooks(afterHookName, hookArguments);
 	}
 
-	private executeHooks(hookName: string): IFuture<void> {
+	private executeHooks(hookName: string, hookArguments?: IDictionary<any>): IFuture<void> {
 		return (() => {
 			_.each(this.hooksDirectories, hooksDirectory => {
-				this.executeHooksInDirectory(hooksDirectory, hookName).wait();
+				this.executeHooksInDirectory(hooksDirectory, hookName, hookArguments).wait();
 			});
 		}).future<void>()();
 	}
 
-	private executeHooksInDirectory(directoryPath: string, hookName: string): IFuture<void> {
+	private executeHooksInDirectory(directoryPath: string, hookName: string, hookArguments?: IDictionary<any>): IFuture<void> {
 		return (() => {
 			let hooks = this.getHooksByName(directoryPath, hookName).wait();
 			hooks.forEach(hook => {
+				this.$logger.info("Executing %s hook from %s", hookName, hook.fullPath);
 				let command = this.getSheBangInterpreter(hook).wait();
+				let inProc = false;
 				if (!command) {
 					command = hook.fullPath;
-					if (path.extname(hook.fullPath) === ".js") {
+					if (path.extname(hook.fullPath).toLowerCase() === ".js") {
 						command = process.argv[0];
+						inProc = this.shouldExecuteInProcess(this.$fs.readText(hook.fullPath).wait());
 					}
 				}
-				let environment = this.prepareEnvironment(hook.fullPath);
-				this.$logger.info("Executing %s hook from %s", hookName, hook.fullPath);
-				this.$logger.trace("Executing %s hook at location %s with environment ", hookName, hook.fullPath, environment);
 
-				let output = this.$childProcess.spawnFromEvent(command, [hook.fullPath], "close", environment, { throwError: false }).wait();
-				if (output.exitCode !== 0) {
-					this.$errors.fail(output.stdout + output.stderr);
+				if (inProc) {
+					this.$logger.trace("Executing %s hook at location %s in-process", hookName, hook.fullPath);
+					let hookEntryPoint = require(hook.fullPath);
+					let maybePromise = this.$injector.resolve(hookEntryPoint, hookArguments);
+					if (maybePromise) {
+						this.$logger.trace('Hook promises to signal completion');
+						let hookCompletion = new Future<void>();
+						maybePromise.then(() => hookCompletion.return(), (err: any) => hookCompletion.throw(err));
+						hookCompletion.wait();
+						this.$logger.trace('Hook completed');
+					}
+				} else {
+					let environment = this.prepareEnvironment(hook.fullPath);
+					this.$logger.trace("Executing %s hook at location %s with environment ", hookName, hook.fullPath, environment);
+
+					let output = this.$childProcess.spawnFromEvent(command, [hook.fullPath], "close", environment, { throwError: false }).wait();
+					if (output.exitCode !== 0) {
+						this.$errors.fail(output.stdout + output.stderr);
+					}
 				}
 			});
 		}).future<void>()();
@@ -168,6 +186,32 @@ export class HooksService implements IHooksService {
 
 	private getBaseFilename(fileName: string): string {
 		return fileName.substr(0, fileName.length - path.extname(fileName).length);
+	}
+
+	private shouldExecuteInProcess(scriptSource: string): boolean {
+		try {
+			let esprima = require('esprima');
+			let ast = esprima.parse(scriptSource);
+
+			let inproc = false;
+			ast.body.forEach((statement: any) => {
+				if (statement.type !== 'ExpressionStatement'
+					|| statement.expression.type !== 'AssignmentExpression') {
+					return;
+				}
+
+				let left = statement.expression.left;
+				if (left.type === 'MemberExpression' &&
+					left.object && left.object.type === 'Identifier' && left.object.name === 'module'
+					&& left.property && left.property.type === 'Identifier' && left.property.name === 'exports') {
+					inproc = true;
+				}
+			});
+
+			return inproc;
+		} catch (err) {
+			return false;
+		}
 	}
 }
 $injector.register("hooksService", HooksService);
