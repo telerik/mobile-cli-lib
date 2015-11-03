@@ -42,7 +42,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		return this.getDeviceInstances().map(deviceInstance => deviceInstance.deviceInfo);
 	}
 
-	private getDeviceInstances(): Mobile.IDevice[] {
+	public getDeviceInstances(): Mobile.IDevice[] {
 		return _.values(this._devices);
 	}
 

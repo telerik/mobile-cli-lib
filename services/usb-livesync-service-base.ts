@@ -80,7 +80,8 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 		localProjectRootPath?: string,
 		beforeLiveSyncAction?: (_device2: Mobile.IDevice, _deviceAppData: Mobile.IDeviceAppData) => IFuture<void>,
 		beforeBatchLiveSyncAction?: (_filePath: string) => IFuture<string>,
-		iOSSimulatorRelativeToProjectBasePathAction?: (projectFile: string) => string): IFuture<void> {
+		iOSSimulatorRelativeToProjectBasePathAction?: (projectFile: string) => string,
+		shouldRestartApplication?: (_localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<boolean>): IFuture<void> {
 		return (() => {
 			let platformLowerCase = platform.toLowerCase();
 			let synciOSSimulator = this.$hostInfo.isDarwin && platformLowerCase === "ios" && (this.$options.emulator || this.$iOSEmulatorServices.isSimulatorRunning().wait());
@@ -98,7 +99,16 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 					(filePath, stat) => !this.isFileExcluded(path.relative(projectFilesPath, filePath), excludedProjectDirsAndFiles, projectFilesPath),
 					{ enumerateDirectories: true }
 				);
-				this.syncCore(platform, projectFiles, appIdentifier, localProjectRootPath || projectFilesPath, platformSpecificLiveSyncServices, notInstalledAppOnDeviceAction, beforeLiveSyncAction).wait();
+
+				this.syncCore(platform,
+					projectFiles,
+					appIdentifier,
+					localProjectRootPath || projectFilesPath,
+					platformSpecificLiveSyncServices,
+					notInstalledAppOnDeviceAction,
+					beforeLiveSyncAction,
+					shouldRestartApplication
+					).wait();
 			}
 
 			if(this.$options.watch) {
@@ -142,7 +152,8 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 	private syncCore(platform: string, projectFiles: string[], appIdentifier: string, projectFilesPath: string,
 		platformSpecificLiveSyncServices: IDictionary<any>,
 		notInstalledAppOnDeviceAction: (_device1: Mobile.IDevice) => IFuture<boolean>,
-		beforeLiveSyncAction?: (_device2: Mobile.IDevice, _deviceAppData1: Mobile.IDeviceAppData) => IFuture<void>): IFuture<void> {
+		beforeLiveSyncAction?: (_device2: Mobile.IDevice, _deviceAppData1: Mobile.IDeviceAppData) => IFuture<void>,
+		shouldRestartApplication?: (_localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<boolean>): IFuture<void> {
 		return (() => {
 			platform = platform ? this.$mobileHelper.normalizePlatformName(platform) : this.$devicesService.platform;
 			let deviceAppData = this.$deviceAppDataFactory.create(appIdentifier, platform);
@@ -172,7 +183,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 						device.fileSystem.transferFiles(deviceAppData.appIdentifier, localToDevicePaths).wait();
 						this.$logger.info("Successfully transferred all project files.");
 
-						if (!this.$options.debugBrk) {
+						if (shouldRestartApplication && shouldRestartApplication(localToDevicePaths).wait()) {
 							this.$logger.info("Applying changes...");
 							let platformSpecificLiveSyncService = this.resolvePlatformSpecificLiveSyncService(platform, device, platformSpecificLiveSyncServices);
 							platformSpecificLiveSyncService.restartApplication(deviceAppData, localToDevicePaths).wait();
