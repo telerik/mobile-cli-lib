@@ -60,7 +60,7 @@ declare module Mobile {
 	}
 
 	interface ILogcatHelper {
-		start(deviceIdentifier: string): any;
+		start(deviceIdentifier: string): void;
 	}
 
 	interface IDeviceLogProvider {
