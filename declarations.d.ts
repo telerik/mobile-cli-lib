@@ -288,6 +288,7 @@ interface IHtmlHelpService {
 
 interface IUsbLiveSyncServiceBase {
 	initialize(platform: string): IFuture<string>;
+	isInitialized: boolean;
 	sync(platform: string, appIdentifier: string, projectFilesPath: string, excludedProjectDirsAndFiles: string[], watchGlob: any,
 		platformSpecificLiveSyncServices: IDictionary<any>,
 		notInstalledAppOnDeviceAction: (device: Mobile.IDevice) => IFuture<boolean>,

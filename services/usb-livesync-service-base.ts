@@ -61,6 +61,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 		protected $injector: IInjector,
 		protected $childProcess: IChildProcess,
 		protected $iOSEmulatorServices: Mobile.IiOSSimulatorService,
+		protected $hooksService: IHooksService,
 		private $hostInfo: IHostInfo) { }
 
 	public initialize(platform: string): IFuture<string> {
@@ -71,6 +72,10 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 				return this.$devicesService.platform;
 			}
 		}).future<string>()();
+	}
+
+	public get isInitialized(): boolean {
+		return this._initialized;
 	}
 
 	public sync(platform: string, appIdentifier: string, projectFilesPath: string, excludedProjectDirsAndFiles: string[], watchGlob: any,
@@ -113,6 +118,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 
 			if(this.$options.watch) {
 				let that = this;
+				this.$hooksService.executeBeforeHooks('watch').wait();
 				gaze("**/*", { cwd: watchGlob }, function(err: any, watcher: any) {
 					this.on('all', (event: string, filePath: string) => {
 						if(event === "added" || event === "changed") {

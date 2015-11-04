@@ -96,8 +96,8 @@ export class HooksService implements IHooksService {
 						let hookCompletion = new Future<void>();
 						maybePromise.then(() => hookCompletion.return(), (err: any) => hookCompletion.throw(err));
 						hookCompletion.wait();
-						this.$logger.trace('Hook completed');
 					}
+					this.$logger.trace('Hook completed');
 				} else {
 					let environment = this.prepareEnvironment(hook.fullPath);
 					this.$logger.trace("Executing %s hook at location %s with environment ", hookName, hook.fullPath, environment);
