@@ -14,6 +14,7 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 	private timerCallbackPtr: NodeBuffer = null;
 	private notificationCallbackPtr: NodeBuffer = null;
 	private _coreFoundation: Mobile.ICoreFoundation;
+
 	private get $coreFoundation(): Mobile.ICoreFoundation {
 		if(!this._coreFoundation) {
 			this._coreFoundation = this.$injector.resolve("$coreFoundation");

@@ -8,7 +8,7 @@ import * as assert from "assert";
 import * as constants from "../constants";
 import {exportedPromise, exported} from "../../decorators";
 
-import fiberBootstrap = require("../../fiber-bootstrap");
+import * as fiberBootstrap from "../../fiber-bootstrap";
 
 export class DevicesService implements Mobile.IDevicesService {
 	private _devices: IDictionary<Mobile.IDevice> = {};

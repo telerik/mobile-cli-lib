@@ -1,6 +1,6 @@
 ///<reference path="../.d.ts"/>
 "use strict";
-import helpers = require("../helpers");
+import * as helpers from "../helpers";
 
 export class AutoCompleteCommand implements ICommand {
 	constructor(private $autoCompletionService: IAutoCompletionService,

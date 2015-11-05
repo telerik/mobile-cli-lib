@@ -1,8 +1,8 @@
 ///<reference path="../.d.ts"/>
 "use strict";
 import * as path from "path";
-import helpers = require("../helpers");
-import ValidationResult = require("./validation-result");
+import * as helpers from "../helpers";
+import * as ValidationResult from "./validation-result";
 
 export class ProjectNameValidator implements IProjectNameValidator {
 	private static MAX_FILENAME_LENGTH = 30;

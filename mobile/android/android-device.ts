@@ -1,9 +1,9 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 
-import androidDebugBridgePath = require("./android-debug-bridge");
-import applicationManagerPath = require("./android-application-manager");
-import fileSystemPath = require("./android-device-file-system");
+import * as androidDebugBridgePath from "./android-debug-bridge";
+import * as applicationManagerPath from "./android-application-manager";
+import * as fileSystemPath from "./android-device-file-system";
 
 interface IAndroidDeviceDetails {
 	model: string;

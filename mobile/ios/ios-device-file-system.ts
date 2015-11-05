@@ -1,9 +1,9 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 
-import iOSProxyServices = require("./ios-proxy-services");
+import * as iOSProxyServices from "./ios-proxy-services";
 import * as path from "path";
-import ref = require("ref");
+import * as ref from "ref";
 import * as util from "util";
 
 export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {

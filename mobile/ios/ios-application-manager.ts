@@ -2,12 +2,10 @@
 "use strict";
 
 import * as net from "net";
-import ref = require("ref");
+import * as ref from "ref";
 import * as os from "os";
-
-import iosCore = require("./ios-core");
-let CoreTypes = iosCore.CoreTypes;
-import iOSProxyServices = require("./ios-proxy-services");
+import {CoreTypes, GDBServer} from "./ios-core";
+import * as iOSProxyServices from "./ios-proxy-services";
 
 export class IOSApplicationManager implements Mobile.IDeviceApplicationManager {
 	private uninstallApplicationCallbackPtr: NodeBuffer = null;
@@ -128,7 +126,7 @@ export class IOSApplicationManager implements Mobile.IDeviceApplicationManager {
 	private createGdbServer(): Mobile.IGDBServer {
 		let service = this.device.startService(iOSProxyServices.MobileServices.DEBUG_SERVER);
 		let socket = this.$hostInfo.isWindows ? service :  new net.Socket({ fd: service });
-		let gdbServer = this.$injector.resolve(iosCore.GDBServer, { socket: socket });
+		let gdbServer = this.$injector.resolve(GDBServer, { socket: socket });
 
 		return gdbServer;
 	}

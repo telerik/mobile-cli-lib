@@ -1,10 +1,10 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
-import ref = require("ref");
+import * as ref from "ref";
 import * as path from "path";
 import * as iOSCore from "./ios-core";
 import * as helpers from "../../helpers";
-import plistlib = require("plistlib");
+import * as plistlib from "plistlib";
 
 export class MobileServices {
 	public static APPLE_FILE_CONNECTION: string = "com.apple.afc";

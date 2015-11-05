@@ -1,8 +1,8 @@
 ///<reference path=".d.ts"/>
 "use strict";
 
-let uuid = require("node-uuid");
-import Fiber = require("fibers");
+import * as uuid from "node-uuid";
+import * as Fiber from "fibers";
 let Table = require("cli-table");
 import Future = require("fibers/future");
 

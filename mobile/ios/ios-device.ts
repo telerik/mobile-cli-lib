@@ -2,7 +2,7 @@
 "use strict";
 
 import * as net from "net";
-import ref = require("ref");
+import * as ref from "ref";
 import * as path from "path";
 import * as util from "util";
 import * as iosCore from "./ios-core";

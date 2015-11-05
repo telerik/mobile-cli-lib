@@ -2,9 +2,9 @@
 "use strict";
 
 import * as path from "path";
-import ref = require("ref");
-import ffi = require("ffi");
-import struct = require("ref-struct");
+import * as ref from "ref";
+import * as ffi from "ffi";
+import * as struct from "ref-struct";
 import * as bufferpack from "bufferpack";
 import * as plistlib from "plistlib";
 import * as plist from "plist";
@@ -68,10 +68,9 @@ export class CoreTypes {
 
 class IOSCore implements Mobile.IiOSCore {
 
-	constructor(private $logger: ILogger,
-		private $fs: IFileSystem,
-		private $errors: IErrors,
-		private $hostInfo: IHostInfo) { }
+	constructor(private $hostInfo: IHostInfo) {
+		this.adjustDllSearchPath();
+	}
 
 	private cfDictionaryKeyCallBacks = struct({
 		version: CoreTypes.uintType,
@@ -122,12 +121,14 @@ class IOSCore implements Mobile.IiOSCore {
 		return pointer;
 	}
 
-	public getCoreFoundationLibrary(): {[key: string]: any} {
+	private adjustDllSearchPath(): void {
 		if(this.$hostInfo.isWindows) {
 			process.env.PATH = this.CoreFoundationDir + ";" + process.env.PATH;
 			process.env.PATH += ";" + this.MobileDeviceDir;
 		}
+	}
 
+	public getCoreFoundationLibrary(): {[key: string]: any} {
 		let coreFoundationDll = this.$hostInfo.isWindows ?  path.join(this.CoreFoundationDir, "CoreFoundation.dll") : this.CoreFoundationDir;
 		let lib = ffi.DynamicLibrary(coreFoundationDll);
 
@@ -172,6 +173,7 @@ class IOSCore implements Mobile.IiOSCore {
 	}
 
 	public getMobileDeviceLibrary(): {[key: string]: any} {
+
 		let mobileDeviceDll = this.$hostInfo.isWindows ? path.join(this.MobileDeviceDir, "MobileDevice.dll") : this.MobileDeviceDir;
 		let lib = ffi.DynamicLibrary(mobileDeviceDll);
 

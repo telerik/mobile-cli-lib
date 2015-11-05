@@ -1,8 +1,8 @@
 ///<reference path=".d.ts"/>
 "use strict";
 
-import Promise = require("bluebird");
-import fiberBootstrap = require("./fiber-bootstrap");
+import * as Promise from "bluebird";
+import * as fiberBootstrap from "./fiber-bootstrap";
 import * as assert from "assert";
 import {isFuture} from "./helpers";
 
