@@ -5,7 +5,7 @@ import { EventEmitter } from "events";
 import Future = require("fibers/future");
 
 export class DeviceDiscovery extends EventEmitter implements Mobile.IDeviceDiscovery {
-	private devices: {[key: string]: Mobile.IDevice} = {};
+	private devices: IDictionary<Mobile.IDevice> = {};
 
 	public addDevice(device: Mobile.IDevice) {
 		this.devices[device.deviceInfo.identifier] = device;

@@ -34,7 +34,6 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 
 	constructor(private $errors: IErrors,
 		private $injector: IInjector,
-		private $options: ICommonOptions,
 		private $utils: IUtils,
 		private $logger: ILogger,
 		private $iTunesValidator: Mobile.IiTunesValidator,
