@@ -5,12 +5,10 @@ import * as net from "net";
 import * as ref from "ref";
 import * as path from "path";
 import * as util from "util";
-import * as iosCore from "./ios-core";
+import {CoreTypes, PlistService} from "./ios-core";
 import * as iOSProxyServices from "./ios-proxy-services";
 import * as applicationManagerPath from "./ios-application-manager";
 import * as fileSystemPath from "./ios-device-file-system";
-
-let CoreTypes = iosCore.CoreTypes;
 
 export class IOSDevice implements Mobile.IiOSDevice {
 	private static IMAGE_ALREADY_MOUNTED_ERROR_CODE = 3892314230;
@@ -31,7 +29,6 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		private $injector: IInjector,
 		private $logger: ILogger,
 		private $mobileDevice: Mobile.IMobileDevice,
-		private $staticConfig: Config.IStaticConfig,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $hostInfo: IHostInfo,
 		private $options: ICommonOptions) {
@@ -211,7 +208,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 				let imageSize = this.$fs.getFsStats(imagePath).wait().size;
 
 				let imageMounterService = this.startService(iOSProxyServices.MobileServices.MOBILE_IMAGE_MOUNTER);
-				let plistService: Mobile.IiOSDeviceSocket = this.$injector.resolve(iosCore.PlistService, { service: imageMounterService, format: CoreTypes.kCFPropertyListXMLFormat_v1_0 });
+				let plistService: Mobile.IiOSDeviceSocket = this.$injector.resolve(PlistService, { service: imageMounterService, format: CoreTypes.kCFPropertyListXMLFormat_v1_0 });
 				let result = plistService.exchange({
 					Command: "ReceiveBytes",
 					ImageSize: imageSize,

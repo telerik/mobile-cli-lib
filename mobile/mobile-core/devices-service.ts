@@ -7,7 +7,6 @@ import * as helpers from "../../helpers";
 import * as assert from "assert";
 import * as constants from "../constants";
 import {exportedPromise, exported} from "../../decorators";
-
 import * as fiberBootstrap from "../../fiber-bootstrap";
 
 export class DevicesService implements Mobile.IDevicesService {
