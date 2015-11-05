@@ -2,7 +2,7 @@
 "use strict";
 
 let jaroWinklerDistance = require("../vendor/jaro-winkler_distance");
-import helpers = require("../helpers");
+import * as helpers from "../helpers";
 import { EOL } from "os";
 
 class CommandArgumentsValidationHelper {

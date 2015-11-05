@@ -1,7 +1,7 @@
 ///<reference path="../.d.ts"/>
 "use strict";
 
-import helpers = require("../helpers");
+import * as helpers from "../helpers";
 
 export class MobileHelper implements Mobile.IMobileHelper {
 	private static DEVICE_PATH_SEPARATOR = "/";

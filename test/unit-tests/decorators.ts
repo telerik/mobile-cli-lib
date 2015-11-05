@@ -1,8 +1,8 @@
 ///<reference path="../.d.ts"/>
 "use strict";
 
-import decoratorsLib = require("../../decorators");
-import yokLib = require("../../yok");
+import * as decoratorsLib from "../../decorators";
+import * as yokLib from "../../yok";
 import {assert} from "chai";
 import Future = require("fibers/future");
 

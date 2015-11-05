@@ -2,7 +2,7 @@
 "use strict";
 import * as util from "util";
 import * as helpers from "./helpers";
-import yargs = require("yargs");
+import * as yargs from "yargs";
 
 export class OptionType {
 	public static String = "string";

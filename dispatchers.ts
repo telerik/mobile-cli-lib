@@ -1,7 +1,7 @@
 ///<reference path=".d.ts"/>
 "use strict";
 
-import queue = require("./queue");
+import * as queue from "./queue";
 
 export class CommandDispatcher implements ICommandDispatcher {
 	constructor(private $logger: ILogger,
