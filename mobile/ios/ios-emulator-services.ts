@@ -4,7 +4,6 @@
 import Future = require("fibers/future");
 import * as path from "path";
 import * as shell from "shelljs";
-let iosSim = require("ios-sim-portable");
 
 class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 	constructor(private $logger: ILogger,
@@ -142,6 +141,8 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 
 	private syncCore(appIdentifier: string, notRunningSimulatorAction: () => IFuture<boolean>, syncAction: (_applicationPath: string) => void): IFuture<void> {
 		return (() => {
+			let iosSim = require("ios-sim-portable");
+
 			if(!this.isSimulatorRunning().wait()) {
 				if (!notRunningSimulatorAction().wait()) {
 					return;
