@@ -94,6 +94,10 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		}).future<void>()();
 	}
 
+	public transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): IFuture<void> {
+		return this.transferFiles(deviceAppData.appIdentifier, localToDevicePaths);
+	}
+
 	private resolveAfc(): Mobile.IAfcClient {
 		let service = this.$options.app ? this.startHouseArrestService(this.$options.app) : this.device.startService(iOSProxyServices.MobileServices.APPLE_FILE_CONNECTION);
 		let afcClient:Mobile.IAfcClient = this.$injector.resolve(iOSProxyServices.AfcClient, {service: service});

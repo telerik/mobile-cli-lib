@@ -83,6 +83,7 @@ declare module Mobile {
 		putFile(localFilePath: string, deviceFilePath: string): IFuture<void>;
 		deleteFile?(deviceFilePath: string, appIdentifier: string): void;
 		transferFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void>;
+		transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): IFuture<void>;
 		transferFile?(localFilePath: string, deviceFilePath: string): IFuture<void>;
 	}
 

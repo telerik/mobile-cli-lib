@@ -39,7 +39,7 @@ class SyncBatch {
 					});
 				}
 				this.timer = null;
-			}, 500);
+			}, 250);
 		}
 
 		public get syncPending() {
@@ -96,7 +96,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 					{ enumerateDirectories: true }
 				);
 
-				this.syncCore(data, projectFiles).wait();
+				this.syncCore(data, projectFiles, false).wait();
 			}
 
 			if(this.$options.watch) {
@@ -110,7 +110,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 							if(!that.isFileExcluded(filePath, data.excludedProjectDirsAndFiles, data.projectFilesPath)) {
 								let canExecuteFastLiveSync = data.canExecuteFastLiveSync && data.canExecuteFastLiveSync(filePath);
 
-								if(synciOSSimulator) {
+								if(synciOSSimulator && !canExecuteFastLiveSync) {
 									that.batchSimulatorLiveSync(data, filePath);
 								}
 
@@ -148,25 +148,28 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 		return localToDevicePaths;
 	}
 
-	protected transferFiles(device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void> {
+	protected transferFiles(device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string, batchLiveSync: boolean): IFuture<void> {
 		return (() => {
 			this.$logger.info("Transferring project files...");
-			device.fileSystem.transferFiles(deviceAppData.appIdentifier, localToDevicePaths).wait();
+			if(batchLiveSync) {
+				device.fileSystem.transferFiles(deviceAppData.appIdentifier, localToDevicePaths).wait();
+			} else {
+				device.fileSystem.transferDirectory(deviceAppData, localToDevicePaths, projectFilesPath).wait();
+			}
 			this.$logger.info("Successfully transferred all project files.");
 		}).future<void>()();
 	}
 
-	private syncCore(data: ILiveSyncData, projectFiles: string[]): IFuture<void> {
+	private syncCore(data: ILiveSyncData, projectFiles: string[], batchLiveSync: boolean): IFuture<void> {
 		return (() => {
+			let projectFilesPath = data.localProjectRootPath || data.projectFilesPath;
 			let platform = data.platform ? this.$mobileHelper.normalizePlatformName(data.platform) : this.$devicesService.platform;
 			let deviceAppData =  this.$deviceAppDataFactory.create(data.appIdentifier, this.$mobileHelper.normalizePlatformName(data.platform));
-			let localToDevicePaths = this.createLocalToDevicePaths(data.platform, data.appIdentifier, data.localProjectRootPath || data.projectFilesPath, projectFiles);
-
-			console.log(localToDevicePaths[0]);
+			let localToDevicePaths = this.createLocalToDevicePaths(data.platform, data.appIdentifier, projectFilesPath, projectFiles);
 
 			let action = (device: Mobile.IDevice) => {
 				return (() => {
-					if(deviceAppData.isLiveSyncSupported(device).wait()) {
+					if (deviceAppData.isLiveSyncSupported(device).wait()) {
 
 						if(data.beforeLiveSyncAction) {
 							data.beforeLiveSyncAction(device, deviceAppData).wait();
@@ -180,7 +183,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 							}
 						}
 
-						this.transferFiles(device, deviceAppData, localToDevicePaths).wait();
+						this.transferFiles(device, deviceAppData, localToDevicePaths, projectFilesPath, batchLiveSync).wait();
 
 						this.$logger.info("Applying changes...");
 						let platformSpecificLiveSyncService = this.resolvePlatformSpecificLiveSyncService(platform, device, data.platformSpecificLiveSyncServices);
@@ -202,7 +205,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 				this.batch = new SyncBatch(
 					this.$logger, this.$dispatcher, (filesToSync) => {
 						this.preparePlatformForSync(data.platform);
-						this.syncCore(data, filesToSync).wait();
+						this.syncCore(data, filesToSync, true).wait();
 					}
 				);
 			}
