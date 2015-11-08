@@ -18,7 +18,7 @@ export class StaticConfigBase implements Config.IStaticConfig {
 	public HTML_CLI_HELPERS_DIR: string;
 	public version: string = null;
 
-	private _adbFilePath: string = null;
+	protected _adbFilePath: string = null;
 
 	constructor(protected $injector: IInjector) { }
 
