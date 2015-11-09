@@ -15,6 +15,21 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 	private notificationCallbackPtr: NodeBuffer = null;
 	private _coreFoundation: Mobile.ICoreFoundation;
 
+	private _iTunesErrorMessage: string;
+	private validateiTunes(): IFuture<boolean> {
+		return (() => {
+			if (!this._iTunesErrorMessage) {
+				this._iTunesErrorMessage = this.$iTunesValidator.getError().wait();
+
+				if(this._iTunesErrorMessage) {
+					this.$logger.warn(this._iTunesErrorMessage);
+				}
+			}
+
+			return !this._iTunesErrorMessage;
+		}).future<boolean>()();
+	}
+
 	private get $coreFoundation(): Mobile.ICoreFoundation {
 		if(!this._coreFoundation) {
 			this._coreFoundation = this.$injector.resolve("$coreFoundation");
@@ -46,13 +61,7 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 
 	public startLookingForDevices(): IFuture<void> {
 		return (() => {
-			let error = this.$iTunesValidator.getError().wait();
-
-			if(error) {
-				this.$logger.warn(error);
-			} else if(this.$hostInfo.isLinux) {
-				this.$logger.warn("In this version of the %s command-line interface, you cannot use connected iOS devices.", this.$staticConfig.CLIENT_NAME.toLowerCase());
-			} else {
+			if (this.validateiTunes().wait()) {
 				this.subscribeForNotifications();
 				this.checkForDevices().wait();
 			}
@@ -60,11 +69,13 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 	}
 
 	public checkForDevices(): IFuture<void> {
-		return ((): void => {
-			let defaultTimeoutInSeconds = 1;
-			let parsedTimeout =  this.$utils.getParsedTimeout(defaultTimeoutInSeconds);
-			let timeout = parsedTimeout > defaultTimeoutInSeconds ? parsedTimeout/1000 : defaultTimeoutInSeconds;
-			this.startRunLoopWithTimer(timeout);
+		return (() => {
+			if (this.validateiTunes().wait()) {
+				let defaultTimeoutInSeconds = 1;
+				let parsedTimeout =  this.$utils.getParsedTimeout(defaultTimeoutInSeconds);
+				let timeout = parsedTimeout > defaultTimeoutInSeconds ? parsedTimeout/1000 : defaultTimeoutInSeconds;
+				this.startRunLoopWithTimer(timeout);
+			}
 		}).future<void>()();
 	}
 
