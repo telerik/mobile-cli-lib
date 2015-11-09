@@ -5,6 +5,27 @@ import * as uuid from "node-uuid";
 import * as Fiber from "fibers";
 let Table = require("cli-table");
 import Future = require("fibers/future");
+import { platform } from "os";
+
+function bashQuote(s: string): string {
+	if (s[0] === "'" && s[s.length - 1] === "'") {
+		return s;
+	}
+	// replace ' with '"'"' and wrap in ''
+	return "'" + s.replace(/'/g, '\'"\'"\'') + "'";
+}
+
+function cmdQuote(s: string): string {
+	if (s[0] === '"' && s[s.length - 1] === '"') {
+		return s;
+	}
+	// replace " with \" and wrap in ""
+	return '"' + s.replace(/"/g, '\\"') + '"';
+}
+
+export function quoteString(s: string): string {
+	return (platform() === "win32") ? cmdQuote(s) : bashQuote(s);
+}
 
 export function createGUID(useBraces: boolean = true) {
 	let output: string;
