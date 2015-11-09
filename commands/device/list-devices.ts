@@ -35,7 +35,7 @@ export class ListDevicesCommand implements ICommand {
 
 			this.$devicesService.execute(action, undefined, {allowNoDevices: true}).wait();
 
-			if (!this.$options.json) {
+			if (!this.$options.json && table.length) {
 				this.$logger.out(table.toString());
 			}
 		}).future<void>()();
