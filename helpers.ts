@@ -3,6 +3,7 @@
 
 import * as uuid from "node-uuid";
 import * as Fiber from "fibers";
+import * as net from "net";
 let Table = require("cli-table");
 import Future = require("fibers/future");
 import { platform } from "os";
@@ -238,25 +239,39 @@ export function isFuture(candidateFuture: any): boolean {
 export function whenAny<T>(...futures: IFuture<T>[]): IFuture<IFuture<T>> {
 	let resultFuture = new Future<IFuture<T>>();
 	let futuresLeft = futures.length;
-	let futureLocal: IFuture<T>;
 
-	for (let future of futures) {
-		futureLocal = future;
+	_.each(futures, future => {
 		future.resolve((error, result?) => {
 			futuresLeft--;
 
 			if (!resultFuture.isResolved()) {
 				if (typeof error === "undefined") {
-					resultFuture.return(futureLocal);
+					resultFuture.return(future);
 				} else if (futuresLeft === 0) {
 					resultFuture.throw(new Error("None of the futures succeeded."));
 				}
 			}
 		});
-	}
+	});
 
 	return resultFuture;
 }
+
+export function connectEventually(factory: () => net.Socket, handler: (_socket: net.Socket) => void): void {
+	function tryConnect() {
+		let tryConnectAfterTimeout = setTimeout.bind(undefined, tryConnect, 1000);
+
+		let socket = factory();
+		socket.on("connect", () => {
+			socket.removeListener("error", tryConnectAfterTimeout);
+			handler(socket);
+		});
+		socket.on("error", tryConnectAfterTimeout);
+	}
+
+	tryConnect();
+}
+
 //--- begin part copied from AngularJS
 
 //The MIT License

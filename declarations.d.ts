@@ -299,8 +299,8 @@ interface ILiveSyncData {
 	excludedProjectDirsAndFiles: string[];
 	watchGlob: any;
 	platformSpecificLiveSyncServices: IDictionary<any>;
-	notInstalledAppOnDeviceAction: (device: Mobile.IDevice) => IFuture<boolean>;
-	notRunningiOSSimulatorAction: () => IFuture<boolean>;
+	notInstalledAppOnDeviceAction: (device: Mobile.IDevice) => IFuture<void>;
+	notRunningiOSSimulatorAction: () => IFuture<void>;
 	localProjectRootPath?: string;
 	beforeLiveSyncAction?: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData) => IFuture<void>;
 	beforeBatchLiveSyncAction?: (filePath: string) => IFuture<string>;

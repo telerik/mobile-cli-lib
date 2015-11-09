@@ -164,8 +164,8 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 		return (() => {
 			let projectFilesPath = data.localProjectRootPath || data.projectFilesPath;
 			let platform = data.platform ? this.$mobileHelper.normalizePlatformName(data.platform) : this.$devicesService.platform;
-			let deviceAppData =  this.$deviceAppDataFactory.create(data.appIdentifier, this.$mobileHelper.normalizePlatformName(data.platform));
-			let localToDevicePaths = this.createLocalToDevicePaths(data.platform, data.appIdentifier, projectFilesPath, projectFiles);
+			let deviceAppData =  this.$deviceAppDataFactory.create(data.appIdentifier, this.$mobileHelper.normalizePlatformName(platform));
+			let localToDevicePaths = this.createLocalToDevicePaths(platform, data.appIdentifier, projectFilesPath, projectFiles);
 
 			let action = (device: Mobile.IDevice) => {
 				return (() => {
@@ -178,9 +178,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 						let applications = device.applicationManager.getInstalledApplications().wait();
 						if(!_.contains(applications, deviceAppData.appIdentifier)) {
 							this.$logger.warn(`The application with id "${deviceAppData.appIdentifier}" is not installed on the device yet.`);
-							if (!data.notInstalledAppOnDeviceAction(device).wait()) {
-								return;
-							}
+							data.notInstalledAppOnDeviceAction(device).wait();
 						}
 
 						this.transferFiles(device, deviceAppData, localToDevicePaths, projectFilesPath, batchLiveSync).wait();
