@@ -1,7 +1,6 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 import byline = require("byline");
-import * as util from "util";
 
 export class LogcatHelper implements Mobile.ILogcatHelper {
 	constructor(private $childProcess: IChildProcess,
@@ -13,7 +12,8 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 	public start(deviceIdentifier: string): void {
 		if(deviceIdentifier) {
 			let adbPath = this.$staticConfig.getAdbFilePath().wait();
-			this.$childProcess.exec(util.format("%s -s %s logcat -c", adbPath, deviceIdentifier)).wait(); // remove cached logs
+			// remove cached logs:
+			this.$childProcess.spawnFromEvent(adbPath, ["-s", deviceIdentifier,  "logcat",  "-c"], "close",  {}, {throwError: false}).wait();
 			let adbLogcat = this.$childProcess.spawn(adbPath, ["-s", deviceIdentifier, "logcat"]);
 			let lineStream = byline(adbLogcat.stdout);
 

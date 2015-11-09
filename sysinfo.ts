@@ -5,6 +5,7 @@ import * as os from "os";
 import * as child_process from "child_process";
 import * as osenv from "osenv";
 import Future = require("fibers/future");
+import * as path from "path";
 
 export class SysInfo implements ISysInfo {
 	constructor(private $childProcess: IChildProcess,
@@ -75,10 +76,7 @@ export class SysInfo implements ISysInfo {
 			procOutput = this.exec("gradle -v");
 			res.gradleVer = procOutput ? /Gradle (.*)/i.exec(procOutput)[1] : null;
 
-			let output = this.exec("javac -version", { showStderr: true });
-            // for other versions of java javac version output is not on first line
-            // thus can't use ^ for starts with in regex
-			res.javacVersion = output ? /javac (.*)/i.exec(output.stderr)[1]: null;
+			res.javacVersion = this.getJavaCompilerVersion().wait();
 
 			this.sysInfoCache = res;
 		}
@@ -139,6 +137,18 @@ export class SysInfo implements ISysInfo {
 
 	private unixVer(): string {
 		return this.$childProcess.exec("uname -a").wait();
+	}
+
+	private getJavaCompilerVersion(): IFuture<string> {
+		return ((): string => {
+			let javaCompileExecutableName = "javac";
+			let javaHome = process.env.JAVA_HOME;
+			let pathToJavaCompilerExecutable = javaHome ? path.join(javaHome, "bin", javaCompileExecutableName) : javaCompileExecutableName;
+			let output = this.exec(`"${pathToJavaCompilerExecutable}" -version`, { showStderr: true });
+			// for other versions of java javac version output is not on first line
+			// thus can't use ^ for starts with in regex
+			return output ? /javac (.*)/i.exec(output.stderr)[1]: null;
+		}).future<string>()();
 	}
 }
 $injector.register("sysInfo", SysInfo);
