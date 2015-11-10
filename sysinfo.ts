@@ -11,12 +11,12 @@ export class SysInfo implements ISysInfo {
 	constructor(private $childProcess: IChildProcess,
 				private $iTunesValidator: Mobile.IiTunesValidator,
 				private $logger: ILogger,
-		private $hostInfo: IHostInfo) { }
+				private $hostInfo: IHostInfo) { }
 
 	private static monoVerRegExp = /version (\d+[.]\d+[.]\d+) /gm;
 	private sysInfoCache: ISysInfoData = undefined;
 
-	getSysInfo(): ISysInfoData {
+	getSysInfo(androidToolsInfo?: {pathToAdb: string, pathToAndroid: string}): ISysInfoData {
 		if (!this.sysInfoCache) {
 			let res: ISysInfoData = Object.create(null);
 			let procOutput: string;
@@ -55,11 +55,17 @@ export class SysInfo implements ISysInfo {
 			res.itunesInstalled = this.$iTunesValidator.getError().wait() === null;
 
 			res.cocoapodVer = this.$hostInfo.isDarwin ? this.exec("pod --version") : null;
+			let pathToAdb = androidToolsInfo ? androidToolsInfo.pathToAdb : "adb";
+			let pathToAndroid = androidToolsInfo ? androidToolsInfo.pathToAndroid : "android";
 
-			procOutput = this.exec("adb version");
+			if(!androidToolsInfo) {
+				this.$logger.trace("'adb' and 'android' will be checked from PATH environment variable.");
+			}
+
+			procOutput = this.exec(`"${pathToAdb}" version`);
 			res.adbVer = procOutput ? procOutput.split(os.EOL)[0] : null;
 
-			procOutput = this.execAndroidH();
+			procOutput = this.execAndroidH(pathToAndroid);
 			res.androidInstalled = procOutput ? _.contains(procOutput, "android") : false;
 
 			procOutput = this.exec("mono --version");
@@ -93,7 +99,7 @@ export class SysInfo implements ISysInfo {
 	}
 
 	// `android -h` returns exit code 1 on successful invocation (Mac OS X for now, possibly Linux). Therefore, we cannot use $childProcess
-	private execAndroidH(): string {
+	private execAndroidH(pathToAndroid: string): string {
 		let future = new Future<any>();
 		let callback = (error: Error, stdout: NodeBuffer, stderr: NodeBuffer) => {
 			this.$logger.trace("Exec android -h \n stdout: %s \n stderr: %s", stdout.toString(), stderr.toString());
@@ -106,7 +112,7 @@ export class SysInfo implements ISysInfo {
 			}
 		};
 
-		child_process.exec("android -h", callback);
+		child_process.exec(`"${pathToAndroid}" -h`, callback);
 
 		let result = future.wait();
 		return result;
