@@ -350,9 +350,9 @@ interface ISysInfo {
 	/**
 	 * Returns information for the current system.
 	 * @param {any} androidToolsInfo Defines paths to adb and android executables.
-	 * @return {ISysInfoData} Object containing information for current system.
+	 * @return {IFuture<ISysInfoData>} Object containing information for current system.
 	 */
-	getSysInfo(androidToolsInfo?: {pathToAdb: string, pathToAndroid: string}): ISysInfoData;
+	getSysInfo(androidToolsInfo?: {pathToAdb: string, pathToAndroid: string}): IFuture<ISysInfoData>;
 }
 
 interface IHostInfo {

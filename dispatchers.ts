@@ -19,7 +19,7 @@ export class CommandDispatcher implements ICommandDispatcher {
 			}
 
 			if (this.$logger.getLevel() === "TRACE") {
-				let sysInfo = this.$sysInfo.getSysInfo();
+				let sysInfo = this.$sysInfo.getSysInfo().wait();
 				this.$logger.trace("System information:");
 				this.$logger.trace(sysInfo);
 			}
