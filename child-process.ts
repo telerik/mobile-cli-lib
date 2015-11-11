@@ -83,7 +83,9 @@ export class ChildProcess implements IChildProcess {
 			};
 
 			if(spawnFromEventOptions && spawnFromEventOptions.throwError === false) {
-				future.return(result);
+				if(!future.isResolved()) {
+					future.return(result);
+				}
 			} else {
 				if (exitCode === 0) {
 					future.return(result);
@@ -102,7 +104,16 @@ export class ChildProcess implements IChildProcess {
 
 		childProcess.once("error", (err: Error) => {
 			if(!future.isResolved()) {
-				future.throw(err);
+				if(spawnFromEventOptions && spawnFromEventOptions.throwError === false) {
+					let result = {
+						stdout: capturedOut,
+						stderr: err.message,
+						exitCode: (<any>err).code
+					};
+					future.return(result);
+				} else {
+					future.throw(err);
+				}
 			}
 		});
 

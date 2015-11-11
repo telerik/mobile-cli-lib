@@ -9,7 +9,7 @@ require("colors");
 $injector.require("errors", "./errors");
 $injector.requirePublic("fs", "./file-system");
 $injector.require("logger", "./logger");
-$injector.require("sysInfo", "./sysinfo");
+$injector.require("sysInfoBase", "./sys-info-base");
 $injector.require("hostInfo", "./host-info");
 
 $injector.require("dispatcher", "./dispatchers");
