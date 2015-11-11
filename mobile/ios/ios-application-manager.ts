@@ -86,7 +86,8 @@ export class IOSApplicationManager implements Mobile.IDeviceApplicationManager {
 	public restartApplication(applicationId: string): IFuture<void> {
 		return (() => {
 			// This must be executed in separate process because ddb sometimes fails and the cli crashes.
-			this.$childProcess.exec(`${process.argv[0]} ${process.argv[1]} device stop ${applicationId} ${this.$devicePlatformsConstants.iOS}`).wait();
+			this.$childProcess.spawnFromEvent(`${process.argv[0]}`,
+				[`${process.argv[1]}`, "device", "stop", `${applicationId}`,  `${this.$devicePlatformsConstants.iOS}`], "close", { stdio: 'inherit' }).wait();
 			this.runApplicationCore(applicationId).wait();
 		}).future<void>()();
 	}

@@ -306,7 +306,7 @@ interface ILiveSyncData {
 	beforeBatchLiveSyncAction?: (filePath: string) => IFuture<string>;
 	iOSSimulatorRelativeToProjectBasePathAction?: (projectFile: string) => string;
 	canExecuteFastLiveSync?: (filePath: string) => boolean;
-	fastLiveSync?: (filePath: string) => IFuture<void>;
+	fastLiveSync?: (filePath: string) => void;
 }
 
 interface IPlatformSpecificUsbLiveSyncService {

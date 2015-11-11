@@ -1130,6 +1130,7 @@ export class GDBServer implements Mobile.IGDBServer {
 					this.send("vCont;c");
 				}
 			}
+			this.socket.destroy();
 		}).future<void>()();
 	}
 
@@ -1140,6 +1141,7 @@ export class GDBServer implements Mobile.IGDBServer {
 			let bundleExecutableNameHex = this.toHex(bundleExecutableName);
 			this.send(`vAttachName;${bundleExecutableNameHex}`);
 			this.send("k");
+			this.socket.destroy();
 		}).future<void>()();
 	}
 
