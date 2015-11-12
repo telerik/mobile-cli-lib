@@ -1199,25 +1199,13 @@ export class GDBServer implements Mobile.IGDBServer {
 		let retryCount = 3;
 		let isDataReceived = false;
 
-		let dataCallback = (data: any) => {
-			let dataAsString = data.toString();
-			if (dataAsString.indexOf("thread") > -1) {
-				isDataReceived = true;
-				this.socket.removeListener("data", dataCallback);
-				future.return(data.toString());
-			}
-		};
-
-		this.socket.on("data", dataCallback);
-		this.sendCore("\x03");
-
 		let timer = setInterval(() => {
 			this.sendCore("\x03");
 			retryCount--;
 
-			let secondTimer = setInterval(() => {
+			let secondTimer = setTimeout(() => {
 				if (isDataReceived || !retryCount) {
-					clearInterval(secondTimer);
+					clearTimeout(secondTimer);
 					clearInterval(timer);
 				}
 
@@ -1226,6 +1214,19 @@ export class GDBServer implements Mobile.IGDBServer {
 				}
 			}, 1000);
 		}, 1000);
+
+		let dataCallback = (data: any) => {
+			let dataAsString = data.toString();
+			if (dataAsString.indexOf("thread") > -1) {
+				isDataReceived = true;
+				this.socket.removeListener("data", dataCallback);
+				clearInterval(timer);
+				future.return(data.toString());
+			}
+		};
+
+		this.socket.on("data", dataCallback);
+		this.sendCore("\x03");
 
 		return future;
 	}

@@ -39,7 +39,7 @@ class SyncBatch {
 					});
 				}
 				this.timer = null;
-			}, 250);
+			}, 250); // https://github.com/Microsoft/TypeScript/blob/master/src/compiler/tsc.ts#L487-L489
 		}
 
 		public get syncPending() {
@@ -86,11 +86,11 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 				this.$iOSEmulatorServices.sync(data.appIdentifier, data.projectFilesPath, data.notRunningiOSSimulatorAction).wait();
 			}
 
-			if(!this._initialized && (!this.$options.emulator || data.platform.toLowerCase() === "android")) {
-				this.initialize(data.platform).wait();
-			}
+			if (!this.$options.emulator || data.platform.toLowerCase() === "android") {
+				if (!this._initialized) {
+					this.initialize(data.platform).wait();
+				}
 
-			if(!this.$options.emulator || data.platform.toLowerCase() === "android") {
 				let projectFiles = this.$fs.enumerateFilesInDirectorySync(data.projectFilesPath,
 					(filePath, stat) => !this.isFileExcluded(path.relative(data.projectFilesPath, filePath), data.excludedProjectDirsAndFiles, data.projectFilesPath),
 					{ enumerateDirectories: true }
@@ -106,15 +106,15 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 
 				gaze("**/*", { cwd: data.watchGlob }, function(err: any, watcher: any) {
 					this.on('all', (event: string, filePath: string) => {
-						if(event === "added" || event === "changed") {
-							if(!that.isFileExcluded(filePath, data.excludedProjectDirsAndFiles, data.projectFilesPath)) {
+						if (event === "added" || event === "changed") {
+							if (!that.isFileExcluded(filePath, data.excludedProjectDirsAndFiles, data.projectFilesPath)) {
 								let canExecuteFastLiveSync = data.canExecuteFastLiveSync && data.canExecuteFastLiveSync(filePath);
 
-								if(synciOSSimulator && !canExecuteFastLiveSync) {
+								if (synciOSSimulator && !canExecuteFastLiveSync) {
 									that.batchSimulatorLiveSync(data, filePath);
 								}
 
-								if( (!that.$options.emulator || data.platform.toLowerCase() === "android") && !canExecuteFastLiveSync) {
+								if ((!that.$options.emulator || data.platform.toLowerCase() === "android") && !canExecuteFastLiveSync) {
 									that.batchLiveSync(data, filePath);
 								}
 

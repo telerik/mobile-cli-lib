@@ -5,6 +5,11 @@ import Future = require("fibers/future");
 import * as path from "path";
 import * as shell from "shelljs";
 
+interface IiOSSim {
+	getRunningSimulator(appIdentifier: string): { id: string };
+	getApplicationPath(runningSimulatorId: string, appIdentifier: string): string;
+}
+
 class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 	constructor(private $logger: ILogger,
 		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
@@ -87,6 +92,15 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 				return false;
 			}
 		}).future<boolean>()();
+	}
+
+	private _iosSim: IiOSSim = null;
+	private get iosSim(): IiOSSim {
+		if (!this._iosSim) {
+			this._iosSim = require("ios-sim-portable");
+		}
+
+		return this._iosSim;
 	}
 
 	private startEmulatorCore(app: string, emulatorOptions?: Mobile.IEmulatorOptions): any {
@@ -174,18 +188,14 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 	}
 
 	private getApplicationPath(appIdentifier: string): string {
-		let iosSim = require("ios-sim-portable");
 		let runningSimulatorId = this.getRunningSimulatorId(appIdentifier);
-		let applicationPath = iosSim.getApplicationPath(runningSimulatorId, appIdentifier);
+		let applicationPath = this.iosSim.getApplicationPath(runningSimulatorId, appIdentifier);
 		return applicationPath;
 	}
 
 	private getRunningSimulatorId(appIdentifier: string): string {
-		let iosSim = require("ios-sim-portable");
-
-		let runningSimulator = iosSim.getRunningSimulator(appIdentifier);
+		let runningSimulator = this.iosSim.getRunningSimulator(appIdentifier);
 		let runningSimulatorId = runningSimulator.id;
-
 		return runningSimulatorId;
 	}
 }
