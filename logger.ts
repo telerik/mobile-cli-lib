@@ -15,6 +15,7 @@ export class Logger implements ILogger {
 	private encodeBody: boolean = false;
 	private passwordRegex = /[Pp]assword=(.*?)(['&,]|$)|\"[Pp]assword\":\"(.*?)\"/;
 	private requestBodyRegex = /^\"(.*?)\"$/;
+	private static LABEL = "[WARNING]:";
 
 	constructor($config: Config.IConfig,
 		private $options: ICommonOptions) {
@@ -64,6 +65,11 @@ export class Logger implements ILogger {
 		let colorizedMessage = message.yellow;
 
 		this.log4jsLogger.warn.apply(this.log4jsLogger, [colorizedMessage]);
+	}
+
+	warnWithLabel(...args: string[]): void {
+		let message = util.format(...args);
+		this.warn(`${Logger.LABEL} ${message}`);
 	}
 
 	info(...args: string[]): void {

@@ -4,6 +4,7 @@ interface ILogger {
 	fatal(formatStr?: any, ...args: string[]): void;
 	error(formatStr?: any, ...args: string[]): void;
 	warn(formatStr?: any, ...args: string[]): void;
+	warnWithLabel(formatStr?: any, ...args: string[]): void;
 	info(formatStr?: any, ...args: string[]): void;
 	debug(formatStr?: any, ...args: string[]): void;
 	trace(formatStr?: any, ...args: string[]): void;
