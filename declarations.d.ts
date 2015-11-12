@@ -289,14 +289,30 @@ interface IHtmlHelpService {
 interface IUsbLiveSyncServiceBase {
 	initialize(platform: string): IFuture<string>;
 	isInitialized: boolean;
-	sync(platform: string, appIdentifier: string, projectFilesPath: string, excludedProjectDirsAndFiles: string[], watchGlob: any,
-		platformSpecificLiveSyncServices: IDictionary<any>,
-		notInstalledAppOnDeviceAction: (device: Mobile.IDevice) => IFuture<boolean>,
-		notRunningiOSSimulatorAction: () => IFuture<boolean>,
-		localProjectRootPath?: string,
-		beforeLiveSyncAction?: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData) => IFuture<void>,
-		beforeBatchLiveSyncAction?: (filePath: string) => IFuture<string>,
-		iOSSimulatorRelativeToProjectBasePathAction?: (projectFile: string) => string): IFuture<void>;
+	sync(data: ILiveSyncData): IFuture<void>;
+}
+
+interface ILiveSyncData {
+	platform: string;
+	appIdentifier: string;
+	projectFilesPath: string;
+	excludedProjectDirsAndFiles: string[];
+	watchGlob: any;
+	platformSpecificLiveSyncServices: IDictionary<any>;
+	notInstalledAppOnDeviceAction: (device: Mobile.IDevice) => IFuture<void>;
+	notRunningiOSSimulatorAction: () => IFuture<void>;
+	localProjectRootPath?: string;
+	beforeLiveSyncAction?: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData) => IFuture<void>;
+	beforeBatchLiveSyncAction?: (filePath: string) => IFuture<string>;
+	iOSSimulatorRelativeToProjectBasePathAction?: (projectFile: string) => string;
+	canExecuteFastLiveSync?: (filePath: string) => boolean;
+	fastLiveSync?: (filePath: string) => void;
+}
+
+interface IPlatformSpecificUsbLiveSyncService {
+	restartApplication(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths?: Mobile.ILocalToDevicePathData[]): IFuture<void>;
+	beforeLiveSyncAction?(deviceAppData: Mobile.IDeviceAppData): IFuture<void>;
+	sendPageReloadMessageToDevice?(deviceAppData: Mobile.IDeviceAppData): IFuture<void>;
 }
 
 interface ISysInfoData {

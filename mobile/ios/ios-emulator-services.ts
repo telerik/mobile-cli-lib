@@ -5,6 +5,11 @@ import Future = require("fibers/future");
 import * as path from "path";
 import * as shell from "shelljs";
 
+interface IiOSSim {
+	getRunningSimulator(appIdentifier: string): { id: string };
+	getApplicationPath(runningSimulatorId: string, appIdentifier: string): string;
+}
+
 class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 	constructor(private $logger: ILogger,
 		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
@@ -57,18 +62,25 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		return this.$childProcess.exec(`${nodeCommandName} ${iosSimPath} ${opts.join(' ')}`);
 	}
 
-	public sync(appIdentifier: string, projectFilesPath: string, notRunningSimulatorAction: () => IFuture<boolean>): IFuture<void> {
-		let syncAction = (applicationPath: string) => shell.cp("-Rf", projectFilesPath, applicationPath);
+	public sync(appIdentifier: string, projectFilesPath: string, notRunningSimulatorAction: () => IFuture<void>): IFuture<void> {
+		let syncAction = (applicationPath: string) => (() => shell.cp("-Rf", projectFilesPath, applicationPath)).future<void>()();
 		return this.syncCore(appIdentifier, notRunningSimulatorAction, syncAction);
 	}
 
-	public syncFiles(appIdentifier: string, projectFilesPath: string,  projectFiles: string[], notRunningSimulatorAction: () => IFuture<boolean>, relativeToProjectBasePathAction?: (_projectFile: string) => string): IFuture<void> {
-		let syncAction = (applicationPath: string) => _.each(projectFiles, projectFile => {
-			let destinationPath = path.join(applicationPath, relativeToProjectBasePathAction(projectFile));
-			this.$logger.trace(`Transfering ${projectFile} to ${destinationPath}`);
-			shell.cp("-Rf", projectFile, destinationPath);
-		});
+	public syncFiles(appIdentifier: string, projectFilesPath: string,  projectFiles: string[], notRunningSimulatorAction: () => IFuture<void>, relativeToProjectBasePathAction?: (_projectFile: string) => string): IFuture<void> {
+		let syncAction = (applicationPath: string) => this.transferFiles(appIdentifier, projectFiles, relativeToProjectBasePathAction, applicationPath);
 		return this.syncCore(appIdentifier, notRunningSimulatorAction, syncAction);
+	}
+
+	public transferFiles(appIdentifier: string, projectFiles: string[], relativeToProjectBasePathAction?: (_projectFile: string) => string, applicationPath?: string): IFuture<void> {
+		return (() => {
+			applicationPath = applicationPath || this.getApplicationPath(appIdentifier);
+			_.each(projectFiles, projectFile => {
+				let destinationPath = path.join(applicationPath, relativeToProjectBasePathAction(projectFile));
+				this.$logger.trace(`Transfering ${projectFile} to ${destinationPath}`);
+				shell.cp("-Rf", projectFile, destinationPath);
+			});
+		}).future<void>()();
 	}
 
 	public isSimulatorRunning(): IFuture<boolean> {
@@ -80,6 +92,15 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 				return false;
 			}
 		}).future<boolean>()();
+	}
+
+	private _iosSim: IiOSSim = null;
+	private get iosSim(): IiOSSim {
+		if (!this._iosSim) {
+			this._iosSim = require("ios-sim-portable");
+		}
+
+		return this._iosSim;
 	}
 
 	private startEmulatorCore(app: string, emulatorOptions?: Mobile.IEmulatorOptions): any {
@@ -139,21 +160,14 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		return this.$childProcess.spawn(nodeCommandName, opts, stdioOpts);
 	}
 
-	private syncCore(appIdentifier: string, notRunningSimulatorAction: () => IFuture<boolean>, syncAction: (_applicationPath: string) => void): IFuture<void> {
+	private syncCore(appIdentifier: string, notRunningSimulatorAction: () => IFuture<void>, syncAction: (_applicationPath: string) => IFuture<void>): IFuture<void> {
 		return (() => {
-			let iosSim = require("ios-sim-portable");
-
 			if(!this.isSimulatorRunning().wait()) {
-				if (!notRunningSimulatorAction().wait()) {
-					return;
-				}
+				notRunningSimulatorAction().wait();
 			}
 
-			let runningSimulator = iosSim.getRunningSimulator(appIdentifier);
-			let runningSimulatorId = runningSimulator.id;
-
-			let applicationPath = iosSim.getApplicationPath(runningSimulatorId, appIdentifier);
-			syncAction(applicationPath);
+			let applicationPath = this.getApplicationPath(appIdentifier);
+			syncAction(applicationPath).wait();
 
 			let applicationName = path.basename(applicationPath);
 
@@ -163,6 +177,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 				this.$logger.trace("Unable to kill simulator: " + e);
 			}
 
+			let runningSimulatorId = this.getRunningSimulatorId(appIdentifier);
 			setTimeout(() => {
 				// Killall doesn't always finish immediately, and the subsequent
 				// start fails since the app is already running.
@@ -170,6 +185,18 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 				this.$childProcess.exec(`xcrun simctl launch ${runningSimulatorId} ${appIdentifier}`);
 			}, 500);
 		}).future<void>()();
+	}
+
+	private getApplicationPath(appIdentifier: string): string {
+		let runningSimulatorId = this.getRunningSimulatorId(appIdentifier);
+		let applicationPath = this.iosSim.getApplicationPath(runningSimulatorId, appIdentifier);
+		return applicationPath;
+	}
+
+	private getRunningSimulatorId(appIdentifier: string): string {
+		let runningSimulator = this.iosSim.getRunningSimulator(appIdentifier);
+		let runningSimulatorId = runningSimulator.id;
+		return runningSimulatorId;
 	}
 }
 $injector.register("iOSEmulatorServices", IosEmulatorServices);

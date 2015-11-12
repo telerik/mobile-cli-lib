@@ -83,6 +83,7 @@ declare module Mobile {
 		putFile(localFilePath: string, deviceFilePath: string): IFuture<void>;
 		deleteFile?(deviceFilePath: string, appIdentifier: string): void;
 		transferFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void>;
+		transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): IFuture<void>;
 		transferFile?(localFilePath: string, deviceFilePath: string): IFuture<void>;
 	}
 
@@ -261,7 +262,8 @@ declare module Mobile {
 
 	interface IGDBServer {
 		run(argv: string[]): IFuture<void>;
-		kill(bundleExecutableName: string): IFuture<void>;
+		kill(argv: string[]): IFuture<void>;
+		destory(): void;
 	}
 
 	interface INotificationProxyClient {
@@ -298,9 +300,10 @@ declare module Mobile {
 
 	interface IiOSSimulatorService extends IEmulatorPlatformServices {
 		postDarwinNotification(notification: string): IFuture<void>;
-		sync(appIdentifier: string, projectFilesPath: string, notRunningSimulatorAction: () => IFuture<boolean>): IFuture<void>;
-		syncFiles(appIdentifier: string, projectFilesPath: string,  projectFiles: string[], notRunningSimulatorAction: () => IFuture<boolean>, relativeToProjectBasePathAction?: (projectFile: string) => string): IFuture<void>;
+		sync(appIdentifier: string, projectFilesPath: string, notRunningSimulatorAction: () => IFuture<void>): IFuture<void>;
+		syncFiles(appIdentifier: string, projectFilesPath: string,  projectFiles: string[], notRunningSimulatorAction: () => IFuture<void>, relativeToProjectBasePathAction?: (projectFile: string) => string): IFuture<void>;
 		isSimulatorRunning(): IFuture<boolean>;
+		transferFiles(appIdentifier: string, projectFiles: string[], relativeToProjectBasePathAction?: (_projectFile: string) => string, applicationPath?: string): IFuture<void>
 	}
 
 	interface IEmulatorSettingsService {

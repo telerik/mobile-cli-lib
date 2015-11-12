@@ -35,7 +35,7 @@ export class AfcFile implements Mobile.IAfcFile {
 		let afcFileRef = ref.alloc(ref.types.uint64);
 		this.open = false;
 
-		let result = this.$mobileDevice.afcFileRefOpen(afcConnection, path, modeValue, afcFileRef);
+		let result = this.$mobileDevice.afcFileRefOpen(this.afcConnection, path, modeValue, afcFileRef);
 		if (result !== 0) {
 			this.$errors.fail("Unable to open file reference: '%s' with path '%s", result, path);
 		}
@@ -168,7 +168,7 @@ export class AfcClient implements Mobile.IAfcClient {
 			this.deleteFile(devicePath);
 
 			let target = this.open(devicePath, "w");
-			let localFilePathSize = this.$fs.getFileSize(localFilePath).wait();
+ 			let localFilePathSize = this.$fs.getFileSize(localFilePath).wait();
 
 			reader.on("data", (data: NodeBuffer) => {
 				target.write(data, data.length);

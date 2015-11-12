@@ -9,6 +9,7 @@ import * as iOSProxyServices from "./ios-proxy-services";
 
 export class IOSApplicationManager implements Mobile.IDeviceApplicationManager {
 	private uninstallApplicationCallbackPtr: NodeBuffer = null;
+	private _gdbServer: Mobile.IGDBServer = null;
 
 	constructor(private device: Mobile.IiOSDevice,
 		private devicePointer: NodeBuffer,
@@ -80,13 +81,12 @@ export class IOSApplicationManager implements Mobile.IDeviceApplicationManager {
 	public stopApplication(applicationId: string): IFuture<void> {
 		let application = this.getApplicationById(applicationId);
 		let gdbServer = this.createGdbServer();
-		return gdbServer.kill(application.CFBundleExecutable);
+		return gdbServer.kill([`${application.Path}`]);
 	}
 
 	public restartApplication(applicationId: string): IFuture<void> {
 		return (() => {
-			// This must be executed in separate process because ddb sometimes fails and the cli crashes.
-			this.$childProcess.exec(`${process.argv[0]} ${process.argv[1]} device stop ${applicationId} ${this.$devicePlatformsConstants.iOS}`).wait();
+			this.stopApplication(applicationId).wait();
 			this.runApplicationCore(applicationId).wait();
 		}).future<void>()();
 	}
@@ -118,17 +118,23 @@ export class IOSApplicationManager implements Mobile.IDeviceApplicationManager {
 	}
 
 	private runApplicationCore(applicationId: any) {
+		if (this._gdbServer) {
+			this._gdbServer.destory();
+			this._gdbServer = null;
+		}
+
 		let application = this.getApplicationById(applicationId);
 		let gdbServer = this.createGdbServer();
-		return gdbServer.run([`${application.Path}/${application.CFBundleExecutable}`]);
+		return gdbServer.run([`${application.Path}`]);
 	}
 
 	private createGdbServer(): Mobile.IGDBServer {
-		let service = this.device.startService(iOSProxyServices.MobileServices.DEBUG_SERVER);
-		let socket = this.$hostInfo.isWindows ? service :  new net.Socket({ fd: service });
-		let gdbServer = this.$injector.resolve(GDBServer, { socket: socket });
-
-		return gdbServer;
+		if(!this._gdbServer) {
+			let service = this.device.startService(iOSProxyServices.MobileServices.DEBUG_SERVER);
+			let socket = this.$hostInfo.isWindows ? service :  new net.Socket({ fd: service });
+			this._gdbServer = this.$injector.resolve(GDBServer, { socket: socket });
+		}
+		return this._gdbServer;
 	}
 
 	private getApplicationById(applicationId: string): Mobile.IDeviceApplication {
