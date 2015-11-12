@@ -35,7 +35,19 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		this.applicationManager = this.$injector.resolve(applicationManagerPath.AndroidApplicationManager, { adb: this.adb, identifier: this.identifier });
 		this.fileSystem = this.$injector.resolve(fileSystemPath.AndroidDeviceFileSystem, { adb: this.adb, identifier: this.identifier });
 
-		let details: IAndroidDeviceDetails = this.getDeviceDetails().wait();
+		let details: IAndroidDeviceDetails;
+		try {
+			details = this.getDeviceDetails(["getprop"]).wait();
+		} catch(err) {
+			this.$logger.trace(`Error while calling getprop: ${err.message}`);
+		}
+
+		if(!details || !details.name) {
+			// In older CLI versions we are calling cat /system/build.prop to get details.
+			// Keep this logic for compatibility and possibly for devices for which getprop is not working
+			details = this.getDeviceDetails(["cat", "/system/build.prop"]).wait();
+		}
+
 		this.deviceInfo = {
 			identifier: this.identifier,
 			displayName: details.name,
@@ -58,18 +70,22 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		this.$logcatHelper.start(this.identifier);
 	}
 
-	private getDeviceDetails(): IFuture<IAndroidDeviceDetails> {
+	private getDeviceDetails(shellCommandArgs: string[]): IFuture<IAndroidDeviceDetails> {
 		return (() => {
-			let details = this.adb.executeShellCommand(["cat", "/system/build.prop"]).wait();
+			let details = this.adb.executeShellCommand(shellCommandArgs).wait();
+
 			let parsedDetails: any = {};
 			details.split(/\r?\n|\r/).forEach((value: any) => {
-				//sample line is "ro.build.version.release=4.4"
-				let match = /(?:ro\.build\.version|ro\.product)\.(.+)=(.+)/.exec(value);
+				// sample line is "ro.build.version.release=4.4" in /system/build.prop
+				// sample line from getprop is:  [ro.build.version.release]: [6.0]
+				// NOTE: some props do not have value: [ro.build.version.base_os]: []
+				let match = /(?:\[?ro\.build\.version|ro\.product)\.(.+?)]?(?:\:|=)(?:\s*?\[)?(.*?)]?$/.exec(value);
 				if (match) {
 					parsedDetails[match[1]] = match[2];
 				}
 			});
 
+			this.$logger.trace(parsedDetails);
 			return parsedDetails;
 		}).future<IAndroidDeviceDetails>()();
 	}
