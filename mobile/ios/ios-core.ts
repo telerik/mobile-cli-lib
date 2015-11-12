@@ -1085,11 +1085,15 @@ class GDBSignalWatcher extends stream.Writable {
 }
 
 export class GDBServer implements Mobile.IGDBServer {
+	private okResponse = "$OK#";
+	private isInitilized = false;
+
 	constructor(private socket: any, // socket is fd on Windows and net.Socket on mac
 		private $injector: IInjector,
 		private $hostInfo: IHostInfo,
 		private $options: ICommonOptions,
-		private $logger: ILogger) {
+		private $logger: ILogger,
+		private $errors: IErrors) {
 		if(this.$hostInfo.isWindows) {
 			let winSocket = this.$injector.resolve(WinSocket, {service: this.socket, format: 0});
 			this.socket = {
@@ -1098,60 +1102,135 @@ export class GDBServer implements Mobile.IGDBServer {
 				}
 			};
 		}
+
+		this.socket.on("close", (hadError: boolean) => this.$logger.trace("GDB socket get closed. HadError", hadError.toString()));
 	}
 
-	public init(): IFuture<void> {
+	public init(argv: string[]): IFuture<void> {
 		return (() => {
-			this.send("QStartNoAckMode");
-			this.socket.write("+");
-			this.send("QEnvironmentHexEncoded:");
-			this.send("QSetDisableASLR:1");
+			if (!this.isInitilized) {
+				this.awaitResponse("QStartNoAckMode", "+").wait();
+				this.sendCore("+");
+				this.awaitResponse("QEnvironmentHexEncoded:").wait();
+				this.awaitResponse("QSetDisableASLR:1").wait();
+				let encodedArguments = _.map(argv, (arg, index) => util.format("%d,%d,%s", arg.length * 2, index, this.toHex(arg))).join(",");
+				this.awaitResponse("A" + encodedArguments).wait();
+
+				this.isInitilized = true;
+			}
 		}).future<void>()();
 	}
 
 	public run(argv: string[]): IFuture<void> {
 		return (() => {
-			this.init().wait();
+			this.init(argv).wait();
 
-			let encodedArguments = _.map(argv, (arg, index) => util.format("%d,%d,%s", arg.length * 2, index, this.toHex(arg))).join(",");
-			this.send("A" + encodedArguments);
-
-			this.send("qLaunchSuccess");
+			this.awaitResponse("qLaunchSuccess").wait();
 
 			if(this.$hostInfo.isWindows) {
 				this.send("vCont;c");
 			} else {
 				if (this.$options.justlaunch) {
 					// Disconnecting the debugger closes the socket and allows the process to quit
-					this.send("D");
+					this.sendCore(this.encodeData("vCont;c"));
 				} else {
 					this.socket.pipe(new GDBStandardOutputAdapter()).pipe(process.stdout);
 					this.socket.pipe(new GDBSignalWatcher());
-					this.send("vCont;c");
+					this.sendCore(this.encodeData("vCont;c"));
 				}
 			}
-			this.socket.destroy();
 		}).future<void>()();
 	}
 
-	public kill(bundleExecutableName?: string): IFuture<void> {
+	public kill(argv: string[]): IFuture<void> {
 		return (() => {
-			this.init().wait();
+			this.init(argv).wait();
 
-			let bundleExecutableNameHex = this.toHex(bundleExecutableName);
-			this.send(`vAttachName;${bundleExecutableNameHex}`);
-			this.send("k");
-			this.socket.destroy();
+			this.awaitResponse("\x03", "thread", () => this.sendx03Message()).wait();
+			this.send("k").wait();
 		}).future<void>()();
 	}
 
-	private send(packet: string): void {
-		let data = this.createData(packet);
-		this.$logger.trace(`GDB: sending ${data}`);
+	public destory(): void {
+		this.socket.destroy();
+	}
+
+	private awaitResponse(packet: string, expectedResponse?: string, getResponseAction?: () => IFuture<string>): IFuture<void> {
+		return (() => {
+			expectedResponse = expectedResponse || this.okResponse;
+			let actualResponse = getResponseAction ? getResponseAction.apply(this, []).wait() : this.send(packet).wait();
+			if (actualResponse.indexOf(expectedResponse) === -1 || _.startsWith(actualResponse, "$E")) {
+				this.$logger.trace(`GDB: actual response: ${actualResponse}, expected response: ${expectedResponse}`);
+				this.$errors.failWithoutHelp(`Unable to send ${packet}.`);
+			}
+		}).future<void>()();
+	}
+
+	private send(packet: string): IFuture<string> {
+		let future = new Future<string>();
+
+		let dataCallback = (data: any) => {
+			this.$logger.trace(`GDB: read packet: ${data}`);
+			this.socket.removeListener("data", dataCallback);
+			if (!future.isResolved()) {
+				future.return(data.toString());
+			}
+		};
+
+		this.socket.on("data", dataCallback);
+		this.socket.on("error", (error: string) => {
+			if (!future.isResolved()) {
+				future.throw(new Error(error));
+			}
+		});
+
+		this.sendCore(this.encodeData(packet));
+
+		return future;
+	}
+
+	private sendCore(data: string): void {
+		this.$logger.trace(`GDB: send packet ${data}`);
 		this.socket.write(data);
 	}
 
-	private createData(packet: string): string {
+	private sendx03Message(): IFuture<string> {
+		let future = new Future<string>();
+		let retryCount = 3;
+		let isDataReceived = false;
+
+		let dataCallback = (data: any) => {
+			let dataAsString = data.toString();
+			if (dataAsString.indexOf("thread") > -1) {
+				isDataReceived = true;
+				this.socket.removeListener("data", dataCallback);
+				future.return(data.toString());
+			}
+		};
+
+		this.socket.on("data", dataCallback);
+		this.sendCore("\x03");
+
+		let timer = setInterval(() => {
+			this.sendCore("\x03");
+			retryCount--;
+
+			let secondTimer = setInterval(() => {
+				if (isDataReceived || !retryCount) {
+					clearInterval(secondTimer);
+					clearInterval(timer);
+				}
+
+				if (!retryCount) {
+					future.throw(new Error("Unable to kill the application."));
+				}
+			}, 1000);
+		}, 1000);
+
+		return future;
+	}
+
+	private encodeData(packet: string): string {
 		let sum = 0;
 		for(let i = 0; i < packet.length; i++) {
 			sum += getCharacterCodePoint(packet[i]);

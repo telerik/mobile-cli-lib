@@ -262,7 +262,8 @@ declare module Mobile {
 
 	interface IGDBServer {
 		run(argv: string[]): IFuture<void>;
-		kill(bundleExecutableName: string): IFuture<void>;
+		kill(argv: string[]): IFuture<void>;
+		destory(): void;
 	}
 
 	interface INotificationProxyClient {
