@@ -28,7 +28,7 @@ export class ListDevicesCommand implements ICommand {
 			} else {
 				action = (device) => {
 					return (() => {
-						table.push([(index++).toString(), device.deviceInfo.displayName, device.deviceInfo.platform, device.deviceInfo.identifier]);
+						table.push([(index++).toString(), device.deviceInfo.displayName || '', device.deviceInfo.platform || '', device.deviceInfo.identifier || '']);
 					}).future<void>()();
 				};
 			}
