@@ -1,14 +1,14 @@
-///<reference path="../.d.ts"/>
+///<reference path=".d.ts"/>
 "use strict";
 //
 // automatically generated code; do not edit manually!
 //
 
 export class Messages implements IMessages{
-			DEVICES = {
-			NOT_FOUND_DEVICE_BY_IDENTIFIER_ERROR_MESSAGE: "DEVICES.NOT_FOUND_DEVICE_BY_IDENTIFIER_ERROR_MESSAGE",
-			NOT_FOUND_DEVICE_BY_IDENTIFIER_ERROR_MESSAGE_WITH_IDENTIFIER: "DEVICES.NOT_FOUND_DEVICE_BY_IDENTIFIER_ERROR_MESSAGE_WITH_IDENTIFIER",
-			NOT_FOUND_DEVICE_BY_INDEX_ERROR_MESSAGE: "DEVICES.NOT_FOUND_DEVICE_BY_INDEX_ERROR_MESSAGE",
+			Devices = {
+			NotFoundDeviceByIdentifierErrorMessage: "Devices.NotFoundDeviceByIdentifierErrorMessage",
+			NotFoundDeviceByIdentifierErrorMessageWithIdentifier: "Devices.NotFoundDeviceByIdentifierErrorMessageWithIdentifier",
+			NotFoundDeviceByIndexErrorMessage: "Devices.NotFoundDeviceByIndexErrorMessage",
 		};
 
 }

@@ -2,7 +2,7 @@
 "use strict";
 
 import {Block} from "../codeGeneration/code-entity";
-import {SwaggerCodePrinter} from "../codeGeneration/code-printer";
+import {CodePrinter} from "../codeGeneration/code-printer";
 
 export class MessageContractGenerator implements IServiceContractGenerator {
 	private pendingModels: any;
@@ -20,7 +20,7 @@ export class MessageContractGenerator implements IServiceContractGenerator {
 			let definitionsPath = `"${this.$staticConfig.CLIENT_NAME ? "" : "../"}.d.ts"`;
 
 			implementationsFile.writeLine(`///<reference path=${definitionsPath}/>`);
-			implementationsFile.writeLine("\"use strict\";");
+			implementationsFile.writeLine('"use strict";');
 			implementationsFile.writeLine("//");
 			implementationsFile.writeLine("// automatically generated code; do not edit manually!");
 			implementationsFile.writeLine("//");
@@ -50,7 +50,7 @@ export class MessageContractGenerator implements IServiceContractGenerator {
 			implementationsFile.addBlock(messagesClass);
 			implementationsFile.writeLine("$injector.register('messages', Messages);");
 
-			let codePrinter = new SwaggerCodePrinter();
+			let codePrinter = new CodePrinter();
 			return {
 				interfaceFile: codePrinter.composeBlock(interfacesFile),
 				implementationFile: codePrinter.composeBlock(implementationsFile)

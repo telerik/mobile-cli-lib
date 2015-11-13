@@ -1,7 +1,7 @@
 {
-	"DEVICES": {
-		"NOT_FOUND_DEVICE_BY_IDENTIFIER_ERROR_MESSAGE": "Cannot resolve the specified connected device by the provided index or identifier. To list currently connected devices and verify that the specified index or identifier exists, run '%s device'.",
-		"NOT_FOUND_DEVICE_BY_IDENTIFIER_ERROR_MESSAGE_WITH_IDENTIFIER": "Could not find device by specified identifier '%s'. To list currently connected devices and verify that the specified identifier exists, run '%s device'.",
-		"NOT_FOUND_DEVICE_BY_INDEX_ERROR_MESSAGE": "Could not find device by specified index %d. To list currently connected devices and verify that the specified index exists, run '%s device'."
+	"Devices": {
+		"NotFoundDeviceByIdentifierErrorMessage": "Cannot resolve the specified connected device by the provided index or identifier. To list currently connected devices and verify that the specified index or identifier exists, run '%s device'.",
+		"NotFoundDeviceByIdentifierErrorMessageWithIdentifier": "Could not find device by specified identifier '%s'. To list currently connected devices and verify that the specified identifier exists, run '%s device'.",
+		"NotFoundDeviceByIndexErrorMessage": "Could not find device by specified index %d. To list currently connected devices and verify that the specified index exists, run '%s device'."
 	}
 }

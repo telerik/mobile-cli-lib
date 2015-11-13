@@ -118,7 +118,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	private getDeviceByIdentifier(identifier: string): Mobile.IDevice {
 		let searchedDevice = _.find(this.getDeviceInstances(), (device: Mobile.IDevice) => { return device.deviceInfo.identifier === identifier; });
 		if(!searchedDevice) {
-			this.$errors.fail(this.$messages.DEVICES.NOT_FOUND_DEVICE_BY_IDENTIFIER_ERROR_MESSAGE_WITH_IDENTIFIER, identifier, this.$staticConfig.CLIENT_NAME.toLowerCase());
+			this.$errors.fail(this.$messages.Devices.NotFoundDeviceByIdentifierErrorMessageWithIdentifier, identifier, this.$staticConfig.CLIENT_NAME.toLowerCase());
 		}
 
 		return searchedDevice;
@@ -136,7 +136,7 @@ export class DevicesService implements Mobile.IDevicesService {
 			}
 
 			if(!device) {
-				this.$errors.fail(this.$messages.DEVICES.NOT_FOUND_DEVICE_BY_IDENTIFIER_ERROR_MESSAGE, this.$staticConfig.CLIENT_NAME.toLowerCase());
+				this.$errors.fail(this.$messages.Devices.NotFoundDeviceByIdentifierErrorMessage, this.$staticConfig.CLIENT_NAME.toLowerCase());
 			}
 
 			return device;
@@ -265,7 +265,7 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	private validateIndex(index: number): void {
 		if (index < 0 || index > this.getDeviceInstances().length) {
-			throw new Error(util.format(this.$messages.DEVICES.NOT_FOUND_DEVICE_BY_INDEX_ERROR_MESSAGE, index, this.$staticConfig.CLIENT_NAME.toLowerCase()));
+			throw new Error(util.format(this.$messages.Devices.NotFoundDeviceByIndexErrorMessage, index, this.$staticConfig.CLIENT_NAME.toLowerCase()));
 		}
 	}
 }

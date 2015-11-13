@@ -9,7 +9,7 @@ export class MessagesService implements IMessagesService {
 	private _messageJsonFilesContentsCache: any[] = null;
 
 	private get pathToDefaultMessageJson(): string {
-		return path.join(path.dirname(__dirname), "resources", "messages", "errorMessages.json");
+		return path.join(__dirname, "..", "resources", "messages", "errorMessages.json");
 	}
 
 	private get messageJsonFilesContents(): any[] {
@@ -81,7 +81,7 @@ export class MessagesService implements IMessagesService {
 	}
 
 	private getFormatedMessage(message: string, ...args: string[]): string {
-		return ~message.indexOf("%") ? util.format.apply(null, [message, ...args]) : message;
+		return ~message.indexOf("%") ? util.format(message, ...args) : message;
 	}
 }
 
