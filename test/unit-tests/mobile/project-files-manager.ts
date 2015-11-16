@@ -1,0 +1,205 @@
+///<reference path="../../.d.ts"/>
+"use strict";
+
+import {assert} from "chai";
+import {DeviceAppDataFactory} from "../../../mobile/device-app-data/device-app-data-factory";
+import {DevicePlatformsConstants} from "../../../mobile/device-platforms-constants";
+import {Errors} from "../../../errors";
+import {FileSystem} from "../../../file-system";
+import Future = require("fibers/future");
+import {HostInfo} from "../../../host-info";
+import {LocalToDevicePathDataFactory} from "../../../mobile/local-to-device-path-data-factory";
+import {MobileHelper} from "../../../mobile/mobile-helper";
+import {ProjectFilesManager} from "../../../services/project-files-manager";
+import * as path from "path";
+import {Yok} from "../../../yok";
+
+import temp = require("temp");
+temp.track();
+
+let testedApplicationIdentifier = "com.telerik.myApp";
+let iOSDeviceProjectRootPath = "/Library/Application Support/LiveSync/app";
+let androidDeviceProjectRootPath = "/data/local/tmp//sync";
+
+class IOSAppIdentifierMock implements Mobile.IDeviceAppData {
+	public get appIdentifier(): string {
+		return testedApplicationIdentifier;
+	}
+
+	public get deviceProjectRootPath(): string {
+		return iOSDeviceProjectRootPath;
+	}
+
+	public isLiveSyncSupported(device: Mobile.IDevice): IFuture<boolean> {
+		return Future.fromResult(true);
+	}
+}
+
+class AndroidAppIdentifierMock implements Mobile.IDeviceAppData {
+	public get appIdentifier(): string {
+		return testedApplicationIdentifier;
+	}
+
+	public get deviceProjectRootPath(): string {
+		return androidDeviceProjectRootPath;
+	}
+
+	public isLiveSyncSupported(device: Mobile.IDevice): IFuture<boolean> {
+		return Future.fromResult(true);
+	}
+}
+
+class DeviceAppDataProvider {
+	public createFactoryRules(): IDictionary<Mobile.IDeviceAppDataFactoryRule> {
+		return {
+			iOS: {
+				vanilla: IOSAppIdentifierMock
+			},
+			Android: {
+				vanilla: AndroidAppIdentifierMock
+			}
+		};
+	}
+}
+
+class MobilePlatformsCapabilitiesMock implements Mobile.IPlatformsCapabilities {
+	public getPlatformNames(): string[]{
+		return _.keys(this.getAllCapabilities());
+	}
+
+	public getAllCapabilities(): IDictionary<Mobile.IPlatformCapabilities> {
+		return {
+			iOS: {
+				wirelessDeploy: false,
+				cableDeploy: true,
+				companion: false,
+				hostPlatformsForDeploy: ["darwin"]
+			},
+			Android: {
+				wirelessDeploy: false,
+				cableDeploy: true,
+				companion: false,
+				hostPlatformsForDeploy: ["win32", "darwin", "linux"]
+			}
+		};
+	}
+}
+
+function createTestInjector(): IInjector {
+	let testInjector = new Yok();
+
+	testInjector.register("deviceAppDataFactory", DeviceAppDataFactory);
+	testInjector.register("deviceAppDataProvider", DeviceAppDataProvider);
+	testInjector.register("devicePlatformsConstants", DevicePlatformsConstants);
+	testInjector.register("errors", Errors);
+	testInjector.register("fs", FileSystem);
+	testInjector.register("hostInfo", HostInfo);
+	testInjector.register("localToDevicePathDataFactory", LocalToDevicePathDataFactory);
+	testInjector.register("mobileHelper", MobileHelper);
+	testInjector.register("mobilePlatformsCapabilities", MobilePlatformsCapabilitiesMock);
+	testInjector.register("projectFilesProvider", {
+		excludedProjectDirsAndFiles: [ "**/*.ts" ]
+	});
+	testInjector.register("projectFilesManager", ProjectFilesManager);
+	testInjector.register("options", { });
+	testInjector.register("staticConfig", {
+		disableAnalytics: true
+	});
+	return testInjector;
+}
+
+function createFiles(testInjector: IInjector, filesToCreate: string[]): IFuture<string> {
+	return (() => {
+		let fs = testInjector.resolve("fs");
+		let directoryPath = temp.mkdirSync("Project Files Manager Tests");
+
+		_.each(filesToCreate, file => fs.writeFile(path.join(directoryPath, file), "").wait());
+
+		return directoryPath;
+	}).future<string>()();
+}
+
+describe("Project Files Manager Tests", () => {
+	let testInjector: IInjector, projectFilesManager: IProjectFilesManager;
+	beforeEach(() => {
+		testInjector = createTestInjector();
+		projectFilesManager = testInjector.resolve("projectFilesManager");
+	});
+
+	it("maps non-platform specific files to device file paths for ios platform", () => {
+		let files = ["~/TestApp/app/test.js", "~/TestApp/app/myfile.js"];
+		let localToDevicePaths = projectFilesManager.createLocalToDevicePaths("ios", testedApplicationIdentifier, "~/TestApp/app", files);
+
+		_.each(localToDevicePaths, (localToDevicePathData, index) => {
+			assert.equal(files[index],  localToDevicePathData.getLocalPath());
+			assert.equal(path.join(iOSDeviceProjectRootPath, path.basename(files[index])), localToDevicePathData.getDevicePath());
+			assert.equal(path.basename(files[index]), localToDevicePathData.getRelativeToProjectBasePath());
+		});
+	});
+
+	it("maps non-platform specific files to device file paths for android platform", () => {
+		let files = ["~/TestApp/app/test.js", "~/TestApp/app/myfile.js"];
+		let localToDevicePaths = projectFilesManager.createLocalToDevicePaths("android", testedApplicationIdentifier, "~/TestApp/app", files);
+
+		_.each(localToDevicePaths, (localToDevicePathData, index) => {
+			assert.equal(files[index],  localToDevicePathData.getLocalPath());
+			assert.equal(path.join(androidDeviceProjectRootPath, path.basename(files[index])), localToDevicePathData.getDevicePath());
+			assert.equal(path.basename(files[index]), localToDevicePathData.getRelativeToProjectBasePath());
+		});
+	});
+
+	it("maps ios platform specific file to device file path", () => {
+		let filePath = "~/TestApp/app/test.ios.js";
+		let localToDevicePathData = projectFilesManager.createLocalToDevicePaths("ios", testedApplicationIdentifier, "~/TestApp/app", [filePath])[0];
+
+		assert.equal(filePath, localToDevicePathData.getLocalPath());
+		assert.equal(path.join(iOSDeviceProjectRootPath, "test.js"), localToDevicePathData.getDevicePath());
+		assert.equal("test.ios.js", localToDevicePathData.getRelativeToProjectBasePath());
+	});
+
+	it("maps android platform specific file to device file path", () => {
+		let filePath = "~/TestApp/app/test.android.js";
+		let localToDevicePathData = projectFilesManager.createLocalToDevicePaths("android", testedApplicationIdentifier, "~/TestApp/app", [filePath])[0];
+
+		assert.equal(filePath, localToDevicePathData.getLocalPath());
+		assert.equal(path.join(androidDeviceProjectRootPath, "test.js"), localToDevicePathData.getDevicePath());
+		assert.equal("test.android.js", localToDevicePathData.getRelativeToProjectBasePath());
+	});
+
+	it("filters android specific files", () => {
+		let files = ["test.ios.x", "test.android.x"];
+		let directoryPath = createFiles(testInjector, files).wait();
+
+		projectFilesManager.processPlatformSpecificFiles(directoryPath, "android").wait();
+
+		let fs = testInjector.resolve("fs");
+		assert.isFalse(fs.exists(path.join(directoryPath, "test.ios.x")).wait());
+		assert.isTrue(fs.exists(path.join(directoryPath, "test.x")).wait());
+		assert.isFalse(fs.exists(path.join(directoryPath, "test.android.x")).wait());
+	});
+
+	it("filters ios specific files", () => {
+		let files = ["index.ios.html", "index1.android.html", "a.test"];
+		let directoryPath = createFiles(testInjector, files).wait();
+
+		projectFilesManager.processPlatformSpecificFiles(directoryPath, "ios").wait();
+
+		let fs = testInjector.resolve("fs");
+		assert.isFalse(fs.exists(path.join(directoryPath, "index1.android.html")).wait());
+		assert.isFalse(fs.exists(path.join(directoryPath, "index1.html")).wait());
+		assert.isTrue(fs.exists(path.join(directoryPath, "index.html")).wait());
+		assert.isTrue(fs.exists(path.join(directoryPath, "a.test")).wait());
+	});
+
+	it("doesn't filter non platform specific files", () => {
+		let files = ["index1.js", "index2.js", "index3.js"];
+		let directoryPath = createFiles(testInjector, files).wait();
+
+		projectFilesManager.processPlatformSpecificFiles(directoryPath, "ios").wait();
+
+		let fs = testInjector.resolve("fs");
+		assert.isTrue(fs.exists(path.join(directoryPath, "index1.js")).wait());
+		assert.isTrue(fs.exists(path.join(directoryPath, "index2.js")).wait());
+		assert.isTrue(fs.exists(path.join(directoryPath, "index3.js")).wait());
+	});
+});

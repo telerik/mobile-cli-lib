@@ -50,6 +50,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 
 	constructor(private identifier: string,
 		private status: string,
+		private $androidEmulatorServices: Mobile.IAndroidEmulatorServices,
 		private $logger: ILogger,
 		private $fs: IFileSystem,
 		private $childProcess: IChildProcess,
@@ -91,17 +92,15 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 			platform: this.$devicePlatformsConstants.Android,
 			status: adbStatusInfo ? adbStatusInfo.deviceStatus : status,
 			errorHelp: adbStatusInfo ? adbStatusInfo.errorHelp : "Unknown status",
-			isTablet: this.getIsTablet(details)
+			isTablet: this.getIsTablet(details),
+			type: this.getType().wait()
 		};
 
 		this.$logger.trace(this.deviceInfo);
 	}
 
-	public deploy(packageFile: string, packageName: string): IFuture<void> {
-		return (() => {
-			this.applicationManager.reinstallApplication(packageName, packageFile).wait();
-			this.$logger.info(`Successfully deployed on device with identifier '${this.identifier}'.`);
-		}).future<void>()();
+	public get isEmulator(): boolean {
+		return this.deviceInfo.type === "Emulator";
 	}
 
 	public openDeviceLogStream(): void {
@@ -133,5 +132,16 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 	private getIsTablet(details: any): boolean {
 		//version 3.x.x (also known as Honeycomb) is a tablet only version
 		return details && ( _.startsWith(details.release, "3.") || _.contains((details.characteristics || '').toLowerCase(), "tablet") );
+	}
+
+	private getType(): IFuture<string> {
+		return (() => {
+			let runningEmulators = this.$androidEmulatorServices.getAllRunningEmulators().wait();
+			if (_.contains(runningEmulators, this.identifier)) {
+				return "Emulator";
+			}
+
+			return "Device";
+		}).future<string>()();
 	}
 }

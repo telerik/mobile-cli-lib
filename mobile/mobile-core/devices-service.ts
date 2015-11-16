@@ -19,12 +19,14 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	constructor(private $logger: ILogger,
 		private $errors: IErrors,
+		private $iOSSimulatorDiscovery: Mobile.IDeviceDiscovery,
 		private $iOSDeviceDiscovery: Mobile.IDeviceDiscovery,
 		private $androidDeviceDiscovery: Mobile.IDeviceDiscovery,
 		private $staticConfig: Config.IStaticConfig,
 		private $messages: IMessages,
 		private $mobileHelper: Mobile.IMobileHelper,
-		private $deviceLogProvider: Mobile.IDeviceLogProvider) {
+		private $deviceLogProvider: Mobile.IDeviceLogProvider,
+		private $hostInfo: IHostInfo) {
 		this.attachToDeviceDiscoveryEvents();
 	}
 
@@ -73,6 +75,9 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	private attachToDeviceDiscoveryEvents(): void {
+		this.$iOSSimulatorDiscovery.on("deviceFound", (device: Mobile.IDevice) => this.onDeviceFound(device));
+		this.$iOSSimulatorDiscovery.on("deviceLost", (device: Mobile.IDevice) => this.onDeviceLost(device));
+
 		this.$iOSDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => this.onDeviceFound(device));
 		this.$iOSDeviceDiscovery.on("deviceLost", (device: Mobile.IDevice) => this.onDeviceLost(device));
 
@@ -97,6 +102,9 @@ export class DevicesService implements Mobile.IDevicesService {
 				try {
 					this.$iOSDeviceDiscovery.startLookingForDevices().wait();
 					this.$androidDeviceDiscovery.startLookingForDevices().wait();
+					if (this.$hostInfo.isDarwin) {
+						this.$iOSSimulatorDiscovery.startLookingForDevices().wait();
+					}
 				} catch (err) {
 					this.$logger.trace("Error while detecting devices.", err);
 				}
@@ -107,6 +115,9 @@ export class DevicesService implements Mobile.IDevicesService {
 							// It's causing error 21 when deploying on some iOS devices during transfer of the first package.
 							this.$iOSDeviceDiscovery.checkForDevices().wait();
 							this.$androidDeviceDiscovery.checkForDevices().wait();
+							if (this.$hostInfo.isDarwin) {
+								this.$iOSSimulatorDiscovery.checkForDevices().wait();
+							}
 						} catch (err) {
 							this.$logger.trace("Error while checking for new devices.", err);
 						}
@@ -114,6 +125,7 @@ export class DevicesService implements Mobile.IDevicesService {
 				}, DevicesService.DEVICE_LOOKING_INTERVAL).unref();
 			} else if(this.$mobileHelper.isiOSPlatform(this._platform)) {
 				this.$iOSDeviceDiscovery.startLookingForDevices().wait();
+				this.$iOSSimulatorDiscovery.startLookingForDevices().wait();
 			} else if(this.$mobileHelper.isAndroidPlatform(this._platform)) {
 				this.$androidDeviceDiscovery.startLookingForDevices().wait();
 			}
@@ -171,8 +183,10 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	private executeOnAllConnectedDevices(action: (dev: Mobile.IDevice) => IFuture<void>, canExecute?: (_dev: Mobile.IDevice) => boolean): IFuture<void> {
 		return ((): void => {
-			let allConnectedDevices = this.getAllConnectedDevices();
-			let futures = _.map(allConnectedDevices, (device: Mobile.IDevice) => {
+			let devices = this.getAllConnectedDevices();
+			let sortedDevices = _.sortBy(devices, device => device.deviceInfo.platform);
+
+			let futures = _.map(sortedDevices, (device: Mobile.IDevice) => {
 				if (!canExecute || canExecute(device)) {
 					let future = action(device);
 					Future.settle(future);
@@ -192,7 +206,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		return _.map(deviceIdentifiers, deviceIdentifier => this.deployOnDevice(deviceIdentifier, packageFile, packageName));
 	}
 
-	public execute(action: (device: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: {[key: string]: boolean}): IFuture<void> {
+	public execute(action: (device: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: {allowNoDevices?: boolean}): IFuture<void> {
 		return ((): void => {
 			assert.ok(this._isInitialized, "Devices services not initialized!");
 			if(this.hasDevices) {
@@ -203,7 +217,7 @@ export class DevicesService implements Mobile.IDevicesService {
 				}
 			} else {
 				let message = constants.ERROR_NO_DEVICES;
-				if(options && options["allowNoDevices"]) {
+				if(options && options.allowNoDevices) {
 					this.$logger.info(message);
 				} else {
 					this.$errors.failWithoutHelp(message);
@@ -267,7 +281,8 @@ export class DevicesService implements Mobile.IDevicesService {
 		return (() => {
 			if(_(this._devices).keys().find(d => d === deviceIdentifier)) {
 				let device = this._devices[deviceIdentifier];
-				device.deploy(packageFile, packageName).wait();
+				device.applicationManager.reinstallApplication(packageName, packageFile).wait();
+				this.$logger.info(`Successfully deployed on device with identifier '${device.deviceInfo.identifier}'.`);
 				if(device.applicationManager.canStartApplication()) {
 					try {
 						device.applicationManager.startApplication(packageName).wait();

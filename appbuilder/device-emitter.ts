@@ -6,6 +6,7 @@ import { EventEmitter } from "events";
 class DeviceEmitter extends EventEmitter {
 	constructor(private $androidDeviceDiscovery:Mobile.IAndroidDeviceDiscovery,
 		private $iOSDeviceDiscovery: Mobile.IDeviceDiscovery,
+		private $iOSSimulatorDiscovery: Mobile.IDeviceDiscovery,
 		private $devicesService: Mobile.IDevicesService,
 		private $deviceLogProvider: EventEmitter) {
 		super();
@@ -29,6 +30,15 @@ class DeviceEmitter extends EventEmitter {
 			});
 
 			this.$iOSDeviceDiscovery.on("deviceLost", (data: Mobile.IDevice) => {
+				this.emit("deviceLost", data.deviceInfo);
+			});
+
+			this.$iOSSimulatorDiscovery.on("deviceFound", (data: Mobile.IDevice) => {
+				this.emit("deviceFound", data.deviceInfo);
+				data.openDeviceLogStream();
+			});
+
+			this.$iOSSimulatorDiscovery.on("deviceLost", (data: Mobile.IDevice) => {
 				this.emit("deviceLost", data.deviceInfo);
 			});
 

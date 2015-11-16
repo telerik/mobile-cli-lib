@@ -3,22 +3,22 @@
 import * as helpers from "../helpers";
 import * as path from "path";
 
-export class LocalToDevicePathData implements Mobile.ILocalToDevicePathData {
+class LocalToDevicePathData implements Mobile.ILocalToDevicePathData {
 	private devicePath: string;
 	private relativeToProjectBasePath: string;
 
-	constructor(private fileName: string,
+	constructor(private filePath: string,
 		private localProjectRootPath: string,
 		private onDeviceFileName: string,
 		private deviceProjectRootPath: string) { }
 
 	public getLocalPath(): string {
-		return this.fileName;
+		return this.filePath;
 	}
 
 	public getDevicePath(): string {
-		if(!this.devicePath) {
-			let devicePath = path.join(this.deviceProjectRootPath, this.getRelativeToProjectBasePath());
+		if (!this.devicePath) {
+			let devicePath = path.join(this.deviceProjectRootPath, path.dirname(this.getRelativeToProjectBasePath()), this.onDeviceFileName);
 			this.devicePath = helpers.fromWindowsRelativePathToUnix(devicePath);
 		}
 
@@ -26,8 +26,8 @@ export class LocalToDevicePathData implements Mobile.ILocalToDevicePathData {
 	}
 
 	public getRelativeToProjectBasePath(): string {
-		 if(!this.relativeToProjectBasePath) {
-			 this.relativeToProjectBasePath = helpers.getRelativeToRootPath(this.localProjectRootPath, this.onDeviceFileName);
+		 if (!this.relativeToProjectBasePath) {
+			 this.relativeToProjectBasePath = path.relative(this.localProjectRootPath, this.filePath);
 		 }
 
 		 return this.relativeToProjectBasePath;
@@ -35,8 +35,8 @@ export class LocalToDevicePathData implements Mobile.ILocalToDevicePathData {
 }
 
 export class LocalToDevicePathDataFactory implements Mobile.ILocalToDevicePathDataFactory {
-	create(fileName: string, localProjectRootPath: string, onDeviceFileName: string, deviceProjectRootPath: string):  Mobile.ILocalToDevicePathData {
-		return new LocalToDevicePathData(fileName, localProjectRootPath, onDeviceFileName, deviceProjectRootPath);
+	create(filePath: string, localProjectRootPath: string, onDeviceFileName: string, deviceProjectRootPath: string):  Mobile.ILocalToDevicePathData {
+		return new LocalToDevicePathData(filePath, localProjectRootPath, onDeviceFileName, deviceProjectRootPath);
 	}
 }
 $injector.register("localToDevicePathDataFactory", LocalToDevicePathDataFactory);

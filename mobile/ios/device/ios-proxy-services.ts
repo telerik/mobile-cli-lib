@@ -1,9 +1,9 @@
-///<reference path="../../.d.ts"/>
+///<reference path="../../../.d.ts"/>
 "use strict";
 import * as ref from "ref";
 import * as path from "path";
 import * as iOSCore from "./ios-core";
-import * as helpers from "../../helpers";
+import * as helpers from "../../../helpers";
 import * as plistlib from "plistlib";
 import Future = require("fibers/future");
 
@@ -246,7 +246,6 @@ export class InstallationProxyClient {
 				PackagePath: helpers.fromWindowsRelativePathToUnix(devicePath)
 			});
 			this.plistService.receiveMessage().wait();
-			this.$logger.info("Successfully deployed on device %s", this.device.deviceInfo.identifier);
 		}).future<void>()();
 	}
 

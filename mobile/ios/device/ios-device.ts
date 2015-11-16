@@ -1,4 +1,4 @@
-///<reference path="../../.d.ts"/>
+///<reference path="../../../.d.ts"/>
 "use strict";
 
 import * as net from "net";
@@ -9,7 +9,7 @@ import {CoreTypes, PlistService} from "./ios-core";
 import * as iOSProxyServices from "./ios-proxy-services";
 import * as applicationManagerPath from "./ios-application-manager";
 import * as fileSystemPath from "./ios-device-file-system";
-import * as constants from "../constants";
+import * as constants from "../../constants";
 
 export class IOSDevice implements Mobile.IiOSDevice {
 	// iOS errors are described here with HEX representation
@@ -45,7 +45,8 @@ export class IOSDevice implements Mobile.IiOSDevice {
 				vendor: "Apple",
 				platform: this.$devicePlatformsConstants.iOS,
 				status: constants.CONNECTED_STATUS,
-				errorHelp: null
+				errorHelp: null,
+				type: "Device"
 			};
 
 			let productType = this.getValue("ProductType");
@@ -54,6 +55,10 @@ export class IOSDevice implements Mobile.IiOSDevice {
 			this.deviceInfo.version = this.getValue("ProductVersion");
 			this.deviceInfo.color = this.getValue("DeviceColor");
 			this.deviceInfo.isTablet = productType && productType.toLowerCase().indexOf("ipad") !== -1;
+	}
+
+	public get isEmulator(): boolean {
+		return false;
 	}
 
 	private static mountImageCallback(dictionary: NodeBuffer, user: NodeBuffer): void {
@@ -305,10 +310,6 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		};
 
 		return this.tryExecuteFunction<number>(func);
-	}
-
-	public deploy(packageFile: string, packageName: string): IFuture<void> {
-		return this.applicationManager.reinstallApplication(packageName, packageFile);
 	}
 
 	public openDeviceLogStream() {

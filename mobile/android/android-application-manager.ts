@@ -1,15 +1,18 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 import {EOL} from "os";
+import {ApplicationManagerBase} from "../application-manager-base";
 
-export class AndroidApplicationManager implements Mobile.IDeviceApplicationManager {
+export class AndroidApplicationManager extends ApplicationManagerBase implements Mobile.IDeviceApplicationManager {
 	private _installedApplications: string[];
 
 	constructor(private adb: Mobile.IAndroidDebugBridge,
 		private identifier: string,
 		private $staticConfig: Config.IStaticConfig,
 		private $options: ICommonOptions,
-		private $logcatHelper: Mobile.ILogcatHelper) { }
+		private $logcatHelper: Mobile.ILogcatHelper) {
+			super();
+		}
 
 	public getInstalledApplications(): IFuture<string[]> {
 		return (() => {
@@ -36,13 +39,6 @@ export class AndroidApplicationManager implements Mobile.IDeviceApplicationManag
 		return this.adb.executeShellCommand(["pm", "uninstall", `${appIdentifier}`]);
 	}
 
-	public reinstallApplication(applicationId: string, packageFilePath: string): IFuture<void> {
-		return (() => {
-			this.uninstallApplication(applicationId).wait();
-			this.installApplication(packageFilePath).wait();
-		}).future<void>()();
-	}
-
 	public startApplication(appIdentifier: string): IFuture<void> {
 		return (() => {
 			this.adb.executeShellCommand(["am", "start",
@@ -57,13 +53,6 @@ export class AndroidApplicationManager implements Mobile.IDeviceApplicationManag
 
 	public stopApplication(appIdentifier: string): IFuture<void> {
 		return this.adb.executeShellCommand(["am", "force-stop", `${appIdentifier}`]);
-	}
-
-	public restartApplication(appIdentifier: string): IFuture<void> {
-		return (() => {
-			this.stopApplication(appIdentifier).wait();
-			this.startApplication(appIdentifier).wait();
-		}).future<void>()();
 	}
 
 	public canStartApplication(): boolean {
