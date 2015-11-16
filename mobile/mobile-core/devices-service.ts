@@ -12,8 +12,6 @@ import * as fiberBootstrap from "../../fiber-bootstrap";
 export class DevicesService implements Mobile.IDevicesService {
 	private _devices: IDictionary<Mobile.IDevice> = {};
 	private platforms: string[] = [];
-	private static NOT_FOUND_DEVICE_BY_IDENTIFIER_ERROR_MESSAGE = "Could not find device by specified identifier '%s'. To list currently connected devices and verify that the specified identifier exists, run '%s device'.";
-	private static NOT_FOUND_DEVICE_BY_INDEX_ERROR_MESSAGE = "Could not find device by specified index %d. To list currently connected devices and verify that the specified index exists, run '%s device'.";
 	private static DEVICE_LOOKING_INTERVAL = 2200;
 	private _platform: string;
 	private _device: Mobile.IDevice;
@@ -24,6 +22,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		private $iOSDeviceDiscovery: Mobile.IDeviceDiscovery,
 		private $androidDeviceDiscovery: Mobile.IDeviceDiscovery,
 		private $staticConfig: Config.IStaticConfig,
+		private $messages: IMessages,
 		private $mobileHelper: Mobile.IMobileHelper) {
 		this.attachToDeviceDiscoveryEvents();
 	}
@@ -119,7 +118,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	private getDeviceByIdentifier(identifier: string): Mobile.IDevice {
 		let searchedDevice = _.find(this.getDeviceInstances(), (device: Mobile.IDevice) => { return device.deviceInfo.identifier === identifier; });
 		if(!searchedDevice) {
-			this.$errors.fail(DevicesService.NOT_FOUND_DEVICE_BY_IDENTIFIER_ERROR_MESSAGE, identifier, this.$staticConfig.CLIENT_NAME.toLowerCase());
+			this.$errors.fail(this.$messages.Devices.NotFoundDeviceByIdentifierErrorMessageWithIdentifier, identifier, this.$staticConfig.CLIENT_NAME.toLowerCase());
 		}
 
 		return searchedDevice;
@@ -137,7 +136,7 @@ export class DevicesService implements Mobile.IDevicesService {
 			}
 
 			if(!device) {
-				this.$errors.fail("Cannot resolve the specified connected device by the provided index or identifier. To list currently connected devices and verify that the specified index or identifier exists, run '%s device'.", this.$staticConfig.CLIENT_NAME.toLowerCase());
+				this.$errors.fail(this.$messages.Devices.NotFoundDeviceByIdentifierErrorMessage, this.$staticConfig.CLIENT_NAME.toLowerCase());
 			}
 
 			return device;
@@ -266,7 +265,7 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	private validateIndex(index: number): void {
 		if (index < 0 || index > this.getDeviceInstances().length) {
-			throw new Error(util.format(DevicesService.NOT_FOUND_DEVICE_BY_INDEX_ERROR_MESSAGE, index, this.$staticConfig.CLIENT_NAME.toLowerCase()));
+			throw new Error(util.format(this.$messages.Devices.NotFoundDeviceByIndexErrorMessage, index, this.$staticConfig.CLIENT_NAME.toLowerCase()));
 		}
 	}
 }

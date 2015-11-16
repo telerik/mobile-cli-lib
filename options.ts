@@ -69,6 +69,7 @@ export class OptionsBase {
 			"emulator": { type: OptionType.Boolean },
 			"sdk": { type: OptionType.String },
 			var: {type: OptionType.Object},
+			default: {type: OptionType.Boolean},
 		};
 	}
 

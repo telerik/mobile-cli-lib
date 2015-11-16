@@ -93,6 +93,8 @@ export function installUncaughtExceptionListener(actionOnException?: () => void)
 }
 
 export class Errors implements IErrors {
+	constructor(private $injector: IInjector) {
+	}
 
 	public printCallStack: boolean = false;
 
@@ -102,15 +104,13 @@ export class Errors implements IErrors {
 			opts = { formatStr: opts };
 		}
 
-		args.unshift(opts.formatStr);
-
 		let exception: any = new (<any>Exception)();
 		exception.name = opts.name || "Exception";
-		exception.message = util.format.apply(null, args);
+		exception.message = this.$injector.resolve("messagesService").getMessage(opts.formatStr, ...args);
 		exception.stack = (new Error(exception.message)).stack;
 		exception.errorCode = opts.errorCode || ErrorCodes.UNKNOWN;
 		exception.suppressCommandHelp = opts.suppressCommandHelp;
-
+		this.$injector.resolve("logger").trace(opts.formatStr);
 		throw exception;
 	}
 
