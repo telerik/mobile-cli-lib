@@ -123,6 +123,10 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 								}
 							}
 						}
+
+						if (event === "deleted") {
+							that.processRemovedFile(data, filePath);
+						}
 					});
 				});
 
@@ -158,6 +162,29 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 			}
 			this.$logger.info("Successfully transferred all project files.");
 		}).future<void>()();
+	}
+
+	private processRemovedFile(data: ILiveSyncData, filePath: string): void {
+		this.$dispatcher.dispatch(() => (() => {
+			let action = (device: Mobile.IDevice) => {
+				return (() => {
+					let fileToSync = data.beforeBatchLiveSyncAction ? data.beforeBatchLiveSyncAction(filePath).wait() : filePath;
+					let localToDevicePaths = this.createLocalToDevicePaths(data.platform, data.appIdentifier, data.localProjectRootPath || data.projectFilesPath, [fileToSync]);
+					let platformSpecificLiveSyncService = this.resolvePlatformSpecificLiveSyncService(data.platform, device, data.platformSpecificLiveSyncServices);
+					platformSpecificLiveSyncService.removeFile(data.appIdentifier, localToDevicePaths).wait();
+
+					let canExecuteFastLiveSync = data.canExecuteFastLiveSync && data.canExecuteFastLiveSync(filePath);
+					if (canExecuteFastLiveSync) {
+						data.fastLiveSync(filePath);
+					} else {
+						let platform = data.platform ? this.$mobileHelper.normalizePlatformName(data.platform) : this.$devicesService.platform;
+						let deviceAppData =  this.$deviceAppDataFactory.create(data.appIdentifier, this.$mobileHelper.normalizePlatformName(platform));
+						platformSpecificLiveSyncService.restartApplication(deviceAppData, localToDevicePaths).wait();
+					}
+				}).future<void>()();
+			};
+			this.$devicesService.execute(action).wait();
+		}).future<void>()());
 	}
 
 	private syncCore(data: ILiveSyncData, projectFiles: string[], batchLiveSync: boolean): IFuture<void> {
