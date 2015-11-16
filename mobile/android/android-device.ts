@@ -59,7 +59,10 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 	}
 
 	public deploy(packageFile: string, packageName: string): IFuture<void> {
-		return this.applicationManager.reinstallApplication(packageName, packageFile);
+		return (() => {
+			this.applicationManager.reinstallApplication(packageName, packageFile).wait();
+			this.$logger.info(`Successfully deployed on device with identifier '${this.identifier}'.`);
+		}).future<void>()();
 	}
 
 	public openDeviceLogStream(): void {
