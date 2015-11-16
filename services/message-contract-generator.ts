@@ -13,11 +13,11 @@ export class MessageContractGenerator implements IServiceContractGenerator {
 		this.pendingModels = {};
 	}
 
-	public generate(): IFuture<IServiceContractClientCode> {
+	public generate(definitionsPath?: string): IFuture<IServiceContractClientCode> {
 		return ((): IServiceContractClientCode => {
 			let interfacesFile= new Block();
 			let implementationsFile = new Block();
-			let definitionsPath = `"${this.$staticConfig.CLIENT_NAME ? "" : "../"}.d.ts"`;
+			definitionsPath = definitionsPath || `"${this.$staticConfig.CLIENT_NAME ? "" : "../"}.d.ts"`;
 
 			implementationsFile.writeLine(`///<reference path=${definitionsPath}/>`);
 			implementationsFile.writeLine('"use strict";');
@@ -26,10 +26,10 @@ export class MessageContractGenerator implements IServiceContractGenerator {
 			implementationsFile.writeLine("//");
 			implementationsFile.writeLine("");
 
+			interfacesFile.writeLine(`///<reference path=${definitionsPath}/>`);
 			interfacesFile.writeLine("//");
 			interfacesFile.writeLine("// automatically generated code; do not edit manually!");
 			interfacesFile.writeLine("//");
-			interfacesFile.writeLine(`///<reference path=${definitionsPath}/>`);
 
 			let messagesClass = new Block("export class Messages implements IMessages");
 			let messagesInterface = new Block("interface IMessages");

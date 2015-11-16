@@ -8,25 +8,26 @@ export class GenerateMessages implements ICommand {
 
 	constructor(private $fs: IFileSystem,
 				private $messageContractGenerator: IServiceContractGenerator,
-				private $staticConfig: Config.IStaticConfig) {
+				private $options: ICommonOptions) {
 	}
 
 	allowedParameters: ICommandParameter[] = [];
 
 	execute(args: string[]): IFuture<void> {
 		return (() => {
-			let result = this.$messageContractGenerator.generate().wait(),
-				outerMessagesDirectory = path.join(__dirname, "../messages"),
-				innerMessagesDirectory = path.join(__dirname, "../.."),
+			let definitionsPath = `"${this.$options.default ? "../" : ""}.d.ts"`,
+				result = this.$messageContractGenerator.generate(definitionsPath).wait(),
+				innerMessagesDirectory = path.join(__dirname, "../messages"),
+				outerMessagesDirectory = path.join(__dirname, "../.."),
 				interfaceFilePath: string,
 				implementationFilePath: string;
 
-			if (this.$staticConfig.CLIENT_NAME) {
-				interfaceFilePath = path.join(outerMessagesDirectory, GenerateMessages.MESSAGES_DEFINITIONS_FILE_NAME);
-				implementationFilePath = path.join(outerMessagesDirectory, GenerateMessages.MESSAGES_IMPLEMENTATION_FILE_NAME);
-			} else {
+			if (this.$options.default) {
 				interfaceFilePath = path.join(innerMessagesDirectory, GenerateMessages.MESSAGES_DEFINITIONS_FILE_NAME);
 				implementationFilePath = path.join(innerMessagesDirectory, GenerateMessages.MESSAGES_IMPLEMENTATION_FILE_NAME);
+			} else {
+				interfaceFilePath = path.join(outerMessagesDirectory, GenerateMessages.MESSAGES_DEFINITIONS_FILE_NAME);
+				implementationFilePath = path.join(outerMessagesDirectory, GenerateMessages.MESSAGES_IMPLEMENTATION_FILE_NAME);
 			}
 
 			this.$fs.writeFile(interfaceFilePath, result.interfaceFile).wait();

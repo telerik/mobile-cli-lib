@@ -1,4 +1,4 @@
-///<reference path=".d.ts"/>
+///<reference path="../.d.ts"/>
 "use strict";
 //
 // automatically generated code; do not edit manually!

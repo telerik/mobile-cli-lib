@@ -429,6 +429,7 @@ interface ICommonOptions {
 	emulator: boolean;
 	sdk: string;
 	var: Object;
+	default: Boolean;
 }
 
 interface IYargArgv extends IDictionary<any> {
@@ -591,7 +592,8 @@ interface IServiceContractClientCode {
 interface IServiceContractGenerator {
 	/**
 	 * Generate code implementation along with interface
-	 * @return {IFuture<IServiceContractClientCode>} The generated code parts
+	 * @param  {string}                              definitionsPath The path to the desired parent .d.ts file
+	 * @return {IFuture<IServiceContractClientCode>}                 The generated code parts
 	 */
-	generate(): IFuture<IServiceContractClientCode>;
+	generate(definitionsPath?: string): IFuture<IServiceContractClientCode>;
 }
