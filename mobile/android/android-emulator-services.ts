@@ -24,12 +24,23 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private static RUNNING_ANDROID_EMULATOR_REGEX = /^(emulator-\d+)\s+device$/;
 
 	private static MISSING_SDK_MESSAGE = "The Android SDK is not configured properly. " +
-		"Verify that you have installed the Android SDK and that you have added its `platform-tools` and `tools` directories to your PATH environment variable.";
+		"Verify that you have installed the Android SDK and that you have configured it as described in System Requirements.";
 	private static MISSING_GENYMOTION_MESSAGE = "Genymotion is not configured properly. " +
 		"Verify that you have installed Genymotion and that you have added its installation directory to your PATH environment variable.";
 
 	private endTimeEpoch: number;
 	private adbFilePath: string;
+	private _pathToEmulatorExecutable: string;
+
+	private get pathToEmulatorExecutable(): string {
+		if(!this._pathToEmulatorExecutable) {
+			let androidHome = process.env.ANDROID_HOME;
+			let emulatorExecutableName = "emulator";
+			this._pathToEmulatorExecutable = androidHome ? path.join(androidHome, "tools", emulatorExecutableName) : emulatorExecutableName;
+		}
+
+		return this._pathToEmulatorExecutable;
+	}
 
 	constructor(private $logger: ILogger,
 		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
@@ -69,7 +80,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private checkAndroidSDKConfiguration(): IFuture<void> {
 		return (() => {
 			try {
-				this.$childProcess.tryExecuteApplication('emulator', ['-help'], "exit", AndroidEmulatorServices.MISSING_SDK_MESSAGE).wait();
+				this.$childProcess.tryExecuteApplication(this.pathToEmulatorExecutable, ['-help'], "exit", AndroidEmulatorServices.MISSING_SDK_MESSAGE).wait();
 			} catch (err) {
 				this.$logger.trace(`Error while checking Android SDK configuration: ${err}`);
 				this.$errors.failWithoutHelp("Android SDK is not configured properly. Make sure you have added tools and platform-tools to your PATH environment variable.");
@@ -246,7 +257,7 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 				this.$childProcess.spawn("player", ["--vm-name", image],
 					{ stdio: "ignore", detached: true }).unref();
 			} else {
-				this.$childProcess.spawn('emulator', ['-avd', image],
+				this.$childProcess.spawn(this.pathToEmulatorExecutable, ['-avd', image],
 					{ stdio: "ignore", detached: true }).unref();
 			}
 
