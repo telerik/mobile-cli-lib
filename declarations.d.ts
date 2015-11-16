@@ -311,6 +311,7 @@ interface ILiveSyncData {
 
 interface IPlatformSpecificUsbLiveSyncService {
 	restartApplication(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths?: Mobile.ILocalToDevicePathData[]): IFuture<void>;
+	removeFile(appIdentifier: string, localToDevicePaths:  Mobile.ILocalToDevicePathData[]): IFuture<void>;
 	beforeLiveSyncAction?(deviceAppData: Mobile.IDeviceAppData): IFuture<void>;
 	sendPageReloadMessageToDevice?(deviceAppData: Mobile.IDeviceAppData): IFuture<void>;
 }
