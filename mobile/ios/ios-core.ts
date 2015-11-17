@@ -1151,7 +1151,7 @@ export class GDBServer implements Mobile.IGDBServer {
 		}).future<void>()();
 	}
 
-	public destory(): void {
+	public destroy(): void {
 		this.socket.destroy();
 	}
 
