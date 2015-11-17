@@ -55,7 +55,7 @@ export class SysInfoBase implements ISysInfo {
 				res.xcodeVer = this.$hostInfo.isDarwin ? this.exec("xcodebuild -version") : null;
 				res.itunesInstalled = this.$iTunesValidator.getError().wait() === null;
 
-				res.cocoapodVer = this.$hostInfo.isDarwin ? this.exec("pod --version") : null;
+				res.cocoapodVer = this.getCocoapodVersion();
 				let pathToAdb = androidToolsInfo ? androidToolsInfo.pathToAdb : "adb";
 				let pathToAndroid = androidToolsInfo ? androidToolsInfo.pathToAndroid : "android";
 
@@ -151,6 +151,21 @@ export class SysInfoBase implements ISysInfo {
 			// thus can't use ^ for starts with in regex
 			return output ? /javac (.*)/i.exec(output.stderr)[1]: null;
 		}).future<string>()();
+	}
+
+	private getCocoapodVersion(): string {
+		if(this.$hostInfo.isDarwin) {
+			let cocoapodVersion = this.exec("pod --version");
+			// Output of pod --version could contain some warnings. Find the version in it.
+			let cocoapodVersionMatch = cocoapodVersion.match(/^((?:\d+\.){2}\d+.*?)$/gm);
+			if(cocoapodVersionMatch && cocoapodVersionMatch[0]) {
+				cocoapodVersion = cocoapodVersionMatch[0].trim();
+			}
+
+			return cocoapodVersion;
+		}
+
+		return null;
 	}
 }
 $injector.register("sysInfoBase", SysInfoBase);

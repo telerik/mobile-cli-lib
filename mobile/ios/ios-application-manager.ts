@@ -21,7 +21,8 @@ export class IOSApplicationManager implements Mobile.IDeviceApplicationManager {
 		private $logger: ILogger,
 		private $hostInfo: IHostInfo,
 		private $staticConfig: Config.IStaticConfig,
-		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
+		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
+		private $options: ICommonOptions) {
 			this.uninstallApplicationCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSApplicationManager.uninstallCallback);
 		}
 
@@ -88,6 +89,9 @@ export class IOSApplicationManager implements Mobile.IDeviceApplicationManager {
 		return (() => {
 			this.stopApplication(applicationId).wait();
 			this.runApplicationCore(applicationId).wait();
+			if (!this.$options.watch) {
+				this._gdbServer.destroy();
+			}
 		}).future<void>()();
 	}
 
@@ -119,7 +123,7 @@ export class IOSApplicationManager implements Mobile.IDeviceApplicationManager {
 
 	private runApplicationCore(applicationId: any) {
 		if (this._gdbServer) {
-			this._gdbServer.destory();
+			this._gdbServer.destroy();
 			this._gdbServer = null;
 		}
 
