@@ -56,7 +56,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 		protected $logger: ILogger,
 		protected $options: ICommonOptions,
 		protected $deviceAppDataFactory: Mobile.IDeviceAppDataFactory,
-		private $fs: IFileSystem,
+		protected $fs: IFileSystem,
 		protected $dispatcher: IFutureDispatcher,
 		protected $injector: IInjector,
 		protected $childProcess: IChildProcess,
