@@ -67,6 +67,17 @@ module.exports = function(grunt) {
 			}
 		},
 
+		tslint: {
+			build: {
+                files: {
+                    src: ["**/*.ts", "!node_modules/**/*.ts", "!messages/**/*.ts", "!**/*.d.ts"]
+                },
+                options: {
+                    configuration: grunt.file.readJSON("./tslint.json")
+                }
+            }
+        },
+
 		watch: {
 			devall: {
 				files: ["**/*.ts", "!node_modules/**/*.ts", 'test/**/*.ts'],
@@ -121,6 +132,7 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks("grunt-contrib-watch");
 	grunt.loadNpmTasks("grunt-shell");
 	grunt.loadNpmTasks("grunt-ts");
+	grunt.loadNpmTasks("grunt-tslint");
 
 	grunt.registerTask("set_package_version", function(version) {
 		var buildVersion = getBuildVersion(version);
@@ -167,6 +179,6 @@ module.exports = function(grunt) {
 		"shell:build_package",
 		"setPackageName"
 	]);
-
+	grunt.registerTask("lint", ["tslint:build"]);
 	grunt.registerTask("default", "ts:devlib");
 };
