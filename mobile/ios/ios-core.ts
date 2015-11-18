@@ -1131,8 +1131,12 @@ export class GDBServer implements Mobile.IGDBServer {
 				this.send("vCont;c");
 			} else {
 				if (this.$options.justlaunch) {
-					// Disconnecting the debugger closes the socket and allows the process to quit
-					this.sendCore(this.encodeData("vCont;c"));
+					if (this.$options.watch) {
+						this.sendCore(this.encodeData("vCont;c"));
+					} else {
+						// Disconnecting the debugger closes the socket and allows the process to quit
+						this.sendCore(this.encodeData("D"));
+					}
 				} else {
 					this.socket.pipe(new GDBStandardOutputAdapter()).pipe(process.stdout);
 					this.socket.pipe(new GDBSignalWatcher());

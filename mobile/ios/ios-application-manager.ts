@@ -89,9 +89,6 @@ export class IOSApplicationManager implements Mobile.IDeviceApplicationManager {
 		return (() => {
 			this.stopApplication(applicationId).wait();
 			this.runApplicationCore(applicationId).wait();
-			if (!this.$options.watch) {
-				this._gdbServer.destroy();
-			}
 		}).future<void>()();
 	}
 
