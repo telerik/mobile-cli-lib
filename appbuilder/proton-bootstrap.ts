@@ -27,7 +27,7 @@ $injector.register("deviceAppDataProvider", {
 				WP8: {
 					vanilla: ""
 				}
-			}
+			};
 		}
 	}
 );
