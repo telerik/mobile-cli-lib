@@ -33,9 +33,7 @@ class DeviceEmitter extends EventEmitter {
 				this.emit("deviceLost", data.deviceInfo);
 			});
 
-			fiberBootstrap.run(() => {
-				this.$devicesService.initialize({skipInferPlatform: true}).wait();
-			});
+			this.$devicesService.initialize({skipInferPlatform: true}).wait();
 
 			this.$deviceLogProvider.on("data", (identifier: string, data: any) => {
 				this.emit('deviceLogData', identifier, data.toString());
