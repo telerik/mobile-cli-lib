@@ -2,7 +2,6 @@
 "use strict";
 
 import { EventEmitter } from "events";
-import * as fiberBootstrap from "../fiber-bootstrap";
 
 class DeviceEmitter extends EventEmitter {
 	constructor(private $androidDeviceDiscovery:Mobile.IAndroidDeviceDiscovery,
