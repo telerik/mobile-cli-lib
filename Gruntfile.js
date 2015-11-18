@@ -171,6 +171,7 @@ module.exports = function(grunt) {
 
 	grunt.registerTask("test", ["ts:devall", "shell:ci_unit_tests"]);
 	grunt.registerTask("pack", [
+		"tslint:build",
 		"ts:release_build",
 		"shell:ci_unit_tests",
 
