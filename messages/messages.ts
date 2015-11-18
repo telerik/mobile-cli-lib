@@ -13,4 +13,3 @@ export class Messages implements IMessages{
 
 }
 $injector.register('messages', Messages);
-

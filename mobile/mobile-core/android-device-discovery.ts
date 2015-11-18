@@ -23,7 +23,6 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 		private $injector: IInjector,
 		private $staticConfig: Config.IStaticConfig) {
 		super();
-		this.ensureAdbServerStarted().wait();
 	}
 
 	private createAndAddDevice(deviceIdentifier: string): void {
@@ -38,6 +37,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 	}
 
 	public startLookingForDevices(): IFuture<void> {
+		this.ensureAdbServerStarted().wait();
 		let blockingFuture = new Future<void>();
 		return this.checkForDevices(blockingFuture);
 	}
