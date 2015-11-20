@@ -6,7 +6,10 @@ export class AndroidApplicationManager implements Mobile.IDeviceApplicationManag
 	private _installedApplications: string[];
 
 	constructor(private adb: Mobile.IAndroidDebugBridge,
-		private $staticConfig: Config.IStaticConfig) { }
+		private identifier: string,
+		private $staticConfig: Config.IStaticConfig,
+		private $options: ICommonOptions,
+		private $logcatHelper: Mobile.ILogcatHelper) { }
 
 	public getInstalledApplications(): IFuture<string[]> {
 		return (() => {
@@ -41,10 +44,15 @@ export class AndroidApplicationManager implements Mobile.IDeviceApplicationManag
 	}
 
 	public startApplication(appIdentifier: string): IFuture<void> {
-		return this.adb.executeShellCommand(["am", "start",
-			"-a", "android.intent.action.MAIN",
-			"-n", `${appIdentifier}/${this.$staticConfig.START_PACKAGE_ACTIVITY_NAME}`,
-			"-c", "android.intent.category.LAUNCHER"]);
+		return (() => {
+			this.adb.executeShellCommand(["am", "start",
+				"-a", "android.intent.action.MAIN",
+				"-n", `${appIdentifier}/${this.$staticConfig.START_PACKAGE_ACTIVITY_NAME}`,
+				"-c", "android.intent.category.LAUNCHER"]).wait();
+			if (!this.$options.justlaunch) {
+				this.$logcatHelper.start(this.identifier);
+			}
+		}).future<void>()();
 	}
 
 	public stopApplication(appIdentifier: string): IFuture<void> {
