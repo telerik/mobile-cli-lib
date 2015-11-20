@@ -1213,7 +1213,7 @@ export class GDBServer implements Mobile.IGDBServer {
 					clearInterval(timer);
 				}
 
-				if (!retryCount) {
+				if (!retryCount && !future.isResolved()) {
 					future.throw(new Error("Unable to kill the application."));
 				}
 			}, 1000);
@@ -1225,7 +1225,9 @@ export class GDBServer implements Mobile.IGDBServer {
 				isDataReceived = true;
 				this.socket.removeListener("data", dataCallback);
 				clearInterval(timer);
-				future.return(data.toString());
+				if(!future.isResolved()) {
+					future.return(data.toString());
+				}
 			}
 		};
 
