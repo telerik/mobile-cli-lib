@@ -300,8 +300,8 @@ declare module Mobile {
 
 	interface IiOSSimulatorService extends IEmulatorPlatformServices {
 		postDarwinNotification(notification: string): IFuture<void>;
-		sync(appIdentifier: string, projectFilesPath: string, notRunningSimulatorAction: () => IFuture<void>): IFuture<void>;
-		syncFiles(appIdentifier: string, projectFilesPath: string,  projectFiles: string[], notRunningSimulatorAction: () => IFuture<void>, relativeToProjectBasePathAction?: (projectFile: string) => string): IFuture<void>;
+		sync(appIdentifier: string, projectFilesPath: string, notRunningSimulatorAction: () => IFuture<void>, getApplicationPathForiOSSimulatorAction: () => IFuture<string>): IFuture<void>;
+		syncFiles(appIdentifier: string, projectFilesPath: string,  projectFiles: string[], notRunningSimulatorAction: () => IFuture<void>, getApplicationPathForiOSSimulatorAction: () => IFuture<string>, relativeToProjectBasePathAction?: (projectFile: string) => string): IFuture<void>;
 		isSimulatorRunning(): IFuture<boolean>;
 		transferFiles(appIdentifier: string, projectFiles: string[], relativeToProjectBasePathAction?: (_projectFile: string) => string, applicationPath?: string): IFuture<void>
 	}
