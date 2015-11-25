@@ -366,10 +366,11 @@ interface ISysInfoData {
 interface ISysInfo {
 	/**
 	 * Returns information for the current system.
+	 * @param {string} pathToPackageJson Path to package.json of the CLI.
 	 * @param {any} androidToolsInfo Defines paths to adb and android executables.
 	 * @return {IFuture<ISysInfoData>} Object containing information for current system.
 	 */
-	getSysInfo(androidToolsInfo?: {pathToAdb: string, pathToAndroid: string}): IFuture<ISysInfoData>;
+	getSysInfo(pathToPackageJson: string, androidToolsInfo?: {pathToAdb: string, pathToAndroid: string}): IFuture<ISysInfoData>;
 }
 
 interface IHostInfo {
@@ -558,4 +559,105 @@ interface IResourceLoader {
 interface IPluginVariablesHelper {
 	getPluginVariableFromVarOption(variableName: string, configuration?: string): any;
 	simplifyYargsObject(obj: any, configuration?: string): any;
+}
+
+/**
+ * Describes Registry values returned from winreg
+ */
+interface IWinRegResult {
+	/**
+	 * The hostname, if it has been set in the options.
+	 */
+	host: string;
+
+	/**
+	 * The hive id, as specified in the options
+	 */
+	hive: string;
+	/**
+	 * The key, as specified in the options
+	 */
+	key: string;
+
+	/**
+	 * The name of the registry value
+	 */
+	name: string;
+
+	/**
+	 * One of the types:
+	 * 	REG_SZ a string value
+	 * 	REG_MULTI_SZ a multiline string value
+	 * 	REG_EXPAND_SZ an expandable string value
+	 * 	REG_DWORD a double word value (32 bit integer)
+	 * 	REG_QWORD a quad word value (64 bit integer)
+	 * 	REG_BINARY a binary value
+	 * 	REG_NONE a value of unknown type
+	 */
+	type: string;
+
+	/**
+	 * A string containing the value
+	 */
+	value: string;
+}
+
+/**
+ * Describes single registry available for search.
+ */
+interface IHiveId {
+	/**
+	 * Name of the registry that will be checked.
+	 */
+	registry: string;
+}
+
+/**
+ * Describes available for search registry ids.
+ */
+interface IHiveIds {
+	/**
+	 * HKEY_LOCAL_MACHINE
+	 */
+	HKLM: IHiveId;
+
+	/**
+	 * HKEY_CURRENT_USER
+	 */
+	HKCU: IHiveId;
+
+	/**
+	 * HKEY_CLASSES_ROOT
+	 */
+	HKCR: IHiveId;
+
+	/**
+	 * HKEY_CURRENT_CONFIG
+	 */
+	HKCC: IHiveId;
+
+	/**
+	 * HKEY_USERS
+	 */
+	HKU: IHiveId;
+}
+
+/**
+ * Defines reading values from registry. Wrapper for node-winreg module.s
+ */
+interface IWinReg {
+	/**
+	 * Gets specified value from the registry.
+	 * The following options are processed by the Winreg constructor:
+	 * @param {string} valueName Value that has to be checked in the registry.
+	 * @param {IHiveId} hive The optional hive id, the default is HKLM.
+	 * @param {string} key The optional key, the default is the root key
+	 * @param {string} host The optional hostname, must start with the '\\' sequence
+	 */
+	getRegistryValue(valueName: string, hive?: IHiveId, key?: string, host?: string): IFuture<IWinRegResult>;
+
+	/**
+	 * Gets object containing available registries for search.
+	 */
+	registryKeys: IHiveIds;
 }

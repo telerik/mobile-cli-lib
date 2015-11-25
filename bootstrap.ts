@@ -100,3 +100,4 @@ $injector.requireCommand("doctor", "./commands/doctor");
 
 $injector.require("utils", "./utils");
 $injector.require("bplistParser", "./bplist-parser");
+$injector.require("winreg", "./winreg");
