@@ -25,6 +25,10 @@ function cmdQuote(s: string): string {
 }
 
 export function quoteString(s: string): string {
+	if (!s) {
+		return s;
+	}
+
 	return (platform() === "win32") ? cmdQuote(s) : bashQuote(s);
 }
 
