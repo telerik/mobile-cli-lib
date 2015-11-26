@@ -2,6 +2,7 @@
 "use strict";
 
 import * as path from "path";
+import * as temp from "temp";
 import future = require("fibers/future");
 
 export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
@@ -9,7 +10,8 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		private identifier: string,
 		private $fs: IFileSystem,
 		private $logger: ILogger,
-		private $deviceAppDataFactory: Mobile.IDeviceAppDataFactory) { }
+		private $deviceAppDataFactory: Mobile.IDeviceAppDataFactory,
+		private $mobileHelper: Mobile.IMobileHelper) { }
 
 	public listFiles(devicePath: string): IFuture<void> {
 		return future.fromResult();
@@ -45,8 +47,10 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		return (() => {
 			this.adb.executeCommand(["push", projectFilesPath, deviceAppData.deviceProjectRootPath]).wait();
 
-			let command = _.map(localToDevicePaths, (localToDevicePathData) => localToDevicePathData.getDevicePath()).join(" ");
-			this.adb.executeCommand(["chmod", "0777", command]).wait();
+			let command = _.map(localToDevicePaths, (localToDevicePathData) => `"${localToDevicePathData.getDevicePath()}"`).join(" ");
+			let commandsDeviceFilePath = this.$mobileHelper.buildDevicePath(deviceAppData.deviceProjectRootPath, "nativescript.commands.sh");
+			this.createFileOnDevice(commandsDeviceFilePath, command).wait();
+			this.adb.executeShellCommand([commandsDeviceFilePath]).wait();
 		}).future<void>()();
 	}
 
@@ -61,4 +65,22 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 			}
 		}).future<void>()();
 	}
+
+	public createFileOnDevice(deviceFilePath: string, fileContent: string): IFuture<void> {
+		return (() => {
+			let hostTmpDir = this.getTempDir();
+			let commandsFileHostPath = path.join(hostTmpDir, "temp.commands.file");
+			this.$fs.writeFile(commandsFileHostPath, fileContent).wait();
+
+			// copy it to the device
+			this.transferFile(commandsFileHostPath, deviceFilePath).wait();
+			this.adb.executeShellCommand(["chmod", "0777", deviceFilePath]).wait();
+		}).future<void>()();
+	}
+
+	private getTempDir(): string {
+		temp.track();
+		return temp.mkdirSync("application-");
+	}
+
 }

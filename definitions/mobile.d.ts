@@ -85,6 +85,7 @@ declare module Mobile {
 		transferFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void>;
 		transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): IFuture<void>;
 		transferFile?(localFilePath: string, deviceFilePath: string): IFuture<void>;
+		createFileOnDevice?(deviceFilePath: string, fileContent: string): IFuture<void>;
 	}
 
 	interface IAndroidDebugBridge {
