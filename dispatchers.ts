@@ -2,6 +2,7 @@
 "use strict";
 
 import * as queue from "./queue";
+import * as path from "path";
 
 export class CommandDispatcher implements ICommandDispatcher {
 	constructor(private $logger: ILogger,
@@ -19,7 +20,8 @@ export class CommandDispatcher implements ICommandDispatcher {
 			}
 
 			if (this.$logger.getLevel() === "TRACE") {
-				let sysInfo = this.$sysInfo.getSysInfo().wait();
+				// CommandDispatcher is called from external CLI's only, so pass the path to their package.json
+				let sysInfo = this.$sysInfo.getSysInfo(path.join(__dirname, "..", "..", "package.json")).wait();
 				this.$logger.trace("System information:");
 				this.$logger.trace(sysInfo);
 			}
