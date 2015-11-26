@@ -227,6 +227,22 @@ describe("sysInfoBase", () => {
 				};
 			});
 
+			describe("when android info is incorrect", () => {
+				it("pathToAdb and pathToAndroid are null", () => {
+					childProcessResult.adbVersion = {
+						result: null
+					};
+					childProcessResult.androidInstalled = {
+						result: false
+					};
+					testInjector = createTestInjector(childProcessResult, {isWindows: false, isDarwin: false, dotNetVersion: "4.5.1"}, null);
+					sysInfoBase = testInjector.resolve("sysInfoBase");
+					let result = sysInfoBase.getSysInfo(toolsPackageJson, {pathToAdb: null, pathToAndroid: null}).wait();
+					assert.deepEqual(result.adbVer, null);
+					assert.deepEqual(result.androidInstalled, false);
+				});
+			});
+
 			describe("when all of calls throw", () => {
 				let assertAllValuesAreNull = () => {
 					sysInfoBase = testInjector.resolve("sysInfoBase");
