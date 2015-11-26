@@ -301,6 +301,7 @@ interface ILiveSyncData {
 	platformSpecificLiveSyncServices: IDictionary<any>;
 	notInstalledAppOnDeviceAction: (device: Mobile.IDevice) => IFuture<void>;
 	notRunningiOSSimulatorAction: () => IFuture<void>;
+	getApplicationPathForiOSSimulatorAction: () => IFuture<string>;
 	localProjectRootPath?: string;
 	beforeLiveSyncAction?: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData) => IFuture<void>;
 	beforeBatchLiveSyncAction?: (filePath: string) => IFuture<string>;

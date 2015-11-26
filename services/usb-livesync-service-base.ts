@@ -82,8 +82,8 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 		return (() => {
 			let synciOSSimulator = this.shouldSynciOSSimulator(data.platform).wait();
 
-			if(synciOSSimulator) {
-				this.$iOSEmulatorServices.sync(data.appIdentifier, data.projectFilesPath, data.notRunningiOSSimulatorAction).wait();
+			if (synciOSSimulator) {
+				this.$iOSEmulatorServices.sync(data.appIdentifier, data.projectFilesPath, data.notRunningiOSSimulatorAction, data.getApplicationPathForiOSSimulatorAction).wait();
 			}
 
 			if (!this.$options.emulator || data.platform.toLowerCase() === "android") {
@@ -247,7 +247,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 			if (!this.batch || !this.batch.syncPending) {
 				this.batch = new SyncBatch(
 					this.$logger, this.$dispatcher, (filesToSync) => {
-						this.$iOSEmulatorServices.syncFiles(data.appIdentifier, data.projectFilesPath, filesToSync, data.notRunningiOSSimulatorAction, data.iOSSimulatorRelativeToProjectBasePathAction);
+						this.$iOSEmulatorServices.syncFiles(data.appIdentifier, data.projectFilesPath, filesToSync, data.notRunningiOSSimulatorAction,  data.getApplicationPathForiOSSimulatorAction, data.iOSSimulatorRelativeToProjectBasePathAction);
 					}
 				);
 			}
