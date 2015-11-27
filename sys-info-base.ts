@@ -3,7 +3,6 @@
 
 import * as os from "os";
 import * as osenv from "osenv";
-import Future = require("fibers/future");
 import * as path from "path";
 import {quoteString} from "./helpers";
 
@@ -11,18 +10,19 @@ export class SysInfoBase implements ISysInfo {
 	constructor(protected $childProcess: IChildProcess,
 				protected $hostInfo: IHostInfo,
 				protected $iTunesValidator: Mobile.IiTunesValidator,
-				protected $logger: ILogger) { }
+				protected $logger: ILogger,
+				protected $winreg: IWinReg) { }
 
-	private static monoVerRegExp = /version (\d+[.]\d+[.]\d+) /gm;
+	private monoVerRegExp = /version (\d+[.]\d+[.]\d+) /gm;
 	private sysInfoCache: ISysInfoData = undefined;
 
-	public getSysInfo(androidToolsInfo?: {pathToAdb: string, pathToAndroid: string}): IFuture<ISysInfoData> {
+	public getSysInfo(pathToPackageJson: string, androidToolsInfo?: {pathToAdb: string, pathToAndroid: string}): IFuture<ISysInfoData> {
 		return((): ISysInfoData => {
 			if (!this.sysInfoCache) {
 				let res: ISysInfoData = Object.create(null);
 				let procOutput: string;
 
-				let packageJson = require("../../package.json");
+				let packageJson = require(pathToPackageJson);
 				res.procInfo = packageJson.name + "/" + packageJson.version;
 
 				// os stuff
@@ -39,7 +39,7 @@ export class SysInfoBase implements ISysInfo {
 				res.procArch = process.arch;
 				res.nodeVer = process.version;
 
-				procOutput = this.$childProcess.exec("npm -v").wait();
+				procOutput = this.exec("npm -v");
 				res.npmVer = procOutput ? procOutput.split("\n")[0] : null;
 
 				// dependencies
@@ -70,7 +70,7 @@ export class SysInfoBase implements ISysInfo {
 
 				procOutput = this.exec("mono --version");
 				if (!!procOutput) {
-					let match = SysInfoBase.monoVerRegExp.exec(procOutput);
+					let match = this.monoVerRegExp.exec(procOutput);
 					res.monoVer = match ? match[1] : null;
 				} else {
 					res.monoVer = null;
@@ -115,30 +115,25 @@ export class SysInfoBase implements ISysInfo {
 	}
 
 	private winVer(): string {
-		return this.readRegistryValue("ProductName").wait() + " " +
-				this.readRegistryValue("CurrentVersion").wait() + "." +
-				this.readRegistryValue("CurrentBuild").wait();
+		try {
+			return this.readRegistryValue("ProductName").wait() + " " +
+					this.readRegistryValue("CurrentVersion").wait() + "." +
+					this.readRegistryValue("CurrentBuild").wait();
+		} catch (err) {
+			this.$logger.trace(err);
+		}
+
+		return null;
 	}
 
 	private readRegistryValue(valueName: string): IFuture<string> {
-		let future = new Future<string>();
-		let Winreg = require("winreg");
-		let regKey = new Winreg({
-			hive: Winreg.HKLM,
-			key:  '\\Software\\Microsoft\\Windows NT\\CurrentVersion'
-		});
-		regKey.get(valueName, (err: Error, value: any) => {
-			if (err) {
-				future.throw(err);
-			} else {
-				future.return(value.value);
-			}
-		});
-		return future;
+		return ((): string => {
+			return this.$winreg.getRegistryValue(valueName, this.$winreg.registryKeys.HKLM, '\\Software\\Microsoft\\Windows NT\\CurrentVersion').wait().value;
+		}).future<string>()();
 	}
 
 	private unixVer(): string {
-		return this.$childProcess.exec("uname -a").wait();
+		return this.exec("uname -a");
 	}
 
 	private getJavaCompilerVersion(): IFuture<string> {
@@ -156,13 +151,15 @@ export class SysInfoBase implements ISysInfo {
 	private getCocoapodVersion(): string {
 		if(this.$hostInfo.isDarwin) {
 			let cocoapodVersion = this.exec("pod --version");
-			// Output of pod --version could contain some warnings. Find the version in it.
-			let cocoapodVersionMatch = cocoapodVersion.match(/^((?:\d+\.){2}\d+.*?)$/gm);
-			if(cocoapodVersionMatch && cocoapodVersionMatch[0]) {
-				cocoapodVersion = cocoapodVersionMatch[0].trim();
-			}
+			if(cocoapodVersion) {
+				// Output of pod --version could contain some warnings. Find the version in it.
+				let cocoapodVersionMatch = cocoapodVersion.match(/^((?:\d+\.){2}\d+.*?)$/gm);
+				if(cocoapodVersionMatch && cocoapodVersionMatch[0]) {
+					cocoapodVersion = cocoapodVersionMatch[0].trim();
+				}
 
-			return cocoapodVersion;
+				return cocoapodVersion;
+			}
 		}
 
 		return null;
