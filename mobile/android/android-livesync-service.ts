@@ -1,9 +1,6 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 
-import * as path from "path";
-import * as temp from "temp";
-
 class LiveSyncCommands {
 	public static DeployProjectCommand(liveSyncUrl: string): string {
 		return `DeployProject ${liveSyncUrl} \r`;
@@ -43,19 +40,6 @@ export class AndroidLiveSyncService implements Mobile.IAndroidLiveSyncService {
 	}
 
 	public createCommandsFileOnDevice(commandsFileDevicePath: string, commands: string[]): IFuture<void> {
-		return (() => {
-			let hostTmpDir = this.getTempDir();
-			let commandsFileHostPath = path.join(hostTmpDir, AndroidLiveSyncService.COMMANDS_FILE);
-			this.$fs.writeFile(commandsFileHostPath, commands.join("\n")).wait();
-
-			// copy it to the device
-			this.device.fileSystem.transferFile(commandsFileHostPath, commandsFileDevicePath).wait();
-			this.device.adb.executeShellCommand(["chmod", "0777", `${commandsFileDevicePath}`]).wait();
-		}).future<void>()();
-	}
-
-	private getTempDir(): string {
-		temp.track();
-		return temp.mkdirSync("ab-");
+		return this.device.fileSystem.createFileOnDevice(commandsFileDevicePath, commands.join("\n"));
 	}
 }
