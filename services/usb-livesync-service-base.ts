@@ -167,6 +167,10 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 
 	private processRemovedFile(data: ILiveSyncData, filePath: string): void {
 		this.$dispatcher.dispatch(() => (() => {
+			if (!this.isInitialized) {
+				this.$devicesService.initialize({ platform: data.platform, deviceId: this.$options.device }).wait();
+			}
+
 			let action = (device: Mobile.IDevice) => {
 				return (() => {
 					let fileToSync = data.beforeBatchLiveSyncAction ? data.beforeBatchLiveSyncAction(filePath).wait() : filePath;
