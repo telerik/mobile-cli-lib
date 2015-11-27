@@ -4,6 +4,7 @@
 import minimatch = require("minimatch");
 import * as path from "path";
 import * as util from "util";
+import * as moment from "moment";
 let gaze = require("gaze");
 
 interface IProjectFileInfo {
@@ -197,6 +198,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 			let action = (device: Mobile.IDevice) => {
 				return (() => {
 					if (deviceAppData.isLiveSyncSupported(device).wait()) {
+						this.$logger.info(`Start syncing application ${deviceAppData.appIdentifier} at ${moment().format("ll LTS")}.`);
 
 						if(data.beforeLiveSyncAction) {
 							data.beforeLiveSyncAction(device, deviceAppData).wait();
@@ -214,7 +216,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 						let platformSpecificLiveSyncService = this.resolvePlatformSpecificLiveSyncService(platform, device, data.platformSpecificLiveSyncServices);
 						platformSpecificLiveSyncService.restartApplication(deviceAppData, localToDevicePaths).wait();
 
-						this.$logger.info(`Successfully synced application ${deviceAppData.appIdentifier}.`);
+						this.$logger.info(`Successfully synced application ${deviceAppData.appIdentifier} at ${moment().format("ll LTS")}.`);
 					}
 				}).future<void>()();
 			};
