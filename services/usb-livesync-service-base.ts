@@ -4,6 +4,7 @@
 import minimatch = require("minimatch");
 import * as path from "path";
 import * as util from "util";
+import * as moment from "moment";
 let gaze = require("gaze");
 
 interface IProjectFileInfo {
@@ -166,6 +167,10 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 
 	private processRemovedFile(data: ILiveSyncData, filePath: string): void {
 		this.$dispatcher.dispatch(() => (() => {
+			if (!this.isInitialized) {
+				this.$devicesService.initialize({ platform: data.platform, deviceId: this.$options.device }).wait();
+			}
+
 			let action = (device: Mobile.IDevice) => {
 				return (() => {
 					let fileToSync = data.beforeBatchLiveSyncAction ? data.beforeBatchLiveSyncAction(filePath).wait() : filePath;
@@ -197,6 +202,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 			let action = (device: Mobile.IDevice) => {
 				return (() => {
 					if (deviceAppData.isLiveSyncSupported(device).wait()) {
+						this.$logger.info(`Start syncing application ${deviceAppData.appIdentifier} at ${moment().format("ll LTS")}.`);
 
 						if(data.beforeLiveSyncAction) {
 							data.beforeLiveSyncAction(device, deviceAppData).wait();
@@ -214,7 +220,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 						let platformSpecificLiveSyncService = this.resolvePlatformSpecificLiveSyncService(platform, device, data.platformSpecificLiveSyncServices);
 						platformSpecificLiveSyncService.restartApplication(deviceAppData, localToDevicePaths).wait();
 
-						this.$logger.info(`Successfully synced application ${deviceAppData.appIdentifier}.`);
+						this.$logger.info(`Successfully synced application ${deviceAppData.appIdentifier} at ${moment().format("ll LTS")}.`);
 					}
 				}).future<void>()();
 			};
