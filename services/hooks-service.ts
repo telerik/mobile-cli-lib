@@ -66,9 +66,14 @@ export class HooksService implements IHooksService {
 
 	private executeHooks(hookName: string, hookArguments?: IDictionary<any>): IFuture<void> {
 		return (() => {
-			_.each(this.hooksDirectories, hooksDirectory => {
-				this.executeHooksInDirectory(hooksDirectory, hookName, hookArguments).wait();
-			});
+			try {
+				_.each(this.hooksDirectories, hooksDirectory => {
+					this.executeHooksInDirectory(hooksDirectory, hookName, hookArguments).wait();
+				});
+			} catch(err) {
+				this.$logger.trace("Failed during hook execution.");
+				this.$errors.failWithoutHelp(err.message);
+			}
 		}).future<void>()();
 	}
 
@@ -104,7 +109,7 @@ export class HooksService implements IHooksService {
 
 					let output = this.$childProcess.spawnFromEvent(command, [hook.fullPath], "close", environment, { throwError: false }).wait();
 					if (output.exitCode !== 0) {
-						this.$errors.fail(output.stdout + output.stderr);
+						throw new Error(output.stdout + output.stderr);
 					}
 				}
 			});
