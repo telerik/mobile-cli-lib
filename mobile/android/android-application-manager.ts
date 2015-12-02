@@ -57,4 +57,8 @@ export class AndroidApplicationManager implements Mobile.IDeviceApplicationManag
 			this.startApplication(appIdentifier).wait();
 		}).future<void>()();
 	}
+
+	public canStartApplication(): boolean {
+		return true;
+	}
 }
