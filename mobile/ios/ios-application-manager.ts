@@ -91,6 +91,10 @@ export class IOSApplicationManager implements Mobile.IDeviceApplicationManager {
 		}).future<void>()();
 	}
 
+	public canStartApplication(): boolean {
+		return this.$hostInfo.isDarwin || (this.$hostInfo.isWindows && this.$staticConfig.enableDeviceRunCommandOnWindows);
+	}
+
 	private lookupApplications(): IDictionary<Mobile.IDeviceApplication> {
 		let func = () => {
 			let dictionaryPointer = ref.alloc(CoreTypes.cfDictionaryRef);
