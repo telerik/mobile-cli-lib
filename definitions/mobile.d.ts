@@ -75,6 +75,7 @@ declare module Mobile {
 		startApplication(appIdentifier: string): IFuture<void>;
 		stopApplication(appIdentifier: string): IFuture<void>;
 		restartApplication(applicationId: string): IFuture<void>;
+		canStartApplication(): boolean;
 	}
 
 	interface IDeviceFileSystem {
