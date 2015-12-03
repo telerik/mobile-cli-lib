@@ -93,10 +93,14 @@ export class SysInfoBase implements ISysInfo {
 
 	private exec(cmd: string, execOptions?: IExecOptions): string | any {
 		try {
-			return this.$childProcess.exec(cmd, null, execOptions).wait();
+			if(cmd) {
+				return this.$childProcess.exec(cmd, null, execOptions).wait();
+			}
 		} catch(e) {
-			return null;
-		} // if we got an error, assume not working
+			// if we got an error, assume not working
+		}
+
+		return null;
 	}
 
 	// `android -h` returns exit code 1 on successful invocation (Mac OS X for now, possibly Linux). Therefore, we cannot use $childProcess
@@ -104,8 +108,10 @@ export class SysInfoBase implements ISysInfo {
 		return ((): boolean => {
 			let result = false;
 			try {
-				let androidChildProcess = this.$childProcess.spawnFromEvent(pathToAndroid, ["-h"], "close", {}, {throwError: false}).wait();
-				result = androidChildProcess && androidChildProcess.stdout && _.contains(androidChildProcess.stdout, "android");
+				if(pathToAndroid) {
+					let androidChildProcess = this.$childProcess.spawnFromEvent(pathToAndroid, ["-h"], "close", {}, {throwError: false}).wait();
+					result = androidChildProcess && androidChildProcess.stdout && _.contains(androidChildProcess.stdout, "android");
+				}
 			} catch(err) {
 				this.$logger.trace(`Error while checking is ${pathToAndroid} installed. Error is: ${err.messge}`);
 			}
