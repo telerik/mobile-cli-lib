@@ -2,6 +2,8 @@
 "use strict";
 
 import * as path from "path";
+import * as shelljs from "shelljs";
+import * as os from "os";
 
 export class StaticConfigBase implements Config.IStaticConfig {
 	public PROJECT_FILE_NAME: string = null;
@@ -52,22 +54,54 @@ export class StaticConfigBase implements Config.IStaticConfig {
 
 	private getAdbFilePathCore(): IFuture<string> {
 		return ((): string => {
-			let defaultAdbFilePath = path.join(__dirname, `resources/platform-tools/android/${process.platform}/adb`);
 			let $childProcess: IChildProcess = this.$injector.resolve("$childProcess");
 
 			try {
 				let proc = $childProcess.spawnFromEvent("adb", ["version"], "exit", undefined, { throwError: false }).wait();
 
 				if(proc.stderr) {
-					return defaultAdbFilePath;
+					return this.spawnPrivateAdb().wait();
 				}
 			} catch(e) {
 				if(e.code === "ENOENT") {
-					return defaultAdbFilePath;
+					return this.spawnPrivateAdb().wait();
 				}
 			}
 
 			return "adb";
+		}).future<string>()();
+	}
+
+	/*
+		Problem:
+		1. Adb forks itself as a server which keeps running until adb kill-server is invoked or crashes
+		2. On Windows running processes lock their image files due to memory mapping. Locked files prevent their parent directories from deletion and cannot be overwritten.
+		3. Update and uninstall scenarios are broken
+		Solution:
+		- Copy adb and associated files into a temporary directory. Let this copy of adb run persistently
+		- On Posix OSes, immediately delete the file to not take file space
+		- Tie common lib version to updates of adb, so that when we integrate a newer adb we can use it
+		- Adb is named differently on OSes and may have additional files. The code is hairy to accommodate these differences
+	 */
+	private spawnPrivateAdb(): IFuture<string> {
+		return (():string => {
+			let $fs: IFileSystem = this.$injector.resolve("$fs");
+			let $childProcess: IChildProcess = this.$injector.resolve("$childProcess");
+
+			// prepare the directory to host our copy of adb
+			let defaultAdbDirPath = path.join(__dirname, `resources/platform-tools/android/${process.platform}`);
+			let commonLibVersion = require(path.join(__dirname, "package.json")).version;
+			let tmpDir = path.join(os.tmpdir(), `telerik-common-lib-${commonLibVersion}`);
+			$fs.createDirectory(tmpDir).wait();
+
+			// copy the adb and associated files
+			shelljs.cp(path.join(defaultAdbDirPath, "*"), tmpDir); // deliberately ignore copy errors
+
+			// let adb start its global server
+			let targetAdb = path.join(tmpDir, "adb");
+			$childProcess.spawnFromEvent(targetAdb, ["start-server"], "exit", undefined, { throwError: false }).wait();
+
+			return targetAdb;
 		}).future<string>()();
 	}
 
