@@ -1,7 +1,7 @@
 {
   "name": "mobile-cli-lib",
   "preferGlobal": false,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "Telerik <support@telerik.com>",
   "description": "common lib used by different CLI",
   "bin": {
@@ -60,7 +60,7 @@
     "ref-struct": "https://github.com/telerik/ref-struct/tarball/v1.0.1.0-proton",
     "rimraf": "2.2.6",
     "semver": "4.3.4",
-    "shelljs": "0.5.1",
+    "shelljs": "0.5.3",
     "tabtab": "https://github.com/Icenium/node-tabtab/tarball/master",
     "temp": "0.8.1",
     "unzip": "0.1.11",
