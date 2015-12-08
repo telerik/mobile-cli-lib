@@ -167,28 +167,35 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 
 	private processRemovedFile(data: ILiveSyncData, filePath: string): void {
 		this.$dispatcher.dispatch(() => (() => {
-			if (!this.isInitialized) {
-				this.$devicesService.initialize({ platform: data.platform, deviceId: this.$options.device }).wait();
+			let synciOSSimulator = this.shouldSynciOSSimulator(data.platform).wait();
+			if (synciOSSimulator) {
+				let fileToSync = data.beforeBatchLiveSyncAction ? data.beforeBatchLiveSyncAction(filePath).wait() : filePath;
+				this.$iOSEmulatorServices.removeFiles(data.appIdentifier, data.projectFilesPath, [fileToSync], data.notRunningiOSSimulatorAction, data.getApplicationPathForiOSSimulatorAction, data.iOSSimulatorRelativeToProjectBasePathAction).wait();
+			} else {
+				if (!this.isInitialized) {
+					this.$devicesService.initialize({ platform: data.platform, deviceId: this.$options.device }).wait();
+				}
+
+				let action = (device: Mobile.IDevice) => {
+					return (() => {
+						let fileToSync = data.beforeBatchLiveSyncAction ? data.beforeBatchLiveSyncAction(filePath).wait() : filePath;
+						let localToDevicePaths = this.createLocalToDevicePaths(data.platform, data.appIdentifier, data.localProjectRootPath || data.projectFilesPath, [fileToSync]);
+						let platformSpecificLiveSyncService = this.resolvePlatformSpecificLiveSyncService(data.platform, device, data.platformSpecificLiveSyncServices);
+						platformSpecificLiveSyncService.removeFile(data.appIdentifier, localToDevicePaths).wait();
+
+						let canExecuteFastLiveSync = data.canExecuteFastLiveSync && data.canExecuteFastLiveSync(filePath);
+						if (canExecuteFastLiveSync) {
+							data.fastLiveSync(filePath);
+						} else {
+							let platform = data.platform ? this.$mobileHelper.normalizePlatformName(data.platform) : this.$devicesService.platform;
+							let deviceAppData =  this.$deviceAppDataFactory.create(data.appIdentifier, this.$mobileHelper.normalizePlatformName(platform));
+							platformSpecificLiveSyncService.restartApplication(deviceAppData, localToDevicePaths).wait();
+						}
+					}).future<void>()();
+				};
+
+				this.$devicesService.execute(action).wait();
 			}
-
-			let action = (device: Mobile.IDevice) => {
-				return (() => {
-					let fileToSync = data.beforeBatchLiveSyncAction ? data.beforeBatchLiveSyncAction(filePath).wait() : filePath;
-					let localToDevicePaths = this.createLocalToDevicePaths(data.platform, data.appIdentifier, data.localProjectRootPath || data.projectFilesPath, [fileToSync]);
-					let platformSpecificLiveSyncService = this.resolvePlatformSpecificLiveSyncService(data.platform, device, data.platformSpecificLiveSyncServices);
-					platformSpecificLiveSyncService.removeFile(data.appIdentifier, localToDevicePaths).wait();
-
-					let canExecuteFastLiveSync = data.canExecuteFastLiveSync && data.canExecuteFastLiveSync(filePath);
-					if (canExecuteFastLiveSync) {
-						data.fastLiveSync(filePath);
-					} else {
-						let platform = data.platform ? this.$mobileHelper.normalizePlatformName(data.platform) : this.$devicesService.platform;
-						let deviceAppData =  this.$deviceAppDataFactory.create(data.appIdentifier, this.$mobileHelper.normalizePlatformName(platform));
-						platformSpecificLiveSyncService.restartApplication(deviceAppData, localToDevicePaths).wait();
-					}
-				}).future<void>()();
-			};
-			this.$devicesService.execute(action).wait();
 		}).future<void>()());
 	}
 
