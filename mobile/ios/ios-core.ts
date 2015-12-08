@@ -16,6 +16,7 @@ import * as bplistParser from "bplist-parser";
 import * as string_decoder from "string_decoder";
 import * as stream from "stream";
 import * as assert from "assert";
+import {EOL} from "os";
 
 export class CoreTypes {
 	public static pointerSize = ref.types.size_t.size;
@@ -866,6 +867,21 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 													output += util.format(" PercentComplete: %s", message.PercentComplete);
 												}
 												this.$logger.out(output);
+
+												let errorMessage: string = "";
+												if (message.Error) {
+													errorMessage += `Error: ${message.Error} ${EOL}`;
+												}
+												if (message.ErrorDescription) {
+													errorMessage += `ErrorDescription: ${message.ErrorDescription} ${EOL}`;
+												}
+												if (message.ErrorDetail) {
+													errorMessage += `ErrorDetail: ${message.ErrorDetail} ${EOL}`;
+												}
+
+												if (errorMessage && !result.isResolved()) {
+													result.throw(new Error(errorMessage));
+												}
 
 												if (message.Status && message.Status === "Complete") {
 													if (!result.isResolved()) {
