@@ -72,20 +72,13 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		return this.syncCore(appIdentifier, notRunningSimulatorAction, syncAction, getApplicationPathForiOSSimulatorAction);
 	}
 
-	public removeFiles(appIdentifier: string, projectFilesPath: string, projectFiles: string[], notRunningSimulatorAction: () => IFuture<void>, getApplicationPathForiOSSimulatorAction: () => IFuture<string>, relativeToProjectBasePathAction?: (_projectFile: string) => string): IFuture<void> {
-		let syncAction = (applicationPath: string) => this.removeFilesCore(appIdentifier, applicationPath, projectFilesPath, projectFiles, relativeToProjectBasePathAction);
-		return this.syncCore(appIdentifier, notRunningSimulatorAction, syncAction, getApplicationPathForiOSSimulatorAction);
-	}
-
-	private removeFilesCore(appIdentifier: string, applicationPath: string, projectFilesPath: string, projectFiles: string[], relativeToProjectBasePathAction?: (_projectFile: string) => string): IFuture<void> {
-		return (() => {
-			applicationPath = applicationPath || this.getApplicationPath(appIdentifier);
-			_.each(projectFiles, projectFile => {
-				let destinationFilePath = path.join(applicationPath, relativeToProjectBasePathAction(projectFile), path.relative(projectFilesPath, projectFile));
-				this.$logger.trace(`Deleting ${destinationFilePath}.`);
-				shell.rm(destinationFilePath);
-			});
-		}).future<void>()();
+	public removeFiles(appIdentifier: string, projectFilesPath: string, projectFiles: string[], relativeToProjectBasePathAction?: (_projectFile: string) => string): void {
+		let applicationPath = this.getApplicationPath(appIdentifier);
+		_.each(projectFiles, projectFile => {
+			let destinationFilePath = path.join(applicationPath, relativeToProjectBasePathAction(projectFile), path.basename(projectFile));
+			this.$logger.trace(`Deleting ${destinationFilePath}.`);
+			shell.rm(destinationFilePath);
+		});
 	}
 
 	public transferFiles(appIdentifier: string, projectFiles: string[], relativeToProjectBasePathAction?: (_projectFile: string) => string, applicationPath?: string): IFuture<void> {
@@ -108,6 +101,22 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 				return false;
 			}
 		}).future<boolean>()();
+	}
+
+	public restartApplication(appIdentifier: string, getApplicationPathForiOSSimulatorAction: () => IFuture<string>): IFuture<void> {
+		return (() => {
+			let runningSimulatorId = this.getRunningSimulatorId(appIdentifier);
+			let applicationPath = this.getApplicationPath(appIdentifier);
+
+			if (applicationPath) {
+				this.killApplication(path.basename(applicationPath)).wait();
+			} else {
+				let app = getApplicationPathForiOSSimulatorAction().wait();
+				this.$childProcess.exec(`xcrun simctl install ${runningSimulatorId} ${app}`).wait();
+			}
+
+			this.launchApplication(runningSimulatorId, appIdentifier);
+		}).future<void>()();
 	}
 
 	private _iosSim: IiOSSim = null;
@@ -187,25 +196,13 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 			let applicationPath = this.getApplicationPath(appIdentifier);
 			if (applicationPath) {
 				syncAction(applicationPath).wait();
-
-				let applicationName = path.basename(applicationPath);
-
-				try {
-					this.$childProcess.exec(`killall ${applicationName.split(".")[0]}`).wait();
-				} catch(e) {
-					this.$logger.trace("Unable to kill simulator: " + e);
-				}
+				this.killApplication(path.basename(applicationPath)).wait();
 			} else {
 				let app = getApplicationPathForiOSSimulatorAction().wait();
 				this.$childProcess.exec(`xcrun simctl install ${runningSimulatorId} ${app}`).wait();
 			}
 
-			setTimeout(() => {
-				// Killall doesn't always finish immediately, and the subsequent
-				// start fails since the app is already running.
-				// Give it some time to die before we attempt restarting.
-				this.$childProcess.exec(`xcrun simctl launch ${runningSimulatorId} ${appIdentifier}`);
-			}, 500);
+			this.launchApplication(runningSimulatorId, appIdentifier);
 		}).future<void>()();
 	}
 
@@ -219,6 +216,25 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		let runningSimulator = this.iosSim.getRunningSimulator(appIdentifier);
 		let runningSimulatorId = runningSimulator.id;
 		return runningSimulatorId;
+	}
+
+	private killApplication(applicationName: string): IFuture<void> {
+		return (() => {
+			try {
+				this.$childProcess.exec(`killall ${applicationName.split(".")[0]}`).wait();
+			} catch(e) {
+				this.$logger.trace(`Unable to kill simulator: ${e}`);
+			}
+		}).future<void>()();
+	}
+
+	private launchApplication(runningSimulatorId: string, appIdentifier: string): void {
+		setTimeout(() => {
+			// Killall doesn't always finish immediately, and the subsequent
+			// start fails since the app is already running.
+			// Give it some time to die before we attempt restarting.
+			this.$childProcess.exec(`xcrun simctl launch ${runningSimulatorId} ${appIdentifier}`);
+		}, 500);
 	}
 }
 $injector.register("iOSEmulatorServices", IosEmulatorServices);

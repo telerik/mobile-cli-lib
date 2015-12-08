@@ -188,7 +188,15 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 			let synciOSSimulator = this.shouldSynciOSSimulator(data.platform).wait();
 			if (synciOSSimulator) {
 				let fileToSync = data.beforeBatchLiveSyncAction ? data.beforeBatchLiveSyncAction(filePath).wait() : filePath;
-				this.$iOSEmulatorServices.removeFiles(data.appIdentifier, data.projectFilesPath, [fileToSync], data.notRunningiOSSimulatorAction, data.getApplicationPathForiOSSimulatorAction, data.iOSSimulatorRelativeToProjectBasePathAction).wait();
+				this.$iOSEmulatorServices.removeFiles(data.appIdentifier, data.projectFilesPath, [fileToSync], data.iOSSimulatorRelativeToProjectBasePathAction);
+
+				let canExecuteFastLiveSync = data.canExecuteFastLiveSync && data.canExecuteFastLiveSync(filePath);
+				if (canExecuteFastLiveSync) {
+					let platformSpecificUsbLiveSyncService = <any>this.resolvePlatformSpecificLiveSyncService(data.platform || this.$devicesService.platform, null, data.platformSpecificLiveSyncServices);
+					platformSpecificUsbLiveSyncService.sendPageReloadMessageToSimulator().wait();
+				} else {
+					this.$iOSEmulatorServices.restartApplication(data.appIdentifier, data.getApplicationPathForiOSSimulatorAction).wait();
+				}
 			} else {
 				if (!this.isInitialized) {
 					this.$devicesService.initialize({ platform: data.platform, deviceId: this.$options.device }).wait();
