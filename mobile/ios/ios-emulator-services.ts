@@ -72,6 +72,22 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		return this.syncCore(appIdentifier, notRunningSimulatorAction, syncAction, getApplicationPathForiOSSimulatorAction);
 	}
 
+	public removeFiles(appIdentifier: string, projectFilesPath: string, projectFiles: string[], notRunningSimulatorAction: () => IFuture<void>, getApplicationPathForiOSSimulatorAction: () => IFuture<string>, relativeToProjectBasePathAction?: (_projectFile: string) => string): IFuture<void> {
+		let syncAction = (applicationPath: string) => this.removeFilesCore(appIdentifier, applicationPath, projectFilesPath, projectFiles, relativeToProjectBasePathAction);
+		return this.syncCore(appIdentifier, notRunningSimulatorAction, syncAction, getApplicationPathForiOSSimulatorAction);
+	}
+
+	private removeFilesCore(appIdentifier: string, applicationPath: string, projectFilesPath: string, projectFiles: string[], relativeToProjectBasePathAction?: (_projectFile: string) => string): IFuture<void> {
+		return (() => {
+			applicationPath = applicationPath || this.getApplicationPath(appIdentifier);
+			_.each(projectFiles, projectFile => {
+				let destinationFilePath = path.join(applicationPath, relativeToProjectBasePathAction(projectFile), path.relative(projectFilesPath, projectFile));
+				this.$logger.trace(`Deleting ${destinationFilePath}.`);
+				shell.rm(destinationFilePath);
+			});
+		}).future<void>()();
+	}
+
 	public transferFiles(appIdentifier: string, projectFiles: string[], relativeToProjectBasePathAction?: (_projectFile: string) => string, applicationPath?: string): IFuture<void> {
 		return (() => {
 			applicationPath = applicationPath || this.getApplicationPath(appIdentifier);
