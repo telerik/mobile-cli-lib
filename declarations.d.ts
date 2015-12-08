@@ -87,7 +87,7 @@ interface IFileSystem {
 	chmod(path: string, mode: string): IFuture<any>;
 
 	setCurrentUserAsOwner(path: string, owner: string): IFuture<void>;
-	enumerateFilesInDirectorySync(directoryPath: string, filterCallback?: (file: string, stat: IFsStats) => boolean, opts?: { enumerateDirectories?: boolean }): string[];
+	enumerateFilesInDirectorySync(directoryPath: string, filterCallback?: (file: string, stat: IFsStats) => boolean, opts?: { enumerateDirectories?: boolean, includeEmptyDirectories?: boolean }): string[];
 	getFileShasum(fileName: string): IFuture<string>;
 }
 
