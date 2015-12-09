@@ -20,32 +20,41 @@ class SyncBatch {
 	constructor(
 		private $logger: ILogger,
 		private $dispatcher: IFutureDispatcher,
-		private done: (filesToSync: Array<string>) => void) {
+		private done: () => void) {
+	}
+
+	public get filesToSync(): string[] {
+		return this.syncQueue;
+	}
+
+	public get syncPending() {
+		return this.syncQueue.length > 0;
+	}
+
+	public reset(): void {
+		this.syncQueue = [];
+	}
+
+	public addFile(filePath: string): void {
+		console.log('addFile: ' + filePath);
+		if (this.timer) {
+			clearTimeout(this.timer);
 		}
 
-		public addFile(filePath: string): void {
-			if (this.timer) {
-				clearTimeout(this.timer);
+		this.syncQueue.push(filePath);
+
+		this.timer = setTimeout(() => {
+			if (this.syncQueue.length > 0) {
+				this.$logger.trace("Syncing %s", this.syncQueue.join(", "));
+				this.$dispatcher.dispatch( () => {
+					return (() => {
+						this.done()
+					}).future<void>()();
+				});
 			}
-
-			this.syncQueue.push(filePath);
-
-			this.timer = setTimeout(() => {
-				let filesToSync = this.syncQueue;
-				if (filesToSync.length > 0) {
-					this.syncQueue = [];
-					this.$logger.trace("Syncing %s", filesToSync.join(", "));
-					this.$dispatcher.dispatch( () => {
-						return (() => this.done(filesToSync)).future<void>()();
-					});
-				}
-				this.timer = null;
-			}, 250); // https://github.com/Microsoft/TypeScript/blob/master/src/compiler/tsc.ts#L487-L489
-		}
-
-		public get syncPending() {
-			return this.syncQueue.length > 0;
-		}
+			this.timer = null;
+		}, 250); // https://github.com/Microsoft/TypeScript/blob/master/src/compiler/tsc.ts#L487-L489
+	}
 }
 
 export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
@@ -157,6 +166,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 		return (() => {
 			this.$logger.info("Transferring project files...");
 			if(batchLiveSync) {
+				console.log(localToDevicePaths);
 				device.fileSystem.transferFiles(deviceAppData.appIdentifier, localToDevicePaths).wait();
 			} else {
 				device.fileSystem.transferDirectory(deviceAppData, localToDevicePaths, projectFilesPath).wait();
@@ -234,9 +244,13 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 	private batchLiveSync(data: ILiveSyncData, filePath: string) : void {
 			if (!this.batch || !this.batch.syncPending) {
 				this.batch = new SyncBatch(
-					this.$logger, this.$dispatcher, (filesToSync) => {
+					this.$logger, this.$dispatcher, () => {
 						this.preparePlatformForSync(data.platform);
-						this.syncCore(data, filesToSync, true).wait();
+
+						setTimeout(() => {
+							this.syncCore(data, this.batch.filesToSync, true);
+							this.batch.reset();
+						}, 250);
 					}
 				);
 			}
@@ -252,8 +266,9 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 	private batchSimulatorLiveSync(data: ILiveSyncData, filePath: string): void {
 			if (!this.batch || !this.batch.syncPending) {
 				this.batch = new SyncBatch(
-					this.$logger, this.$dispatcher, (filesToSync) => {
-						this.$iOSEmulatorServices.syncFiles(data.appIdentifier, data.projectFilesPath, filesToSync, data.notRunningiOSSimulatorAction,  data.getApplicationPathForiOSSimulatorAction, data.iOSSimulatorRelativeToProjectBasePathAction);
+					this.$logger, this.$dispatcher, () => {
+						this.$iOSEmulatorServices.syncFiles(data.appIdentifier, data.projectFilesPath, this.batch.filesToSync, data.notRunningiOSSimulatorAction,  data.getApplicationPathForiOSSimulatorAction, data.iOSSimulatorRelativeToProjectBasePathAction);
+						this.batch.reset();
 					}
 				);
 			}
