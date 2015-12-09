@@ -20,32 +20,49 @@ class SyncBatch {
 	constructor(
 		private $logger: ILogger,
 		private $dispatcher: IFutureDispatcher,
-		private done: (filesToSync: Array<string>) => void) {
+		private syncData: ILiveSyncData,
+		private done: () => void) {
+	}
+
+	private get filesToSync(): string[] {
+		let filteredFiles = this.syncQueue.filter(syncFilePath => !UsbLiveSyncServiceBase.isFileExcluded(path.relative(this.syncData.projectFilesPath, syncFilePath), this.syncData.excludedProjectDirsAndFiles, this.syncData.projectFilesPath));
+		return filteredFiles;
+	}
+
+	public get syncPending() {
+		return this.syncQueue.length > 0;
+	}
+
+	public reset(): void {
+		this.syncQueue = [];
+	}
+
+	public syncFiles(syncAction: (filesToSync: string[]) => void): void {
+		if (this.filesToSync.length > 0) {
+			syncAction(this.filesToSync);
+		}
+		this.reset();
+	}
+
+	public addFile(filePath: string): void {
+		if (this.timer) {
+			clearTimeout(this.timer);
 		}
 
-		public addFile(filePath: string): void {
-			if (this.timer) {
-				clearTimeout(this.timer);
+		this.syncQueue.push(filePath);
+
+		this.timer = setTimeout(() => {
+			if (this.syncQueue.length > 0) {
+				this.$logger.trace("Syncing %s", this.syncQueue.join(", "));
+				this.$dispatcher.dispatch( () => {
+					return (() => {
+						this.done();
+					}).future<void>()();
+				});
 			}
-
-			this.syncQueue.push(filePath);
-
-			this.timer = setTimeout(() => {
-				let filesToSync = this.syncQueue;
-				if (filesToSync.length > 0) {
-					this.syncQueue = [];
-					this.$logger.trace("Syncing %s", filesToSync.join(", "));
-					this.$dispatcher.dispatch( () => {
-						return (() => this.done(filesToSync)).future<void>()();
-					});
-				}
-				this.timer = null;
-			}, 250); // https://github.com/Microsoft/TypeScript/blob/master/src/compiler/tsc.ts#L487-L489
-		}
-
-		public get syncPending() {
-			return this.syncQueue.length > 0;
-		}
+			this.timer = null;
+		}, 250); // https://github.com/Microsoft/TypeScript/blob/master/src/compiler/tsc.ts#L487-L489
+	}
 }
 
 export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
@@ -96,7 +113,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 				}
 
 				let projectFiles = this.$fs.enumerateFilesInDirectorySync(data.projectFilesPath,
-					(filePath, stat) => !this.isFileExcluded(path.relative(data.projectFilesPath, filePath), data.excludedProjectDirsAndFiles, data.projectFilesPath),
+					(filePath, stat) => !UsbLiveSyncServiceBase.isFileExcluded(path.relative(data.projectFilesPath, filePath), data.excludedProjectDirsAndFiles, data.projectFilesPath),
 					{ enumerateDirectories: true }
 				);
 
@@ -111,32 +128,30 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 				gaze("**/*", { cwd: data.watchGlob }, function(err: any, watcher: any) {
 					this.on('all', (event: string, filePath: string) => {
 						if (event === "added" || event === "changed") {
-							if (!that.isFileExcluded(filePath, data.excludedProjectDirsAndFiles, data.projectFilesPath)) {
-								that.$dispatcher.dispatch(() => (() => {
-									let fileHash = that.$fs.getFileShasum(filePath).wait();
-									if (fileHash === that.fileHashes[filePath]) {
-										that.$logger.trace(`Skipping livesync for ${filePath} file with ${fileHash} hash.`);
-										return;
-									}
+							that.$dispatcher.dispatch(() => (() => {
+								let fileHash = that.$fs.getFileShasum(filePath).wait();
+								if (fileHash === that.fileHashes[filePath]) {
+									that.$logger.trace(`Skipping livesync for ${filePath} file with ${fileHash} hash.`);
+									return;
+								}
 
-									that.$logger.trace(`Adding ${filePath} file with ${fileHash} hash.`);
-									that.fileHashes[filePath] = fileHash;
+								that.$logger.trace(`Adding ${filePath} file with ${fileHash} hash.`);
+								that.fileHashes[filePath] = fileHash;
 
-									let canExecuteFastLiveSync = data.canExecuteFastLiveSync && data.canExecuteFastLiveSync(filePath);
+								let canExecuteFastLiveSync = data.canExecuteFastLiveSync && data.canExecuteFastLiveSync(filePath);
 
-									if (synciOSSimulator && !canExecuteFastLiveSync) {
-										that.batchSimulatorLiveSync(data, filePath);
-									}
+								if (synciOSSimulator && !canExecuteFastLiveSync) {
+									that.batchSimulatorLiveSync(data, filePath);
+								}
 
-									if ((!that.$options.emulator || data.platform.toLowerCase() === "android") && !canExecuteFastLiveSync) {
-										that.batchLiveSync(data, filePath);
-									}
+								if ((!that.$options.emulator || data.platform.toLowerCase() === "android") && !canExecuteFastLiveSync) {
+									that.batchLiveSync(data, filePath);
+								}
 
-									if (canExecuteFastLiveSync) {
-										data.fastLiveSync(filePath);
-									}
-								}).future<void>()());
-							}
+								if (canExecuteFastLiveSync) {
+									data.fastLiveSync(filePath);
+								}
+							}).future<void>()());
 						}
 
 						if (event === "deleted") {
@@ -259,9 +274,14 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 	private batchLiveSync(data: ILiveSyncData, filePath: string) : void {
 			if (!this.batch || !this.batch.syncPending) {
 				this.batch = new SyncBatch(
-					this.$logger, this.$dispatcher, (filesToSync) => {
+					this.$logger, this.$dispatcher, data, () => {
 						this.preparePlatformForSync(data.platform);
-						this.syncCore(data, filesToSync, true).wait();
+
+						setTimeout(() => {
+							this.batch.syncFiles((filesToSync) => {
+								this.syncCore(data, filesToSync, true);
+							});
+						}, 250);
 					}
 				);
 			}
@@ -277,21 +297,27 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 	private batchSimulatorLiveSync(data: ILiveSyncData, filePath: string): void {
 			if (!this.batch || !this.batch.syncPending) {
 				this.batch = new SyncBatch(
-					this.$logger, this.$dispatcher, (filesToSync) => {
+					this.$logger, this.$dispatcher, data, () => {
 						this.preparePlatformForSync(data.platform);
-						this.$iOSEmulatorServices.syncFiles(data.appIdentifier, data.projectFilesPath, filesToSync, data.notRunningiOSSimulatorAction,  data.getApplicationPathForiOSSimulatorAction, data.iOSSimulatorRelativeToProjectBasePathAction);
+
+						setTimeout(() => {
+							this.batch.syncFiles((filesToSync) => {
+								this.$iOSEmulatorServices.syncFiles(data.appIdentifier, data.projectFilesPath, filesToSync, data.notRunningiOSSimulatorAction,  data.getApplicationPathForiOSSimulatorAction, data.iOSSimulatorRelativeToProjectBasePathAction);
+							});
+						}, 250);
 					}
 				);
 			}
 
-			this.batch.addFile(filePath);
+			let fileToSync = data.beforeBatchLiveSyncAction ? data.beforeBatchLiveSyncAction(filePath).wait() : filePath;
+			this.batch.addFile(fileToSync);
 		}
 
-		protected preparePlatformForSync(platform: string) {
+		protected preparePlatformForSync(platform: string): void {
 			//Overridden in platform-specific services.
 		}
 
-	private isFileExcluded(path: string, exclusionList: string[], projectDir: string): boolean {
+	public static isFileExcluded(path: string, exclusionList: string[], projectDir: string): boolean {
 		return !!_.find(exclusionList, (pattern) => minimatch(path, pattern, { nocase: true }));
 	}
 
