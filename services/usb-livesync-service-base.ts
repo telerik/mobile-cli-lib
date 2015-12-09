@@ -20,6 +20,7 @@ class SyncBatch {
 	constructor(
 		private $logger: ILogger,
 		private $dispatcher: IFutureDispatcher,
+		private syncData: ILiveSyncData,
 		private done: () => void) {
 	}
 
@@ -117,20 +118,18 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 				gaze("**/*", { cwd: data.watchGlob }, function(err: any, watcher: any) {
 					this.on('all', (event: string, filePath: string) => {
 						if (event === "added" || event === "changed") {
-							if (!that.isFileExcluded(filePath, data.excludedProjectDirsAndFiles, data.projectFilesPath)) {
-								let canExecuteFastLiveSync = data.canExecuteFastLiveSync && data.canExecuteFastLiveSync(filePath);
+							let canExecuteFastLiveSync = data.canExecuteFastLiveSync && data.canExecuteFastLiveSync(filePath);
 
-								if (synciOSSimulator && !canExecuteFastLiveSync) {
-									that.batchSimulatorLiveSync(data, filePath);
-								}
+							if (synciOSSimulator && !canExecuteFastLiveSync) {
+								that.batchSimulatorLiveSync(data, filePath);
+							}
 
-								if ((!that.$options.emulator || data.platform.toLowerCase() === "android") && !canExecuteFastLiveSync) {
-									that.batchLiveSync(data, filePath);
-								}
+							if ((!that.$options.emulator || data.platform.toLowerCase() === "android") && !canExecuteFastLiveSync) {
+								that.batchLiveSync(data, filePath);
+							}
 
-								if (canExecuteFastLiveSync) {
-									data.fastLiveSync(filePath);
-								}
+							if (canExecuteFastLiveSync) {
+								data.fastLiveSync(filePath);
 							}
 						}
 
@@ -244,11 +243,12 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 	private batchLiveSync(data: ILiveSyncData, filePath: string) : void {
 			if (!this.batch || !this.batch.syncPending) {
 				this.batch = new SyncBatch(
-					this.$logger, this.$dispatcher, () => {
+					this.$logger, this.$dispatcher, data, () => {
 						this.preparePlatformForSync(data.platform);
 
 						setTimeout(() => {
-							this.syncCore(data, this.batch.filesToSync, true);
+							let filteredFiles = this.batch.filesToSync.filter(filePath => !this.isFileExcluded(path.relative(data.projectFilesPath, filePath), data.excludedProjectDirsAndFiles, data.projectFilesPath));
+							this.syncCore(data, filteredFiles, true);
 							this.batch.reset();
 						}, 250);
 					}
@@ -266,7 +266,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 	private batchSimulatorLiveSync(data: ILiveSyncData, filePath: string): void {
 			if (!this.batch || !this.batch.syncPending) {
 				this.batch = new SyncBatch(
-					this.$logger, this.$dispatcher, () => {
+					this.$logger, this.$dispatcher, data, () => {
 						this.$iOSEmulatorServices.syncFiles(data.appIdentifier, data.projectFilesPath, this.batch.filesToSync, data.notRunningiOSSimulatorAction,  data.getApplicationPathForiOSSimulatorAction, data.iOSSimulatorRelativeToProjectBasePathAction);
 						this.batch.reset();
 					}
