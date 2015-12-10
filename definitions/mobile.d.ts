@@ -305,7 +305,8 @@ declare module Mobile {
 		syncFiles(appIdentifier: string, projectFilesPath: string, projectFiles: string[], notRunningSimulatorAction: () => IFuture<void>, getApplicationPathForiOSSimulatorAction: () => IFuture<string>, relativeToProjectBasePathAction?: (projectFile: string) => string): IFuture<void>;
 		isSimulatorRunning(): IFuture<boolean>;
 		transferFiles(appIdentifier: string, projectFiles: string[], relativeToProjectBasePathAction?: (_projectFile: string) => string, applicationPath?: string): IFuture<void>;
-		removeFiles(appIdentifier: string, projectFilesPath: string, projectFiles: string[], notRunningSimulatorAction: () => IFuture<void>, getApplicationPathForiOSSimulatorAction: () => IFuture<string>, relativeToProjectBasePathAction?: (projectFile: string) => string): IFuture<void>;
+		removeFiles(appIdentifier: string, projectFilesPath: string, projectFiles: string[], relativeToProjectBasePathAction?: (_projectFile: string) => string): void;
+		restartApplication(appIdentifier: string, getApplicationPathForiOSSimulatorAction: () => IFuture<string>): IFuture<void>;
 	}
 
 	interface IEmulatorSettingsService {

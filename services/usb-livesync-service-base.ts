@@ -113,7 +113,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 						if (event === "added" || event === "changed") {
 							if (!that.isFileExcluded(filePath, data.excludedProjectDirsAndFiles, data.projectFilesPath)) {
 								that.$dispatcher.dispatch(() => (() => {
-									let fileHash = that.$fs.getFileShasum(filePath).wait();
+									let fileHash = that.$fs.getFsStats(filePath).wait().isFile() ? that.$fs.getFileShasum(filePath).wait() : "";
 									if (fileHash === that.fileHashes[filePath]) {
 										that.$logger.trace(`Skipping livesync for ${filePath} file with ${fileHash} hash.`);
 										return;
@@ -188,7 +188,15 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 			let synciOSSimulator = this.shouldSynciOSSimulator(data.platform).wait();
 			if (synciOSSimulator) {
 				let fileToSync = data.beforeBatchLiveSyncAction ? data.beforeBatchLiveSyncAction(filePath).wait() : filePath;
-				this.$iOSEmulatorServices.removeFiles(data.appIdentifier, data.projectFilesPath, [fileToSync], data.notRunningiOSSimulatorAction, data.getApplicationPathForiOSSimulatorAction, data.iOSSimulatorRelativeToProjectBasePathAction).wait();
+				this.$iOSEmulatorServices.removeFiles(data.appIdentifier, data.projectFilesPath, [fileToSync], data.iOSSimulatorRelativeToProjectBasePathAction);
+
+				let canExecuteFastLiveSync = data.canExecuteFastLiveSync && data.canExecuteFastLiveSync(filePath);
+				if (canExecuteFastLiveSync) {
+					let platformSpecificUsbLiveSyncService = <any>this.resolvePlatformSpecificLiveSyncService(data.platform || this.$devicesService.platform, null, data.platformSpecificLiveSyncServices);
+					platformSpecificUsbLiveSyncService.sendPageReloadMessageToSimulator().wait();
+				} else {
+					this.$iOSEmulatorServices.restartApplication(data.appIdentifier, data.getApplicationPathForiOSSimulatorAction).wait();
+				}
 			} else {
 				if (!this.isInitialized) {
 					this.$devicesService.initialize({ platform: data.platform, deviceId: this.$options.device }).wait();
