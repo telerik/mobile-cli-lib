@@ -113,7 +113,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 						if (event === "added" || event === "changed") {
 							if (!that.isFileExcluded(filePath, data.excludedProjectDirsAndFiles, data.projectFilesPath)) {
 								that.$dispatcher.dispatch(() => (() => {
-									let fileHash = that.$fs.getFileShasum(filePath).wait();
+									let fileHash = that.$fs.getFsStats(filePath).wait().isFile() ? that.$fs.getFileShasum(filePath).wait() : "";
 									if (fileHash === that.fileHashes[filePath]) {
 										that.$logger.trace(`Skipping livesync for ${filePath} file with ${fileHash} hash.`);
 										return;
