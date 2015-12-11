@@ -99,7 +99,16 @@ export class HooksService implements IHooksService {
 					if (maybePromise) {
 						this.$logger.trace('Hook promises to signal completion');
 						let hookCompletion = new Future<void>();
-						maybePromise.then(() => hookCompletion.return(), (err: any) => hookCompletion.throw(err));
+						maybePromise.then(
+							() => hookCompletion.return(),
+							(err: any) => {
+								if (_.isBoolean(err.stopExecution) && err.errorAsWarning === true) {
+									this.$logger.warn(err.message);
+									hookCompletion.return();
+								} else {
+									hookCompletion.throw(err);
+								}
+							});
 						hookCompletion.wait();
 					}
 					this.$logger.trace('Hook completed');
