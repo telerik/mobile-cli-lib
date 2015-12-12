@@ -284,17 +284,17 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	private getRunningGenymotionEmulators(adbDevicesOutput: string[]): IFuture<string[]> {
 		return ((): string[]=> {
-			let futures = _(adbDevicesOutput).filter(r => !r.match(AndroidEmulatorServices.RUNNING_ANDROID_EMULATOR_REGEX))
+			let futures = <IFuture<string>[]>(_(adbDevicesOutput).filter(r => !r.match(AndroidEmulatorServices.RUNNING_ANDROID_EMULATOR_REGEX))
 				.map(row => {
 					let match = row.match(/^(.+?)\s+device$/);
 					if(match && match[1]) {
 						// possible genymotion emulator
 						let emulatorId = match[1];
-						return this.checkForGenymotionProductManufacturer(emulatorId);
+						return Future.fromResult(this.isGenymotionEmulator(emulatorId).wait() ? emulatorId : undefined);
 					}
 
 					return Future.fromResult(undefined);
-				}).value();
+				}).value());
 
 			Future.wait(futures);
 
@@ -304,15 +304,20 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		}).future<string[]>()();
 	}
 
-	private checkForGenymotionProductManufacturer(emulatorId: string): IFuture<string> {
-		return ((): string => {
+	private isGenymotionEmulator(emulatorId: string): IFuture<boolean> {
+		return ((): boolean => {
 			let manufacturer = this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.manufacturer"]).wait();
-			if(manufacturer.match(/^Genymotion/i)) {
-				return emulatorId;
+			if (manufacturer.match(/^Genymotion/i)) {
+				return true;
 			}
 
-			return undefined;
-		}).future<string>()();
+			let buildProduct = this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.build.product"]).wait();
+			if (buildProduct && _.contains(buildProduct.toLowerCase(), "vbox")) {
+				return true;
+			}
+
+			return false;
+		}).future<boolean>()();
 	}
 
 	private getRunningEmulators(): IFuture<string[]> {
