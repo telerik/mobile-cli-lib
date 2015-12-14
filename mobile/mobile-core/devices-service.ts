@@ -248,7 +248,11 @@ export class DevicesService implements Mobile.IDevicesService {
 	private deployOnDevice(deviceIdentifier: string, packageFile: string, packageName: string): IFuture<void> {
 		return (() => {
 			if(_(this._devices).keys().find(d => d === deviceIdentifier)) {
-				this._devices[deviceIdentifier].deploy(packageFile, packageName).wait();
+				let device = this._devices[deviceIdentifier];
+				device.deploy(packageFile, packageName).wait();
+				if(device.applicationManager.canStartApplication()) {
+					device.applicationManager.startApplication(packageName).wait();
+				}
 			} else {
 				throw new Error(`Cannot find device with identifier ${deviceIdentifier}.`);
 			}
