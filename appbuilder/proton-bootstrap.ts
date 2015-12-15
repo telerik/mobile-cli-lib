@@ -2,6 +2,7 @@
 "use strict";
 
 require("../bootstrap");
+$injector.require("logger", "./appbuilder/proton-logger");
 
 import {OptionsBase} from "../options";
 $injector.require("staticConfig", "./appbuilder/proton-static-config");
