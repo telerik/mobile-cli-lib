@@ -8,7 +8,6 @@ if (!global.Promise) {
 require("colors");
 $injector.require("errors", "./errors");
 $injector.requirePublic("fs", "./file-system");
-$injector.require("logger", "./logger");
 $injector.require("sysInfoBase", "./sys-info-base");
 $injector.require("hostInfo", "./host-info");
 
