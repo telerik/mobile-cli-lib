@@ -13,6 +13,9 @@ declare module Mobile {
 		version: string;
 		vendor: string;
 		platform: string;
+		status: string;
+		errorHelp: string;
+		color?: string;
 	}
 
 	interface IDevice {

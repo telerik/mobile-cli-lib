@@ -9,10 +9,15 @@ import {CoreTypes, PlistService} from "./ios-core";
 import * as iOSProxyServices from "./ios-proxy-services";
 import * as applicationManagerPath from "./ios-application-manager";
 import * as fileSystemPath from "./ios-device-file-system";
+import * as constants from "../constants";
 
 export class IOSDevice implements Mobile.IiOSDevice {
+	// iOS errors are described here with HEX representation
+	// https://github.com/samdmarshall/SDMMobileDevice/blob/763fa8d5a3b72eea86bf854894f8c8bcf5676877/Framework/MobileDevice/Error/SDMMD_Error.h
+	// We receive them as decimal values.
 	private static IMAGE_ALREADY_MOUNTED_ERROR_CODE = 3892314230;
 	private static INCOMPATIBLE_IMAGE_SIGNATURE_ERROR_CODE = 3892314163;
+	private static PASSWORD_PROTECTED_ERROR_CODE = 3892314138;
 	private static INTERFACE_USB = 1;
 
 	private mountImageCallbackPtr: NodeBuffer = null;
@@ -32,18 +37,23 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $hostInfo: IHostInfo,
 		private $options: ICommonOptions) {
-		this.mountImageCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSDevice.mountImageCallback);
+			this.mountImageCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSDevice.mountImageCallback);
 
-		this.applicationManager = this.$injector.resolve(applicationManagerPath.IOSApplicationManager, { device: this, devicePointer: this.devicePointer });
-		this.fileSystem = this.$injector.resolve(fileSystemPath.IOSDeviceFileSystem, { device: this,  devicePointer: this.devicePointer });
-		this.deviceInfo = {
-			identifier: this.$coreFoundation.convertCFStringToCString(this.$mobileDevice.deviceCopyDeviceIdentifier(this.devicePointer)),
-			displayName: this.getValue("ProductType"),
-			model: this.getValue("ProductType"),
-			version: this.getValue("ProductVersion"),
-			vendor: "Apple",
-			platform: this.$devicePlatformsConstants.iOS
-		};
+			this.applicationManager = this.$injector.resolve(applicationManagerPath.IOSApplicationManager, { device: this, devicePointer: this.devicePointer });
+			this.fileSystem = this.$injector.resolve(fileSystemPath.IOSDeviceFileSystem, { device: this,  devicePointer: this.devicePointer });
+			this.deviceInfo = <any>{
+				identifier: this.$coreFoundation.convertCFStringToCString(this.$mobileDevice.deviceCopyDeviceIdentifier(this.devicePointer)),
+				vendor: "Apple",
+				platform: this.$devicePlatformsConstants.iOS,
+				status: constants.CONNECTED_STATUS
+			};
+
+			this.deviceInfo.errorHelp = null;
+			let productType = this.getValue("ProductType");
+			this.deviceInfo.displayName = this.getValue("DeviceName") || productType;
+			this.deviceInfo.model = productType;
+			this.deviceInfo.version = this.getValue("ProductVersion");
+			this.deviceInfo.color = this.getValue("DeviceColor");
 	}
 
 	private static mountImageCallback(dictionary: NodeBuffer, user: NodeBuffer): void {
@@ -55,19 +65,27 @@ export class IOSDevice implements Mobile.IiOSDevice {
 	}
 
 	private getValue(value: string): string {
-		this.connect();
-		this.startSession();
 		try {
+			this.connect();
+			this.startSession();
 			let cfValue =  this.$coreFoundation.createCFString(value);
 			return this.$coreFoundation.convertCFStringToCString(this.$mobileDevice.deviceCopyValue(this.devicePointer, null, cfValue));
+		} catch (err) {
+			this.deviceInfo.errorHelp = this.deviceInfo.errorHelp || err.message.replace(/ Result code is: \d+$/, "");
+			this.$logger.trace(`Error while trying to get ${value} for iOS device. Error is: `, err);
 		} finally {
 			this.stopSession();
 			this.disconnect();
 		}
+
+		return null;
 	}
 
 	private validateResult(result: number, error: string) {
 		if (result !== 0) {
+			if(result === IOSDevice.PASSWORD_PROTECTED_ERROR_CODE) {
+				this.deviceInfo.status = constants.UNAUTHORIZED_STATUS;
+			}
 			this.$errors.fail(util.format("%s. Result code is: %s", error, result));
 		}
 	}
@@ -78,7 +96,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 
 	private pair(): number {
 		let result = this.$mobileDevice.devicePair(this.devicePointer);
-		this.validateResult(result, "If your phone is locked with a passcode, unlock then reconnect it");
+		this.validateResult(result, "Make sure you have trusted the computer from your device. If your phone is locked with a passcode, unlock then reconnect it");
 		return result;
 	}
 
@@ -101,7 +119,9 @@ export class IOSDevice implements Mobile.IiOSDevice {
 
 	private disconnect() {
 		let result = this.$mobileDevice.deviceDisconnect(this.devicePointer);
-		this.validateResult(result, "Unable to disconnect from device");
+		if(result > 0) {
+			this.$logger.warn(`Unable to disconnect. Result is: ${result}`);
+		}
 	}
 
 	private startSession() {
@@ -111,7 +131,9 @@ export class IOSDevice implements Mobile.IiOSDevice {
 
 	private stopSession() {
 		let result = this.$mobileDevice.deviceStopSession(this.devicePointer);
-		this.validateResult(result, "Unable to stop session");
+		if(result > 0) {
+			this.$logger.warn(`Unable to stop session. Result is: ${result}`);
+		}
 	}
 
 	private getDeviceValue(value: string): string {
@@ -292,8 +314,10 @@ export class IOSDevice implements Mobile.IiOSDevice {
 	}
 
 	public openDeviceLogStream() {
-		let iOSSystemLog = this.$injector.resolve(iOSProxyServices.IOSSyslog, {device: this});
-		iOSSystemLog.read();
+		if(this.deviceInfo.status !== constants.UNAUTHORIZED_STATUS) {
+			let iOSSystemLog = this.$injector.resolve(iOSProxyServices.IOSSyslog, {device: this});
+			iOSSystemLog.read();
+		}
 	}
 
 	// This function works only on OSX

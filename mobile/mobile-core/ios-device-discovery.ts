@@ -9,6 +9,7 @@ import {IOSDevice} from "../ios/ios-device";
 class IOSDeviceDiscovery extends DeviceDiscovery {
 	private static ADNCI_MSG_CONNECTED = 1;
 	private static ADNCI_MSG_DISCONNECTED = 2;
+	private static ADNCI_MSG_TRUSTED = 4;
 	private static APPLE_SERVICE_NOT_STARTED_ERROR_CODE = 0xE8000063;
 
 	private timerCallbackPtr: NodeBuffer = null;
@@ -82,12 +83,15 @@ class IOSDeviceDiscovery extends DeviceDiscovery {
 	private static deviceNotificationCallback(devicePointer?: NodeBuffer, user?: number) : any {
 		let iOSDeviceDiscovery: IOSDeviceDiscovery = $injector.resolve("iOSDeviceDiscovery");
 		let deviceInfo = ref.deref(devicePointer);
-
 		if(deviceInfo.msg === IOSDeviceDiscovery.ADNCI_MSG_CONNECTED) {
 			iOSDeviceDiscovery.createAndAddDevice(deviceInfo.dev);
 		} else if(deviceInfo.msg === IOSDeviceDiscovery.ADNCI_MSG_DISCONNECTED) {
 			let deviceIdentifier = iOSDeviceDiscovery.$coreFoundation.convertCFStringToCString(iOSDeviceDiscovery.$mobileDevice.deviceCopyDeviceIdentifier(deviceInfo.dev));
 			iOSDeviceDiscovery.removeDevice(deviceIdentifier);
+		} else if(deviceInfo.msg === IOSDeviceDiscovery.ADNCI_MSG_TRUSTED) {
+			let deviceIdentifier = iOSDeviceDiscovery.$coreFoundation.convertCFStringToCString(iOSDeviceDiscovery.$mobileDevice.deviceCopyDeviceIdentifier(deviceInfo.dev));
+			iOSDeviceDiscovery.removeDevice(deviceIdentifier);
+			iOSDeviceDiscovery.createAndAddDevice(deviceInfo.dev);
 		}
 	}
 

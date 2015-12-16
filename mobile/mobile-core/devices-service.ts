@@ -86,12 +86,20 @@ export class DevicesService implements Mobile.IDevicesService {
 		return (() => {
 			this.$logger.trace("startLookingForDevices; platform is %s", this._platform);
 			if(!this._platform) {
-				this.$iOSDeviceDiscovery.startLookingForDevices().wait();
-				this.$androidDeviceDiscovery.startLookingForDevices().wait();
+				try {
+					this.$iOSDeviceDiscovery.startLookingForDevices().wait();
+					this.$androidDeviceDiscovery.startLookingForDevices().wait();
+				} catch (err) {
+					this.$logger.trace("Error while detecting devices.", err);
+				}
 				setInterval(() => {
 					fiberBootstrap.run(() => {
-						Future.wait([this.$iOSDeviceDiscovery.checkForDevices(),
-									 this.$androidDeviceDiscovery.checkForDevices()]);
+						try {
+							Future.wait([this.$iOSDeviceDiscovery.checkForDevices(),
+										this.$androidDeviceDiscovery.checkForDevices()]);
+						} catch (err) {
+							this.$logger.trace("Error while checking for new devices.", err);
+						}
 					});
 				}, DevicesService.DEVICE_LOOKING_INTERVAL).unref();
 			} else if(this.$mobileHelper.isiOSPlatform(this._platform)) {

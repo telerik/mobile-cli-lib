@@ -2,6 +2,7 @@
 "use strict";
 
 require("../bootstrap");
+$injector.require("messages", "./messages/messages");
 $injector.require("logger", "./appbuilder/proton-logger");
 
 import {OptionsBase} from "../options";
@@ -13,7 +14,6 @@ $injector.register("analyiticsService", {});
 $injector.register("options", $injector.resolve(OptionsBase, {options: {}, defaultProfileDir: ""}));
 $injector.requirePublicClass("deviceEmitter", "./appbuilder/device-emitter");
 $injector.requirePublicClass("deviceLogProvider", "./appbuilder/device-log-provider");
-$injector.require("messages", "./messages/messages");
 import {installUncaughtExceptionListener} from "../errors";
 installUncaughtExceptionListener();
 $injector.register("deviceAppDataProvider", {
