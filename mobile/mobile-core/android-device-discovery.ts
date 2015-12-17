@@ -8,8 +8,13 @@ import {EOL} from "os";
 import Future = require("fibers/future");
 import * as fiberBootstrap from "../../fiber-bootstrap";
 
+interface IAdbAndroidDeviceInfo {
+	identifier: string;
+	status: string;
+}
+
 export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IAndroidDeviceDiscovery {
-	private _devices: string[] = [];
+	private _devices: IAdbAndroidDeviceInfo[] = [];
 	private _pathToAdb: string;
 	private get pathToAdb(): string {
 		if(!this._pathToAdb) {
@@ -25,9 +30,9 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 		super();
 	}
 
-	private createAndAddDevice(deviceIdentifier: string): void {
-		this._devices.push(deviceIdentifier);
-		let device = this.$injector.resolve(AndroidDevice, { identifier: deviceIdentifier });
+	private createAndAddDevice(adbDeviceInfo: IAdbAndroidDeviceInfo): void {
+		this._devices.push(adbDeviceInfo);
+		let device = this.$injector.resolve(AndroidDevice, { identifier: adbDeviceInfo.identifier, status: adbDeviceInfo.status });
 		this.addDevice(device);
 	}
 
@@ -75,21 +80,26 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 
 	private checkCurrentData(result: any): IFuture<void> {
 		return (() => {
-			let currentDevices = result.toString().split(EOL).slice(1)
+			let currentDevices: IAdbAndroidDeviceInfo[] = result.toString().split(EOL).slice(1)
 				.filter( (element:string) => !helpers.isNullOrWhitespace(element) )
 				.map((element: string) => {
 					// http://developer.android.com/tools/help/adb.html#devicestatus
-					let [identifier, state] = element.split('\t');
-					if (state === "device"/*ready*/) {
-						return identifier;
-					}
+					let [identifier, status] = element.split('\t');
+					return {
+						identifier: identifier,
+						status: status
+					};
 				});
 
-			let oldDevices = _.difference(this._devices, currentDevices),
-				newDevices = _.difference(currentDevices, this._devices);
+			_(this._devices)
+				.reject(d => _.find(currentDevices, device => device.identifier === d.identifier && device.status === d.status))
+				.each(d => this.deleteAndRemoveDevice(d.identifier))
+				.value();
 
-			_.each(newDevices, d => this.createAndAddDevice(d));
-			_.each(oldDevices, d => this.deleteAndRemoveDevice(d));
+			_(currentDevices)
+				.reject(d => _.find(this._devices, device => device.identifier === d.identifier && device.status === d.status))
+				.each(d => this.createAndAddDevice(d))
+				.value();
 		}).future<void>()();
 	}
 

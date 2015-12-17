@@ -4,6 +4,7 @@
 import * as androidDebugBridgePath from "./android-debug-bridge";
 import * as applicationManagerPath from "./android-application-manager";
 import * as fileSystemPath from "./android-device-file-system";
+import * as constants from "../constants";
 
 interface IAndroidDeviceDetails {
 	model: string;
@@ -12,13 +13,43 @@ interface IAndroidDeviceDetails {
 	brand: string;
 }
 
+interface IAdbDeviceStatusInfo {
+	errorHelp: string;
+	deviceStatus: string;
+}
+
 export class AndroidDevice implements Mobile.IAndroidDevice {
 	public adb: Mobile.IAndroidDebugBridge;
 	public applicationManager: Mobile.IDeviceApplicationManager;
 	public fileSystem: Mobile.IDeviceFileSystem;
 	public deviceInfo: Mobile.IDeviceInfo;
 
+	// http://stackoverflow.com/questions/31178195/what-does-adb-device-status-mean
+	private static ADB_DEVICE_STATUS_INFO: IDictionary<IAdbDeviceStatusInfo> = {
+		"device": {
+			errorHelp: null,
+			deviceStatus: constants.CONNECTED_STATUS
+		},
+		"offline": {
+			errorHelp: "The device instance is not connected to adb or is not responding.",
+			deviceStatus: constants.UNAUTHORIZED_STATUS
+		},
+		"unauthorized": {
+			errorHelp: "Allow USB Debugging on your device.",
+			deviceStatus: constants.UNAUTHORIZED_STATUS
+		},
+		"recovery": {
+			errorHelp: "Your device is in recovery mode. This mode is used to recover your phone when it is broken or to install custom roms.",
+			deviceStatus: constants.UNAUTHORIZED_STATUS
+		},
+		"no permissions": {
+			errorHelp: "Insufficient permissions to communicate with the device.",
+			deviceStatus: constants.UNAUTHORIZED_STATUS
+		},
+	};
+
 	constructor(private identifier: string,
+		private status: string,
 		private $logger: ILogger,
 		private $fs: IFileSystem,
 		private $childProcess: IChildProcess,
@@ -48,13 +79,17 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 			details = this.getDeviceDetails(["cat", "/system/build.prop"]).wait();
 		}
 
+		let adbStatusInfo = AndroidDevice.ADB_DEVICE_STATUS_INFO[status];
+
 		this.deviceInfo = {
 			identifier: this.identifier,
 			displayName: details.name,
 			model: details.model,
 			version: details.release,
 			vendor: details.brand,
-			platform: this.$devicePlatformsConstants.Android
+			platform: this.$devicePlatformsConstants.Android,
+			status: adbStatusInfo ? adbStatusInfo.deviceStatus : status,
+			errorHelp: adbStatusInfo ? adbStatusInfo.errorHelp : "Unknown status"
 		};
 	}
 
@@ -66,7 +101,9 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 	}
 
 	public openDeviceLogStream(): void {
-		this.$logcatHelper.start(this.identifier);
+		if(this.deviceInfo.status === constants.CONNECTED_STATUS) {
+			this.$logcatHelper.start(this.identifier);
+		}
 	}
 
 	private getDeviceDetails(shellCommandArgs: string[]): IFuture<IAndroidDeviceDetails> {
