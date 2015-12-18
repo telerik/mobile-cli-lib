@@ -13,5 +13,5 @@ export let ERROR_NO_DEVICES = "Cannot find connected devices. Reconnect any conn
 // LiveSync constants
 export let CHECK_LIVESYNC_INTENT_NAME = "com.telerik.IsLiveSyncSupported";
 
-export let UNAUTHORIZED_STATUS = "Unauthorized";
+export let UNREACHABLE_STATUS = "Unreachable";
 export let CONNECTED_STATUS = "Connected";

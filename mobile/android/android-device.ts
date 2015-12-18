@@ -32,19 +32,19 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		},
 		"offline": {
 			errorHelp: "The device instance is not connected to adb or is not responding.",
-			deviceStatus: constants.UNAUTHORIZED_STATUS
+			deviceStatus: constants.UNREACHABLE_STATUS
 		},
 		"unauthorized": {
 			errorHelp: "Allow USB Debugging on your device.",
-			deviceStatus: constants.UNAUTHORIZED_STATUS
+			deviceStatus: constants.UNREACHABLE_STATUS
 		},
 		"recovery": {
 			errorHelp: "Your device is in recovery mode. This mode is used to recover your phone when it is broken or to install custom roms.",
-			deviceStatus: constants.UNAUTHORIZED_STATUS
+			deviceStatus: constants.UNREACHABLE_STATUS
 		},
 		"no permissions": {
 			errorHelp: "Insufficient permissions to communicate with the device.",
-			deviceStatus: constants.UNAUTHORIZED_STATUS
+			deviceStatus: constants.UNREACHABLE_STATUS
 		},
 	};
 
