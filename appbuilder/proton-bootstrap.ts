@@ -32,3 +32,7 @@ $injector.register("deviceAppDataProvider", {
 		}
 	}
 );
+
+// When debugging uncomment the lines below and comment the line #6 (requiring logger).
+// $injector.require("logger", "./logger");
+// $injector.resolve("logger").setLevel("TRACE");
