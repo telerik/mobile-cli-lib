@@ -37,7 +37,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 	}
 
 	private deleteAndRemoveDevice(deviceIdentifier: string): void {
-		_.remove(this._devices, d => d === deviceIdentifier);
+		_.remove(this._devices, d => d.identifier === deviceIdentifier);
 		this.removeDevice(deviceIdentifier);
 	}
 

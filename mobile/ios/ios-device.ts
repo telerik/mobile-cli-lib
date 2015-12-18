@@ -17,7 +17,6 @@ export class IOSDevice implements Mobile.IiOSDevice {
 	// We receive them as decimal values.
 	private static IMAGE_ALREADY_MOUNTED_ERROR_CODE = 3892314230;
 	private static INCOMPATIBLE_IMAGE_SIGNATURE_ERROR_CODE = 3892314163;
-	private static PASSWORD_PROTECTED_ERROR_CODE = 3892314138;
 	private static INTERFACE_USB = 1;
 
 	private mountImageCallbackPtr: NodeBuffer = null;
@@ -83,9 +82,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 
 	private validateResult(result: number, error: string) {
 		if (result !== 0) {
-			if(result === IOSDevice.PASSWORD_PROTECTED_ERROR_CODE) {
-				this.deviceInfo.status = constants.UNAUTHORIZED_STATUS;
-			}
+			this.deviceInfo.status = constants.UNREACHABLE_STATUS;
 			this.$errors.fail(util.format("%s. Result code is: %s", error, result));
 		}
 	}
@@ -314,7 +311,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 	}
 
 	public openDeviceLogStream() {
-		if(this.deviceInfo.status !== constants.UNAUTHORIZED_STATUS) {
+		if(this.deviceInfo.status !== constants.UNREACHABLE_STATUS) {
 			let iOSSystemLog = this.$injector.resolve(iOSProxyServices.IOSSyslog, {device: this});
 			iOSSystemLog.read();
 		}
