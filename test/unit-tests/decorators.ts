@@ -2,18 +2,13 @@
 "use strict";
 
 import * as decoratorsLib from "../../decorators";
-import * as yokLib from "../../yok";
+import { Yok } from "../../yok";
 import {assert} from "chai";
 import Future = require("fibers/future");
 
-let originalInjector:any = {};
-_.extend(originalInjector, $injector);
-
 describe("decorators", () => {
 	afterEach(() => {
-		$injector = originalInjector;
-		// Due to bug in lodash's extend method, manually set publicApi to the initial object.
-		$injector.publicApi = {__modules__: {}};
+		$injector = new Yok();
 	});
 
 	describe("exportedPromise", () => {
@@ -37,7 +32,7 @@ describe("decorators", () => {
 		});
 
 		it("returns Promise", () => {
-			$injector = new yokLib.Yok();
+			$injector = new Yok();
 			let expectedResult = "result";
 			$injector.register("moduleName", {propertyName: () => {return expectedResult;}});
 			assert.deepEqual($injector.publicApi.__modules__["moduleName"], undefined);
@@ -52,7 +47,7 @@ describe("decorators", () => {
 		});
 
 		it("returns Promise, which is resolved to correct value (function without arguments)", () => {
-			$injector = new yokLib.Yok();
+			$injector = new Yok();
 			let expectedResult = "result";
 			$injector.register("moduleName", {propertyName: () => {return expectedResult;}});
 			let promisifiedResultFunction: any = decoratorsLib.exportedPromise("moduleName");
@@ -65,7 +60,7 @@ describe("decorators", () => {
 		});
 
 		it("returns Promise, which is resolved to correct value (function with arguments)", () => {
-			$injector = new yokLib.Yok();
+			$injector = new Yok();
 			let expectedArgs = ["result", "result1", "result2"];
 			$injector.register("moduleName", {propertyName: (functionArgs: string[]) => {return functionArgs;}});
 			let promisifiedResultFunction: any = decoratorsLib.exportedPromise("moduleName");
@@ -78,7 +73,7 @@ describe("decorators", () => {
 		});
 
 		it("returns Promise, which is resolved to correct value (function returning IFuture without arguments)", () => {
-			$injector = new yokLib.Yok();
+			$injector = new Yok();
 			let expectedResult = "result";
 			$injector.register("moduleName", {propertyName: () => Future.fromResult(expectedResult)});
 			let promisifiedResultFunction: any = decoratorsLib.exportedPromise("moduleName");
@@ -91,7 +86,7 @@ describe("decorators", () => {
 		});
 
 		it("returns Promise, which is resolved to correct value (function returning IFuture with arguments)", () => {
-			$injector = new yokLib.Yok();
+			$injector = new Yok();
 			let expectedArgs = ["result", "result1", "result2"];
 			$injector.register("moduleName", {propertyName: (args: string[]) => Future.fromResult(args)});
 			let promisifiedResultFunction: any = decoratorsLib.exportedPromise("moduleName");
@@ -104,7 +99,7 @@ describe("decorators", () => {
 		});
 
 		it("rejects Promise, which is resolved to correct error (function without arguments throws)", () => {
-			$injector = new yokLib.Yok();
+			$injector = new Yok();
 			let expectedError = new Error("Test msg");
 			$injector.register("moduleName", {propertyName: () => {throw expectedError;}});
 			let promisifiedResultFunction: any = decoratorsLib.exportedPromise("moduleName");
@@ -119,7 +114,7 @@ describe("decorators", () => {
 		});
 
 		it("rejects Promise, which is resolved to correct error (function returning IFuture without arguments throws)", () => {
-			$injector = new yokLib.Yok();
+			$injector = new Yok();
 			let expectedError = new Error("Test msg");
 			$injector.register("moduleName", {propertyName: () => { return (() => { throw expectedError; }).future<void>()(); }});
 			let promisifiedResultFunction: any = decoratorsLib.exportedPromise("moduleName");
@@ -135,7 +130,7 @@ describe("decorators", () => {
 		});
 
 		it("returns Promises, which are resolved to correct value (function returning IFuture<T>[] without arguments)", () => {
-			$injector = new yokLib.Yok();
+			$injector = new Yok();
 			let expectedResults = ["result1", "result2", "result3"];
 			$injector.register("moduleName", { propertyName: () => _.map(expectedResults, expectedResult => Future.fromResult(expectedResult)) });
 			let promisifiedResultFunction: any = decoratorsLib.exportedPromise("moduleName");
@@ -148,7 +143,7 @@ describe("decorators", () => {
 		});
 
 		it("rejects Promises, which are resolved to correct error (function returning IFuture<T>[] without arguments throws)", () => {
-			$injector = new yokLib.Yok();
+			$injector = new Yok();
 			let expectedErrors = [new Error("result1"), new Error("result2"), new Error("result3")];
 			$injector.register("moduleName", { propertyName: () => _.map(expectedErrors, expectedError => { return (() => { throw expectedError; }).future<void>()(); })});
 			let promisifiedResultFunction: any = decoratorsLib.exportedPromise("moduleName");
@@ -164,7 +159,7 @@ describe("decorators", () => {
 		});
 
 		it("rejects only Promises which throw, resolves the others correctly (function returning IFuture<T>[] without arguments)", () => {
-			$injector = new yokLib.Yok();
+			$injector = new Yok();
 			let expectedResults: any[] = ["result1", new Error("result2")];
 			$injector.register("moduleName", { propertyName: () => _.map(expectedResults, expectedResult => Future.fromResult(expectedResult)) });
 			let promisifiedResultFunction: any = decoratorsLib.exportedPromise("moduleName");

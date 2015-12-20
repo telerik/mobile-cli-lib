@@ -103,8 +103,8 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 		}).future<void>()();
 	}
 
-	public ensureAdbServerStarted(): IFuture<void> {
-		return this.$childProcess.spawnFromEvent(this.$staticConfig.getAdbFilePath().wait(), ["start-server"], "close");
+	public ensureAdbServerStarted(): IFuture<any> {
+		return this.$childProcess.spawnFromEvent(this.pathToAdb, ["start-server"], "close");
 	}
 }
 $injector.register("androidDeviceDiscovery", AndroidDeviceDiscovery);
