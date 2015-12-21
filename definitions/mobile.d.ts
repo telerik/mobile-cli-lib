@@ -13,6 +13,9 @@ declare module Mobile {
 		version: string;
 		vendor: string;
 		platform: string;
+		status: string;
+		errorHelp: string;
+		color?: string;
 	}
 
 	interface IDevice {
@@ -75,6 +78,7 @@ declare module Mobile {
 		startApplication(appIdentifier: string): IFuture<void>;
 		stopApplication(appIdentifier: string): IFuture<void>;
 		restartApplication(applicationId: string): IFuture<void>;
+		canStartApplication(): boolean;
 	}
 
 	interface IDeviceFileSystem {

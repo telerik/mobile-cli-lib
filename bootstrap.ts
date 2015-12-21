@@ -8,7 +8,6 @@ if (!global.Promise) {
 require("colors");
 $injector.require("errors", "./errors");
 $injector.requirePublic("fs", "./file-system");
-$injector.require("logger", "./logger");
 $injector.require("sysInfoBase", "./sys-info-base");
 $injector.require("hostInfo", "./host-info");
 
@@ -21,6 +20,8 @@ $injector.require("stringParameter", "./command-params");
 $injector.require("stringParameterBuilder", "./command-params");
 
 $injector.require("commandsService", "./services/commands-service");
+
+$injector.require("messagesService", "./services/messages-service");
 
 $injector.require("cancellation", "./services/cancellation");
 $injector.require("analyticsService", "./services/analytics-service");
@@ -95,7 +96,9 @@ $injector.require("microTemplateService", "./services/micro-templating-service")
 $injector.require("mobileHelper", "./mobile/mobile-helper");
 $injector.require("devicePlatformsConstants", "./mobile/device-platforms-constants");
 $injector.require("htmlHelpService", "./services/html-help-service");
+$injector.require("messageContractGenerator", "./services/message-contract-generator");
 $injector.requireCommand("dev-preuninstall", "./commands/preuninstall");
+$injector.requireCommand("dev-generate-messages", "./commands/generate-messages");
 $injector.requireCommand("doctor", "./commands/doctor");
 
 $injector.require("utils", "./utils");

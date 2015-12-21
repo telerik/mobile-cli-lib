@@ -431,7 +431,9 @@ interface ICommonOptions {
 	companion: boolean;
 	emulator: boolean;
 	sdk: string;
+	template: string;
 	var: Object;
+	default: Boolean;
 }
 
 interface IYargArgv extends IDictionary<any> {
@@ -560,6 +562,44 @@ interface IResourceLoader {
 interface IPluginVariablesHelper {
 	getPluginVariableFromVarOption(variableName: string, configuration?: string): any;
 	simplifyYargsObject(obj: any, configuration?: string): any;
+}
+
+/**
+ * Used for getting strings for informational/error messages.
+ */
+interface IMessagesService {
+	/**
+	 * Array of the paths to the .json files containing all the messages.
+	 * @type {string[]}
+	 */
+	pathsToMessageJsonFiles: string[];
+
+	/**
+	 * @param  {string} 	id		Message's key in corresponding messages json file, could be complex (e.g. 'iOS.iTunes.ConnectError').
+	 * @param  {string[]} 	args	Additional arguments used when the message's value is a string format.
+	 * @return {string}				The value found under the given id. If no value is found returns the id itself.
+	 */
+	getMessage(id: string, ...args: string[]): string;
+}
+
+/**
+ * Describes generated code parts.
+ */
+interface IServiceContractClientCode {
+	interfaceFile: string;
+	implementationFile: string;
+}
+
+/**
+ * Used for code generation.
+ */
+interface IServiceContractGenerator {
+	/**
+	 * Generate code implementation along with interface
+	 * @param  {string}                              definitionsPath The path to the desired parent .d.ts file
+	 * @return {IFuture<IServiceContractClientCode>}                 The generated code parts
+	 */
+	generate(definitionsPath?: string): IFuture<IServiceContractClientCode>;
 }
 
 /**

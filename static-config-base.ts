@@ -95,10 +95,12 @@ export class StaticConfigBase implements Config.IStaticConfig {
 			$fs.createDirectory(tmpDir).wait();
 
 			// copy the adb and associated files
+			let targetAdb = path.join(tmpDir, "adb");
 			shelljs.cp(path.join(defaultAdbDirPath, "*"), tmpDir); // deliberately ignore copy errors
+			// adb loses its executable bit when packed inside electron asar file. Manually fix the issue
+			shelljs.chmod("+x", targetAdb);
 
 			// let adb start its global server
-			let targetAdb = path.join(tmpDir, "adb");
 			$childProcess.spawnFromEvent(targetAdb, ["start-server"], "exit", undefined, { throwError: false }).wait();
 
 			return targetAdb;

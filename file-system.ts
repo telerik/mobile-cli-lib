@@ -12,8 +12,7 @@ import * as crypto from "crypto";
 
 @injector.register("fs")
 export class FileSystem implements IFileSystem {
-	constructor(private $injector: IInjector,
-		private $hostInfo: IHostInfo) { }
+	constructor(private $injector: IInjector) { }
 
 	//TODO: try 'archiver' module for zipping
 	public zipFiles(zipFile: string, files: string[], zipPathCallback: (path: string) => string): IFuture<void> {
@@ -60,15 +59,16 @@ export class FileSystem implements IFileSystem {
 		return (() => {
 			let shouldOverwriteFiles = !(options && options.overwriteExisitingFiles === false);
 			let isCaseSensitive = !(options && options.caseSensitive === false);
+			let $hostInfo = this.$injector.resolve("$hostInfo");
 
 			this.createDirectory(destinationDir).wait();
 
 			let proc: string;
-			if (this.$hostInfo.isWindows) {
+			if ($hostInfo.isWindows) {
 				proc = path.join(__dirname, "resources/platform-tools/unzip/win32/unzip");
-			} else if (this.$hostInfo.isDarwin) {
+			} else if ($hostInfo.isDarwin) {
 				proc = "unzip"; // darwin unzip is info-zip
-			} else if (this.$hostInfo.isLinux) {
+			} else if ($hostInfo.isLinux) {
 				proc = "unzip"; // linux unzip is info-zip
 			}
 
@@ -441,7 +441,7 @@ export class FileSystem implements IFileSystem {
 		return (() => {
 			let $childProcess = this.$injector.resolve("childProcess");
 
-			if(!this.$hostInfo.isWindows) {
+			if(!this.$injector.resolve("$hostInfo").isWindows) {
 				let chown = $childProcess.spawn("chown", ["-R", owner, path],
 					{ stdio: "ignore", detached: true });
 				this.futureFromEvent(chown, "close").wait();

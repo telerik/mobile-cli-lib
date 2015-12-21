@@ -2,7 +2,6 @@
 "use strict";
 
 import { EventEmitter } from "events";
-import * as fiberBootstrap from "../fiber-bootstrap";
 
 class DeviceEmitter extends EventEmitter {
 	constructor(private $androidDeviceDiscovery:Mobile.IAndroidDeviceDiscovery,
@@ -33,9 +32,7 @@ class DeviceEmitter extends EventEmitter {
 				this.emit("deviceLost", data.deviceInfo);
 			});
 
-			fiberBootstrap.run(() => {
-				this.$devicesService.initialize({skipInferPlatform: true}).wait();
-			});
+			this.$devicesService.initialize({skipInferPlatform: true}).wait();
 
 			this.$deviceLogProvider.on("data", (identifier: string, data: any) => {
 				this.emit('deviceLogData', identifier, data.toString());
