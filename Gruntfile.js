@@ -16,7 +16,7 @@ function getBuildVersion(version) {
 	if (process.env["BUILD_CAUSE_GHPRBCAUSE"]) {
 		buildVersion = "PR" + buildVersion;
 	}
-	
+
 	return buildVersion;
 }
 
@@ -140,7 +140,7 @@ module.exports = function(grunt) {
 		packageJson.buildVersion = buildVersion;
 		grunt.file.write("package.json", JSON.stringify(packageJson, null, "  "));
 	});
-	
+
 	grunt.registerTask("setPackageName", function (version) {
 		var fs = require("fs");
 		var fileExtension = ".tgz";
@@ -182,4 +182,5 @@ module.exports = function(grunt) {
 	]);
 	grunt.registerTask("lint", ["tslint:build"]);
 	grunt.registerTask("default", "ts:devlib");
+	grunt.registerTask("all", ["clean", "test", "lint"]);
 };
