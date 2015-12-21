@@ -79,6 +79,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 			details = this.getDeviceDetails(["cat", "/system/build.prop"]).wait();
 		}
 
+		this.$logger.trace(details);
 		let adbStatusInfo = AndroidDevice.ADB_DEVICE_STATUS_INFO[status];
 
 		this.deviceInfo = {
@@ -89,8 +90,11 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 			vendor: details.brand,
 			platform: this.$devicePlatformsConstants.Android,
 			status: adbStatusInfo ? adbStatusInfo.deviceStatus : status,
-			errorHelp: adbStatusInfo ? adbStatusInfo.errorHelp : "Unknown status"
+			errorHelp: adbStatusInfo ? adbStatusInfo.errorHelp : "Unknown status",
+			isTablet: this.getIsTablet(details)
 		};
+
+		this.$logger.trace(this.deviceInfo);
 	}
 
 	public deploy(packageFile: string, packageName: string): IFuture<void> {
@@ -115,7 +119,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 				// sample line is "ro.build.version.release=4.4" in /system/build.prop
 				// sample line from getprop is:  [ro.build.version.release]: [6.0]
 				// NOTE: some props do not have value: [ro.build.version.base_os]: []
-				let match = /(?:\[?ro\.build\.version|ro\.product)\.(.+?)]?(?:\:|=)(?:\s*?\[)?(.*?)]?$/.exec(value);
+				let match = /(?:\[?ro\.build\.version|ro\.product|ro\.build)\.(.+?)]?(?:\:|=)(?:\s*?\[)?(.*?)]?$/.exec(value);
 				if (match) {
 					parsedDetails[match[1]] = match[2];
 				}
@@ -124,5 +128,10 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 			this.$logger.trace(parsedDetails);
 			return parsedDetails;
 		}).future<IAndroidDeviceDetails>()();
+	}
+
+	private getIsTablet(details: any): boolean {
+		//version 3.x.x (also known as Honeycomb) is a tablet only version
+		return details && ( _.startsWith(details.release, "3.") || _.contains((details.characteristics || '').toLowerCase(), "tablet") );
 	}
 }

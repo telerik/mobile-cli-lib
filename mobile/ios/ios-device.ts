@@ -44,15 +44,16 @@ export class IOSDevice implements Mobile.IiOSDevice {
 				identifier: this.$coreFoundation.convertCFStringToCString(this.$mobileDevice.deviceCopyDeviceIdentifier(this.devicePointer)),
 				vendor: "Apple",
 				platform: this.$devicePlatformsConstants.iOS,
-				status: constants.CONNECTED_STATUS
+				status: constants.CONNECTED_STATUS,
+				errorHelp: null
 			};
 
-			this.deviceInfo.errorHelp = null;
 			let productType = this.getValue("ProductType");
 			this.deviceInfo.displayName = this.getValue("DeviceName") || productType;
 			this.deviceInfo.model = productType;
 			this.deviceInfo.version = this.getValue("ProductVersion");
 			this.deviceInfo.color = this.getValue("DeviceColor");
+			this.deviceInfo.isTablet = productType && productType.toLowerCase().indexOf("ipad") !== -1;
 	}
 
 	private static mountImageCallback(dictionary: NodeBuffer, user: NodeBuffer): void {

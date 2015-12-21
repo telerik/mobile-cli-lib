@@ -15,6 +15,7 @@ declare module Mobile {
 		platform: string;
 		status: string;
 		errorHelp: string;
+		isTablet: boolean;
 		color?: string;
 	}
 
