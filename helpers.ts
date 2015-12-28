@@ -237,7 +237,7 @@ export function hook(commandName: string) {
 }
 
 export function isFuture(candidateFuture: any): boolean {
-	return candidateFuture && typeof(candidateFuture.wait) === "function";
+	return !!(candidateFuture && typeof(candidateFuture.wait) === "function");
 }
 
 export function whenAny<T>(...futures: IFuture<T>[]): IFuture<IFuture<T>> {
