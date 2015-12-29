@@ -148,7 +148,7 @@ declare module Mobile {
 	}
 
 	interface IAndroidDeviceDiscovery extends IDeviceDiscovery {
-		ensureAdbServerStarted(): IFuture<void>;
+		ensureAdbServerStarted(): IFuture<any>;
 	}
 
 	interface IDevicesServicesInitializationOptions {
