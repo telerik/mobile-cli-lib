@@ -104,3 +104,8 @@ $injector.requireCommand("doctor", "./commands/doctor");
 $injector.require("utils", "./utils");
 $injector.require("bplistParser", "./bplist-parser");
 $injector.require("winreg", "./winreg");
+
+$injector.require("loggingLevels", "./mobile/logging-levels");
+$injector.require("logFilter", "./mobile/log-filter");
+$injector.require("androidLogFilter", "./mobile/android/android-log-filter");
+$injector.require("iOSLogFilter", "./mobile/ios/ios-log-filter");

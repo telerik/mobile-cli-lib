@@ -69,6 +69,45 @@ declare module Mobile {
 
 	interface IDeviceLogProvider {
 		logData(line: string, platform: string, deviceIdentifier: string): void;
+		setLogLevel(level: string, deviceIdentifier?: string): void;
+	}
+
+	/**
+	 * Describes common filtering rules for device logs.
+	 */
+	interface ILogFilter {
+		/**
+		 * The logging level that will be used for filtering in case logLevel is not passed to filterData method.
+		 * Defaults to INFO.
+		 */
+		loggingLevel: string;
+
+		/**
+		 * Filters data for specified platform.
+		 * @param {string} platform The platform for which is the device log.
+		 * @param {string} data The input data for filtering.
+		 * @param {string} logLevel @optional The logging level based on which input data will be filtered.
+		 * @return {string} The filtered result based on the input or null when the input data shouldn't be shown.
+		 */
+		filterData(platform: string, data: string, logLevel?: string): string;
+	}
+
+	/**
+	 * Describes filtering logic for specific platform (Android, iOS).
+	 */
+	interface IPlatformLogFilter {
+		/**
+		 * Filters passed string data based on the passed logging level.
+		 * @param {string} data The string data that will be checked based on the logging level.
+		 * @param {string} logLevel Selected logging level.
+		 * @return {string} The filtered result based on the input or null when the input data shouldn't be shown.
+		 */
+		filterData(data: string, logLevel: string): string;
+	}
+
+	interface ILoggingLevels {
+		info: string;
+		full: string;
 	}
 
 	interface IDeviceApplicationManager {

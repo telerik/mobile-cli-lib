@@ -7,12 +7,16 @@ export class OpenDeviceLogStreamCommand implements ICommand {
 	constructor(private $devicesService: Mobile.IDevicesService,
 		private $errors: IErrors,
 		private $commandsService: ICommandsService,
-		private $options: ICommonOptions) { }
+		private $options: ICommonOptions,
+		private $deviceLogProvider: Mobile.IDeviceLogProvider,
+		private $loggingLevels: Mobile.ILoggingLevels) { }
 
 	allowedParameters: ICommandParameter[] = [];
 
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
+			this.$deviceLogProvider.setLogLevel(this.$loggingLevels.full);
+
 			this.$devicesService.initialize({ deviceId: this.$options.device, skipInferPlatform: true }).wait();
 
 			if (this.$devicesService.deviceCount > 1) {
