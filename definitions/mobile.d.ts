@@ -6,16 +6,72 @@ declare module Mobile {
 		skipRefresh?: boolean;
 	}
 
+	/**
+	 * Describes available information for a device.
+	 */
 	interface IDeviceInfo {
+		/**
+		 * Unique identifier of the device.
+		 */
 		identifier: string;
+
+		/**
+		 * The name of the device.
+		 * For Android this is the value of device's 'ro.product.name' property.
+		 * For iOS this is the value of device's 'DeviceName' property.
+		 */
 		displayName: string;
+
+		/**
+		 * Device model.
+		 * For Android this is the value of device's 'ro.product.model' property.
+		 * For iOS this is the value of device's 'ProductType' property.
+		 */
 		model: string;
+
+		/**
+		 * Version of the OS.
+		 * For Android this is the value of device's 'ro.build.version.release' property.
+		 * For iOS this is the value of device's 'ProductVersion' property.
+		 */
 		version: string;
+
+		/**
+		 * Vendor of the device.
+		 * For Android this is the value of device's 'ro.product.brand' property.
+		 * For iOS the value is always "Apple".
+		 */
 		vendor: string;
+
+		/**
+		 * Device's platform.
+		 * Can be Android or iOS.
+		 */
 		platform: string;
+
+		/**
+		 * Status of device describing if you can work with this device or there's communication error.
+		 * Can be Connected or Unauthorized.
+		 */
 		status: string;
+
+		/**
+		 * Additional information for errors that prevents working with this device.
+		 * It will be null when status is Connected.
+		 */
 		errorHelp: string;
+
+		/**
+		 * Defines if the device is tablet or not.
+		 * For Android the value will be true when device's 'ro.build.characteristics' property contains "tablet" word or when the 'ro.build.version.release' is 3.x
+		 * For iOS the value will be true when device's 'ProductType' property contains "ipad" word.
+		 */
 		isTablet: boolean;
+
+		/**
+		 * Optional property describing the color of the device.
+		 * Available for iOS only - the value of device's 'DeviceColor' property.
+		 */
 		color?: string;
 	}
 

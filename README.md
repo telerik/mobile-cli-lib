@@ -117,7 +117,7 @@ Usage
 In order to use mobile-cli-lib, just add a reference to it in your package.json:
 ```JSON
 dependencies: {
-	"mobile-cli-lib": "0.0.4"
+	"mobile-cli-lib": "0.4.0"
 }
 ```
 
@@ -144,7 +144,79 @@ You can change the filename in `index.js`.
 Public API
 ==
 
-This section contains information about each public method. All methods return Promise.
+This section contains information about each public method.
+
+Device related public API, exposes `IDeviceInfo` data, that contains the following information:
+```TypeScript
+/**
+ * Describes available information for a device.
+ */
+interface IDeviceInfo {
+	/**
+	 * Unique identifier of the device.
+	 */
+	identifier: string;
+
+	/**
+	 * The name of the device.
+	 * For Android this is the value of device's 'ro.product.name' property.
+	 * For iOS this is the value of device's 'DeviceName' property.
+	 */
+	displayName: string;
+
+	/**
+	 * Device model.
+	 * For Android this is the value of device's 'ro.product.model' property.
+	 * For iOS this is the value of device's 'ProductType' property.
+	 */
+	model: string;
+
+	/**
+	 * Version of the OS.
+	 * For Android this is the value of device's 'ro.build.version.release' property.
+	 * For iOS this is the value of device's 'ProductVersion' property.
+	 */
+	version: string;
+
+	/**
+	 * Vendor of the device.
+	 * For Android this is the value of device's 'ro.product.brand' property.
+	 * For iOS the value is always "Apple".
+	 */
+	vendor: string;
+
+	/**
+	 * Device's platform.
+	 * Can be Android or iOS.
+	 */
+	platform: string;
+
+	/**
+	 * Status of device describing if you can work with this device or there's communication error.
+	 * Can be Connected or Unreachable.
+	 */
+	status: string;
+
+	/**
+	 * Additional information for errors that prevents working with this device.
+	 * It will be null when status is Connected.
+	 */
+	errorHelp: string;
+
+	/**
+	 * Defines if the device is tablet or not.
+	 * For Android the value will be true when device's 'ro.build.characteristics' property contains "tablet" word or when the 'ro.build.version.release' is 3.x
+	 * For iOS the value will be true when device's 'ProductType' property contains "ipad" word.
+	 */
+	isTablet: boolean;
+
+	/**
+	 * Optional property describing the color of the device.
+	 * Available for iOS only - the value of device's 'DeviceColor' property.
+	 */
+	color?: string;
+}
+```
 
 ### Module deviceEmitter
 > Stability 2 - Stable
@@ -152,17 +224,7 @@ This section contains information about each public method. All methods return P
 `deviceEmitter` module is used to emit different events related to devices attached to the system.
 You can use `deviceEmitter` to add handles for the following events:
 
-* `deviceFound` - Raised when a new device is attached to the system. The callback function will receive one argument - deviceInfoData. It contains the following information:
-```TypeScript
-interface IDeviceInfo {
-	identifier: string;
-	displayName: string;
-	model: string;
-	version: string;
-	vendor: string;
-	platform: string;
-}
-```
+* `deviceFound` - Raised when a new device is attached to the system. The callback function will receive one argument - deviceInfoData.
 Sample usage:
 ```JavaScript
 require("mobile-cli-lib").deviceEmitter.on("deviceFound",  function(deviceInfoData) {
@@ -170,17 +232,7 @@ require("mobile-cli-lib").deviceEmitter.on("deviceFound",  function(deviceInfoDa
 });
 ```
 
-* `deviceLost` - Raised when a device is detached from the system. The callback function will receive one argument - deviceInfoData. It contains the following information:
-```TypeScript
-interface IDeviceInfo {
-	identifier: string;
-	displayName: string;
-	model: string;
-	version: string;
-	vendor: string;
-	platform: string;
-}
-```
+* `deviceLost` - Raised when a device is detached from the system. The callback function will receive one argument - deviceInfoData.
 Sample usage:
 ```JavaScript
 require("mobile-cli-lib").deviceEmitter.on("deviceLost",  function(deviceInfoData) {
@@ -188,7 +240,7 @@ require("mobile-cli-lib").deviceEmitter.on("deviceLost",  function(deviceInfoDat
 });
 ```
 
-* `deviceLogData` - Raised when attached device sends reports any information. This is the output of `adb logcat` for Android devices. For iOS this si the `iOS SysLog`.
+* `deviceLogData` - Raised when attached device sends reports any information. This is the output of `adb logcat` for Android devices. For iOS this is the `iOS SysLog`.
 The event is raised for any device that reports data. The callback function has two arguments - `deviceIdentifier` and `reportedData`. <br/><br/>
 Sample usage:
 ```JavaScript
@@ -203,16 +255,6 @@ require("mobile-cli-lib").deviceEmitter.on("deviceLogData",  function(identifier
 This modules allows interaction with devices. You can get a list of the attached devices or deploy on specific devices.
 
 * `getDevices()` - This function returns array of all connected devices. For each of them the following information is provided:
-```TypeScript
-interface IDeviceInfo {
-	identifier: string;
-	displayName: string;
-	model: string;
-	version: string;
-	vendor: string;
-	platform: string;
-}
-```
 Sample usage:
 ```JavaScript
 var devices = require("mobile-cli-lib").devicesService.getDevices();
@@ -239,6 +281,19 @@ Promise.all(require("mobile-cli-lib")
 				console.log(err);
 			});
 ```
+
+* `setLogLevel(logLevel: string, deviceIdentifier?: string)` - Sets the logging level for device(s) to `INFO` or `FULL`.
+The method has two parameters, only the first one is mandatory. When only `logLevel` is passed, it's value is used for all currently connected devices and all devices that will be connected in the future.
+By default the logging level is set to `INFO`. For example when there are two devices attached and this method is called in the following way:
+```JavaScript
+require("mobile-cli-lib").devicesService.setLogLevel("FULL");
+```
+Everything that the devices report will be raised in `deviceEmitter.deviceLogData` event. When a new device is attached, all of the information that it reports will also be send.
+When the `deviceIdentifier` is passed, the value of the log level will be used only for this device. For example when all devices report all of their logs (`FULL`) level, you may call:
+```JavaScript
+require("mobile-cli-lib").devicesService.setLogLevel("INFO", "129604ab96a4d0053023b4bf5b288cf34a9ed5fa");
+```
+This will set the logging level to `INFO` only for device with identifier `129604ab96a4d0053023b4bf5b288cf34a9ed5fa`.
 
 ### Module fs
 > Stability: 0 - Only for testing purposes. Will be removed.

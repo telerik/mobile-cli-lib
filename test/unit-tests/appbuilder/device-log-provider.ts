@@ -5,7 +5,6 @@ import { Yok } from "../../../yok";
 import * as assert from "assert";
 import { DeviceLogProvider } from "../../../appbuilder/device-log-provider";
 
-// $logFilter
 function createTestInjector(loggingLevel: string, emptyFilteredData?: boolean) {
 	let testInjector = new Yok();
 	testInjector.register("logFilter", {
