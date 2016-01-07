@@ -10,7 +10,8 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		private $childProcess: IChildProcess,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $hostInfo: IHostInfo,
-		private $options: ICommonOptions) { }
+		private $options: ICommonOptions,
+		private $iOSSimResolver: Mobile.IiOSSimResolver) { }
 
 	public getEmulatorId(): IFuture<string> {
 		return Future.fromResult("");
@@ -23,24 +24,28 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 	public checkAvailability(dependsOnProject: boolean = true): IFuture<void> {
 		return (() => {
 			if(!this.$hostInfo.isDarwin) {
-				this.$errors.fail("iOS Simulator is available only on Mac OS X.");
+				this.$errors.failWithoutHelp("iOS Simulator is available only on Mac OS X.");
 			}
 
 			let platform = this.$devicePlatformsConstants.iOS;
 			if(dependsOnProject && !this.$emulatorSettingsService.canStart(platform).wait()) {
-				this.$errors.fail("The current project does not target iOS and cannot be run in the iOS Simulator.");
+				this.$errors.failWithoutHelp("The current project does not target iOS and cannot be run in the iOS Simulator.");
 			}
 		}).future<void>()();
 	}
 
-	public startEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): IFuture<any> {
+	public startEmulator(): IFuture<string> {
+		return this.$iOSSimResolver.iOSSim.startSimulator();
+	}
+
+	public runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): IFuture<any> {
 		return (() => {
-			return this.startEmulatorCore(app, emulatorOptions);
+			return this.runApplicationOnEmulatorCore(app, emulatorOptions);
 		}).future<any>()();
 	}
 
 	public postDarwinNotification(notification: string): IFuture<void> {
-		let iosSimPath = require.resolve("ios-sim-portable");
+		let iosSimPath = this.$iOSSimResolver.iOSSimPath;
 		let nodeCommandName = process.argv[0];
 
 		let opts = [ "notify-post", notification ];
@@ -52,9 +57,9 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		return this.$childProcess.exec(`${nodeCommandName} ${iosSimPath} ${opts.join(' ')}`);
 	}
 
-	private startEmulatorCore(app: string, emulatorOptions?: Mobile.IEmulatorOptions): any {
+	private runApplicationOnEmulatorCore(app: string, emulatorOptions?: Mobile.IEmulatorOptions): any {
 		this.$logger.info("Starting iOS Simulator");
-		let iosSimPath = require.resolve("ios-sim-portable");
+		let iosSimPath = this.$iOSSimResolver.iOSSimPath;
 		let nodeCommandName = process.argv[0];
 
 		if(this.$options.availableDevices) {

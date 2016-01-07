@@ -228,6 +228,10 @@ declare module Mobile {
 		platform: string;
 		getDevices(): Mobile.IDeviceInfo[];
 		getDeviceInstances(): Mobile.IDevice[];
+		reset(): void;
+		isAndroidDevice(device: Mobile.IDevice): boolean;
+		isiOSDevice(device: Mobile.IDevice): boolean;
+		isiOSSimulator(device: Mobile.IDevice): boolean;
 	}
 
 	interface IiTunesValidator {
@@ -402,7 +406,8 @@ declare module Mobile {
 	interface IEmulatorPlatformServices {
 		checkDependencies(): IFuture<void>;
 		checkAvailability(dependsOnProject?: boolean): IFuture<void>;
-		startEmulator(app: string, emulatorOptions?: IEmulatorOptions): IFuture<any>;
+		startEmulator(): IFuture<string>;
+		runApplicationOnEmulator(app: string, emulatorOptions?: IEmulatorOptions): IFuture<any>;
 		getEmulatorId(): IFuture<string>;
 	}
 
@@ -418,8 +423,12 @@ declare module Mobile {
 		state?: string;
 	}
 
+	interface IiOSSimResolver {
+		iOSSim: any;
+		iOSSimPath: string;
+	}
+
 	interface IiOSSimulatorService extends IEmulatorPlatformServices {
-		startEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): IFuture<any>;
 		postDarwinNotification(notification: string): IFuture<void>;
 	}
 

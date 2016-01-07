@@ -79,6 +79,7 @@ $injector.require("androidDeviceDiscovery", "./mobile/mobile-core/android-device
 $injector.require("iOSDevice", "./mobile/ios/device/ios-device");
 $injector.require("androidDevice", "./mobile/android/android-device");
 $injector.require("logcatHelper", "./mobile/android/logcat-helper");
+$injector.require("iOSSimResolver", "./mobile/ios/simulator/ios-sim-resolver");
 
 $injector.require("localToDevicePathDataFactory", "./mobile/local-to-device-path-data-factory");
 $injector.require("deviceAppDataFactory", "./mobile/device-app-data/device-app-data-factory");

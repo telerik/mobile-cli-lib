@@ -26,7 +26,8 @@ export class DevicesService implements Mobile.IDevicesService {
 		private $messages: IMessages,
 		private $mobileHelper: Mobile.IMobileHelper,
 		private $deviceLogProvider: Mobile.IDeviceLogProvider,
-		private $hostInfo: IHostInfo) {
+		private $hostInfo: IHostInfo,
+		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
 		this.attachToDeviceDiscoveryEvents();
 	}
 
@@ -41,6 +42,18 @@ export class DevicesService implements Mobile.IDevicesService {
 	@exported("devicesService")
 	public getDevices(): Mobile.IDeviceInfo[] {
 		return this.getDeviceInstances().map(deviceInstance => deviceInstance.deviceInfo);
+	}
+
+	public isAndroidDevice(device: Mobile.IDevice): boolean {
+		return device.deviceInfo.platform.toLowerCase() === this.$devicePlatformsConstants.Android.toLowerCase();
+	}
+
+	public isiOSDevice(device: Mobile.IDevice): boolean {
+		return device.deviceInfo.platform.toLowerCase() === this.$devicePlatformsConstants.iOS.toLowerCase() && !device.isEmulator;
+	}
+
+	public isiOSSimulator(device: Mobile.IDevice): boolean {
+		return device.deviceInfo.platform.toLowerCase() === this.$devicePlatformsConstants.iOS.toLowerCase() && device.isEmulator;
 	}
 
 	/* tslint:disable:no-unused-variable */
@@ -275,6 +288,10 @@ export class DevicesService implements Mobile.IDevicesService {
 		} else {
 			return this.filterDevicesByPlatform().length !== 0;
 		}
+	}
+
+	public reset(): void {
+		this._isInitialized = false;
 	}
 
 	private deployOnDevice(deviceIdentifier: string, packageFile: string, packageName: string): IFuture<void> {

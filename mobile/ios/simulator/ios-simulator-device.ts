@@ -8,7 +8,8 @@ import * as constants from "../../constants";
 export class IOSSimulator implements Mobile.IiOSSimulator {
 	constructor(private simulator: Mobile.IiSimDevice,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
-		private $injector: IInjector) { }
+		private $injector: IInjector,
+		private $iOSSimResolver: Mobile.IiOSSimResolver) { }
 
 	public get deviceInfo(): Mobile.IDeviceInfo {
 		return {
@@ -30,23 +31,14 @@ export class IOSSimulator implements Mobile.IiOSSimulator {
 	}
 
 	public get applicationManager(): Mobile.IDeviceApplicationManager {
-		return this.$injector.resolve(applicationManagerPath.IOSSimulatorApplicationManager, { iosSim: this.iosSim, identifier: this.simulator.id });
+		return this.$injector.resolve(applicationManagerPath.IOSSimulatorApplicationManager, { iosSim: this.$iOSSimResolver.iOSSim, identifier: this.simulator.id });
 	}
 
 	public get fileSystem(): Mobile.IDeviceFileSystem {
-		return this.$injector.resolve(fileSystemPath.IOSSimulatorFileSystem, { iosSim: this.iosSim, identifier: this.simulator.id });
+		return this.$injector.resolve(fileSystemPath.IOSSimulatorFileSystem, { iosSim: this.$iOSSimResolver.iOSSim, identifier: this.simulator.id });
 	}
 
 	public openDeviceLogStream(): void {
-		return this.iosSim.printDeviceLog(this.deviceInfo.identifier);
-	}
-
-	private _iosSim: any = null;
-	private get iosSim(): any {
-		if (!this._iosSim) {
-			this._iosSim = require("ios-sim-portable");
-		}
-
-		return this._iosSim;
+		return this.$iOSSimResolver.iOSSim.printDeviceLog(this.deviceInfo.identifier);
 	}
 }

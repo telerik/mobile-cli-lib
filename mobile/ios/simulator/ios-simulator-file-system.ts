@@ -18,7 +18,7 @@ export class IOSSimulatorFileSystem implements Mobile.IDeviceFileSystem {
 	}
 
 	public putFile(localFilePath: string, deviceFilePath: string): IFuture<void> {
-		return this.iosSim.getFile(localFilePath, deviceFilePath);
+		return this.iosSim.putFile(localFilePath, deviceFilePath);
 	}
 
 	public deleteFile(deviceFilePath: string, appIdentifier: string): void {

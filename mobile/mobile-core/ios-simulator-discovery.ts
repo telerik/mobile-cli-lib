@@ -5,11 +5,12 @@ import {DeviceDiscovery} from "./device-discovery";
 import Future = require("fibers/future");
 import {IOSSimulator} from "./../ios/simulator/ios-simulator-device";
 
-class IOSSimlatorDiscovery extends DeviceDiscovery {
+class IOSSimulatorDiscovery extends DeviceDiscovery {
 	private cachedSimulator: Mobile.IiSimDevice;
 
 	constructor(private $childProcess: IChildProcess,
 		private $injector: IInjector,
+		private $iOSSimResolver: Mobile.IiOSSimResolver,
 		private $hostInfo: IHostInfo) {
 		super();
 	}
@@ -20,7 +21,7 @@ class IOSSimlatorDiscovery extends DeviceDiscovery {
 
 	public checkForDevices(future?: IFuture<void>): IFuture<void> {
 		if (this.$hostInfo.isDarwin && this.isSimulatorRunning().wait()) {
-			let currentSimulator = this.iOSSim.getRunningSimulator();
+			let currentSimulator = this.$iOSSimResolver.iOSSim.getRunningSimulator();
 
 			if (!this.cachedSimulator) {
 				this.createAndAddDevice(currentSimulator);
@@ -48,18 +49,9 @@ class IOSSimlatorDiscovery extends DeviceDiscovery {
 		}).future<boolean>()();
 	}
 
-	private _iOSSim: any = null;
-	private get iOSSim(): any {
-		if (!this._iOSSim) {
-			this._iOSSim = require("ios-sim-portable");
-		}
-
-		return this._iOSSim;
-	}
-
 	private createAndAddDevice(simulator: Mobile.IiSimDevice): void {
 		this.cachedSimulator = simulator;
 		this.addDevice(this.$injector.resolve(IOSSimulator, {simulator: simulator}));
 	}
 }
-$injector.register("iOSSimulatorDiscovery", IOSSimlatorDiscovery);
+$injector.register("iOSSimulatorDiscovery", IOSSimulatorDiscovery);

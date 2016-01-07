@@ -185,3 +185,4 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 	}
 }
 $injector.register('liveSyncServiceBase', LiveSyncServiceBase);
+

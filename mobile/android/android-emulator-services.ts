@@ -116,32 +116,41 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		}).future<void>()();
 	}
 
-	public startEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): IFuture<void> {
+	public startEmulator(): IFuture<string> {
 		return (() => {
-			if(this.$options.avd && this.$options.geny) {
+			if (this.$options.avd && this.$options.geny) {
 				this.$errors.fail("You cannot specify both --avd and --geny options. Please use only one of them.");
 			}
 
+			let emulatorId: string = null;
+
 			let image = this.getEmulatorImage().wait();
-			if(image) {
-				this.startEmulatorCore(app, emulatorOptions.appId, image).wait();
+			if (image) {
+				// start the emulator, if needed
+				emulatorId = this.startEmulatorInstance(image).wait();
+
+				// waits for the boot animation property of the emulator to switch to 'stopped'
+				this.waitForEmulatorBootToComplete(emulatorId).wait();
+
+				// unlock screen
+				this.unlockScreen(emulatorId).wait();
 			} else {
 				this.$errors.fail("Could not find an emulator image to run your project.");
 			}
+
+			return emulatorId;
+		}).future<string>()();
+	}
+
+	public runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): IFuture<void> {
+		return (() => {
+			let emulatorId = this.startEmulator().wait();
+			this.runApplicationOnEmulatorCore(app, emulatorOptions.appId, emulatorId).wait();
 		}).future<void>()();
 	}
 
-	private startEmulatorCore(app: string, appId: string, image: string): IFuture<void> {
+	private runApplicationOnEmulatorCore(app: string, appId: string, emulatorId: string): IFuture<void> {
 		return (() => {
-			// start the emulator, if needed
-			let emulatorId = this.startEmulatorInstance(image).wait();
-
-			// waits for the boot animation property of the emulator to switch to 'stopped'
-			this.waitForEmulatorBootToComplete(emulatorId).wait();
-
-			// unlock screen
-			this.unlockScreen(emulatorId).wait();
-
 			// install the app
 			this.$logger.info("installing %s through adb", app);
 			let childProcess = this.$childProcess.spawn(this.adbFilePath, ["-s", emulatorId, 'install', '-r', app]);
@@ -345,8 +354,11 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	private getRunningEmulators(): IFuture<string[]> {
 		return (() => {
 			let outputRaw: string[] = this.$childProcess.execFile(this.adbFilePath, ['devices']).wait().split(EOL);
-			let emulatorDevices = this.$options.geny ? this.getRunningGenymotionEmulators(outputRaw).wait() : this.getRunningAvdEmulators(outputRaw).wait();
-			return emulatorDevices;
+			if (this.$options.geny) {
+				return this.getRunningGenymotionEmulators(outputRaw).wait();
+			} else {
+				return this.getRunningAvdEmulators(outputRaw).wait();
+			}
 		}).future<string[]>()();
 	}
 

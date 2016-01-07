@@ -48,14 +48,11 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 	}
 
 	public checkForDevices(future?: IFuture<void>): IFuture<void> {
+		let adbData = "";
+
 		let result = this.$childProcess.spawn(this.pathToAdb, ["devices"], { stdio: 'pipe' });
 		result.stdout.on("data", (data: NodeBuffer) => {
-			fiberBootstrap.run(() => {
-				this.checkCurrentData(data).wait();
-				if(future) {
-					future.return();
-				}
-			});
+			adbData += data.toString();
 		});
 
 		result.stderr.on("data", (data: NodeBuffer) => {
@@ -73,6 +70,15 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 			} else {
 				throw(err);
 			}
+		});
+
+		result.on("close", (exitCode: any) => {
+			fiberBootstrap.run(() => {
+				this.checkCurrentData(adbData).wait();
+				if(future) {
+					future.return();
+				}
+			});
 		});
 
 		return future || Future.fromResult();

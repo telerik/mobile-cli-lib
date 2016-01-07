@@ -5,6 +5,7 @@ require("../bootstrap");
 $injector.require("messages", "./messages/messages");
 $injector.require("logger", "./appbuilder/proton-logger");
 
+import Future = require("fibers/future");
 import {OptionsBase} from "../options";
 $injector.require("staticConfig", "./appbuilder/proton-static-config");
 $injector.register("mobilePlatformsCapabilities", {});
@@ -32,6 +33,14 @@ $injector.register("deviceAppDataProvider", {
 		}
 	}
 );
+$injector.register("emulatorSettingsService", {
+	canStart(platform: string): IFuture<boolean> {
+		return Future.fromResult(true);
+	},
+	minVersion(): number {
+		return 17;
+	}
+});
 
 // When debugging uncomment the lines below and comment the line #6 (requiring logger).
 // $injector.require("logger", "./logger");
