@@ -103,8 +103,10 @@ export class DevicesService implements Mobile.IDevicesService {
 				setInterval(() => {
 					fiberBootstrap.run(() => {
 						try {
-							Future.wait([this.$iOSDeviceDiscovery.checkForDevices(),
-										this.$androidDeviceDiscovery.checkForDevices()]);
+							// This code could be faster, by using Future.wait([...]), but it turned out this is breaking iOS deployment on Mac
+							// It's causing error 21 when deploying on some iOS devices during transfer of the first package.
+							this.$iOSDeviceDiscovery.checkForDevices().wait();
+							this.$androidDeviceDiscovery.checkForDevices().wait();
 						} catch (err) {
 							this.$logger.trace("Error while checking for new devices.", err);
 						}
@@ -267,7 +269,11 @@ export class DevicesService implements Mobile.IDevicesService {
 				let device = this._devices[deviceIdentifier];
 				device.deploy(packageFile, packageName).wait();
 				if(device.applicationManager.canStartApplication()) {
-					device.applicationManager.startApplication(packageName).wait();
+					try {
+						device.applicationManager.startApplication(packageName).wait();
+					} catch(err) {
+						this.$logger.trace("Unable to start application on device. Error is: ", err);
+					}
 				}
 			} else {
 				throw new Error(`Cannot find device with identifier ${deviceIdentifier}.`);
