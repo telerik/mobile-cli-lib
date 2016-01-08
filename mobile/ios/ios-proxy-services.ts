@@ -5,6 +5,7 @@ import * as path from "path";
 import * as iOSCore from "./ios-core";
 import * as helpers from "../../helpers";
 import * as plistlib from "plistlib";
+import Future = require("fibers/future");
 
 export class MobileServices {
 	public static APPLE_FILE_CONNECTION: string = "com.apple.afc";
@@ -161,6 +162,7 @@ export class AfcClient implements Mobile.IAfcClient {
 
 	public transfer(localFilePath: string, devicePath: string): IFuture<void> {
 		return(() => {
+			let future = new Future<void>();
 			this.ensureDevicePathExist(path.dirname(devicePath));
 			let reader = this.$fs.createReadStream(localFilePath);
 			devicePath = helpers.fromWindowsRelativePathToUnix(devicePath);
@@ -169,19 +171,44 @@ export class AfcClient implements Mobile.IAfcClient {
 
 			let target = this.open(devicePath, "w");
  			let localFilePathSize = this.$fs.getFileSize(localFilePath).wait();
+ 			let isErrorCode21Raised = false,
+ 				futureThrow = (err: Error) => {
+					if (!future.isResolved()) {
+						future.throw(err);
+					}
+				};
 
 			reader.on("data", (data: NodeBuffer) => {
-				target.write(data, data.length);
-				this.$logger.trace("transfer-> localFilePath: '%s', devicePath: '%s', localFilePathSize: '%s', transferred bytes: '%s'",
-					localFilePath, devicePath, localFilePathSize.toString(), data.length.toString());
-			})
-			.on("error", (error: Error) => {
-				this.$errors.fail(error);
-			})
-			.on("end", () => target.close());
+				try {
+					target.write(data, data.length);
+					this.$logger.trace("transfer-> localFilePath: '%s', devicePath: '%s', localFilePathSize: '%s', transferred bytes: '%s'",
+						localFilePath, devicePath, localFilePathSize.toString(), data.length.toString());
+				} catch(err) {
+					if(err.message.indexOf("Result is: '21'") !== -1 && !isErrorCode21Raised) {
+						// Error code 21 is kAFCInterruptedError. It looks like in most cases it is raised on the first package that we try to transfer.
+						// However ignoring this error on the first package, does not prevent the application from installing and working correctly.
+						// So ignore the first occurrence of the error only.
+						this.$logger.warn(err.message);
+						isErrorCode21Raised = true;
+					} else {
+						futureThrow(err);
+					}
+				}
+			});
 
-			this.$fs.futureFromEvent(reader, "close").wait();
+			reader.on("error", (error: Error) => {
+				futureThrow(error);
+			});
 
+			reader.on("end", () => target.close());
+
+			reader.on("close", () => {
+				if(!future.isResolved()) {
+					future.return();
+				}
+			});
+
+			future.wait();
 		}).future<void>()();
 	}
 
