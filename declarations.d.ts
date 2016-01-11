@@ -702,3 +702,17 @@ interface IWinReg {
 	 */
 	registryKeys: IHiveIds;
 }
+
+/**
+ * Used to show indication that a process is running
+ */
+interface IProgressIndicator {
+	/**
+	 * Prints indication that a process is running
+	 * @param  {IFuture<any>}	future		process
+	 * @param  {number}			timeout		time interval for printing indication
+	 * @param  {boolean}		options		whether to surpress the trailing new line printed after the process ends
+	 * @return {IFuture<void>}
+	 */
+	showProgressIndicator(future: IFuture<any>, timeout: number, options?: { surpressTrailingNewLine?: boolean }): IFuture<void>;
+}
