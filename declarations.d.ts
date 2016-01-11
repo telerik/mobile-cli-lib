@@ -321,13 +321,14 @@ interface ILiveSyncData {
 	/** The path to a directory that is watched */
 	syncWorkingDirectory: string;
 	canExecuteFastSync?: boolean;
+	excludedProjectDirsAndFiles?: string[];
 }
 
-interface IPlatformSpecificLiveSyncService {
+interface IPlatformLiveSyncService {
 	/**
 	 * Refreshes the application's content on a device
 	 */
-	refreshApplication(deviceAppData: Mobile.IDeviceAppData, canExecuteFastSync: boolean): IFuture<void>;
+	refreshApplication(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], canExecuteFastSync?: boolean): IFuture<void>;
 	/**
 	 * Removes specified files from a connected device
 	 */
@@ -535,13 +536,11 @@ interface IDoctorService {
 	printWarnings(): boolean;
 }
 
-interface IPlatformSpecificLiveSyncService {
-	restartApplication(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths?: Mobile.ILocalToDevicePathData[]): IFuture<void>;
-}
 interface IUtils {
 	getParsedTimeout(defaultTimeout: number): number;
 	getMilliSecondsTimeout(defaultTimeout: number): number;
 }
+
 interface IBinaryPlistParser {
 	parseFile(plistFilePath: string): IFuture<any>;
 }
@@ -742,16 +741,16 @@ interface IProjectFilesManager {
 	/**
 	 * Enumerates all files and directories from the specified project files path.
 	 */
-	getProjectFiles(projectFilesPath: string): string[];
+	getProjectFiles(projectFilesPath: string, excludedProjectDirsAndFiles?: string[], filter?: (filePath: string, stat: IFsStats) => IFuture<boolean>, opts?: any): string[];
 	/**
 	 * Checks if the file is excluded
 	 */
-	isFileExcluded(filePath: string): boolean;
+	isFileExcluded(filePath: string, excludedProjectDirsAndFiles?: string[]): boolean;
 	/**
 	 * Returns an object that maps every local file path to device file path
 	 * If projectFiles parameter is not specified enumerates the files from the specified projectFilesPath
 	 */
-	createLocalToDevicePaths(platform: string, appIdentifier: string, projectFilesPath: string, projectFiles?: string[]): Mobile.ILocalToDevicePathData[];
+	createLocalToDevicePaths(deviceAppData: Mobile.IDeviceAppData, projectFilesPath: string, files?: string[], excludedProjectDirsAndFiles?: string[]): Mobile.ILocalToDevicePathData[];
 	/**
 	 * Handle platform specific files
 	 */
@@ -760,9 +759,9 @@ interface IProjectFilesManager {
 
 interface IProjectFilesProvider {
 	/**
-	 * Specifies the excluded directories and files
+	 * Checks if the file is excluded
 	 */
-	excludedProjectDirsAndFiles: string[];
+	isFileExcluded(filePath: string): boolean;
 	/**
 	 * Performs local file path mapping
 	 */
@@ -775,9 +774,9 @@ interface ILiveSyncProvider {
 	 */
 	platformSpecificLiveSyncServices: IDictionary<any>;
 	/**
-	 * Installs the application on a connected device
+	 * Builds the application and returns the package file path
 	 */
-	installOnDevice(platform: string): IFuture<void>;
+	buildForDevice(device: Mobile.IDevice): IFuture<string>;
 	/**
 	 * Prepares the platform for sync
 	 */

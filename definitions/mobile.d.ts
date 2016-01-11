@@ -103,12 +103,14 @@ declare module Mobile {
 
 	interface IDeviceAppData {
 		appIdentifier: string;
+		device: Mobile.IDevice;
+		platform: string;
 		deviceProjectRootPath: string;
-		isLiveSyncSupported(device: Mobile.IDevice): IFuture<boolean>;
+		isLiveSyncSupported(): IFuture<boolean>;
 	}
 
 	interface IDeviceAppDataFactory {
-		create<T extends Mobile.IDeviceAppData>(appIdentifier: string, platform: string): T;
+		create<T extends Mobile.IDeviceAppData>(appIdentifier: string, platform: string, device: Mobile.IDevice): T;
 	}
 
 	interface IDeviceAppDataFactoryRule {
@@ -175,12 +177,13 @@ declare module Mobile {
 
 	interface IDeviceApplicationManager {
 		getInstalledApplications(): IFuture<string[]>;
+		isApplicationInstalled(appIdentifier: string): IFuture<boolean>;
 		installApplication(packageFilePath: string): IFuture<void>;
 		uninstallApplication(appIdentifier: string): IFuture<void>;
-		reinstallApplication(applicationId: string, packageFilePath: string): IFuture<void>;
+		reinstallApplication(appIdentifier: string, packageFilePath: string): IFuture<void>;
 		startApplication(appIdentifier: string): IFuture<void>;
 		stopApplication(appIdentifier: string): IFuture<void>;
-		restartApplication(applicationId: string): IFuture<void>;
+		restartApplication(appIdentifier: string, bundleExecutable?: string): IFuture<void>;
 		canStartApplication(): boolean;
 	}
 
@@ -189,7 +192,7 @@ declare module Mobile {
 		getFile(deviceFilePath: string): IFuture<void>;
 		putFile(localFilePath: string, deviceFilePath: string): IFuture<void>;
 		deleteFile?(deviceFilePath: string, appIdentifier: string): void;
-		transferFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void>;
+		transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void>;
 		transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): IFuture<void>;
 		transferFile?(localFilePath: string, deviceFilePath: string): IFuture<void>;
 		createFileOnDevice?(deviceFilePath: string, fileContent: string): IFuture<void>;
@@ -227,11 +230,13 @@ declare module Mobile {
 		initialize(data: IDevicesServicesInitializationOptions): IFuture<void>;
 		platform: string;
 		getDevices(): Mobile.IDeviceInfo[];
+		getDevicesForPlatform(platform: string): Mobile.IDevice[];
 		getDeviceInstances(): Mobile.IDevice[];
-		reset(): void;
+		getDeviceByDeviceOption(): Mobile.IDevice;
 		isAndroidDevice(device: Mobile.IDevice): boolean;
 		isiOSDevice(device: Mobile.IDevice): boolean;
 		isiOSSimulator(device: Mobile.IDevice): boolean;
+		isOnlyiOSSimultorRunning(): boolean;
 	}
 
 	interface IiTunesValidator {

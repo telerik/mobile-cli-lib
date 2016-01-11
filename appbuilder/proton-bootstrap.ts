@@ -38,7 +38,7 @@ $injector.register("emulatorSettingsService", {
 		return Future.fromResult(true);
 	},
 	minVersion(): number {
-		return 17;
+		return 10;
 	}
 });
 

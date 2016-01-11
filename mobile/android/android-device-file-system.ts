@@ -10,7 +10,6 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		private identifier: string,
 		private $fs: IFileSystem,
 		private $logger: ILogger,
-		private $deviceAppDataFactory: Mobile.IDeviceAppDataFactory,
 		private $mobileHelper: Mobile.IMobileHelper) { }
 
 	public listFiles(devicePath: string): IFuture<void> {
@@ -25,7 +24,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		return future.fromResult();
 	}
 
-	public transferFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[],  projectFilesPath?: string): IFuture<void> {
+	public transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[],  projectFilesPath?: string): IFuture<void> {
 		return (() => {
 			_(localToDevicePaths)
 				.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).wait().isFile())

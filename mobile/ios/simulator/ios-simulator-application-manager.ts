@@ -26,8 +26,8 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase imple
 		return this.iosSim.startApplication(this.identifier, appIdentifier);
 	}
 
-	public stopApplication(appIdentifier: string): IFuture<void> {
-		return this.iosSim.stopApplication(this.identifier, appIdentifier);
+	public stopApplication(cfBundleExecutable: string): IFuture<void> {
+		return this.iosSim.stopApplication(this.identifier, cfBundleExecutable);
 	}
 
 	public canStartApplication(): boolean {

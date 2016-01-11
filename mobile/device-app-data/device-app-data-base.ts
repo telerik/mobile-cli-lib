@@ -2,7 +2,6 @@
 "use strict";
 
 import * as helpers from "../../helpers";
-import * as constants from "../constants";
 
 export class DeviceAppDataBase {
 	constructor(private _appIdentifier: string) { }
@@ -13,15 +12,6 @@ export class DeviceAppDataBase {
 
 	protected getDeviceProjectRootPath(projectRoot: string): string {
 		return helpers.fromWindowsRelativePathToUnix(projectRoot);
-	}
-}
-
-export class AndroidDeviceAppDataBase extends DeviceAppDataBase {
-	public isLiveSyncSupported(device: Mobile.IAndroidDevice): IFuture<boolean> {
-		return (() => {
-			let broadcastResult = device.adb.sendBroadcastToDevice(constants.CHECK_LIVESYNC_INTENT_NAME, {"app-id": this.appIdentifier}).wait();
-			return broadcastResult !== 0;
-		}).future<boolean>()();
 	}
 }
 

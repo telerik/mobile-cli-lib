@@ -16,7 +16,7 @@ export class SyncBatch {
 		private done: () => IFuture<void>) { }
 
 	private get filesToSync(): string[] {
-		let filteredFiles = this.syncQueue.filter(syncFilePath => this.$projectFilesManager.isFileExcluded(syncFilePath));
+		let filteredFiles = this.syncQueue.filter(syncFilePath => !this.$projectFilesManager.isFileExcluded(syncFilePath));
 		return filteredFiles;
 	}
 

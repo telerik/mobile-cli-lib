@@ -2,27 +2,28 @@
 "use strict";
 
 import * as fiberBootstrap from "../fiber-bootstrap";
-let gaze = require("gaze");
 import syncBatchLib = require("./livesync/sync-batch");
+import * as shell from "shelljs";
+import * as path from "path";
+import * as temp from "temp";
+let gaze = require("gaze");
 
 class LiveSyncServiceBase implements ILiveSyncServiceBase {
 	private fileHashes: IDictionary<string>;
 
 	constructor(protected $devicesService: Mobile.IDevicesService,
 		protected $mobileHelper: Mobile.IMobileHelper,
-		private $localToDevicePathDataFactory: Mobile.ILocalToDevicePathDataFactory,
 		protected $logger: ILogger,
 		protected $options: ICommonOptions,
 		protected $deviceAppDataFactory: Mobile.IDeviceAppDataFactory,
 		protected $fs: IFileSystem,
 		protected $injector: IInjector,
-		protected $childProcess: IChildProcess,
 		protected $hooksService: IHooksService,
-		protected $hostInfo: IHostInfo,
 		private $projectFilesManager: IProjectFilesManager,
 		private $projectFilesProvider: IProjectFilesProvider,
 		private $liveSyncProvider: ILiveSyncProvider,
-		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
+		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
+		private $hostInfo: IHostInfo) {
 			this.fileHashes = Object.create(null);
 		}
 
@@ -46,10 +47,10 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 
 	private partialSync(data: ILiveSyncData): void {
 		let that = this;
-		gaze("***", { cwd: data.syncWorkingDirectory }, function(err: any, watcher: any) {
+		gaze("**/*", { cwd: data.syncWorkingDirectory }, function(err: any, watcher: any) {
 			this.on('all', (event: string, filePath: string) => {
 				fiberBootstrap.run(() => {
-					let fileHash = that.$fs.getFsStats(filePath).wait().isFile() ? that.$fs.getFileShasum(filePath).wait() : "";
+					let fileHash = that.$fs.exists(filePath).wait() && that.$fs.getFsStats(filePath).wait().isFile() ? that.$fs.getFileShasum(filePath).wait() : "";
 					if (fileHash === that.fileHashes[filePath]) {
 						that.$logger.trace(`Skipping livesync for ${filePath} file with ${fileHash} hash.`);
 						return;
@@ -69,9 +70,10 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 
 					data.canExecuteFastSync = that.$liveSyncProvider.canExecuteFastSync(filePath);
 
-					if (event === "added" || event === "changed") {
+					if (event === "added" || event === "changed" || event === "renamed") {
 						that.syncAddedOrChangedFile(data, mappedFilePath).wait();
 					} else if (event === "deleted") {
+						that.fileHashes = <any>(_.omit(that.fileHashes, filePath));
 						that.syncRemovedFile(data, mappedFilePath).wait();
 					}
 				});
@@ -115,8 +117,8 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 	private syncRemovedFile(data: ILiveSyncData, filePath: string): IFuture<void> {
 		return (() => {
 			let deviceFilesAction = (device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => {
-				let platformSpecificLiveSyncService = this.resolvePlatformSpecificLiveSyncService(data.platform, device);
-				return platformSpecificLiveSyncService.removeFiles(data.appIdentifier, localToDevicePaths);
+				let platformLiveSyncService = this.resolvePlatformLiveSyncService(data.platform, device);
+				return platformLiveSyncService.removeFiles(data.appIdentifier, localToDevicePaths);
 			};
 
 			this.syncCore(data, [filePath], deviceFilesAction).wait();
@@ -129,59 +131,104 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 			let platform = data.platform;
 			let projectFilesPath = data.projectFilesPath;
 
-			let deviceAppData =  this.$deviceAppDataFactory.create(appIdentifier, this.$mobileHelper.normalizePlatformName(platform));
+			let packageFilePath: string = null;
+			let shouldRefreshApplication: boolean;
 
 			let action = (device: Mobile.IDevice) => {
 				return (() => {
-					if (deviceAppData.isLiveSyncSupported(device).wait()) {
-						let platformSpecificLiveSyncService = this.resolvePlatformSpecificLiveSyncService(platform, device);
+					shouldRefreshApplication = true;
+					let deviceAppData = this.$deviceAppDataFactory.create(appIdentifier, this.$mobileHelper.normalizePlatformName(platform), device);
+					if (deviceAppData.isLiveSyncSupported().wait()) {
+						let platformLiveSyncService = this.resolvePlatformLiveSyncService(platform, device);
 
-						if (platformSpecificLiveSyncService.beforeLiveSyncAction) {
-							platformSpecificLiveSyncService.beforeLiveSyncAction(deviceAppData).wait();
+						if (platformLiveSyncService.beforeLiveSyncAction) {
+							platformLiveSyncService.beforeLiveSyncAction(deviceAppData).wait();
 						}
 
 						// Not installed application
-						let applications = device.applicationManager.getInstalledApplications().wait();
-						if (!_.contains(applications, appIdentifier)) {
+						if (!device.applicationManager.isApplicationInstalled(appIdentifier).wait()) {
 							this.$logger.warn(`The application with id "${appIdentifier}" is not installed on device with identifier ${device.deviceInfo.identifier}.`);
-							this.$liveSyncProvider.installOnDevice(platform).wait();
+							if (!packageFilePath) {
+								packageFilePath = this.$liveSyncProvider.buildForDevice(device).wait();
+								device.applicationManager.reinstallApplication(appIdentifier, packageFilePath).wait();
+								if (device.applicationManager.canStartApplication()) {
+									device.applicationManager.startApplication(appIdentifier).wait();
+								}
+							}
+							shouldRefreshApplication =  false;
 						}
 
 						// Transfer or remove files on device
-						let localToDevicePaths = this.$projectFilesManager.createLocalToDevicePaths(platform, appIdentifier, projectFilesPath, filesToSync);
+						let localToDevicePaths = this.$projectFilesManager.createLocalToDevicePaths(deviceAppData, projectFilesPath, filesToSync, data.excludedProjectDirsAndFiles);
 						if (deviceFilesAction) {
 							deviceFilesAction(device, localToDevicePaths).wait();
 						} else {
-							this.transferFiles(device, deviceAppData, localToDevicePaths, projectFilesPath).wait();
+							this.transferFiles(deviceAppData, localToDevicePaths, projectFilesPath, !filesToSync).wait();
 						}
 
 						// Restart application or reload page
-						this.$logger.info("Applying changes...");
-						platformSpecificLiveSyncService.refreshApplication(deviceAppData, data.canExecuteFastSync).wait();
-						this.$logger.info(`Successfully synced application ${data.appIdentifier}.`);
+						if (shouldRefreshApplication) {
+							this.$logger.info("Applying changes...");
+							platformLiveSyncService.refreshApplication(deviceAppData, localToDevicePaths, data.canExecuteFastSync).wait();
+							this.$logger.info(`Successfully synced application ${data.appIdentifier} on device ${device.deviceInfo.identifier}.`);
+						}
 					}
 				}).future<void>()();
 			};
 
-			this.$devicesService.execute(action).wait();
+			let canExecute = this.getCanExecuteAction(platform, appIdentifier);
+
+			this.$devicesService.execute(action, canExecute).wait();
 		}).future<void>()();
 	}
 
-	private transferFiles(device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): IFuture<void> {
+	private transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string, isFullSync: boolean): IFuture<void> {
 		return (() => {
 			this.$logger.info("Transferring project files...");
-			let canTransferDirectory = device.deviceInfo.platform === this.$devicePlatformsConstants.Android || device.deviceInfo.type === "Simulator";
+			let canTransferDirectory = isFullSync && (this.$devicesService.isAndroidDevice(deviceAppData.device) || this.$devicesService.isiOSSimulator(deviceAppData.device));
 			if (canTransferDirectory) {
-				device.fileSystem.transferDirectory(deviceAppData, localToDevicePaths, projectFilesPath).wait();
+				let tempDir = temp.mkdirSync("tempDir");
+				shell.cp("-Rf", path.join(projectFilesPath, "*"), tempDir);
+				this.$projectFilesManager.processPlatformSpecificFiles(tempDir, deviceAppData.platform).wait();
+				deviceAppData.device.fileSystem.transferDirectory(deviceAppData, localToDevicePaths, tempDir).wait();
 			} else {
-				device.fileSystem.transferFiles(deviceAppData.appIdentifier, localToDevicePaths).wait();
+				deviceAppData.device.fileSystem.transferFiles(deviceAppData, localToDevicePaths).wait();
 			}
 			this.$logger.info("Successfully transferred all project files.");
 		}).future<void>()();
 	}
 
-	private resolvePlatformSpecificLiveSyncService(platform: string, device: Mobile.IDevice): IPlatformSpecificLiveSyncService {
+	private resolvePlatformLiveSyncService(platform: string, device: Mobile.IDevice): IPlatformLiveSyncService {
 		return this.$injector.resolve(this.$liveSyncProvider.platformSpecificLiveSyncServices[platform.toLowerCase()], {_device: device});
+	}
+
+	private getCanExecuteAction(platform: string, appIdentifier: string): (dev: Mobile.IDevice) => boolean {
+		let canExecute: (dev: Mobile.IDevice) => boolean = null;
+		if (this.$options.device) {
+			return (device: Mobile.IDevice): boolean => device.deviceInfo.identifier === this.$devicesService.getDeviceByDeviceOption().deviceInfo.identifier;
+		}
+
+		if (this.$mobileHelper.isiOSPlatform(platform)) {
+			if (this.$options.emulator) {
+				canExecute = (device: Mobile.IDevice): boolean => this.$devicesService.isiOSSimulator(device);
+			} else {
+				let devices = this.$devicesService.getDevicesForPlatform(platform);
+				let simulator = _.find(devices, d => this.$devicesService.isiOSSimulator(d));
+				if (simulator) {
+					let iOSDevices = _.filter(devices, d => d.deviceInfo.identifier !== simulator.deviceInfo.identifier);
+					if (iOSDevices && iOSDevices.length) {
+						let isApplicationInstalledOnSimulator = simulator.applicationManager.isApplicationInstalled(appIdentifier).wait();
+						let isApplicationInstalledOnAllDevices = _.intersection.apply(null, iOSDevices.map(device => device.applicationManager.isApplicationInstalled(appIdentifier).wait()));
+						// In case the application is not installed on both device and simulator, syncs only on device.
+						if (!isApplicationInstalledOnSimulator && !isApplicationInstalledOnAllDevices) {
+							canExecute = (device: Mobile.IDevice): boolean => this.$devicesService.isiOSDevice(device);
+						}
+					}
+				}
+			}
+		}
+
+		return canExecute;
 	}
 }
 $injector.register('liveSyncServiceBase', LiveSyncServiceBase);

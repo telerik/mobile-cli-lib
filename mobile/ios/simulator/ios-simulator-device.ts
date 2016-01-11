@@ -6,6 +6,9 @@ import * as fileSystemPath from "./ios-simulator-file-system";
 import * as constants from "../../constants";
 
 export class IOSSimulator implements Mobile.IiOSSimulator {
+	private _applicationManager: Mobile.IDeviceApplicationManager;
+	private _fileSystem: Mobile.IDeviceFileSystem;
+
 	constructor(private simulator: Mobile.IiSimDevice,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $injector: IInjector,
@@ -31,11 +34,19 @@ export class IOSSimulator implements Mobile.IiOSSimulator {
 	}
 
 	public get applicationManager(): Mobile.IDeviceApplicationManager {
-		return this.$injector.resolve(applicationManagerPath.IOSSimulatorApplicationManager, { iosSim: this.$iOSSimResolver.iOSSim, identifier: this.simulator.id });
+		if (!this._applicationManager) {
+			this._applicationManager = this.$injector.resolve(applicationManagerPath.IOSSimulatorApplicationManager, { iosSim: this.$iOSSimResolver.iOSSim, identifier: this.simulator.id });
+		}
+
+		return this._applicationManager;
 	}
 
 	public get fileSystem(): Mobile.IDeviceFileSystem {
-		return this.$injector.resolve(fileSystemPath.IOSSimulatorFileSystem, { iosSim: this.$iOSSimResolver.iOSSim, identifier: this.simulator.id });
+		if (!this._fileSystem) {
+			this._fileSystem = this.$injector.resolve(fileSystemPath.IOSSimulatorFileSystem, { iosSim: this.$iOSSimResolver.iOSSim, identifier: this.simulator.id });
+		}
+
+		return this._fileSystem;
 	}
 
 	public openDeviceLogStream(): void {

@@ -1,4 +1,4 @@
-///<reference path="../../.d.ts"/>
+	///<reference path="../../.d.ts"/>
 "use strict";
 
 import {assert} from "chai";
@@ -11,6 +11,7 @@ import {HostInfo} from "../../../host-info";
 import {LocalToDevicePathDataFactory} from "../../../mobile/local-to-device-path-data-factory";
 import {MobileHelper} from "../../../mobile/mobile-helper";
 import {ProjectFilesManager} from "../../../services/project-files-manager";
+import {Logger} from "../../../logger";
 import * as path from "path";
 import {Yok} from "../../../yok";
 
@@ -22,29 +23,23 @@ let iOSDeviceProjectRootPath = "/Library/Application Support/LiveSync/app";
 let androidDeviceProjectRootPath = "/data/local/tmp//sync";
 
 class IOSAppIdentifierMock implements Mobile.IDeviceAppData {
-	public get appIdentifier(): string {
-		return testedApplicationIdentifier;
-	}
+	public platform = "iOS";
+	public appIdentifier = testedApplicationIdentifier;
+	public device: Mobile.IDevice = null;
+	public deviceProjectRootPath = iOSDeviceProjectRootPath;
 
-	public get deviceProjectRootPath(): string {
-		return iOSDeviceProjectRootPath;
-	}
-
-	public isLiveSyncSupported(device: Mobile.IDevice): IFuture<boolean> {
+	public isLiveSyncSupported(): IFuture<boolean> {
 		return Future.fromResult(true);
 	}
 }
 
 class AndroidAppIdentifierMock implements Mobile.IDeviceAppData {
-	public get appIdentifier(): string {
-		return testedApplicationIdentifier;
-	}
+	public platform = "Android";
+	public appIdentifier = testedApplicationIdentifier;
+	public device: Mobile.IDevice = null;
+	public deviceProjectRootPath = androidDeviceProjectRootPath;
 
-	public get deviceProjectRootPath(): string {
-		return androidDeviceProjectRootPath;
-	}
-
-	public isLiveSyncSupported(device: Mobile.IDevice): IFuture<boolean> {
+	public isLiveSyncSupported(): IFuture<boolean> {
 		return Future.fromResult(true);
 	}
 }
@@ -97,14 +92,14 @@ function createTestInjector(): IInjector {
 	testInjector.register("localToDevicePathDataFactory", LocalToDevicePathDataFactory);
 	testInjector.register("mobileHelper", MobileHelper);
 	testInjector.register("mobilePlatformsCapabilities", MobilePlatformsCapabilitiesMock);
-	testInjector.register("projectFilesProvider", {
-		excludedProjectDirsAndFiles: [ "**/*.ts" ]
-	});
+	testInjector.register("projectFilesProvider", {});
 	testInjector.register("projectFilesManager", ProjectFilesManager);
 	testInjector.register("options", { });
 	testInjector.register("staticConfig", {
 		disableAnalytics: true
 	});
+	testInjector.register("logger", Logger);
+	testInjector.register("config", {});
 	return testInjector;
 }
 
@@ -120,15 +115,17 @@ function createFiles(testInjector: IInjector, filesToCreate: string[]): IFuture<
 }
 
 describe("Project Files Manager Tests", () => {
-	let testInjector: IInjector, projectFilesManager: IProjectFilesManager;
+	let testInjector: IInjector, projectFilesManager: IProjectFilesManager, deviceAppDataFactory: Mobile.IDeviceAppDataFactory;
 	beforeEach(() => {
 		testInjector = createTestInjector();
 		projectFilesManager = testInjector.resolve("projectFilesManager");
+		deviceAppDataFactory = testInjector.resolve("deviceAppDataFactory");
 	});
 
 	it("maps non-platform specific files to device file paths for ios platform", () => {
+		let deviceAppData = deviceAppDataFactory.create(testedApplicationIdentifier, "iOS", null);
 		let files = ["~/TestApp/app/test.js", "~/TestApp/app/myfile.js"];
-		let localToDevicePaths = projectFilesManager.createLocalToDevicePaths("ios", testedApplicationIdentifier, "~/TestApp/app", files);
+		let localToDevicePaths = projectFilesManager.createLocalToDevicePaths(deviceAppData, "~/TestApp/app", files);
 
 		_.each(localToDevicePaths, (localToDevicePathData, index) => {
 			assert.equal(files[index],  localToDevicePathData.getLocalPath());
@@ -138,8 +135,9 @@ describe("Project Files Manager Tests", () => {
 	});
 
 	it("maps non-platform specific files to device file paths for android platform", () => {
+		let deviceAppData = deviceAppDataFactory.create(testedApplicationIdentifier, "Android", null);
 		let files = ["~/TestApp/app/test.js", "~/TestApp/app/myfile.js"];
-		let localToDevicePaths = projectFilesManager.createLocalToDevicePaths("android", testedApplicationIdentifier, "~/TestApp/app", files);
+		let localToDevicePaths = projectFilesManager.createLocalToDevicePaths(deviceAppData, "~/TestApp/app", files);
 
 		_.each(localToDevicePaths, (localToDevicePathData, index) => {
 			assert.equal(files[index],  localToDevicePathData.getLocalPath());
@@ -149,8 +147,9 @@ describe("Project Files Manager Tests", () => {
 	});
 
 	it("maps ios platform specific file to device file path", () => {
+		let deviceAppData = deviceAppDataFactory.create(testedApplicationIdentifier, "iOS", null);
 		let filePath = "~/TestApp/app/test.ios.js";
-		let localToDevicePathData = projectFilesManager.createLocalToDevicePaths("ios", testedApplicationIdentifier, "~/TestApp/app", [filePath])[0];
+		let localToDevicePathData = projectFilesManager.createLocalToDevicePaths(deviceAppData, "~/TestApp/app", [filePath])[0];
 
 		assert.equal(filePath, localToDevicePathData.getLocalPath());
 		assert.equal(path.join(iOSDeviceProjectRootPath, "test.js"), localToDevicePathData.getDevicePath());
@@ -158,8 +157,9 @@ describe("Project Files Manager Tests", () => {
 	});
 
 	it("maps android platform specific file to device file path", () => {
+		let deviceAppData = deviceAppDataFactory.create(testedApplicationIdentifier, "Android", null);
 		let filePath = "~/TestApp/app/test.android.js";
-		let localToDevicePathData = projectFilesManager.createLocalToDevicePaths("android", testedApplicationIdentifier, "~/TestApp/app", [filePath])[0];
+		let localToDevicePathData = projectFilesManager.createLocalToDevicePaths(deviceAppData, "~/TestApp/app", [filePath])[0];
 
 		assert.equal(filePath, localToDevicePathData.getLocalPath());
 		assert.equal(path.join(androidDeviceProjectRootPath, "test.js"), localToDevicePathData.getDevicePath());

@@ -2,11 +2,13 @@
 "use strict";
 
 import Future = require("fibers/future");
-import * as shell from "shelljs";
+import * as path from "path";
+import * as shelljs from "shelljs";
 
 export class IOSSimulatorFileSystem implements Mobile.IDeviceFileSystem {
 	constructor(private iosSim: any,
 		private identifier: string,
+		private $fs: IFileSystem,
 		private $logger: ILogger) { }
 
 	public listFiles(devicePath: string): IFuture<void> {
@@ -22,23 +24,29 @@ export class IOSSimulatorFileSystem implements Mobile.IDeviceFileSystem {
 	}
 
 	public deleteFile(deviceFilePath: string, appIdentifier: string): void {
-		shell.rm("-rf", deviceFilePath);
+		shelljs.rm("-rf", deviceFilePath);
 	}
 
-	public transferFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void> {
+	public transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void> {
 		return (() => {
 			_.each(localToDevicePaths, localToDevicePathData => this.transferFile(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()).wait());
 		}).future<void>()();
 	}
 
 	public transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): IFuture<void> {
-		let destinationPath = this.iosSim.getApplicationPath(this.identifier, deviceAppData.appIdentifier);
+		let destinationPath = deviceAppData.deviceProjectRootPath;
 		this.$logger.trace(`Transferring from ${projectFilesPath} to ${destinationPath}`);
-		return Future.fromResult(shell.cp("-Rf", projectFilesPath,  destinationPath));
+		return Future.fromResult(shelljs.cp("-Rf", path.join(projectFilesPath, "*"), destinationPath));
 	}
 
 	public transferFile(localFilePath: string, deviceFilePath: string): IFuture<void> {
-		this.$logger.trace(`Transferring from ${localFilePath} to ${deviceFilePath}`);
-		return Future.fromResult(shell.cp("-f", localFilePath,  deviceFilePath));
+		return (() => {
+			this.$logger.trace(`Transferring from ${localFilePath} to ${deviceFilePath}`);
+			if (this.$fs.getFsStats(localFilePath).wait().isDirectory()) {
+				shelljs.mkdir(deviceFilePath);
+			} else {
+				shelljs.cp("-f", localFilePath, deviceFilePath);
+			}
+		}).future<void>()();
 	}
 }
