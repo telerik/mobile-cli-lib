@@ -6,7 +6,7 @@ import {CoreTypes} from "../ios/device/ios-core";
 import * as ref from "ref";
 import {IOSDevice} from "../ios/device/ios-device";
 
-class IOSDeviceDiscovery extends DeviceDiscovery {
+export class IOSDeviceDiscovery extends DeviceDiscovery {
 	private static ADNCI_MSG_CONNECTED = 1;
 	private static ADNCI_MSG_DISCONNECTED = 2;
 	private static ADNCI_MSG_TRUSTED = 4;
