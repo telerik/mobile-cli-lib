@@ -35,7 +35,8 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		private $mobileDevice: Mobile.IMobileDevice,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $hostInfo: IHostInfo,
-		private $options: ICommonOptions) {
+		private $options: ICommonOptions,
+		private $iOSDeviceProductNameMapper: Mobile.IiOSDeviceProductNameMapper) {
 			this.mountImageCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSDevice.mountImageCallback);
 
 			this.applicationManager = this.$injector.resolve(applicationManagerPath.IOSApplicationManager, { device: this, devicePointer: this.devicePointer });
@@ -50,8 +51,10 @@ export class IOSDevice implements Mobile.IiOSDevice {
 			};
 
 			let productType = this.getValue("ProductType");
-			this.deviceInfo.displayName = this.getValue("DeviceName") || productType;
-			this.deviceInfo.model = productType;
+			let deviceName = this.getValue("DeviceName") || productType;
+			let displayName = this.$iOSDeviceProductNameMapper.resolveProductName(deviceName) || deviceName;
+			this.deviceInfo.displayName = displayName;
+			this.deviceInfo.model = this.$iOSDeviceProductNameMapper.resolveProductName(productType);
 			this.deviceInfo.version = this.getValue("ProductVersion");
 			this.deviceInfo.color = this.getValue("DeviceColor");
 			this.deviceInfo.isTablet = productType && productType.toLowerCase().indexOf("ipad") !== -1;
