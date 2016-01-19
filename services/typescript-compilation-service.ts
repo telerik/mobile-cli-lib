@@ -3,7 +3,6 @@
 
 import * as path from "path";
 import * as os from "os";
-import * as util from "util";
 import temp = require("temp");
 temp.track();
 
@@ -14,22 +13,26 @@ interface ITypeScriptCompilerMessages {
 	hasPreventEmitErrors: boolean;
 }
 
+interface ITypeScriptCompilerSettings {
+	pathToCompiler: string;
+	version: string;
+}
+
 export class TypeScriptCompilationService implements ITypeScriptCompilationService {
 	private typeScriptFiles: string[];
 	private definitionFiles: string[];
+	private noEmitOnError: boolean;
 
 	constructor(private $childProcess: IChildProcess,
 		private $fs: IFileSystem,
 		private $logger: ILogger,
 		private $config: Config.IConfig) { }
 
-	public initialize(typeScriptFiles: string[], definitionFiles?: string[]): void {
-		this.typeScriptFiles = typeScriptFiles;
-		this.definitionFiles = definitionFiles || [];
-	}
-
-	public compileAllFiles(): IFuture<void> {
+	public compileFiles(compilerOptions: {noEmitOnError: boolean}, typeScriptFiles: string[], definitionFiles?: string[]): IFuture<void> {
 		return (() => {
+			this.noEmitOnError = compilerOptions.noEmitOnError;
+			this.typeScriptFiles = typeScriptFiles || [];
+			this.definitionFiles = definitionFiles || [];
 			if(this.typeScriptFiles.length > 0) {
 				// Create typeScript command file
 				let typeScriptCommandsFilePath = path.join(temp.mkdirSync("typeScript-compilation"), "tscommand.txt");
@@ -37,35 +40,59 @@ export class TypeScriptCompilationService implements ITypeScriptCompilationServi
 				let typeScriptDefinitionsFiles = this.getTypeScriptDefinitionsFiles().wait();
 				this.$fs.writeFile(typeScriptCommandsFilePath, this.typeScriptFiles.concat(typeScriptDefinitionsFiles).concat(typeScriptCompilerOptions).join(' ')).wait();
 
-				// Get the path to tsc
-				let typeScriptModuleFilePath = require.resolve("typescript");
-				let typeScriptModuleDirPath = path.dirname(typeScriptModuleFilePath);
-				let typeScriptCompilerPath = path.join(typeScriptModuleDirPath, "tsc");
-				let typeScriptCompilerVersion = this.$fs.readJson(path.join(typeScriptModuleDirPath, "../", "package.json")).wait().version;
+				let typeScriptCompilerSettings = this.getTypeScriptCompiler().wait();
 
 				// Log some messages
 				this.$logger.out("Compiling...".yellow);
 				_.each(this.typeScriptFiles, file => {
-					this.$logger.out(util.format("### Compile ", file).cyan);
+					this.$logger.out(`### Compile ${file}`.cyan);
 				});
-				this.$logger.out(util.format("Using tsc version ", typeScriptCompilerVersion).cyan);
+				this.$logger.out(`Using tsc version ${typeScriptCompilerSettings.version}`.cyan);
 
 				// Core compilation
-				this.runCompilation(typeScriptCompilerPath, typeScriptCommandsFilePath).wait();
+				this.runCompilation(typeScriptCompilerSettings.pathToCompiler, typeScriptCommandsFilePath).wait();
 			}
 		}).future<void>()();
 	}
 
-	private runCompilation(typeScriptCompilerPath: string, typeScriptCommandsFilePath: string): IFuture<void> {
+	// Uses tsconfig.json if it exists
+	public compileWithDefaultOptions(compilerOptions: {noEmitOnError: boolean}): IFuture<void> {
+		return (() => {
+			this.noEmitOnError = compilerOptions.noEmitOnError;
+			let typeScriptCompilerSettings = this.getTypeScriptCompiler().wait();
+			this.$logger.out(`Using tsc version ${typeScriptCompilerSettings.version}`.cyan);
+
+			// Core compilation
+			this.runCompilation(typeScriptCompilerSettings.pathToCompiler).wait();
+		}).future<void>()();
+	}
+
+	private getTypeScriptCompiler(): IFuture<ITypeScriptCompilerSettings> {
+		return ((): ITypeScriptCompilerSettings => {
+			// Get the path to tsc
+			let typeScriptModuleFilePath = require.resolve("typescript");
+			let typeScriptModuleDirPath = path.dirname(typeScriptModuleFilePath);
+			let typeScriptCompilerPath = path.join(typeScriptModuleDirPath, "tsc");
+			let typeScriptCompilerVersion = this.$fs.readJson(path.join(typeScriptModuleDirPath, "../", "package.json")).wait().version;
+
+			return { pathToCompiler: typeScriptCompilerPath, version: typeScriptCompilerVersion };
+		}).future<ITypeScriptCompilerSettings>()();
+	}
+
+	private runCompilation(typeScriptCompilerPath: string, typeScriptCommandsFilePath?: string): IFuture<void> {
 		return (() => {
 			let startTime = new Date().getTime();
+			let params = [typeScriptCompilerPath];
+			if(typeScriptCommandsFilePath) {
+				params.push("@" + typeScriptCommandsFilePath);
+			}
 
-			let output = this.$childProcess.spawnFromEvent("node", [typeScriptCompilerPath, "@" + typeScriptCommandsFilePath], "close", undefined, { throwError: false }).wait();
+			let output = this.$childProcess.spawnFromEvent(process.argv[0], params, "close", undefined, { throwError: false }).wait();
 			if (output.exitCode === 0) {
 				let endTime = new Date().getTime();
 				let time = (endTime - startTime) / 1000;
 
-				this.$logger.out(util.format("\n Success: %ss for %s typeScript files \n Done without errors.", time.toFixed(2), this.typeScriptFiles.length).green);
+				this.$logger.out(`${os.EOL}Success: ${time.toFixed(2)}s${os.EOL}Done without errors.`.green);
 			} else {
 				let compilerOutput = output.stderr || output.stdout;
 				let compilerMessages = this.getCompilerMessages(compilerOutput);
@@ -85,7 +112,7 @@ export class TypeScriptCompilationService implements ITypeScriptCompilationServi
 			nonEmitPreventingWarningCount = 0;
 
 		let hasPreventEmitErrors = _.reduce(compilerOutput.split("\n"), (memo: any, errorMsg: string) => {
-			let isPreventEmitError = false;
+			let isPreventEmitError = !!this.noEmitOnError;
 			if (errorMsg.search(/error TS1\d+:/) >= 0) {
 				level1ErrorCount += 1;
 				isPreventEmitError = true;
@@ -118,13 +145,17 @@ export class TypeScriptCompilationService implements ITypeScriptCompilationServi
 
 			let errorTitle = "";
 			if (level5ErrorCount > 0) {
-				errorTitle = this.composeErrorTitle(level5ErrorCount, "compiler flag error");
+				errorTitle += this.composeErrorTitle(level5ErrorCount, "compiler flag error");
 			}
 			if (level1ErrorCount > 0) {
-				errorTitle = this.composeErrorTitle(level1ErrorCount, "syntax error");
+				errorTitle += this.composeErrorTitle(level1ErrorCount, "syntax error");
 			}
 			if (nonEmitPreventingWarningCount > 0) {
-				errorTitle = this.composeErrorTitle(nonEmitPreventingWarningCount, "non-emit-preventing type warning");
+				if(!level1ErrorCount && !level5ErrorCount && this.noEmitOnError) {
+					errorTitle += this.composeErrorTitle(nonEmitPreventingWarningCount, "non-emit-preventing type errors, but output is not generated as noEmitOnError option is true.");
+				} else {
+					errorTitle += this.composeErrorTitle(nonEmitPreventingWarningCount, "non-emit-preventing type warning");
+				}
 			}
 
 			if (hasPreventEmitErrors) {
@@ -140,7 +171,7 @@ export class TypeScriptCompilationService implements ITypeScriptCompilationServi
 	}
 
 	private composeErrorTitle(count: number, title: string) {
-		return util.format("%d %s%s %s", count, title, (count === 1) ? '': 's', os.EOL);
+		return `${count} ${title}${(count === 1) ? '': 's'} ${os.EOL}`;
 	}
 
 	private getTypeScriptCompilerOptions(): IFuture<string[]> {
@@ -186,10 +217,11 @@ export class TypeScriptCompilationService implements ITypeScriptCompilationServi
 				if (options.mapRoot) {
 					compilerOptions.push("--mapRoot ", options.mapRoot);
 				}
+
+				this.noEmitOnError = !!options.noEmitOnError;
 			}
 
 			return compilerOptions;
-
 		}).future<string[]>()();
 	}
 

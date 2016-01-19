@@ -260,9 +260,25 @@ interface IHook {
 	fullPath: string;
 }
 
+/**
+ * Describes TypeScript compilation methods.
+ */
 interface ITypeScriptCompilationService {
-	initialize(typeScriptFiles: string[], definitionFiles?: string[]): void;
-	compileAllFiles(): IFuture<void>;
+	/**
+	 * Compiles specified files only. Options are read from CLI's config file. Disregards tsconfig.json.
+	 * @param {any} compilerOptions: Specifies if noEmitOnError option is true or false. When it is true, any warning will prevent .js generation.
+	 * @param {string[]} typeScriptFiles The files that will be compiled.
+	 * @param {string[]} definitionFiles @optional The definition files used for compilation.
+	 * @return {IFuture<void>}
+	 */
+	compileFiles(compilerOptions: {noEmitOnError: boolean}, typeScriptFiles: string[], definitionFiles?: string[]): IFuture<void>;
+
+	/**
+	 * Spawns tsc directly without options. Tsc will respect tsconfig.json file in case it exists and all of its options.
+	 * @param {any} compilerOptions: Specifies if noEmitOnError option is true or false. When it is true, any warning will prevent .js generation.
+	 * @return {IFuture<void>}
+	 */
+	compileWithDefaultOptions(compilerOptions: {noEmitOnError: boolean}): IFuture<void>;
 }
 
 interface IDynamicHelpService {
