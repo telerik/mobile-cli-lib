@@ -1,4 +1,4 @@
-	///<reference path="../../.d.ts"/>
+///<reference path="../../.d.ts"/>
 "use strict";
 
 import {assert} from "chai";
@@ -20,7 +20,7 @@ temp.track();
 
 let testedApplicationIdentifier = "com.telerik.myApp";
 let iOSDeviceProjectRootPath = "/Library/Application Support/LiveSync/app";
-let androidDeviceProjectRootPath = "/data/local/tmp//sync";
+let androidDeviceProjectRootPath = "/data/local/tmp/sync";
 
 class IOSAppIdentifierMock implements Mobile.IDeviceAppData {
 	public platform = "iOS";
@@ -115,11 +115,13 @@ function createFiles(testInjector: IInjector, filesToCreate: string[]): IFuture<
 }
 
 describe("Project Files Manager Tests", () => {
-	let testInjector: IInjector, projectFilesManager: IProjectFilesManager, deviceAppDataFactory: Mobile.IDeviceAppDataFactory;
+	let testInjector: IInjector, projectFilesManager: IProjectFilesManager, deviceAppDataFactory: Mobile.IDeviceAppDataFactory,
+		mobileHelper: Mobile.IMobileHelper;
 	beforeEach(() => {
 		testInjector = createTestInjector();
 		projectFilesManager = testInjector.resolve("projectFilesManager");
 		deviceAppDataFactory = testInjector.resolve("deviceAppDataFactory");
+		mobileHelper = testInjector.resolve("mobileHelper");
 	});
 
 	it("maps non-platform specific files to device file paths for ios platform", () => {
@@ -129,7 +131,7 @@ describe("Project Files Manager Tests", () => {
 
 		_.each(localToDevicePaths, (localToDevicePathData, index) => {
 			assert.equal(files[index],  localToDevicePathData.getLocalPath());
-			assert.equal(path.join(iOSDeviceProjectRootPath, path.basename(files[index])), localToDevicePathData.getDevicePath());
+			assert.equal(mobileHelper.buildDevicePath(iOSDeviceProjectRootPath, path.basename(files[index])), localToDevicePathData.getDevicePath());
 			assert.equal(path.basename(files[index]), localToDevicePathData.getRelativeToProjectBasePath());
 		});
 	});
@@ -140,8 +142,8 @@ describe("Project Files Manager Tests", () => {
 		let localToDevicePaths = projectFilesManager.createLocalToDevicePaths(deviceAppData, "~/TestApp/app", files);
 
 		_.each(localToDevicePaths, (localToDevicePathData, index) => {
-			assert.equal(files[index],  localToDevicePathData.getLocalPath());
-			assert.equal(path.join(androidDeviceProjectRootPath, path.basename(files[index])), localToDevicePathData.getDevicePath());
+			assert.equal(files[index], localToDevicePathData.getLocalPath());
+			assert.equal(mobileHelper.buildDevicePath(androidDeviceProjectRootPath, path.basename(files[index])), localToDevicePathData.getDevicePath());
 			assert.equal(path.basename(files[index]), localToDevicePathData.getRelativeToProjectBasePath());
 		});
 	});
@@ -152,7 +154,7 @@ describe("Project Files Manager Tests", () => {
 		let localToDevicePathData = projectFilesManager.createLocalToDevicePaths(deviceAppData, "~/TestApp/app", [filePath])[0];
 
 		assert.equal(filePath, localToDevicePathData.getLocalPath());
-		assert.equal(path.join(iOSDeviceProjectRootPath, "test.js"), localToDevicePathData.getDevicePath());
+		assert.equal(mobileHelper.buildDevicePath(iOSDeviceProjectRootPath, "test.js"), localToDevicePathData.getDevicePath());
 		assert.equal("test.ios.js", localToDevicePathData.getRelativeToProjectBasePath());
 	});
 
@@ -162,7 +164,7 @@ describe("Project Files Manager Tests", () => {
 		let localToDevicePathData = projectFilesManager.createLocalToDevicePaths(deviceAppData, "~/TestApp/app", [filePath])[0];
 
 		assert.equal(filePath, localToDevicePathData.getLocalPath());
-		assert.equal(path.join(androidDeviceProjectRootPath, "test.js"), localToDevicePathData.getDevicePath());
+		assert.equal(mobileHelper.buildDevicePath(androidDeviceProjectRootPath, "test.js"), localToDevicePathData.getDevicePath());
 		assert.equal("test.android.js", localToDevicePathData.getRelativeToProjectBasePath());
 	});
 
