@@ -480,4 +480,8 @@ declare module Mobile {
 		CFBundleExecutable: string;
 		Path: string;
 	}
+
+	interface IiOSDeviceProductNameMapper {
+		resolveProductName(deviceType: string): string;
+	}
 }
