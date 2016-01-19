@@ -58,6 +58,21 @@ export class IOSDevice implements Mobile.IiOSDevice {
 			this.deviceInfo.version = this.getValue("ProductVersion");
 			this.deviceInfo.color = this.getValue("DeviceColor");
 			this.deviceInfo.isTablet = productType && productType.toLowerCase().indexOf("ipad") !== -1;
+
+			productType = productType.toLowerCase().trim();
+			let majorVersionAsString = productType.match(/.*?(\d+)\,(\d+)/)[1];
+			let majorVersion = parseInt(majorVersionAsString);
+			let isArm64Architecture = false;
+			//https://en.wikipedia.org/wiki/List_of_iOS_devices
+			if (_.startsWith(productType, "iphone")) {
+				isArm64Architecture = majorVersion >= 6;
+			} else if (_.startsWith(productType, "ipad")) {
+				isArm64Architecture = majorVersion >= 4;
+			} else if (_.startsWith(productType, "ipod")) {
+				isArm64Architecture = majorVersion >= 7;
+			}
+
+			this.deviceInfo.activeArchitecture = isArm64Architecture ? "arm64" : "armv7";
 	}
 
 	public get isEmulator(): boolean {

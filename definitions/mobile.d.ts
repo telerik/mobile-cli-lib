@@ -78,6 +78,12 @@ declare module Mobile {
 		 * Available for iOS only - the value of device's 'DeviceColor' property.
 		 */
 		color?: string;
+
+		/**
+		 *  Optional property describing the architecture of the device
+		 *  Available for iOS only - can be "armv7" or "arm64"
+		 */
+		activeArchitecture?: string;
 	}
 
 	interface IDevice {
