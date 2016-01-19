@@ -1,4 +1,4 @@
-///<reference path="../../.d.ts"/>
+///<reference path="../../../.d.ts"/>
 "use strict";
 
 import * as path from "path";
@@ -8,7 +8,7 @@ import * as struct from "ref-struct";
 import * as bufferpack from "bufferpack";
 import * as plistlib from "plistlib";
 import * as plist from "plist";
-import * as helpers from "../../helpers";
+import * as helpers from "../../../helpers";
 import * as net from "net";
 import * as util from "util";
 import Future = require("fibers/future");

@@ -286,35 +286,57 @@ interface IHtmlHelpService {
 	openHelpForCommandInBrowser(commandName: string): IFuture<void>;
 }
 
-interface IUsbLiveSyncServiceBase {
-	initialize(platform: string): IFuture<string>;
-	isInitialized: boolean;
+interface ILiveSyncServiceBase {
+	/**
+	 * If platform parameter is specified returns it
+	 * If platform parameter is not specified returns the platform of the connected device(s)
+	 * If devices from different platforms are connected throws an error
+	 */
+	getPlatform(platform?: string): IFuture<string>;
+	/**
+	 * If watch option is not specified executes full sync
+	 * If watch option is specified executes partial sync
+	 */
 	sync(data: ILiveSyncData): IFuture<void>;
+}
+
+interface ISyncBatch {
+	/**
+	 * Checks if there is a pending sync
+	 */
+	syncPending: boolean;
+	/**
+	 * Adds the file to the sync queue. All files from the queue will be pushed on the device after 250ms.
+	 */
+	addFile(filePath: string): void;
+	syncFiles(syncAction: (filesToSync: string[]) => IFuture<void>): IFuture<void>;
 }
 
 interface ILiveSyncData {
 	platform: string;
+	/** Application identifier */
 	appIdentifier: string;
+	/** The path to a directory that contains prepared project files for sync */
 	projectFilesPath: string;
-	excludedProjectDirsAndFiles: string[];
-	watchGlob: any;
-	platformSpecificLiveSyncServices: IDictionary<any>;
-	notInstalledAppOnDeviceAction: (device: Mobile.IDevice) => IFuture<void>;
-	notRunningiOSSimulatorAction: () => IFuture<void>;
-	getApplicationPathForiOSSimulatorAction: () => IFuture<string>;
-	localProjectRootPath?: string;
-	beforeLiveSyncAction?: (device: Mobile.IDevice, deviceAppData: Mobile.IDeviceAppData) => IFuture<void>;
-	beforeBatchLiveSyncAction?: (filePath: string) => IFuture<string>;
-	iOSSimulatorRelativeToProjectBasePathAction?: (projectFile: string) => string;
-	canExecuteFastLiveSync?: (filePath: string) => boolean;
-	fastLiveSync?: (filePath: string) => void;
+	/** The path to a directory that is watched */
+	syncWorkingDirectory: string;
+	canExecuteFastSync?: boolean;
+	excludedProjectDirsAndFiles?: string[];
 }
 
-interface IPlatformSpecificUsbLiveSyncService {
-	restartApplication(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths?: Mobile.ILocalToDevicePathData[]): IFuture<void>;
-	removeFile(appIdentifier: string, localToDevicePaths:  Mobile.ILocalToDevicePathData[]): IFuture<void>;
+interface IPlatformLiveSyncService {
+	/**
+	 * Refreshes the application's content on a device
+	 */
+	refreshApplication(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], canExecuteFastSync?: boolean): IFuture<void>;
+	/**
+	 * Removes specified files from a connected device
+	 */
+	removeFiles(appIdentifier: string, localToDevicePaths:  Mobile.ILocalToDevicePathData[]): IFuture<void>;
+	/**
+	 * Specifies some action that will be executed before every sync operation
+	 */
 	beforeLiveSyncAction?(deviceAppData: Mobile.IDeviceAppData): IFuture<void>;
-	sendPageReloadMessageToDevice?(deviceAppData: Mobile.IDeviceAppData): IFuture<void>;
 }
 
 interface ISysInfoData {
@@ -514,13 +536,11 @@ interface IDoctorService {
 	printWarnings(): boolean;
 }
 
-interface IPlatformSpecificLiveSyncService {
-	restartApplication(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths?: Mobile.ILocalToDevicePathData[]): IFuture<void>;
-}
 interface IUtils {
 	getParsedTimeout(defaultTimeout: number): number;
 	getMilliSecondsTimeout(defaultTimeout: number): number;
 }
+
 interface IBinaryPlistParser {
 	parseFile(plistFilePath: string): IFuture<any>;
 }
@@ -715,4 +735,54 @@ interface IProgressIndicator {
 	 * @return {IFuture<void>}
 	 */
 	showProgressIndicator(future: IFuture<any>, timeout: number, options?: { surpressTrailingNewLine?: boolean }): IFuture<void>;
+}
+
+interface IProjectFilesManager {
+	/**
+	 * Enumerates all files and directories from the specified project files path.
+	 */
+	getProjectFiles(projectFilesPath: string, excludedProjectDirsAndFiles?: string[], filter?: (filePath: string, stat: IFsStats) => IFuture<boolean>, opts?: any): string[];
+	/**
+	 * Checks if the file is excluded
+	 */
+	isFileExcluded(filePath: string, excludedProjectDirsAndFiles?: string[]): boolean;
+	/**
+	 * Returns an object that maps every local file path to device file path
+	 * If projectFiles parameter is not specified enumerates the files from the specified projectFilesPath
+	 */
+	createLocalToDevicePaths(deviceAppData: Mobile.IDeviceAppData, projectFilesPath: string, files?: string[], excludedProjectDirsAndFiles?: string[]): Mobile.ILocalToDevicePathData[];
+	/**
+	 * Handle platform specific files
+	 */
+	processPlatformSpecificFiles(directoryPath: string, platform: string, excludedDirs?: string[]): IFuture<void>;
+}
+
+interface IProjectFilesProvider {
+	/**
+	 * Checks if the file is excluded
+	 */
+	isFileExcluded(filePath: string): boolean;
+	/**
+	 * Performs local file path mapping
+	 */
+	mapFilePath(filePath: string, platform: string): string;
+}
+
+interface ILiveSyncProvider {
+	/**
+	 * Returns a dictionary that map platform to platform specific livesync service
+	 */
+	platformSpecificLiveSyncServices: IDictionary<any>;
+	/**
+	 * Builds the application and returns the package file path
+	 */
+	buildForDevice(device: Mobile.IDevice): IFuture<string>;
+	/**
+	 * Prepares the platform for sync
+	 */
+	preparePlatformForSync(platform: string): IFuture<void>;
+	/**
+	 * Checks if the specified file can be fast synced.
+	 */
+	canExecuteFastSync(filePath: string): boolean;
 }

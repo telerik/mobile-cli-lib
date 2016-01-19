@@ -1,4 +1,4 @@
-///<reference path="../../.d.ts"/>
+///<reference path="../../../.d.ts"/>
 "use strict";
 
 import * as iOSProxyServices from "./ios-proxy-services";
@@ -80,10 +80,10 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		houseArrestClient.closeSocket();
 	}
 
-	public transferFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void> {
+	public transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void> {
 		return (() => {
 			let houseArrestClient: Mobile.IHouseArrestClient = this.$injector.resolve(iOSProxyServices.HouseArrestClient, { device: this.device });
-			let afcClientForAppContainer = houseArrestClient.getAfcClientForAppContainer(appIdentifier);
+			let afcClientForAppContainer = houseArrestClient.getAfcClientForAppContainer(deviceAppData.appIdentifier);
 			_.each(localToDevicePaths, (localToDevicePathData) => {
 				let stats = this.$fs.getFsStats(localToDevicePathData.getLocalPath()).wait();
 				if(stats.isFile()) {
@@ -95,7 +95,7 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	}
 
 	public transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): IFuture<void> {
-		return this.transferFiles(deviceAppData.appIdentifier, localToDevicePaths);
+		return this.transferFiles(deviceAppData, localToDevicePaths);
 	}
 
 	private resolveAfc(): Mobile.IAfcClient {

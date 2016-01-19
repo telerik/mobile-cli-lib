@@ -14,7 +14,7 @@ class VirtualMachine {
 	constructor(public name: string, public identifier: string) { }
 }
 
-class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
+class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	private static ANDROID_DIR_NAME = ".android";
 	private static AVD_DIR_NAME = "avd";
 	private static INI_FILES_MASK = /^(.*)\.ini$/i;
@@ -116,32 +116,41 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		}).future<void>()();
 	}
 
-	public startEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): IFuture<void> {
+	public startEmulator(): IFuture<string> {
 		return (() => {
-			if(this.$options.avd && this.$options.geny) {
+			if (this.$options.avd && this.$options.geny) {
 				this.$errors.fail("You cannot specify both --avd and --geny options. Please use only one of them.");
 			}
 
+			let emulatorId: string = null;
+
 			let image = this.getEmulatorImage().wait();
-			if(image) {
-				this.startEmulatorCore(app, emulatorOptions.appId, image).wait();
+			if (image) {
+				// start the emulator, if needed
+				emulatorId = this.startEmulatorInstance(image).wait();
+
+				// waits for the boot animation property of the emulator to switch to 'stopped'
+				this.waitForEmulatorBootToComplete(emulatorId).wait();
+
+				// unlock screen
+				this.unlockScreen(emulatorId).wait();
 			} else {
 				this.$errors.fail("Could not find an emulator image to run your project.");
 			}
+
+			return emulatorId;
+		}).future<string>()();
+	}
+
+	public runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): IFuture<void> {
+		return (() => {
+			let emulatorId = this.startEmulator().wait();
+			this.runApplicationOnEmulatorCore(app, emulatorOptions.appId, emulatorId).wait();
 		}).future<void>()();
 	}
 
-	private startEmulatorCore(app: string, appId: string, image: string): IFuture<void> {
+	private runApplicationOnEmulatorCore(app: string, appId: string, emulatorId: string): IFuture<void> {
 		return (() => {
-			// start the emulator, if needed
-			let emulatorId = this.startEmulatorInstance(image).wait();
-
-			// waits for the boot animation property of the emulator to switch to 'stopped'
-			this.waitForEmulatorBootToComplete(emulatorId).wait();
-
-			// unlock screen
-			this.unlockScreen(emulatorId).wait();
-
 			// install the app
 			this.$logger.info("installing %s through adb", app);
 			let childProcess = this.$childProcess.spawn(this.adbFilePath, ["-s", emulatorId, 'install', '-r', app]);
@@ -304,6 +313,20 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		}).future<string[]>()();
 	}
 
+	private getRunningAvdEmulators(adbDevicesOutput: string[]): IFuture<string[]> {
+		return ((): string[]=> {
+			let emulatorDevices: string[] = [];
+			_.each(adbDevicesOutput, (device: string) => {
+				let rx = device.match(AndroidEmulatorServices.RUNNING_ANDROID_EMULATOR_REGEX);
+
+				if(rx && rx[1]) {
+					emulatorDevices.push(rx[1]);
+				}
+			});
+			return emulatorDevices;
+		}).future<string[]>()();
+	}
+
 	private isGenymotionEmulator(emulatorId: string): IFuture<boolean> {
 		return ((): boolean => {
 			let manufacturer = this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.manufacturer"]).wait();
@@ -320,23 +343,22 @@ class AndroidEmulatorServices implements Mobile.IEmulatorPlatformServices {
 		}).future<boolean>()();
 	}
 
+	public getAllRunningEmulators(): IFuture<string[]> {
+		return ((): string[] => {
+			let outputRaw: string[] = this.$childProcess.execFile(this.adbFilePath, ['devices']).wait().split(EOL);
+			let emulators = this.getRunningAvdEmulators(outputRaw).wait().concat(this.getRunningGenymotionEmulators(outputRaw).wait());
+			return emulators;
+		}).future<string[]>()();
+	}
+
 	private getRunningEmulators(): IFuture<string[]> {
 		return (() => {
-
-			let emulatorDevices: string[] = [];
 			let outputRaw: string[] = this.$childProcess.execFile(this.adbFilePath, ['devices']).wait().split(EOL);
-			if(this.$options.geny) {
-				emulatorDevices = this.getRunningGenymotionEmulators(outputRaw).wait();
+			if (this.$options.geny) {
+				return this.getRunningGenymotionEmulators(outputRaw).wait();
 			} else {
-				_.each(outputRaw, (device: string) => {
-					let rx = device.match(AndroidEmulatorServices.RUNNING_ANDROID_EMULATOR_REGEX);
-
-					if(rx && rx[1]) {
-						emulatorDevices.push(rx[1]);
-					}
-				});
+				return this.getRunningAvdEmulators(outputRaw).wait();
 			}
-			return emulatorDevices;
 		}).future<string[]>()();
 	}
 

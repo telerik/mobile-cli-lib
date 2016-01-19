@@ -1,13 +1,14 @@
-///<reference path="../../.d.ts"/>
+///<reference path="../../../.d.ts"/>
 "use strict";
 
+import {ApplicationManagerBase} from "../../application-manager-base";
 import * as net from "net";
 import * as ref from "ref";
 import * as os from "os";
 import {CoreTypes, GDBServer} from "./ios-core";
 import * as iOSProxyServices from "./ios-proxy-services";
 
-export class IOSApplicationManager implements Mobile.IDeviceApplicationManager {
+export class IOSApplicationManager extends ApplicationManagerBase implements Mobile.IDeviceApplicationManager {
 	private uninstallApplicationCallbackPtr: NodeBuffer = null;
 	private _gdbServer: Mobile.IGDBServer = null;
 
@@ -23,6 +24,7 @@ export class IOSApplicationManager implements Mobile.IDeviceApplicationManager {
 		private $staticConfig: Config.IStaticConfig,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $options: ICommonOptions) {
+			super();
 			this.uninstallApplicationCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSApplicationManager.uninstallCallback);
 		}
 
@@ -42,11 +44,11 @@ export class IOSApplicationManager implements Mobile.IDeviceApplicationManager {
 		}).future<void>()();
 	}
 
-	public uninstallApplication(applicationId: string): IFuture<void> {
+	public uninstallApplication(appIdentifier: string): IFuture<void> {
 		return (() => {
 			let afc = this.device.startService(iOSProxyServices.MobileServices.INSTALLATION_PROXY);
 			try {
-				let result = this.$mobileDevice.deviceUninstallApplication(afc, this.$coreFoundation.createCFString(applicationId), null, this.uninstallApplicationCallbackPtr);
+				let result = this.$mobileDevice.deviceUninstallApplication(afc, this.$coreFoundation.createCFString(appIdentifier), null, this.uninstallApplicationCallbackPtr);
 				if(result) {
 					this.$errors.failWithoutHelp("AMDeviceUninstallApplication returned '%d'.", result);
 				}
@@ -54,33 +56,26 @@ export class IOSApplicationManager implements Mobile.IDeviceApplicationManager {
 				this.$logger.trace(`Error while uninstalling application ${e}.`);
 			}
 
-			this.$logger.trace("Application %s has been uninstalled successfully.", applicationId);
+			this.$logger.trace("Application %s has been uninstalled successfully.", appIdentifier);
 		}).future<void>()();
 	}
 
-	public reinstallApplication(applicationId: string, packageFilePath: string): IFuture<void> {
-		return (() => {
-			this.uninstallApplication(applicationId).wait();
-			this.installApplication(packageFilePath).wait();
-		}).future<void>()();
-	}
-
-	public startApplication(applicationId: string): IFuture<void> {
+	public startApplication(appIdentifier: string): IFuture<void> {
 		return (() => {
 			if(this.$hostInfo.isWindows && !this.$staticConfig.enableDeviceRunCommandOnWindows) {
 				this.$errors.fail("$%s device run command is not supported on Windows for iOS devices.", this.$staticConfig.CLIENT_NAME.toLowerCase());
 			}
 
-			this.validateApplicationId(applicationId);
+			this.validateApplicationId(appIdentifier);
 			this.device.mountImage().wait();
 
-			this.runApplicationCore(applicationId).wait();
-			this.$logger.info(`Successfully run application ${applicationId} on device with ID ${ this.device.deviceInfo.identifier}.`);
+			this.runApplicationCore(appIdentifier).wait();
+			this.$logger.info(`Successfully run application ${appIdentifier} on device with ID ${ this.device.deviceInfo.identifier}.`);
 		}).future<void>()();
 	}
 
-	public stopApplication(applicationId: string): IFuture<void> {
-		let application = this.getApplicationById(applicationId);
+	public stopApplication(appIdentifier: string): IFuture<void> {
+		let application = this.getApplicationById(appIdentifier);
 		let gdbServer = this.createGdbServer();
 		return gdbServer.kill([`${application.Path}`]);
 	}
@@ -111,24 +106,24 @@ export class IOSApplicationManager implements Mobile.IDeviceApplicationManager {
 		return this.device.tryExecuteFunction<IDictionary<Mobile.IDeviceApplication>>(func);
 	}
 
-	private validateApplicationId(applicationId: string): Mobile.IDeviceApplication {
+	private validateApplicationId(appIdentifier: string): Mobile.IDeviceApplication {
 		let applications = this.lookupApplications();
-		let application = applications[applicationId];
+		let application = applications[appIdentifier];
 		if(!application) {
 			let sortedKeys = _.sortBy(_.keys(applications));
-			this.$errors.failWithoutHelp("Invalid application id: %s. All available application ids are: %s%s ", applicationId, os.EOL, sortedKeys.join(os.EOL));
+			this.$errors.failWithoutHelp("Invalid application id: %s. All available application ids are: %s%s ", appIdentifier, os.EOL, sortedKeys.join(os.EOL));
 		}
 
 		return application;
 	}
 
-	private runApplicationCore(applicationId: any) {
+	private runApplicationCore(appIdentifier: any) {
 		if (this._gdbServer) {
 			this._gdbServer.destroy();
 			this._gdbServer = null;
 		}
 
-		let application = this.getApplicationById(applicationId);
+		let application = this.getApplicationById(appIdentifier);
 		let gdbServer = this.createGdbServer();
 		return gdbServer.run([`${application.Path}`]);
 	}
@@ -142,7 +137,7 @@ export class IOSApplicationManager implements Mobile.IDeviceApplicationManager {
 		return this._gdbServer;
 	}
 
-	private getApplicationById(applicationId: string): Mobile.IDeviceApplication {
-		return this.validateApplicationId(applicationId);
+	private getApplicationById(appIdentifier: string): Mobile.IDeviceApplication {
+		return this.validateApplicationId(appIdentifier);
 	}
 }

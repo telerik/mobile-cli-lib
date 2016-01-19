@@ -1,7 +1,6 @@
 ///<reference path="../.d.ts"/>
 
 declare module Mobile {
-
 	interface ISyncOptions {
 		skipRefresh?: boolean;
 	}
@@ -69,6 +68,12 @@ declare module Mobile {
 		isTablet: boolean;
 
 		/**
+		 * Defines if the device is emulator or not.
+		 * Can be "Device" or "Emulator"
+		 */
+		type: string;
+
+		/**
 		 * Optional property describing the color of the device.
 		 * Available for iOS only - the value of device's 'DeviceColor' property.
 		 */
@@ -79,7 +84,7 @@ declare module Mobile {
 		deviceInfo: Mobile.IDeviceInfo;
 		applicationManager: Mobile.IDeviceApplicationManager;
 		fileSystem: Mobile.IDeviceFileSystem;
-		deploy(packageFile: string, packageName: string): IFuture<void>;
+		isEmulator: boolean;
 		openDeviceLogStream(): void;
 	}
 
@@ -94,14 +99,18 @@ declare module Mobile {
 		connectToPort(port: number): any;
 	}
 
+	interface IiOSSimulator extends IDevice { }
+
 	interface IDeviceAppData {
 		appIdentifier: string;
+		device: Mobile.IDevice;
+		platform: string;
 		deviceProjectRootPath: string;
-		isLiveSyncSupported(device: Mobile.IDevice): IFuture<boolean>;
+		isLiveSyncSupported(): IFuture<boolean>;
 	}
 
 	interface IDeviceAppDataFactory {
-		create<T extends Mobile.IDeviceAppData>(appIdentifier: string, platform: string): T;
+		create<T extends Mobile.IDeviceAppData>(appIdentifier: string, platform: string, device: Mobile.IDevice): T;
 	}
 
 	interface IDeviceAppDataFactoryRule {
@@ -168,12 +177,13 @@ declare module Mobile {
 
 	interface IDeviceApplicationManager {
 		getInstalledApplications(): IFuture<string[]>;
+		isApplicationInstalled(appIdentifier: string): IFuture<boolean>;
 		installApplication(packageFilePath: string): IFuture<void>;
 		uninstallApplication(appIdentifier: string): IFuture<void>;
-		reinstallApplication(applicationId: string, packageFilePath: string): IFuture<void>;
+		reinstallApplication(appIdentifier: string, packageFilePath: string): IFuture<void>;
 		startApplication(appIdentifier: string): IFuture<void>;
 		stopApplication(appIdentifier: string): IFuture<void>;
-		restartApplication(applicationId: string): IFuture<void>;
+		restartApplication(appIdentifier: string, bundleExecutable?: string): IFuture<void>;
 		canStartApplication(): boolean;
 	}
 
@@ -182,7 +192,7 @@ declare module Mobile {
 		getFile(deviceFilePath: string): IFuture<void>;
 		putFile(localFilePath: string, deviceFilePath: string): IFuture<void>;
 		deleteFile?(deviceFilePath: string, appIdentifier: string): void;
-		transferFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void>;
+		transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void>;
 		transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): IFuture<void>;
 		transferFile?(localFilePath: string, deviceFilePath: string): IFuture<void>;
 		createFileOnDevice?(deviceFilePath: string, fileContent: string): IFuture<void>;
@@ -220,7 +230,13 @@ declare module Mobile {
 		initialize(data: IDevicesServicesInitializationOptions): IFuture<void>;
 		platform: string;
 		getDevices(): Mobile.IDeviceInfo[];
+		getDevicesForPlatform(platform: string): Mobile.IDevice[];
 		getDeviceInstances(): Mobile.IDevice[];
+		getDeviceByDeviceOption(): Mobile.IDevice;
+		isAndroidDevice(device: Mobile.IDevice): boolean;
+		isiOSDevice(device: Mobile.IDevice): boolean;
+		isiOSSimulator(device: Mobile.IDevice): boolean;
+		isOnlyiOSSimultorRunning(): boolean;
 	}
 
 	interface IiTunesValidator {
@@ -395,18 +411,30 @@ declare module Mobile {
 	interface IEmulatorPlatformServices {
 		checkDependencies(): IFuture<void>;
 		checkAvailability(dependsOnProject?: boolean): IFuture<void>;
-		startEmulator(app: string, emulatorOptions?: IEmulatorOptions): IFuture<any>;
+		startEmulator(): IFuture<string>;
+		runApplicationOnEmulator(app: string, emulatorOptions?: IEmulatorOptions): IFuture<any>;
 		getEmulatorId(): IFuture<string>;
+	}
+
+	interface IAndroidEmulatorServices extends IEmulatorPlatformServices {
+		getAllRunningEmulators(): IFuture<string[]>;
+	}
+
+	interface IiSimDevice {
+		name: string;
+		id: string;
+		fullId: string;
+		runtimeVersion: string;
+		state?: string;
+	}
+
+	interface IiOSSimResolver {
+		iOSSim: any;
+		iOSSimPath: string;
 	}
 
 	interface IiOSSimulatorService extends IEmulatorPlatformServices {
 		postDarwinNotification(notification: string): IFuture<void>;
-		sync(appIdentifier: string, projectFilesPath: string, notRunningSimulatorAction: () => IFuture<void>, getApplicationPathForiOSSimulatorAction: () => IFuture<string>): IFuture<void>;
-		syncFiles(appIdentifier: string, projectFilesPath: string, projectFiles: string[], notRunningSimulatorAction: () => IFuture<void>, getApplicationPathForiOSSimulatorAction: () => IFuture<string>, relativeToProjectBasePathAction?: (projectFile: string) => string): IFuture<void>;
-		isSimulatorRunning(): IFuture<boolean>;
-		transferFiles(appIdentifier: string, projectFiles: string[], relativeToProjectBasePathAction?: (_projectFile: string) => string, applicationPath?: string): IFuture<void>;
-		removeFiles(appIdentifier: string, projectFilesPath: string, projectFiles: string[], relativeToProjectBasePathAction?: (_projectFile: string) => string): void;
-		restartApplication(appIdentifier: string, getApplicationPathForiOSSimulatorAction: () => IFuture<string>): IFuture<void>;
 	}
 
 	interface IEmulatorSettingsService {

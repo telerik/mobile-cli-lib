@@ -58,15 +58,15 @@ $injector.requireCommand("device|list-files", "./commands/device/list-files");
 $injector.requireCommand("device|get-file", "./commands/device/get-file");
 $injector.requireCommand("device|put-file", "./commands/device/put-file");
 
-$injector.require("iOSCore", "./mobile/ios/ios-core");
-$injector.require("coreFoundation", "./mobile/ios/ios-core");
-$injector.require("mobileDevice", "./mobile/ios/ios-core");
-$injector.require("plistService", "./mobile/ios/ios-core");
+$injector.require("iOSCore", "./mobile/ios/device/ios-core");
+$injector.require("coreFoundation", "./mobile/ios/device/ios-core");
+$injector.require("mobileDevice", "./mobile/ios/device/ios-core");
+$injector.require("plistService", "./mobile/ios/device/ios-core");
 
-$injector.require("installationProxyClient", "./mobile/ios/ios-proxy-services");
-$injector.require("notificationProxyClient", "./mobile/ios/ios-proxy-services");
-$injector.require("houseArrestClient", "./mobile/ios/ios-proxy-services");
-$injector.require("gdbServer", "./mobile/ios/ios-core");
+$injector.require("installationProxyClient", "./mobile/ios/device/ios-proxy-services");
+$injector.require("notificationProxyClient", "./mobile/ios/device/ios-proxy-services");
+$injector.require("houseArrestClient", "./mobile/ios/device/ios-proxy-services");
+$injector.require("gdbServer", "./mobile/ios/device/ios-core");
 
 $injector.require("deviceFound", "./mobile/mobile-core/device-discovery");
 $injector.require("deviceLost", "./mobile/mobile-core/device-discovery");
@@ -74,10 +74,12 @@ $injector.require("deviceLost", "./mobile/mobile-core/device-discovery");
 $injector.require("iTunesValidator", "./validators/iTunes-validator");
 $injector.require("deviceDiscovery", "./mobile/mobile-core/device-discovery");
 $injector.require("iOSDeviceDiscovery", "./mobile/mobile-core/ios-device-discovery");
+$injector.require("iOSSimulatorDiscovery", "./mobile/mobile-core/ios-simulator-discovery");
 $injector.require("androidDeviceDiscovery", "./mobile/mobile-core/android-device-discovery");
-$injector.require("iOSDevice", "./mobile/ios/ios-device");
+$injector.require("iOSDevice", "./mobile/ios/device/ios-device");
 $injector.require("androidDevice", "./mobile/android/android-device");
 $injector.require("logcatHelper", "./mobile/android/logcat-helper");
+$injector.require("iOSSimResolver", "./mobile/ios/simulator/ios-sim-resolver");
 
 $injector.require("localToDevicePathDataFactory", "./mobile/local-to-device-path-data-factory");
 $injector.require("deviceAppDataFactory", "./mobile/device-app-data/device-app-data-factory");
@@ -86,11 +88,11 @@ $injector.requirePublic("devicesService", "./mobile/mobile-core/devices-service"
 $injector.require("projectNameValidator", "./validators/project-name-validator");
 
 $injector.require("androidEmulatorServices", "./mobile/android/android-emulator-services");
-$injector.require("iOSEmulatorServices", "./mobile/ios/ios-emulator-services");
+$injector.require("iOSEmulatorServices", "./mobile/ios/simulator/ios-emulator-services");
 $injector.require("wp8EmulatorServices", "./mobile/wp8/wp8-emulator-services");
 
 $injector.require("autoCompletionService", "./services/auto-completion-service");
-$injector.require("usbLiveSyncServiceBase", "./services/usb-livesync-service-base");
+$injector.require("liveSyncServiceBase", "./services/livesync-service-base");
 $injector.require("opener", "./opener");
 $injector.require("dynamicHelpService", "./services/dynamic-help-service");
 $injector.require("microTemplateService", "./services/micro-templating-service");
@@ -110,3 +112,5 @@ $injector.require("loggingLevels", "./mobile/logging-levels");
 $injector.require("logFilter", "./mobile/log-filter");
 $injector.require("androidLogFilter", "./mobile/android/android-log-filter");
 $injector.require("iOSLogFilter", "./mobile/ios/ios-log-filter");
+
+$injector.require("projectFilesManager", "./services/project-files-manager");

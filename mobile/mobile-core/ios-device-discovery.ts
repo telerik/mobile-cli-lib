@@ -2,9 +2,9 @@
 "use strict";
 
 import {DeviceDiscovery} from "./device-discovery";
-import {CoreTypes} from "../ios/ios-core";
+import {CoreTypes} from "../ios/device/ios-core";
 import * as ref from "ref";
-import {IOSDevice} from "../ios/ios-device";
+import {IOSDevice} from "../ios/device/ios-device";
 
 class IOSDeviceDiscovery extends DeviceDiscovery {
 	private static ADNCI_MSG_CONNECTED = 1;
