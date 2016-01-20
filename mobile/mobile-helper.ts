@@ -29,15 +29,15 @@ export class MobileHelper implements Mobile.IMobileHelper {
 	}
 
 	public isAndroidPlatform(platform: string): boolean {
-		return this.$devicePlatformsConstants.Android.toLowerCase() === platform.toLowerCase();
+		return !!(platform && (this.$devicePlatformsConstants.Android.toLowerCase() === platform.toLowerCase()));
 	}
 
 	public isiOSPlatform(platform: string): boolean {
-		return this.$devicePlatformsConstants.iOS.toLowerCase() === platform.toLowerCase();
+		return !!(platform && (this.$devicePlatformsConstants.iOS.toLowerCase() === platform.toLowerCase()));
 	}
 
 	public isWP8Platform(platform: string): boolean {
-		return this.$devicePlatformsConstants.WP8.toLowerCase() === platform.toLowerCase();
+		return !!(platform && (this.$devicePlatformsConstants.WP8.toLowerCase() === platform.toLowerCase()));
 	}
 
 	public normalizePlatformName(platform: string): string {
