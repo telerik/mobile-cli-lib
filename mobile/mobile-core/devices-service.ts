@@ -353,7 +353,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	private resolveEmulatorServices(): Mobile.IEmulatorPlatformServices {
-		if (this.$mobileHelper.isiOSPlatform(this._platform)) {
+		if (this.$mobileHelper.isiOSPlatform(this._platform) && this.$hostInfo.isDarwin) {
 			return this.$injector.resolve("iOSEmulatorServices");
 		} else if (this.$mobileHelper.isAndroidPlatform(this._platform)) {
 			return this.$injector.resolve("androidEmulatorServices");
@@ -364,8 +364,11 @@ export class DevicesService implements Mobile.IDevicesService {
 		return (() => {
 			let emulatorServices = this.resolveEmulatorServices();
 			emulatorServices.startEmulator().wait();
-			this._isInitialized = false;
-			this.initialize(this._data).wait();
+			if (this.$mobileHelper.isAndroidPlatform(this._platform)) {
+				this.$androidDeviceDiscovery.checkForDevices().wait();
+			} else if (this.$mobileHelper.isiOSPlatform(this._platform) && this.$hostInfo.isDarwin) {
+				this.$iOSSimulatorDiscovery.checkForDevices().wait();
+			}
 		}).future<void>()();
 	}
 
