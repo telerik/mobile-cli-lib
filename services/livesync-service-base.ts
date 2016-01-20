@@ -68,7 +68,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 						return;
 					}
 
-					data.canExecuteFastSync = that.$liveSyncProvider.canExecuteFastSync(filePath);
+					data.canExecuteFastSync = that.$liveSyncProvider.canExecuteFastSync(filePath, data.platform);
 
 					if (event === "added" || event === "changed" || event === "renamed") {
 						that.syncAddedOrChangedFile(data, mappedFilePath).wait();

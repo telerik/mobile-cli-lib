@@ -800,5 +800,5 @@ interface ILiveSyncProvider {
 	/**
 	 * Checks if the specified file can be fast synced.
 	 */
-	canExecuteFastSync(filePath: string): boolean;
+	canExecuteFastSync(filePath: string, platform?: string): boolean;
 }
