@@ -233,7 +233,7 @@ declare module Mobile {
 		hasDevices: boolean;
 		deviceCount: number;
 		execute(action: (device: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: {allowNoDevices?: boolean}): IFuture<void>;
-		initialize(data: IDevicesServicesInitializationOptions): IFuture<void>;
+		initialize(data?: IDevicesServicesInitializationOptions): IFuture<void>;
 		platform: string;
 		getDevices(): Mobile.IDeviceInfo[];
 		getDevicesForPlatform(platform: string): Mobile.IDevice[];
@@ -243,6 +243,9 @@ declare module Mobile {
 		isiOSDevice(device: Mobile.IDevice): boolean;
 		isiOSSimulator(device: Mobile.IDevice): boolean;
 		isOnlyiOSSimultorRunning(): boolean;
+		isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string): IFuture<boolean>[];
+		setLogLevel(logLevel: string, deviceIdentifier?: string): void;
+		deployOnDevices(deviceIdentifiers: string[], packageFile: string, packageName: string): IFuture<void>[];
 	}
 
 	interface IiTunesValidator {

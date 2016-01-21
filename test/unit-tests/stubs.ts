@@ -9,13 +9,20 @@ export class CommonLoggerStub implements ILogger {
 	getLevel(): string { return undefined; }
 	fatal(...args: string[]): void {}
 	error(...args: string[]): void {}
-	warn(...args: string[]): void {}
+	warn(...args: string[]): void {
+		this.out(...args);
+	}
 	warnWithLabel(...args: string[]): void {}
-	info(...args: string[]): void {}
+	info(...args: string[]): void {
+		this.out(...args);
+	}
 	debug(...args: string[]): void {}
-	trace(...args: string[]): void {}
+	trace(...args: string[]): void {
+		this.traceOutput += util.format(...args) + "\n";
+	}
 
 	public output = "";
+	public traceOutput = "";
 
 	out(...args: string[]): void {
 		this.output += util.format(...args) + "\n";
@@ -33,4 +40,29 @@ export class CommonLoggerStub implements ILogger {
 	}
 
 	printMarkdown(message: string): void { }
+}
+
+export class ErrorsStub implements IErrors {
+	printCallStack: boolean = false;
+
+	fail(formatStr:string, ...args: any[]): void;
+	fail(opts:{formatStr?: string; errorCode?: number; suppressCommandHelp?: boolean}, ...args: any[]): void;
+
+	fail(...args: any[]) {
+		throw new Error(require("util").format.apply(null,args));
+	}
+
+	failWithoutHelp(message: string, ...args: any[]): void {
+		throw new Error(message);
+	}
+
+	beginCommand(action:() => IFuture<boolean>, printHelpCommand: () => IFuture<boolean>): IFuture<boolean> {
+		return action();
+	}
+
+	executeAction(action: Function): any {
+		return action();
+	}
+
+	verifyHeap(message: string): void { }
 }
