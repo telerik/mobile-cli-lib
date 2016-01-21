@@ -84,6 +84,8 @@ export class ChildProcess implements IChildProcess {
 
 			if(spawnFromEventOptions && spawnFromEventOptions.throwError === false) {
 				if(!future.isResolved()) {
+					this.$logger.trace("Result when throw error is false:");
+					this.$logger.trace(result);
 					future.return(result);
 				}
 			} else {
