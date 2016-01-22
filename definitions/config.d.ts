@@ -14,7 +14,7 @@ declare module Config {
 		helpTextPath: string;
 		getAdbFilePath(): IFuture<string>;
 		disableAnalytics?: boolean;
-		disableHooks?: boolean;
+		disableCommandHooks?: boolean;
 		enableDeviceRunCommandOnWindows?: boolean;
 		MAN_PAGES_DIR: string;
 		HTML_PAGES_DIR: string;
@@ -37,5 +37,6 @@ declare module Config {
 		ON_PREM?: boolean;
 		CI_LOGGER?: boolean;
 		TYPESCRIPT_COMPILER_OPTIONS?: any;
+		DISABLE_HOOKS: boolean;
 	}
 }
