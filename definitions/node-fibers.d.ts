@@ -22,6 +22,7 @@ interface IFuture<T> {
 	return(result?: T): void;
 	throw(error: any): void;
 	wait(): T;
+	error: Error;
 }
 
 declare module "fibers" {
@@ -64,6 +65,7 @@ declare module "fibers/future" {
 		return(result?: T): void;
 		throw (error: any): void;
 		wait(): T;
+		error: Error;
 
 		static task<T>(fn: Function): IFuture<T>;
 

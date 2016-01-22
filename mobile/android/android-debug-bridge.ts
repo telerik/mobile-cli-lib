@@ -16,6 +16,8 @@ export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 	public executeCommand(args: string[]): IFuture<any> {
 		return (() => {
 			let command = this.composeCommand(args).wait();
+			// TODO: Remove throwError when adb output parse is implemented.
+			// For example `adb -s <invalid device id> install <smth>` throws error 'error: device \'030939f508e6c773\' not found\r\n' exitCode 4294967295
 			return this.$childProcess.spawnFromEvent(command.command, command.args, "close", undefined, {throwError: false}).wait().stdout;
 		}).future<any>()();
 	}

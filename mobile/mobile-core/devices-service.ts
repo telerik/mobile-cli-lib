@@ -60,15 +60,21 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	public isiOSSimulator(device: Mobile.IDevice): boolean {
-		return this.$mobileHelper.isiOSPlatform(device.deviceInfo.platform) && device.isEmulator;
+		return !!(this.$mobileHelper.isiOSPlatform(device.deviceInfo.platform) && device.isEmulator);
 	}
 
 	/* tslint:disable:no-unused-variable */
 	@exported("devicesService")
-	private setLogLevel(logLevel: string, deviceIdentifier?: string): void {
+	public setLogLevel(logLevel: string, deviceIdentifier?: string): void {
 		this.$deviceLogProvider.setLogLevel(logLevel, deviceIdentifier);
 	}
 	/* tslint:enable:no-unused-variable */
+
+	@exportedPromise("devicesService")
+	public isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string): IFuture<boolean>[] {
+		this.$logger.trace(`Called isInstalledOnDevices for identifiers ${deviceIdentifiers}. AppIdentifier is ${appIdentifier}.`);
+		return _.map(deviceIdentifiers, deviceIdentifier => this.isApplicationInstalledOnDevice(deviceIdentifier, appIdentifier));
+	}
 
 	public getDeviceInstances(): Mobile.IDevice[] {
 		return _.values(this._devices);
@@ -210,9 +216,7 @@ export class DevicesService implements Mobile.IDevicesService {
 
 			let futures = _.map(sortedDevices, (device: Mobile.IDevice) => {
 				if (!canExecute || canExecute(device)) {
-					let future = action(device);
-					Future.settle(future);
-					return future;
+					return action(device);
 				} else {
 					return Future.fromResult();
 				}
@@ -235,7 +239,9 @@ export class DevicesService implements Mobile.IDevicesService {
 				if (this.$hostInfo.isDarwin && this._platform && this.$mobileHelper.isiOSPlatform(this._platform) &&
 					this.$options.emulator && !this.isOnlyiOSSimultorRunning()) {
 					this.startEmulator().wait();
-					canExecute = (dev: Mobile.IDevice): boolean => this.isiOSSimulator(dev); // Executes the command only on iOS simulator
+					// Executes the command only on iOS simulator
+					let originalCanExecute = canExecute;
+					canExecute = (dev: Mobile.IDevice): boolean => this.isiOSSimulator(dev) && (!originalCanExecute || !!(originalCanExecute(dev)));
 				}
 				this.executeCore(action, canExecute).wait();
 			} else {
@@ -278,11 +284,23 @@ export class DevicesService implements Mobile.IDevicesService {
 			} else if(platform && !deviceOption) {
 				this._platform = this.getPlatform(platform);
 				this.startLookingForDevices().wait();
-			} else if(!platform && !deviceOption) {
+			} else {
+				// platform and deviceId are not specified
 				this.startLookingForDevices().wait();
 				if (!data.skipInferPlatform) {
 					let devices = this.getDeviceInstances();
-					let platforms = _.uniq(_.map(devices, (device) => device.deviceInfo.platform));
+					let platforms = _(devices)
+									.map(device => device.deviceInfo.platform)
+									.filter(pl => {
+										try {
+											return this.getPlatform(pl);
+										} catch(err) {
+											this.$logger.warn(err.message);
+											return null;
+										}
+									})
+									.uniq()
+									.value();
 
 					if (platforms.length === 1) {
 						this._platform = platforms[0];
@@ -296,7 +314,7 @@ export class DevicesService implements Mobile.IDevicesService {
 			}
 
 			if (!this.$hostInfo.isDarwin && this._platform && this.$mobileHelper.isiOSPlatform(this._platform) && this.$options.emulator) {
-				this.$errors.failWithoutHelp("You are not allowed to use iOS simulator on Windows.");
+				this.$errors.failWithoutHelp("You can use iOS simulator only on OS X.");
 			}
 			this._isInitialized = true;
 		}).future<void>()();
@@ -321,19 +339,15 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	private deployOnDevice(deviceIdentifier: string, packageFile: string, packageName: string): IFuture<void> {
 		return (() => {
-			if(_(this._devices).keys().find(d => d === deviceIdentifier)) {
-				let device = this._devices[deviceIdentifier];
-				device.applicationManager.reinstallApplication(packageName, packageFile).wait();
-				this.$logger.info(`Successfully deployed on device with identifier '${device.deviceInfo.identifier}'.`);
-				if (device.applicationManager.canStartApplication()) {
-					try {
-						device.applicationManager.startApplication(packageName).wait();
-					} catch(err) {
-						this.$logger.trace("Unable to start application on device. Error is: ", err);
-					}
+			let device = this.getDeviceByIdentifier(deviceIdentifier);
+			device.applicationManager.reinstallApplication(packageName, packageFile).wait();
+			this.$logger.info(`Successfully deployed on device with identifier '${device.deviceInfo.identifier}'.`);
+			if (device.applicationManager.canStartApplication()) {
+				try {
+					device.applicationManager.startApplication(packageName).wait();
+				} catch(err) {
+					this.$logger.trace("Unable to start application on device. Error is: ", err);
 				}
-			} else {
-				throw new Error(`Cannot find device with identifier ${deviceIdentifier}.`);
 			}
 		}).future<void>()();
 	}
@@ -358,11 +372,16 @@ export class DevicesService implements Mobile.IDevicesService {
 		} else if (this.$mobileHelper.isAndroidPlatform(this._platform)) {
 			return this.$injector.resolve("androidEmulatorServices");
 		}
+
+		return null;
 	}
 
 	private startEmulator(): IFuture<void> {
 		return (() => {
 			let emulatorServices = this.resolveEmulatorServices();
+			if(!emulatorServices) {
+				this.$errors.failWithoutHelp("Unable to detect platform for which to start emulator.");
+			}
 			emulatorServices.startEmulator().wait();
 			if (this.$mobileHelper.isAndroidPlatform(this._platform)) {
 				this.$androidDeviceDiscovery.checkForDevices().wait();
@@ -378,6 +397,13 @@ export class DevicesService implements Mobile.IDevicesService {
 		}
 
 		return this.executeOnAllConnectedDevices(action, canExecute);
+}
+
+	private isApplicationInstalledOnDevice(deviceIdentifier: string, appIdentifier: string): IFuture<boolean> {
+		return ((): boolean => {
+			let device = this.getDeviceByIdentifier(deviceIdentifier);
+			return device.applicationManager.isApplicationInstalled(appIdentifier).wait();
+		}).future<boolean>()();
 	}
 }
 

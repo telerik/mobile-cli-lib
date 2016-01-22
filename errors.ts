@@ -75,8 +75,15 @@ export function installUncaughtExceptionListener(actionOnException?: () => void)
 			}
 		}
 		console.error(callstack || err.toString());
+		let disableAnalytics: boolean;
+		try {
+			disableAnalytics = $injector.resolve("staticConfig").disableAnalytics;
+		} catch(err) {
+			// We should get here only in our unit tests.
+			disableAnalytics = true;
+		}
 
-		if(!$injector.resolve("staticConfig").disableAnalytics) {
+		if(!disableAnalytics) {
 			try {
 				let analyticsService = $injector.resolve("analyticsService");
 				analyticsService.trackException(err, callstack);
