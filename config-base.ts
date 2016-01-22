@@ -4,6 +4,8 @@
 import * as path from "path";
 
 export class ConfigBase implements Config.IConfig {
+	DISABLE_HOOKS: boolean = false;
+
 	constructor(protected $fs: IFileSystem) { }
 
 	protected loadConfig(name: string): IFuture<any> {

@@ -48,7 +48,7 @@ export class CommandsService implements ICommandsService {
 					}
 					analyticsService.trackFeature(commandName).wait();
 				}
-				if(!this.$staticConfig.disableHooks && (command.enableHooks === undefined || command.enableHooks === true)) {
+				if(!this.$staticConfig.disableCommandHooks && (command.enableHooks === undefined || command.enableHooks === true)) {
 					// Handle correctly hierarchical commands
 					let hierarchicalCommandName = this.$injector.buildHierarchicalCommand(commandName, commandArguments);
 					if(hierarchicalCommandName) {

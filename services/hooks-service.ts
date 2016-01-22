@@ -21,6 +21,7 @@ export class HooksService implements IHooksService {
 		private $fs: IFileSystem,
 		private $logger: ILogger,
 		private $errors: IErrors,
+		private $config: Config.IConfig,
 		private $staticConfig: Config.IStaticConfig,
 		private $injector: IInjector,
 		private $projectHelper: IProjectHelper) { }
@@ -47,25 +48,29 @@ export class HooksService implements IHooksService {
 	}
 
 	public executeBeforeHooks(commandName: string, hookArguments?: IDictionary<any>): IFuture<void> {
-		if (!this.hooksDirectories) {
-			this.initialize();
-		}
 		let beforeHookName = `before-${HooksService.formatHookName(commandName)}`;
-		this.$logger.trace("BeforeHookName for command %s is %s", commandName, beforeHookName);
-		return this.executeHooks(beforeHookName, hookArguments);
+		let traceMessage = `BeforeHookName for command ${commandName} is ${beforeHookName}`;
+		return this.executeHooks(beforeHookName, traceMessage, hookArguments);
 	}
 
 	public executeAfterHooks(commandName: string, hookArguments?: IDictionary<any>): IFuture<void> {
-		if (!this.hooksDirectories) {
-			this.initialize();
-		}
 		let afterHookName = `after-${HooksService.formatHookName(commandName)}`;
-		this.$logger.trace("AfterHookName for command %s is %s", commandName, afterHookName);
-		return this.executeHooks(afterHookName, hookArguments);
+		let traceMessage = `AfterHookName for command ${commandName} is ${afterHookName}`;
+		return this.executeHooks(afterHookName, traceMessage ,hookArguments);
 	}
 
-	private executeHooks(hookName: string, hookArguments?: IDictionary<any>): IFuture<void> {
+	private executeHooks(hookName: string, traceMessage: string, hookArguments?: IDictionary<any>): IFuture<void> {
 		return (() => {
+			if (this.$config.DISABLE_HOOKS) {
+				return;
+			}
+
+			if (!this.hooksDirectories) {
+				this.initialize();
+			}
+
+			this.$logger.trace(traceMessage);
+
 			try {
 				_.each(this.hooksDirectories, hooksDirectory => {
 					this.executeHooksInDirectory(hooksDirectory, hookName, hookArguments).wait();
