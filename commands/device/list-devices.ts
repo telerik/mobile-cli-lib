@@ -16,7 +16,7 @@ export class ListDevicesCommand implements ICommand {
 			let index = 1;
 			this.$devicesService.initialize({platform: args[0], deviceId: null, skipInferPlatform: true}).wait();
 
-			let table: any = createTable(["#", "Device Name", "Platform", "Device Identifier", "Type"], []);
+			let table: any = createTable(["#", "Device Name", "Platform", "Device Identifier", "Type", "Status"], []);
 			let action: (_device: Mobile.IDevice) => IFuture<void>;
 			if (this.$options.json) {
 				this.$logger.setLevel("ERROR");
@@ -28,7 +28,9 @@ export class ListDevicesCommand implements ICommand {
 			} else {
 				action = (device) => {
 					return (() => {
-						table.push([(index++).toString(), device.deviceInfo.displayName || '', device.deviceInfo.platform || '', device.deviceInfo.identifier || '', device.deviceInfo.type || '']);
+						table.push([(index++).toString(), device.deviceInfo.displayName || '',
+									device.deviceInfo.platform || '', device.deviceInfo.identifier || '',
+									device.deviceInfo.type || '', device.deviceInfo.status || '']);
 					}).future<void>()();
 				};
 			}
