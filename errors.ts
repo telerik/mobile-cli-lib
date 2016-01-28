@@ -75,28 +75,32 @@ export function installUncaughtExceptionListener(actionOnException?: () => void)
 			}
 		}
 		console.error(callstack || err.toString());
-		let disableAnalytics: boolean;
-		try {
-			disableAnalytics = $injector.resolve("staticConfig").disableAnalytics;
-		} catch(err) {
-			// We should get here only in our unit tests.
-			disableAnalytics = true;
-		}
-
-		if(!disableAnalytics) {
-			try {
-				let analyticsService = $injector.resolve("analyticsService");
-				analyticsService.trackException(err, callstack);
-			} catch (e) {
-				// Do not replace with logger due to cyclic dependency
-				console.error("Error while reporting exception: " + e);
-			}
-		}
+		tryTrackException(err, $injector);
 
 		if(actionOnException) {
 			actionOnException();
 		}
 	});
+}
+
+function tryTrackException(error: Error, injector: IInjector): void {
+	let disableAnalytics: boolean;
+	try {
+		disableAnalytics = injector.resolve("staticConfig").disableAnalytics;
+	} catch(err) {
+		// We should get here only in our unit tests.
+		disableAnalytics = true;
+	}
+
+	if(!disableAnalytics) {
+		try {
+			let analyticsService = injector.resolve("analyticsService");
+			analyticsService.trackException(error, error.message).wait();
+		} catch (e) {
+			// Do not replace with logger due to cyclic dependency
+			console.error("Error while reporting exception: " + e);
+		}
+	}
 }
 
 export class Errors implements IErrors {
@@ -141,6 +145,7 @@ export class Errors implements IErrors {
 					printCommandHelp().wait();
 				}
 
+				tryTrackException(ex, this.$injector);
 				process.exit(_.isNumber(ex.errorCode) ? ex.errorCode : ErrorCodes.UNKNOWN);
 			}
 		}).future<boolean>()();

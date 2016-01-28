@@ -3,15 +3,20 @@
 
 import * as helpers from "../helpers";
 import * as os from "os";
+import Future = require("fibers/future");
 // HACK
 global.XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 global.XMLHttpRequest.prototype.withCredentials = false;
 // HACK -end
 
 export class AnalyticsService implements IAnalyticsService {
+	private static MAX_WAIT_SENDING_INTERVAL = 30000; // in milliseconds
 	private _eqatecMonitor: any;
 	private analyticsStatuses: IDictionary<AnalyticsStatus> = {};
 	private isAnalyticsStatusesInitialized = false;
+	private get acceptTrackFeatureSetting(): string {
+		return `Accept${this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME}`;
+	}
 
 	constructor(private $staticConfig: Config.IStaticConfig,
 		private $logger: ILogger,
@@ -19,7 +24,8 @@ export class AnalyticsService implements IAnalyticsService {
 		private $prompter: IPrompter,
 		private $userSettingsService: UserSettings.IUserSettingsService,
 		private $analyticsSettingsService: IAnalyticsSettingsService,
-		private $options: ICommonOptions) {}
+		private $options: ICommonOptions,
+		private $progressIndicator: IProgressIndicator) {}
 
 	public checkConsent(): IFuture<void> {
 		return ((): void => {
@@ -34,6 +40,11 @@ export class AnalyticsService implements IAnalyticsService {
 
 					let trackFeatureUsage = this.$prompter.confirm(message, () => true).wait();
 					this.setStatus(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, trackFeatureUsage).wait();
+					if(trackFeatureUsage) {
+						this.trackFeatureCore(`${this.acceptTrackFeatureSetting}.true`).wait();
+					} else {
+						this.trackFeatureCore(`${this.acceptTrackFeatureSetting}.false`).wait();
+					}
 				}
 
 				if(this.isNotConfirmed(this.$staticConfig.ERROR_REPORT_SETTING_NAME).wait()) {
@@ -55,16 +66,23 @@ export class AnalyticsService implements IAnalyticsService {
 			this.initAnalyticsStatuses().wait();
 			this.$logger.trace(`Trying to track feature '${featureName}' with value '${featureValue}'.`);
 
-			if(this.analyticsStatuses[this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME] !== AnalyticsStatus.disabled &&
-				this.$analyticsSettingsService.canDoRequest().wait()) {
-				try {
+			if(this.analyticsStatuses[this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME] !== AnalyticsStatus.disabled) {
+				this.trackFeatureCore(`${featureName}.${featureValue}`).wait();
+			}
+		}).future<void>()();
+	}
+
+	private trackFeatureCore(featureTrackString: string): IFuture<void> {
+		return (() => {
+			try {
+				if(this.$analyticsSettingsService.canDoRequest().wait()) {
 					this.start().wait();
 					if(this._eqatecMonitor) {
-						this._eqatecMonitor.trackFeature(`${featureName}.${featureValue}`);
+						this._eqatecMonitor.trackFeature(featureTrackString);
 					}
-				} catch(e) {
-					this.$logger.trace("Analytics exception: '%s'", e.toString());
 				}
+			} catch(e) {
+				this.$logger.trace("Analytics exception: '%s'", e.toString());
 			}
 		}).future<void>()();
 	}
@@ -74,15 +92,19 @@ export class AnalyticsService implements IAnalyticsService {
 			this.initAnalyticsStatuses().wait();
 			this.$logger.trace(`Trying to track exception with message '${message}'.`);
 
-			if(this.analyticsStatuses[this.$staticConfig.ERROR_REPORT_SETTING_NAME] !== AnalyticsStatus.disabled &&
-				this.$analyticsSettingsService.canDoRequest().wait()) {
+			if(this.analyticsStatuses[this.$staticConfig.ERROR_REPORT_SETTING_NAME] !== AnalyticsStatus.disabled
+				&& this.$analyticsSettingsService.canDoRequest().wait()) {
 				try {
 					this.start().wait();
 
 					if(this._eqatecMonitor) {
+						this.$logger.printInfoMessageOnSameLine("Tracking exception " + message);
 						this._eqatecMonitor.trackException(exception, message);
+						// Sending the exception might take a while.
+						// As in most cases we exit immediately after exception is caught,
+						// wait for tracking the exception.
+						this.$progressIndicator.showProgressIndicator(this.waitForExceptionReport(), 500).wait();
 					}
-
 				} catch(e) {
 					this.$logger.trace("Analytics exception: '%s'", e.toString());
 				}
@@ -94,6 +116,8 @@ export class AnalyticsService implements IAnalyticsService {
 		return (() => {
 			this.analyticsStatuses[settingName] = enabled ? AnalyticsStatus.enabled : AnalyticsStatus.disabled;
 			this.$userSettingsService.saveSetting(settingName, enabled.toString()).wait();
+			this.trackFeatureCore(`${settingName}.${enabled ? "enabled" : "disabled"}`).wait();
+
 			if(this.analyticsStatuses[settingName] === AnalyticsStatus.disabled
 				&& this.analyticsStatuses[settingName] === AnalyticsStatus.disabled
 				&& this._eqatecMonitor) {
@@ -129,12 +153,13 @@ export class AnalyticsService implements IAnalyticsService {
 				return;
 			}
 
-			require("../vendor/EqatecMonitor");
+			require("../vendor/EqatecMonitor.min");
 
 			let settings = global._eqatec.createSettings(this.$staticConfig.ANALYTICS_API_KEY);
 			settings.useHttps = false;
 			settings.userAgent = this.getUserAgentString();
 			settings.version = this.$staticConfig.version;
+			settings.useCookies = false;
 			settings.loggingInterface = {
 				logMessage: this.$logger.trace.bind(this.$logger),
 				logError: this.$logger.debug.bind(this.$logger)
@@ -152,8 +177,13 @@ export class AnalyticsService implements IAnalyticsService {
 
 			try {
 				this._eqatecMonitor.setUserID(this.$analyticsSettingsService.getUserId().wait());
+				let currentCount = this.$analyticsSettingsService.getUserSessionsCount().wait();
+				// increment with 1 every time and persist the new value so next execution will be marked as new session
+				this.$analyticsSettingsService.setUserSessionsCount(++currentCount).wait();
+				this._eqatecMonitor.setStartCount(currentCount);
 			} catch(e) {
 				// user not logged in. don't care.
+				this.$logger.trace("Error while initializing eqatecMonitor", e);
 			}
 
 			this._eqatecMonitor.start();
@@ -247,6 +277,25 @@ export class AnalyticsService implements IAnalyticsService {
 				this.$logger.trace(this.analyticsStatuses);
 			}
 		}).future<void>()();
+	}
+
+	private getIsSending(): boolean {
+		return this._eqatecMonitor.status().isSending;
+	}
+
+	private waitForExceptionReport(): IFuture<void> {
+		let future = new Future<void>();
+		let intervalTime = 1000;
+		let remainingTime = AnalyticsService.MAX_WAIT_SENDING_INTERVAL;
+		let interval = setInterval(() => {
+			if(!this.getIsSending() || (remainingTime <= 0)) {
+				clearInterval(interval);
+				future.return();
+			}
+			remainingTime -= intervalTime;
+		}, intervalTime);
+
+		return future;
 	}
 }
 $injector.register("analyticsService", AnalyticsService);
