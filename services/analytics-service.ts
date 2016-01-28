@@ -40,11 +40,7 @@ export class AnalyticsService implements IAnalyticsService {
 
 					let trackFeatureUsage = this.$prompter.confirm(message, () => true).wait();
 					this.setStatus(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, trackFeatureUsage).wait();
-					if(trackFeatureUsage) {
-						this.trackFeatureCore(`${this.acceptTrackFeatureSetting}.true`).wait();
-					} else {
-						this.trackFeatureCore(`${this.acceptTrackFeatureSetting}.false`).wait();
-					}
+					this.trackFeatureCore(`${this.acceptTrackFeatureSetting}.${!!trackFeatureUsage}`).wait();
 				}
 
 				if(this.isNotConfirmed(this.$staticConfig.ERROR_REPORT_SETTING_NAME).wait()) {
@@ -116,6 +112,7 @@ export class AnalyticsService implements IAnalyticsService {
 		return (() => {
 			this.analyticsStatuses[settingName] = enabled ? AnalyticsStatus.enabled : AnalyticsStatus.disabled;
 			this.$userSettingsService.saveSetting(settingName, enabled.toString()).wait();
+
 			this.trackFeatureCore(`${settingName}.${enabled ? "enabled" : "disabled"}`).wait();
 
 			if(this.analyticsStatuses[settingName] === AnalyticsStatus.disabled
@@ -149,7 +146,7 @@ export class AnalyticsService implements IAnalyticsService {
 
 	private start(): IFuture<void> {
 		return (() => {
-			if(this._eqatecMonitor || this.isEverythingDisabled()) {
+			if(this._eqatecMonitor) {
 				return;
 			}
 
@@ -253,15 +250,6 @@ export class AnalyticsService implements IAnalyticsService {
 			let enabled = status === AnalyticsStatus.notConfirmed ? null : status === AnalyticsStatus.disabled ? false : true;
 			return JSON.stringify({ enabled: enabled });
 		}).future<string>()();
-	}
-
-	private isEverythingDisabled(): boolean {
-		let statuses = _(this.analyticsStatuses)
-						.values()
-						.groupBy(p => _.identity(p))
-						.keys()
-						.value();
-		return statuses.length === 1 && _.first(statuses) === AnalyticsStatus.disabled.toString();
 	}
 
 	private initAnalyticsStatuses(): IFuture<void> {
