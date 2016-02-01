@@ -99,7 +99,8 @@ export class StaticConfigBase implements Config.IStaticConfig {
 
 			// let adb start its global server
 			let targetAdb = path.join(tmpDir, "adb");
-			$childProcess.spawnFromEvent(targetAdb, ["start-server"], "exit", undefined, { throwError: false }).wait();
+			console.log("spawnPrivateAdb, stack is: ", new Error().stack);
+			// $childProcess.spawnFromEvent(targetAdb, ["start-server"], "exit", undefined, { throwError: false }).wait();
 
 			return targetAdb;
 		}).future<string>()();
