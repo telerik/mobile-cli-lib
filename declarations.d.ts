@@ -233,6 +233,18 @@ interface IAnalyticsSettingsService {
 	getUserId(): IFuture<string>;
 	getClientName(): string;
 	getPrivacyPolicyLink(): string;
+	/**
+	 * Gets current user sessions count.
+	 * @return {number} Number of user sessions.
+	 */
+	getUserSessionsCount(): IFuture<number>;
+
+	/**
+	 * Set the number of user sessions.
+	 * @param {number} count The number that will be set for user sessions.
+	 * @return {IFuture<void>}
+	 */
+	setUserSessionsCount(count: number): IFuture<void>;
 }
 
 interface IHostCapabilities {
