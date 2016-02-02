@@ -94,7 +94,7 @@ export class AnalyticsService implements IAnalyticsService {
 					this.start().wait();
 
 					if(this._eqatecMonitor) {
-						this.$logger.printInfoMessageOnSameLine("Tracking exception " + message);
+						this.$logger.printInfoMessageOnSameLine("Sending exception report (press Ctrl+C to stop)...");
 						this._eqatecMonitor.trackException(exception, message);
 						// Sending the exception might take a while.
 						// As in most cases we exit immediately after exception is caught,
