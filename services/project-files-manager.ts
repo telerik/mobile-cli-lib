@@ -36,7 +36,7 @@ export class ProjectFilesManager implements IProjectFilesManager {
 	}
 
 	public createLocalToDevicePaths(deviceAppData: Mobile.IDeviceAppData, projectFilesPath: string, files?: string[], excludedProjectDirsAndFiles?: string[]): Mobile.ILocalToDevicePathData[] {
-		files = files || this.getProjectFiles(projectFilesPath, excludedProjectDirsAndFiles);
+		files = files || this.getProjectFiles(projectFilesPath, excludedProjectDirsAndFiles, null, { enumerateDirectories: true});
 		let localToDevicePaths = _(files)
 			.map(projectFile => this.getProjectFileInfo(projectFile, deviceAppData.platform))
 			.filter(projectFileInfo => projectFileInfo.shouldIncludeFile)
