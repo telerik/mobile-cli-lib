@@ -45,10 +45,9 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	public transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): IFuture<void> {
 		return (() => {
 			this.adb.executeCommand(["push", projectFilesPath, deviceAppData.deviceProjectRootPath]).wait();
-
-			let command = _.map(localToDevicePaths, (localToDevicePathData) => `"${localToDevicePathData.getDevicePath()}"`).join(" ");
+			let deviceFilePaths = _.map(localToDevicePaths, (localToDevicePathData) => `"${localToDevicePathData.getDevicePath()}"`).join(" ");
 			let commandsDeviceFilePath = this.$mobileHelper.buildDevicePath(deviceAppData.deviceProjectRootPath, "nativescript.commands.sh");
-			this.createFileOnDevice(commandsDeviceFilePath, command).wait();
+			this.createFileOnDevice(commandsDeviceFilePath, "chmod 0777 " + deviceFilePaths).wait();
 			this.adb.executeShellCommand([commandsDeviceFilePath]).wait();
 		}).future<void>()();
 	}
