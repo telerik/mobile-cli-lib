@@ -59,8 +59,6 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 					that.$logger.trace(`Adding ${filePath} file with ${fileHash} hash.`);
 					that.fileHashes[filePath] = fileHash;
 
-					that.$liveSyncProvider.preparePlatformForSync(data.platform).wait(); // TODO: this might be moved inside batchSync and fastSync functions
-
 					let mappedFilePath = that.$projectFilesProvider.mapFilePath(filePath, data.platform);
 					that.$logger.trace(`Syncing filePath ${filePath}, mappedFilePath is ${mappedFilePath}`);
 					if (!mappedFilePath) {
@@ -89,6 +87,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 				return (() => {
 					setTimeout(() => {
 						fiberBootstrap.run(() => {
+							this.$liveSyncProvider.preparePlatformForSync(data.platform).wait();
 							this.batch.syncFiles(filesToSync => this.syncCore(data, filesToSync)).wait();
 						});
 					}, syncBatchLib.SYNC_WAIT_THRESHOLD);
@@ -101,7 +100,10 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 	}
 
 	private fastSync(data: ILiveSyncData, filePath: string): IFuture<void> {
-		return this.syncCore(data, [filePath]);
+		return (() => {
+			this.$liveSyncProvider.preparePlatformForSync(data.platform).wait();
+			this.syncCore(data, [filePath]).wait();
+		}).future<void>()();
 	}
 
 	private syncAddedOrChangedFile(data: ILiveSyncData, filePath: string): IFuture<void> {
@@ -154,20 +156,25 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 								if (device.applicationManager.canStartApplication()) {
 									device.applicationManager.startApplication(appIdentifier).wait();
 								}
+
+								if (platformLiveSyncService.afterInstallApplicationAction) {
+									let localToDevicePaths = this.$projectFilesManager.createLocalToDevicePaths(deviceAppData, projectFilesPath, filesToSync, data.excludedProjectDirsAndFiles);
+									platformLiveSyncService.afterInstallApplicationAction(deviceAppData, localToDevicePaths).wait();
+								}
 							}
 							shouldRefreshApplication =  false;
 						}
 
-						// Transfer or remove files on device
-						let localToDevicePaths = this.$projectFilesManager.createLocalToDevicePaths(deviceAppData, projectFilesPath, filesToSync, data.excludedProjectDirsAndFiles);
-						if (deviceFilesAction) {
-							deviceFilesAction(device, localToDevicePaths).wait();
-						} else {
-							this.transferFiles(deviceAppData, localToDevicePaths, projectFilesPath, !filesToSync).wait();
-						}
-
 						// Restart application or reload page
 						if (shouldRefreshApplication) {
+							// Transfer or remove files on device
+							let localToDevicePaths = this.$projectFilesManager.createLocalToDevicePaths(deviceAppData, projectFilesPath, filesToSync, data.excludedProjectDirsAndFiles);
+							if (deviceFilesAction) {
+								deviceFilesAction(device, localToDevicePaths).wait();
+							} else {
+								this.transferFiles(deviceAppData, localToDevicePaths, projectFilesPath, !filesToSync).wait();
+							}
+
 							this.$logger.info("Applying changes...");
 							platformLiveSyncService.refreshApplication(deviceAppData, localToDevicePaths, data.canExecuteFastSync).wait();
 							this.$logger.info(`Successfully synced application ${data.appIdentifier} on device ${device.deviceInfo.identifier}.`);

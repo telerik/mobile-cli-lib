@@ -493,4 +493,34 @@ declare module Mobile {
 	interface IiOSDeviceProductNameMapper {
 		resolveProductName(deviceType: string): string;
 	}
+
+	interface IAndroidDeviceHashService {
+		/**
+		 * Returns the hash file path on device
+		 */
+		hashFileDevicePath: string;
+		/**
+		 * If hash file exists on device, read the hashes from the file and returns them as array
+		 * If hash file doesn't exist on device, returns null
+		 */
+		getShasumsFromDevice(): IFuture<IStringDictionary>;
+		/**
+		 * Computes the shasums of localToDevicePaths and changes the content of hash file on device
+		 */
+		uploadHashFileToDevice(data: IStringDictionary|Mobile.ILocalToDevicePathData[]): IFuture<void>;
+		/**
+		 * Computes the shasums of localToDevicePaths and updates hash file on device
+		 */
+		updateHashes(localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<boolean>;
+		/**
+		 * Computes the shasums of localToDevicePaths and removes them from hash file on device
+		 */
+		removeHashes(localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<boolean>;
+
+		/**
+		 * Detects if there's hash file on the device for the specified device.
+		 * @return {IFuture<boolean>} boolean True if file exists and false otherwise.
+		 */
+		doesShasumFileExistsOnDevice(): IFuture<boolean>;
+	}
 }
