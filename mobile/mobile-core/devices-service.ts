@@ -216,7 +216,9 @@ export class DevicesService implements Mobile.IDevicesService {
 
 			let futures = _.map(sortedDevices, (device: Mobile.IDevice) => {
 				if (!canExecute || canExecute(device)) {
-					return action(device);
+					let future = action(device);
+					Future.settle(future);
+					return future;
 				} else {
 					return Future.fromResult();
 				}
