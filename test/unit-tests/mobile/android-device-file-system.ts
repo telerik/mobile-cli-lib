@@ -144,7 +144,7 @@ describe("Android device file system tests", () => {
 			let fs = injector.resolve("fs");
 			fs.getFileShasum = (filePath: string) => (() => fileToShasumDictionary[filePath]).future<string>()();
 			fs.exists = (filePath: string) => Future.fromResult(true);
-			fs.readJson = (filePath: string) => (() =>  "~/TestApp/app/test.js 0\n ~/TestApp/app/myfile.js 2").future<string>()();
+			fs.readJson = (filePath: string) => (() => ({"~/TestApp/app/test.js":  "0", "~/TestApp/app/myfile.js": "2"})).future<string>()();
 			fs.getFsStats = (filePath: string) => Future.fromResult({
 				isDirectory: () => false,
 				isFile: () => true
@@ -171,7 +171,7 @@ describe("Android device file system tests", () => {
 			let fs = injector.resolve("fs");
 			fs.getFileShasum = (filePath: string) => (() => fileToShasumDictionary[filePath]).future<string>()();
 			fs.exists = (filePath: string) => Future.fromResult(true);
-			fs.readJson = (filePath: string) => (() =>  "~/TestApp/app/test.js 0\n ~/TestApp/app/myfile.js 4\n ~/TestApp/app/notchangedFile.js 3").future<string>()();
+			fs.readJson = (filePath: string) => (() =>  ({"~/TestApp/app/test.js": "0", "~/TestApp/app/myfile.js": "4", "~/TestApp/app/notchangedFile.js": "3"})).future<string>()();
 			fs.getFsStats = (filePath: string) => Future.fromResult({
 				isDirectory: () => false,
 				isFile: () => true
@@ -189,6 +189,60 @@ describe("Android device file system tests", () => {
 			assert.isTrue(_.contains(transferedFilesOnDevice, "~/TestApp/app/test.js"));
 			assert.isTrue(_.contains(transferedFilesOnDevice, "~/TestApp/app/myfile.js"));
 			assert.isFalse(_.contains(transferedFilesOnDevice, "~/TestApp/app/notchangedFile.js"));
+		});
+
+		it("pushes files which has different location when hash file exists on device", () => {
+			let injector = createTestInjector();
+			let deviceAppData = createDeviceAppData();
+
+			let fileToShasumDictionary: IStringDictionary = {
+				"~/TestApp/app/newDir/test.js": "1",
+				"~/TestApp/app/myfile.js": "2"
+			};
+			let localToDevicePaths = _.keys(fileToShasumDictionary).map(file => injector.resolve(LocalToDevicePathDataMock, {filePath: file}));
+
+			let fs = injector.resolve("fs");
+			fs.getFileShasum = (filePath: string) => (() => fileToShasumDictionary[filePath]).future<string>()();
+			fs.exists = (filePath: string) => Future.fromResult(true);
+			fs.readJson = (filePath: string) => (() => ({"~/TestApp/app/test.js":  "0", "~/TestApp/app/myfile.js": "2"})).future<string>()();
+			fs.getFsStats = (filePath: string) => Future.fromResult({
+				isDirectory: () => false,
+				isFile: () => true
+			});
+
+			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
+			androidDeviceFileSystem.transferFile = (localPath: string, devicePath: string) => {
+				assert.equal(localPath, "~/TestApp/app/newDir/test.js");
+				return Future.fromResult();
+			};
+			androidDeviceFileSystem.transferDirectory(deviceAppData, localToDevicePaths, "~/TestApp/app").wait();
+		});
+
+		it("pushes files which has different location and different shasum when hash file exists on device", () => {
+			let injector = createTestInjector();
+			let deviceAppData = createDeviceAppData();
+
+			let fileToShasumDictionary: IStringDictionary = {
+				"~/TestApp/app/newDir/test.js": "2",
+				"~/TestApp/app/myfile.js": "2"
+			};
+			let localToDevicePaths = _.keys(fileToShasumDictionary).map(file => injector.resolve(LocalToDevicePathDataMock, {filePath: file}));
+
+			let fs = injector.resolve("fs");
+			fs.getFileShasum = (filePath: string) => (() => fileToShasumDictionary[filePath]).future<string>()();
+			fs.exists = (filePath: string) => Future.fromResult(true);
+			fs.readJson = (filePath: string) => (() => ({"~/TestApp/app/test.js":  "0", "~/TestApp/app/myfile.js": "2"})).future<string>()();
+			fs.getFsStats = (filePath: string) => Future.fromResult({
+				isDirectory: () => false,
+				isFile: () => true
+			});
+
+			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
+			androidDeviceFileSystem.transferFile = (localPath: string, devicePath: string) => {
+				assert.equal(localPath, "~/TestApp/app/newDir/test.js");
+				return Future.fromResult();
+			};
+			androidDeviceFileSystem.transferDirectory(deviceAppData, localToDevicePaths, "~/TestApp/app").wait();
 		});
 	});
 });

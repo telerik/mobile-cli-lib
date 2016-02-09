@@ -79,8 +79,8 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 				// Create or update file hashes on device
 				let oldShasums = deviceHashService.getShasumsFromDevice().wait();
 				if (oldShasums) {
-					let changedShasums: any = _.omit(currentShasums, (hash: string, pathToFile: string) => !!_.find(oldShasums, h => hash === h));
-					this.$logger.trace(`Changed file hashes are: ${changedShasums}.`);
+					let changedShasums: any = _.omit(currentShasums, (hash: string, pathToFile: string) => !!_.find(oldShasums, (oldHash: string, oldPath: string) => pathToFile === oldPath && hash === oldHash));
+					this.$logger.trace("Changed file hashes are:", changedShasums);
 					filesToChmodOnDevice = [];
 					let futures = _(changedShasums)
 						.map((hash: string, filePath: string) => _.find(localToDevicePaths, ldp => ldp.getLocalPath() === filePath))
