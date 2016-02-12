@@ -23,7 +23,8 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		private $projectFilesProvider: IProjectFilesProvider,
 		private $liveSyncProvider: ILiveSyncProvider,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
-		private $hostInfo: IHostInfo) {
+		private $hostInfo: IHostInfo,
+		private $dispatcher: IFutureDispatcher) {
 			this.fileHashes = Object.create(null);
 		}
 
@@ -50,33 +51,42 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		gaze("**/*", { cwd: data.syncWorkingDirectory }, function(err: any, watcher: any) {
 			this.on('all', (event: string, filePath: string) => {
 				fiberBootstrap.run(() => {
-					let fileHash = that.$fs.exists(filePath).wait() && that.$fs.getFsStats(filePath).wait().isFile() ? that.$fs.getFileShasum(filePath).wait() : "";
-					if (fileHash === that.fileHashes[filePath]) {
-						that.$logger.trace(`Skipping livesync for ${filePath} file with ${fileHash} hash.`);
-						return;
-					}
+					that.$dispatcher.dispatch(() => (() => {
+						try {
+							let fileHash = that.$fs.exists(filePath).wait() && that.$fs.getFsStats(filePath).wait().isFile() ? that.$fs.getFileShasum(filePath).wait() : "";
+							if (fileHash === that.fileHashes[filePath]) {
+								that.$logger.trace(`Skipping livesync for ${filePath} file with ${fileHash} hash.`);
+								return;
+							}
 
-					that.$logger.trace(`Adding ${filePath} file with ${fileHash} hash.`);
-					that.fileHashes[filePath] = fileHash;
+							that.$logger.trace(`Adding ${filePath} file with ${fileHash} hash.`);
+							that.fileHashes[filePath] = fileHash;
 
-					let mappedFilePath = that.$projectFilesProvider.mapFilePath(filePath, data.platform);
-					that.$logger.trace(`Syncing filePath ${filePath}, mappedFilePath is ${mappedFilePath}`);
-					if (!mappedFilePath) {
-						that.$logger.warn(`Unable to sync ${filePath}.`);
-						return;
-					}
+							let mappedFilePath = that.$projectFilesProvider.mapFilePath(filePath, data.platform);
+							that.$logger.trace(`Syncing filePath ${filePath}, mappedFilePath is ${mappedFilePath}`);
+							if (!mappedFilePath) {
+								that.$logger.warn(`Unable to sync ${filePath}.`);
+								return;
+							}
 
-					data.canExecuteFastSync = that.$liveSyncProvider.canExecuteFastSync(filePath, data.platform);
+							data.canExecuteFastSync = that.$liveSyncProvider.canExecuteFastSync(filePath, data.platform);
 
-					if (event === "added" || event === "changed" || event === "renamed") {
-						that.syncAddedOrChangedFile(data, mappedFilePath).wait();
-					} else if (event === "deleted") {
-						that.fileHashes = <any>(_.omit(that.fileHashes, filePath));
-						that.syncRemovedFile(data, mappedFilePath).wait();
-					}
+							if (event === "added" || event === "changed" || event === "renamed") {
+								that.syncAddedOrChangedFile(data, mappedFilePath).wait();
+							} else if (event === "deleted") {
+								that.fileHashes = <any>(_.omit(that.fileHashes, filePath));
+								that.syncRemovedFile(data, mappedFilePath).wait();
+							}
+						} catch (err) {
+							that.$logger.warn(`Unable to sync file ${filePath}. Error is:`, err.message);
+							that.$logger.info("Try saving it again or restart the livesync operation.");
+						}
+					}).future<void>()());
 				});
 			});
 		});
+
+		this.$dispatcher.run();
 	}
 
 	private batch: ISyncBatch = null;
@@ -87,8 +97,15 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 				return (() => {
 					setTimeout(() => {
 						fiberBootstrap.run(() => {
-							this.$liveSyncProvider.preparePlatformForSync(data.platform).wait();
-							this.batch.syncFiles(filesToSync => this.syncCore(data, filesToSync)).wait();
+							this.$dispatcher.dispatch(() => (() => {
+								try {
+									this.$liveSyncProvider.preparePlatformForSync(data.platform).wait();
+									this.batch.syncFiles(filesToSync => this.syncCore(data, filesToSync)).wait();
+								} catch (err) {
+									this.$logger.warn(`Unable to sync files. Error is:`, err.message);
+								}
+							}).future<void>()());
+
 						});
 					}, syncBatchLib.SYNC_WAIT_THRESHOLD);
 				}).future<void>()();
@@ -239,4 +256,3 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 	}
 }
 $injector.register('liveSyncServiceBase', LiveSyncServiceBase);
-
