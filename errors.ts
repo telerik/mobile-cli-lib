@@ -3,6 +3,7 @@
 
 import * as util from "util";
 import * as path from "path";
+import * as fiberBootstrap from "./fiber-bootstrap";
 
 // we need this to overwrite .stack property (read-only in Error)
 function Exception() {
@@ -95,7 +96,9 @@ function tryTrackException(error: Error, injector: IInjector): void {
 	if(!disableAnalytics) {
 		try {
 			let analyticsService = injector.resolve("analyticsService");
-			analyticsService.trackException(error, error.message).wait();
+			fiberBootstrap.run(() => {
+				analyticsService.trackException(error, error.message).wait();
+			});
 		} catch (e) {
 			// Do not replace with logger due to cyclic dependency
 			console.error("Error while reporting exception: " + e);
