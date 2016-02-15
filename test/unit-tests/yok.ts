@@ -4,7 +4,7 @@ import {assert} from "chai";
 import {Yok} from "../../yok";
 import * as path from "path";
 import * as fs from "fs";
-import rimraf = require("rimraf");
+import * as shelljs from "shelljs";
 import * as classesWithInitMethod from "./mocks/mockClassesWithInitializeMethod";
 
 class MyClass {
@@ -321,6 +321,12 @@ describe("yok", () => {
 		});
 	});
 
+	function deleteDirectory(directory: string): boolean {
+		shelljs.rm("-rf", directory);
+		let err = shelljs.error();
+		return err === null;
+	}
+
 	it("adds whole class to public api when requirePublicClass is used", () => {
 		let injector = new Yok();
 		let dataObject =  {
@@ -339,11 +345,9 @@ describe("yok", () => {
 		// Get the real instance here, so we can delete the file before asserts.
 		// This way we'll keep the directory clean, even if assert fails.
 		let resultFooObject = injector.publicApi.foo;
-		rimraf(filepath, (err: Error) => {
-			if(err) {
-				console.log(`Unable to delete file used for tests: ${filepath}.`);
-			}
-		});
+		if (!deleteDirectory(filepath)) {
+			console.log(`Unable to delete file used for tests: ${filepath}.`);
+		}
 		assert.isTrue(_.contains(Object.getOwnPropertyNames(injector.publicApi), "foo"));
 		assert.deepEqual(resultFooObject, dataObject);
 	});

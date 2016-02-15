@@ -4,11 +4,11 @@
 import * as fs from "fs";
 import Future = require("fibers/future");
 import * as path from "path";
-import rimraf = require("rimraf");
 import * as minimatch from "minimatch";
 import * as decorators from "./decorators";
 import * as injector from "./yok";
 import * as crypto from "crypto";
+import * as shelljs from "shelljs";
 
 @injector.register("fs")
 export class FileSystem implements IFileSystem {
@@ -132,14 +132,15 @@ export class FileSystem implements IFileSystem {
 
 	public deleteDirectory(directory: string): IFuture<void> {
 		let future = new Future<void>();
-		rimraf(directory, (err:Error) => {
-			if(err) {
-				future.throw(err);
-			} else {
-				future.return();
-			}
-		});
 
+		shelljs.rm("-rf", directory);
+
+		let err = shelljs.error();
+		if (err !== null) {
+			future.throw(new Error(err));
+		} else {
+			future.return();
+		}
 		return future;
 	}
 
