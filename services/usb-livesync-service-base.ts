@@ -6,6 +6,7 @@ import * as path from "path";
 import * as util from "util";
 import * as moment from "moment";
 import * as fiberBootstrap from "../fiber-bootstrap";
+import Future = require("fibers/future");
 let gaze = require("gaze");
 
 interface IProjectFileInfo {
@@ -344,8 +345,7 @@ export class UsbLiveSyncServiceBase implements IUsbLiveSyncServiceBase {
 	}
 
 	protected preparePlatformForSync(platform: string): IFuture<void> {
-		return null;
-		//Overridden in platform-specific services.
+		return Future.fromResult();
 	}
 
 	public static isFileExcluded(path: string, exclusionList: string[], projectDir: string): boolean {
