@@ -6,6 +6,7 @@ import syncBatchLib = require("./livesync/sync-batch");
 import * as shell from "shelljs";
 import * as path from "path";
 import * as temp from "temp";
+import * as minimatch from "minimatch";
 let gaze = require("gaze");
 
 class LiveSyncServiceBase implements ILiveSyncServiceBase {
@@ -46,6 +47,18 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		}).future<void>()();
 	}
 
+	private isFileExcluded(filePath: string, excludedPatterns: string[]): boolean {
+		let isFileExcluded = false;
+		_.each(excludedPatterns, pattern => {
+			if(minimatch(filePath, pattern, {nocase: true})) {
+				isFileExcluded = true;
+				return false;
+			}
+		});
+
+		return isFileExcluded;
+	}
+
 	private partialSync(data: ILiveSyncData): void {
 		let that = this;
 		gaze("**/*", { cwd: data.syncWorkingDirectory }, function(err: any, watcher: any) {
@@ -53,6 +66,11 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 				fiberBootstrap.run(() => {
 					that.$dispatcher.dispatch(() => (() => {
 						try {
+							if(that.isFileExcluded(filePath, data.excludedProjectDirsAndFiles)) {
+								that.$logger.trace(`Skipping livesync for changed file ${filePath} as it is excluded in the patterns: ${data.excludedProjectDirsAndFiles.join(", ")}`);
+								return;
+							}
+
 							let fileHash = that.$fs.exists(filePath).wait() && that.$fs.getFsStats(filePath).wait().isFile() ? that.$fs.getFileShasum(filePath).wait() : "";
 							if (fileHash === that.fileHashes[filePath]) {
 								that.$logger.trace(`Skipping livesync for ${filePath} file with ${fileHash} hash.`);
@@ -151,11 +169,10 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 			let projectFilesPath = data.projectFilesPath;
 
 			let packageFilePath: string = null;
-			let shouldRefreshApplication: boolean;
 
 			let action = (device: Mobile.IDevice) => {
 				return (() => {
-					shouldRefreshApplication = true;
+					let shouldRefreshApplication = true;
 					let deviceAppData = this.$deviceAppDataFactory.create(appIdentifier, this.$mobileHelper.normalizePlatformName(platform), device);
 					if (deviceAppData.isLiveSyncSupported().wait()) {
 						let platformLiveSyncService = this.resolvePlatformLiveSyncService(platform, device);
@@ -169,15 +186,15 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 							this.$logger.warn(`The application with id "${appIdentifier}" is not installed on device with identifier ${device.deviceInfo.identifier}.`);
 							if (!packageFilePath) {
 								packageFilePath = this.$liveSyncProvider.buildForDevice(device).wait();
-								device.applicationManager.reinstallApplication(appIdentifier, packageFilePath).wait();
-								if (device.applicationManager.canStartApplication()) {
-									device.applicationManager.startApplication(appIdentifier).wait();
-								}
+							}
+							device.applicationManager.reinstallApplication(appIdentifier, packageFilePath).wait();
+							if (device.applicationManager.canStartApplication()) {
+								device.applicationManager.startApplication(appIdentifier).wait();
+							}
 
-								if (platformLiveSyncService.afterInstallApplicationAction) {
-									let localToDevicePaths = this.$projectFilesManager.createLocalToDevicePaths(deviceAppData, projectFilesPath, filesToSync, data.excludedProjectDirsAndFiles);
-									platformLiveSyncService.afterInstallApplicationAction(deviceAppData, localToDevicePaths).wait();
-								}
+							if (platformLiveSyncService.afterInstallApplicationAction) {
+								let localToDevicePaths = this.$projectFilesManager.createLocalToDevicePaths(deviceAppData, projectFilesPath, filesToSync, data.excludedProjectDirsAndFiles);
+								platformLiveSyncService.afterInstallApplicationAction(deviceAppData, localToDevicePaths).wait();
 							}
 							shouldRefreshApplication =  false;
 						}
