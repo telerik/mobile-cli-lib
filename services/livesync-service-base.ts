@@ -151,11 +151,10 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 			let projectFilesPath = data.projectFilesPath;
 
 			let packageFilePath: string = null;
-			let shouldRefreshApplication: boolean;
 
 			let action = (device: Mobile.IDevice) => {
 				return (() => {
-					shouldRefreshApplication = true;
+					let shouldRefreshApplication = true;
 					let deviceAppData = this.$deviceAppDataFactory.create(appIdentifier, this.$mobileHelper.normalizePlatformName(platform), device);
 					if (deviceAppData.isLiveSyncSupported().wait()) {
 						let platformLiveSyncService = this.resolvePlatformLiveSyncService(platform, device);
@@ -169,15 +168,15 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 							this.$logger.warn(`The application with id "${appIdentifier}" is not installed on device with identifier ${device.deviceInfo.identifier}.`);
 							if (!packageFilePath) {
 								packageFilePath = this.$liveSyncProvider.buildForDevice(device).wait();
-								device.applicationManager.reinstallApplication(appIdentifier, packageFilePath).wait();
-								if (device.applicationManager.canStartApplication()) {
-									device.applicationManager.startApplication(appIdentifier).wait();
-								}
+							}
+							device.applicationManager.reinstallApplication(appIdentifier, packageFilePath).wait();
+							if (device.applicationManager.canStartApplication()) {
+								device.applicationManager.startApplication(appIdentifier).wait();
+							}
 
-								if (platformLiveSyncService.afterInstallApplicationAction) {
-									let localToDevicePaths = this.$projectFilesManager.createLocalToDevicePaths(deviceAppData, projectFilesPath, filesToSync, data.excludedProjectDirsAndFiles);
-									platformLiveSyncService.afterInstallApplicationAction(deviceAppData, localToDevicePaths).wait();
-								}
+							if (platformLiveSyncService.afterInstallApplicationAction) {
+								let localToDevicePaths = this.$projectFilesManager.createLocalToDevicePaths(deviceAppData, projectFilesPath, filesToSync, data.excludedProjectDirsAndFiles);
+								platformLiveSyncService.afterInstallApplicationAction(deviceAppData, localToDevicePaths).wait();
 							}
 							shouldRefreshApplication =  false;
 						}
