@@ -143,7 +143,7 @@ export class ChildProcess implements IChildProcess {
 	}
 
 	private getArgumentsAsQuotedString(args: string[]): string {
-		return args.map(argument => `"${argument}"`).join(" ");
+		return args && args.length && args.map(argument => `"${argument}"`).join(" ");
 	}
 }
 $injector.register("childProcess", ChildProcess);
