@@ -485,6 +485,7 @@ interface ICommonOptions {
 	template: string;
 	var: Object;
 	default: Boolean;
+	release: boolean;
 }
 
 interface IYargArgv extends IDictionary<any> {
@@ -766,6 +767,26 @@ interface IProgressIndicator {
 	showProgressIndicator(future: IFuture<any>, timeout: number, options?: { surpressTrailingNewLine?: boolean }): IFuture<void>;
 }
 
+/**
+ * Describes project file that should be livesynced
+ */
+interface IProjectFileInfo {
+	/**
+	 * Full path to the file that has to be livesynced.
+	 */
+	filePath: string;
+
+	/**
+	 * Filename that will be transefered on the device. This is the original filename with stripped platform and configuration names.
+	 */
+	onDeviceFileName: string;
+
+	/**
+	 * Defines if the file should be included in the transfer. For example when device is Android, files that contain iOS in the name should not be synced.
+	 */
+	shouldIncludeFile: boolean;
+}
+
 interface IProjectFilesManager {
 	/**
 	 * Enumerates all files and directories from the specified project files path.
@@ -795,6 +816,20 @@ interface IProjectFilesProvider {
 	 * Performs local file path mapping
 	 */
 	mapFilePath(filePath: string, platform: string): string;
+
+	/**
+	 * Returns information about file in the project, that includes file's name on device after removing platform or configuration from the name.
+	 * @param {string} filePath Path to the project file.
+	 * @param {string} optional Platform for which to get the information.
+	 * @return {IProjectFileInfo}
+	 */
+	getProjectFileInfo(filePath: string, platform?: string): IProjectFileInfo;
+	/**
+	 * Parses file by removing platform or configuration from its name.
+	 * @param {string} filePath Path to the project file.
+	 * @return {string} Parsed file name or original file name in case it does not have platform/configuration in the filename.
+	 */
+	getPreparedFilePath(filePath: string): string;
 }
 
 interface ILiveSyncProvider {

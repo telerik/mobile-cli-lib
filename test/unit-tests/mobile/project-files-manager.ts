@@ -14,6 +14,7 @@ import {ProjectFilesManager} from "../../../services/project-files-manager";
 import {Logger} from "../../../logger";
 import * as path from "path";
 import {Yok} from "../../../yok";
+import { ProjectFilesProviderBase } from "../../../services/project-files-provider-base";
 
 import temp = require("temp");
 temp.track();
@@ -92,7 +93,7 @@ function createTestInjector(): IInjector {
 	testInjector.register("localToDevicePathDataFactory", LocalToDevicePathDataFactory);
 	testInjector.register("mobileHelper", MobileHelper);
 	testInjector.register("mobilePlatformsCapabilities", MobilePlatformsCapabilitiesMock);
-	testInjector.register("projectFilesProvider", {});
+	testInjector.register("projectFilesProvider", ProjectFilesProviderBase);
 	testInjector.register("projectFilesManager", ProjectFilesManager);
 	testInjector.register("options", { });
 	testInjector.register("staticConfig", {
