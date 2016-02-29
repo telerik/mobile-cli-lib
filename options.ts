@@ -69,8 +69,9 @@ export class OptionsBase {
 			"emulator": { type: OptionType.Boolean },
 			"sdk": { type: OptionType.String },
 			"template": { type: OptionType.String },
-			var: {type: OptionType.Object},
-			default: {type: OptionType.Boolean},
+			"release": { type: OptionType.Boolean },
+			"var": {type: OptionType.Object},
+			"default": {type: OptionType.Boolean}
 		};
 	}
 

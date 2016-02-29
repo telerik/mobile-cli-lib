@@ -5,12 +5,6 @@ import minimatch = require("minimatch");
 import * as path from "path";
 import * as util from "util";
 
-interface IProjectFileInfo {
-	filePath: string;
-	onDeviceFileName: string;
-	shouldIncludeFile: boolean;
-}
-
 export class ProjectFilesManager implements IProjectFilesManager {
 	constructor(private $fs: IFileSystem,
 		private $localToDevicePathDataFactory: Mobile.ILocalToDevicePathDataFactory,
@@ -37,11 +31,10 @@ export class ProjectFilesManager implements IProjectFilesManager {
 
 	public createLocalToDevicePaths(deviceAppData: Mobile.IDeviceAppData, projectFilesPath: string, files?: string[], excludedProjectDirsAndFiles?: string[]): Mobile.ILocalToDevicePathData[] {
 		files = files || this.getProjectFiles(projectFilesPath, excludedProjectDirsAndFiles, null, { enumerateDirectories: true});
-		let localToDevicePaths = _(files)
-			.map(projectFile => this.getProjectFileInfo(projectFile, deviceAppData.platform))
+		let localToDevicePaths = files
+			.map(projectFile => this.$projectFilesProvider.getProjectFileInfo(projectFile, deviceAppData.platform))
 			.filter(projectFileInfo => projectFileInfo.shouldIncludeFile)
-			.map(projectFileInfo => this.$localToDevicePathDataFactory.create(projectFileInfo.filePath, projectFilesPath, projectFileInfo.onDeviceFileName, deviceAppData.deviceProjectRootPath))
-			.value();
+			.map(projectFileInfo => this.$localToDevicePathDataFactory.create(projectFileInfo.filePath, projectFilesPath, projectFileInfo.onDeviceFileName, deviceAppData.deviceProjectRootPath));
 
 		return localToDevicePaths;
 	}
@@ -69,7 +62,7 @@ export class ProjectFilesManager implements IProjectFilesManager {
 		// Renames the files that have `platform` as substring and removes the files from other platform
 		return (() => {
 			_.each(files, filePath => {
-				let projectFileInfo = this.getProjectFileInfo(filePath, platform);
+				let projectFileInfo = this.$projectFilesProvider.getProjectFileInfo(filePath, platform);
 				if (!projectFileInfo.shouldIncludeFile) {
 					this.$fs.deleteFile(filePath).wait();
 				} else if (projectFileInfo.onDeviceFileName) {
@@ -77,34 +70,6 @@ export class ProjectFilesManager implements IProjectFilesManager {
 				}
 			});
 		}).future<void>()();
-	}
-
-	private getProjectFileInfo(filePath: string, platform: string): IProjectFileInfo {
-		let parsed = this.parseFile(filePath, this.$mobileHelper.platformNames, platform);
-		if (!parsed) {
-			parsed = this.parseFile(filePath, ["debug", "release"], "debug");
-		}
-
-		return parsed || {
-			filePath: filePath,
-			onDeviceFileName: path.basename(filePath),
-			shouldIncludeFile: true
-		};
-	}
-
-	private parseFile(filePath: string, validValues: string[], value: string): any {
-		let regex = util.format("^(.+?)[.](%s)([.].+?)$", validValues.join("|"));
-		let parsed = filePath.match(new RegExp(regex, "i"));
-		if (parsed) {
-			return {
-				filePath: filePath,
-				onDeviceFileName: path.basename(parsed[1] + parsed[3]),
-				shouldIncludeFile: parsed[2].toLowerCase() === value.toLowerCase(),
-				value: value
-			};
-		}
-
-		return null;
 	}
 }
 $injector.register("projectFilesManager", ProjectFilesManager);
