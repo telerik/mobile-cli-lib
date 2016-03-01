@@ -220,10 +220,18 @@ interface IAnalyticsService {
 	track(featureName: string, featureValue: string): IFuture<void>;
 }
 
+interface IAllowEmpty {
+	allowEmpty?: boolean
+}
+
+interface IPrompterOptions extends IAllowEmpty {
+	defaultAction?: () => string
+}
+
 interface IPrompter extends IDisposable {
 	get(schemas: IPromptSchema[]): IFuture<any>;
-	getPassword(prompt: string, options?: {allowEmpty?: boolean}): IFuture<string>;
-	getString(prompt: string, defaultAction?: () => string): IFuture<string>;
+	getPassword(prompt: string, options?: IAllowEmpty): IFuture<string>;
+	getString(prompt: string, options?: IPrompterOptions): IFuture<string>;
 	promptForChoice(promptMessage: string, choices: any[]): IFuture<string>;
 	confirm(prompt: string, defaultAction?: () => boolean): IFuture<boolean>;
 }
