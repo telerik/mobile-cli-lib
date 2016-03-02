@@ -66,7 +66,7 @@ export class Prompter implements IPrompter {
 		return future;
 	}
 
-	public getPassword(prompt: string, options?: {allowEmpty?: boolean}): IFuture<string> {
+	public getPassword(prompt: string, options?: IAllowEmpty): IFuture<string> {
 		return (() => {
 			let schema: IPromptSchema = {
 				message: prompt,
@@ -83,17 +83,18 @@ export class Prompter implements IPrompter {
 		}).future<string>()();
 	}
 
-	public getString(prompt: string, defaultAction?: () => string): IFuture<string> {
+	public getString(prompt: string, options?: IPrompterOptions): IFuture<string> {
 		return (() => {
 			let schema: IPromptSchema = {
 				message: prompt,
 				type: "input",
-				name: "inputString"
+				name: "inputString",
+				validate: (value: any) => {
+					let doesNotAllowEmpty = options && _.has(options, "allowEmpty") && !options.allowEmpty;
+					return (doesNotAllowEmpty && !value) ? `${prompt} must be non-empty` : true;
+				},
+				default: options && options.defaultAction
 			};
-
-			if(defaultAction) {
-				schema.default = defaultAction;
-			}
 
 			let result = this.get([schema]).wait();
 			return result.inputString;
