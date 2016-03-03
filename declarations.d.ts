@@ -4,10 +4,120 @@ interface Object {
 
 interface IStringDictionary extends IDictionary<string> { }
 
+
+/**
+ * Describes iTunes Connect application types
+ */
+interface IItunesConnectApplicationType {
+	/**
+	 * Applications developed for iOS
+	 * @type {string}
+	 */
+	iOS: string;
+	/**
+	 * Applications developed for Mac OS
+	 * @type {string}
+	 */
+	Mac: string;
+}
+
+/**
+ * Descibes iTunes Connect applications
+ */
+interface IItunesConnectApplication {
+	/**
+	 * Unique Apple ID for each application. Automatically generated and assigned by Apple.
+	 * @type {string}
+	 */
+	adamId: string;
+	/**
+	 * No information available.
+	 * @type {number}
+	 */
+	addOnCount: number;
+	/**
+	 * The application's bundle identifier.
+	 * @type {string}
+	 */
+	bundleId: string;
+	/**
+	 * Application's name
+	 * @type {string}
+	 */
+	name: string;
+	/**
+	 * Application's stock keeping unit. User-defined unique string to keep track of the applications
+	 * @type {string}
+	 */
+	sku: string;
+	/**
+	 * Application's type
+	 * @type {IItunesConnectApplicationTypes}
+	 */
+	type: string;
+	/**
+	 * Application's current version
+	 * @type {string}
+	 */
+	version: string;
+}
+
+/**
+ * Describes data returned from querying itunes' contentdelivery api
+ */
+interface IContentDeliveryBody {
+	/**
+	 * Error object - likely present if result's Success is false.
+	 */
+	error?: {
+		/**
+		 * Occurred error's code.
+		 * @type {number}
+		 */
+		code: number;
+		/**
+		 * Occurred error's message.
+		 * @type {string}
+		 */
+		message: string;
+	};
+
+	/**
+	 * Query results.
+	 */
+	result: {
+		/**
+		 * A list of the user's applications.
+		 * @type {IItunesConnectApplication[]}
+		 */
+		Applications: IItunesConnectApplication[];
+		/**
+		 * Error code - likely present if Success is false.
+		 * @type {number}
+		 */
+		ErrorCode?: number;
+		/**
+		 * Error message - likely present if Success is false.
+		 * @type {string}
+		 */
+		ErrorMessage?: string;
+		/**
+		 * Error message - likely present if Success is false.
+		 * @type {string[]}
+		 */
+		Errors?: string[];
+		/**
+		 * Indication whether the query was a success or not.
+		 * @type {boolean}
+		 */
+		Success: boolean;
+	};
+}
+
 declare module Server {
 	interface IResponse {
 		response: any;
-		body?: string;
+		body?: any;
 		headers: any;
 		error?: Error;
 	}
