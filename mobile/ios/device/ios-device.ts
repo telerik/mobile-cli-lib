@@ -26,7 +26,6 @@ export class IOSDevice implements Mobile.IiOSDevice {
 	public deviceInfo: Mobile.IDeviceInfo;
 
 	constructor(private devicePointer: NodeBuffer,
-		private $childProcess: IChildProcess,
 		private $coreFoundation: Mobile.ICoreFoundation,
 		private $errors: IErrors,
 		private $fs: IFileSystem,
@@ -36,7 +35,8 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $hostInfo: IHostInfo,
 		private $options: ICommonOptions,
-		private $iOSDeviceProductNameMapper: Mobile.IiOSDeviceProductNameMapper) {
+		private $iOSDeviceProductNameMapper: Mobile.IiOSDeviceProductNameMapper,
+		private $xcodeSelectService: IXcodeSelectService) {
 			this.mountImageCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSDevice.mountImageCallback);
 
 			this.applicationManager = this.$injector.resolve(applicationManagerPath.IOSApplicationManager, { device: this, devicePointer: this.devicePointer });
@@ -162,13 +162,6 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		return this.$coreFoundation.convertCFStringToCString(deviceCopyValue);
 	}
 
-	private findDeveloperDirectory(): IFuture<string> {
-		return (() => {
-			let childProcess = this.$childProcess.spawnFromEvent("xcode-select", ["-print-path"], "close").wait();
-			return childProcess.stdout.trim();
-		}).future<string>()();
-	}
-
 	public tryExecuteFunction<TResult>(func: () => TResult): TResult {
 		this.connect();
 		try {
@@ -185,7 +178,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 
 	private findDeveloperDiskImageDirectoryPath(): IFuture<string> {
 		return (() => {
-			let developerDirectory = this.findDeveloperDirectory().wait();
+			let developerDirectory = this.$xcodeSelectService.getDeveloperDirectoryPath().wait();
 			let buildVersion = this.getDeviceValue("BuildVersion");
 			let productVersion = this.getDeviceValue("ProductVersion");
 			let productVersionParts = productVersion.split(".");

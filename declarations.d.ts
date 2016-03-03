@@ -322,6 +322,24 @@ interface IHtmlHelpService {
 	openHelpForCommandInBrowser(commandName: string): IFuture<void>;
 }
 
+/**
+ * Used to talk to xcode-select command-line tool.
+ */
+interface IXcodeSelectService {
+	/**
+	 * Get the path to Contents directory inside Xcode.app.
+	 * With a default installation this path is /Applications/Xcode.app/Contents
+	 * @return {IFuture<string>}
+	 */
+	getContentsDirectoryPath(): IFuture<string>;
+	/**
+	 * Get the path to Developer directory inside Xcode.app.
+	 * With a default installation this path is /Applications/Xcode.app/Contents/Developer/
+	 * @return {IFuture<string>}
+	 */
+	getDeveloperDirectoryPath(): IFuture<string>;
+}
+
 interface ILiveSyncServiceBase {
 	/**
 	 * If platform parameter is specified returns it
