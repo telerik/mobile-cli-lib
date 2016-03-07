@@ -4,10 +4,109 @@ interface Object {
 
 interface IStringDictionary extends IDictionary<string> { }
 
+
+/**
+ * Describes iTunes Connect application types
+ */
+interface IiTunesConnectApplicationType {
+	/**
+	 * Applications developed for iOS
+	 * @type {string}
+	 */
+	iOS: string;
+	/**
+	 * Applications developed for Mac OS
+	 * @type {string}
+	 */
+	Mac: string;
+}
+
+/**
+ * Descibes iTunes Connect applications
+ */
+interface IiTunesConnectApplication {
+	/**
+	 * Unique Apple ID for each application. Automatically generated and assigned by Apple.
+	 * @type {string}
+	 */
+	adamId: string;
+	/**
+	 * No information available.
+	 * @type {number}
+	 */
+	addOnCount: number;
+	/**
+	 * The application's bundle identifier.
+	 * @type {string}
+	 */
+	bundleId: string;
+	/**
+	 * Application's name
+	 * @type {string}
+	 */
+	name: string;
+	/**
+	 * Application's stock keeping unit. User-defined unique string to keep track of the applications
+	 * @type {string}
+	 */
+	sku: string;
+	/**
+	 * Application's type
+	 * @type {IItunesConnectApplicationTypes}
+	 */
+	type: string;
+	/**
+	 * Application's current version
+	 * @type {string}
+	 */
+	version: string;
+}
+
+/**
+ * Describes data returned from querying itunes' Content Delivery api
+ */
+interface IContentDeliveryBody {
+	/**
+	 * Error object - likely present if result's Success is false.
+	 */
+	error?: Error;
+
+	/**
+	 * Query results.
+	 */
+	result: {
+		/**
+		 * A list of the user's applications.
+		 * @type {IItunesConnectApplication[]}
+		 */
+		Applications: IiTunesConnectApplication[];
+		/**
+		 * Error code - likely present if Success is false.
+		 * @type {number}
+		 */
+		ErrorCode?: number;
+		/**
+		 * Error message - likely present if Success is false.
+		 * @type {string}
+		 */
+		ErrorMessage?: string;
+		/**
+		 * Error message - likely present if Success is false.
+		 * @type {string[]}
+		 */
+		Errors?: string[];
+		/**
+		 * Indication whether the query was a success or not.
+		 * @type {boolean}
+		 */
+		Success: boolean;
+	};
+}
+
 declare module Server {
 	interface IResponse {
 		response: any;
-		body?: string;
+		body?: any;
 		headers: any;
 		error?: Error;
 	}
@@ -88,7 +187,13 @@ interface IFileSystem {
 
 	setCurrentUserAsOwner(path: string, owner: string): IFuture<void>;
 	enumerateFilesInDirectorySync(directoryPath: string, filterCallback?: (file: string, stat: IFsStats) => boolean, opts?: { enumerateDirectories?: boolean, includeEmptyDirectories?: boolean }): string[];
-	getFileShasum(fileName: string): IFuture<string>;
+	/**
+	 * Hashes a file's contents.
+	 * @param {string} fileName Path to file
+	 * @param {Object} options algorithm and digest encoding. Default values are sha1 for algorithm and hex for encoding
+	 * @return {IFuture<string>} The computed shasum
+	 */
+	getFileShasum(fileName: string, options?: { algorithm?: string, encoding?: string }): IFuture<string>;
 }
 
 // duplicated from fs.Stats, because I cannot import it here
@@ -469,8 +574,21 @@ interface Function {
 	};
 }
 
-interface Error {
+/**
+ * Extends Nodejs' Error interface.
+ * The native interface already has name and message properties
+ */
+interface Error  {
+	/**
+	 * Error's stack trace
+	 * @type {string}
+	 */
 	stack: string;
+	/**
+	 * Error's code - could be a string ('ENOENT'), as well as a number (127)
+	 * @type {string|number}
+	 */
+	code?: string|number;
 }
 
 interface ICommonOptions {
