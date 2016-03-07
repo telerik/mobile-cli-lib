@@ -8,7 +8,7 @@ interface IStringDictionary extends IDictionary<string> { }
 /**
  * Describes iTunes Connect application types
  */
-interface IItunesConnectApplicationType {
+interface IiTunesConnectApplicationType {
 	/**
 	 * Applications developed for iOS
 	 * @type {string}
@@ -24,7 +24,7 @@ interface IItunesConnectApplicationType {
 /**
  * Descibes iTunes Connect applications
  */
-interface IItunesConnectApplication {
+interface IiTunesConnectApplication {
 	/**
 	 * Unique Apple ID for each application. Automatically generated and assigned by Apple.
 	 * @type {string}
@@ -63,24 +63,13 @@ interface IItunesConnectApplication {
 }
 
 /**
- * Describes data returned from querying itunes' contentdelivery api
+ * Describes data returned from querying itunes' Content Delivery api
  */
 interface IContentDeliveryBody {
 	/**
 	 * Error object - likely present if result's Success is false.
 	 */
-	error?: {
-		/**
-		 * Occurred error's code.
-		 * @type {number}
-		 */
-		code: number;
-		/**
-		 * Occurred error's message.
-		 * @type {string}
-		 */
-		message: string;
-	};
+	error?: Error;
 
 	/**
 	 * Query results.
@@ -90,7 +79,7 @@ interface IContentDeliveryBody {
 		 * A list of the user's applications.
 		 * @type {IItunesConnectApplication[]}
 		 */
-		Applications: IItunesConnectApplication[];
+		Applications: IiTunesConnectApplication[];
 		/**
 		 * Error code - likely present if Success is false.
 		 * @type {number}
@@ -198,7 +187,13 @@ interface IFileSystem {
 
 	setCurrentUserAsOwner(path: string, owner: string): IFuture<void>;
 	enumerateFilesInDirectorySync(directoryPath: string, filterCallback?: (file: string, stat: IFsStats) => boolean, opts?: { enumerateDirectories?: boolean, includeEmptyDirectories?: boolean }): string[];
-	getFileShasum(fileName: string): IFuture<string>;
+	/**
+	 * Hashes a file's contents.
+	 * @param {string} fileName Path to file
+	 * @param {Object} options algorithm and digest encoding. Default values are sha1 for algorithm and hex for encoding
+	 * @return {IFuture<string>} The computed shasum
+	 */
+	getFileShasum(fileName: string, options?: { algorithm?: string, encoding?: string }): IFuture<string>;
 }
 
 // duplicated from fs.Stats, because I cannot import it here
@@ -579,8 +574,21 @@ interface Function {
 	};
 }
 
-interface Error {
+/**
+ * Extends Nodejs' Error interface.
+ * The native interface already has name and message properties
+ */
+interface Error  {
+	/**
+	 * Error's stack trace
+	 * @type {string}
+	 */
 	stack: string;
+	/**
+	 * Error's code - could be a string ('ENOENT'), as well as a number (127)
+	 * @type {string|number}
+	 */
+	code?: string|number;
 }
 
 interface ICommonOptions {

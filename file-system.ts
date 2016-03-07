@@ -480,18 +480,19 @@ export class FileSystem implements IFileSystem {
 		return foundFiles;
 	}
 
-	public getFileShasum(fileName: string, encoding?: string): IFuture<string> {
+	public getFileShasum(fileName: string, options?: { algorithm?: string, encoding?: string }): IFuture<string> {
 		let future = new Future<string>();
-		encoding = encoding || "sha1";
+		let algorithm = (options && options.algorithm) || "sha1";
+		let encoding = (options && options.encoding) || "hex";
 		let logger: ILogger = this.$injector.resolve("$logger");
-		let shasumData = crypto.createHash(encoding);
+		let shasumData = crypto.createHash(algorithm);
 		let fileStream = this.createReadStream(fileName);
 		fileStream.on("data", (data: NodeBuffer | string) => {
 			shasumData.update(data);
 		});
 
 		fileStream.on("end", () => {
-			let shasum: string = shasumData.digest("hex");
+			let shasum: string = shasumData.digest(encoding);
 			logger.trace(`Shasum of file ${fileName} is ${shasum}`);
 			future.return(shasum);
 		});
