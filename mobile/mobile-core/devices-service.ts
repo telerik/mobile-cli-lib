@@ -385,11 +385,13 @@ export class DevicesService implements Mobile.IDevicesService {
 				this.$errors.failWithoutHelp("Unable to detect platform for which to start emulator.");
 			}
 			emulatorServices.startEmulator().wait();
+
 			if (this.$mobileHelper.isAndroidPlatform(this._platform)) {
-				this.$androidDeviceDiscovery.checkForDevices().wait();
+				this.$androidDeviceDiscovery.startLookingForDevices().wait();
 			} else if (this.$mobileHelper.isiOSPlatform(this._platform) && this.$hostInfo.isDarwin) {
-				this.$iOSSimulatorDiscovery.checkForDevices().wait();
+				this.$iOSSimulatorDiscovery.startLookingForDevices().wait();
 			}
+
 		}).future<void>()();
 	}
 
