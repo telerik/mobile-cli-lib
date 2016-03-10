@@ -39,8 +39,8 @@ export class AnalyticsService implements IAnalyticsService {
 					let message = this.$analyticsSettingsService.getPrivacyPolicyLink();
 
 					let trackFeatureUsage = this.$prompter.confirm(message, () => true).wait();
-					this.setStatus(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, trackFeatureUsage).wait();
 					this.trackFeatureCore(`${this.acceptTrackFeatureSetting}.${!!trackFeatureUsage}`).wait();
+					this.setStatus(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, trackFeatureUsage).wait();
 				}
 
 				if(this.isNotConfirmed(this.$staticConfig.ERROR_REPORT_SETTING_NAME).wait()) {
@@ -75,6 +75,7 @@ export class AnalyticsService implements IAnalyticsService {
 					this.start().wait();
 					if(this._eqatecMonitor) {
 						this._eqatecMonitor.trackFeature(featureTrackString);
+						this.waitForSending().wait();
 					}
 				}
 			} catch(e) {
@@ -99,7 +100,7 @@ export class AnalyticsService implements IAnalyticsService {
 						// Sending the exception might take a while.
 						// As in most cases we exit immediately after exception is caught,
 						// wait for tracking the exception.
-						this.$progressIndicator.showProgressIndicator(this.waitForExceptionReport(), 500).wait();
+						this.$progressIndicator.showProgressIndicator(this.waitForSending(), 500).wait();
 					}
 				} catch(e) {
 					this.$logger.trace("Analytics exception: '%s'", e.toString());
@@ -271,7 +272,7 @@ export class AnalyticsService implements IAnalyticsService {
 		return this._eqatecMonitor.status().isSending;
 	}
 
-	private waitForExceptionReport(): IFuture<void> {
+	private waitForSending(): IFuture<void> {
 		let future = new Future<void>();
 		let intervalTime = 1000;
 		let remainingTime = AnalyticsService.MAX_WAIT_SENDING_INTERVAL;
