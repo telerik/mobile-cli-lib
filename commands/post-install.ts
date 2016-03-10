@@ -8,7 +8,8 @@ export class PostInstallCommand implements ICommand {
 		private $commandsService: ICommandsService,
 		private $htmlHelpService: IHtmlHelpService,
 		private $options: ICommonOptions,
-		private $doctorService: IDoctorService) {
+		private $doctorService: IDoctorService,
+		private $analyticsService: IAnalyticsService) {
 	}
 
 	public disableAnalytics = true;
@@ -27,7 +28,8 @@ export class PostInstallCommand implements ICommand {
 
 			this.$htmlHelpService.generateHtmlPages().wait();
 
-			this.$doctorService.printWarnings();
+			let doctorResult = this.$doctorService.printWarnings({ trackResult: false });
+			this.$analyticsService.track("InstallEnvironmentSetup", doctorResult ? "incorrect" : "correct").wait();
 
 			this.$commandsService.tryExecuteCommand("autocomplete", []).wait();
 		}).future<void>()();
