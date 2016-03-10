@@ -704,10 +704,10 @@ interface IDashedOption {
 interface IDoctorService {
 	/**
 	 * Verifies the host OS configuration and prints warnings to the users
-	 *
+	 * @param configOptions: defines if the result should be tracked by Analytics
 	 * @returns {boolean} true if at least one warning was printed
 	 */
-	printWarnings(): boolean;
+	printWarnings(configOptions?: { trackResult: boolean }): boolean;
 }
 
 interface IUtils {
