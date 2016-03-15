@@ -511,4 +511,8 @@ export class FileSystem implements IFileSystem {
 		process.stdin.on('end', () => future.return(buffer));
 		return future;
 	}
+
+	public rm(options: string = undefined, ...files: string[]): void {
+		shelljs.rm(options, files);
+	}
 }
