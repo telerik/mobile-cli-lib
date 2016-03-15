@@ -194,6 +194,13 @@ interface IFileSystem {
 	 * @return {IFuture<string>} The computed shasum
 	 */
 	getFileShasum(fileName: string, options?: { algorithm?: string, encoding?: string }): IFuture<string>;
+
+	// shell.js wrappers
+	/**
+	 * @param (string) options Options, can be undefined or a combination of "-r" (recursive) and "-f" (force)
+	 * @param (string[]) files files and direcories to delete
+	 */
+	rm(options: string, ...files: string[]): void;
 }
 
 // duplicated from fs.Stats, because I cannot import it here
