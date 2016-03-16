@@ -1,7 +1,7 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 
-import deviceAppDataBaseLib = require("../../mobile/device-app-data/device-app-data-base");
+import { DeviceAppDataBase } from "../../mobile/device-app-data/device-app-data-base";
 import Future = require("fibers/future");
 import querystring = require("querystring");
 import * as path from "path";
@@ -14,7 +14,7 @@ let CHECK_LIVESYNC_INTENT_NAME = "com.telerik.IsLiveSyncSupported";
 let IOS_PROJECT_PATH = "/Documents";
 let NATIVESCRIPT_ION_APP_IDENTIFIER = "com.telerik.NativeScript";
 
-export class AndroidAppIdentifier extends deviceAppDataBaseLib.DeviceAppDataBase implements ILiveSyncDeviceAppData {
+export class AndroidAppIdentifier extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
 	private _deviceProjectRootPath: string = null;
 	private _liveSyncVersion: number;
 
@@ -79,7 +79,7 @@ export class AndroidAppIdentifier extends deviceAppDataBaseLib.DeviceAppDataBase
 	}
 }
 
-export class AndroidCompanionAppIdentifier extends deviceAppDataBaseLib.DeviceAppDataBase implements ILiveSyncDeviceAppData {
+export class AndroidCompanionAppIdentifier extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
 	constructor(_appIdentifier: string,
 		public device: Mobile.IDevice,
 		public platform: string) {
@@ -107,7 +107,7 @@ export class AndroidCompanionAppIdentifier extends deviceAppDataBaseLib.DeviceAp
 	}
 }
 
-export class AndroidNativeScriptCompanionAppIdentifier extends deviceAppDataBaseLib.DeviceAppDataBase implements ILiveSyncDeviceAppData {
+export class AndroidNativeScriptCompanionAppIdentifier extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
 	constructor(_appIdentifier: string,
 		public device: Mobile.IDevice,
 		public platform: string) {
@@ -135,7 +135,7 @@ export class AndroidNativeScriptCompanionAppIdentifier extends deviceAppDataBase
 	}
 }
 
-export class IOSAppIdentifier extends deviceAppDataBaseLib.DeviceAppDataBase implements ILiveSyncDeviceAppData {
+export class IOSAppIdentifier extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
 	private _deviceProjectRootPath: string = null;
 
 	constructor(_appIdentifier: string,
@@ -175,7 +175,7 @@ export class IOSAppIdentifier extends deviceAppDataBaseLib.DeviceAppDataBase imp
 	}
 }
 
-export class IOSCompanionAppIdentifier extends deviceAppDataBaseLib.DeviceAppDataBase implements ILiveSyncDeviceAppData {
+export class IOSCompanionAppIdentifier extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
 	constructor(public device: Mobile.IDevice,
 		public platform: string) {
 		super("com.telerik.Icenium");
@@ -202,7 +202,7 @@ export class IOSCompanionAppIdentifier extends deviceAppDataBaseLib.DeviceAppDat
 	}
 }
 
-export class IOSNativeScriptCompanionAppIdentifier extends deviceAppDataBaseLib.DeviceAppDataBase implements ILiveSyncDeviceAppData {
+export class IOSNativeScriptCompanionAppIdentifier extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
 	constructor(public device: Mobile.IDevice,
 		public platform: string) {
 		super(NATIVESCRIPT_ION_APP_IDENTIFIER);
@@ -229,7 +229,7 @@ export class IOSNativeScriptCompanionAppIdentifier extends deviceAppDataBaseLib.
 	}
 }
 
-export class WP8CompanionAppIdentifier extends deviceAppDataBaseLib.DeviceAppDataBase implements ILiveSyncDeviceAppData {
+export class WP8CompanionAppIdentifier extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
 	constructor(public device: Mobile.IDevice,
 		public platform: string) {
 		super("{9155af5b-e7ed-486d-bc6b-35087fb59ecc}");
@@ -257,7 +257,7 @@ export class WP8CompanionAppIdentifier extends deviceAppDataBaseLib.DeviceAppDat
 }
 
 export class DeviceAppDataProvider implements Mobile.IDeviceAppDataProvider {
-	constructor(private $project: Project.IProject) { }
+	constructor(private $project: any) { }
 
 	public createFactoryRules(): IDictionary<Mobile.IDeviceAppDataFactoryRule> {
 		let rules: IDictionary<IDictionary<Mobile.IDeviceAppDataFactoryRule>>= {

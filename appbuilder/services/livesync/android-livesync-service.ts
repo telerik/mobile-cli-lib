@@ -1,19 +1,14 @@
 ///<reference path="../../../.d.ts"/>
 "use strict";
 
-import androidLiveSyncServiceLib = require("../../../mobile/android/android-livesync-service");
+import { AndroidLiveSyncService } from "../../../mobile/android/android-livesync-service";
 import Future = require("fibers/future");
 
-export class AndroidLiveSyncService extends androidLiveSyncServiceLib.AndroidLiveSyncService implements IPlatformLiveSyncService {
+export class AppBuilderAndroidLiveSyncService extends AndroidLiveSyncService implements IPlatformLiveSyncService {
 	constructor(private _device: Mobile.IDevice,
-		private $config: IConfiguration,
-		private $errors: IErrors,
 	 	$fs: IFileSystem,
-		private $injector: IInjector,
 		$mobileHelper: Mobile.IMobileHelper,
-		private $options: IOptions,
-		private $project: Project.IProject,
-		private $server: Server.IServer) {
+		private $options: ICommonOptions) {
 			super(<Mobile.IAndroidDevice>_device, $fs, $mobileHelper);
 		}
 
@@ -34,4 +29,4 @@ export class AndroidLiveSyncService extends androidLiveSyncServiceLib.AndroidLiv
 		return Future.fromResult();
 	}
 }
-$injector.register("androidLiveSyncServiceLocator", {factory: AndroidLiveSyncService});
+$injector.register("androidLiveSyncServiceLocator", {factory: AppBuilderAndroidLiveSyncService});

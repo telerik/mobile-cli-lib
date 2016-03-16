@@ -8,12 +8,13 @@ import * as shell from "shelljs";
 let osenv = require("osenv");
 
 export class IOSLiveSyncService implements IPlatformLiveSyncService {
+	private get $project(): any {
+		return this.$injector.resolve("project");
+	}
 	constructor(private _device: Mobile.IDevice,
 		private $fs: IFileSystem,
 		private $injector: IInjector,
-		private $iOSSimResolver: Mobile.IiOSSimResolver,
 		private $logger: ILogger,
-		private $project: Project.IProject,
 		private $errors: IErrors) { }
 
 	private get device(): Mobile.IDevice {

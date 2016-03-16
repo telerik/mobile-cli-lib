@@ -10,7 +10,7 @@ export class ProjectFilesProvider extends ProjectFilesProviderBase {
 	private _projectDir: string = null;
 	private get projectDir(): string {
 		if (!this._projectDir) {
-			let project: Project.IProject = this.$injector.resolve("project");
+			let project = this.$injector.resolve("project");
 			this._projectDir = project.getProjectDir().wait();
 		}
 
@@ -18,7 +18,7 @@ export class ProjectFilesProvider extends ProjectFilesProviderBase {
 	}
 
 	constructor(private $pathFilteringService: IPathFilteringService,
-		private $projectConstants: Project.IProjectConstants,
+		private $projectConstants: IProjectConstants,
 		private $injector: IInjector,
 		$mobileHelper: Mobile.IMobileHelper,
 		$options: ICommonOptions) {
