@@ -35,3 +35,13 @@ interface IPathFilteringService {
 	filterIgnoredFiles(files: string[], rules: string[], rootDir: string) :string[];
 	isFileExcluded(file: string, rules: string[], rootDir: string): boolean
 }
+
+interface IProtonLiveSyncService {
+	livesync(platform: string, deviceIdentifiers: string[], projectDir: string, filePats: string[]): IFuture<void>;
+}
+
+interface IDeviceLiveSyncInfo {
+	deviceIdentifier: string;
+	syncToApp: boolean;
+	syncToCompanion: boolean;
+}

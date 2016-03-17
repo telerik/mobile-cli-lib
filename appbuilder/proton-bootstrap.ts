@@ -17,22 +17,7 @@ $injector.requirePublicClass("deviceEmitter", "./appbuilder/device-emitter");
 $injector.requirePublicClass("deviceLogProvider", "./appbuilder/device-log-provider");
 import {installUncaughtExceptionListener} from "../errors";
 installUncaughtExceptionListener();
-$injector.register("deviceAppDataProvider", {
-	createFactoryRules(): IDictionary<Mobile.IDeviceAppDataFactoryRule> {
-		return {
-				Android: {
-					vanilla: ""
-				},
-				iOS: {
-					vanilla: ""
-				},
-				WP8: {
-					vanilla: ""
-				}
-			};
-		}
-	}
-);
+
 $injector.register("emulatorSettingsService", {
 	canStart(platform: string): IFuture<boolean> {
 		return Future.fromResult(true);
@@ -73,5 +58,58 @@ class Project {
 
 		return null;
 	}
+
+	public get capabilities(): any {
+		let projectData = this.projectData;
+		if(projectData) {
+			if(projectData.Framework && projectData.Framework.toLowerCase() === this.$projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript.toLowerCase()) {
+				return {
+					build: true,
+					buildCompanion: true,
+					deploy: true,
+					simulate: false,
+					livesync: false,
+					livesyncCompanion: true,
+					updateKendo: false,
+					emulate: true,
+					publish: false,
+					uploadToAppstore: true,
+					canChangeFrameworkVersion: true,
+					imageGeneration: true,
+					wp8Supported: false
+				};
+			} else if(projectData.Framework && projectData.Framework.toLowerCase() === this.$projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova.toLowerCase()) {
+				return {
+					build: true,
+					buildCompanion: true,
+					deploy: true,
+					simulate: true,
+					livesync: true,
+					livesyncCompanion: true,
+					updateKendo: true,
+					emulate: true,
+					publish: false,
+					uploadToAppstore: true,
+					canChangeFrameworkVersion: true,
+					imageGeneration: true,
+					wp8Supported: true
+				};
+			}
+		}
+
+		return null;
+
+	}
 }
 $injector.register("project", Project);
+
+$injector.require("projectFilesProvider", "./appbuilder/providers/project-files-provider");
+$injector.require("pathFilteringService", "./appbuilder/services/path-filtering-service");
+
+$injector.requirePublic("liveSyncService", "./appbuilder/services/livesync/livesync-service");
+
+$injector.require("liveSyncProvider", "./appbuilder/providers/livesync-provider");
+$injector.require("androidLiveSyncServiceLocator", "./appbuilder/services/livesync/android-livesync-service");
+$injector.require("iosLiveSyncServiceLocator", "./appbuilder/services/livesync/ios-livesync-service");
+$injector.require("deviceAppDataProvider", "./appbuilder/providers/device-app-data-provider");
+
