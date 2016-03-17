@@ -37,11 +37,15 @@ interface IPathFilteringService {
 }
 
 interface IProtonLiveSyncService {
-	livesync(platform: string, deviceIdentifiers: string[], projectDir: string, filePats: string[]): IFuture<void>;
+	livesync(deviceIdentifiers: IDeviceLiveSyncInfo[], projectDir: string, filePats: string[]): IFuture<void>;
 }
 
 interface IDeviceLiveSyncInfo {
 	deviceIdentifier: string;
 	syncToApp: boolean;
 	syncToCompanion: boolean;
+}
+
+interface ICompanionAppsService {
+	getCompanionAppIdentifier(framework: string, platform: string): string;
 }

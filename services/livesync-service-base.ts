@@ -36,9 +36,9 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		}).future<string>()();
 	}
 
-	public sync(data: ILiveSyncData): IFuture<void> {
+	public sync(data: ILiveSyncData, filePaths?: string[]): IFuture<void> {
 		return (() => {
-			this.syncCore(data).wait();
+			this.syncCore(data, filePaths).wait();
 
 			if (this.$options.watch) {
 				this.$hooksService.executeBeforeHooks('watch').wait();
@@ -217,7 +217,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 				}).future<void>()();
 			};
 
-			let canExecute = this.getCanExecuteAction(platform, appIdentifier);
+			let canExecute = this.getCanExecuteAction(platform, appIdentifier, data.canExecute);
 
 			this.$devicesService.execute(action, canExecute).wait();
 		}).future<void>()();
@@ -243,15 +243,16 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		return this.$injector.resolve(this.$liveSyncProvider.platformSpecificLiveSyncServices[platform.toLowerCase()], {_device: device});
 	}
 
-	private getCanExecuteAction(platform: string, appIdentifier: string): (dev: Mobile.IDevice) => boolean {
-		let canExecute: (dev: Mobile.IDevice) => boolean = null;
+	private getCanExecuteAction(platform: string, appIdentifier: string, canExecute: (dev: Mobile.IDevice) => boolean): (dev: Mobile.IDevice) => boolean {
+		canExecute = canExecute || ((dev: Mobile.IDevice) => dev.deviceInfo.platform.toLowerCase() === platform.toLowerCase());
+		let finalCanExecute = canExecute;
 		if (this.$options.device) {
 			return (device: Mobile.IDevice): boolean => device.deviceInfo.identifier === this.$devicesService.getDeviceByDeviceOption().deviceInfo.identifier;
 		}
 
 		if (this.$mobileHelper.isiOSPlatform(platform)) {
 			if (this.$options.emulator) {
-				canExecute = (device: Mobile.IDevice): boolean => this.$devicesService.isiOSSimulator(device);
+				finalCanExecute = (device: Mobile.IDevice): boolean => canExecute(device) && this.$devicesService.isiOSSimulator(device);
 			} else {
 				let devices = this.$devicesService.getDevicesForPlatform(platform);
 				let simulator = _.find(devices, d => this.$devicesService.isiOSSimulator(d));
@@ -262,14 +263,14 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 						let isApplicationInstalledOnAllDevices = _.intersection.apply(null, iOSDevices.map(device => device.applicationManager.isApplicationInstalled(appIdentifier).wait()));
 						// In case the application is not installed on both device and simulator, syncs only on device.
 						if (!isApplicationInstalledOnSimulator && !isApplicationInstalledOnAllDevices) {
-							canExecute = (device: Mobile.IDevice): boolean => this.$devicesService.isiOSDevice(device);
+							finalCanExecute = (device: Mobile.IDevice): boolean => canExecute(device) && this.$devicesService.isiOSDevice(device);
 						}
 					}
 				}
 			}
 		}
 
-		return canExecute;
+		return finalCanExecute;
 	}
 }
 $injector.register('liveSyncServiceBase', LiveSyncServiceBase);

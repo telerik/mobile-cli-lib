@@ -3,14 +3,14 @@
 
 require("../bootstrap");
 $injector.require("messages", "./messages/messages");
-$injector.require("logger", "./appbuilder/proton-logger");
+// $injector.require("logger", "./appbuilder/proton-logger");
 
 import Future = require("fibers/future");
 import {OptionsBase} from "../options";
 $injector.require("staticConfig", "./appbuilder/proton-static-config");
-$injector.register("mobilePlatformsCapabilities", {});
+$injector.require("mobilePlatformsCapabilities", "./appbuilder/mobile-platforms-capabilities");
 $injector.register("config", {});
-// Proton will track the features and execptions, so no need of analyticsService here.
+// Proton will track the features and exceptions, so no need of analyticsService here.
 $injector.register("analyiticsService", {});
 $injector.register("options", $injector.resolve(OptionsBase, {options: {}, defaultProfileDir: ""}));
 $injector.requirePublicClass("deviceEmitter", "./appbuilder/device-emitter");
@@ -28,8 +28,8 @@ $injector.register("emulatorSettingsService", {
 });
 
 // When debugging uncomment the lines below and comment the line #6 (requiring logger).
-// $injector.require("logger", "./logger");
-// $injector.resolve("logger").setLevel("TRACE");
+$injector.require("logger", "./logger");
+$injector.resolve("logger").setLevel("TRACE");
 
 // Mock as it is used in LiveSync logic to deploy on devices.
 // When called from Proton we'll not deploy on device, just livesync.
@@ -37,7 +37,6 @@ $injector.register("deployHelper", {
 	deploy: (platform?: string) => Future.fromResult()
 });
 
-$injector.require("liveSyncProvider", "./appbuilder/providers/livesync-provider");
 $injector.require("projectConstants", "./appbuilder/project-constants");
 
 import * as path from "path";
@@ -68,7 +67,7 @@ class Project {
 					buildCompanion: true,
 					deploy: true,
 					simulate: false,
-					livesync: false,
+					livesync: true,
 					livesyncCompanion: true,
 					updateKendo: false,
 					emulate: true,
@@ -98,13 +97,12 @@ class Project {
 		}
 
 		return null;
-
 	}
 }
 $injector.register("project", Project);
 
 $injector.require("projectFilesProvider", "./appbuilder/providers/project-files-provider");
-$injector.require("pathFilteringService", "./appbuilder/services/path-filtering-service");
+$injector.require("pathFilteringService", "./appbuilder/services/path-filtering");
 
 $injector.requirePublic("liveSyncService", "./appbuilder/services/livesync/livesync-service");
 
@@ -112,4 +110,4 @@ $injector.require("liveSyncProvider", "./appbuilder/providers/livesync-provider"
 $injector.require("androidLiveSyncServiceLocator", "./appbuilder/services/livesync/android-livesync-service");
 $injector.require("iosLiveSyncServiceLocator", "./appbuilder/services/livesync/ios-livesync-service");
 $injector.require("deviceAppDataProvider", "./appbuilder/providers/device-app-data-provider");
-
+$injector.requirePublic("companionAppsService", "./appbuilder/services/livesync/companion-apps-service");

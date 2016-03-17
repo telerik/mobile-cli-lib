@@ -11,6 +11,11 @@ export class IOSLiveSyncService implements IPlatformLiveSyncService {
 	private get $project(): any {
 		return this.$injector.resolve("project");
 	}
+
+	private get $projectConstants(): IProjectConstants {
+		return this.$injector.resolve("projectConstants");
+	}
+
 	constructor(private _device: Mobile.IDevice,
 		private $fs: IFileSystem,
 		private $injector: IInjector,
@@ -54,7 +59,8 @@ export class IOSLiveSyncService implements IPlatformLiveSyncService {
 			} else {
 				this.device.fileSystem.deleteFile("/Library/Preferences/ServerInfo.plist", deviceAppData.appIdentifier);
 				let notificationProxyClient = this.$injector.resolve(iOSProxyServices.NotificationProxyClient, {device: this.device});
-				notificationProxyClient.postNotification("com.telerik.app.refreshWebView");
+				let notification = this.$project.projectData.Framework === this.$projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript ? "com.telerik.app.refreshWebView" : "com.telerik.app.refreshApp";
+				notificationProxyClient.postNotification(notification);
 				notificationProxyClient.closeSocket();
 			}
 
