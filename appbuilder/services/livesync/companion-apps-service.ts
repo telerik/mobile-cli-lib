@@ -8,9 +8,8 @@ const APPBUILDER_ANDROID_COMPANION_APP_IDENTIFIER = "com.telerik.AppBuilder";
 const APPBUILDER_IOS_COMPANION_APP_IDENTIFIER = "com.telerik.Icenium";
 
 // TODO: Detect when companion app is installed on any device and raise event.
-// consider naming it CompanionAppService
 export class CompanionAppsService implements ICompanionAppsService {
-	constructor(private $projectConstants: IProjectConstants,
+	constructor(private $projectConstants: Project.IConstants,
 		private $mobileHelper: Mobile.IMobileHelper) { }
 
 	@exported("companionAppsService")

@@ -1,7 +1,7 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 
-export class CordovaProjectCapabilities implements IProjectCapabilities {
+export class CordovaProjectCapabilities implements Project.ICapabilities {
 	public get build(): boolean {
 		return true;
 	}

@@ -1,7 +1,7 @@
 ///<reference path="../.d.ts"/>
 "use strict";
 
-export class ProjectConstants implements IProjectConstants {
+export class ProjectConstants implements Project.IConstants {
 	public PROJECT_FILE = ".abproject";
 	public PROJECT_IGNORE_FILE = ".abignore";
 	public DEBUG_CONFIGURATION_NAME = "debug";

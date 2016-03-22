@@ -18,7 +18,7 @@ export class ProjectFilesProvider extends ProjectFilesProviderBase {
 	}
 
 	constructor(private $pathFilteringService: IPathFilteringService,
-		private $projectConstants: IProjectConstants,
+		private $projectConstants: Project.IConstants,
 		private $injector: IInjector,
 		$mobileHelper: Mobile.IMobileHelper,
 		$options: ICommonOptions) {

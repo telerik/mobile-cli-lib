@@ -3,19 +3,19 @@
 
 import Future = require("fibers/future");
 import * as path from "path";
-export class Project implements IProjectBase {
-	constructor(private $cordovaProjectCapabilities: IProjectCapabilities,
+export class Project implements Project.IProjectBase {
+	constructor(private $cordovaProjectCapabilities: Project.ICapabilities,
 		private $fs: IFileSystem,
 		private $logger: ILogger,
-		private $nativeScriptProjectCapabilities: IProjectCapabilities,
-		private $projectConstants: IProjectConstants) { }
+		private $nativeScriptProjectCapabilities: Project.ICapabilities,
+		private $projectConstants: Project.IConstants) { }
 
 	public projectDir: string;
 	public getProjectDir(): IFuture<string> {
 		return Future.fromResult(this.projectDir);
 	}
-	// TODO: Move IProjectData to common
-	public get projectData(): IProjectData {
+
+	public get projectData(): Project.IData {
 		if(this.projectDir) {
 			let projectFile = path.join(this.projectDir, this.$projectConstants.PROJECT_FILE);
 			let jsonContent = this.$fs.readJson(projectFile).wait();
@@ -26,7 +26,7 @@ export class Project implements IProjectBase {
 		return null;
 	}
 
-	public get capabilities(): IProjectCapabilities {
+	public get capabilities(): Project.ICapabilities {
 		let projectData = this.projectData;
 		if(projectData) {
 			if(projectData.Framework && projectData.Framework.toLowerCase() === this.$projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript.toLowerCase()) {

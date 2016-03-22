@@ -16,7 +16,7 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 		private $options: ICommonOptions,
 		private $fs: IFileSystem,
 		private $injector: IInjector,
-		private $project: any,
+		private $project: Project.IProjectBase,
 		private $logger: ILogger) { }
 
 	@exportedPromise("liveSyncService")

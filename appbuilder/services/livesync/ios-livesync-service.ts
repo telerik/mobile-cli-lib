@@ -12,18 +12,15 @@ export class IOSLiveSyncService implements IPlatformLiveSyncService {
 		return this.$injector.resolve("project");
 	}
 
-	private get $projectConstants(): IProjectConstants {
-		return this.$injector.resolve("projectConstants");
-	}
-
-	constructor(private _device: Mobile.IDevice,
+	constructor(private _device: Mobile.IiOSDevice,
 		private $fs: IFileSystem,
 		private $injector: IInjector,
 		private $logger: ILogger,
-		private $errors: IErrors) { }
+		private $errors: IErrors,
+		private $projectConstants: Project.IConstants) { }
 
-	private get device(): Mobile.IDevice {
-		return <Mobile.IiOSDevice>this._device;
+	private get device(): Mobile.IiOSDevice {
+		return this._device;
 	}
 
 	public refreshApplication(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void> {
@@ -59,7 +56,7 @@ export class IOSLiveSyncService implements IPlatformLiveSyncService {
 			} else {
 				this.device.fileSystem.deleteFile("/Library/Preferences/ServerInfo.plist", deviceAppData.appIdentifier);
 				let notificationProxyClient = this.$injector.resolve(iOSProxyServices.NotificationProxyClient, {device: this.device});
-				let notification = this.$project.projectData.Framework === this.$projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript ? "com.telerik.app.refreshWebView" : "com.telerik.app.refreshApp";
+				let notification = this.$project.projectData.Framework === this.$projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript ? "com.telerik.app.refreshApp" : "com.telerik.app.refreshWebView";
 				notificationProxyClient.postNotification(notification);
 				notificationProxyClient.closeSocket();
 			}

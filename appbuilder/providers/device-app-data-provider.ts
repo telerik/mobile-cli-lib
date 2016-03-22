@@ -3,14 +3,14 @@
 
 import { DeviceAppDataBase } from "../../mobile/device-app-data/device-app-data-base";
 import Future = require("fibers/future");
-import querystring = require("querystring");
+import * as querystring from "querystring";
 import * as path from "path";
-import util = require("util");
+import * as util from "util";
 
 const DEVICE_TMP_DIR_FORMAT_V2 = "/data/local/tmp/12590FAA-5EDD-4B12-856D-F52A0A1599F2/%s";
 const DEVICE_TMP_DIR_FORMAT_V3 = "/mnt/sdcard/Android/data/%s/files/12590FAA-5EDD-4B12-856D-F52A0A1599F2";
 const CHECK_LIVESYNC_INTENT_NAME = "com.telerik.IsLiveSyncSupported";
-const IOS_PROJECT_PATH = "/Library/Application Support/12590FAA-5EDD-4B12-856D-F52A0A1599F2";
+const IOS_PROJECT_PATH = "/Library/Application Support/LiveSync";
 const IOS_NS_PROJECT_PATH = "/tmp/Application Support/LiveSync";
 
 export class AndroidAppIdentifier extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
@@ -82,7 +82,7 @@ export class AndroidCompanionAppIdentifier extends DeviceAppDataBase implements 
 		public device: Mobile.IDevice,
 		public platform: string,
 		private $companionAppsService: ICompanionAppsService,
-		private $projectConstants: IProjectConstants) {
+		private $projectConstants: Project.IConstants) {
 		super($companionAppsService.getCompanionAppIdentifier($projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform));
 	}
 
@@ -112,7 +112,7 @@ export class AndroidNativeScriptCompanionAppIdentifier extends DeviceAppDataBase
 		public device: Mobile.IDevice,
 		public platform: string,
 		private $companionAppsService: ICompanionAppsService,
-		private $projectConstants: IProjectConstants) {
+		private $projectConstants: Project.IConstants) {
 		super($companionAppsService.getCompanionAppIdentifier($projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript, platform));
 	}
 
@@ -221,7 +221,7 @@ export class IOSCompanionAppIdentifier extends DeviceAppDataBase implements ILiv
 	constructor(public device: Mobile.IDevice,
 		public platform: string,
 		private $companionAppsService: ICompanionAppsService,
-		private $projectConstants: IProjectConstants) {
+		private $projectConstants: Project.IConstants) {
 		super($companionAppsService.getCompanionAppIdentifier($projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform));
 	}
 
@@ -250,7 +250,7 @@ export class IOSNativeScriptCompanionAppIdentifier extends DeviceAppDataBase imp
 	constructor(public device: Mobile.IDevice,
 		public platform: string,
 		private $companionAppsService: ICompanionAppsService,
-		private $projectConstants: IProjectConstants) {
+		private $projectConstants: Project.IConstants) {
 		super($companionAppsService.getCompanionAppIdentifier($projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript, platform));
 	}
 

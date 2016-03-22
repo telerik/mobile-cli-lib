@@ -5,11 +5,11 @@ import { AndroidLiveSyncService } from "../../../mobile/android/android-livesync
 import Future = require("fibers/future");
 
 export class AppBuilderAndroidLiveSyncService extends AndroidLiveSyncService implements IPlatformLiveSyncService {
-	constructor(private _device: Mobile.IDevice,
+	constructor(private _device: Mobile.IAndroidDevice,
 	 	$fs: IFileSystem,
 		$mobileHelper: Mobile.IMobileHelper,
 		private $options: ICommonOptions) {
-			super(<Mobile.IAndroidDevice>_device, $fs, $mobileHelper);
+			super(_device, $fs, $mobileHelper);
 		}
 
 	public refreshApplication(deviceAppData: Mobile.IDeviceAppData): IFuture<void> {

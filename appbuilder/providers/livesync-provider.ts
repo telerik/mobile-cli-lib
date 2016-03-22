@@ -1,7 +1,6 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 
-import Future = require("fibers/future");
 import { AppBuilderLiveSyncProviderBase } from "./appbuilder-livesync-provider-base";
 
 export class LiveSyncProvider extends AppBuilderLiveSyncProviderBase {
@@ -11,7 +10,9 @@ export class LiveSyncProvider extends AppBuilderLiveSyncProviderBase {
 		}
 
 	public buildForDevice(device: Mobile.IDevice): IFuture<string> {
-		return Future.fromResult(null);
+		return (() => {
+			throw new Error(`Application is not installed on device ${device.deviceInfo.identifier}. Cannot LiveSync changes without installing the application before that.`);
+		}).future<string>()();
 	}
 }
 $injector.register("liveSyncProvider", LiveSyncProvider);
