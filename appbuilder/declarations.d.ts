@@ -37,7 +37,7 @@ interface IPathFilteringService {
 }
 
 interface IProtonLiveSyncService {
-	livesync(deviceIdentifiers: IDeviceLiveSyncInfo[], projectDir: string, filePats: string[]): IFuture<void>;
+	livesync(deviceIdentifiers: IDeviceLiveSyncInfo[], projectDir: string, filePaths: string[]): IFuture<void>;
 }
 
 interface IDeviceLiveSyncInfo {
@@ -48,4 +48,60 @@ interface IDeviceLiveSyncInfo {
 
 interface ICompanionAppsService {
 	getCompanionAppIdentifier(framework: string, platform: string): string;
+}
+
+interface IProjectCapabilities {
+	build: boolean;
+	buildCompanion: boolean;
+	deploy: boolean
+	simulate: boolean;
+	livesync: boolean;
+	livesyncCompanion: boolean;
+	updateKendo: boolean;
+	emulate: boolean;
+	publish: boolean;
+	uploadToAppstore: boolean;
+	canChangeFrameworkVersion: boolean;
+	imageGeneration: boolean;
+	wp8Supported: boolean;
+}
+
+interface IProjectData extends IDictionary<any> {
+	ProjectName: string;
+	ProjectGuid: string;
+	projectVersion : number;
+	AppIdentifier: string;
+	DisplayName: string;
+	Author: string;
+	Description: string;
+	BundleVersion: string;
+	Framework: string;
+	FrameworkVersion: string;
+	CorePlugins: string[];
+	AndroidPermissions: string[];
+	DeviceOrientations: string[];
+	AndroidHardwareAcceleration: string;
+	AndroidVersionCode: string;
+	iOSStatusBarStyle: string;
+	iOSDeviceFamily: string[];
+	iOSBackgroundMode: string[];
+	iOSDeploymentTarget: string;
+	WP8ProductID: string;
+	WP8PublisherID: string;
+	WP8Publisher: string;
+	WP8TileTitle: string;
+	WP8Capabilities: string[];
+	WP8Requirements: string[];
+	WP8SupportedResolutions: string[];
+	WPSdk?: string;
+	WP8PackageIdentityName?: string;
+	WP8WindowsPublisherName?: string;
+	CordovaPluginVariables?: any;
+}
+
+interface IProjectBase {
+	projectDir: string;
+	getProjectDir(): IFuture<string>;
+	projectData: IProjectData;
+	capabilities: IProjectCapabilities;
 }
