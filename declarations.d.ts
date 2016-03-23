@@ -463,7 +463,7 @@ interface ILiveSyncServiceBase {
 	 * If watch option is not specified executes full sync
 	 * If watch option is specified executes partial sync
 	 */
-	sync(data: ILiveSyncData): IFuture<void>;
+	sync(data: ILiveSyncData, filePaths?: string[]): IFuture<void>;
 }
 
 interface ISyncBatch {
@@ -488,6 +488,11 @@ interface ILiveSyncData {
 	syncWorkingDirectory: string;
 	canExecuteFastSync?: boolean;
 	excludedProjectDirsAndFiles?: string[];
+	/**
+	 * Describes if the livesync action can be executed on specified device.
+	 * The method is called for each device.
+	 */
+	canExecute?(device: Mobile.IDevice): boolean;
 }
 
 interface IPlatformLiveSyncService {
