@@ -236,7 +236,6 @@ interface IErrors {
 interface ICommandOptions {
 	disableAnalytics?: boolean;
 	enableHooks?: boolean;
-	disableAnalyticsConsentCheck?: boolean;
 	disableCommandHelpSuggestion?: boolean;
 }
 
@@ -319,10 +318,16 @@ interface IAnalyticsService {
 	checkConsent(): IFuture<void>;
 	trackFeature(featureName: string): IFuture<void>;
 	trackException(exception: any, message: string): IFuture<void>;
-	setStatus(settingName: string, enabled: boolean): IFuture<void>;
+	setStatus(settingName: string, enabled: boolean, doNotTrackSetting?: boolean): IFuture<void>;
 	getStatusMessage(settingName: string, jsonFormat: boolean, readableSettingName: string): IFuture<string>;
 	isEnabled(settingName: string): IFuture<boolean>;
 	track(featureName: string, featureValue: string): IFuture<void>;
+	/**
+	 * Tries to stop current eqatec monitor, clean it's state and remove the process.exit event handler.
+	 * @param {string|number} code - Exit code as the method is used for process.exit event handler.
+	 * @return void
+	 */
+	tryStopEqatecMonitor(code?: string|number): void;
 }
 
 interface IAllowEmpty {

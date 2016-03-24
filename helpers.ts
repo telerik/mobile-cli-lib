@@ -93,7 +93,7 @@ export function isInteractive(): boolean {
 }
 
 export function toBoolean(str: string) {
-	return str === "true";
+	return str && str.toLowerCase() === "true";
 }
 
 export function block(operation: () => void): void {
