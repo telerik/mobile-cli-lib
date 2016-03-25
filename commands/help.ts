@@ -10,7 +10,6 @@ export class HelpCommand implements ICommand {
 		private $options: ICommonOptions) { }
 
 	public enableHooks = false;
-	public disableAnalyticsConsentCheck = true;
 	public canExecute(args: string[]): IFuture<boolean> {
 		return Future.fromResult(true);
 	}

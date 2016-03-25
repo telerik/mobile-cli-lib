@@ -29,9 +29,11 @@ export class PostInstallCommand implements ICommand {
 			this.$htmlHelpService.generateHtmlPages().wait();
 
 			let doctorResult = this.$doctorService.printWarnings({ trackResult: false });
-			this.$analyticsService.track("InstallEnvironmentSetup", doctorResult ? "incorrect" : "correct").wait();
+			// Explicitly ask for confirmation of usage-reporting:
+			this.$analyticsService.checkConsent().wait();
 
 			this.$commandsService.tryExecuteCommand("autocomplete", []).wait();
+			this.$analyticsService.track("InstallEnvironmentSetup", doctorResult ? "incorrect" : "correct").wait();
 		}).future<void>()();
 	}
 }
