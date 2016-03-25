@@ -143,6 +143,7 @@ function createTestInjector(testScenario: ITestScenario): IInjector {
 describe("analytics-service", () => {
 	let baseTestScenario: ITestScenario;
 	let featureName = "unit tests feature";
+	let service: IAnalyticsService = null;
 
 	beforeEach(() => {
 		baseTestScenario = {
@@ -159,6 +160,14 @@ describe("analytics-service", () => {
 		savedSettingNamesAndValues = "";
 		isEqatecStopCalled = false;
 		lastUsedEqatecSettings = {};
+		service = null;
+	});
+
+	afterEach(() => {
+		// clean up the process.exit event handler
+		if(service) {
+			service.tryStopEqatecMonitor();
+		}
 	});
 
 	after(() => {
@@ -168,23 +177,25 @@ describe("analytics-service", () => {
 	describe("trackFeature", () => {
 		it("tracks feature when console is interactive", () => {
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			service.trackFeature(featureName).wait();
 			assert.isTrue(trackedFeatureNamesAndValues.indexOf(`CLI.${featureName}`) !== -1);
+			(<any>service).tryStopEqatecMonitor();
 		});
 
 		it("tracks feature when console is not interactive", () => {
 			baseTestScenario.isInteractive = false;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			service.trackFeature(featureName).wait();
 			assert.isTrue(trackedFeatureNamesAndValues.indexOf(`Non-interactive.${featureName}`) !== -1);
+			(<any>service).tryStopEqatecMonitor();
 		});
 
 		it("does not track feature when console is interactive and feature tracking is disabled", () => {
 			baseTestScenario.featureTracking = false;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			service.trackFeature(featureName).wait();
 			assert.deepEqual(trackedFeatureNamesAndValues, "");
 		});
@@ -192,7 +203,7 @@ describe("analytics-service", () => {
 		it("does not track feature when console is not interactive and feature tracking is disabled", () => {
 			baseTestScenario.featureTracking = baseTestScenario.isInteractive = false;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			service.trackFeature(featureName).wait();
 			assert.deepEqual(trackedFeatureNamesAndValues, "");
 		});
@@ -200,7 +211,7 @@ describe("analytics-service", () => {
 		it("does not track feature when console is interactive and feature tracking is enabled, but cannot make request", () => {
 			baseTestScenario.canDoRequest = false;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			service.trackFeature(featureName).wait();
 			assert.deepEqual(trackedFeatureNamesAndValues, "");
 		});
@@ -208,7 +219,7 @@ describe("analytics-service", () => {
 		it("does not track feature when console is not interactive and feature tracking is enabled, but cannot make request", () => {
 			baseTestScenario.canDoRequest = baseTestScenario.isInteractive = false;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			service.trackFeature(featureName).wait();
 			assert.deepEqual(trackedFeatureNamesAndValues, "");
 		});
@@ -216,7 +227,7 @@ describe("analytics-service", () => {
 		it("does not throw exception when eqatec start throws", () => {
 			baseTestScenario.shouldStartThrow = true;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			service.trackFeature(featureName).wait();
 			assert.deepEqual(trackedFeatureNamesAndValues, "");
 		});
@@ -227,7 +238,7 @@ describe("analytics-service", () => {
 		let message = "Track Exception Msg";
 		it("tracks when all conditions are correct", () => {
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			service.trackException(exception, message).wait();
 			assert.isTrue(lastTrackedExceptionMsg.indexOf(message) !== -1);
 		});
@@ -235,7 +246,7 @@ describe("analytics-service", () => {
 		it("does not track when exception tracking is disabled", () => {
 			baseTestScenario.exceptionsTracking = false;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			service.trackException(exception, message).wait();
 			assert.deepEqual(lastTrackedExceptionMsg, "");
 		});
@@ -243,7 +254,7 @@ describe("analytics-service", () => {
 		it("does not track when feature tracking is enabled, but cannot make request", () => {
 			baseTestScenario.canDoRequest = false;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			service.trackException(exception, message).wait();
 			assert.deepEqual(lastTrackedExceptionMsg, "");
 		});
@@ -251,7 +262,7 @@ describe("analytics-service", () => {
 		it("does not throw exception when eqatec start throws", () => {
 			baseTestScenario.shouldStartThrow = true;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			service.trackException(exception, message).wait();
 			assert.deepEqual(lastTrackedExceptionMsg, "");
 		});
@@ -261,7 +272,7 @@ describe("analytics-service", () => {
 		let name = "unitTests";
 		it("tracks when all conditions are correct", () => {
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			service.track(name, featureName).wait();
 			assert.isTrue(trackedFeatureNamesAndValues.indexOf(`${name}.${featureName}`) !== -1);
 		});
@@ -269,7 +280,7 @@ describe("analytics-service", () => {
 		it("does not track when feature tracking is disabled", () => {
 			baseTestScenario.featureTracking = false;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			service.track(name, featureName).wait();
 			assert.deepEqual(trackedFeatureNamesAndValues, "");
 		});
@@ -277,7 +288,7 @@ describe("analytics-service", () => {
 		it("does not track when feature tracking is enabled, but cannot make request", () => {
 			baseTestScenario.canDoRequest = false;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			service.track(name, featureName).wait();
 			assert.deepEqual(trackedFeatureNamesAndValues, "");
 		});
@@ -285,7 +296,7 @@ describe("analytics-service", () => {
 		it("does not throw exception when eqatec start throws", () => {
 			baseTestScenario.shouldStartThrow = true;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			service.track(name, featureName).wait();
 			assert.deepEqual(trackedFeatureNamesAndValues, "");
 		});
@@ -294,7 +305,7 @@ describe("analytics-service", () => {
 	describe("isEnabled", () => {
 		it("returns true when analytics status is enabled", () => {
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
 			assert.isTrue(service.isEnabled(staticConfig.ERROR_REPORT_SETTING_NAME).wait());
 			assert.isTrue(service.isEnabled(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME).wait());
@@ -303,7 +314,7 @@ describe("analytics-service", () => {
 		it("returns false when analytics status is disabled", () => {
 			baseTestScenario.exceptionsTracking = baseTestScenario.featureTracking = false;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
 			assert.isFalse(service.isEnabled(staticConfig.ERROR_REPORT_SETTING_NAME).wait());
 			assert.isFalse(service.isEnabled(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME).wait());
@@ -312,7 +323,7 @@ describe("analytics-service", () => {
 		it("returns false when analytics status is notConfirmed", () => {
 			baseTestScenario.exceptionsTracking = baseTestScenario.featureTracking = undefined;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
 			assert.isFalse(service.isEnabled(staticConfig.ERROR_REPORT_SETTING_NAME).wait());
 			assert.isFalse(service.isEnabled(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME).wait());
@@ -322,7 +333,7 @@ describe("analytics-service", () => {
 	describe("setStatus", () => {
 		it("sets correct status", () => {
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
 			service.setStatus(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, false).wait();
 			assert.isTrue(savedSettingNamesAndValues.indexOf(`${staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME}.false`) !== -1);
@@ -331,7 +342,7 @@ describe("analytics-service", () => {
 		it("calls eqatec stop when all analytics trackings are disabled", () => {
 			baseTestScenario.exceptionsTracking = false;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
 			// start eqatec
 			service.trackFeature(featureName).wait();
@@ -343,7 +354,7 @@ describe("analytics-service", () => {
 
 		it("tracks that user had disabled feature tracking", () => {
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
 			service.setStatus(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, false).wait();
 			assert.isTrue(savedSettingNamesAndValues.indexOf(`${staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME}.false`) !== -1);
@@ -352,7 +363,7 @@ describe("analytics-service", () => {
 
 		it("tracks that user had enabled feature tracking", () => {
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
 			service.setStatus(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, true).wait();
 			assert.isTrue(savedSettingNamesAndValues.indexOf(`${staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME}.true`) !== -1);
@@ -361,7 +372,7 @@ describe("analytics-service", () => {
 
 		it("tracks that user had disabled exceptions tracking", () => {
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
 			service.setStatus(staticConfig.ERROR_REPORT_SETTING_NAME, false).wait();
 			assert.isTrue(savedSettingNamesAndValues.indexOf(`${staticConfig.ERROR_REPORT_SETTING_NAME}.false`) !== -1);
@@ -370,7 +381,7 @@ describe("analytics-service", () => {
 
 		it("tracks that user had enabled exceptions tracking", () => {
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
 			service.setStatus(staticConfig.ERROR_REPORT_SETTING_NAME, true).wait();
 			assert.isTrue(savedSettingNamesAndValues.indexOf(`${staticConfig.ERROR_REPORT_SETTING_NAME}.true`) !== -1);
@@ -381,7 +392,7 @@ describe("analytics-service", () => {
 	describe("getStatusMessage", () => {
 		it("returns correct string results when status is enabled", () => {
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
 			let expectedMsg = "Expected result";
 			assert.equal(`${expectedMsg} is enabled.`, service.getStatusMessage(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, false, expectedMsg).wait());
@@ -390,7 +401,7 @@ describe("analytics-service", () => {
 		it("returns correct string results when status is disabled", () => {
 			baseTestScenario.featureTracking = false;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
 			let expectedMsg = "Expected result";
 			assert.equal(`${expectedMsg} is disabled.`, service.getStatusMessage(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, false, expectedMsg).wait());
@@ -399,7 +410,7 @@ describe("analytics-service", () => {
 		it("returns correct string results when status is not confirmed", () => {
 			baseTestScenario.featureTracking = undefined;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
 			let expectedMsg = "Expected result";
 			assert.equal(`${expectedMsg} is disabled until confirmed.`, service.getStatusMessage(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, false, expectedMsg).wait());
@@ -407,7 +418,7 @@ describe("analytics-service", () => {
 
 		it("returns correct json results when status is enabled", () => {
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
 			assert.deepEqual(JSON.stringify({ "enabled": true }), service.getStatusMessage(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, true, "").wait());
 		});
@@ -415,7 +426,7 @@ describe("analytics-service", () => {
 		it("returns correct json results when status is disabled", () => {
 			baseTestScenario.featureTracking = false;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
 			assert.deepEqual(JSON.stringify({ "enabled": false }), service.getStatusMessage(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, true, "").wait());
 		});
@@ -423,7 +434,7 @@ describe("analytics-service", () => {
 		it("returns correct json results when status is not confirmed", () => {
 			baseTestScenario.featureTracking = undefined;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
 			assert.deepEqual(JSON.stringify({ "enabled": null }), service.getStatusMessage(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, true, "").wait());
 		});
@@ -434,7 +445,7 @@ describe("analytics-service", () => {
 			baseTestScenario.featureTracking = undefined;
 			baseTestScenario.exceptionsTracking = false;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			service.checkConsent().wait();
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
 			assert.isTrue(savedSettingNamesAndValues.indexOf(`${staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME}.true`) !== -1);
@@ -445,7 +456,7 @@ describe("analytics-service", () => {
 			baseTestScenario.prompterConfirmResult = false;
 			baseTestScenario.exceptionsTracking = false;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			service.checkConsent().wait();
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
 			assert.isTrue(savedSettingNamesAndValues.indexOf(`${staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME}.false`) !== -1);
@@ -455,7 +466,7 @@ describe("analytics-service", () => {
 			baseTestScenario.featureTracking = false;
 			baseTestScenario.exceptionsTracking = undefined;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			service.checkConsent().wait();
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
 			assert.isTrue(savedSettingNamesAndValues.indexOf(`${staticConfig.ERROR_REPORT_SETTING_NAME}.true`) !== -1);
@@ -464,7 +475,7 @@ describe("analytics-service", () => {
 		it("do nothing when exception and feature tracking are already set", () => {
 			baseTestScenario.featureTracking = baseTestScenario.exceptionsTracking = true;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			service.checkConsent().wait();
 			assert.deepEqual(savedSettingNamesAndValues, "");
 		});
@@ -473,7 +484,7 @@ describe("analytics-service", () => {
 			baseTestScenario.canDoRequest = false;
 			baseTestScenario.featureTracking = baseTestScenario.exceptionsTracking = undefined;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			service.checkConsent().wait();
 			assert.deepEqual(savedSettingNamesAndValues, "");
 		});
@@ -482,7 +493,7 @@ describe("analytics-service", () => {
 			baseTestScenario.featureTracking = undefined;
 			baseTestScenario.exceptionsTracking = false;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			service.checkConsent().wait();
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
 			assert.isTrue(trackedFeatureNamesAndValues.indexOf(`Accept${staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME}.true`) !== -1);
@@ -493,7 +504,7 @@ describe("analytics-service", () => {
 			baseTestScenario.prompterConfirmResult = false;
 			baseTestScenario.exceptionsTracking = false;
 			let testInjector = createTestInjector(baseTestScenario);
-			let service: IAnalyticsService = testInjector.resolve("analyticsService");
+			service = testInjector.resolve("analyticsService");
 			service.checkConsent().wait();
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
 			assert.isTrue(trackedFeatureNamesAndValues.indexOf(`Accept${staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME}.false`) !== -1);
@@ -503,7 +514,6 @@ describe("analytics-service", () => {
 	describe("uses correct settings on different os-es", () => {
 		let name = "unitTests";
 		let testInjector: IInjector;
-		let service: IAnalyticsService;
 		let osType = os.type;
 		let osRelease = os.release;
 		let release = "1.0";

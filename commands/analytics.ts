@@ -11,7 +11,7 @@ class AnalyticsCommand implements ICommand {
 		private humanReadableSettingName: string) { }
 
 	public allowedParameters = [new AnalyticsCommandParameter(this.$errors)];
-	public disableAnalyticsConsentCheck = true;
+	public disableAnalytics = true;
 
 	public execute(args: string[]): IFuture<void> {
 		return(() => {
