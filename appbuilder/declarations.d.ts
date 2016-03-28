@@ -98,9 +98,23 @@ interface IProtonLiveSyncService {
 	livesync(deviceIdentifiers: IDeviceLiveSyncInfo[], projectDir: string, filePaths: string[]): IFuture<void>;
 }
 
+/**
+ * Describes device's LiveSync information.
+ */
 interface IDeviceLiveSyncInfo {
+	/**
+	 * Unique identifier of the device.
+	 */
 	deviceIdentifier: string;
+
+	/**
+	 * Defines if changes have to be synced to installed application.
+	 */
 	syncToApp: boolean;
+
+	/**
+	 * Defines if changes have to be synced to companion app.
+	 */
 	syncToCompanion: boolean;
 }
 

@@ -7,9 +7,9 @@ Contains common infrastructure for CLIs - mainly AppBuilder and NativeScript.
 Installation
 ===
 
-Latest version: 0.4.1
+Latest version: 0.5.0
 
-Release date: 2016, January 08
+Release date: 2016, March 28
 
 ### System Requirements
 
@@ -252,7 +252,7 @@ require("mobile-cli-lib").deviceEmitter.on("deviceLogData",  function(identifier
 ### Module devicesService
 > Stability: 2 - Stable
 
-This modules allows interaction with devices. You can get a list of the attached devices or deploy on specific devices.
+This module allows interaction with devices. You can get a list of the attached devices or deploy on specific devices.
 
 * `getDevices()` - This function returns array of all connected devices. For each of them the following information is provided:
 Sample usage:
@@ -294,6 +294,74 @@ When the `deviceIdentifier` is passed, the value of the log level will be used o
 require("mobile-cli-lib").devicesService.setLogLevel("INFO", "129604ab96a4d0053023b4bf5b288cf34a9ed5fa");
 ```
 This will set the logging level to `INFO` only for device with identifier `129604ab96a4d0053023b4bf5b288cf34a9ed5fa`.
+
+
+* `isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string)` - checks if the specified application is installed on each of the specified devices.
+Sample usage:
+```JavaScript
+Promise.all(require("mobile-cli-lib")
+				.devicesService
+				.isAppInstalledOnDevices(devicesFound, "com.telerik.myApp"))
+		.then(function(data) {
+			console.log(data);
+		}, function(err) {
+			console.log(err);
+		});
+```
+Result will be `[ false, false ]` for example.
+
+### Module liveSyncService
+> Stability: 1 - Could be changed due to some new requirments.
+
+This module allows LiveSync applications on different devices.
+
+* `livesync(devicesInfo: IDeviceLiveSyncInfo[], projectDir: string, filePaths?: string[])` - LiveSync changes on the specified devices.
+In case filePaths are not specified, the whole project directory will be synced.
+The `devicesInfo` array describes livesync operations for each device. Each object should be described with the following properties:
+```TypeScript
+/**
+ * Describes device's LiveSync information.
+ */
+interface IDeviceLiveSyncInfo {
+	/**
+	 * Unique identifier of the device.
+	 */
+	deviceIdentifier: string;
+
+	/**
+	 * Defines if changes have to be synced to installed application.
+	 */
+	syncToApp: boolean;
+
+	/**
+	 * Defines if changes have to be synced to companion app.
+	 */
+	syncToCompanion: boolean;
+}
+```
+
+Sample usage:
+```JavaScript
+var deviceInfos = [{"deviceIdentifier": "129604ab96a4d0053023b4bf5b288cf34a9ed5fa", "syncToApp": true, "syncToCompanion": false},
+					{"deviceIdentifier": "153544fa45f4a5646543b5bf1b221fe31a8fa6bc", "syncToApp": true, "syncToCompanion": false}];
+// Full Sync - the whole project dir will be synced
+require("mobile-cli-lib").liveSyncService.livesync(deviceInfos, projectDir)
+				.then(function(result) {
+						console.log("Finished with full sync, result is: ", result);
+				}).catch(function(err) {
+						console.log("Error while livesyncing: ", err);
+				});
+
+// Or use livesync only for some files:
+var filesToSync = [path.join(projectDir,"app","components", "homeView", "homeView.xml"),
+					path.join(projectDir,"app","components", "addressView", "addressView.xml")]
+require("mobile-cli-lib").liveSyncService.livesync(deviceInfos, projectDir, filesToSync)
+				.then(function(result) {
+						console.log("Finished with partial sync, result is: ", result);
+				}).catch(function(err) {
+						console.log("Error while livesyncing: ", err);
+				});
+```
 
 ### Module fs
 > Stability: 0 - Only for testing purposes. Will be removed.
