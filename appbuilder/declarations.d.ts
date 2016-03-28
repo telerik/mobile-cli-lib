@@ -29,6 +29,8 @@ declare module Project {
 		NATIVESCRIPT_APP_DIR_NAME: string;
 		IMAGE_DEFINITIONS_FILE_NAME: string;
 		PACKAGE_JSON_NAME: string;
+		ADDITIONAL_FILE_DISPOSITION: string;
+		ADDITIONAL_FILES_DIRECTORY: string;
 	}
 
 	interface ICapabilities {
