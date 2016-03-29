@@ -15,6 +15,8 @@ export class ProjectConstants implements Project.IConstants {
 	public NATIVESCRIPT_APP_DIR_NAME = "app";
 	public IMAGE_DEFINITIONS_FILE_NAME = 'image-definitions.json';
 	public PACKAGE_JSON_NAME = "package.json";
+	public ADDITIONAL_FILE_DISPOSITION = "AdditionalFile";
+	public ADDITIONAL_FILES_DIRECTORY = ".ab";
 
 	public TARGET_FRAMEWORK_IDENTIFIERS = {
 		Cordova: "Cordova",
