@@ -112,8 +112,8 @@ declare module Server {
 	}
 
 	interface IHttpClient {
-		httpRequest(url:string): IFuture<IResponse>;
-		httpRequest(options:any): IFuture<IResponse>;
+		httpRequest(url: string): IFuture<IResponse>;
+		httpRequest(options: any): IFuture<IResponse>;
 	}
 
 	interface IRequestResponseData {
@@ -130,7 +130,7 @@ interface IDisposable {
 
 interface IFileSystem {
 	zipFiles(zipFile: string, files: string[], zipPathCallback: (path: string) => string): IFuture<void>;
-	unzip(zipFile: string, destinationDir: string, options?: { overwriteExisitingFiles?: boolean; caseSensitive?: boolean}, fileFilters?: string[]): IFuture<void>;
+	unzip(zipFile: string, destinationDir: string, options?: { overwriteExisitingFiles?: boolean; caseSensitive?: boolean }, fileFilters?: string[]): IFuture<void>;
 	exists(path: string): IFuture<boolean>;
 	tryExecuteFileOperation(path: string, operation: () => IFuture<any>, enoentErrorMessage?: string): IFuture<void>;
 	deleteFile(path: string): IFuture<void>;
@@ -233,7 +233,7 @@ interface IOpener {
 
 interface IErrors {
 	fail(formatStr: string, ...args: any[]): void;
-	fail(opts: {formatStr?: string; errorCode?: number; suppressCommandHelp?: boolean}, ...args: any[]): void;
+	fail(opts: { formatStr?: string; errorCode?: number; suppressCommandHelp?: boolean }, ...args: any[]): void;
 	failWithoutHelp(message: string, ...args: any[]): void;
 	beginCommand(action: () => IFuture<boolean>, printCommandHelp: () => IFuture<boolean>): IFuture<boolean>;
 	verifyHeap(message: string): void;
@@ -252,7 +252,7 @@ declare const enum ErrorCodes {
 	RESOURCE_PROBLEM = 129
 }
 
-interface IFutureDispatcher	 {
+interface IFutureDispatcher {
 	run(): void;
 	dispatch(action: () => IFuture<void>): void;
 }
@@ -287,7 +287,7 @@ interface IChildProcess {
 	 * @param {string} options Object
 	 * @return {child_process} ChildProcess object.
 	 */
-	fork(modulePath: string, args?: string[], options?: {cwd?: string, env?: any, execPath?: string, execArgv?: string[], silent?: boolean, uid?: number, gid?: number}): any;
+	fork(modulePath: string, args?: string[], options?: { cwd?: string, env?: any, execPath?: string, execArgv?: string[], silent?: boolean, uid?: number, gid?: number }): any;
 }
 
 interface IExecOptions {
@@ -334,7 +334,7 @@ interface IAnalyticsService {
 	 * @param {string|number} code - Exit code as the method is used for process.exit event handler.
 	 * @return void
 	 */
-	tryStopEqatecMonitor(code?: string|number): void;
+	tryStopEqatecMonitor(code?: string | number): void;
 }
 
 interface IAllowEmpty {
@@ -408,14 +408,14 @@ interface ITypeScriptCompilationService {
 	 * @param {string[]} definitionFiles @optional The definition files used for compilation.
 	 * @return {IFuture<void>}
 	 */
-	compileFiles(compilerOptions: {noEmitOnError: boolean}, typeScriptFiles: string[], definitionFiles?: string[]): IFuture<void>;
+	compileFiles(compilerOptions: { noEmitOnError: boolean }, typeScriptFiles: string[], definitionFiles?: string[]): IFuture<void>;
 
 	/**
 	 * Spawns tsc directly without options. Tsc will respect tsconfig.json file in case it exists and all of its options.
 	 * @param {any} compilerOptions: Specifies if noEmitOnError option is true or false. When it is true, any warning will prevent .js generation.
 	 * @return {IFuture<void>}
 	 */
-	compileWithDefaultOptions(compilerOptions: {noEmitOnError: boolean}): IFuture<void>;
+	compileWithDefaultOptions(compilerOptions: { noEmitOnError: boolean }): IFuture<void>;
 }
 
 interface IDynamicHelpService {
@@ -430,7 +430,7 @@ interface IDynamicHelpProvider {
 }
 
 interface IMicroTemplateService {
-	parseContent(data: string, options: {isHtml: boolean }): string;
+	parseContent(data: string, options: { isHtml: boolean }): string;
 }
 
 interface IHtmlHelpService {
@@ -508,7 +508,7 @@ interface IPlatformLiveSyncService {
 	/**
 	 * Removes specified files from a connected device
 	 */
-	removeFiles(appIdentifier: string, localToDevicePaths:  Mobile.ILocalToDevicePathData[]): IFuture<void>;
+	removeFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void>;
 	/**
 	 * Specifies some action that will be executed before every sync operation
 	 */
@@ -570,7 +570,7 @@ interface ISysInfo {
 	 * @param {any} androidToolsInfo Defines paths to adb and android executables.
 	 * @return {IFuture<ISysInfoData>} Object containing information for current system.
 	 */
-	getSysInfo(pathToPackageJson: string, androidToolsInfo?: {pathToAdb: string, pathToAndroid: string}): IFuture<ISysInfoData>;
+	getSysInfo(pathToPackageJson: string, androidToolsInfo?: { pathToAdb: string, pathToAndroid: string }): IFuture<ISysInfoData>;
 }
 
 interface IHostInfo {
@@ -581,7 +581,7 @@ interface IHostInfo {
 	isLinux: boolean;
 	isLinux64: boolean;
 	dotNetVersion(): IFuture<string>;
-	isDotNet40Installed(message: string) : IFuture<boolean>;
+	isDotNet40Installed(message: string): IFuture<boolean>;
 }
 
 interface Function {
@@ -595,7 +595,7 @@ interface Function {
  * Extends Nodejs' Error interface.
  * The native interface already has name and message properties
  */
-interface Error  {
+interface Error {
 	/**
 	 * Error's stack trace
 	 * @type {string}
@@ -605,7 +605,7 @@ interface Error  {
 	 * Error's code - could be a string ('ENOENT'), as well as a number (127)
 	 * @type {string|number}
 	 */
-	code?: string|number;
+	code?: string | number;
 }
 
 interface ICommonOptions {
@@ -647,6 +647,7 @@ interface ICommonOptions {
 	var: Object;
 	default: Boolean;
 	release: boolean;
+	count: number;
 }
 
 interface IYargArgv extends IDictionary<any> {
