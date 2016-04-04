@@ -121,19 +121,25 @@ export class DevicesService implements Mobile.IDevicesService {
 		delete this._devices[device.deviceInfo.identifier];
 	}
 
+	private detectCurrentlyAttachedDevices(): IFuture<void> {
+		return (() => {
+			try {
+				this.$iOSDeviceDiscovery.startLookingForDevices().wait();
+				this.$androidDeviceDiscovery.startLookingForDevices().wait();
+				if (this.$hostInfo.isDarwin) {
+					this.$iOSSimulatorDiscovery.startLookingForDevices().wait();
+				}
+			} catch (err) {
+				this.$logger.trace("Error while detecting devices.", err);
+			}
+		}).future<void>()();
+	}
+
 	private startLookingForDevices(): IFuture<void> {
 		return (() => {
 			this.$logger.trace("startLookingForDevices; platform is %s", this._platform);
 			if(!this._platform) {
-				try {
-					this.$iOSDeviceDiscovery.startLookingForDevices().wait();
-					this.$androidDeviceDiscovery.startLookingForDevices().wait();
-					if (this.$hostInfo.isDarwin) {
-						this.$iOSSimulatorDiscovery.startLookingForDevices().wait();
-					}
-				} catch (err) {
-					this.$logger.trace("Error while detecting devices.", err);
-				}
+				this.detectCurrentlyAttachedDevices().wait();
 				setInterval(() => {
 					fiberBootstrap.run(() => {
 						try {
@@ -288,8 +294,10 @@ export class DevicesService implements Mobile.IDevicesService {
 				this.startLookingForDevices().wait();
 			} else {
 				// platform and deviceId are not specified
-				this.startLookingForDevices().wait();
-				if (!data.skipInferPlatform) {
+				if (data.skipInferPlatform) {
+					this.startLookingForDevices().wait();
+				} else {
+					this.detectCurrentlyAttachedDevices().wait();
 					let devices = this.getDeviceInstances();
 					let platforms = _(devices)
 									.map(device => device.deviceInfo.platform)
