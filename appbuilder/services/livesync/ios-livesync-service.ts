@@ -1,7 +1,6 @@
 ///<reference path="../../../.d.ts"/>
 "use strict";
 
-import Future = require("fibers/future");
 import iOSProxyServices = require("../../../mobile/ios/device/ios-proxy-services");
 import * as path from "path";
 import * as shell from "shelljs";
@@ -64,8 +63,12 @@ export class IOSLiveSyncService implements IPlatformLiveSyncService {
 		}).future<void>()();
 	}
 
-	public removeFiles(): IFuture<void> {
-		return Future.fromResult();
+	public removeFiles(appIdentifier: string, localToDevicePaths:  Mobile.ILocalToDevicePathData[]): IFuture<void> {
+		return (() => {
+			localToDevicePaths
+				.map(localToDevicePath => localToDevicePath.getDevicePath())
+				.forEach(deviceFilePath => this.device.fileSystem.deleteFile(deviceFilePath, appIdentifier));
+		}).future<void>()();
 	}
 }
 $injector.register("iosLiveSyncServiceLocator", {factory: IOSLiveSyncService});
