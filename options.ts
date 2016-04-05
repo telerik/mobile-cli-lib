@@ -21,7 +21,7 @@ export class OptionsBase {
 		"version": { type: OptionType.Boolean },
 		"help": { type: OptionType.Boolean, alias: "h" },
 		"profileDir": { type: OptionType.String },
-		"analyticsClient": {type: OptionType.String},
+		"analyticsClient": { type: OptionType.String },
 		"path": { type: OptionType.String, alias: "p" },
 		// This will parse all non-hyphenated values as strings.
 		"_": { type: OptionType.String }
@@ -39,7 +39,7 @@ export class OptionsBase {
 	public get shorthands(): string[] {
 		let result: string[] = [];
 		_.each(_.keys(this.options), optionName => {
-			if(this.options[optionName].alias) {
+			if (this.options[optionName].alias) {
 				result.push(this.options[optionName].alias);
 			}
 		});
@@ -57,7 +57,7 @@ export class OptionsBase {
 			"appid": { type: OptionType.String },
 			"geny": { type: OptionType.String },
 			"debugBrk": { type: OptionType.Boolean },
-			"debugPort": {type: OptionType.Number },
+			"debugPort": { type: OptionType.Number },
 			"getPort": { type: OptionType.Boolean },
 			"start": { type: OptionType.Boolean },
 			"stop": { type: OptionType.Boolean },
@@ -69,9 +69,10 @@ export class OptionsBase {
 			"emulator": { type: OptionType.Boolean },
 			"sdk": { type: OptionType.String },
 			"template": { type: OptionType.String },
-			"release": { type: OptionType.Boolean, alias: "r"},
-			"var": {type: OptionType.Object},
-			"default": {type: OptionType.Boolean}
+			"release": { type: OptionType.Boolean, alias: "r" },
+			"var": { type: OptionType.Object },
+			"default": { type: OptionType.Boolean },
+			"count": { type: OptionType.Number }
 		};
 	}
 
@@ -85,7 +86,7 @@ export class OptionsBase {
 	}
 
 	public validateOptions(commandSpecificDashedOptions?: IDictionary<IDashedOption>): void {
-		if(commandSpecificDashedOptions) {
+		if (commandSpecificDashedOptions) {
 			this.options = OptionsBase.GLOBAL_OPTIONS;
 			_.extend(this.options, commandSpecificDashedOptions);
 			this.setArgv();
@@ -97,9 +98,9 @@ export class OptionsBase {
 			parsed[optionName] = this.getOptionValue(optionName);
 		});
 
-		_.each(parsed, (value:any, originalOptionName:string) => {
+		_.each(parsed, (value: any, originalOptionName: string) => {
 			// when this.options are passed to yargs, it returns all of them and the ones that are not part of process.argv are set to undefined.
-			if(value === undefined) {
+			if (value === undefined) {
 				return;
 			}
 
@@ -115,7 +116,7 @@ export class OptionsBase {
 					this.$errors.fail("You have set the %s option multiple times. Check the correct command syntax below and try again.", originalOptionName);
 				} else if (optionType === OptionType.String && helpers.isNullOrWhitespace(optionValue)) {
 					this.$errors.failWithoutHelp("The option '%s' requires non-empty value.", originalOptionName);
-				} else if(optionType === OptionType.Array && optionValue.length === 0) {
+				} else if (optionType === OptionType.Array && optionValue.length === 0) {
 					this.$errors.failWithoutHelp(`The option '${originalOptionName}' requires one or more values, separated by a space.`);
 				}
 			}
@@ -138,7 +139,7 @@ export class OptionsBase {
 	}
 
 	private isOptionSupported(option: string): boolean {
-		if(!this.options[option]) {
+		if (!this.options[option]) {
 			let opt = this.tryGetOptionByAliasName(option);
 			return !!opt;
 		}
@@ -153,7 +154,7 @@ export class OptionsBase {
 	// This way your code will work in case "$ <cli name> emulate android --profile-dir" or "$ <cli name> emulate android --profileDir" is used by user.
 	private getSecondaryOptionName(optionName: string): string {
 		let matchUpperCaseLetters = optionName.match(/(.+?)([-])([a-zA-Z])(.*)/);
-		if(matchUpperCaseLetters) {
+		if (matchUpperCaseLetters) {
 			// get here if option with upperCase letter is specified, for example profileDir
 			// check if in knownOptions we have its kebabCase presentation
 			let secondaryOptionName = util.format("%s%s%s", matchUpperCaseLetters[1], matchUpperCaseLetters[3].toUpperCase(), matchUpperCaseLetters[4] || '');
@@ -174,7 +175,7 @@ export class OptionsBase {
 		_.each(this.optionNames, optionName => {
 			Object.defineProperty(OptionsBase.prototype, optionName, {
 				configurable: true,
-				get: function () {
+				get: function() {
 					return this.getOptionValue(optionName);
 				},
 				set: function(value: any) {
