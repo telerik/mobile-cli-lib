@@ -11,7 +11,6 @@ const DEVICE_TMP_DIR_FORMAT_V2 = "/data/local/tmp/12590FAA-5EDD-4B12-856D-F52A0A
 const DEVICE_TMP_DIR_FORMAT_V3 = "/mnt/sdcard/Android/data/%s/files/12590FAA-5EDD-4B12-856D-F52A0A1599F2";
 const CHECK_LIVESYNC_INTENT_NAME = "com.telerik.IsLiveSyncSupported";
 const IOS_PROJECT_PATH = "/Library/Application Support/LiveSync";
-const IOS_NS_PROJECT_PATH = "/tmp/Application Support/LiveSync";
 
 export class AndroidAppIdentifier extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
 	private _deviceProjectRootPath: string = null;
@@ -193,7 +192,7 @@ export class IOSNativeScriptAppIdentifier extends DeviceAppDataBase implements I
 				let applicationPath = this.$iOSSimResolver.iOSSim.getApplicationPath(this.device.deviceInfo.identifier, this.appIdentifier);
 				this._deviceProjectRootPath = path.join(applicationPath, "app");
 			} else {
-				this._deviceProjectRootPath = IOS_NS_PROJECT_PATH;
+				this._deviceProjectRootPath = IOS_PROJECT_PATH;
 			}
 		}
 
