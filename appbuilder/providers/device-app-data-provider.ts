@@ -212,7 +212,7 @@ export class IOSNativeScriptAppIdentifier extends DeviceAppDataBase implements I
 	}
 
 	isLiveSyncSupported(): IFuture<boolean> {
-		return this.device.applicationManager.isApplicationInstalled(this.appIdentifier);
+		return Future.fromResult(true);
 	}
 }
 
