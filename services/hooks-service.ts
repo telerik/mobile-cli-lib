@@ -24,7 +24,8 @@ export class HooksService implements IHooksService {
 		private $config: Config.IConfig,
 		private $staticConfig: Config.IStaticConfig,
 		private $injector: IInjector,
-		private $projectHelper: IProjectHelper) { }
+		private $projectHelper: IProjectHelper,
+		private $options: ICommonOptions) { }
 
 	private initialize(): void {
 		this.cachedHooks = {};
@@ -61,7 +62,7 @@ export class HooksService implements IHooksService {
 
 	private executeHooks(hookName: string, traceMessage: string, hookArguments?: IDictionary<any>): IFuture<void> {
 		return (() => {
-			if (this.$config.DISABLE_HOOKS) {
+			if (this.$config.DISABLE_HOOKS || !this.$options.hooks) {
 				return;
 			}
 
