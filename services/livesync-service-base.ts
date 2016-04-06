@@ -182,7 +182,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 						}
 
 						// Not installed application
-						if (!device.applicationManager.isApplicationInstalled(appIdentifier).wait()) {
+						if (!device.applicationManager.isApplicationInstalled(appIdentifier).wait() && !this.$options.companion) {
 							this.$logger.warn(`The application with id "${appIdentifier}" is not installed on device with identifier ${device.deviceInfo.identifier}.`);
 							if (!packageFilePath) {
 								packageFilePath = this.$liveSyncProvider.buildForDevice(device).wait();
