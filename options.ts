@@ -71,7 +71,8 @@ export class OptionsBase {
 			"template": { type: OptionType.String },
 			"release": { type: OptionType.Boolean, alias: "r"},
 			"var": {type: OptionType.Object},
-			"default": {type: OptionType.Boolean}
+			"default": {type: OptionType.Boolean},
+			"hooks": { type: OptionType.Boolean, default: true }
 		};
 	}
 
