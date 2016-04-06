@@ -38,7 +38,6 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 
 	public sync(data: ILiveSyncData, filePaths?: string[]): IFuture<void> {
 		return (() => {
-			console.log("SYNC CALLED");
 			this.syncCore(data, filePaths).wait();
 
 			if (this.$options.watch) {
