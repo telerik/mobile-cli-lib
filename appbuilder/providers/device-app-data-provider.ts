@@ -6,11 +6,7 @@ import Future = require("fibers/future");
 import * as querystring from "querystring";
 import * as path from "path";
 import * as util from "util";
-
-const DEVICE_TMP_DIR_FORMAT_V2 = "/data/local/tmp/12590FAA-5EDD-4B12-856D-F52A0A1599F2/%s";
-const DEVICE_TMP_DIR_FORMAT_V3 = "/mnt/sdcard/Android/data/%s/files/12590FAA-5EDD-4B12-856D-F52A0A1599F2";
-const CHECK_LIVESYNC_INTENT_NAME = "com.telerik.IsLiveSyncSupported";
-const IOS_PROJECT_PATH = "/Library/Application Support/LiveSync";
+import { LiveSyncConstants } from "../../mobile/constants";
 
 export class AndroidAppIdentifier extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
 	private _deviceProjectRootPath: string = null;
@@ -31,9 +27,9 @@ export class AndroidAppIdentifier extends DeviceAppDataBase implements ILiveSync
 
 			let version = this.getLiveSyncVersion().wait();
 			if (version === 2) {
-				deviceTmpDirFormat = DEVICE_TMP_DIR_FORMAT_V2;
+				deviceTmpDirFormat = LiveSyncConstants.DEVICE_TMP_DIR_FORMAT_V2;
 			} else if (version === 3) {
-				deviceTmpDirFormat = DEVICE_TMP_DIR_FORMAT_V3;
+				deviceTmpDirFormat = LiveSyncConstants.DEVICE_TMP_DIR_FORMAT_V3;
 			} else {
 				this.$errors.failWithoutHelp(`Unsupported LiveSync version: ${version}`);
 			}
@@ -69,7 +65,7 @@ export class AndroidAppIdentifier extends DeviceAppDataBase implements ILiveSync
 	private getLiveSyncVersion(): IFuture<number> {
 		return (() => {
 			if (!this._liveSyncVersion) {
-				this._liveSyncVersion = (<Mobile.IAndroidDevice>this.device).adb.sendBroadcastToDevice(CHECK_LIVESYNC_INTENT_NAME, {"app-id": this.appIdentifier}).wait();
+				this._liveSyncVersion = (<Mobile.IAndroidDevice>this.device).adb.sendBroadcastToDevice(LiveSyncConstants.CHECK_LIVESYNC_INTENT_NAME, {"app-id": this.appIdentifier}).wait();
 			}
 			return this._liveSyncVersion;
 		}).future<number>()();
@@ -86,7 +82,7 @@ export class AndroidCompanionAppIdentifier extends DeviceAppDataBase implements 
 	}
 
 	public get deviceProjectRootPath(): string {
-		return this.getDeviceProjectRootPath(util.format(DEVICE_TMP_DIR_FORMAT_V3, this.appIdentifier));
+		return this.getDeviceProjectRootPath(util.format(LiveSyncConstants.DEVICE_TMP_DIR_FORMAT_V3, this.appIdentifier));
 	}
 
 	public get liveSyncFormat(): string {
@@ -116,7 +112,7 @@ export class AndroidNativeScriptCompanionAppIdentifier extends DeviceAppDataBase
 	}
 
 	public get deviceProjectRootPath(): string {
-		return util.format(DEVICE_TMP_DIR_FORMAT_V3, this.appIdentifier);
+		return util.format(LiveSyncConstants.DEVICE_TMP_DIR_FORMAT_V3, this.appIdentifier);
 	}
 
 	public get liveSyncFormat(): string {
@@ -152,7 +148,7 @@ export class IOSAppIdentifier extends DeviceAppDataBase implements ILiveSyncDevi
 				let applicationPath = this.$iOSSimResolver.iOSSim.getApplicationPath(this.device.deviceInfo.identifier, this.appIdentifier);
 				this._deviceProjectRootPath = path.join(applicationPath, "www");
 			} else {
-				this._deviceProjectRootPath = IOS_PROJECT_PATH;
+				this._deviceProjectRootPath = LiveSyncConstants.IOS_PROJECT_PATH;
 			}
 		}
 
@@ -190,9 +186,9 @@ export class IOSNativeScriptAppIdentifier extends DeviceAppDataBase implements I
 		if (!this._deviceProjectRootPath) {
 			if (this.device.isEmulator) {
 				let applicationPath = this.$iOSSimResolver.iOSSim.getApplicationPath(this.device.deviceInfo.identifier, this.appIdentifier);
-				this._deviceProjectRootPath = path.join(applicationPath, "app");
+				this._deviceProjectRootPath = applicationPath;
 			} else {
-				this._deviceProjectRootPath = IOS_PROJECT_PATH;
+				this._deviceProjectRootPath = LiveSyncConstants.IOS_PROJECT_PATH;
 			}
 		}
 
@@ -225,7 +221,7 @@ export class IOSCompanionAppIdentifier extends DeviceAppDataBase implements ILiv
 	}
 
 	public get deviceProjectRootPath(): string {
-		return IOS_PROJECT_PATH;
+		return LiveSyncConstants.IOS_PROJECT_PATH;
 	}
 
 	public get liveSyncFormat(): string {
@@ -254,7 +250,7 @@ export class IOSNativeScriptCompanionAppIdentifier extends DeviceAppDataBase imp
 	}
 
 	public get deviceProjectRootPath(): string {
-		return IOS_PROJECT_PATH;
+		return LiveSyncConstants.IOS_PROJECT_PATH;
 	}
 
 	public get liveSyncFormat(): string {

@@ -5,6 +5,7 @@ import iOSProxyServices = require("../../../mobile/ios/device/ios-proxy-services
 import * as path from "path";
 import * as shell from "shelljs";
 let osenv = require("osenv");
+import { LiveSyncConstants } from "../../../mobile/constants";
 
 export class IOSLiveSyncService implements IPlatformLiveSyncService {
 	private get $project(): any {
@@ -45,7 +46,7 @@ export class IOSLiveSyncService implements IPlatformLiveSyncService {
 				}
 
 				let sourcePath = deviceAppData.deviceProjectRootPath;
-				let destinationPath = path.join(simulatorCachePath, guid, "Documents");
+				let destinationPath = path.join(simulatorCachePath, guid, LiveSyncConstants.IOS_PROJECT_PATH);
 
 				this.$logger.trace(`Transferring from ${sourcePath} to ${destinationPath}`);
 				shell.cp("-Rf", path.join(sourcePath, "*"), destinationPath);
