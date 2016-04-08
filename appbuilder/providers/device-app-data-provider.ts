@@ -86,11 +86,11 @@ export class AndroidCompanionAppIdentifier extends DeviceAppDataBase implements 
 	}
 
 	public get liveSyncFormat(): string {
-		return "%s/Mist/MobilePackage/redirect?token=%s";
+		return "icenium://%s?token=%s&appId=%s&configuration=%s";
 	}
 
 	public encodeLiveSyncHostUri(hostUri: string): string {
-		return hostUri;
+		return querystring.escape(hostUri);
 	}
 
 	public getLiveSyncNotSupportedError(): string {
@@ -116,11 +116,11 @@ export class AndroidNativeScriptCompanionAppIdentifier extends DeviceAppDataBase
 	}
 
 	public get liveSyncFormat(): string {
-		return "%s/Mist/MobilePackage/nsredirect?token=%s";
+		return "nativescript://%s?token=%s&appId=%s&configuration=%s";
 	}
 
 	public encodeLiveSyncHostUri(hostUri: string): string {
-		return hostUri;
+		return querystring.escape(hostUri);
 	}
 
 	public getLiveSyncNotSupportedError(): string {
@@ -225,7 +225,7 @@ export class IOSCompanionAppIdentifier extends DeviceAppDataBase implements ILiv
 	}
 
 	public get liveSyncFormat(): string {
-		return "icenium://%s?LiveSyncToken=%s";
+		return "icenium://%s?LiveSyncToken=%s&appId=%s&configuration=%s";
 	}
 
 	public encodeLiveSyncHostUri(hostUri: string): string {
@@ -254,7 +254,7 @@ export class IOSNativeScriptCompanionAppIdentifier extends DeviceAppDataBase imp
 	}
 
 	public get liveSyncFormat(): string {
-		return "nativescript://%s?LiveSyncToken=%s";
+		return "nativescript://%s?LiveSyncToken=%s&appId=%s&configuration=%s";
 	}
 
 	public encodeLiveSyncHostUri(hostUri: string): string {
@@ -281,7 +281,7 @@ export class WP8CompanionAppIdentifier extends DeviceAppDataBase implements ILiv
 	}
 
 	public get liveSyncFormat(): string {
-		return "%s/Mist/MobilePackage/redirect?token=%s";
+		return "%s/Mist/MobilePackage/redirect?token=%s&appId=%s&configuration=%s";
 	}
 
 	public encodeLiveSyncHostUri(hostUri: string): string {
