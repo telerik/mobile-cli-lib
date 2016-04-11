@@ -181,7 +181,7 @@ declare module Mobile {
 		full: string;
 	}
 
-	interface IDeviceApplicationManager {
+	interface IDeviceApplicationManager extends NodeJS.EventEmitter {
 		getInstalledApplications(): IFuture<string[]>;
 		isApplicationInstalled(appIdentifier: string): IFuture<boolean>;
 		installApplication(packageFilePath: string): IFuture<void>;
@@ -191,6 +191,7 @@ declare module Mobile {
 		stopApplication(appIdentifier: string): IFuture<void>;
 		restartApplication(appIdentifier: string, bundleExecutable?: string): IFuture<void>;
 		canStartApplication(): boolean;
+		checkForApplicationUpdates(): IFuture<void>;
 	}
 
 	interface IDeviceFileSystem {
