@@ -272,8 +272,10 @@ export class IOSNativeScriptCompanionAppIdentifier extends DeviceAppDataBase imp
 
 export class WP8CompanionAppIdentifier extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
 	constructor(public device: Mobile.IDevice,
-		public platform: string) {
-		super("{9155af5b-e7ed-486d-bc6b-35087fb59ecc}");
+		public platform: string,
+		private $companionAppsService: ICompanionAppsService,
+		private $projectConstants: Project.IConstants) {
+		super($companionAppsService.getCompanionAppIdentifier($projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform));
 	}
 
 	public get deviceProjectRootPath(): string {

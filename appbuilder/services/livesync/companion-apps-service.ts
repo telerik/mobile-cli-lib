@@ -6,11 +6,12 @@ import { exported } from "../../../decorators";
 const NS_COMPANION_APP_IDENTIFIER = "com.telerik.NativeScript";
 const APPBUILDER_ANDROID_COMPANION_APP_IDENTIFIER = "com.telerik.AppBuilder";
 const APPBUILDER_IOS_COMPANION_APP_IDENTIFIER = "com.telerik.Icenium";
+const APPBUILDER_WP8_COMPANION_APP_IDENTIFIER = "{9155af5b-e7ed-486d-bc6b-35087fb59ecc}";
 
-// TODO: Detect when companion app is installed on any device and raise event.
 export class CompanionAppsService implements ICompanionAppsService {
 	constructor(private $projectConstants: Project.IConstants,
-		private $mobileHelper: Mobile.IMobileHelper) { }
+		private $mobileHelper: Mobile.IMobileHelper,
+		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) { }
 
 	@exported("companionAppsService")
 	public getCompanionAppIdentifier(framework: string, platform: string): string {
@@ -22,12 +23,42 @@ export class CompanionAppsService implements ICompanionAppsService {
 				return APPBUILDER_ANDROID_COMPANION_APP_IDENTIFIER;
 			} else if(this.$mobileHelper.isiOSPlatform(lowerCasedPlatform)) {
 				return APPBUILDER_IOS_COMPANION_APP_IDENTIFIER;
+			} else if(this.$mobileHelper.isWP8Platform(lowerCasedPlatform)) {
+				return APPBUILDER_WP8_COMPANION_APP_IDENTIFIER;
 			}
 		} else if (lowerCasedFramework === this.$projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript.toLowerCase()) {
-			return NS_COMPANION_APP_IDENTIFIER;
+			if(!this.$mobileHelper.isWP8Platform(lowerCasedPlatform)) {
+				return NS_COMPANION_APP_IDENTIFIER;
+			}
 		}
 
 		return null;
+	}
+
+	@exported("companionAppsService")
+	public getAllCompanionAppIdentifiers(): IDictionary<IStringDictionary> {
+		let platforms = [
+			this.$devicePlatformsConstants.Android,
+			this.$devicePlatformsConstants.iOS,
+			this.$devicePlatformsConstants.WP8
+		];
+
+		let frameworks = [
+			this.$projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova.toLowerCase(),
+			this.$projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript.toLowerCase()
+		];
+
+		let companionAppIdentifiers: IDictionary<IStringDictionary> = {};
+		_.each(frameworks, framework => {
+			let lowerCasedFramework = framework.toLowerCase();
+			companionAppIdentifiers[lowerCasedFramework] = companionAppIdentifiers[lowerCasedFramework] || {};
+			_.each(platforms, platform => {
+				let lowerCasedPlatform = platform.toLowerCase();
+				companionAppIdentifiers[lowerCasedFramework][lowerCasedPlatform] = this.getCompanionAppIdentifier(lowerCasedFramework, lowerCasedPlatform);
+			});
+		});
+
+		return companionAppIdentifiers;
 	}
 }
 $injector.register("companionAppsService", CompanionAppsService);

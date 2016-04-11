@@ -218,6 +218,38 @@ interface IDeviceInfo {
 }
 ```
 
+### Module companionAppsService
+> Stability 2 - Stable
+
+`companionAppsService` gives access to companion apps identifiers.
+
+* `getAllCompanionAppIdentifiers`: returns all companion app identifiers in a JSON object, where the top level keys are frameworks (cordova and nativescript) and inner keys are platforms (android, ios, wp8).
+Sample usage:
+```JavaScript
+var companionAppIdentifiers = require("mobile-cli-lib").companionAppsService.getAllCompanionAppIdentifiers();
+```
+Result object is something like:
+```JSON
+{
+	'cordova': {
+		'android': 'android.cordova.companion.app.identifier',
+		'ios': 'ios.cordova.companion.app.identifier',
+		'wp8': 'wp8.cordova.companion.app.identifier'
+	},
+	'nativescript': {
+		'android': 'android.nativescript.companion.app.identifier',
+		'ios': 'ios.nativescript.companion.app.identifier',
+		'wp8': null
+	}
+}
+```
+
+* `getCompanionAppIdentifier(framework: string, platform: string): string` - returns companion app identifier for specified framework and platform.
+Sample usage:
+```JavaScript
+var companionAppIdentifiers = require("mobile-cli-lib").companionAppsService.getCompanionAppIdentifier("cordova", "android");
+```
+
 ### Module deviceEmitter
 > Stability 2 - Stable
 
@@ -240,12 +272,44 @@ require("mobile-cli-lib").deviceEmitter.on("deviceLost",  function(deviceInfoDat
 });
 ```
 
-* `deviceLogData` - Raised when attached device sends reports any information. This is the output of `adb logcat` for Android devices. For iOS this is the `iOS SysLog`.
+* `deviceLogData` - Raised when attached device reports any information. This is the output of `adb logcat` for Android devices. For iOS this is the `iOS SysLog`.
 The event is raised for any device that reports data. The callback function has two arguments - `deviceIdentifier` and `reportedData`. <br/><br/>
 Sample usage:
 ```JavaScript
 require("mobile-cli-lib").deviceEmitter.on("deviceLogData",  function(identifier, reportedData) {
 	console.log("Device " + identifier + " reports: " + reportedData);
+});
+```
+
+* `applicationInstalled` - Raised when application is installed on a device. The callback has two arguments - `deviceIdentifier` and `applicationIdentifier`. <br/><br/>
+Sample usage:
+```JavaScript
+require("mobile-cli-lib").deviceEmitter.on("applicationInstalled",  function(identifier, applicationIdentifier) {
+	console.log("Application " + applicationIdentifier  + " has been installed on device with id: " + identifier);
+});
+```
+
+* `applicationUninstalled` - Raised when application is removed from device. The callback has two arguments - `deviceIdentifier` and `applicationIdentifier`. <br/><br/>
+Sample usage:
+```JavaScript
+require("mobile-cli-lib").deviceEmitter.on("applicationUninstalled",  function(identifier, applicationIdentifier) {
+	console.log("Application " + applicationIdentifier  + " has been uninstalled from device with id: " + identifier);
+});
+```
+
+* `companionAppInstalled` - Raised when application is removed from device. The callback has two arguments - `deviceIdentifier` and `framwork`. <br/><br/>
+Sample usage:
+```JavaScript
+require("mobile-cli-lib").deviceEmitter.on("companionAppInstalled",  function(identifier, framwework) {
+	console.log("Companion app for " + framework  + " has been installed on device with id: " + identifier);
+});
+```
+
+* `companionAppUninstalled` - Raised when application is removed from device. The callback has two arguments - `deviceIdentifier` and `framwork`. <br/><br/>
+Sample usage:
+```JavaScript
+require("mobile-cli-lib").deviceEmitter.on("companionAppUninstalled",  function(identifier, framwework) {
+	console.log("Companion app for " + framework  + " has been uninstalled from device with id: " + identifier);
 });
 ```
 

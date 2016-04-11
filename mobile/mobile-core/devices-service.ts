@@ -146,13 +146,31 @@ export class DevicesService implements Mobile.IDevicesService {
 							// This code could be faster, by using Future.wait([...]), but it turned out this is breaking iOS deployment on Mac
 							// It's causing error 21 when deploying on some iOS devices during transfer of the first package.
 							this.$iOSDeviceDiscovery.checkForDevices().wait();
+						} catch (err) {
+							this.$logger.trace("Error while checking for new iOS devices.", err);
+						}
+
+						try {
 							this.$androidDeviceDiscovery.checkForDevices().wait();
+						} catch (err) {
+							this.$logger.trace("Error while checking for new Android devices.", err);
+						}
+
+						try {
 							if (this.$hostInfo.isDarwin) {
 								this.$iOSSimulatorDiscovery.checkForDevices().wait();
 							}
 						} catch (err) {
-							this.$logger.trace("Error while checking for new devices.", err);
+							this.$logger.trace("Error while checking for new iOS Simulators.", err);
 						}
+
+						_.each(this._devices, device => {
+							try {
+								device.applicationManager.checkForApplicationUpdates().wait();
+							} catch (err) {
+								this.$logger.trace(`Error checking for application updates on device ${device.deviceInfo.identifier}.`, err);
+							}
+						});
 					});
 				}, DevicesService.DEVICE_LOOKING_INTERVAL).unref();
 			} else if(this.$mobileHelper.isiOSPlatform(this._platform)) {

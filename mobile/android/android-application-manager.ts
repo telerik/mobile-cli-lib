@@ -3,8 +3,7 @@
 import {EOL} from "os";
 import {ApplicationManagerBase} from "../application-manager-base";
 
-export class AndroidApplicationManager extends ApplicationManagerBase implements Mobile.IDeviceApplicationManager {
-	private _installedApplications: string[];
+export class AndroidApplicationManager extends ApplicationManagerBase {
 
 	constructor(private adb: Mobile.IAndroidDebugBridge,
 		private identifier: string,
@@ -16,26 +15,23 @@ export class AndroidApplicationManager extends ApplicationManagerBase implements
 
 	public getInstalledApplications(): IFuture<string[]> {
 		return (() => {
-			if (!this._installedApplications) {
-				let result = this.adb.executeShellCommand(["pm", "list", "packages"]).wait();
-				let regex = /package:(.+)/;
-				this._installedApplications = _.map(result.split(EOL), (packageString: string) => {
-					let match = packageString.match(regex);
-					return match ? match[1] : null;
-				}).filter(parsedPackage => parsedPackage !== null);
-			}
+			let result = this.adb.executeShellCommand(["pm", "list", "packages"]).wait() || "";
+			let regex = /package:(.+)/;
+			return result.split(EOL)
+					.map((packageString: string) => {
+						let match = packageString.match(regex);
+						return match ? match[1] : null;
+					})
+					.filter((parsedPackage: string) => parsedPackage !== null);
 
-			return this._installedApplications;
 		}).future<string[]>()();
 	}
 
 	public installApplication(packageFilePath: string): IFuture<void> {
-		this._installedApplications = null;
 		return this.adb.executeCommand(["install", "-r", `${packageFilePath}`]);
 	}
 
 	public uninstallApplication(appIdentifier: string): IFuture<void> {
-		this._installedApplications = null;
 		return this.adb.executeShellCommand(["pm", "uninstall", `${appIdentifier}`]);
 	}
 
