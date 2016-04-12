@@ -95,7 +95,7 @@ declare module Mobile {
 	}
 
 	interface IAndroidDevice extends IDevice {
-		adb: Mobile.IAndroidDebugBridge;
+		adb: Mobile.IDeviceAndroidDebugBridge;
 	}
 
 	interface IiOSDevice extends IDevice {
@@ -213,8 +213,11 @@ declare module Mobile {
 	}
 
 	interface IAndroidDebugBridge {
-		executeCommand(args: string[]): IFuture<any>;
-		executeShellCommand(args: string[]): IFuture<any>;
+		executeCommand(args: string[], fromEvent?: string): IFuture<any>;
+	}
+
+	interface IDeviceAndroidDebugBridge extends IAndroidDebugBridge {
+		executeShellCommand(args: string[], fromEvent?: string): IFuture<any>;
 		sendBroadcastToDevice(action: string, extras?: IStringDictionary): IFuture<number>;
 	}
 
