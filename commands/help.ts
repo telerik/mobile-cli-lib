@@ -1,6 +1,7 @@
 ///<reference path="../.d.ts"/>
 "use strict";
 
+import * as androidDebugBridgePath from "../mobile/android/android-debug-bridge";
 import Future = require("fibers/future");
 
 export class HelpCommand implements ICommand {
