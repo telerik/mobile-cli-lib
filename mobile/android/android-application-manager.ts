@@ -2,6 +2,7 @@
 "use strict";
 import {EOL} from "os";
 import {ApplicationManagerBase} from "../application-manager-base";
+import { LiveSyncConstants } from "../../mobile/constants";
 
 export class AndroidApplicationManager extends ApplicationManagerBase {
 
@@ -53,5 +54,12 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 
 	public canStartApplication(): boolean {
 		return true;
+	}
+
+	protected isLiveSyncSupportedOnDevice(appIdentifier: string): IFuture<boolean> {
+		return ((): boolean => {
+			let liveSyncVersion = this.adb.sendBroadcastToDevice(LiveSyncConstants.CHECK_LIVESYNC_INTENT_NAME, {"app-id": appIdentifier}).wait();
+			return liveSyncVersion === LiveSyncConstants.VERSION_2 || liveSyncVersion === LiveSyncConstants.VERSION_3;
+		}).future<boolean>()();
 	}
 }

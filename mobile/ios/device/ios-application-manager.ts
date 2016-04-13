@@ -8,7 +8,7 @@ import * as os from "os";
 import {CoreTypes, GDBServer} from "./ios-core";
 import * as iOSProxyServices from "./ios-proxy-services";
 
-export class IOSApplicationManager extends ApplicationManagerBase implements Mobile.IDeviceApplicationManager {
+export class IOSApplicationManager extends ApplicationManagerBase {
 	private uninstallApplicationCallbackPtr: NodeBuffer = null;
 	private _gdbServer: Mobile.IGDBServer = null;
 
@@ -41,6 +41,96 @@ export class IOSApplicationManager extends ApplicationManagerBase implements Mob
 			let installationProxy = this.$injector.resolve(iOSProxyServices.InstallationProxyClient, { device: this.device });
 			installationProxy.deployApplication(packageFilePath).wait();
 			installationProxy.closeSocket();
+		}).future<void>()();
+	}
+
+	public getApplicationsLiveSyncSupportedStatus(): IFuture<void> {
+		return (() => {
+			let installationProxy = this.$injector.resolve(iOSProxyServices.InstallationProxyClient, { device: this.device });
+			let result = installationProxy.sendMessage({
+					"Command": "Browse",
+					"ClientOptions": {
+						"ApplicationType": "User",
+						"ReturnAttributes": [
+							"CFBundleIdentifier",
+							"IceniumLiveSyncEnabled"
+						]}
+				}).wait();
+
+			/*
+				Sample Result:
+				[{
+					"Total": 13,
+					"CurrentIndex": 0,
+					"CurrentAmount": 10,
+					"Status": "BrowsingApplications",
+					"CurrentList": [
+					{
+						"CFBundleIdentifier": "com.ebay.redlaserproper"
+					},
+					{
+						"CFBundleIdentifier": "com.apple.TestFlight"
+					},
+					{
+						"IceniumLiveSyncEnabled": true,
+						"CFBundleIdentifier": "com.telerik.TestSpecialChars"
+					},
+					{
+						"CFBundleIdentifier": "com.telerik.PlatformCompanion"
+					},
+					{
+						"IceniumLiveSyncEnabled": true,
+						"CFBundleIdentifier": "com.telerik.KendoUITabStrip1"
+					},
+					{
+						"IceniumLiveSyncEnabled": true,
+						"CFBundleIdentifier": "com.telerik.myAppNative1"
+					},
+					{
+						"CFBundleIdentifier": "com.ionic.viewapp"
+					},
+					{
+						"IceniumLiveSyncEnabled": true,
+						"CFBundleIdentifier": "com.telerik.samplepinchandzoom"
+					},
+					{
+						"CFBundleIdentifier": "com.telerik.7e4c83f6-4e40-420f-a395-ab3cd9f77afd.AppManager"
+					},
+					{
+						"IceniumLiveSyncEnabled": true,
+						"CFBundleIdentifier": "com.telerik.sampleinappbrowser"
+					}
+					]
+				},
+				{
+						"Total": 13,
+						"CurrentIndex": 10,
+						"CurrentAmount": 3,
+						"Status": "BrowsingApplications",
+						"CurrentList": [
+						{
+							"IceniumLiveSyncEnabled": true,
+							"CFBundleIdentifier": "com.telerik.KendoUIBlank9"
+						},
+						{
+							"IceniumLiveSyncEnabled": true,
+							"CFBundleIdentifier": "com.telerik.Blank1"
+						},
+						{
+							"IceniumLiveSyncEnabled": true,
+							"CFBundleIdentifier": "com.telerik.samplecapture"
+						}
+						]
+					}
+				]
+			 */
+
+			this.$logger.trace("Result when getting applications for which LiveSync is enabled: ", JSON.stringify(result, null, 2));
+			this.applicationsLiveSyncStatus = [];
+			_.each(result, (singleResult: any) => {
+				let currentList = _.map(singleResult.CurrentList, (app: any) => ({applicationIdentifier: app.CFBundleIdentifier, isLiveSyncSupported: app.IceniumLiveSyncEnabled }));
+				this.applicationsLiveSyncStatus = this.applicationsLiveSyncStatus.concat(currentList);
+			});
 		}).future<void>()();
 	}
 

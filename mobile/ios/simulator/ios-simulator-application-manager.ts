@@ -3,11 +3,14 @@
 
 import {ApplicationManagerBase} from "../../application-manager-base";
 import Future = require("fibers/future");
+import * as path from "path";
 
 export class IOSSimulatorApplicationManager extends ApplicationManagerBase implements Mobile.IDeviceApplicationManager {
 	constructor(private iosSim: any,
 		private identifier: string,
-		private $options: ICommonOptions) {
+		private $options: ICommonOptions,
+		private $fs: IFileSystem,
+		private $bplistParser: IBinaryPlistParser) {
 			super();
 		}
 
@@ -42,5 +45,18 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase imple
 
 	public canStartApplication(): boolean {
 		return true;
+	}
+
+	protected isLiveSyncSupportedOnDevice(appIdentifier: string): IFuture<boolean> {
+		return ((): boolean => {
+			let applicationPath = this.iosSim.getApplicationPath(this.identifier, appIdentifier);
+			let pathToInfoPlist = path.join(applicationPath, "Info.plist");
+			if(this.$fs.exists(pathToInfoPlist).wait()) {
+				let plistContent: any = this.$bplistParser.parseFile(pathToInfoPlist).wait()[0];
+				return !!plistContent && !!plistContent.IceniumLiveSyncEnabled;
+			}
+
+			return false;
+		}).future<boolean>()();
 	}
 }
