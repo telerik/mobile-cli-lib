@@ -15,18 +15,10 @@ interface IAdbAndroidDeviceInfo {
 
 export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IAndroidDeviceDiscovery {
 	private _devices: IAdbAndroidDeviceInfo[] = [];
-	private _pathToAdb: string;
-	private get pathToAdb(): string {
-		if(!this._pathToAdb) {
-			this._pathToAdb = this.$staticConfig.getAdbFilePath().wait();
-		}
-
-		return this._pathToAdb;
-	}
 
 	constructor(private $childProcess: IChildProcess,
 		private $injector: IInjector,
-		private $staticConfig: Config.IStaticConfig) {
+		private $adb: Mobile.IAndroidDebugBridge) {
 		super();
 	}
 
@@ -50,32 +42,32 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 	public checkForDevices(future?: IFuture<void>): IFuture<void> {
 		let adbData = "";
 
-		let result = this.$childProcess.spawn(this.pathToAdb, ["devices"], { stdio: 'pipe' });
+		let result = this.$adb.executeCommand(["devices"], { returnChildProcess: true }).wait();
 		result.stdout.on("data", (data: NodeBuffer) => {
 			adbData += data.toString();
 		});
 
 		result.stderr.on("data", (data: NodeBuffer) => {
 			let error = new Error(data.toString());
-			if(future) {
+			if (future) {
 				return future.throw(error);
 			} else {
-				throw(error);
+				throw (error);
 			}
 		});
 
 		result.on("error", (err: Error) => {
-			if(future) {
+			if (future) {
 				return future.throw(err);
 			} else {
-				throw(err);
+				throw (err);
 			}
 		});
 
 		result.on("close", (exitCode: any) => {
 			fiberBootstrap.run(() => {
 				this.checkCurrentData(adbData).wait();
-				if(future) {
+				if (future) {
 					future.return();
 				}
 			});
@@ -87,7 +79,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 	private checkCurrentData(result: any): IFuture<void> {
 		return (() => {
 			let currentDevices: IAdbAndroidDeviceInfo[] = result.toString().split(EOL).slice(1)
-				.filter( (element:string) => !helpers.isNullOrWhitespace(element) )
+				.filter((element: string) => !helpers.isNullOrWhitespace(element))
 				.map((element: string) => {
 					// http://developer.android.com/tools/help/adb.html#devicestatus
 					let [identifier, status] = element.split('\t');
@@ -110,7 +102,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 	}
 
 	public ensureAdbServerStarted(): IFuture<any> {
-		return this.$childProcess.spawnFromEvent(this.pathToAdb, ["start-server"], "close");
+		return this.$adb.executeCommand(["start-server"]);
 	}
 }
 $injector.register("androidDeviceDiscovery", AndroidDeviceDiscovery);

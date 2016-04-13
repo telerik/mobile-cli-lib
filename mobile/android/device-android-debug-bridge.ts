@@ -18,21 +18,9 @@ export class DeviceAndroidDebugBridge extends AndroidDebugBridge implements Mobi
 		super($childProcess, $errors, $logger, $staticConfig, $androidDebugBridgeResultHandler);
 	}
 
-	public executeShellCommand(args: string[], fromEvent?: string): IFuture<any> {
-		return (() => {
-			let event = fromEvent || "close";
-			args.unshift("shell");
-			let shellCommand = this.composeCommand(args).wait();
-			let result: any = this.$childProcess.spawnFromEvent(shellCommand.command, shellCommand.args, event, undefined, { throwError: false }).wait();
-
-			let errors = this.$androidDebugBridgeResultHandler.checkForErrors(result);
-
-			if (errors && errors.length > 0) {
-				this.$androidDebugBridgeResultHandler.handleErrors(errors);
-			}
-
-			return result.stdout;
-		}).future<any>()();
+	public executeShellCommand(args: string[], options?: Mobile.IAndroidDebugBridgeCommandOptions): IFuture<any> {
+		args.unshift("shell");
+		return super.executeCommand(args, options);
 	}
 
 	public sendBroadcastToDevice(action: string, extras: IStringDictionary = {}): IFuture<number> {

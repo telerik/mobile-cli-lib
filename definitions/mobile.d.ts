@@ -212,12 +212,19 @@ declare module Mobile {
 		createFileOnDevice?(deviceFilePath: string, fileContent: string): IFuture<void>;
 	}
 
+	interface IAndroidDebugBridgeCommandOptions {
+		fromEvent?: string,
+		returnChildProcess?: boolean,
+		treatErrorsAsWarnings?: boolean,
+		childProcessOptions?: any
+	}
+
 	interface IAndroidDebugBridge {
-		executeCommand(args: string[], fromEvent?: string): IFuture<any>;
+		executeCommand(args: string[], options?: IAndroidDebugBridgeCommandOptions): IFuture<any>;
 	}
 
 	interface IDeviceAndroidDebugBridge extends IAndroidDebugBridge {
-		executeShellCommand(args: string[], fromEvent?: string): IFuture<any>;
+		executeShellCommand(args: string[], options?: IAndroidDebugBridgeCommandOptions): IFuture<any>;
 		sendBroadcastToDevice(action: string, extras?: IStringDictionary): IFuture<number>;
 	}
 
@@ -573,6 +580,6 @@ declare module Mobile {
 		 * @param {IAndroidDebugBridgeError[]} errors The Android debug bridge result errors.
 		 * @return {void}.
 		 */
-		handleErrors(errors: IAndroidDebugBridgeError[]): void;
+		handleErrors(errors: IAndroidDebugBridgeError[], treatErrorsAsWarnings?: boolean): void;
 	}
 }

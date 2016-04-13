@@ -229,17 +229,27 @@ export class AndroidDebugBridgeResultHandler implements Mobile.IAndroidDebugBrid
 	public checkForErrors(adbResult: any): Mobile.IAndroidDebugBridgeError[] {
 		let errors: Mobile.IAndroidDebugBridgeError[] = [];
 
-		_.each(AndroidDebugBridgeResultHandler.ANDROID_DEBUG_BRIDGE_ERRORS, (error: Mobile.IAndroidDebugBridgeError) => {
-			if (adbResult.stdout.indexOf(error.name) >= 0 ||
-				adbResult.stderr.indexOf(error.name) >= 0) {
-				errors.push(error);
+		if (adbResult) {
+			if (_.isArray(adbResult)) {
+				_.each(AndroidDebugBridgeResultHandler.ANDROID_DEBUG_BRIDGE_ERRORS, (error: Mobile.IAndroidDebugBridgeError) => {
+					if (_.indexOf(adbResult, error.name) >= 0) {
+						errors.push(error);
+					}
+				});
+			} else {
+				_.each(AndroidDebugBridgeResultHandler.ANDROID_DEBUG_BRIDGE_ERRORS, (error: Mobile.IAndroidDebugBridgeError) => {
+					if ((adbResult.stdout && adbResult.stdout.indexOf(error.name) >= 0) ||
+						(adbResult.stderr && adbResult.stderr.indexOf(error.name) >= 0)) {
+						errors.push(error);
+					}
+				});
 			}
-		});
+		}
 
 		return errors;
 	}
 
-	public handleErrors(errors: Mobile.IAndroidDebugBridgeError[]): void {
+	public handleErrors(errors: Mobile.IAndroidDebugBridgeError[], treatErrorsAsWarnings?: boolean): void {
 		_.each(errors, (error: Mobile.IAndroidDebugBridgeError) => {
 			this.$logger.trace(`Error name: ${error.name} result code: ${error.resultCode}`);
 		});
@@ -248,7 +258,11 @@ export class AndroidDebugBridgeResultHandler implements Mobile.IAndroidDebugBrid
 			.join(EOL)
 			.toString();
 
-		this.$errors.failWithoutHelp(errorMessages);
+		if (treatErrorsAsWarnings) {
+			this.$logger.warn(errorMessages);
+		} else {
+			this.$errors.failWithoutHelp(errorMessages);
+		}
 	}
 }
 

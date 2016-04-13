@@ -33,7 +33,8 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 	}
 
 	public uninstallApplication(appIdentifier: string): IFuture<void> {
-		return this.adb.executeShellCommand(["pm", "uninstall", `${appIdentifier}`]);
+		// Need to set the treatErrorsAsWarnings to true because when using tns run command if the application is not installed on the device it will throw error
+		return this.adb.executeShellCommand(["pm", "uninstall", `${appIdentifier}`], {treatErrorsAsWarnings: true});
 	}
 
 	public startApplication(appIdentifier: string): IFuture<void> {

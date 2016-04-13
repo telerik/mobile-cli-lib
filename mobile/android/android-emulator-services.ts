@@ -9,6 +9,7 @@ import * as osenv from "osenv";
 import * as path from "path";
 import * as helpers from "../../helpers";
 import * as net from "net";
+import {DeviceAndroidDebugBridge} from "./device-android-debug-bridge";
 
 class VirtualMachine {
 	constructor(public name: string, public identifier: string) { }
@@ -32,16 +33,6 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	private adbFilePath: string;
 	private _pathToEmulatorExecutable: string;
 
-	private get pathToEmulatorExecutable(): string {
-		if (!this._pathToEmulatorExecutable) {
-			let androidHome = process.env.ANDROID_HOME;
-			let emulatorExecutableName = "emulator";
-			this._pathToEmulatorExecutable = androidHome ? path.join(androidHome, "tools", emulatorExecutableName) : emulatorExecutableName;
-		}
-
-		return this._pathToEmulatorExecutable;
-	}
-
 	constructor(private $logger: ILogger,
 		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
 		private $errors: IErrors,
@@ -51,9 +42,20 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $logcatHelper: Mobile.ILogcatHelper,
 		private $options: ICommonOptions,
-		private $utils: IUtils) {
+		private $utils: IUtils,
+		private $injector: IInjector) {
 		iconv.extendNodeEncodings();
 		this.adbFilePath = this.$staticConfig.getAdbFilePath().wait();
+	}
+
+	private get pathToEmulatorExecutable(): string {
+		if (!this._pathToEmulatorExecutable) {
+			let androidHome = process.env.ANDROID_HOME;
+			let emulatorExecutableName = "emulator";
+			this._pathToEmulatorExecutable = androidHome ? path.join(androidHome, "tools", emulatorExecutableName) : emulatorExecutableName;
+		}
+
+		return this._pathToEmulatorExecutable;
 	}
 
 	public getEmulatorId(): IFuture<string> {
@@ -75,36 +77,6 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 				this.checkGenymotionConfiguration().wait();
 			}
 		}).future<void>()();
-	}
-
-	private checkAndroidSDKConfiguration(): IFuture<void> {
-		return (() => {
-			try {
-				this.$childProcess.tryExecuteApplication(this.pathToEmulatorExecutable, ['-help'], "exit", AndroidEmulatorServices.MISSING_SDK_MESSAGE).wait();
-			} catch (err) {
-				this.$logger.trace(`Error while checking Android SDK configuration: ${err}`);
-				this.$errors.failWithoutHelp("Android SDK is not configured properly. Make sure you have added tools and platform-tools to your PATH environment variable.");
-			}
-		}).future<void>()();
-	}
-
-	private checkGenymotionConfiguration(): IFuture<void> {
-		return (() => {
-			try {
-				let condition = (childProcess: any) => childProcess.stderr && !_.startsWith(childProcess.stderr, "Usage:");
-				this.$childProcess.tryExecuteApplication("player", [], "exit", AndroidEmulatorServices.MISSING_GENYMOTION_MESSAGE, condition).wait();
-			} catch (err) {
-				this.$logger.trace(`Error while checking Genymotion configuration: ${err}`);
-				this.$errors.failWithoutHelp("Genymotion is not configured properly. Make sure you have added its installation directory to your PATH environment variable.");
-			}
-		}).future<void>()();
-	}
-
-	private getEmulatorImage(): IFuture<string> {
-		return (() => {
-			let image = this.$options.avd || this.$options.geny || this.getBestFit().wait();
-			return image;
-		}).future<string>()();
 	}
 
 	public checkAvailability(): IFuture<void> {
@@ -149,11 +121,46 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		}).future<void>()();
 	}
 
+	private checkAndroidSDKConfiguration(): IFuture<void> {
+		return (() => {
+			try {
+				this.$childProcess.tryExecuteApplication(this.pathToEmulatorExecutable, ['-help'], "exit", AndroidEmulatorServices.MISSING_SDK_MESSAGE).wait();
+			} catch (err) {
+				this.$logger.trace(`Error while checking Android SDK configuration: ${err}`);
+				this.$errors.failWithoutHelp("Android SDK is not configured properly. Make sure you have added tools and platform-tools to your PATH environment variable.");
+			}
+		}).future<void>()();
+	}
+
+	private getDeviceAndroidDebugBridge(deviceIdentifier: string): Mobile.IDeviceAndroidDebugBridge {
+		return this.$injector.resolve(DeviceAndroidDebugBridge, { identifier: deviceIdentifier });
+	}
+
+	private checkGenymotionConfiguration(): IFuture<void> {
+		return (() => {
+			try {
+				let condition = (childProcess: any) => childProcess.stderr && !_.startsWith(childProcess.stderr, "Usage:");
+				this.$childProcess.tryExecuteApplication("player", [], "exit", AndroidEmulatorServices.MISSING_GENYMOTION_MESSAGE, condition).wait();
+			} catch (err) {
+				this.$logger.trace(`Error while checking Genymotion configuration: ${err}`);
+				this.$errors.failWithoutHelp("Genymotion is not configured properly. Make sure you have added its installation directory to your PATH environment variable.");
+			}
+		}).future<void>()();
+	}
+
+	private getEmulatorImage(): IFuture<string> {
+		return (() => {
+			let image = this.$options.avd || this.$options.geny || this.getBestFit().wait();
+			return image;
+		}).future<string>()();
+	}
+
 	private runApplicationOnEmulatorCore(app: string, appId: string, emulatorId: string): IFuture<void> {
 		return (() => {
 			// install the app
 			this.$logger.info("installing %s through adb", app);
-			let childProcess = this.$childProcess.spawn(this.adbFilePath, ["-s", emulatorId, 'install', '-r', app]);
+			let adb = this.getDeviceAndroidDebugBridge(emulatorId);
+			let childProcess = adb.executeCommand(["install", "-r", app], { returnChildProcess: true }).wait();
 			this.$fs.futureFromEvent(childProcess, "close").wait();
 
 			// unlock screen again in cases when the installation is slow
@@ -161,8 +168,12 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 
 			// run the installed app
 			this.$logger.info("running %s through adb", app);
-			childProcess = this.$childProcess.spawn(this.adbFilePath, ["-s", emulatorId, 'shell', 'am', 'start', '-S', appId + "/" + this.$staticConfig.START_PACKAGE_ACTIVITY_NAME],
-				{ stdio: "ignore", detached: true });
+
+			let androidDebugBridgeCommandOptions: Mobile.IAndroidDebugBridgeCommandOptions = {
+				childProcessOptions: { stdio: "ignore", detached: true },
+				returnChildProcess: true
+			};
+			childProcess = adb.executeShellCommand(["am", "start", "-S", appId + "/" + this.$staticConfig.START_PACKAGE_ACTIVITY_NAME], androidDebugBridgeCommandOptions).wait();
 			this.$fs.futureFromEvent(childProcess, "close").wait();
 
 			if (!this.$options.justlaunch) {
@@ -172,7 +183,8 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	}
 
 	private unlockScreen(emulatorId: string): IFuture<void> {
-		let childProcess = this.$childProcess.spawn(this.adbFilePath, ["-s", emulatorId, "shell", "input", "keyevent", "82"]);
+		let adb = this.getDeviceAndroidDebugBridge(emulatorId);
+		let childProcess = adb.executeShellCommand(["input", "keyevent", "82"], { returnChildProcess: true }).wait();
 		return this.$fs.futureFromEvent(childProcess, "close");
 	}
 

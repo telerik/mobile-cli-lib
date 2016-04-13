@@ -13,22 +13,36 @@ export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 		protected $staticConfig: Config.IStaticConfig,
 		protected $androidDebugBridgeResultHandler: Mobile.IAndroidDebugBridgeResultHandler) { }
 
-	public executeCommand(args: string[], fromEvent?: string): IFuture<any> {
+	public executeCommand(args: string[], options?: Mobile.IAndroidDebugBridgeCommandOptions): IFuture<any> {
 		return (() => {
-			let event = fromEvent || "close";
+			let event = "close";
 			let command = this.composeCommand(args).wait();
+			let treatErrorsAsWarnings = false;
+			let childProcessOptions: any = undefined;
+
+			if (options) {
+				event = options.fromEvent || event;
+				treatErrorsAsWarnings = options.treatErrorsAsWarnings;
+				childProcessOptions = options.childProcessOptions;
+
+				if (options.returnChildProcess) {
+					return this.$childProcess.spawn(command.command, command.args);
+				}
+			}
+
 			// If adb -s <invalid device id> install <smth> is executed the childProcess won't get any response
 			// because the adb will be waiting for valid device and will not send close or exit event.
 			// For example `adb -s <invalid device id> install <smth>` throws error 'error: device \'030939f508e6c773\' not found\r\n' exitCode 4294967295
-			let result: any = this.$childProcess.spawnFromEvent(command.command, command.args, event, undefined, { throwError: false }).wait();
+			let result: any = this.$childProcess.spawnFromEvent(command.command, command.args, event, childProcessOptions, { throwError: false }).wait();
 
 			let errors = this.$androidDebugBridgeResultHandler.checkForErrors(result);
 
 			if (errors && errors.length > 0) {
-				this.$androidDebugBridgeResultHandler.handleErrors(errors);
+				this.$androidDebugBridgeResultHandler.handleErrors(errors, treatErrorsAsWarnings);
 			}
 
-			return result.stdout;
+			// Some adb commands returns array of strings instead of object with stdout and stderr. (adb start-server)
+			return result.stdout || result;
 		}).future<any>()();
 	}
 
