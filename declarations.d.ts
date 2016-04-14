@@ -648,6 +648,7 @@ interface ICommonOptions {
 	default: Boolean;
 	release: boolean;
 	count: number;
+	hooks: boolean;
 }
 
 interface IYargArgv extends IDictionary<any> {
