@@ -3,7 +3,6 @@
 
 require("./appbuilder-bootstrap");
 $injector.require("messages", "./messages/messages");
-$injector.require("logger", "./appbuilder/proton-logger");
 
 import Future = require("fibers/future");
 import {OptionsBase} from "../options";
@@ -26,8 +25,8 @@ $injector.register("emulatorSettingsService", {
 	}
 });
 
+$injector.require("logger", "./logger");
 // When debugging uncomment the lines below and comment the line #6 (requiring logger).
-// $injector.require("logger", "./logger");
 // $injector.resolve("logger").setLevel("TRACE");
 
 // Mock as it is used in LiveSync logic to deploy on devices.
