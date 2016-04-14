@@ -76,6 +76,12 @@ export class DevicesService implements Mobile.IDevicesService {
 		return _.map(deviceIdentifiers, deviceIdentifier => this.isApplicationInstalledOnDevice(deviceIdentifier, appIdentifier));
 	}
 
+	@exportedPromise("devicesService")
+	public isLiveSyncSupportedForApplication(deviceIdentifiers: string[], appIdentifier: string): IFuture<boolean>[] {
+		this.$logger.trace(`Called isLiveSyncSupportedForApplication for identifiers ${deviceIdentifiers}. AppIdentifier is ${appIdentifier}.`);
+		return _.map(deviceIdentifiers, deviceIdentifier => this.isLiveSyncSupportedForApplicationOnDevice(deviceIdentifier, appIdentifier));
+	}
+
 	public getDeviceInstances(): Mobile.IDevice[] {
 		return _.values(this._devices);
 	}
@@ -427,12 +433,19 @@ export class DevicesService implements Mobile.IDevicesService {
 		}
 
 		return this.executeOnAllConnectedDevices(action, canExecute);
-}
+	}
 
 	private isApplicationInstalledOnDevice(deviceIdentifier: string, appIdentifier: string): IFuture<boolean> {
 		return ((): boolean => {
 			let device = this.getDeviceByIdentifier(deviceIdentifier);
 			return device.applicationManager.isApplicationInstalled(appIdentifier).wait();
+		}).future<boolean>()();
+	}
+
+	private isLiveSyncSupportedForApplicationOnDevice(deviceIdentifier: string, appIdentifier: string): IFuture<boolean> {
+		return ((): boolean => {
+			let device = this.getDeviceByIdentifier(deviceIdentifier);
+			return device.applicationManager.isLiveSyncSupported(appIdentifier).wait();
 		}).future<boolean>()();
 	}
 }

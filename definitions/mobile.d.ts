@@ -192,6 +192,13 @@ declare module Mobile {
 		restartApplication(appIdentifier: string, bundleExecutable?: string): IFuture<void>;
 		canStartApplication(): boolean;
 		checkForApplicationUpdates(): IFuture<void>;
+		isLiveSyncSupported(appIdentifier: string): IFuture<boolean>;
+		getApplicationsLiveSyncSupportedStatus(newApplications: string[]): IFuture<void>;
+	}
+
+	interface IApplicationLiveSyncStatus {
+		applicationIdentifier: string;
+		isLiveSyncSupported: boolean;
 	}
 
 	interface IDeviceFileSystem {

@@ -230,7 +230,8 @@ export class InstallationProxyClient {
 
 	constructor(private device: Mobile.IiOSDevice,
 		private $logger: ILogger,
-		private $injector: IInjector) { }
+		private $injector: IInjector,
+		private $errors: IErrors) { }
 
 	public deployApplication(packageFile: string) : IFuture<void>  {
 		return(() => {
@@ -247,6 +248,22 @@ export class InstallationProxyClient {
 			});
 			this.plistService.receiveMessage().wait();
 		}).future<void>()();
+	}
+
+	public sendMessage(message: any): IFuture<any> {
+		return (() => {
+			let service = this.device.startService(MobileServices.INSTALLATION_PROXY);
+			let plistService = this.$injector.resolve(iOSCore.PlistService, { service: service,  format: iOSCore.CoreTypes.kCFPropertyListBinaryFormat_v1_0 });
+
+			plistService.sendMessage(message);
+
+			let response = plistService.receiveMessage().wait();
+			if(response.Error) {
+				this.$errors.failWithoutHelp(response.Error);
+			}
+
+			return response;
+		}).future<any>()();
 	}
 
 	public closeSocket() {

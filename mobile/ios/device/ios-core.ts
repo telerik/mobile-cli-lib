@@ -695,15 +695,17 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 		});
 	}
 
-	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData> {
+	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData | Mobile.IiOSSocketResponseData[]> {
 		return (() => {
-			let message = this.receiveMessageCore();
 			if(this.format === CoreTypes.kCFPropertyListXMLFormat_v1_0) {
-				let reply = plist.parse(message);
-				return reply;
+				let message = this.receiveMessageCore();
+				return plist.parse(message.toString());
 			}
 
-			// TODO: add parsing for binary plists
+			if(this.format === CoreTypes.kCFPropertyListBinaryFormat_v1_0) {
+				return this.receiveBinaryMessage();
+			}
+
 			return null;
 		}).future<Mobile.IiOSSocketResponseData>()();
 	}
@@ -753,26 +755,49 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 		this.$errors.verifyHeap("socket close");
 	}
 
-	private receiveMessageCore(): string {
+	private receiveBinaryMessage(): Mobile.IiOSSocketResponseData[] {
+		let result: Mobile.IiOSSocketResponseData[] = [];
+		while(true) {
+			let partialReply = this.receiveMessageCore();
+			if(!partialReply.length) {
+				break;
+			}
+
+			let currentResult = bplistParser.parseBuffer(partialReply)[0];
+			if(currentResult.Status === "Complete" || !currentResult.Status) {
+				break;
+			}
+
+			if(currentResult.Error) {
+				throw new Error(currentResult.Error);
+			}
+
+			result = result.concat(currentResult);
+			this.$errors.verifyHeap("receiveMessage");
+		}
+
+		return result;
+	}
+
+	private receiveMessageCore(): NodeBuffer {
 		let data = this.read(4);
-		let reply = "";
+		let reply = new Buffer(0);
 
 		if (data !== null && data.length === 4) {
-			let l = bufferpack.unpack(">i", data)[0];
-			let left = l;
-			while (left > 0) {
-				let r = this.read(left);
-				if (r === null) {
+			let bufferLength = bufferpack.unpack(">i", data)[0];
+			let remainingSymbols = bufferLength;
+			while (remainingSymbols > 0) {
+				let currentBuffer = this.read(remainingSymbols);
+				if (currentBuffer === null) {
 					this.$errors.fail("Unable to read reply");
 				}
-				reply += r;
-				left -= r.length;
+				reply = Buffer.concat([reply, currentBuffer]);
+				remainingSymbols -= currentBuffer.length;
 			}
 		}
 
-		let result = reply.toString();
 		this.$errors.verifyHeap("receiveMessage");
-		return result;
+		return reply;
 	}
 
 	private sendCore(data: NodeBuffer): number {
@@ -782,33 +807,49 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 	}
 
 	private createPlist(data: IDictionary<any>) : {} {
-		let keys = _.keys(data);
-		let values = _.values(data);
-		let plistData: {type:string; value:any} = {type: "dict", value: {}};
-
-		for(let i=0; i<keys.length; i++) {
-			let type = "";
-			let value: any;
-			if(values[i] instanceof Buffer) {
-				type = "data";
-				value = values[i].toString("base64");
-			} else if(values[i] instanceof Object) {
-				type = "dict";
-				value = {};
-			} else  if(typeof(values[i]) === "number" ) {
-				type = "integer";
-				value = values[i];
-			} else {
-				type = "string";
-				value = values[i];
-			}
-
-			plistData.value[keys[i]] = {type: type, value: value};
-		}
+		let plistData: {type:string; value:any} = {
+			type: "dict", value: this.getDataFromObject(data)
+		};
 
 		this.$logger.trace("created plist: '%s'", plistData.toString());
 
 		return plistData;
+	}
+
+	private getDataFromObject(data: any): any {
+		let keys = _.keys(data);
+		let values = _.values(data);
+		let plistData: any = {};
+		for(let i = 0; i < keys.length; i++) {
+			plistData[keys[i]] = this.parseValue(values[i]);
+		}
+
+		return plistData;
+	}
+
+	private parseValue(data: any): any {
+		let type = "",
+			value: any;
+
+		if(data instanceof Buffer) {
+			type = "data";
+			value = data.toString("base64");
+		} else if (data instanceof Array) {
+			type = "array";
+			let objs = _.map(data, v => this.parseValue(v));
+			value = objs;
+		} else if(data instanceof Object) {
+			type = "dict";
+			value = this.getDataFromObject(data);
+		} else if(typeof(data) === "number" ) {
+			type = "integer";
+			value = data;
+		} else {
+			type = "string";
+			value = data;
+		}
+
+		return { type: type, value: value };
 	}
 }
 
@@ -835,8 +876,9 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 		this.socket = new net.Socket({ fd: service });
 	}
 
-	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData> {
+	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData|Mobile.IiOSSocketResponseData[]> {
 		let result = new Future<Mobile.IiOSSocketResponseData>();
+		let messages: Mobile.IiOSSocketResponseData[] = [];
 
 		this.socket
 			.on("data", (data: NodeBuffer) => {
@@ -887,6 +929,8 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 													if (!result.isResolved()) {
 														result.return(message);
 													}
+												} else {
+													messages.push(message);
 												}
 
 												let status = message[0].Status;
