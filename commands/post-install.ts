@@ -28,7 +28,7 @@ export class PostInstallCommand implements ICommand {
 
 			this.$htmlHelpService.generateHtmlPages().wait();
 
-			let doctorResult = this.$doctorService.printWarnings({ trackResult: false });
+			let doctorResult = this.$doctorService.printWarnings({ trackResult: false }).wait();
 			// Explicitly ask for confirmation of usage-reporting:
 			this.$analyticsService.checkConsent().wait();
 

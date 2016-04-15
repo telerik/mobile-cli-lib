@@ -18,7 +18,7 @@ export class DoctorCommand implements ICommand {
 
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
-			let warningsPrinted = this.$doctorService.printWarnings();
+			let warningsPrinted = this.$doctorService.printWarnings().wait();
 			if (warningsPrinted) {
 				let client = this.$staticConfig.CLIENT_NAME_ALIAS || this.$staticConfig.CLIENT_NAME;
 				this.$logger.out(`These warnings are just used to help the ${client} maintainers with debugging if you file an issue.`.bold
