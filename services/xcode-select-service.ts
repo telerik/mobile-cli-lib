@@ -4,9 +4,12 @@
 import * as path from "path";
 
 export class XcodeSelectService implements IXcodeSelectService {
+	private _xcodeVerionCache: IVersionData;
+
 	constructor(private $childProcess: IChildProcess,
 		private $errors: IErrors,
-		private $hostInfo: IHostInfo) {
+		private $hostInfo: IHostInfo,
+		private $sysInfo: ISysInfo) {
 	}
 
 	public getDeveloperDirectoryPath(): IFuture<string> {
@@ -30,6 +33,25 @@ export class XcodeSelectService implements IXcodeSelectService {
 		return (() => {
 			return path.join(this.getDeveloperDirectoryPath().wait(), "..");
 		}).future<string>()();
+	}
+
+	public getXcodeVersion(): IFuture<IVersionData> {
+		return ((): IVersionData => {
+			if (!this._xcodeVerionCache) {
+				let sysInfo = this.$sysInfo.getSysInfo(path.join(__dirname, "..", "..", "..", "package.json")).wait(),
+					xcodeVersionMatch = sysInfo.xcodeVer.match(/Xcode (.*)/),
+					xcodeVersionGroup = xcodeVersionMatch && xcodeVersionMatch[1],
+					xcodeVersionSplit = xcodeVersionGroup && xcodeVersionGroup.split(".");
+
+					this._xcodeVerionCache = {
+						major: xcodeVersionSplit && xcodeVersionSplit[0],
+						minor: xcodeVersionSplit && xcodeVersionSplit[1],
+						patch: xcodeVersionSplit && xcodeVersionSplit[2]
+					};
+			}
+
+			return this._xcodeVerionCache;
+		}).future<IVersionData>()();
 	}
 }
 

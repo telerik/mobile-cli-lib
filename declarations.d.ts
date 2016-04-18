@@ -455,6 +455,11 @@ interface IXcodeSelectService {
 	 * @return {IFuture<string>}
 	 */
 	getDeveloperDirectoryPath(): IFuture<string>;
+	/**
+	 * Get version of the currently used Xcode.
+	 * @return {IFuture<IVersionData>}
+	 */
+	getXcodeVersion(): IFuture<IVersionData>;
 }
 
 interface ILiveSyncServiceBase {
@@ -1012,4 +1017,10 @@ interface ILiveSyncProvider {
 	 * Checks if the specified file can be fast synced.
 	 */
 	canExecuteFastSync(filePath: string, platform?: string): boolean;
+}
+
+interface IVersionData {
+	major: string;
+	minor: string;
+	patch: string;
 }
