@@ -455,6 +455,11 @@ interface IXcodeSelectService {
 	 * @return {IFuture<string>}
 	 */
 	getDeveloperDirectoryPath(): IFuture<string>;
+	/**
+	 * Get version of the currently used Xcode.
+	 * @return {IFuture<IVersionData>}
+	 */
+	getXcodeVersion(): IFuture<IVersionData>;
 }
 
 interface ILiveSyncServiceBase {
@@ -1032,3 +1037,10 @@ interface IVersionInformation {
 	 */
 	latestVersion: string;
 }
+
+interface IVersionData {
+	major: string;
+	minor: string;
+	patch: string;
+}
+
