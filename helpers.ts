@@ -69,11 +69,24 @@ export function getRelativeToRootPath(rootPath: string, filePath: string): strin
 	return relativeToRootPath;
 }
 
-export function versionCompare(version1: string, version2: string): number {
-	version1 = version1.split("-")[0];
-	version2 = version2.split("-")[0];
-	let v1array = _.map(version1.split("."), (x) => parseInt(x, 10)),
-		v2array = _.map(version2.split("."), (x) => parseInt(x, 10));
+function getVersionArray(version: string|IVersionData): number[] {
+	let result: number[] = [],
+		parseLambda = (x: string) => parseInt(x, 10),
+		filterLambda = (x: number) => !isNaN(x);
+
+	if (typeof version === "string") {
+		let versionString = <string>version.split("-")[0];
+		result = _.map(versionString.split("."), parseLambda);
+	} else {
+		result = _(version).map(parseLambda).filter(filterLambda).value();
+	}
+
+	return result;
+}
+
+export function versionCompare(version1: string|IVersionData, version2: string|IVersionData): number {
+	let v1array = getVersionArray(version1),
+		v2array = getVersionArray(version2);
 
 	if (v1array.length !== v2array.length) {
 		throw new Error("Version strings are not in the same format");
@@ -166,13 +179,13 @@ export function trimSymbol(str: string, symbol: string) {
 }
 
 // TODO: Use generic for predicatе predicate: (element: T|T[]) when TypeScript support this.
-export function getFuturesResults<T>(futures: IFuture<T|T[]>[], predicate: (element: any) => boolean): T[] {
+export function getFuturesResults<T>(futures: IFuture<T | T[]>[], predicate: (element: any) => boolean): T[] {
 	Future.wait(futures);
 	return _(futures)
-			.map(f => f.get())
-			.filter(predicate)
-			.flatten<T>()
-			.value();
+		.map(f => f.get())
+		.filter(predicate)
+		.flatten<T>()
+		.value();
 }
 
 export function appendZeroesToVersion(version: string, requiredVersionLength: number): string {
@@ -237,7 +250,7 @@ export function hook(commandName: string) {
 }
 
 export function isFuture(candidateFuture: any): boolean {
-	return !!(candidateFuture && typeof(candidateFuture.wait) === "function");
+	return !!(candidateFuture && typeof (candidateFuture.wait) === "function");
 }
 
 export function whenAny<T>(...futures: IFuture<T>[]): IFuture<IFuture<T>> {
@@ -310,13 +323,13 @@ export function annotate(fn: any) {
 		fnText: string,
 		argDecl: string[];
 
-	if(typeof fn === "function") {
-		if(!($inject = fn.$inject) || $inject.name !== fn.name) {
+	if (typeof fn === "function") {
+		if (!($inject = fn.$inject) || $inject.name !== fn.name) {
 			$inject = { args: [], name: "" };
 			fnText = fn.toString().replace(STRIP_COMMENTS, '');
 			argDecl = fnText.match(FN_NAME_AND_ARGS);
 			$inject.name = argDecl[1];
-			if(fn.length) {
+			if (fn.length) {
 				argDecl[2].split(FN_ARG_SPLIT).forEach((arg) => {
 					arg.replace(FN_ARG, (all, underscore, name) => $inject.args.push(name));
 				});

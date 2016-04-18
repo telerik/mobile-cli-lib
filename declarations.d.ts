@@ -455,6 +455,11 @@ interface IXcodeSelectService {
 	 * @return {IFuture<string>}
 	 */
 	getDeveloperDirectoryPath(): IFuture<string>;
+	/**
+	 * Get version of the currently used Xcode.
+	 * @return {IFuture<IVersionData>}
+	 */
+	getXcodeVersion(): IFuture<IVersionData>;
 }
 
 interface ILiveSyncServiceBase {
@@ -492,6 +497,7 @@ interface ILiveSyncData {
 	/** The path to a directory that is watched */
 	syncWorkingDirectory: string;
 	canExecuteFastSync?: boolean;
+	forceExecuteFullSync?: boolean;
 	excludedProjectDirsAndFiles?: string[];
 	/**
 	 * Describes if the livesync action can be executed on specified device.
@@ -561,6 +567,8 @@ interface ISysInfoData {
 	javacVersion: string;
 	/** pod version string, as returned by `pod --version` **/
 	cocoapodVer: string;
+	/** xcodeproj gem location, as returned by `which gem xcodeproj` **/
+	xcodeprojGemLocation: string;
 }
 
 interface ISysInfo {
@@ -724,9 +732,9 @@ interface IDoctorService {
 	/**
 	 * Verifies the host OS configuration and prints warnings to the users
 	 * @param configOptions: defines if the result should be tracked by Analytics
-	 * @returns {boolean} true if at least one warning was printed
+	 * @returns {IFuture<boolean>} true if at least one warning was printed
 	 */
-	printWarnings(configOptions?: { trackResult: boolean }): boolean;
+	printWarnings(configOptions?: { trackResult: boolean }): IFuture<boolean>;
 }
 
 interface IUtils {
@@ -1013,3 +1021,28 @@ interface ILiveSyncProvider {
 	 */
 	canExecuteFastSync(filePath: string, platform?: string): boolean;
 }
+
+/**
+ * Describes imformation about the version of component
+ */
+interface IVersionInformation {
+	/**
+	 * Component name.
+	 */
+	componentName: string;
+	/**
+	 * The current version of the component if available.
+	 */
+	currentVersion?: string;
+	/**
+	 * The latest available version of the component.
+	 */
+	latestVersion: string;
+}
+
+interface IVersionData {
+	major: string;
+	minor: string;
+	patch: string;
+}
+

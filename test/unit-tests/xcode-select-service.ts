@@ -9,12 +9,19 @@ import Future = require("fibers/future");
 
 let executionStopped = false;
 
-function createTestInjector(config: { xcodeSelectStdout: string, isDarwin: boolean }): IInjector {
+function createTestInjector(config: { xcodeSelectStdout: string, isDarwin: boolean, xcodeVersionOutput?: string }): IInjector {
 	let testInjector = new Yok();
 	testInjector.register("childProcess", {
 		spawnFromEvent: (command: string, args: string[], event: string): IFuture<any> => Future.fromResult({
 			stdout: config.xcodeSelectStdout
 		})
+	});
+	testInjector.register("sysInfo", {
+		getSysInfo: (pathToPackageJson: string, androidToolsInfo?: { pathToAdb: string, pathToAndroid: string }) => {
+			return Future.fromResult({
+				xcodeVer: config.xcodeVersionOutput
+			});
+		}
 	});
 	testInjector.register("errors", {
 		failWithoutHelp: (message: string, ...args: any[]): void => { executionStopped=true; }
@@ -48,6 +55,16 @@ describe("xcode-select-service", () => {
 		service = injector.resolve("$xcodeSelectService");
 
 		assert.deepEqual(service.getDeveloperDirectoryPath().wait(), defaultXcodeSelectStdout, "xcode-select service should get correct trimmed  path to Developer directory on Mac OS X.");
+	});
+
+	it("gets correct Xcode version", () => {
+		injector = createTestInjector({ xcodeSelectStdout: null, isDarwin: true, xcodeVersionOutput: "Xcode 7.3\nBuild version 7D175" });
+		service = injector.resolve("$xcodeSelectService");
+
+		let xcodeVersion = service.getXcodeVersion().wait();
+
+		assert.strictEqual(xcodeVersion.major, "7", "xcodeSelectService should get correct Xcode version");
+		assert.strictEqual(xcodeVersion.minor, "3", "xcodeSelectService should get correct Xcode version");
 	});
 
 	it("gets correct path to Developer directory on Mac OS X", () => {

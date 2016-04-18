@@ -53,6 +53,7 @@ export class SysInfoBase implements ISysInfo {
 
 				res.nodeGypVer = this.exec("node-gyp -v");
 				res.xcodeVer = this.$hostInfo.isDarwin ? this.exec("xcodebuild -version") : null;
+				res.xcodeprojGemLocation = this.$hostInfo.isDarwin ? this.exec("gem which xcodeproj") : null;
 				res.itunesInstalled = this.$iTunesValidator.getError().wait() === null;
 
 				res.cocoapodVer = this.getCocoapodVersion();
