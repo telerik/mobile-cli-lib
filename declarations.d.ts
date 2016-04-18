@@ -492,6 +492,7 @@ interface ILiveSyncData {
 	/** The path to a directory that is watched */
 	syncWorkingDirectory: string;
 	canExecuteFastSync?: boolean;
+	forceExecuteFullSync?: boolean;
 	excludedProjectDirsAndFiles?: string[];
 	/**
 	 * Describes if the livesync action can be executed on specified device.
