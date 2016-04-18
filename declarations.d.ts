@@ -724,9 +724,9 @@ interface IDoctorService {
 	/**
 	 * Verifies the host OS configuration and prints warnings to the users
 	 * @param configOptions: defines if the result should be tracked by Analytics
-	 * @returns {boolean} true if at least one warning was printed
+	 * @returns {IFuture<boolean>} true if at least one warning was printed
 	 */
-	printWarnings(configOptions?: { trackResult: boolean }): boolean;
+	printWarnings(configOptions?: { trackResult: boolean }): IFuture<boolean>;
 }
 
 interface IUtils {
@@ -1012,4 +1012,22 @@ interface ILiveSyncProvider {
 	 * Checks if the specified file can be fast synced.
 	 */
 	canExecuteFastSync(filePath: string, platform?: string): boolean;
+}
+
+/**
+ * Describes imformation about the version of component
+ */
+interface IVersionInformation {
+	/**
+	 * Component name.
+	 */
+	componentName: string;
+	/**
+	 * The current version of the component if available.
+	 */
+	currentVersion?: string;
+	/**
+	 * The latest available version of the component.
+	 */
+	latestVersion: string;
 }

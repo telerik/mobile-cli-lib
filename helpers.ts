@@ -166,13 +166,13 @@ export function trimSymbol(str: string, symbol: string) {
 }
 
 // TODO: Use generic for predicatе predicate: (element: T|T[]) when TypeScript support this.
-export function getFuturesResults<T>(futures: IFuture<T|T[]>[], predicate: (element: any) => boolean): T[] {
+export function getFuturesResults<T>(futures: IFuture<T | T[]>[], predicate: (element: any) => boolean): T[] {
 	Future.wait(futures);
 	return _(futures)
-			.map(f => f.get())
-			.filter(predicate)
-			.flatten<T>()
-			.value();
+		.map(f => f.get())
+		.filter(predicate)
+		.flatten<T>()
+		.value();
 }
 
 export function appendZeroesToVersion(version: string, requiredVersionLength: number): string {
@@ -237,7 +237,7 @@ export function hook(commandName: string) {
 }
 
 export function isFuture(candidateFuture: any): boolean {
-	return !!(candidateFuture && typeof(candidateFuture.wait) === "function");
+	return !!(candidateFuture && typeof (candidateFuture.wait) === "function");
 }
 
 export function whenAny<T>(...futures: IFuture<T>[]): IFuture<IFuture<T>> {
@@ -310,13 +310,13 @@ export function annotate(fn: any) {
 		fnText: string,
 		argDecl: string[];
 
-	if(typeof fn === "function") {
-		if(!($inject = fn.$inject) || $inject.name !== fn.name) {
+	if (typeof fn === "function") {
+		if (!($inject = fn.$inject) || $inject.name !== fn.name) {
 			$inject = { args: [], name: "" };
 			fnText = fn.toString().replace(STRIP_COMMENTS, '');
 			argDecl = fnText.match(FN_NAME_AND_ARGS);
 			$inject.name = argDecl[1];
-			if(fn.length) {
+			if (fn.length) {
 				argDecl[2].split(FN_ARG_SPLIT).forEach((arg) => {
 					arg.replace(FN_ARG, (all, underscore, name) => $inject.args.push(name));
 				});
