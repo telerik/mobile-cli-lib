@@ -69,11 +69,24 @@ export function getRelativeToRootPath(rootPath: string, filePath: string): strin
 	return relativeToRootPath;
 }
 
-export function versionCompare(version1: string, version2: string): number {
-	version1 = version1.split("-")[0];
-	version2 = version2.split("-")[0];
-	let v1array = _.map(version1.split("."), (x) => parseInt(x, 10)),
-		v2array = _.map(version2.split("."), (x) => parseInt(x, 10));
+function getVersionArray(version: string|IVersionData): number[] {
+	let result: number[] = [],
+		parseLambda = (x: string) => parseInt(x, 10),
+		filterLambda = (x: string) => x;
+
+	if (typeof version === "string") {
+		let versionString = <string>version.split("-")[0];
+		result = _.map(versionString.split("."), parseLambda);
+	} else {
+		result = _(version).map(parseLambda).filter(filterLambda).value();
+	}
+
+	return result;
+}
+
+export function versionCompare(version1: string|IVersionData, version2: string|IVersionData): number {
+	let v1array = getVersionArray(version1),
+		v2array = getVersionArray(version2);
 
 	if (v1array.length !== v2array.length) {
 		throw new Error("Version strings are not in the same format");
