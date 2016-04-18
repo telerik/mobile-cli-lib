@@ -26,8 +26,8 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $hostInfo: IHostInfo,
 		private $dispatcher: IFutureDispatcher) {
-			this.fileHashes = Object.create(null);
-		}
+		this.fileHashes = Object.create(null);
+	}
 
 	public getPlatform(platform?: string): IFuture<string> { // gets the platform and ensures that the devicesService is initialized
 		return (() => {
@@ -50,7 +50,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 	private isFileExcluded(filePath: string, excludedPatterns: string[]): boolean {
 		let isFileExcluded = false;
 		_.each(excludedPatterns, pattern => {
-			if(minimatch(filePath, pattern, {nocase: true})) {
+			if (minimatch(filePath, pattern, { nocase: true })) {
 				isFileExcluded = true;
 				return false;
 			}
@@ -61,12 +61,12 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 
 	private partialSync(data: ILiveSyncData): void {
 		let that = this;
-		gaze("**/*", { cwd: data.syncWorkingDirectory }, function(err: any, watcher: any) {
+		gaze("**/*", { cwd: data.syncWorkingDirectory }, function (err: any, watcher: any) {
 			this.on('all', (event: string, filePath: string) => {
 				fiberBootstrap.run(() => {
 					that.$dispatcher.dispatch(() => (() => {
 						try {
-							if(that.isFileExcluded(filePath, data.excludedProjectDirsAndFiles)) {
+							if (that.isFileExcluded(filePath, data.excludedProjectDirsAndFiles)) {
 								that.$logger.trace(`Skipping livesync for changed file ${filePath} as it is excluded in the patterns: ${data.excludedProjectDirsAndFiles.join(", ")}`);
 								return;
 							}
@@ -87,7 +87,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 								return;
 							}
 
-							data.canExecuteFastSync = that.$liveSyncProvider.canExecuteFastSync(filePath, data.platform);
+							data.canExecuteFastSync = data.forceExecuteFullSync ? false : that.$liveSyncProvider.canExecuteFastSync(filePath, data.platform);
 
 							if (event === "added" || event === "changed" || event === "renamed") {
 								that.syncAddedOrChangedFile(data, mappedFilePath).wait();
@@ -196,7 +196,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 								let localToDevicePaths = this.$projectFilesManager.createLocalToDevicePaths(deviceAppData, projectFilesPath, filesToSync, data.excludedProjectDirsAndFiles);
 								platformLiveSyncService.afterInstallApplicationAction(deviceAppData, localToDevicePaths).wait();
 							}
-							shouldRefreshApplication =  false;
+							shouldRefreshApplication = false;
 						}
 
 						// Restart application or reload page
@@ -240,7 +240,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 	}
 
 	private resolvePlatformLiveSyncService(platform: string, device: Mobile.IDevice): IPlatformLiveSyncService {
-		return this.$injector.resolve(this.$liveSyncProvider.platformSpecificLiveSyncServices[platform.toLowerCase()], {_device: device});
+		return this.$injector.resolve(this.$liveSyncProvider.platformSpecificLiveSyncServices[platform.toLowerCase()], { _device: device });
 	}
 
 	private getCanExecuteAction(platform: string, appIdentifier: string, canExecute: (dev: Mobile.IDevice) => boolean): (dev: Mobile.IDevice) => boolean {
