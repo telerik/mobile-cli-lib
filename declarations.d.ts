@@ -567,6 +567,8 @@ interface ISysInfoData {
 	javacVersion: string;
 	/** pod version string, as returned by `pod --version` **/
 	cocoapodVer: string;
+	/** xcodeproj gem location, as returned by `which gem xcodeproj` **/
+	xcodeprojGemLocation: string;
 }
 
 interface ISysInfo {
