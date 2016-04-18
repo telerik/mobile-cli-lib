@@ -72,7 +72,7 @@ export function getRelativeToRootPath(rootPath: string, filePath: string): strin
 function getVersionArray(version: string|IVersionData): number[] {
 	let result: number[] = [],
 		parseLambda = (x: string) => parseInt(x, 10),
-		filterLambda = (x: string) => x;
+		filterLambda = (x: number) => !isNaN(x);
 
 	if (typeof version === "string") {
 		let versionString = <string>version.split("-")[0];
