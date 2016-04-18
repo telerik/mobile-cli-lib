@@ -38,10 +38,10 @@ export class AnalyticsService implements IAnalyticsService {
 					let message = this.$analyticsSettingsService.getPrivacyPolicyLink();
 
 					let trackFeatureUsage = this.$prompter.confirm(message, () => true).wait();
-					this.setStatus(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, trackFeatureUsage, false).wait();
+					this.setStatus(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, trackFeatureUsage, true).wait();
 					if(!trackFeatureUsage) {
 						// In case user selects to disable feature tracking, disable the exceptions reporting as well.
-						this.setStatus(this.$staticConfig.ERROR_REPORT_SETTING_NAME, trackFeatureUsage, false).wait();
+						this.setStatus(this.$staticConfig.ERROR_REPORT_SETTING_NAME, trackFeatureUsage, true).wait();
 					}
 					this.restartEqatecMonitor(this.$staticConfig.ANALYTICS_FEATURE_USAGE_TRACKING_API_KEY).wait();
 					this.trackFeatureCore(`${this.acceptTrackFeatureSetting}.${!!trackFeatureUsage}`).wait();
