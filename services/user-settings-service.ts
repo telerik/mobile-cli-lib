@@ -24,14 +24,26 @@ export class UserSettingsServiceBase implements UserSettings.IUserSettingsServic
 		return this.saveSettings(settingObject);
 	}
 
-	private saveSettings(data: any): IFuture<void> {
+	public removeSetting(key: string): IFuture<void> {
+		return (() => {
+			this.loadUserSettingsFile().wait();
+
+			delete this.userSettingsData[key];
+			this.saveSettings().wait();
+		}).future<void>()();
+	}
+
+	private saveSettings(data?: any): IFuture<void> {
 		return(() => {
 			this.loadUserSettingsFile().wait();
 			this.userSettingsData = this.userSettingsData || {};
 
-			Object.keys(data).forEach(propertyName => {
-				this.userSettingsData[propertyName] = data[propertyName];
-			});
+			_(data)
+				.keys()
+				.each(propertyName => {
+					this.userSettingsData[propertyName] = data[propertyName];
+				})
+				.value();
 
 			this.$fs.writeJson(this.userSettingsFilePath, this.userSettingsData, "\t").wait();
 		}).future<void>()();
