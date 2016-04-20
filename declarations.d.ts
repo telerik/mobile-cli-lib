@@ -360,16 +360,18 @@ interface IAnalyticsSettingsService {
 	getPrivacyPolicyLink(): string;
 	/**
 	 * Gets current user sessions count.
+	 * @param {string} projectName The analytics project id for which the counter should be taken.
 	 * @return {number} Number of user sessions.
 	 */
-	getUserSessionsCount(): IFuture<number>;
+	getUserSessionsCount(projectName: string): IFuture<number>;
 
 	/**
 	 * Set the number of user sessions.
 	 * @param {number} count The number that will be set for user sessions.
+	 * @param {string} projectName The analytics project id for which the counter should be set.
 	 * @return {IFuture<void>}
 	 */
-	setUserSessionsCount(count: number): IFuture<void>;
+	setUserSessionsCount(count: number, projectName: string): IFuture<void>;
 }
 
 interface IHostCapabilities {
