@@ -160,8 +160,8 @@ export class AnalyticsService implements IAnalyticsService {
 			}
 
 			require("../vendor/EqatecMonitor.min");
-
-			let settings = global._eqatec.createSettings(analyticsProjectKey || this.$staticConfig.ANALYTICS_API_KEY);
+			analyticsProjectKey = analyticsProjectKey || this.$staticConfig.ANALYTICS_API_KEY;
+			let settings = global._eqatec.createSettings(analyticsProjectKey);
 			settings.useHttps = false;
 			settings.userAgent = this.getUserAgentString();
 			settings.version = this.$staticConfig.version;
@@ -183,9 +183,9 @@ export class AnalyticsService implements IAnalyticsService {
 
 			try {
 				this._eqatecMonitor.setUserID(this.$analyticsSettingsService.getUserId().wait());
-				let currentCount = this.$analyticsSettingsService.getUserSessionsCount().wait();
+				let currentCount = this.$analyticsSettingsService.getUserSessionsCount(analyticsProjectKey).wait();
 				// increment with 1 every time and persist the new value so next execution will be marked as new session
-				this.$analyticsSettingsService.setUserSessionsCount(++currentCount).wait();
+				this.$analyticsSettingsService.setUserSessionsCount(++currentCount, analyticsProjectKey).wait();
 				this._eqatecMonitor.setStartCount(currentCount);
 			} catch(e) {
 				// user not logged in. don't care.
