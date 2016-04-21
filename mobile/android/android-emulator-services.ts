@@ -24,16 +24,16 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	private static RUNNING_ANDROID_EMULATOR_REGEX = /^(emulator-\d+)\s+device$/;
 
 	private static MISSING_SDK_MESSAGE = "The Android SDK is not configured properly. " +
-		"Verify that you have installed the Android SDK and that you have configured it as described in System Requirements.";
+	"Verify that you have installed the Android SDK and that you have configured it as described in System Requirements.";
 	private static MISSING_GENYMOTION_MESSAGE = "Genymotion is not configured properly. " +
-		"Verify that you have installed Genymotion and that you have added its installation directory to your PATH environment variable.";
+	"Verify that you have installed Genymotion and that you have added its installation directory to your PATH environment variable.";
 
 	private endTimeEpoch: number;
 	private adbFilePath: string;
 	private _pathToEmulatorExecutable: string;
 
 	private get pathToEmulatorExecutable(): string {
-		if(!this._pathToEmulatorExecutable) {
+		if (!this._pathToEmulatorExecutable) {
 			let androidHome = process.env.ANDROID_HOME;
 			let emulatorExecutableName = "emulator";
 			this._pathToEmulatorExecutable = androidHome ? path.join(androidHome, "tools", emulatorExecutableName) : emulatorExecutableName;
@@ -59,7 +59,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	public getEmulatorId(): IFuture<string> {
 		return (() => {
 			let image = this.getEmulatorImage().wait();
-			if(!image) {
+			if (!image) {
 				this.$errors.fail("Could not find an emulator image to run your project.");
 			}
 
@@ -71,7 +71,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	public checkDependencies(): IFuture<void> {
 		return (() => {
 			this.checkAndroidSDKConfiguration().wait();
-			if(this.$options.geny) {
+			if (this.$options.geny) {
 				this.checkGenymotionConfiguration().wait();
 			}
 		}).future<void>()();
@@ -92,8 +92,8 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		return (() => {
 			try {
 				let condition = (childProcess: any) => childProcess.stderr && !_.startsWith(childProcess.stderr, "Usage:");
-				this.$childProcess.tryExecuteApplication("player", [], "exit",  AndroidEmulatorServices.MISSING_GENYMOTION_MESSAGE, condition).wait();
-			} catch(err) {
+				this.$childProcess.tryExecuteApplication("player", [], "exit", AndroidEmulatorServices.MISSING_GENYMOTION_MESSAGE, condition).wait();
+			} catch (err) {
 				this.$logger.trace(`Error while checking Genymotion configuration: ${err}`);
 				this.$errors.failWithoutHelp("Genymotion is not configured properly. Make sure you have added its installation directory to your PATH environment variable.");
 			}
@@ -110,7 +110,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	public checkAvailability(): IFuture<void> {
 		return (() => {
 			let platform = this.$devicePlatformsConstants.Android;
-			if(!this.$emulatorSettingsService.canStart(platform).wait()) {
+			if (!this.$emulatorSettingsService.canStart(platform).wait()) {
 				this.$errors.fail("The current project does not target Android and cannot be run in the Android emulator.");
 			}
 		}).future<void>()();
@@ -185,7 +185,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	private getRunningEmulatorId(image: string): IFuture<string> {
 		return ((): string => {
 			let runningEmulators = this.getRunningEmulators().wait();
-			if(runningEmulators.length === 0) {
+			if (runningEmulators.length === 0) {
 				return "";
 			}
 
@@ -209,7 +209,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	private getNameFromSDKEmulatorId(emulatorId: string): IFuture<string> {
 		let match = emulatorId.match(/^emulator-(\d+)/);
 		let portNumber: string;
-		if(match && match[1]) {
+		if (match && match[1]) {
 			portNumber = match[1];
 		} else {
 			return Future.fromResult("");
@@ -223,45 +223,64 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 
 		client.on('data', (data: any) => {
 			output += data.toString();
+
+			let name = this.getEmulatorNameFromClientOutput(output);
+			// old output should look like:
+			// Android Console: type 'help' for a list of commands
+			// OK
+			// <Name of image>
+			// OK
+
+			// new output should look like:
+			// Android Console: type 'help' for a list of commands
+			// OK
+			// a\u001b[K\u001b[Dav\u001b[K\u001b[D\u001b[Davd\u001b...
+			// <Name of image>
+			// OK
+
+			if (name && !future.isResolved()) {
+				future.return(name);
+			}
+
 			client.end();
 		});
-		client.on('end', () => {
-			//output should look like:
-			//Android Console: type 'help' for a list of commands
-			//OK
-			//<Name of image>
-			//OK
-			//
-			let name: string;
-			let foundOK = false;
-			let lines: string[] = output.split(EOL);
-			// find line between OK
-			_(lines).each((line: string) => {
-				if(foundOK) {
-					name = line.trim();
-					return false;
-				} else if(line.match(/^OK/)) {
-					foundOK = true;
-				}
-			}).value();
 
-			future.return(name);
-		});
 		return future;
+	}
+
+	private getEmulatorNameFromClientOutput(output: string): string {
+		let lines: string[] = output.split(EOL);
+		let name: string;
+
+		let firstIndexOfOk = _.indexOf(lines, "OK");
+
+		if (firstIndexOfOk < 0) {
+			return null;
+		}
+
+		let secondIndexOfOk = _.indexOf(lines, "OK", firstIndexOfOk + 1);
+
+		if (secondIndexOfOk < 0) {
+			return null;
+		}
+
+		name = lines[secondIndexOfOk - 1].trim();
+
+		return name;
 	}
 
 	private startEmulatorInstance(image: string): IFuture<string> {
 		return (() => {
 			let emulatorId = this.getRunningEmulatorId(image).wait();
 			this.endTimeEpoch = helpers.getCurrentEpochTime() + this.$utils.getMilliSecondsTimeout(AndroidEmulatorServices.TIMEOUT_SECONDS);
-			if(emulatorId) {
+			if (emulatorId) {
 				// If there's already a running instance of this image, we'll just deploy the app to it.
 				return emulatorId;
 			}
 
 			// have to start new emulator
 			this.$logger.info("Starting Android emulator with image %s", image);
-			if(this.$options.geny) {
+			if (this.$options.geny) {
 				//player is part of Genymotion, it should be part of the PATH.
 				this.$childProcess.spawn("player", ["--vm-name", image],
 					{ stdio: "ignore", detached: true }).unref();
@@ -273,9 +292,9 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 			let isInfiniteWait = this.$utils.getMilliSecondsTimeout(AndroidEmulatorServices.TIMEOUT_SECONDS) === 0;
 			let hasTimeLeft = helpers.getCurrentEpochTime() < this.endTimeEpoch;
 
-			while(hasTimeLeft || isInfiniteWait) {
+			while (hasTimeLeft || isInfiniteWait) {
 				emulatorId = this.getRunningEmulatorId(image).wait();
-				if(emulatorId) {
+				if (emulatorId) {
 					return emulatorId;
 				}
 
@@ -283,7 +302,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 				hasTimeLeft = helpers.getCurrentEpochTime() < this.endTimeEpoch;
 			}
 
-			if(!hasTimeLeft && !isInfiniteWait) {
+			if (!hasTimeLeft && !isInfiniteWait) {
 				this.$errors.fail(AndroidEmulatorServices.UNABLE_TO_START_EMULATOR_MESSAGE);
 			}
 
@@ -292,11 +311,11 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	}
 
 	private getRunningGenymotionEmulators(adbDevicesOutput: string[]): IFuture<string[]> {
-		return ((): string[]=> {
+		return ((): string[] => {
 			let futures = <IFuture<string>[]>(_(adbDevicesOutput).filter(r => !r.match(AndroidEmulatorServices.RUNNING_ANDROID_EMULATOR_REGEX))
 				.map(row => {
 					let match = row.match(/^(.+?)\s+device$/);
-					if(match && match[1]) {
+					if (match && match[1]) {
 						// possible genymotion emulator
 						let emulatorId = match[1];
 						return Future.fromResult(this.isGenymotionEmulator(emulatorId).wait() ? emulatorId : undefined);
@@ -314,12 +333,12 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	}
 
 	private getRunningAvdEmulators(adbDevicesOutput: string[]): IFuture<string[]> {
-		return ((): string[]=> {
+		return ((): string[] => {
 			let emulatorDevices: string[] = [];
 			_.each(adbDevicesOutput, (device: string) => {
 				let rx = device.match(AndroidEmulatorServices.RUNNING_ANDROID_EMULATOR_REGEX);
 
-				if(rx && rx[1]) {
+				if (rx && rx[1]) {
 					emulatorDevices.push(rx[1]);
 				}
 			});
@@ -393,23 +412,23 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 			let encoding = this.getAvdEncoding(avdFileName).wait();
 			let contents = this.$fs.readText(avdFileName, encoding).wait().split("\n");
 
-			avdInfo = _.reduce(contents, (result: Mobile.IAvdInfo, line:string) => {
-					let parsedLine = line.split("=");
-					let key = parsedLine[0];
-					switch(key) {
-						case "target":
-							result.target = parsedLine[1];
-							result.targetNum = this.readTargetNum(result.target);
-							break;
-						case "path": result.path = parsedLine[1]; break;
-						case "hw.device.name": result.device = parsedLine[1]; break;
-						case "abi.type": result.abi = parsedLine[1]; break;
-						case "skin.name": result.skin = parsedLine[1]; break;
-						case "sdcard.size": result.sdcard = parsedLine[1]; break;
-					}
-					return result;
-				},
-					avdInfo  || <Mobile.IAvdInfo>Object.create(null));
+			avdInfo = _.reduce(contents, (result: Mobile.IAvdInfo, line: string) => {
+				let parsedLine = line.split("=");
+				let key = parsedLine[0];
+				switch (key) {
+					case "target":
+						result.target = parsedLine[1];
+						result.targetNum = this.readTargetNum(result.target);
+						break;
+					case "path": result.path = parsedLine[1]; break;
+					case "hw.device.name": result.device = parsedLine[1]; break;
+					case "abi.type": result.abi = parsedLine[1]; break;
+					case "skin.name": result.skin = parsedLine[1]; break;
+					case "sdcard.size": result.sdcard = parsedLine[1]; break;
+				}
+				return result;
+			},
+				avdInfo || <Mobile.IAvdInfo>Object.create(null));
 			avdInfo.name = avdName;
 			return avdInfo;
 		}).future<Mobile.IAvdInfo>()();
@@ -443,7 +462,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 				contents = contents.split("\n", 1)[0];
 				if (contents.length > 0) {
 					let matches = contents.match(AndroidEmulatorServices.ENCODING_MASK);
-					if(matches) {
+					if (matches) {
 						encoding = matches[1];
 					}
 				}
@@ -462,7 +481,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 
 	private getAvds(): IFuture<string[]> {
 		return (() => {
-			let result:string[] = [];
+			let result: string[] = [];
 			if (this.$fs.exists(this.avdDir).wait()) {
 				let entries = this.$fs.readDirectory(this.avdDir).wait();
 				result = _.select(entries, (e: string) => e.match(AndroidEmulatorServices.INI_FILES_MASK) !== null)
@@ -477,10 +496,10 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 			this.$logger.printInfoMessageOnSameLine("Waiting for emulator device initialization...");
 
 			let isInfiniteWait = this.$utils.getMilliSecondsTimeout(AndroidEmulatorServices.TIMEOUT_SECONDS) === 0;
-			while(helpers.getCurrentEpochTime() < this.endTimeEpoch || isInfiniteWait) {
+			while (helpers.getCurrentEpochTime() < this.endTimeEpoch || isInfiniteWait) {
 				let isEmulatorBootCompleted = this.isEmulatorBootCompleted(emulatorId).wait();
 
-				if(isEmulatorBootCompleted) {
+				if (isEmulatorBootCompleted) {
 					this.$logger.printInfoMessageOnSameLine(EOL);
 					return;
 				}

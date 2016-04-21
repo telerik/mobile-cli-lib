@@ -14,8 +14,6 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase imple
 			super();
 		}
 
-	private deviceLoggingStarted = false;
-
 	public getInstalledApplications(): IFuture<string[]> {
 		return Future.fromResult(this.iosSim.getInstalledApplications(this.identifier));
 	}
@@ -31,8 +29,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase imple
 	public startApplication(appIdentifier: string): IFuture<void> {
 		return (() => {
 			let launchResult = this.iosSim.startApplication(this.identifier, appIdentifier).wait();
-			if (!this.$options.justlaunch && !this.deviceLoggingStarted) {
-				this.deviceLoggingStarted = true;
+			if (!this.$options.justlaunch) {
 				this.iosSim.printDeviceLog(this.identifier, launchResult);
 			}
 
