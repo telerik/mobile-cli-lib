@@ -26,6 +26,7 @@ declare module Config {
 		COMMAND_HELP_FILE_NAME: string;
 		RESOURCE_DIR_PATH: string;
 		PATH_TO_BOOTSTRAP: string;
+		INSTALLATION_SUCCESS_MESSAGE?: string;
 	}
 
 	interface IConfig {
