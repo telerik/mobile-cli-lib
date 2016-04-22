@@ -9,7 +9,8 @@ export class PostInstallCommand implements ICommand {
 		private $htmlHelpService: IHtmlHelpService,
 		private $options: ICommonOptions,
 		private $doctorService: IDoctorService,
-		private $analyticsService: IAnalyticsService) {
+		private $analyticsService: IAnalyticsService,
+		private $logger: ILogger) {
 	}
 
 	public disableAnalytics = true;
@@ -34,6 +35,12 @@ export class PostInstallCommand implements ICommand {
 
 			this.$commandsService.tryExecuteCommand("autocomplete", []).wait();
 			this.$analyticsService.track("InstallEnvironmentSetup", doctorResult ? "incorrect" : "correct").wait();
+
+			if(this.$staticConfig.INSTALLATION_SUCCESS_MESSAGE) {
+				// Make sure the success message is separated with at least one line from all other messages.
+				this.$logger.out();
+				this.$logger.printMarkdown(this.$staticConfig.INSTALLATION_SUCCESS_MESSAGE);
+			}
 		}).future<void>()();
 	}
 }
