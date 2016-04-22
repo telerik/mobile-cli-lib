@@ -249,7 +249,8 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	}
 
 	private getEmulatorNameFromClientOutput(output: string): string {
-		let lines: string[] = output.split(EOL);
+		// The lines should be trimmed after the split because the output has \r\n and when using split(EOL) on mac each line ends with \r.
+		let lines: string[] = _.map(output.split(EOL), (line: string) => line.trim());
 		let name: string;
 
 		let firstIndexOfOk = _.indexOf(lines, "OK");
