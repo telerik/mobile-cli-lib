@@ -9,7 +9,7 @@ export class XcodeSelectService implements IXcodeSelectService {
 	constructor(private $childProcess: IChildProcess,
 		private $errors: IErrors,
 		private $hostInfo: IHostInfo,
-		private $sysInfo: ISysInfo) {
+		private $sysInfoBase: ISysInfo) {
 	}
 
 	public getDeveloperDirectoryPath(): IFuture<string> {
@@ -38,7 +38,7 @@ export class XcodeSelectService implements IXcodeSelectService {
 	public getXcodeVersion(): IFuture<IVersionData> {
 		return ((): IVersionData => {
 			if (!this._xcodeVerionCache) {
-				let sysInfo = this.$sysInfo.getSysInfo(path.join(__dirname, "..", "..", "..", "package.json")).wait(),
+				let sysInfo = this.$sysInfoBase.getSysInfo(path.join(__dirname, "..", "..", "..", "package.json")).wait(),
 					xcodeVersionMatch = sysInfo.xcodeVer.match(/Xcode (.*)/),
 					xcodeVersionGroup = xcodeVersionMatch && xcodeVersionMatch[1],
 					xcodeVersionSplit = xcodeVersionGroup && xcodeVersionGroup.split(".");
