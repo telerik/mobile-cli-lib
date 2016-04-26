@@ -6,9 +6,10 @@ export class DeviceAppDataFactory implements Mobile.IDeviceAppDataFactory {
 		private $injector: IInjector,
 		private $options: ICommonOptions) { }
 
-	create<T>(appIdentifier: string, platform: string, device: Mobile.IDevice): T {
+	create<T>(appIdentifier: string, platform: string, device: Mobile.IDevice, liveSyncOptions?: { isForCompanionApp: boolean }): T {
 		let factoryRules = this.$deviceAppDataProvider.createFactoryRules();
-		let ctor = (<any>factoryRules[platform])[this.$options.companion ? "companion" : "vanilla"];
+		let isForCompanionApp = (liveSyncOptions && liveSyncOptions.isForCompanionApp) || this.$options.companion;
+		let ctor = (<any>factoryRules[platform])[isForCompanionApp ? "companion" : "vanilla"];
 		return this.$injector.resolve(ctor, { _appIdentifier: appIdentifier, device: device, platform: platform });
 	}
 }

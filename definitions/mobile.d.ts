@@ -116,7 +116,7 @@ declare module Mobile {
 	}
 
 	interface IDeviceAppDataFactory {
-		create<T extends Mobile.IDeviceAppData>(appIdentifier: string, platform: string, device: Mobile.IDevice): T;
+		create<T extends Mobile.IDeviceAppData>(appIdentifier: string, platform: string, device: Mobile.IDevice, liveSyncOptions?: { isForCompanionApp: boolean }): T;
 	}
 
 	interface IDeviceAppDataFactoryRule {

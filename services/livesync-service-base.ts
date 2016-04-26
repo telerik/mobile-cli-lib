@@ -162,62 +162,72 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		}).future<void>()();
 	}
 
+	public getSyncAction(data: ILiveSyncData, filesToSync?: string[], deviceFilesAction?: (device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>, liveSyncOptions?: { isForCompanionApp: boolean }): (device: Mobile.IDevice) => IFuture<void> {
+		let appIdentifier = data.appIdentifier;
+		let platform = data.platform;
+		let projectFilesPath = data.projectFilesPath;
+
+		let packageFilePath: string = null;
+
+		let action = (device: Mobile.IDevice): IFuture<void> => {
+			return (() => {
+				let shouldRefreshApplication = true;
+				let deviceAppData = this.$deviceAppDataFactory.create(appIdentifier, this.$mobileHelper.normalizePlatformName(platform), device, liveSyncOptions);
+				if (deviceAppData.isLiveSyncSupported().wait()) {
+					let platformLiveSyncService = this.resolvePlatformLiveSyncService(platform, device);
+
+					if (platformLiveSyncService.beforeLiveSyncAction) {
+						platformLiveSyncService.beforeLiveSyncAction(deviceAppData).wait();
+					}
+
+					// Not installed application
+					if (!device.applicationManager.isApplicationInstalled(appIdentifier).wait() && !this.$options.companion) {
+						this.$logger.warn(`The application with id "${appIdentifier}" is not installed on device with identifier ${device.deviceInfo.identifier}.`);
+						if (!packageFilePath) {
+							packageFilePath = this.$liveSyncProvider.buildForDevice(device).wait();
+						}
+						device.applicationManager.installApplication(packageFilePath).wait();
+						if (device.applicationManager.canStartApplication()) {
+							device.applicationManager.startApplication(appIdentifier).wait();
+						}
+
+						if (platformLiveSyncService.afterInstallApplicationAction) {
+							let localToDevicePaths = this.$projectFilesManager.createLocalToDevicePaths(deviceAppData, projectFilesPath, filesToSync, data.excludedProjectDirsAndFiles);
+							platformLiveSyncService.afterInstallApplicationAction(deviceAppData, localToDevicePaths).wait();
+						}
+						shouldRefreshApplication = false;
+					}
+
+					// Restart application or reload page
+					if (shouldRefreshApplication) {
+						// Transfer or remove files on device
+						let localToDevicePaths = this.$projectFilesManager.createLocalToDevicePaths(deviceAppData, projectFilesPath, filesToSync, data.excludedProjectDirsAndFiles);
+						if (deviceFilesAction) {
+							deviceFilesAction(device, localToDevicePaths).wait();
+						} else {
+							this.transferFiles(deviceAppData, localToDevicePaths, projectFilesPath, !filesToSync).wait();
+						}
+
+						this.$logger.info("Applying changes...");
+						platformLiveSyncService.refreshApplication(deviceAppData, localToDevicePaths, data.canExecuteFastSync).wait();
+						this.$logger.info(`Successfully synced application ${data.appIdentifier} on device ${device.deviceInfo.identifier}.`);
+					}
+				} else {
+					throw new Error(`LiveSync is not supported for device with ${device.deviceInfo.identifier}.`);
+				}
+			}).future<void>()();
+		};
+
+		return action;
+	}
+
 	private syncCore(data: ILiveSyncData, filesToSync?: string[], deviceFilesAction?: (device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>): IFuture<void> {
 		return (() => {
 			let appIdentifier = data.appIdentifier;
 			let platform = data.platform;
-			let projectFilesPath = data.projectFilesPath;
-
-			let packageFilePath: string = null;
-
-			let action = (device: Mobile.IDevice) => {
-				return (() => {
-					let shouldRefreshApplication = true;
-					let deviceAppData = this.$deviceAppDataFactory.create(appIdentifier, this.$mobileHelper.normalizePlatformName(platform), device);
-					if (deviceAppData.isLiveSyncSupported().wait()) {
-						let platformLiveSyncService = this.resolvePlatformLiveSyncService(platform, device);
-
-						if (platformLiveSyncService.beforeLiveSyncAction) {
-							platformLiveSyncService.beforeLiveSyncAction(deviceAppData).wait();
-						}
-
-						// Not installed application
-						if (!device.applicationManager.isApplicationInstalled(appIdentifier).wait() && !this.$options.companion) {
-							this.$logger.warn(`The application with id "${appIdentifier}" is not installed on device with identifier ${device.deviceInfo.identifier}.`);
-							if (!packageFilePath) {
-								packageFilePath = this.$liveSyncProvider.buildForDevice(device).wait();
-							}
-							device.applicationManager.reinstallApplication(appIdentifier, packageFilePath).wait();
-							if (device.applicationManager.canStartApplication()) {
-								device.applicationManager.startApplication(appIdentifier).wait();
-							}
-
-							if (platformLiveSyncService.afterInstallApplicationAction) {
-								let localToDevicePaths = this.$projectFilesManager.createLocalToDevicePaths(deviceAppData, projectFilesPath, filesToSync, data.excludedProjectDirsAndFiles);
-								platformLiveSyncService.afterInstallApplicationAction(deviceAppData, localToDevicePaths).wait();
-							}
-							shouldRefreshApplication = false;
-						}
-
-						// Restart application or reload page
-						if (shouldRefreshApplication) {
-							// Transfer or remove files on device
-							let localToDevicePaths = this.$projectFilesManager.createLocalToDevicePaths(deviceAppData, projectFilesPath, filesToSync, data.excludedProjectDirsAndFiles);
-							if (deviceFilesAction) {
-								deviceFilesAction(device, localToDevicePaths).wait();
-							} else {
-								this.transferFiles(deviceAppData, localToDevicePaths, projectFilesPath, !filesToSync).wait();
-							}
-
-							this.$logger.info("Applying changes...");
-							platformLiveSyncService.refreshApplication(deviceAppData, localToDevicePaths, data.canExecuteFastSync).wait();
-							this.$logger.info(`Successfully synced application ${data.appIdentifier} on device ${device.deviceInfo.identifier}.`);
-						}
-					}
-				}).future<void>()();
-			};
 
 			let canExecute = this.getCanExecuteAction(platform, appIdentifier, data.canExecute);
+			let action = this.getSyncAction(data, filesToSync, deviceFilesAction);
 
 			this.$devicesService.execute(action, canExecute).wait();
 		}).future<void>()();
@@ -243,7 +253,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		return this.$injector.resolve(this.$liveSyncProvider.platformSpecificLiveSyncServices[platform.toLowerCase()], { _device: device });
 	}
 
-	private getCanExecuteAction(platform: string, appIdentifier: string, canExecute: (dev: Mobile.IDevice) => boolean): (dev: Mobile.IDevice) => boolean {
+	public getCanExecuteAction(platform: string, appIdentifier: string, canExecute: (dev: Mobile.IDevice) => boolean): (dev: Mobile.IDevice) => boolean {
 		canExecute = canExecute || ((dev: Mobile.IDevice) => dev.deviceInfo.platform.toLowerCase() === platform.toLowerCase());
 		let finalCanExecute = canExecute;
 		if (this.$options.device) {
