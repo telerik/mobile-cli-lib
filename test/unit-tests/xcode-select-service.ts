@@ -16,7 +16,7 @@ function createTestInjector(config: { xcodeSelectStdout: string, isDarwin: boole
 			stdout: config.xcodeSelectStdout
 		})
 	});
-	testInjector.register("sysInfo", {
+	testInjector.register("sysInfoBase", {
 		getSysInfo: (pathToPackageJson: string, androidToolsInfo?: { pathToAdb: string, pathToAndroid: string }) => {
 			return Future.fromResult({
 				xcodeVer: config.xcodeVersionOutput
