@@ -7,9 +7,9 @@ Contains common infrastructure for CLIs - mainly AppBuilder and NativeScript.
 Installation
 ===
 
-Latest version: 0.7.0
+Latest version: 0.8.0
 
-Release date: 2016, April 14
+Release date: 2016, April 26
 
 ### System Requirements
 
@@ -24,8 +24,6 @@ Before installing the `mobile-cli-lib`, verify that your system meets the follow
 * Node.js
 	* (Windows 7 systems): Node.js 0.10.26 or a later stable official release except 0.10.34<br/>A [known issue](https://github.com/joyent/node/issues/8894) prevents the `mobile-cli-lib` from working properly with Node.js 0.10.34.
 	* (Windows 8 and later systems): Node.js 0.12.0 or a later stable official release<br/>A [known issue](https://github.com/SBoudrias/Inquirer.js/issues/235) in Inquirer.js prevents the interactive prompts from working properly in `cmd` shells on Windows 8 or later systems with Node.js 0.10.x.
-
-> To be able to work with connected iOS devices from the command line, download and install the 32-bit Node.js.<br/>You can download and install the 32-bit Node.js from the <a href="http://nodejs.org/download/" target="_blank">Node.js web site</a>.
 
 **Additional Software Requirements for iOS On-Device Deployment**
 
@@ -215,6 +213,12 @@ interface IDeviceInfo {
 	 * Available for iOS only - the value of device's 'DeviceColor' property.
 	 */
 	color?: string;
+
+	/**
+	 *  Optional property describing the architecture of the device
+	 *  Available for iOS only - can be "armv7" or "arm64"
+	 */
+	activeArchitecture?: string;
 }
 ```
 
@@ -379,7 +383,44 @@ Result will be `[ false, false ]` for example.
 
 This module allows LiveSync applications on different devices.
 
-* `livesync(devicesInfo: IDeviceLiveSyncInfo[], projectDir: string, filePaths?: string[])` - LiveSync changes on the specified devices.
+The following types are used:
+```TypeScript
+/**
+ * Describes the result of a single livesync operation started by Proton.
+ */
+interface ILiveSyncOperationResult {
+	/**
+	 * Defines if the operation is successful (set to true) or not (value is false).
+	 */
+	isResolved: boolean;
+
+	/**
+	 * Error when livesync operation fails. If `isResolved` is true, error will be undefined.
+	 */
+	error?: Error;
+}
+
+/**
+ * Describes result of all LiveSync operations per device.
+ */
+interface IDeviceLiveSyncResult {
+	/**
+	 * Identifier of the device.
+	 */
+	deviceIdentifier: string;
+
+	/**
+	 * Result of LiveSync operation for application.
+	 */
+	liveSyncToApp?: ILiveSyncOperationResult;
+
+	/**
+	 * Result of LiveSync operation to companion app.
+	 */
+	liveSyncToCompanion?: ILiveSyncOperationResult;
+}
+```
+* `livesync(devicesInfo: IDeviceLiveSyncInfo[], projectDir: string, filePaths?: string[]): Promise<IDeviceLiveSyncResult>[]` - LiveSync changes on the specified devices.
 In case filePaths are not specified, the whole project directory will be synced.
 The `devicesInfo` array describes livesync operations for each device. Each object should be described with the following properties:
 ```TypeScript
@@ -409,22 +450,22 @@ Sample usage:
 var deviceInfos = [{"deviceIdentifier": "129604ab96a4d0053023b4bf5b288cf34a9ed5fa", "syncToApp": true, "syncToCompanion": false},
 					{"deviceIdentifier": "153544fa45f4a5646543b5bf1b221fe31a8fa6bc", "syncToApp": true, "syncToCompanion": false}];
 // Full Sync - the whole project dir will be synced
-require("mobile-cli-lib").liveSyncService.livesync(deviceInfos, projectDir)
-				.then(function(result) {
-						console.log("Finished with full sync, result is: ", result);
-				}).catch(function(err) {
-						console.log("Error while livesyncing: ", err);
-				});
+Promise.all(require("mobile-cli-lib").liveSyncService.livesync(deviceInfos, projectDir))
+	.then(function(result) {
+			console.log("Finished with full sync, result is: ", result);
+	}).catch(function(err) {
+			console.log("Error while livesyncing: ", err);
+	});
 
 // Or use livesync only for some files:
 var filesToSync = [path.join(projectDir,"app","components", "homeView", "homeView.xml"),
 					path.join(projectDir,"app","components", "addressView", "addressView.xml")]
-require("mobile-cli-lib").liveSyncService.livesync(deviceInfos, projectDir, filesToSync)
-				.then(function(result) {
-						console.log("Finished with partial sync, result is: ", result);
-				}).catch(function(err) {
-						console.log("Error while livesyncing: ", err);
-				});
+Promise.all(require("mobile-cli-lib").liveSyncService.livesync(deviceInfos, projectDir, filesToSync))
+	.then(function(result) {
+			console.log("Finished with partial sync, result is: ", result);
+	}).catch(function(err) {
+			console.log("Error while livesyncing: ", err);
+	});
 ```
 
 ### Module fs
