@@ -96,8 +96,53 @@ interface IPathFilteringService {
 	isFileExcluded(file: string, rules: string[], rootDir: string): boolean
 }
 
+/**
+ * Describes available methods for LiveSync operation from Proton.
+ */
 interface IProtonLiveSyncService {
-	livesync(deviceIdentifiers: IDeviceLiveSyncInfo[], projectDir: string, filePaths: string[]): IFuture<void>;
+	/**
+	 * Sends files to specified devices.
+	 * @param {IDeviceLiveSyncInfo[]} deviceDescriptors Descriptions of the devices, which includes device identifiers and what should be synced.
+	 * @param {string} projectDir Project directory.
+	 * @param {string[]} filePaths Passed only in cases when only some of the files must be synced.
+	 * @return {IDeviceLiveSyncResult[]} Information about each LiveSync operation.
+	 */
+	livesync(deviceDescriptors: IDeviceLiveSyncInfo[], projectDir: string, filePaths?: string[]): IFuture<IDeviceLiveSyncResult>[];
+}
+
+/**
+ * Describes the result of a single livesync operation started by Proton.
+ */
+interface ILiveSyncOperationResult {
+	/**
+	 * Defines if the operation is successful (set to true) or not (value is false).
+	 */
+	isResolved: boolean;
+
+	/**
+	 * Error when livesync operation fails. If `isResolved` is true, error will be undefined.
+	 */
+	error?: Error;
+}
+
+/**
+ * Describes result of all LiveSync operations per device.
+ */
+interface IDeviceLiveSyncResult {
+	/**
+	 * Identifier of the device.
+	 */
+	deviceIdentifier: string;
+
+	/**
+	 * Result of LiveSync operation for application.
+	 */
+	liveSyncToApp?: ILiveSyncOperationResult;
+
+	/**
+	 * Result of LiveSync operation to companion app.
+	 */
+	liveSyncToCompanion?: ILiveSyncOperationResult;
 }
 
 /**

@@ -17,86 +17,82 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 		private $fs: IFileSystem,
 		private $injector: IInjector,
 		private $project: Project.IProjectBase,
-		private $logger: ILogger) { }
+		private $logger: ILogger,
+		private $companionAppsService: ICompanionAppsService) { }
 
 	@exportedPromise("liveSyncService")
-	public livesync(deviceIdentifiers: IDeviceLiveSyncInfo[], projectDir: string, filePaths?: string[]): IFuture<void> {
-		return (() => {
-			this.$project.projectDir = projectDir;
-			let deviceInfos: any = _.map(deviceIdentifiers, d => {
-				let matchingDevice = _.find(this.$devicesService.getDeviceInstances(), device => device.deviceInfo.identifier === d.deviceIdentifier);
-				return _.extend(d, { device: matchingDevice });
-			});
-
-			let errors: Error[] = [];
-			// Group devices by platform. After that group each group by types of sync.
-			// Aggregate the errors and throw a single error in case any operation fails.
-			let groupedByPlatform = _.groupBy(deviceInfos, (d: any) => d.device.deviceInfo.platform.toLowerCase());
-			_.each(groupedByPlatform, (platformGroup: any[], platform: string) => {
-				let syncToApp = platformGroup.filter(plGr => !!plGr.syncToApp);
-				try {
-					this.liveSyncToApp(platform, syncToApp.map((s: any) => s.device), filePaths).wait();
-				} catch (err) {
-					this.$logger.trace(`Error while trying to livesync applications to devices: ${syncToApp.join(", ")}.`, err.message);
-					errors.push(err);
-				}
-
-				let syncToCompanion =  platformGroup.filter(plGr => !!plGr.syncToCompanion);
-				try {
-					this.liveSyncToCompanion(platform, syncToCompanion.map((s: any) => s.device), filePaths).wait();
-				} catch (err) {
-					this.$logger.trace(`Error while trying to livesync to companion app to devices: ${syncToCompanion.join(", ")}.`, err.message);
-					errors.push(err);
-				}
-			});
-
-			if(errors && errors.length) {
-				throw new Error(`Unable to livesync to specified devices. Errors are: ${errors.map(err => err.message)}`);
-			}
-		}).future<void>()();
+	public livesync(deviceDescriptors: IDeviceLiveSyncInfo[], projectDir: string, filePaths?: string[]): IFuture<IDeviceLiveSyncResult>[] {
+		this.$project.projectDir = projectDir;
+		return _.map(deviceDescriptors, deviceDescriptor => this.liveSyncOnDevice(deviceDescriptor, filePaths));
 	}
 
-	private liveSyncToApp(platform: string, devices: Mobile.IDevice[], filePaths: string[]): IFuture<void> {
-		return (() => {
-			this.$options.companion = false;
-			if(!this.$project.capabilities.livesync) {
-				this.$errors.failWithoutHelp(`You cannot use LiveSync for ${this.$project.projectData.Framework} projects.`);
-			}
-
-			this.liveSyncCore(platform, devices, filePaths).wait();
-		}).future<void>()();
-	}
-
-	private liveSyncToCompanion(platform: string, devices: Mobile.IDevice[], filePaths: string[]): IFuture<void> {
-		return (() => {
-			this.$options.companion = true;
-
-			if(!this.$mobileHelper.getPlatformCapabilities(platform).companion) {
-				this.$errors.failWithoutHelp(`The Companion app is not available on ${platform} devices.`);
-			}
-
-			if(!this.$project.capabilities.livesyncCompanion) {
-				this.$errors.failWithoutHelp(`You cannot use LiveSync to Companion app for ${this.$project.projectData.Framework} projects.`);
-			}
-
-			this.liveSyncCore(platform, devices, filePaths).wait();
-		}).future<void>()();
-	}
-
-	private liveSyncCore(platform: string, devices: Mobile.IDevice[], filePaths: string[]): IFuture<void> {
-		return (() => {
-			let livesyncData: ILiveSyncData = {
-				platform: platform,
-				appIdentifier: this.$project.projectData.AppIdentifier,
-				projectFilesPath: this.$project.projectDir,
-				syncWorkingDirectory: this.$project.projectDir,
-				excludedProjectDirsAndFiles: this.excludedProjectDirsAndFiles,
-				canExecuteFastSync: false,
-				canExecute: (device: Mobile.IDevice) =>  device.deviceInfo.platform.toLowerCase() === platform.toLowerCase() && !!_.any(devices, d => d.deviceInfo.identifier === device.deviceInfo.identifier)
+	private liveSyncOnDevice(deviceDescriptor: IDeviceLiveSyncInfo, filePaths: string[]): IFuture<IDeviceLiveSyncResult> {
+		return ((): IDeviceLiveSyncResult => {
+			let result: IDeviceLiveSyncResult = {
+				deviceIdentifier: deviceDescriptor.deviceIdentifier
 			};
 
-			this.$liveSyncServiceBase.sync(livesyncData, filePaths).wait();
-		}).future<void>()();
+			let device = _.find(this.$devicesService.getDeviceInstances(), d => d.deviceInfo.identifier === deviceDescriptor.deviceIdentifier);
+			if(!device) {
+				result.liveSyncToApp = result.liveSyncToCompanion = {
+					isResolved: false,
+					error: new Error(`Cannot find connected device with identifier ${deviceDescriptor.deviceIdentifier}.`)
+				};
+
+				return result;
+			}
+
+			let appIdentifier = this.$project.projectData.AppIdentifier,
+				canExecute = (d: Mobile.IDevice) => d.deviceInfo.identifier === device.deviceInfo.identifier,
+				livesyncData: ILiveSyncData = {
+					platform: device.deviceInfo.platform,
+					appIdentifier: appIdentifier,
+					projectFilesPath: this.$project.projectDir,
+					syncWorkingDirectory: this.$project.projectDir,
+					excludedProjectDirsAndFiles: this.excludedProjectDirsAndFiles,
+					canExecuteFastSync: false
+				};
+
+			let canExecuteAction = this.$liveSyncServiceBase.getCanExecuteAction(device.deviceInfo.platform, appIdentifier, canExecute);
+			if(deviceDescriptor.syncToApp) {
+				result.liveSyncToApp = this.liveSyncCore(livesyncData, device, appIdentifier, canExecuteAction, { isForCompanionApp: false }, filePaths).wait();
+			}
+
+			if(deviceDescriptor.syncToCompanion) {
+				result.liveSyncToCompanion = this.liveSyncCore(livesyncData, device, appIdentifier, canExecuteAction, { isForCompanionApp: true }, filePaths).wait();
+			}
+
+			return result;
+		}).future<IDeviceLiveSyncResult>()();
+	}
+
+	private liveSyncCore(livesyncData: ILiveSyncData, device: Mobile.IDevice, appIdentifier: string, canExecuteAction: (dev: Mobile.IDevice) => boolean, liveSyncOptions: { isForCompanionApp: boolean }, filePaths: string[]): IFuture<ILiveSyncOperationResult> {
+		return (() => {
+			let liveSyncOperationResult: ILiveSyncOperationResult = {
+				isResolved: false
+			};
+
+			if(liveSyncOptions.isForCompanionApp) {
+				// We should check if the companion app is installed, not the real application.
+				appIdentifier = this.$companionAppsService.getCompanionAppIdentifier(this.$project.projectData.Framework, device.deviceInfo.platform);
+			}
+
+			if(device.applicationManager.isApplicationInstalled(appIdentifier).wait()) {
+				let action: any = this.$liveSyncServiceBase.getSyncAction(livesyncData, filePaths, null, liveSyncOptions);
+				try {
+					this.$devicesService.execute(action, canExecuteAction).wait();
+					liveSyncOperationResult.isResolved = true;
+				} catch (err) {
+					liveSyncOperationResult.error = err;
+					liveSyncOperationResult.isResolved = false;
+				}
+			} else {
+				liveSyncOperationResult.error = new Error(`Application with id ${appIdentifier} is not installed on device with id ${device.deviceInfo.identifier} and it cannot be livesynced.`);
+				liveSyncOperationResult.isResolved = false;
+			}
+
+			return liveSyncOperationResult;
+		}).future<ILiveSyncOperationResult>()();
 	}
 }
 $injector.register("liveSyncService", ProtonLiveSyncService);

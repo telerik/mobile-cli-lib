@@ -476,6 +476,25 @@ interface ILiveSyncServiceBase {
 	 * If watch option is specified executes partial sync
 	 */
 	sync(data: ILiveSyncData, filePaths?: string[]): IFuture<void>;
+
+	/**
+	 * Returns the `canExecute` method which defines if LiveSync operation can be executed on specified device.
+	 * @param {string} platform Platform for which the LiveSync operation should be executed.
+	 * @param {string} appIdentifier Application identifier.
+	 * @param {Function} canExecute Base canExecute function that will be added to the predefined checks.
+	 * @return {Function} Function that returns boolean.
+	 */
+	getCanExecuteAction(platform: string, appIdentifier: string, canExecute: (dev: Mobile.IDevice) => boolean): (dev: Mobile.IDevice) => boolean;
+
+	/**
+	 * Gets LiveSync action that should be executed per device.
+	 * @param {ILiveSyncData} data LiveSync data describing the LiveSync operation.
+	 * @param {string[]} filesToSync Files that have to be synced.
+	 * @param {Function} deviceFilesAction Custom action that has to be executed instead of just copying the files.
+	 * @param {any} liveSyncOptions Defines if the LiveSync operation is for Companion app.
+	 * @return {Function} Function that returns IFuture<void>.
+	 */
+	getSyncAction(data: ILiveSyncData, filesToSync?: string[], deviceFilesAction?: (device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>, liveSyncOptions?: { isForCompanionApp: boolean }): (device: Mobile.IDevice) => IFuture<void>;
 }
 
 interface ISyncBatch {
