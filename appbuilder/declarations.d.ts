@@ -31,6 +31,8 @@ declare module Project {
 		PACKAGE_JSON_NAME: string;
 		ADDITIONAL_FILE_DISPOSITION: string;
 		ADDITIONAL_FILES_DIRECTORY: string;
+		APPBUILDER_PROJECT_PLATFORMS_NAMES: IDictionary<string>;
+		IONIC_PROJECT_PLATFORMS_NAMES: IDictionary<string>;
 	}
 
 	interface ICapabilities {
@@ -52,7 +54,7 @@ declare module Project {
 	interface IData extends IDictionary<any> {
 		ProjectName: string;
 		ProjectGuid: string;
-		projectVersion : number;
+		projectVersion: number;
 		AppIdentifier: string;
 		DisplayName: string;
 		Author: string;
@@ -92,8 +94,8 @@ declare module Project {
 }
 
 interface IPathFilteringService {
-	getRulesFromFile(file: string) : string[];
-	filterIgnoredFiles(files: string[], rules: string[], rootDir: string) :string[];
+	getRulesFromFile(file: string): string[];
+	filterIgnoredFiles(files: string[], rules: string[], rootDir: string): string[];
 	isFileExcluded(file: string, rules: string[], rootDir: string): boolean
 }
 

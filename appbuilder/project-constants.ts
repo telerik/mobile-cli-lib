@@ -22,6 +22,18 @@ export class ProjectConstants implements Project.IConstants {
 		Cordova: "Cordova",
 		NativeScript: "NativeScript"
 	};
+
+	public APPBUILDER_PROJECT_PLATFORMS_NAMES: IDictionary<string> = {
+		android: "Android",
+		ios: "iOS",
+		wp8: "WP8"
+	};
+
+	public IONIC_PROJECT_PLATFORMS_NAMES: IDictionary<string> = {
+		android: "android",
+		ios: "ios",
+		wp8: "wp8"
+	};
 }
 
 $injector.register("projectConstants", ProjectConstants);
