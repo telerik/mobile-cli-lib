@@ -927,14 +927,14 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 
 												if (message.Status && message.Status === "Complete") {
 													if (!result.isResolved()) {
-														result.return(message);
+														result.return(messages);
 													}
 												} else {
 													messages.push(message);
 												}
 
-												let status = message[0].Status;
-												let percentComplete = message[0].PercentComplete;
+												let status = message.Status;
+												let percentComplete = message.PercentComplete;
 												this.$logger.trace("Status: " + status + " PercentComplete: " + percentComplete);
 											}
 										} catch (e) {
