@@ -254,6 +254,8 @@ declare module Mobile {
 		isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string): IFuture<boolean>[];
 		setLogLevel(logLevel: string, deviceIdentifier?: string): void;
 		deployOnDevices(deviceIdentifiers: string[], packageFile: string, packageName: string): IFuture<void>[];
+		startDeviceDetectionInterval(): void;
+		stopDeviceDetectionInterval(): void;
 	}
 
 	interface IiTunesValidator {

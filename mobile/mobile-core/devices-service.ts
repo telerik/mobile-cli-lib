@@ -17,6 +17,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	private _device: Mobile.IDevice;
 	private _isInitialized = false;
 	private _data: Mobile.IDevicesServicesInitializationOptions;
+	private deviceDetectionInterval: any;
 
 	constructor(private $logger: ILogger,
 		private $errors: IErrors,
@@ -141,44 +142,61 @@ export class DevicesService implements Mobile.IDevicesService {
 		}).future<void>()();
 	}
 
+	public startDeviceDetectionInterval(): void {
+		if (this.deviceDetectionInterval) {
+			this.$logger.trace("Device detection interval is already started. New Interval will not be started.");
+		} else {
+			this.deviceDetectionInterval = setInterval(() => {
+				fiberBootstrap.run(() => {
+					try {
+						// This code could be faster, by using Future.wait([...]), but it turned out this is breaking iOS deployment on Mac
+						// It's causing error 21 when deploying on some iOS devices during transfer of the first package.
+						this.$iOSDeviceDiscovery.checkForDevices().wait();
+					} catch (err) {
+						this.$logger.trace("Error while checking for new iOS devices.", err);
+					}
+
+					try {
+						this.$androidDeviceDiscovery.checkForDevices().wait();
+					} catch (err) {
+						this.$logger.trace("Error while checking for new Android devices.", err);
+					}
+
+					try {
+						if (this.$hostInfo.isDarwin) {
+							this.$iOSSimulatorDiscovery.checkForDevices().wait();
+						}
+					} catch (err) {
+						this.$logger.trace("Error while checking for new iOS Simulators.", err);
+					}
+
+					_.each(this._devices, device => {
+						try {
+							device.applicationManager.checkForApplicationUpdates().wait();
+						} catch (err) {
+							this.$logger.trace(`Error checking for application updates on device ${device.deviceInfo.identifier}.`, err);
+						}
+					});
+				});
+			}, DevicesService.DEVICE_LOOKING_INTERVAL).unref();
+		}
+	}
+
+	public stopDeviceDetectionInterval(): void {
+		if (this.deviceDetectionInterval) {
+			clearInterval(this.deviceDetectionInterval);
+			this.deviceDetectionInterval = null;
+		} else {
+			this.$logger.trace("Device detection interval is not started, so it cannot be stopped.");
+		}
+	}
+
 	private startLookingForDevices(): IFuture<void> {
 		return (() => {
 			this.$logger.trace("startLookingForDevices; platform is %s", this._platform);
 			if(!this._platform) {
 				this.detectCurrentlyAttachedDevices().wait();
-				setInterval(() => {
-					fiberBootstrap.run(() => {
-						try {
-							// This code could be faster, by using Future.wait([...]), but it turned out this is breaking iOS deployment on Mac
-							// It's causing error 21 when deploying on some iOS devices during transfer of the first package.
-							this.$iOSDeviceDiscovery.checkForDevices().wait();
-						} catch (err) {
-							this.$logger.trace("Error while checking for new iOS devices.", err);
-						}
-
-						try {
-							this.$androidDeviceDiscovery.checkForDevices().wait();
-						} catch (err) {
-							this.$logger.trace("Error while checking for new Android devices.", err);
-						}
-
-						try {
-							if (this.$hostInfo.isDarwin) {
-								this.$iOSSimulatorDiscovery.checkForDevices().wait();
-							}
-						} catch (err) {
-							this.$logger.trace("Error while checking for new iOS Simulators.", err);
-						}
-
-						_.each(this._devices, device => {
-							try {
-								device.applicationManager.checkForApplicationUpdates().wait();
-							} catch (err) {
-								this.$logger.trace(`Error checking for application updates on device ${device.deviceInfo.identifier}.`, err);
-							}
-						});
-					});
-				}, DevicesService.DEVICE_LOOKING_INTERVAL).unref();
+				this.startDeviceDetectionInterval();
 			} else if(this.$mobileHelper.isiOSPlatform(this._platform)) {
 				this.$iOSDeviceDiscovery.startLookingForDevices().wait();
 				if (this.$hostInfo.isDarwin) {
