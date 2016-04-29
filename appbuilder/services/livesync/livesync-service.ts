@@ -32,36 +32,42 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 				deviceIdentifier: deviceDescriptor.deviceIdentifier
 			};
 
-			let device = _.find(this.$devicesService.getDeviceInstances(), d => d.deviceInfo.identifier === deviceDescriptor.deviceIdentifier);
-			if(!device) {
-				result.liveSyncToApp = result.liveSyncToCompanion = {
-					isResolved: false,
-					error: new Error(`Cannot find connected device with identifier ${deviceDescriptor.deviceIdentifier}.`)
-				};
+			try {
+				// HACK: On Mac OS the livesync for iOS devices fails due to the setInterval for device detection.
+				// Stop the interval during livesync operation and start it again after that.
+				this.$devicesService.stopDeviceDetectionInterval();
+				let device = _.find(this.$devicesService.getDeviceInstances(), d => d.deviceInfo.identifier === deviceDescriptor.deviceIdentifier);
+				if(!device) {
+					result.liveSyncToApp = result.liveSyncToCompanion = {
+						isResolved: false,
+						error: new Error(`Cannot find connected device with identifier ${deviceDescriptor.deviceIdentifier}.`)
+					};
 
-				return result;
+					return result;
+				}
+
+				let appIdentifier = this.$project.projectData.AppIdentifier,
+					canExecute = (d: Mobile.IDevice) => d.deviceInfo.identifier === device.deviceInfo.identifier,
+					livesyncData: ILiveSyncData = {
+						platform: device.deviceInfo.platform,
+						appIdentifier: appIdentifier,
+						projectFilesPath: this.$project.projectDir,
+						syncWorkingDirectory: this.$project.projectDir,
+						excludedProjectDirsAndFiles: this.excludedProjectDirsAndFiles,
+						canExecuteFastSync: false
+					};
+
+				let canExecuteAction = this.$liveSyncServiceBase.getCanExecuteAction(device.deviceInfo.platform, appIdentifier, canExecute);
+				if(deviceDescriptor.syncToApp) {
+					result.liveSyncToApp = this.liveSyncCore(livesyncData, device, appIdentifier, canExecuteAction, { isForCompanionApp: false }, filePaths).wait();
+				}
+
+				if(deviceDescriptor.syncToCompanion) {
+					result.liveSyncToCompanion = this.liveSyncCore(livesyncData, device, appIdentifier, canExecuteAction, { isForCompanionApp: true }, filePaths).wait();
+				}
+			} finally {
+				this.$devicesService.startDeviceDetectionInterval();
 			}
-
-			let appIdentifier = this.$project.projectData.AppIdentifier,
-				canExecute = (d: Mobile.IDevice) => d.deviceInfo.identifier === device.deviceInfo.identifier,
-				livesyncData: ILiveSyncData = {
-					platform: device.deviceInfo.platform,
-					appIdentifier: appIdentifier,
-					projectFilesPath: this.$project.projectDir,
-					syncWorkingDirectory: this.$project.projectDir,
-					excludedProjectDirsAndFiles: this.excludedProjectDirsAndFiles,
-					canExecuteFastSync: false
-				};
-
-			let canExecuteAction = this.$liveSyncServiceBase.getCanExecuteAction(device.deviceInfo.platform, appIdentifier, canExecute);
-			if(deviceDescriptor.syncToApp) {
-				result.liveSyncToApp = this.liveSyncCore(livesyncData, device, appIdentifier, canExecuteAction, { isForCompanionApp: false }, filePaths).wait();
-			}
-
-			if(deviceDescriptor.syncToCompanion) {
-				result.liveSyncToCompanion = this.liveSyncCore(livesyncData, device, appIdentifier, canExecuteAction, { isForCompanionApp: true }, filePaths).wait();
-			}
-
 			return result;
 		}).future<IDeviceLiveSyncResult>()();
 	}
