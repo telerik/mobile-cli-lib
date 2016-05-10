@@ -767,6 +767,11 @@ interface IBinaryPlistParser {
 	parseFile(plistFilePath: string): IFuture<any>;
 }
 
+interface IUserSettingsService extends UserSettings.IUserSettingsService {
+	loadUserSettingsFile(): IFuture<void>;
+	saveSettings(data: IDictionary<{}>): IFuture<void>;
+}
+
 /**
  *	Used for interaction with various resources located in a resources folder.
  *	@interface
