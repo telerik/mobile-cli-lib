@@ -5,7 +5,7 @@ import {DeviceDiscovery} from "./device-discovery";
 import Future = require("fibers/future");
 import {IOSSimulator} from "./../ios/simulator/ios-simulator-device";
 
-class IOSSimulatorDiscovery extends DeviceDiscovery {
+export class IOSSimulatorDiscovery extends DeviceDiscovery {
 	private cachedSimulator: Mobile.IiSimDevice;
 
 	constructor(private $childProcess: IChildProcess,
@@ -33,6 +33,7 @@ class IOSSimulatorDiscovery extends DeviceDiscovery {
 			} else if (this.cachedSimulator) {
 				// In case there's no running simulator, but it's been running before, we should report it as removed.
 				this.removeDevice(this.cachedSimulator.id);
+				this.cachedSimulator = null;
 			}
 		}
 
@@ -55,8 +56,8 @@ class IOSSimulatorDiscovery extends DeviceDiscovery {
 	}
 
 	private createAndAddDevice(simulator: Mobile.IiSimDevice): void {
-		this.cachedSimulator = simulator;
-		this.addDevice(this.$injector.resolve(IOSSimulator, {simulator: simulator}));
+		this.cachedSimulator = _.cloneDeep(simulator);
+		this.addDevice(this.$injector.resolve(IOSSimulator, {simulator: this.cachedSimulator}));
 	}
 }
 $injector.register("iOSSimulatorDiscovery", IOSSimulatorDiscovery);
