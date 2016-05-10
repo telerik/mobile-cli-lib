@@ -1,12 +1,12 @@
 ///<reference path="../.d.ts"/>
 "use strict";
 
-export class UserSettingsServiceBase implements UserSettings.IUserSettingsService {
+export class UserSettingsServiceBase implements IUserSettingsService {
 	private userSettingsFilePath: string = null;
-	private userSettingsData: any = null;
+	protected userSettingsData: any = null;
 
 	constructor(userSettingsFilePath: string,
-		private $fs: IFileSystem) {
+		protected $fs: IFileSystem) {
 		this.userSettingsFilePath = userSettingsFilePath;
 	}
 
@@ -33,7 +33,7 @@ export class UserSettingsServiceBase implements UserSettings.IUserSettingsServic
 		}).future<void>()();
 	}
 
-	private saveSettings(data?: any): IFuture<void> {
+	public saveSettings(data?: any): IFuture<void> {
 		return(() => {
 			this.loadUserSettingsFile().wait();
 			this.userSettingsData = this.userSettingsData || {};
@@ -49,7 +49,7 @@ export class UserSettingsServiceBase implements UserSettings.IUserSettingsServic
 		}).future<void>()();
 	}
 
-	private loadUserSettingsFile(): IFuture<void> {
+	public loadUserSettingsFile(): IFuture<void> {
 		return (() => {
 			if(!this.userSettingsData) {
 				if(!this.$fs.exists(this.userSettingsFilePath).wait()) {
