@@ -9,7 +9,7 @@ import Future = require("fibers/future");
 export class IOSApplicationManager extends ApplicationManagerBase {
 	private uninstallApplicationCallbackPtr: NodeBuffer = null;
 	private _gdbServer: Mobile.IGDBServer = null;
-	private applicationsLiveSyncStatus: Mobile.IApplicationLiveSyncStatus[];
+	private applicationsLiveSyncInfos: Mobile.ILiveSyncApplicationInfo[];
 
 	constructor(protected $logger: ILogger,
 		private device: Mobile.IiOSDevice,
@@ -53,8 +53,18 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		}).future<void>()();
 	}
 
-	public getApplicationsLiveSyncSupportedStatus(): IFuture<Mobile.IApplicationLiveSyncStatus[]> {
-		return ((): Mobile.IApplicationLiveSyncStatus[] => {
+	public getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo> {
+		return ((): Mobile.IApplicationInfo => {
+			if (!this.applicationsLiveSyncInfos || !this.applicationsLiveSyncInfos.length) {
+				this.getApplicationsLiveSyncSupportedStatus().wait();
+			}
+
+			return _.find(this.applicationsLiveSyncInfos, app => app.applicationIdentifier === applicationIdentifier);
+		}).future<Mobile.IApplicationInfo>()();
+	}
+
+	public getApplicationsLiveSyncSupportedStatus(): IFuture<Mobile.ILiveSyncApplicationInfo[]> {
+		return ((): Mobile.ILiveSyncApplicationInfo[] => {
 			let installationProxy = this.getInstallationProxy();
 			try {
 				let result = installationProxy.sendMessage({
@@ -63,7 +73,8 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 						"ApplicationType": "User",
 						"ReturnAttributes": [
 							"CFBundleIdentifier",
-							"IceniumLiveSyncEnabled"
+								"IceniumLiveSyncEnabled",
+								"configuration"
 						]
 					}
 				}).wait();
@@ -95,14 +106,16 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 						},
 						{
 							"IceniumLiveSyncEnabled": true,
-							"CFBundleIdentifier": "com.telerik.myAppNative1"
+							"CFBundleIdentifier": "com.telerik.myAppNative1",
+							"configuration": "live"
 						},
 						{
 							"CFBundleIdentifier": "com.ionic.viewapp"
 						},
 						{
 							"IceniumLiveSyncEnabled": true,
-							"CFBundleIdentifier": "com.telerik.samplepinchandzoom"
+							"CFBundleIdentifier": "com.telerik.samplepinchandzoom",
+							"configuration": "test"
 						},
 						{
 							"CFBundleIdentifier": "com.telerik.7e4c83f6-4e40-420f-a395-ab3cd9f77afd.AppManager"
@@ -137,22 +150,31 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 				*/
 
 				this.$logger.trace("Result when getting applications for which LiveSync is enabled: ", JSON.stringify(result, null, 2));
-				this.applicationsLiveSyncStatus = [];
+				this.applicationsLiveSyncInfos = [];
 				_.each(result, (singleResult: any) => {
-					let currentList = _.map(singleResult.CurrentList, (app: any) => ({ applicationIdentifier: app.CFBundleIdentifier, isLiveSyncSupported: app.IceniumLiveSyncEnabled }));
-					this.applicationsLiveSyncStatus = this.applicationsLiveSyncStatus.concat(currentList);
+					let currentList = _.map(singleResult.CurrentList, (app: any) => ({
+						applicationIdentifier: app.CFBundleIdentifier,
+						isLiveSyncSupported: app.IceniumLiveSyncEnabled,
+						configuration: app.configuration,
+						deviceIdentifier: this.device.deviceInfo.identifier
+					 }));
+					this.applicationsLiveSyncInfos = this.applicationsLiveSyncInfos.concat(currentList);
 				});
 
-				return this.applicationsLiveSyncStatus;
+				return this.applicationsLiveSyncInfos;
 			} finally {
 				installationProxy.closeSocket();
 			}
-		}).future<Mobile.IApplicationLiveSyncStatus[]>()();
+		}).future<Mobile.ILiveSyncApplicationInfo[]>()();
 	}
 
 	public isLiveSyncSupported(appIdentifier: string): IFuture<boolean> {
 		return ((): boolean => {
-			let selectedApplication = _.find(this.applicationsLiveSyncStatus, app => app.applicationIdentifier === appIdentifier);
+			if (!this.applicationsLiveSyncInfos || !this.applicationsLiveSyncInfos.length) {
+				this.getApplicationsLiveSyncSupportedStatus().wait();
+			}
+
+			let selectedApplication = _.find(this.applicationsLiveSyncInfos, app => app.applicationIdentifier === appIdentifier);
 			return !!selectedApplication && selectedApplication.isLiveSyncSupported;
 		}).future<boolean>()();
 	}

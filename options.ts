@@ -14,15 +14,15 @@ export class OptionsBase {
 	private optionsWhiteList = ["ui", "recursive", "reporter", "require", "timeout", "_", "$0"]; // These options shouldn't be validated
 	public argv: IYargArgv;
 	private static GLOBAL_OPTIONS: IDictionary<IDashedOption> = {
-		"log": { type: OptionType.String },
-		"verbose": { type: OptionType.Boolean, alias: "v" },
-		"version": { type: OptionType.Boolean },
-		"help": { type: OptionType.Boolean, alias: "h" },
-		"profileDir": { type: OptionType.String },
-		"analyticsClient": { type: OptionType.String },
-		"path": { type: OptionType.String, alias: "p" },
+		log: { type: OptionType.String },
+		verbose: { type: OptionType.Boolean, alias: "v" },
+		version: { type: OptionType.Boolean },
+		help: { type: OptionType.Boolean, alias: "h" },
+		profileDir: { type: OptionType.String },
+		analyticsClient: {type: OptionType.String },
+		path: { type: OptionType.String, alias: "p" },
 		// This will parse all non-hyphenated values as strings.
-		"_": { type: OptionType.String }
+		_: { type: OptionType.String }
 	};
 
 	constructor(public options: IDictionary<IDashedOption>,
@@ -46,32 +46,34 @@ export class OptionsBase {
 
 	private get commonOptions(): IDictionary<IDashedOption> {
 		return {
-			"json": { type: OptionType.Boolean },
-			"watch": { type: OptionType.Boolean },
-			"avd": { type: OptionType.String },
-			"timeout": { type: OptionType.String },
-			"device": { type: OptionType.String },
-			"availableDevices": { type: OptionType.Boolean },
-			"appid": { type: OptionType.String },
-			"geny": { type: OptionType.String },
-			"debugBrk": { type: OptionType.Boolean },
-			"debugPort": { type: OptionType.Number },
-			"getPort": { type: OptionType.Boolean },
-			"start": { type: OptionType.Boolean },
-			"stop": { type: OptionType.Boolean },
-			"ddi": { type: OptionType.String }, // the path to developer  disk image
-			"justlaunch": { type: OptionType.Boolean },
-			"file": { type: OptionType.String },
-			"force": { type: OptionType.Boolean, alias: "f" },
-			"companion": { type: OptionType.Boolean },
-			"emulator": { type: OptionType.Boolean },
-			"sdk": { type: OptionType.String },
-			"template": { type: OptionType.String },
-			"release": { type: OptionType.Boolean, alias: "r" },
-			"var": { type: OptionType.Object },
-			"default": { type: OptionType.Boolean },
-			"count": { type: OptionType.Number },
-			"hooks": { type: OptionType.Boolean, default: true }
+			json: { type: OptionType.Boolean },
+			watch: { type: OptionType.Boolean },
+			avd: { type: OptionType.String },
+			config: { type: OptionType.Array },
+			debug: { type: OptionType.Boolean, alias: "d" },
+			timeout: { type: OptionType.String },
+			device: { type: OptionType.String },
+			availableDevices: { type: OptionType.Boolean },
+			appid: { type: OptionType.String },
+			geny: { type: OptionType.String },
+			debugBrk: { type: OptionType.Boolean },
+			debugPort: {type: OptionType.Number },
+			getPort: { type: OptionType.Boolean },
+			start: { type: OptionType.Boolean },
+			stop: { type: OptionType.Boolean },
+			ddi: { type: OptionType.String }, // the path to developer  disk image
+			justlaunch: { type: OptionType.Boolean },
+			file: { type: OptionType.String },
+			force: { type: OptionType.Boolean, alias: "f" },
+			companion: { type: OptionType.Boolean },
+			emulator: { type: OptionType.Boolean },
+			sdk: { type: OptionType.String },
+			template: { type: OptionType.String },
+			release: { type: OptionType.Boolean, alias: "r" },
+			var: { type: OptionType.Object },
+			default: {type: OptionType.Boolean },
+			count: { type: OptionType.Number },
+			hooks: { type: OptionType.Boolean, default: true }
 		};
 	}
 

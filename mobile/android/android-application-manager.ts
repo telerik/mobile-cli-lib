@@ -1,6 +1,7 @@
 import {EOL} from "os";
 import {ApplicationManagerBase} from "../application-manager-base";
-import { LiveSyncConstants, startPackageActivityNames, TARGET_FRAMEWORK_IDENTIFIERS } from "../../mobile/constants";
+import { LiveSyncConstants, startPackageActivityNames, TARGET_FRAMEWORK_IDENTIFIERS } from "../../constants";
+import Future = require("fibers/future");
 
 export class AndroidApplicationManager extends ApplicationManagerBase {
 
@@ -60,6 +61,11 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 
 	public stopApplication(appIdentifier: string): IFuture<void> {
 		return this.adb.executeShellCommand(["am", "force-stop", `${appIdentifier}`]);
+	}
+
+	public getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo> {
+		// This method is currently only used in the ios application managers. Configurations for Android are acquired through filesystem listing.
+		return Future.fromResult(null);
 	}
 
 	public canStartApplication(): boolean {

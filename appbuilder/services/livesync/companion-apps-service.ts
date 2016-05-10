@@ -1,5 +1,5 @@
 import { exported } from "../../../decorators";
-import { TARGET_FRAMEWORK_IDENTIFIERS } from "../../../mobile/constants";
+import { TARGET_FRAMEWORK_IDENTIFIERS } from "../../../constants";
 
 const NS_COMPANION_APP_IDENTIFIER = "com.telerik.NativeScript";
 const APPBUILDER_ANDROID_COMPANION_APP_IDENTIFIER = "com.telerik.AppBuilder";

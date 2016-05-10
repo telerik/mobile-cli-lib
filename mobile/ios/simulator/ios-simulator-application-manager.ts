@@ -55,17 +55,41 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		return true;
 	}
 
+	public getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo> {
+		return ((): Mobile.IApplicationInfo => {
+			let result: Mobile.IApplicationInfo = null,
+				plistContent = this.getParsedPlistContent(applicationIdentifier).wait();
+
+			if(plistContent) {
+				result = {
+					applicationIdentifier,
+					deviceIdentifier: this.identifier,
+					configuration: plistContent && plistContent.configuration
+				};
+			}
+
+			return result;
+		}).future<Mobile.IApplicationInfo>()();
+	}
+
 	public isLiveSyncSupported(appIdentifier: string): IFuture<boolean> {
 		return ((): boolean => {
-			let applicationPath = this.iosSim.getApplicationPath(this.identifier, appIdentifier);
-			let pathToInfoPlist = path.join(applicationPath, "Info.plist");
-			if (this.$fs.exists(pathToInfoPlist).wait()) {
-				let plistContent: any = this.$bplistParser.parseFile(pathToInfoPlist).wait()[0];
+			let plistContent = this.getParsedPlistContent(appIdentifier).wait();
+			if(plistContent) {
 				return !!plistContent && !!plistContent.IceniumLiveSyncEnabled;
 			}
 
 			return false;
 		}).future<boolean>()();
+	}
+
+	private getParsedPlistContent(appIdentifier: string): any {
+		return ((): any => {
+			let applicationPath = this.iosSim.getApplicationPath(this.identifier, appIdentifier),
+				pathToInfoPlist = path.join(applicationPath, "Info.plist");
+
+			return this.$fs.exists(pathToInfoPlist).wait() ? this.$bplistParser.parseFile(pathToInfoPlist).wait()[0] : null;
+		}).future<any>()();
 	}
 
 	public getDebuggableApps(): IFuture<Mobile.IAndroidApplicationInformation[]> {

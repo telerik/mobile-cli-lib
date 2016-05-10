@@ -101,7 +101,7 @@ describe("ProjectFilesProviderBase", () => {
 
 		it("process file without platforms in the name", () => {
 			let filePath = "/test/filePath.ts",
-				projectFileInfo = projectFilesProviderBase.getProjectFileInfo(filePath);
+				projectFileInfo = projectFilesProviderBase.getProjectFileInfo(filePath, "");
 
 			assert.deepEqual(projectFileInfo, getExpectedProjectFileInfo(filePath, true));
 		});

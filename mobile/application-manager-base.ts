@@ -79,6 +79,7 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 	public abstract startApplication(appIdentifier: string, framework?: string): IFuture<void>;
 	public abstract stopApplication(appIdentifier: string): IFuture<void>;
 	public abstract getInstalledApplications(): IFuture<string[]>;
+	public abstract getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo>;
 	public abstract canStartApplication(): boolean;
 	public abstract getDebuggableApps(): IFuture<Mobile.IAndroidApplicationInformation[]>;
 

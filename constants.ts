@@ -16,8 +16,10 @@ export let CONNECTED_STATUS = "Connected";
 export class LiveSyncConstants {
 	static VERSION_2 = 2;
 	static VERSION_3 = 3;
-	static DEVICE_TMP_DIR_FORMAT_V2 = "/data/local/tmp/12590FAA-5EDD-4B12-856D-F52A0A1599F2/%s";
-	static DEVICE_TMP_DIR_FORMAT_V3 = "/mnt/sdcard/Android/data/%s/files/12590FAA-5EDD-4B12-856D-F52A0A1599F2";
+	static GUID = "12590FAA-5EDD-4B12-856D-F52A0A1599F2";
+	static DEVICE_TMP_DIR_FORMAT_V2 = `/data/local/tmp/${LiveSyncConstants.GUID}/%s`;
+	static ANDROID_FILES_PATH = `files/${LiveSyncConstants.GUID}`;
+	static DEVICE_TMP_DIR_FORMAT_V3 = `/mnt/sdcard/Android/data/%s/${LiveSyncConstants.ANDROID_FILES_PATH}`;
 	static CHECK_LIVESYNC_INTENT_NAME = "com.telerik.IsLiveSyncSupported";
 	static IOS_PROJECT_PATH = "/Library/Application Support/LiveSync";
 }
@@ -31,3 +33,9 @@ export let TARGET_FRAMEWORK_IDENTIFIERS = {
 	Cordova: "Cordova",
 	NativeScript: "NativeScript"
 };
+
+export class Configurations {
+	static Debug = "Debug";
+	static Release = "Release";
+}
+

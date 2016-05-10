@@ -91,6 +91,7 @@ declare module Mobile {
 		fileSystem: Mobile.IDeviceFileSystem;
 		isEmulator: boolean;
 		openDeviceLogStream(): void;
+		getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo>;
 	}
 
 	interface IAndroidDevice extends IDevice {
@@ -193,17 +194,46 @@ declare module Mobile {
 		canStartApplication(): boolean;
 		checkForApplicationUpdates(): IFuture<void>;
 		isLiveSyncSupported(appIdentifier: string): IFuture<boolean>;
+		getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo>;
 		tryStartApplication(appIdentifier: string, framework?: string): IFuture<void>;
 		getDebuggableApps(): IFuture<Mobile.IAndroidApplicationInformation[]>;
 	}
 
-	interface IApplicationLiveSyncStatus {
-		applicationIdentifier: string;
+	/**
+	 * Describes information about livesync in an application.
+	 */
+	interface ILiveSyncApplicationInfo extends IApplicationInfo {
+		/**
+		 * Whether LiveSync is supported
+		 * @type {boolean}
+		 */
 		isLiveSyncSupported: boolean;
 	}
 
+	/**
+	 * Describes information about an application.
+	 */
+	interface IApplicationInfo {
+		/**
+		 * Application's identifier
+		 * @type {string}
+		 */
+		applicationIdentifier: string;
+
+		/**
+		 * Device's identifier
+		 * @type {string}
+		 */
+		deviceIdentifier?: string;
+		/**
+		 * The configuration of the currently deployed application (e.g. debug, release, live, etc.)
+		 * @type {string}
+		 */
+		configuration: string
+	}
+
 	interface IDeviceFileSystem {
-		listFiles(devicePath: string): IFuture<void>;
+		listFiles(devicePath: string, appIdentifier?: string): IFuture<any>;
 		getFile(deviceFilePath: string): IFuture<void>;
 		putFile(localFilePath: string, deviceFilePath: string): IFuture<void>;
 		deleteFile?(deviceFilePath: string, appIdentifier: string): void;
