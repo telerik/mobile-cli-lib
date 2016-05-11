@@ -4,6 +4,7 @@
 import {ApplicationManagerBase} from "../../application-manager-base";
 import Future = require("fibers/future");
 import * as path from "path";
+import * as temp from "temp";
 
 export class IOSSimulatorApplicationManager extends ApplicationManagerBase implements Mobile.IDeviceApplicationManager {
 	constructor(private iosSim: any,
@@ -19,7 +20,19 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase imple
 	}
 
 	public installApplication(packageFilePath: string): IFuture<void> {
-		return this.iosSim.installApplication(this.identifier, packageFilePath);
+		return (() => {
+			if(this.$fs.exists(packageFilePath).wait() && path.extname(packageFilePath) === ".zip") {
+				temp.track();
+				let dir = temp.mkdirSync("simulatorPackage");
+				this.$fs.unzip(packageFilePath, dir).wait();
+				let app = _.find(this.$fs.readDirectory(dir).wait(), directory => path.extname(directory) === ".app");
+				if (app) {
+					packageFilePath = path.join(dir, app);
+				}
+			}
+
+			this.iosSim.installApplication(this.identifier, packageFilePath).wait();
+		}).future<void>()();
 	}
 
 	public uninstallApplication(appIdentifier: string): IFuture<void> {
