@@ -58,8 +58,11 @@ export class StaticConfigBase implements Config.IStaticConfig {
 
 	private getAdbFilePathCore(): IFuture<string> {
 		return ((): string => {
+			let $childProcess: IChildProcess = this.$injector.resolve("$childProcess");
+
 			try {
-				let proc = this.adb.executeCommand(["version"], { returnChildProcess: true }).wait();
+				// Do NOT use the adb wrapper because it will end blow up with Segmentation fault because the wrapper uses this method!!!
+				let proc = $childProcess.spawnFromEvent("adb", ["version"], "exit", undefined, { throwError: false }).wait();
 
 				if (proc.stderr) {
 					return this.spawnPrivateAdb().wait();
