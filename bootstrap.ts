@@ -79,6 +79,8 @@ $injector.require("androidDeviceDiscovery", "./mobile/mobile-core/android-device
 $injector.require("iOSDevice", "./mobile/ios/device/ios-device");
 $injector.require("iOSDeviceProductNameMapper", "./mobile/ios/ios-device-product-name-mapper");
 $injector.require("androidDevice", "./mobile/android/android-device");
+$injector.require("adb", "./mobile/android/android-debug-bridge");
+$injector.require("androidDebugBridgeResultHandler", "./mobile/android/android-debug-bridge-result-handler");
 $injector.require("logcatHelper", "./mobile/android/logcat-helper");
 $injector.require("iOSSimResolver", "./mobile/ios/simulator/ios-sim-resolver");
 

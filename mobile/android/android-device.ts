@@ -1,7 +1,7 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 
-import * as androidDebugBridgePath from "./android-debug-bridge";
+import {DeviceAndroidDebugBridge} from "./device-android-debug-bridge";
 import * as applicationManagerPath from "./android-application-manager";
 import * as fileSystemPath from "./android-device-file-system";
 import * as constants from "../constants";
@@ -19,7 +19,7 @@ interface IAdbDeviceStatusInfo {
 }
 
 export class AndroidDevice implements Mobile.IAndroidDevice {
-	public adb: Mobile.IAndroidDebugBridge;
+	public adb: Mobile.IDeviceAndroidDebugBridge;
 	public applicationManager: Mobile.IDeviceApplicationManager;
 	public fileSystem: Mobile.IDeviceFileSystem;
 	public deviceInfo: Mobile.IDeviceInfo;
@@ -63,7 +63,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		private $mobileHelper: Mobile.IMobileHelper,
 		private $injector: IInjector) {
 
-		this.adb = this.$injector.resolve(androidDebugBridgePath.AndroidDebugBridge, { identifier: this.identifier });
+		this.adb = this.$injector.resolve(DeviceAndroidDebugBridge, { identifier: this.identifier });
 		this.applicationManager = this.$injector.resolve(applicationManagerPath.AndroidApplicationManager, { adb: this.adb, identifier: this.identifier });
 		this.fileSystem = this.$injector.resolve(fileSystemPath.AndroidDeviceFileSystem, { adb: this.adb, identifier: this.identifier });
 

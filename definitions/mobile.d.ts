@@ -95,7 +95,7 @@ declare module Mobile {
 	}
 
 	interface IAndroidDevice extends IDevice {
-		adb: Mobile.IAndroidDebugBridge;
+		adb: Mobile.IDeviceAndroidDebugBridge;
 	}
 
 	interface IiOSDevice extends IDevice {
@@ -212,9 +212,19 @@ declare module Mobile {
 		createFileOnDevice?(deviceFilePath: string, fileContent: string): IFuture<void>;
 	}
 
+	interface IAndroidDebugBridgeCommandOptions {
+		fromEvent?: string,
+		returnChildProcess?: boolean,
+		treatErrorsAsWarnings?: boolean,
+		childProcessOptions?: any
+	}
+
 	interface IAndroidDebugBridge {
-		executeCommand(args: string[]): IFuture<any>;
-		executeShellCommand(args: string[]): IFuture<any>;
+		executeCommand(args: string[], options?: IAndroidDebugBridgeCommandOptions): IFuture<any>;
+	}
+
+	interface IDeviceAndroidDebugBridge extends IAndroidDebugBridge {
+		executeShellCommand(args: string[], options?: IAndroidDebugBridgeCommandOptions): IFuture<any>;
 		sendBroadcastToDevice(action: string, extras?: IStringDictionary): IFuture<number>;
 	}
 
@@ -240,7 +250,7 @@ declare module Mobile {
 	interface IDevicesService {
 		hasDevices: boolean;
 		deviceCount: number;
-		execute(action: (device: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: {allowNoDevices?: boolean}): IFuture<void>;
+		execute(action: (device: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: { allowNoDevices?: boolean }): IFuture<void>;
 		initialize(data?: IDevicesServicesInitializationOptions): IFuture<void>;
 		platform: string;
 		getDevices(): Mobile.IDeviceInfo[];
@@ -289,11 +299,11 @@ declare module Mobile {
 		stringGetLength(theString: NodeBuffer): number;
 		dictionaryGetCount(theDict: NodeBuffer): number;
 		createCFString(str: string): NodeBuffer;
-		dictToPlistEncoding(dict: {[key: string]: {}}, format: number): NodeBuffer;
+		dictToPlistEncoding(dict: { [key: string]: {} }, format: number): NodeBuffer;
 		dictFromPlistEncoding(str: NodeBuffer): NodeBuffer;
 		dictionaryGetTypeID(): number;
 		stringGetTypeID(): number;
-		dataGetTypeID():  number;
+		dataGetTypeID(): number;
 		numberGetTypeID(): number;
 		booleanGetTypeID(): number;
 		arrayGetTypeID(): number;
@@ -335,7 +345,7 @@ declare module Mobile {
 		afcFileRefRead(afcConnection: NodeBuffer, afcFileRef: number, buffer: NodeBuffer, byteLength: NodeBuffer): number;
 		afcRemovePath(afcConnection: NodeBuffer, path: string): number;
 		afcDirectoryOpen(afcConnection: NodeBuffer, path: string, afcDirectory: NodeBuffer): number;
-		afcDirectoryRead(afcConnection: NodeBuffer, afcdirectory: NodeBuffer,  name: NodeBuffer): number;
+		afcDirectoryRead(afcConnection: NodeBuffer, afcdirectory: NodeBuffer, name: NodeBuffer): number;
 		afcDirectoryClose(afcConnection: NodeBuffer, afcdirectory: NodeBuffer): number;
 		isDataReceivingCompleted(reply: IDictionary<any>): boolean;
 		setLogLevel(logLevel: number): number;
@@ -375,7 +385,7 @@ declare module Mobile {
 	}
 
 	interface ILocalToDevicePathDataFactory {
-		create(fileName: string, localProjectRootPath: string, onDeviceFileName: string, deviceProjectRootPath: string):  Mobile.ILocalToDevicePathData;
+		create(fileName: string, localProjectRootPath: string, onDeviceFileName: string, deviceProjectRootPath: string): Mobile.ILocalToDevicePathData;
 	}
 
 	interface IiOSSocketResponseData {
@@ -388,10 +398,10 @@ declare module Mobile {
 	interface IiOSDeviceSocket {
 		receiveMessage(): IFuture<IiOSSocketResponseData>;
 		readSystemLog(action: (data: string) => void): void;
-		sendMessage(message: {[key: string]: {}}, format?: number): void;
+		sendMessage(message: { [key: string]: {} }, format?: number): void;
 		sendMessage(message: string): void;
-		sendAll? (data: NodeBuffer): void;
-		receiveAll? (callback: (data: NodeBuffer) => void): void;
+		sendAll?(data: NodeBuffer): void;
+		receiveAll?(callback: (data: NodeBuffer) => void): void;
 		exchange(message: IDictionary<any>): IFuture<IiOSSocketResponseData>;
 		close(): void;
 	}
@@ -517,7 +527,7 @@ declare module Mobile {
 		/**
 		 * Computes the shasums of localToDevicePaths and changes the content of hash file on device
 		 */
-		uploadHashFileToDevice(data: IStringDictionary|Mobile.ILocalToDevicePathData[]): IFuture<void>;
+		uploadHashFileToDevice(data: IStringDictionary | Mobile.ILocalToDevicePathData[]): IFuture<void>;
 		/**
 		 * Computes the shasums of localToDevicePaths and updates hash file on device
 		 */
@@ -532,5 +542,44 @@ declare module Mobile {
 		 * @return {IFuture<boolean>} boolean True if file exists and false otherwise.
 		 */
 		doesShasumFileExistsOnDevice(): IFuture<boolean>;
+	}
+
+	/**
+	 * Describes information for Android debug bridge error.
+	 */
+	interface IAndroidDebugBridgeError {
+		/**
+		 * Name of the error.
+		 */
+		name: string;
+
+		/**
+		 * Description of the error.
+		 */
+		description: string;
+
+		/**
+		 * Returned result code.
+		 */
+		resultCode: number;
+	}
+
+	/**
+	 * Describes logic for handling Android debug bridge result.
+	 */
+	interface IAndroidDebugBridgeResultHandler {
+		/**
+		 * Checks the Android debug bridge result for errors.
+		 * @param {string} adbResult The Android debug bridge result.
+		 * @return {string} The errors found in the Android debug bridge result.
+		 */
+		checkForErrors(adbResult: any): IAndroidDebugBridgeError[];
+
+		/**
+		 * Handles the Android debug bridge result errors.
+		 * @param {IAndroidDebugBridgeError[]} errors The Android debug bridge result errors.
+		 * @return {void}.
+		 */
+		handleErrors(errors: IAndroidDebugBridgeError[], treatErrorsAsWarnings?: boolean): void;
 	}
 }

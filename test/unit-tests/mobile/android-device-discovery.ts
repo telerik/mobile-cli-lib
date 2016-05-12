@@ -1,6 +1,8 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 import {AndroidDeviceDiscovery} from "../../../mobile/mobile-core/android-device-discovery";
+import {AndroidDebugBridge} from "../../../mobile/android/android-debug-bridge";
+import {AndroidDebugBridgeResultHandler} from "../../../mobile/android/android-debug-bridge-result-handler";
 import {Yok} from "../../../yok";
 import Future = require("fibers/future");
 import { EventEmitter } from "events";
@@ -31,6 +33,10 @@ let mockStdoutEmitter: MockEventEmitter,
 function createTestInjector(): IInjector {
 	let injector = new Yok();
 	injector.register("injector", injector);
+	injector.register("adb", AndroidDebugBridge);
+	injector.register("errors", {});
+	injector.register("logger", {});
+	injector.register("androidDebugBridgeResultHandler", AndroidDebugBridgeResultHandler);
 	injector.register("childProcess", {
 		spawn: (command: string, args?: string[], options?: any) => {
 			mockChildProcess = new MockEventEmitter();
@@ -53,8 +59,8 @@ function createTestInjector(): IInjector {
 	let originalResolve = injector.resolve;
 	// replace resolve as we do not want to create real AndroidDevice
 	let resolve = (param: any, ctorArguments?: IDictionary<any>) => {
-		if(ctorArguments && Object.prototype.hasOwnProperty.call(ctorArguments, "status") &&
-			Object.prototype.hasOwnProperty.call(ctorArguments, "identifier")){
+		if (ctorArguments && Object.prototype.hasOwnProperty.call(ctorArguments, "status") &&
+			Object.prototype.hasOwnProperty.call(ctorArguments, "identifier")) {
 			return new AndroidDeviceMock(ctorArguments["identifier"], ctorArguments["status"]);
 		} else {
 			return originalResolve.apply(injector, [param, ctorArguments]);
@@ -127,7 +133,7 @@ describe("androidDeviceDiscovery", () => {
 			let future = new Future<void>();
 			androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
 				devicesFound.push(device);
-				if(devicesFound.length === 2) {
+				if (devicesFound.length === 2) {
 					future.return();
 				}
 			});

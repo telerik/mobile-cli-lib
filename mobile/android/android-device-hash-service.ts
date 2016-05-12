@@ -12,7 +12,7 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 	private _hashFileLocalPath: string = null;
 	private _tempDir: string = null;
 
-	constructor(private adb: Mobile.IAndroidDebugBridge,
+	constructor(private adb: Mobile.IDeviceAndroidDebugBridge,
 		private appIdentifier: string,
 		private $fs: IFileSystem,
 		private $mobileHelper: Mobile.IMobileHelper) { }

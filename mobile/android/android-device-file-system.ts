@@ -9,7 +9,7 @@ import Future = require("fibers/future");
 export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	private _deviceHashServices = Object.create(null);
 
-	constructor(private adb: Mobile.IAndroidDebugBridge,
+	constructor(private adb: Mobile.IDeviceAndroidDebugBridge,
 		private identifier: string,
 		private $fs: IFileSystem,
 		private $logger: ILogger,

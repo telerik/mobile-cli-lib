@@ -7,51 +7,57 @@ interface IComposeCommandResult {
 }
 
 export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
-	constructor(private identifier: string,
-		private $childProcess: IChildProcess,
-		private $errors: IErrors,
-		private $logger: ILogger,
-		private $staticConfig: Config.IStaticConfig) { }
+	constructor(protected $childProcess: IChildProcess,
+		protected $errors: IErrors,
+		protected $logger: ILogger,
+		protected $staticConfig: Config.IStaticConfig,
+		protected $androidDebugBridgeResultHandler: Mobile.IAndroidDebugBridgeResultHandler) { }
 
-	public executeCommand(args: string[]): IFuture<any> {
+	public executeCommand(args: string[], options?: Mobile.IAndroidDebugBridgeCommandOptions): IFuture<any> {
 		return (() => {
+			let event = "close";
 			let command = this.composeCommand(args).wait();
-			// TODO: Remove throwError when adb output parse is implemented.
-			// For example `adb -s <invalid device id> install <smth>` throws error 'error: device \'030939f508e6c773\' not found\r\n' exitCode 4294967295
-			return this.$childProcess.spawnFromEvent(command.command, command.args, "close", undefined, {throwError: false}).wait().stdout;
-		}).future<any>()();
-	}
+			let treatErrorsAsWarnings = false;
+			let childProcessOptions: any = undefined;
 
-	public executeShellCommand(args: string[]): IFuture<any> {
-		return (() => {
-			args.unshift("shell");
-			let shellCommand = this.composeCommand(args).wait();
-			return this.$childProcess.spawnFromEvent(shellCommand.command, shellCommand.args, "close", undefined, {throwError: false}).wait().stdout;
-		}).future<any>()();
-	}
+			if (options) {
+				event = options.fromEvent || event;
+				treatErrorsAsWarnings = options.treatErrorsAsWarnings;
+				childProcessOptions = options.childProcessOptions;
 
-	public sendBroadcastToDevice(action: string, extras: IStringDictionary = {}): IFuture<number> {
-		return (() => {
-			let broadcastCommand = ["am", "broadcast", "-a", `${action}`];
-			_.each(extras, (value,key) => broadcastCommand.push("-e", key, value));
-
-			let result = this.executeShellCommand(broadcastCommand).wait();
-			this.$logger.trace(`Broadcast result ${result} from ${broadcastCommand}`);
-
-			let match = result.match(/Broadcast completed: result=(\d+)/);
-			if (match) {
-				return +match[1];
+				if (options.returnChildProcess) {
+					return this.$childProcess.spawn(command.command, command.args);
+				}
 			}
 
-			this.$errors.failWithoutHelp("Unable to broadcast to android device:\n%s", result);
-		}).future<number>()();
+			// If adb -s <invalid device id> install <smth> is executed the childProcess won't get any response
+			// because the adb will be waiting for valid device and will not send close or exit event.
+			// For example `adb -s <invalid device id> install <smth>` throws error 'error: device \'030939f508e6c773\' not found\r\n' exitCode 4294967295
+			let result: any = this.$childProcess.spawnFromEvent(command.command, command.args, event, childProcessOptions, { throwError: false }).wait();
+
+			let errors = this.$androidDebugBridgeResultHandler.checkForErrors(result);
+
+			if (errors && errors.length > 0) {
+				this.$androidDebugBridgeResultHandler.handleErrors(errors, treatErrorsAsWarnings);
+			}
+
+			// Some adb commands returns array of strings instead of object with stdout and stderr. (adb start-server)
+			return result.stdout || result;
+		}).future<any>()();
 	}
 
-	private composeCommand(params: string[]): IFuture<IComposeCommandResult> {
+	protected composeCommand(params: string[], identifier?: string): IFuture<IComposeCommandResult> {
 		return (() => {
 			let command = this.$staticConfig.getAdbFilePath().wait();
-			let args: string[] = ["-s", `${this.identifier}`].concat(params);
+			let deviceIdentifier: string[] = [];
+			if (identifier) {
+				deviceIdentifier = ["-s", `${identifier}`];
+			}
+
+			let args: string[] = deviceIdentifier.concat(params);
 			return { command, args };
 		}).future<IComposeCommandResult>()();
 	}
 }
+
+$injector.register("adb", AndroidDebugBridge);

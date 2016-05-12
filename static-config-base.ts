@@ -20,6 +20,7 @@ export class StaticConfigBase implements Config.IStaticConfig {
 	public SYS_REQUIREMENTS_LINK: string;
 	public HTML_CLI_HELPERS_DIR: string;
 	public version: string = null;
+	public pathToPackageJson: string;
 
 	protected _adbFilePath: string = null;
 
@@ -31,7 +32,7 @@ export class StaticConfigBase implements Config.IStaticConfig {
 
 	public getAdbFilePath(): IFuture<string> {
 		return (() => {
-			if(!this._adbFilePath) {
+			if (!this._adbFilePath) {
 				this._adbFilePath = this.getAdbFilePathCore().wait();
 			}
 
@@ -51,20 +52,20 @@ export class StaticConfigBase implements Config.IStaticConfig {
 		return path.join(__dirname, "docs", "helpers");
 	}
 
-	public pathToPackageJson: string;
+	private get adb(): Mobile.IAndroidDebugBridge {
+		return this.$injector.resolve("adb");
+	}
 
 	private getAdbFilePathCore(): IFuture<string> {
 		return ((): string => {
-			let $childProcess: IChildProcess = this.$injector.resolve("$childProcess");
-
 			try {
-				let proc = $childProcess.spawnFromEvent("adb", ["version"], "exit", undefined, { throwError: false }).wait();
+				let proc = this.adb.executeCommand(["version"], { returnChildProcess: true }).wait();
 
-				if(proc.stderr) {
+				if (proc.stderr) {
 					return this.spawnPrivateAdb().wait();
 				}
-			} catch(e) {
-				if(e.code === "ENOENT") {
+			} catch (e) {
+				if (e.code === "ENOENT") {
 					return this.spawnPrivateAdb().wait();
 				}
 			}
@@ -85,9 +86,8 @@ export class StaticConfigBase implements Config.IStaticConfig {
 		- Adb is named differently on OSes and may have additional files. The code is hairy to accommodate these differences
 	 */
 	private spawnPrivateAdb(): IFuture<string> {
-		return (():string => {
+		return ((): string => {
 			let $fs: IFileSystem = this.$injector.resolve("$fs");
-			let $childProcess: IChildProcess = this.$injector.resolve("$childProcess");
 
 			// prepare the directory to host our copy of adb
 			let defaultAdbDirPath = path.join(__dirname, `resources/platform-tools/android/${process.platform}`);
@@ -102,7 +102,7 @@ export class StaticConfigBase implements Config.IStaticConfig {
 			shelljs.chmod("+x", targetAdb);
 
 			// let adb start its global server
-			$childProcess.spawnFromEvent(targetAdb, ["start-server"], "exit", undefined, { throwError: false }).wait();
+			this.adb.executeCommand(["start-server"], "exit").wait();
 
 			return targetAdb;
 		}).future<string>()();

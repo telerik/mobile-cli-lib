@@ -1,24 +1,27 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 import byline = require("byline");
+import {DeviceAndroidDebugBridge} from "./device-android-debug-bridge";
 
 export class LogcatHelper implements Mobile.ILogcatHelper {
 	private mapDeviceToLoggingStarted: IDictionary<boolean>;
 
 	constructor(private $childProcess: IChildProcess,
-			private $deviceLogProvider: Mobile.IDeviceLogProvider,
-			private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
-			private $logger: ILogger,
-			private $staticConfig: Config.IStaticConfig) {
-				this.mapDeviceToLoggingStarted = Object.create(null);
-			}
+		private $deviceLogProvider: Mobile.IDeviceLogProvider,
+		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
+		private $logger: ILogger,
+		private $injector: IInjector) {
+		this.mapDeviceToLoggingStarted = Object.create(null);
+	}
 
 	public start(deviceIdentifier: string): void {
 		if (deviceIdentifier && !this.mapDeviceToLoggingStarted[deviceIdentifier]) {
-			let adbPath = this.$staticConfig.getAdbFilePath().wait();
+			let adb: Mobile.IDeviceAndroidDebugBridge = this.$injector.resolve(DeviceAndroidDebugBridge, { identifier: deviceIdentifier });
+
 			// remove cached logs:
-			this.$childProcess.spawnFromEvent(adbPath, ["-s", deviceIdentifier,  "logcat",  "-c"], "close",  {}, {throwError: false}).wait();
-			let adbLogcat = this.$childProcess.spawn(adbPath, ["-s", deviceIdentifier, "logcat"]);
+			adb.executeCommand(["logcat", "-c"]).wait();
+
+			let adbLogcat = adb.executeCommand(["logcat"], { returnChildProcess: true }).wait();
 			let lineStream = byline(adbLogcat.stdout);
 
 			adbLogcat.stderr.on("data", (data: NodeBuffer) => {
@@ -27,7 +30,7 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 
 			adbLogcat.on("close", (code: number) => {
 				this.mapDeviceToLoggingStarted[deviceIdentifier] = false;
-				if(code !== 0) {
+				if (code !== 0) {
 					this.$logger.trace("ADB process exited with code " + code.toString());
 				}
 			});
@@ -41,4 +44,5 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 		}
 	}
 }
+
 $injector.register("logcatHelper", LogcatHelper);
