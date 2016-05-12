@@ -58,7 +58,12 @@ export class IOSDevice implements Mobile.IiOSDevice {
 			this.deviceInfo.version = this.getValue("ProductVersion");
 			this.deviceInfo.color = this.getValue("DeviceColor");
 			this.deviceInfo.isTablet = productType && productType.toLowerCase().indexOf("ipad") !== -1;
+			this.deviceInfo.activeArchitecture = this.getActiveArchitecture(productType);
+		}
 
+	private getActiveArchitecture(productType: string): string {
+		let activeArchitecture = "";
+		if (productType) {
 			productType = productType.toLowerCase().trim();
 			let majorVersionAsString = productType.match(/.*?(\d+)\,(\d+)/)[1];
 			let majorVersion = parseInt(majorVersionAsString);
@@ -72,7 +77,10 @@ export class IOSDevice implements Mobile.IiOSDevice {
 				isArm64Architecture = majorVersion >= 7;
 			}
 
-			this.deviceInfo.activeArchitecture = isArm64Architecture ? "arm64" : "armv7";
+			activeArchitecture = isArm64Architecture ? "arm64" : "armv7";
+		}
+
+		return activeArchitecture;
 	}
 
 	public get isEmulator(): boolean {
