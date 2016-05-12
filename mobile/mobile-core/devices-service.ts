@@ -400,6 +400,11 @@ export class DevicesService implements Mobile.IDevicesService {
 		return this.$androidProcessService.mapAbstractToTcpPort(deviceIdentifier, appIdentifier);
 	}
 
+	@exportedPromise("devicesService")
+	public getApplicationsAvailableForDebugging(deviceIdentifier: string): IFuture<string[]> {
+		return this.$androidProcessService.getApplicationsAvailableForDebugging(deviceIdentifier);
+	}
+
 	private deployOnDevice(deviceIdentifier: string, packageFile: string, packageName: string): IFuture<void> {
 		return (() => {
 			let device = this.getDeviceByIdentifier(deviceIdentifier);
