@@ -42,7 +42,7 @@ export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 			}
 
 			// Some adb commands returns array of strings instead of object with stdout and stderr. (adb start-server)
-			return result.stdout || result;
+			return (result.stdout === undefined || result.stdout === null) ? result : result.stdout;
 		}).future<any>()();
 	}
 
