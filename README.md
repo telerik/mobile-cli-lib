@@ -7,9 +7,9 @@ Contains common infrastructure for CLIs - mainly AppBuilder and NativeScript.
 Installation
 ===
 
-Latest version: 0.8.3
+Latest version: 0.9.0
 
-Release date: 2016, May 11
+Release date: 2016, May 13
 
 ### System Requirements
 
