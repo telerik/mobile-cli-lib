@@ -2,11 +2,9 @@
 "use strict";
 
 import { EventEmitter } from "events";
-import { getFuturesResults } from "../helpers";
 
 export abstract class ApplicationManagerBase extends EventEmitter implements Mobile.IDeviceApplicationManager {
 	private lastInstalledAppIdentifiers: string[];
-	public applicationsLiveSyncStatus: Mobile.IApplicationLiveSyncStatus[];
 
 	public reinstallApplication(appIdentifier: string, packageFilePath: string): IFuture<void> {
 		return (() => {
@@ -44,14 +42,8 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 					let newAppIdentifiers = _.difference(currentlyInstalledAppIdentifiers, previouslyInstalledAppIdentifiers);
 					let removedAppIdentifiers = _.difference(previouslyInstalledAppIdentifiers, currentlyInstalledAppIdentifiers);
 
-					if(newAppIdentifiers.length || removedAppIdentifiers.length) {
-						this.applicationsLiveSyncStatus = _.reject(this.applicationsLiveSyncStatus,
-															(app: Mobile.IApplicationLiveSyncStatus) => _.contains(removedAppIdentifiers, app.applicationIdentifier));
-						this.getApplicationsLiveSyncSupportedStatus(newAppIdentifiers).wait();
-					}
-
-					_.each(newAppIdentifiers, application => this.emit("applicationInstalled", application, {isLiveSyncSupported: this.isLiveSyncSupported(application).wait()} ));
-					_.each(removedAppIdentifiers, application => this.emit("applicationUninstalled", application));
+					_.each(newAppIdentifiers, appIdentifier => this.emit("applicationInstalled", appIdentifier));
+					_.each(removedAppIdentifiers, appIdentifier => this.emit("applicationUninstalled", appIdentifier));
 
 					this.lastInstalledAppIdentifiers = currentlyInstalledAppIdentifiers;
 				} finally {
@@ -61,31 +53,7 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 		}).future<void>()();
 	}
 
-	public getApplicationsLiveSyncSupportedStatus(newAppIdentifiers: string[]): IFuture<void> {
-		return (() => {
-			let liveSyncStatus = getFuturesResults<boolean>(_.map(newAppIdentifiers, appIdentifier => this.isLiveSyncSupportedOnDevice(appIdentifier)), () => true);
-			this.applicationsLiveSyncStatus = (this.applicationsLiveSyncStatus || [])
-												.concat(_.map(newAppIdentifiers, (appIdentifier: string, index: number) =>
-															({ applicationIdentifier: appIdentifier, isLiveSyncSupported: liveSyncStatus[index]})
-												));
-		}).future<void>()();
-	}
-
-	public isLiveSyncSupported(appIdentifier: string): IFuture<boolean> {
-		return ((): boolean => {
-			if(!this.applicationsLiveSyncStatus || !this.applicationsLiveSyncStatus.length) {
-				this.checkForApplicationUpdates().wait();
-			}
-			let applicationLiveSyncData = _.find(this.applicationsLiveSyncStatus, app => app.applicationIdentifier === appIdentifier);
-			return !!applicationLiveSyncData && !!applicationLiveSyncData.isLiveSyncSupported;
-		}).future<boolean>()();
-	}
-
-	protected isLiveSyncSupportedOnDevice(appIdentifier: string): IFuture<boolean> {
-		return (() => {
-			throw new Error("This method should not be called.");
-		}).future<boolean>()();
-	}
+	public abstract isLiveSyncSupported(appIdentifier: string): IFuture<boolean>;
 
 	public abstract installApplication(packageFilePath: string): IFuture<void>;
 	public abstract uninstallApplication(appIdentifier: string): IFuture<void>;

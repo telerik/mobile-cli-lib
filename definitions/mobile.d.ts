@@ -193,7 +193,6 @@ declare module Mobile {
 		canStartApplication(): boolean;
 		checkForApplicationUpdates(): IFuture<void>;
 		isLiveSyncSupported(appIdentifier: string): IFuture<boolean>;
-		getApplicationsLiveSyncSupportedStatus(newApplications: string[]): IFuture<void>;
 	}
 
 	interface IApplicationLiveSyncStatus {
@@ -261,11 +260,12 @@ declare module Mobile {
 		isiOSDevice(device: Mobile.IDevice): boolean;
 		isiOSSimulator(device: Mobile.IDevice): boolean;
 		isOnlyiOSSimultorRunning(): boolean;
-		isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string): IFuture<boolean>[];
+		isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string): IFuture<IAppInstalledInfo>[];
 		setLogLevel(logLevel: string, deviceIdentifier?: string): void;
 		deployOnDevices(deviceIdentifiers: string[], packageFile: string, packageName: string): IFuture<void>[];
 		startDeviceDetectionInterval(): void;
 		stopDeviceDetectionInterval(): void;
+		getDeviceByIdentifier(identifier: string): Mobile.IDevice;
 	}
 
 	interface IiTunesValidator {

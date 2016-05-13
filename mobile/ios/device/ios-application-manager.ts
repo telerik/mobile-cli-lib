@@ -44,8 +44,8 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		}).future<void>()();
 	}
 
-	public getApplicationsLiveSyncSupportedStatus(): IFuture<void> {
-		return (() => {
+	public getApplicationsLiveSyncSupportedStatus(): IFuture<Mobile.IApplicationLiveSyncStatus[]> {
+		return ((): Mobile.IApplicationLiveSyncStatus[] => {
 			let installationProxy = this.$injector.resolve(iOSProxyServices.InstallationProxyClient, { device: this.device });
 			let result = installationProxy.sendMessage({
 					"Command": "Browse",
@@ -126,12 +126,22 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 			 */
 
 			this.$logger.trace("Result when getting applications for which LiveSync is enabled: ", JSON.stringify(result, null, 2));
-			this.applicationsLiveSyncStatus = [];
+			let applicationsLiveSyncStatus: Mobile.IApplicationLiveSyncStatus[] = [];
 			_.each(result, (singleResult: any) => {
 				let currentList = _.map(singleResult.CurrentList, (app: any) => ({applicationIdentifier: app.CFBundleIdentifier, isLiveSyncSupported: app.IceniumLiveSyncEnabled }));
-				this.applicationsLiveSyncStatus = this.applicationsLiveSyncStatus.concat(currentList);
+				applicationsLiveSyncStatus = applicationsLiveSyncStatus.concat(currentList);
 			});
-		}).future<void>()();
+
+			return applicationsLiveSyncStatus;
+		}).future<Mobile.IApplicationLiveSyncStatus[]>()();
+	}
+
+	public isLiveSyncSupported(appIdentifier: string): IFuture<boolean> {
+		return ((): boolean => {
+			let applicationsLiveSyncStatus = this.getApplicationsLiveSyncSupportedStatus().wait(),
+				selectedApplication = _.find(applicationsLiveSyncStatus, app => app.applicationIdentifier === appIdentifier);
+			return !!selectedApplication && selectedApplication.isLiveSyncSupported;
+		}).future<boolean>()();
 	}
 
 	public uninstallApplication(appIdentifier: string): IFuture<void> {

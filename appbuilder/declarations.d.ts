@@ -166,6 +166,37 @@ interface IDeviceLiveSyncInfo {
 }
 
 /**
+ * Describes if LiveSync is supported for specific device and application.
+ */
+interface ILiveSyncSupportedInfo {
+	/**
+	 * Unique identifier of the device.
+	 */
+	deviceIdentifier: string;
+
+	/**
+	 * Application identifier.
+	 */
+	appIdentifier: string;
+
+	/**
+	 * Result, indicating is livesync supported for specified device and specified application.
+	 * `true` in case livesync is supported and false otherwise.
+	 */
+	isLiveSyncSupported: boolean;
+}
+
+/**
+ * Describes if LiveSync is supported for specific device and application.
+ */
+interface IAppInstalledInfo extends ILiveSyncSupportedInfo {
+	/**
+	 * Defines if application is installed on device.
+	 */
+	isInstalled: boolean;
+}
+
+/**
  * Describes information about Telerik Companion Apps.
  */
 interface ICompanionAppsService {
