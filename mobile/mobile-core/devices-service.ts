@@ -142,12 +142,12 @@ export class DevicesService implements Mobile.IDevicesService {
 		} else {
 			this.deviceDetectionInterval = setInterval(() => {
 				fiberBootstrap.run(() => {
-					try {
-						// This code could be faster, by using Future.wait([...]), but it turned out this is breaking iOS deployment on Mac
-						// It's causing error 21 when deploying on some iOS devices during transfer of the first package.
-						this.$iOSDeviceDiscovery.checkForDevices().wait();
-					} catch (err) {
-						this.$logger.trace("Error while checking for new iOS devices.", err);
+					if(!this.$hostInfo.isDarwin) {
+						try {
+							this.$iOSDeviceDiscovery.checkForDevices().wait();
+						} catch (err) {
+							this.$logger.trace("Error while checking for new iOS devices.", err);
+						}
 					}
 
 					try {
