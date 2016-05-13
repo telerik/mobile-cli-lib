@@ -86,7 +86,7 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 
 			if(liveSyncOptions.isForCompanionApp) {
 				// We should check if the companion app is installed, not the real application.
-				appIdentifier = this.$companionAppsService.getCompanionAppIdentifier(this.$project.projectData.Framework, device.deviceInfo.platform);
+				livesyncData.appIdentifier = appIdentifier = this.$companionAppsService.getCompanionAppIdentifier(this.$project.projectData.Framework, device.deviceInfo.platform);
 			}
 
 			if(device.applicationManager.isApplicationInstalled(appIdentifier).wait()) {
