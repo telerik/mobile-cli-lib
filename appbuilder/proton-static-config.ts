@@ -22,5 +22,7 @@ export class ProtonStaticConfig extends StaticConfigBase {
 	}
 
 	public disableAnalytics = true;
+
+	public CLIENT_NAME = "Desktop Universal Client";
 }
 $injector.register("staticConfig", ProtonStaticConfig);

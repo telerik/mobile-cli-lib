@@ -54,7 +54,8 @@ let androidDeviceDiscovery: EventEmitter,
 			canStartApplication: () => true,
 			startApplication: (packageName: string) => Future.fromResult(),
 			reinstallApplication: (packageName: string, packageFile: string) => Future.fromResult(),
-			isApplicationInstalled: (packageName: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2"], packageName))
+			isApplicationInstalled: (packageName: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2"], packageName)),
+			isLiveSyncSupported: (appIdentifier: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2"], appIdentifier))
 		},
 		deploy: (packageFile: string, packageName: string) => Future.fromResult(),
 		isEmulator: true
@@ -125,7 +126,8 @@ describe("devicesService", () => {
 				canStartApplication: () => true,
 				startApplication: (packageName: string) => Future.fromResult(),
 				reinstallApplication: (packageName: string, packageFile: string) => Future.fromResult(),
-				isApplicationInstalled: (packageName: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2"], packageName))
+				isApplicationInstalled: (packageName: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2"], packageName)),
+				isLiveSyncSupported: (appIdentifier: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2"], appIdentifier))
 			},
 			deploy: (packageFile: string, packageName: string) => Future.fromResult()
 		},
@@ -139,7 +141,8 @@ describe("devicesService", () => {
 				canStartApplication: () => true,
 				startApplication: (packageName: string) => Future.fromResult(),
 				reinstallApplication: (packageName: string, packageFile: string) => Future.fromResult(),
-				isApplicationInstalled: (packageName: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], packageName))
+				isApplicationInstalled: (packageName: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], packageName)),
+				isLiveSyncSupported: (appIdentifier: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], appIdentifier))
 			},
 			deploy: (packageFile: string, packageName: string) => Future.fromResult()
 		},
@@ -245,11 +248,16 @@ describe("devicesService", () => {
 		});
 
 		it("returns true for each device on which the app is installed", () => {
-			let results = devicesService.isAppInstalledOnDevices([androidDevice.deviceInfo.identifier, iOSDevice.deviceInfo.identifier], "com.telerik.unitTest1");
+			let deviceIdentifiers = [androidDevice.deviceInfo.identifier, iOSDevice.deviceInfo.identifier],
+				appId = "com.telerik.unitTest1";
+			let results = devicesService.isAppInstalledOnDevices(deviceIdentifiers, appId);
 			assert.isTrue(results.length > 0);
-			_.each(results, futurizedResult => {
+			_.each(results, (futurizedResult: IFuture<IAppInstalledInfo>, index: number) => {
 				let realResult = futurizedResult.wait();
-				assert.isTrue(realResult);
+				assert.isTrue(realResult.isInstalled);
+				assert.deepEqual(realResult.appIdentifier, appId);
+				assert.deepEqual(realResult.deviceIdentifier, deviceIdentifiers[index]);
+				assert.deepEqual(realResult.isLiveSyncSupported, true);
 			});
 		});
 
@@ -257,7 +265,7 @@ describe("devicesService", () => {
 			let results = devicesService.isAppInstalledOnDevices([androidDevice.deviceInfo.identifier, iOSDevice.deviceInfo.identifier], "com.telerik.unitTest3");
 			assert.isTrue(results.length > 0);
 			Future.wait(results);
-			assert.deepEqual(results.map(r => r.get()), [true, false]);
+			assert.deepEqual(results.map(r => r.get().isInstalled), [true, false]);
 		});
 
 		it("throws error when invalid identifier is passed", () => {
@@ -268,7 +276,7 @@ describe("devicesService", () => {
 				if(error) {
 					assert.isTrue(error.message.indexOf("invalidDeviceId") !== -1, "The message must contain the id of the invalid device.");
 				} else {
-					assert.isTrue(futurizedResult.get(), "The app is installed on iOS Device, so we must return true.");
+					assert.isTrue(futurizedResult.get().isInstalled, "The app is installed on iOS Device, so we must return true.");
 				}
 			});
 		});
@@ -282,7 +290,8 @@ describe("devicesService", () => {
 			},
 			applicationManager: {
 				getInstalledApplications: () => Future.fromResult(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"]),
-				isApplicationInstalled: (packageName: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], packageName))
+				isApplicationInstalled: (packageName: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], packageName)),
+				isLiveSyncSupported: (appIdentifier: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], appIdentifier))
 			}
 		};
 

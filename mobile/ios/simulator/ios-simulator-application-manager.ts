@@ -6,7 +6,7 @@ import Future = require("fibers/future");
 import * as path from "path";
 import * as temp from "temp";
 
-export class IOSSimulatorApplicationManager extends ApplicationManagerBase implements Mobile.IDeviceApplicationManager {
+export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 	constructor(private iosSim: any,
 		private identifier: string,
 		private $options: ICommonOptions,
@@ -57,7 +57,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase imple
 		return true;
 	}
 
-	protected isLiveSyncSupportedOnDevice(appIdentifier: string): IFuture<boolean> {
+	public isLiveSyncSupported(appIdentifier: string): IFuture<boolean> {
 		return ((): boolean => {
 			let applicationPath = this.iosSim.getApplicationPath(this.identifier, appIdentifier);
 			let pathToInfoPlist = path.join(applicationPath, "Info.plist");

@@ -66,14 +66,14 @@ class DeviceEmitter extends EventEmitter {
 	}
 
 	private attachApplicationChangedHandlers(device: Mobile.IDevice): void {
-		device.applicationManager.on("applicationInstalled", (applicationName: string, applicationSettings: {isLiveSyncEnabled: boolean}) => {
-			this.emit("applicationInstalled", device.deviceInfo.identifier, applicationName, applicationSettings);
-			this.checkCompanionAppChanged(device, applicationName, "companionAppInstalled");
+		device.applicationManager.on("applicationInstalled", (appIdentifier: string) => {
+			this.emit("applicationInstalled", device.deviceInfo.identifier, appIdentifier);
+			this.checkCompanionAppChanged(device, appIdentifier, "companionAppInstalled");
 		});
 
-		device.applicationManager.on("applicationUninstalled", (applicationName: string) => {
-			this.emit("applicationUninstalled", device.deviceInfo.identifier, applicationName);
-			this.checkCompanionAppChanged(device, applicationName, "companionAppUninstalled");
+		device.applicationManager.on("applicationUninstalled", (appIdentifier: string) => {
+			this.emit("applicationUninstalled", device.deviceInfo.identifier, appIdentifier);
+			this.checkCompanionAppChanged(device, appIdentifier, "companionAppUninstalled");
 		});
 	}
 

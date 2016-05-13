@@ -57,7 +57,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		return true;
 	}
 
-	protected isLiveSyncSupportedOnDevice(appIdentifier: string): IFuture<boolean> {
+	public isLiveSyncSupported(appIdentifier: string): IFuture<boolean> {
 		return ((): boolean => {
 			let liveSyncVersion = this.adb.sendBroadcastToDevice(LiveSyncConstants.CHECK_LIVESYNC_INTENT_NAME, {"app-id": appIdentifier}).wait();
 			return liveSyncVersion === LiveSyncConstants.VERSION_2 || liveSyncVersion === LiveSyncConstants.VERSION_3;

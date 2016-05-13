@@ -364,7 +364,35 @@ require("mobile-cli-lib").devicesService.setLogLevel("INFO", "129604ab96a4d00530
 This will set the logging level to `INFO` only for device with identifier `129604ab96a4d0053023b4bf5b288cf34a9ed5fa`.
 
 
-* `isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string)` - checks if the specified application is installed on each of the specified devices.
+* `isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string): Promise<IAppInstalledInfo>[]` - checks if the specified application is installed on each of the specified devices and is LiveSync supported for this application.
+The returned type for each device is `IAppInstalledInfo`:
+```JavaScript
+/**
+ * Describes if LiveSync is supported for specific device and application.
+ */
+interface IAppInstalledInfo extends ILiveSyncSupportedInfo {
+	/**
+	 * Unique identifier of the device.
+	 */
+	deviceIdentifier: string;
+
+	/**
+	 * Application identifier.
+	 */
+	appIdentifier: string;
+
+	/**
+	 * Defines if application is installed on device.
+	 */
+	isInstalled: boolean;
+
+	/**
+	 * Result, indicating is livesync supported for specified device and specified application.
+	 * `true` in case livesync is supported and false otherwise.
+	 */
+	isLiveSyncSupported: boolean;
+}
+```
 Sample usage:
 ```JavaScript
 Promise.all(require("mobile-cli-lib")
@@ -376,7 +404,20 @@ Promise.all(require("mobile-cli-lib")
 			console.log(err);
 		});
 ```
-Result will be `[ false, false ]` for example.
+Sample result will be:
+```JSON
+[{
+	"deviceIdentifier": "deviceId1",
+	"appIdentifier": "appId",
+	"isInstalled": true,
+	"isLiveSyncSupported": true
+}, {
+	"deviceIdentifier": "deviceId2",
+	"appIdentifier": "appId",
+	"isInstalled": false,
+	"isLiveSyncSupported": false
+}]
+```
 
 ### Module liveSyncService
 > Stability: 1 - Could be changed due to some new requirments.
@@ -468,25 +509,52 @@ Promise.all(require("mobile-cli-lib").liveSyncService.livesync(deviceInfos, proj
 	});
 ```
 
-### Module fs
-> Stability: 0 - Only for testing purposes. Will be removed.
-
-For testing purposes we have exposed fs module and one of its methods: getFileSize. Its signature is:
-`getFileSize(path: string): number`
-This method throws exception in case the passed path does not exist.
-
-Example usage:
+* `isLiveSyncSupported(deviceIdentifiers: string[], appIdentifier: string): Promise<ILiveSyncSupportedInfo>[]` - checks if user can use LiveSync for application and for specified devices.
+For each device the following object will be returned:
 ```JavaScript
-var common = require("mobile-cli-lib");
-common.fs.getFileSize("D:\\Work\\t.txt")
-    .then(function (a) {
-    	console.log("File size is: ");
-    	console.log(a);
-    	return a;
-	}, function (err) {
-    	console.log("Error happened:");
-    	console.log(err);
+/**
+ * Describes if LiveSync is supported for specific device and application.
+ */
+interface ILiveSyncSupportedInfo {
+	/**
+	 * Unique identifier of the device.
+	 */
+	deviceIdentifier: string;
+
+	/**
+	 * Application identifier.
+	 */
+	appIdentifier: string;
+
+	/**
+	 * Result, indicating is livesync supported for specified device and specified application.
+	 * `true` in case livesync is supported and false otherwise.
+	 */
+	isLiveSyncSupported: boolean;
+}
+```
+
+Sample usage:
+```JavaScript
+Promise.all(require("mobile-cli-lib").liveSyncService.isLiveSyncSupported(["deviceId1", "deviceId2"], "appIdentifier"))
+	.then(function(result) {
+			console.log("Result is: ", result);
+	}).catch(function(err) {
+			console.log("Error while checking is LiveSync supported: ", err);
 	});
+```
+
+Sample result will be:
+```JSON
+[{
+	"deviceIdentifier": "deviceId1",
+	"appIdentifier": "appIdentifier",
+	"isLiveSyncSupported": true
+}, {
+	"deviceIdentifier": "deviceId2",
+	"appIdentifier": "appIdentifier",
+	"isLiveSyncSupported": false
+}]
 ```
 
 Technical details

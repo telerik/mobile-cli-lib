@@ -72,15 +72,9 @@ export class DevicesService implements Mobile.IDevicesService {
 	/* tslint:enable:no-unused-variable */
 
 	@exportedPromise("devicesService")
-	public isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string): IFuture<boolean>[] {
+	public isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string): IFuture<IAppInstalledInfo>[] {
 		this.$logger.trace(`Called isInstalledOnDevices for identifiers ${deviceIdentifiers}. AppIdentifier is ${appIdentifier}.`);
 		return _.map(deviceIdentifiers, deviceIdentifier => this.isApplicationInstalledOnDevice(deviceIdentifier, appIdentifier));
-	}
-
-	@exportedPromise("devicesService")
-	public isLiveSyncSupportedForApplication(deviceIdentifiers: string[], appIdentifier: string): IFuture<boolean>[] {
-		this.$logger.trace(`Called isLiveSyncSupportedForApplication for identifiers ${deviceIdentifiers}. AppIdentifier is ${appIdentifier}.`);
-		return _.map(deviceIdentifiers, deviceIdentifier => this.isLiveSyncSupportedForApplicationOnDevice(deviceIdentifier, appIdentifier));
 	}
 
 	public getDeviceInstances(): Mobile.IDevice[] {
@@ -191,6 +185,15 @@ export class DevicesService implements Mobile.IDevicesService {
 		}
 	}
 
+	public getDeviceByIdentifier(identifier: string): Mobile.IDevice {
+		let searchedDevice = _.find(this.getDeviceInstances(), (device: Mobile.IDevice) => { return device.deviceInfo.identifier === identifier; });
+		if(!searchedDevice) {
+			this.$errors.fail(this.$messages.Devices.NotFoundDeviceByIdentifierErrorMessageWithIdentifier, identifier, this.$staticConfig.CLIENT_NAME.toLowerCase());
+		}
+
+		return searchedDevice;
+	}
+
 	private startLookingForDevices(): IFuture<void> {
 		return (() => {
 			this.$logger.trace("startLookingForDevices; platform is %s", this._platform);
@@ -219,15 +222,6 @@ export class DevicesService implements Mobile.IDevicesService {
 	private getDeviceByIndex(index: number): Mobile.IDevice {
 		this.validateIndex(index-1);
 		return this.getDeviceInstances()[index-1];
-	}
-
-	private getDeviceByIdentifier(identifier: string): Mobile.IDevice {
-		let searchedDevice = _.find(this.getDeviceInstances(), (device: Mobile.IDevice) => { return device.deviceInfo.identifier === identifier; });
-		if(!searchedDevice) {
-			this.$errors.fail(this.$messages.Devices.NotFoundDeviceByIdentifierErrorMessageWithIdentifier, identifier, this.$staticConfig.CLIENT_NAME.toLowerCase());
-		}
-
-		return searchedDevice;
 	}
 
 	private getDevice(deviceOption: string): IFuture<Mobile.IDevice> {
@@ -453,19 +447,20 @@ export class DevicesService implements Mobile.IDevicesService {
 		return this.executeOnAllConnectedDevices(action, canExecute);
 	}
 
-	private isApplicationInstalledOnDevice(deviceIdentifier: string, appIdentifier: string): IFuture<boolean> {
-		return ((): boolean => {
-			let device = this.getDeviceByIdentifier(deviceIdentifier);
-			return device.applicationManager.isApplicationInstalled(appIdentifier).wait();
-		}).future<boolean>()();
-	}
+	private isApplicationInstalledOnDevice(deviceIdentifier: string, appIdentifier: string): IFuture<IAppInstalledInfo> {
+		return ((): IAppInstalledInfo => {
+			let device = this.getDeviceByIdentifier(deviceIdentifier),
+				isInstalled = device.applicationManager.isApplicationInstalled(appIdentifier).wait(),
+				isLiveSyncSupported = isInstalled && device.applicationManager.isLiveSyncSupported(appIdentifier).wait();
 
-	private isLiveSyncSupportedForApplicationOnDevice(deviceIdentifier: string, appIdentifier: string): IFuture<boolean> {
-		return ((): boolean => {
-			let device = this.getDeviceByIdentifier(deviceIdentifier);
-			return device.applicationManager.isLiveSyncSupported(appIdentifier).wait();
-		}).future<boolean>()();
+			return {
+				appIdentifier,
+				deviceIdentifier,
+				isInstalled,
+				isLiveSyncSupported
+			};
+
+		}).future<IAppInstalledInfo>()();
 	}
 }
-
 $injector.register("devicesService", DevicesService);
