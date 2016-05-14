@@ -83,7 +83,12 @@ declare module SemVerModule {
 	 * Return true if the version is outside the bounds of the range in either the high or low direction. The hilo argument must be either the string '>' or '<'. (This is the function called by gtr and ltr.)
 	 */
 	function outside(version: string, range: string, hilo: string, loose?: boolean): boolean;
-	
+
+	/**
+	 * Return the cleaned version. Does not clean ^, ~ or *. Return null if version is not valid.
+	 */
+	function clean(version: string): string;
+
 	function major(version: string): number;
 
 	class SemVerBase {
@@ -104,10 +109,11 @@ declare module SemVerModule {
 		build: string[];
 		prerelease: string[];
 
-		compare(other:SemVer): number;
-		compareMain(other:SemVer): number;
-		comparePre(other:SemVer): number;
+		compare(other: SemVer): number;
+		compareMain(other: SemVer): number;
+		comparePre(other: SemVer): number;
 		inc(release: string): SemVer;
+		clean(version: string): string;
 	}
 
 	class Comparator extends SemVerBase {
@@ -117,7 +123,7 @@ declare module SemVerModule {
 		operator: string;
 		value: boolean;
 		parse(comp: string): void;
-		test(version:SemVer): boolean;
+		test(version: SemVer): boolean;
 	}
 
 	class Range extends SemVerBase {
