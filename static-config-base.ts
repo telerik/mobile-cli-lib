@@ -52,10 +52,6 @@ export class StaticConfigBase implements Config.IStaticConfig {
 		return path.join(__dirname, "docs", "helpers");
 	}
 
-	private get adb(): Mobile.IAndroidDebugBridge {
-		return this.$injector.resolve("adb");
-	}
-
 	private getAdbFilePathCore(): IFuture<string> {
 		return ((): string => {
 			let $childProcess: IChildProcess = this.$injector.resolve("$childProcess");
@@ -90,7 +86,9 @@ export class StaticConfigBase implements Config.IStaticConfig {
 	 */
 	private spawnPrivateAdb(): IFuture<string> {
 		return ((): string => {
-			let $fs: IFileSystem = this.$injector.resolve("$fs");
+			let $fs: IFileSystem = this.$injector.resolve("$fs"),
+				$childProcess: IChildProcess = this.$injector.resolve("$childProcess"),
+				$hostInfo: IHostInfo = this.$injector.resolve("$hostInfo");
 
 			// prepare the directory to host our copy of adb
 			let defaultAdbDirPath = path.join(__dirname, `resources/platform-tools/android/${process.platform}`);
@@ -100,12 +98,18 @@ export class StaticConfigBase implements Config.IStaticConfig {
 
 			// copy the adb and associated files
 			let targetAdb = path.join(tmpDir, "adb");
-			shelljs.cp(path.join(defaultAdbDirPath, "*"), tmpDir); // deliberately ignore copy errors
-			// adb loses its executable bit when packed inside electron asar file. Manually fix the issue
-			shelljs.chmod("+x", targetAdb);
+
+			// In case directory is missing or it's empty, copy the new adb
+			if(!$fs.exists(tmpDir).wait() || !$fs.readDirectory(tmpDir).wait().length) {
+				shelljs.cp(path.join(defaultAdbDirPath, "*"), tmpDir); // deliberately ignore copy errors
+				// adb loses its executable bit when packed inside electron asar file. Manually fix the issue
+				if(!$hostInfo.isWindows) {
+					shelljs.chmod("+x", targetAdb);
+				}
+			}
 
 			// let adb start its global server
-			this.adb.executeCommand(["start-server"], "exit").wait();
+			$childProcess.spawnFromEvent(targetAdb, ["start-server"], "exit").wait();
 
 			return targetAdb;
 		}).future<string>()();
