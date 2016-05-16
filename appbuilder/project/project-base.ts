@@ -3,6 +3,7 @@
 
 import Future = require("fibers/future");
 import * as path from "path";
+import { StartPackageActivityNames } from "../../mobile/constants";
 export class Project implements Project.IProjectBase {
 	constructor(private $cordovaProjectCapabilities: Project.ICapabilities,
 		private $fs: IFileSystem,
@@ -38,5 +39,8 @@ export class Project implements Project.IProjectBase {
 
 		return null;
 	}
+
+	// Will be set to new value on each deploy.
+	public startPackageActivity = StartPackageActivityNames.CORDOVA;
 }
 $injector.register("project", Project);

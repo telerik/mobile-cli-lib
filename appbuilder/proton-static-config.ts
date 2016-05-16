@@ -1,14 +1,13 @@
 ///<reference path="../.d.ts"/>
 "use strict";
 
-import {StaticConfigBase} from "../static-config-base";
+import { AppBuilderStaticConfigBase } from "./appbuilder-static-config-base";
 import * as path from "path";
 
-export class ProtonStaticConfig extends StaticConfigBase {
+export class ProtonStaticConfig extends AppBuilderStaticConfigBase {
 	constructor($injector: IInjector) {
 		super($injector);
 	}
-	public START_PACKAGE_ACTIVITY_NAME = ".TelerikCallbackActivity";
 
 	public getAdbFilePath(): IFuture<string> {
 		return (() => {

@@ -747,7 +747,7 @@ describe("devicesService", () => {
 		});
 
 		it("returns undefined for each device on which the app is installed", () => {
-			let results = devicesService.deployOnDevices([androidDevice.deviceInfo.identifier, iOSDevice.deviceInfo.identifier], "path", "packageName");
+			let results = devicesService.deployOnDevices([androidDevice.deviceInfo.identifier, iOSDevice.deviceInfo.identifier], "path", "packageName", "cordova");
 			assert.isTrue(results.length > 0);
 			_.each(results, futurizedResult => {
 				let realResult = futurizedResult.wait();
@@ -760,14 +760,14 @@ describe("devicesService", () => {
 			iOSDevice.applicationManager.startApplication = (): IFuture<void> => {
 				throw new Error("Start application must not be called for iOSDevice when canStartApplication returns false.");
 			};
-			let results = devicesService.deployOnDevices([androidDevice.deviceInfo.identifier, iOSDevice.deviceInfo.identifier], "path", "packageName");
+			let results = devicesService.deployOnDevices([androidDevice.deviceInfo.identifier, iOSDevice.deviceInfo.identifier], "path", "packageName", "cordova");
 			assert.isTrue(results.length > 0);
 			Future.wait(results);
 			assert.deepEqual(results.map(r => r.get()), [undefined, undefined]);
 		});
 
 		it("throws error when invalid identifier is passed", () => {
-			let results = devicesService.deployOnDevices(["invalidDeviceId", iOSDevice.deviceInfo.identifier], "path", "packageName");
+			let results = devicesService.deployOnDevices(["invalidDeviceId", iOSDevice.deviceInfo.identifier], "path", "packageName", "cordova");
 			assert.throws(() => Future.wait(results));
 			_.each(results, futurizedResult => {
 				let error = futurizedResult.error;

@@ -87,6 +87,7 @@ declare module Project {
 		getProjectDir(): IFuture<string>;
 		projectData: IData;
 		capabilities: ICapabilities;
+		startPackageActivity: string;
 	}
 }
 
