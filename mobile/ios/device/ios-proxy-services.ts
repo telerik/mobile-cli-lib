@@ -170,8 +170,7 @@ export class AfcClient implements Mobile.IAfcClient {
 			this.deleteFile(devicePath);
 
 			let target = this.open(devicePath, "w");
- 			let localFilePathSize = this.$fs.getFileSize(localFilePath).wait();
- 			let isErrorCode21Raised = false,
+ 			let localFilePathSize = this.$fs.getFileSize(localFilePath).wait(),
  				futureThrow = (err: Error) => {
 					if (!future.isResolved()) {
 						future.throw(err);
@@ -184,12 +183,10 @@ export class AfcClient implements Mobile.IAfcClient {
 					this.$logger.trace("transfer-> localFilePath: '%s', devicePath: '%s', localFilePathSize: '%s', transferred bytes: '%s'",
 						localFilePath, devicePath, localFilePathSize.toString(), data.length.toString());
 				} catch(err) {
-					if(err.message.indexOf("Result is: '21'") !== -1 && !isErrorCode21Raised) {
-						// Error code 21 is kAFCInterruptedError. It looks like in most cases it is raised on the first package that we try to transfer.
-						// However ignoring this error on the first package, does not prevent the application from installing and working correctly.
-						// So ignore the first occurrence of the error only.
+					if(err.message.indexOf("Result is: '21'") !== -1) {
+						// Error code 21 is kAFCInterruptedError. It looks like in most cases it is raised during package transfer.
+						// However ignoring this error, does not prevent the application from installing and working correctly.
 						this.$logger.warn(err.message);
-						isErrorCode21Raised = true;
 					} else {
 						futureThrow(err);
 					}
