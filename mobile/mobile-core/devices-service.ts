@@ -271,8 +271,19 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	@exportedPromise("devicesService")
-	public deployOnDevices(deviceIdentifiers: string[], packageFile: string, packageName: string): IFuture<void>[] {
+	public deployOnDevices(deviceIdentifiers: string[], packageFile: string, packageName: string, framework: string): IFuture<void>[] {
 		this.$logger.trace(`Called deployOnDevices for identifiers ${deviceIdentifiers} for packageFile: ${packageFile}. packageName is ${packageName}.`);
+		try {
+			let project = this.$injector.resolve("project"),
+				projectConstants: Project.IConstants = this.$injector.resolve("projectConstants");
+			if (project) {
+				framework = framework || "";
+				project.startPackageActivity = framework.toLowerCase() === projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript.toLowerCase() ?
+													constants.StartPackageActivityNames.NATIVESCRIPT : constants.StartPackageActivityNames.CORDOVA;
+			}
+		} catch (err) {
+			this.$logger.trace("Error while trying to set startPackageActivity during deploy. Error is: ", err);
+		}
 		return _.map(deviceIdentifiers, deviceIdentifier => this.deployOnDevice(deviceIdentifier, packageFile, packageName));
 	}
 

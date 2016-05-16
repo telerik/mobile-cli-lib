@@ -21,3 +21,8 @@ export class LiveSyncConstants {
 	static CHECK_LIVESYNC_INTENT_NAME = "com.telerik.IsLiveSyncSupported";
 	static IOS_PROJECT_PATH = "/Library/Application Support/LiveSync";
 }
+
+export class StartPackageActivityNames {
+	static NATIVESCRIPT = "com.tns.NativeScriptActivity";
+	static CORDOVA = ".TelerikCallbackActivity";
+}
