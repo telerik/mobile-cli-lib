@@ -112,10 +112,14 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		return null;
 	}
 
-	private validateResult(result: number, error: string) {
+	private validateResult(result: number, error: string, statusOptions?: { setStatusToUnreachable: boolean }) {
 		if (result !== 0) {
-			this.deviceInfo.status = constants.UNREACHABLE_STATUS;
+			if (statusOptions && statusOptions.setStatusToUnreachable) {
+				this.deviceInfo.status = constants.UNREACHABLE_STATUS;
+			}
 			this.$errors.fail(util.format("%s. Result code is: %s", error, result));
+		} else {
+			this.deviceInfo.status = constants.CONNECTED_STATUS;
 		}
 	}
 
@@ -125,19 +129,19 @@ export class IOSDevice implements Mobile.IiOSDevice {
 
 	private pair(): number {
 		let result = this.$mobileDevice.devicePair(this.devicePointer);
-		this.validateResult(result, "Make sure you have trusted the computer from your device. If your phone is locked with a passcode, unlock then reconnect it");
+		this.validateResult(result, "Make sure you have trusted the computer from your device. If your phone is locked with a passcode, unlock then reconnect it", { setStatusToUnreachable: true });
 		return result;
 	}
 
 	private validatePairing() : number{
 		let result = this.$mobileDevice.deviceValidatePairing(this.devicePointer);
-		this.validateResult(result, "Unable to validate pairing");
+		this.validateResult(result, "Unable to validate pairing", { setStatusToUnreachable: true });
 		return result;
 	}
 
 	private connect() : number {
 		let result = this.$mobileDevice.deviceConnect(this.devicePointer);
-		this.validateResult(result, "Unable to connect to device");
+		this.validateResult(result, "Unable to connect to device", { setStatusToUnreachable: true });
 
 		if (!this.isPaired()) {
 			this.pair();
