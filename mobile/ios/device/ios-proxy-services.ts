@@ -224,6 +224,7 @@ export class AfcClient implements Mobile.IAfcClient {
 
 export class InstallationProxyClient {
 	private plistService: Mobile.IiOSDeviceSocket = null;
+	private plistInstallationService: iOSCore.PlistService;
 
 	constructor(private device: Mobile.IiOSDevice,
 		private $logger: ILogger,
@@ -250,11 +251,12 @@ export class InstallationProxyClient {
 	public sendMessage(message: any): IFuture<any> {
 		return (() => {
 			let service = this.device.startService(MobileServices.INSTALLATION_PROXY);
-			let plistService = this.$injector.resolve(iOSCore.PlistService, { service: service,  format: iOSCore.CoreTypes.kCFPropertyListBinaryFormat_v1_0 });
+			if(!this.plistInstallationService) {
+				this.plistInstallationService = this.$injector.resolve(iOSCore.PlistService, { service: service,  format: iOSCore.CoreTypes.kCFPropertyListBinaryFormat_v1_0 });
+			}
+			this.plistInstallationService.sendMessage(message);
 
-			plistService.sendMessage(message);
-
-			let response = plistService.receiveMessage().wait();
+			let response = this.plistInstallationService.receiveMessage().wait();
 			if(response.Error) {
 				this.$errors.failWithoutHelp(response.Error);
 			}
