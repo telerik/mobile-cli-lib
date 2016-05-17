@@ -460,9 +460,16 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	private isApplicationInstalledOnDevice(deviceIdentifier: string, appIdentifier: string): IFuture<IAppInstalledInfo> {
 		return ((): IAppInstalledInfo => {
-			let device = this.getDeviceByIdentifier(deviceIdentifier),
-				isInstalled = device.applicationManager.isApplicationInstalled(appIdentifier).wait(),
+			let isInstalled = false,
+				isLiveSyncSupported = false,
+				device = this.getDeviceByIdentifier(deviceIdentifier);
+
+			try {
+				isInstalled = device.applicationManager.isApplicationInstalled(appIdentifier).wait();
 				isLiveSyncSupported = isInstalled && device.applicationManager.isLiveSyncSupported(appIdentifier).wait();
+			} catch (err) {
+				this.$logger.trace("Error while checking is application installed. Error is: ", err);
+			}
 
 			return {
 				appIdentifier,
@@ -470,7 +477,6 @@ export class DevicesService implements Mobile.IDevicesService {
 				isInstalled,
 				isLiveSyncSupported
 			};
-
 		}).future<IAppInstalledInfo>()();
 	}
 }

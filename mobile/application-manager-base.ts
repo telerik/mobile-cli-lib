@@ -22,8 +22,7 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 
 	public isApplicationInstalled(appIdentifier: string): IFuture<boolean> {
 		return (() => {
-			let installedApplications = this.getInstalledApplications().wait();
-			return _.contains(installedApplications, appIdentifier);
+			return _.contains(this.lastInstalledAppIdentifiers, appIdentifier);
 		}).future<boolean>()();
 	}
 

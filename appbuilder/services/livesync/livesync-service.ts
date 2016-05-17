@@ -23,6 +23,7 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 	@exportedPromise("liveSyncService")
 	public livesync(deviceDescriptors: IDeviceLiveSyncInfo[], projectDir: string, filePaths?: string[]): IFuture<IDeviceLiveSyncResult>[] {
 		this.$project.projectDir = projectDir;
+		this.$logger.trace(`Called livesync for identifiers ${_.map(deviceDescriptors, d => d.deviceIdentifier)}. Project dir is ${projectDir}. Files are: ${filePaths}`);
 		return _.map(deviceDescriptors, deviceDescriptor => this.liveSyncOnDevice(deviceDescriptor, filePaths));
 	}
 

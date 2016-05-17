@@ -11,6 +11,7 @@ import * as iOSProxyServices from "./ios-proxy-services";
 export class IOSApplicationManager extends ApplicationManagerBase {
 	private uninstallApplicationCallbackPtr: NodeBuffer = null;
 	private _gdbServer: Mobile.IGDBServer = null;
+	private applicationsLiveSyncStatus: Mobile.IApplicationLiveSyncStatus[];
 
 	constructor(private device: Mobile.IiOSDevice,
 		private devicePointer: NodeBuffer,
@@ -30,24 +31,34 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 
 	private static uninstallCallback(dictionary: NodeBuffer, user: NodeBuffer): void { /* intentionally empty body */ }
 
+	private _installationProxy: iOSProxyServices.InstallationProxyClient;
+	private get installationProxy(): iOSProxyServices.InstallationProxyClient {
+		if (!this._installationProxy) {
+			this._installationProxy = this.$injector.resolve(iOSProxyServices.InstallationProxyClient, { device: this.device });
+		}
+
+		return this._installationProxy;
+	}
+
 	public getInstalledApplications():  IFuture<string[]> {
 		return (() => {
-			return _(this.lookupApplications()).keys().sortBy((identifier: string) => identifier.toLowerCase()).value();
+			return _(this.getApplicationsLiveSyncSupportedStatus().wait())
+					.map(appLiveSyncStatus => appLiveSyncStatus.applicationIdentifier)
+					.sortBy((identifier: string) => identifier.toLowerCase())
+					.value();
 		}).future<string[]>()();
 	}
 
 	public installApplication(packageFilePath: string): IFuture<void> {
 		return (() => {
-			let installationProxy = this.$injector.resolve(iOSProxyServices.InstallationProxyClient, { device: this.device });
-			installationProxy.deployApplication(packageFilePath).wait();
-			installationProxy.closeSocket();
+			this.installationProxy.deployApplication(packageFilePath).wait();
+			this.installationProxy.closeSocket();
 		}).future<void>()();
 	}
 
 	public getApplicationsLiveSyncSupportedStatus(): IFuture<Mobile.IApplicationLiveSyncStatus[]> {
 		return ((): Mobile.IApplicationLiveSyncStatus[] => {
-			let installationProxy = this.$injector.resolve(iOSProxyServices.InstallationProxyClient, { device: this.device });
-			let result = installationProxy.sendMessage({
+			let result = this.installationProxy.sendMessage({
 					"Command": "Browse",
 					"ClientOptions": {
 						"ApplicationType": "User",
@@ -126,20 +137,19 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 			 */
 
 			this.$logger.trace("Result when getting applications for which LiveSync is enabled: ", JSON.stringify(result, null, 2));
-			let applicationsLiveSyncStatus: Mobile.IApplicationLiveSyncStatus[] = [];
+			this.applicationsLiveSyncStatus = [];
 			_.each(result, (singleResult: any) => {
 				let currentList = _.map(singleResult.CurrentList, (app: any) => ({applicationIdentifier: app.CFBundleIdentifier, isLiveSyncSupported: app.IceniumLiveSyncEnabled }));
-				applicationsLiveSyncStatus = applicationsLiveSyncStatus.concat(currentList);
+				this.applicationsLiveSyncStatus = this.applicationsLiveSyncStatus.concat(currentList);
 			});
 
-			return applicationsLiveSyncStatus;
+			return this.applicationsLiveSyncStatus;
 		}).future<Mobile.IApplicationLiveSyncStatus[]>()();
 	}
 
 	public isLiveSyncSupported(appIdentifier: string): IFuture<boolean> {
 		return ((): boolean => {
-			let applicationsLiveSyncStatus = this.getApplicationsLiveSyncSupportedStatus().wait(),
-				selectedApplication = _.find(applicationsLiveSyncStatus, app => app.applicationIdentifier === appIdentifier);
+			let selectedApplication = _.find(this.applicationsLiveSyncStatus, app => app.applicationIdentifier === appIdentifier);
 			return !!selectedApplication && selectedApplication.isLiveSyncSupported;
 		}).future<boolean>()();
 	}
