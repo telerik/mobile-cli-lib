@@ -224,7 +224,6 @@ export class AfcClient implements Mobile.IAfcClient {
 
 export class InstallationProxyClient {
 	private plistService: Mobile.IiOSDeviceSocket = null;
-	private plistInstallationService: iOSCore.PlistService;
 
 	constructor(private device: Mobile.IiOSDevice,
 		private $logger: ILogger,
@@ -238,7 +237,8 @@ export class InstallationProxyClient {
 			let devicePath = path.join("PublicStaging", path.basename(packageFile));
 
 			afcClient.transferPackage(packageFile, devicePath).wait();
-			this.plistService = this.$injector.resolve(iOSCore.PlistService, {service: this.device.startService(MobileServices.INSTALLATION_PROXY), format: iOSCore.CoreTypes.kCFPropertyListBinaryFormat_v1_0});
+			let installationService = this.device.startService(MobileServices.INSTALLATION_PROXY);
+			this.plistService = this.getPlistService(installationService);
 
 			this.plistService.sendMessage({
 				Command: "Install",
@@ -251,12 +251,10 @@ export class InstallationProxyClient {
 	public sendMessage(message: any): IFuture<any> {
 		return (() => {
 			let service = this.device.startService(MobileServices.INSTALLATION_PROXY);
-			if(!this.plistInstallationService) {
-				this.plistInstallationService = this.$injector.resolve(iOSCore.PlistService, { service: service,  format: iOSCore.CoreTypes.kCFPropertyListBinaryFormat_v1_0 });
-			}
-			this.plistInstallationService.sendMessage(message);
+			this.plistService = this.getPlistService(service);
+			this.plistService.sendMessage(message);
 
-			let response = this.plistInstallationService.receiveMessage().wait();
+			let response = this.plistService.receiveMessage().wait();
 			if(response.Error) {
 				this.$errors.failWithoutHelp(response.Error);
 			}
@@ -266,7 +264,13 @@ export class InstallationProxyClient {
 	}
 
 	public closeSocket() {
-		return this.plistService.close();
+		if (this.plistService) {
+			return this.plistService.close();
+		}
+	}
+
+	private getPlistService(service: number): Mobile.IiOSDeviceSocket {
+		return this.$injector.resolve(iOSCore.PlistService, { service: service,  format: iOSCore.CoreTypes.kCFPropertyListBinaryFormat_v1_0 });
 	}
 }
 $injector.register("installationProxyClient", InstallationProxyClient);
