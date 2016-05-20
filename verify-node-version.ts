@@ -19,8 +19,12 @@ export function verifyNodeVersion(supportedVersionsRange: string): void {
 		process.exit(1);
 	}
 
-	let checkSatisfied = semver.satisfies(nodeVer, supportedVersionsRange);
-	if (!checkSatisfied) {
-		console.log(`${EOL}Support for node.js ${nodeVer} is not verified. This CLI might not install or run properly.${EOL}`.yellow.bold);
+	if (semver.satisfies(nodeVer, "~0.10.0")) {
+		console.warn(`${EOL}Support for Node.js 0.10.x is deprecated and it will be removed in the next release. Please upgrade to latest Node.js LTS version.${EOL}`.yellow.bold);
+	} else {
+		let checkSatisfied = semver.satisfies(nodeVer, supportedVersionsRange);
+		if (!checkSatisfied) {
+			console.log(`${EOL}Support for node.js ${nodeVer} is not verified. This CLI might not install or run properly.${EOL}`.yellow.bold);
+		}
 	}
 }
