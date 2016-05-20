@@ -147,7 +147,7 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 			let allPorts: string[] = tcpPorts.concat(tcp6Ports);
 
 			// Get information only for the ports which are not in use - remote address is empty (only zeroes) and have host localhost.
-			let emptyAddressRegExp = /^00*:0+/;
+			let emptyAddressRegExp = /^00*/;
 
 			// Localhost hex representation is 0100007F or 0000000000000000FFFF00000100007F
 			let localHostHexRegExp = /^00*100007F/;
@@ -155,7 +155,12 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 			let availablePorts: Mobile.IAndroidPortInformation[] = _(allPorts)
 				.filter((line: string) => line.match(this.androidPortInformationRegExp))
 				.map((line: string) => this.parseAndroidPortInformation(line))
-				.filter((port: Mobile.IAndroidPortInformation) => port.remAddress.match(emptyAddressRegExp) && (port.ipAddressHex.match(localHostHexRegExp) || port.ipAddressHex.match(localHostVersionSixHexRegExp)))
+				.filter((port: Mobile.IAndroidPortInformation) => {
+					return port.remAddress.match(emptyAddressRegExp) &&
+						(port.ipAddressHex.match(localHostHexRegExp) ||
+							port.ipAddressHex.match(localHostVersionSixHexRegExp) ||
+							port.ipAddressHex.match(emptyAddressRegExp));
+				})
 				.value();
 
 			return availablePorts;

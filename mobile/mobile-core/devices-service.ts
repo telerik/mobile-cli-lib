@@ -123,7 +123,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		delete this._devices[device.deviceInfo.identifier];
 	}
 
-	private detectCurrentlyAttachedDevices(): IFuture<void> {
+	public detectCurrentlyAttachedDevices(): IFuture<void> {
 		return (() => {
 			try {
 				this.$iOSDeviceDiscovery.startLookingForDevices().wait();
@@ -143,7 +143,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		} else {
 			this.deviceDetectionInterval = setInterval(() => {
 				fiberBootstrap.run(() => {
-					if(!this.$hostInfo.isDarwin) {
+					if (!this.$hostInfo.isDarwin) {
 						try {
 							this.$iOSDeviceDiscovery.checkForDevices().wait();
 						} catch (err) {
@@ -188,7 +188,7 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	public getDeviceByIdentifier(identifier: string): Mobile.IDevice {
 		let searchedDevice = _.find(this.getDeviceInstances(), (device: Mobile.IDevice) => { return device.deviceInfo.identifier === identifier; });
-		if(!searchedDevice) {
+		if (!searchedDevice) {
 			this.$errors.fail(this.$messages.Devices.NotFoundDeviceByIdentifierErrorMessageWithIdentifier, identifier, this.$staticConfig.CLIENT_NAME.toLowerCase());
 		}
 
@@ -280,7 +280,7 @@ export class DevicesService implements Mobile.IDevicesService {
 			if (project) {
 				framework = framework || "";
 				project.startPackageActivity = framework.toLowerCase() === projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript.toLowerCase() ?
-													constants.StartPackageActivityNames.NATIVESCRIPT : constants.StartPackageActivityNames.CORDOVA;
+					constants.StartPackageActivityNames.NATIVESCRIPT : constants.StartPackageActivityNames.CORDOVA;
 			}
 		} catch (err) {
 			this.$logger.trace("Error while trying to set startPackageActivity during deploy. Error is: ", err);

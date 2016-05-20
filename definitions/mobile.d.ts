@@ -267,6 +267,7 @@ declare module Mobile {
 		stopDeviceDetectionInterval(): void;
 		getDeviceByIdentifier(identifier: string): Mobile.IDevice;
 		mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string): IFuture<string>;
+		detectCurrentlyAttachedDevices(): IFuture<void>;
 	}
 
 	/**
