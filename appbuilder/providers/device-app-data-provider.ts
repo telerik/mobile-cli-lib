@@ -57,6 +57,8 @@ export class AndroidAppIdentifier extends DeviceAppDataBase implements ILiveSync
 			let isApplicationInstalled = this.device.applicationManager.isApplicationInstalled(this.appIdentifier).wait();
 			if (!isApplicationInstalled) {
 				this.$deployHelper.deploy(this.$devicePlatformsConstants.Android.toLowerCase()).wait();
+				// Update cache of installed apps
+				this.device.applicationManager.checkForApplicationUpdates().wait();
 			}
 		 	return this.getLiveSyncVersion().wait() !== 0;
 		}).future<boolean>()();
