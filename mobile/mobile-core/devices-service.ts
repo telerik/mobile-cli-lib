@@ -31,7 +31,8 @@ export class DevicesService implements Mobile.IDevicesService {
 		private $hostInfo: IHostInfo,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $injector: IInjector,
-		private $options: ICommonOptions) {
+		private $options: ICommonOptions,
+		private $androidProcessService: Mobile.IAndroidProcessService) {
 		this.attachToDeviceDiscoveryEvents();
 	}
 
@@ -82,7 +83,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	private getAllPlatforms(): Array<string> {
-		if(this.platforms.length > 0) {
+		if (this.platforms.length > 0) {
 			return this.platforms;
 		}
 
@@ -93,7 +94,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	private getPlatform(platform: string): string {
 		let allSupportedPlatforms = this.getAllPlatforms();
 		let normalizedPlatform = this.$mobileHelper.validatePlatformName(platform);
-		if(!_.contains(allSupportedPlatforms, normalizedPlatform)) {
+		if (!_.contains(allSupportedPlatforms, normalizedPlatform)) {
 			this.$errors.failWithoutHelp("Deploying to %s connected devices is not supported. Build the " +
 				"app using the `build` command and deploy the package manually.", normalizedPlatform);
 		}
@@ -197,22 +198,22 @@ export class DevicesService implements Mobile.IDevicesService {
 	private startLookingForDevices(): IFuture<void> {
 		return (() => {
 			this.$logger.trace("startLookingForDevices; platform is %s", this._platform);
-			if(!this._platform) {
+			if (!this._platform) {
 				this.detectCurrentlyAttachedDevices().wait();
 				this.startDeviceDetectionInterval();
-			} else if(this.$mobileHelper.isiOSPlatform(this._platform)) {
+			} else if (this.$mobileHelper.isiOSPlatform(this._platform)) {
 				this.$iOSDeviceDiscovery.startLookingForDevices().wait();
 				if (this.$hostInfo.isDarwin) {
 					this.$iOSSimulatorDiscovery.startLookingForDevices().wait();
 				}
-			} else if(this.$mobileHelper.isAndroidPlatform(this._platform)) {
+			} else if (this.$mobileHelper.isAndroidPlatform(this._platform)) {
 				this.$androidDeviceDiscovery.startLookingForDevices().wait();
 			}
 		}).future<void>()();
 	}
 
 	private getAllConnectedDevices(): Mobile.IDevice[] {
-		if(!this._platform) {
+		if (!this._platform) {
 			return this.getDeviceInstances();
 		} else {
 			return this.filterDevicesByPlatform();
@@ -220,8 +221,8 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	private getDeviceByIndex(index: number): Mobile.IDevice {
-		this.validateIndex(index-1);
-		return this.getDeviceInstances()[index-1];
+		this.validateIndex(index - 1);
+		return this.getDeviceInstances()[index - 1];
 	}
 
 	private getDevice(deviceOption: string): IFuture<Mobile.IDevice> {
@@ -229,13 +230,13 @@ export class DevicesService implements Mobile.IDevicesService {
 			this.startLookingForDevices().wait();
 			let device: Mobile.IDevice = null;
 
-			if(this.hasDevice(deviceOption)) {
+			if (this.hasDevice(deviceOption)) {
 				device = this.getDeviceByIdentifier(deviceOption);
-			} else if(helpers.isNumber(deviceOption)) {
+			} else if (helpers.isNumber(deviceOption)) {
 				device = this.getDeviceByIndex(parseInt(deviceOption, 10));
 			}
 
-			if(!device) {
+			if (!device) {
 				this.$errors.fail(this.$messages.Devices.NotFoundDeviceByIdentifierErrorMessage, this.$staticConfig.CLIENT_NAME.toLowerCase());
 			}
 
@@ -245,7 +246,7 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	private executeOnDevice(action: (dev: Mobile.IDevice) => IFuture<void>, canExecute?: (_dev: Mobile.IDevice) => boolean): IFuture<void> {
 		return ((): void => {
-			if(!canExecute || canExecute(this._device)) {
+			if (!canExecute || canExecute(this._device)) {
 				action(this._device).wait();
 			}
 		}).future<void>()();
@@ -287,7 +288,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		return _.map(deviceIdentifiers, deviceIdentifier => this.deployOnDevice(deviceIdentifier, packageFile, packageName));
 	}
 
-	public execute(action: (device: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: {allowNoDevices?: boolean}): IFuture<void> {
+	public execute(action: (device: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: { allowNoDevices?: boolean }): IFuture<void> {
 		return ((): void => {
 			assert.ok(this._isInitialized, "Devices services not initialized!");
 			if (this.hasDevices) {
@@ -319,24 +320,24 @@ export class DevicesService implements Mobile.IDevicesService {
 		if (this._isInitialized) {
 			return Future.fromResult();
 		}
-		return(() => {
+		return (() => {
 			data = data || {};
 			this._data = data;
-			let platform =  data.platform;
+			let platform = data.platform;
 			let deviceOption = data.deviceId;
 
-			if(platform && deviceOption) {
+			if (platform && deviceOption) {
 				this._device = this.getDevice(deviceOption).wait();
 				this._platform = this._device.deviceInfo.platform;
-				if(this._platform !== this.getPlatform(platform)) {
+				if (this._platform !== this.getPlatform(platform)) {
 					this.$errors.fail("Cannot resolve the specified connected device. The provided platform does not match the provided index or identifier." +
 						"To list currently connected devices and verify that the specified pair of platform and index or identifier exists, run 'device'.");
 				}
 				this.$logger.warn("Your application will be deployed only on the device specified by the provided index or identifier.");
-			} else if(!platform && deviceOption) {
+			} else if (!platform && deviceOption) {
 				this._device = this.getDevice(deviceOption).wait();
 				this._platform = this._device.deviceInfo.platform;
-			} else if(platform && !deviceOption) {
+			} else if (platform && !deviceOption) {
 				this._platform = this.getPlatform(platform);
 				this.startLookingForDevices().wait();
 			} else {
@@ -347,22 +348,22 @@ export class DevicesService implements Mobile.IDevicesService {
 					this.detectCurrentlyAttachedDevices().wait();
 					let devices = this.getDeviceInstances();
 					let platforms = _(devices)
-									.map(device => device.deviceInfo.platform)
-									.filter(pl => {
-										try {
-											return this.getPlatform(pl);
-										} catch(err) {
-											this.$logger.warn(err.message);
-											return null;
-										}
-									})
-									.uniq()
-									.value();
+						.map(device => device.deviceInfo.platform)
+						.filter(pl => {
+							try {
+								return this.getPlatform(pl);
+							} catch (err) {
+								this.$logger.warn(err.message);
+								return null;
+							}
+						})
+						.uniq()
+						.value();
 
 					if (platforms.length === 1) {
 						this._platform = platforms[0];
 					} else if (platforms.length === 0) {
-						this.$errors.fail({formatStr: constants.ERROR_NO_DEVICES, suppressCommandHelp: true});
+						this.$errors.fail({ formatStr: constants.ERROR_NO_DEVICES, suppressCommandHelp: true });
 					} else {
 						this.$errors.fail("Multiple device platforms detected (%s). Specify platform or device on command line.",
 							helpers.formatListOfNames(platforms, "and"));
@@ -394,6 +395,16 @@ export class DevicesService implements Mobile.IDevicesService {
 		return this._device;
 	}
 
+	@exportedPromise("devicesService")
+	public mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string): IFuture<string> {
+		return this.$androidProcessService.mapAbstractToTcpPort(deviceIdentifier, appIdentifier);
+	}
+
+	@exportedPromise("devicesService")
+	public getApplicationsAvailableForDebugging(deviceIdentifier: string): IFuture<string[]> {
+		return this.$androidProcessService.getApplicationsAvailableForDebugging(deviceIdentifier);
+	}
+
 	private deployOnDevice(deviceIdentifier: string, packageFile: string, packageName: string): IFuture<void> {
 		return (() => {
 			let device = this.getDeviceByIdentifier(deviceIdentifier);
@@ -402,7 +413,7 @@ export class DevicesService implements Mobile.IDevicesService {
 			if (device.applicationManager.canStartApplication()) {
 				try {
 					device.applicationManager.startApplication(packageName).wait();
-				} catch(err) {
+				} catch (err) {
 					this.$logger.trace("Unable to start application on device. Error is: ", err);
 				}
 			}
@@ -436,7 +447,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	private startEmulator(): IFuture<void> {
 		return (() => {
 			let emulatorServices = this.resolveEmulatorServices();
-			if(!emulatorServices) {
+			if (!emulatorServices) {
 				this.$errors.failWithoutHelp("Unable to detect platform for which to start emulator.");
 			}
 			emulatorServices.startEmulator().wait();
@@ -480,4 +491,5 @@ export class DevicesService implements Mobile.IDevicesService {
 		}).future<IAppInstalledInfo>()();
 	}
 }
+
 $injector.register("devicesService", DevicesService);

@@ -266,6 +266,27 @@ declare module Mobile {
 		startDeviceDetectionInterval(): void;
 		stopDeviceDetectionInterval(): void;
 		getDeviceByIdentifier(identifier: string): Mobile.IDevice;
+		mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string): IFuture<string>;
+	}
+
+	/**
+	 * Describes methods for working with Android processes.
+	 */
+	interface IAndroidProcessService {
+		/**
+		 * Checks for available ports and forwards the current abstract port to one of the available ports.
+		 * @param deviceIdentifier The identifier of the device.
+		 * @param appIdentifier The identifier of the application.
+		 * @return {string} Returns the tcp port number which is mapped to the abstract port.
+		 */
+		mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string): IFuture<string>;
+
+		/**
+		 * Gets the applications which are available for debugging on the specified device.
+		 * @param deviceIdentifier The identifier of the device.
+		 * @return {string[]} Returns array of applications identifiers which are available for debugging.
+		 */
+		getApplicationsAvailableForDebugging(deviceIdentifier: string): IFuture<string[]>;
 	}
 
 	interface IiTunesValidator {
@@ -581,5 +602,35 @@ declare module Mobile {
 		 * @return {void}.
 		 */
 		handleErrors(errors: IAndroidDebugBridgeError[], treatErrorsAsWarnings?: boolean): void;
+	}
+
+	/**
+	 * Describes one row from Android's proc/net/tcp table.
+	 */
+	interface IAndroidPortInformation {
+		/**
+		 * Local address in format: IP-address:port both in hex format.
+		 */
+		localAddress: string;
+		/**
+		 * Remote address in format: IP-address:port both in hex format.
+		 */
+		remAddress: string;
+		/**
+		 * Process id.
+		 */
+		uid: number;
+		/**
+		 * Hex IP address.
+		 */
+		ipAddressHex: string;
+		/**
+		 * Decimal port number.
+		 */
+		number: number;
+		/**
+		 * Hex port number.
+		 */
+		numberHex: string;
 	}
 }

@@ -88,6 +88,7 @@ $injector.require("localToDevicePathDataFactory", "./mobile/local-to-device-path
 $injector.require("deviceAppDataFactory", "./mobile/device-app-data/device-app-data-factory");
 
 $injector.requirePublic("devicesService", "./mobile/mobile-core/devices-service");
+$injector.require("androidProcessService", "./mobile/mobile-core/android-process-service");
 $injector.require("projectNameValidator", "./validators/project-name-validator");
 
 $injector.require("androidEmulatorServices", "./mobile/android/android-emulator-services");
