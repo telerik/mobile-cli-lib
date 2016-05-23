@@ -59,6 +59,11 @@ export class IOSDevice implements Mobile.IiOSDevice {
 			this.deviceInfo.color = this.getValue("DeviceColor");
 			this.deviceInfo.isTablet = productType && productType.toLowerCase().indexOf("ipad") !== -1;
 			this.deviceInfo.activeArchitecture = this.getActiveArchitecture(productType);
+
+			// In case any of the operations had failed, the device status should be Unreachable.
+			if (this.deviceInfo.errorHelp) {
+				this.deviceInfo.status = constants.UNREACHABLE_STATUS;
+			}
 		}
 
 	private getActiveArchitecture(productType: string): string {
@@ -112,11 +117,8 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		return null;
 	}
 
-	private validateResult(result: number, error: string, statusOptions?: { setStatusToUnreachable: boolean }) {
+	private validateResult(result: number, error: string) {
 		if (result !== 0) {
-			if (statusOptions && statusOptions.setStatusToUnreachable) {
-				this.deviceInfo.status = constants.UNREACHABLE_STATUS;
-			}
 			this.$errors.fail(util.format("%s. Result code is: %s", error, result));
 		} else {
 			this.deviceInfo.status = constants.CONNECTED_STATUS;
@@ -129,19 +131,19 @@ export class IOSDevice implements Mobile.IiOSDevice {
 
 	private pair(): number {
 		let result = this.$mobileDevice.devicePair(this.devicePointer);
-		this.validateResult(result, "Make sure you have trusted the computer from your device. If your phone is locked with a passcode, unlock then reconnect it", { setStatusToUnreachable: true });
+		this.validateResult(result, "Make sure you have trusted the computer from your device. If your phone is locked with a passcode, unlock then reconnect it");
 		return result;
 	}
 
 	private validatePairing() : number{
 		let result = this.$mobileDevice.deviceValidatePairing(this.devicePointer);
-		this.validateResult(result, "Unable to validate pairing", { setStatusToUnreachable: true });
+		this.validateResult(result, "Unable to validate pairing");
 		return result;
 	}
 
 	private connect() : number {
 		let result = this.$mobileDevice.deviceConnect(this.devicePointer);
-		this.validateResult(result, "Unable to connect to device", { setStatusToUnreachable: true });
+		this.validateResult(result, "Unable to connect to device");
 
 		if (!this.isPaired()) {
 			this.pair();
