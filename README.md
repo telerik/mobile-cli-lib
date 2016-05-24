@@ -420,6 +420,32 @@ Sample result will be:
 }]
 ```
 
+* `mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string): Promise<string>` - This function forwards the abstract port of the web view on the device to available tcp port on the host and returns the tcp port.
+
+Sample usage:
+```JavaScript
+require("mobile-cli-lib").devicesService.mapAbstractToTcpPort("4df18f307d8a8f1b", "com.telerik.test")
+	.then(function(port) {
+		console.log(port);
+	}, function(err) {
+		console.log(err);
+	});
+```
+
+* `getApplicationsAvailableForDebugging(deviceIdentifier: string): Promise<string[]>` - This function checks the proc/net/unix file of the device for web views connected to abstract ports and returns the applications identifiers.
+
+Sample usage:
+```JavaScript
+require("mobile-cli-lib").devicesService.getApplicationsAvailableForDebugging("4df18f307d8a8f1b")
+	.then(function(applicationsIdentifiers) {
+		applicationsIdentifiers.forEach(function(applicationIdentifier) {
+			console.log(applicationIdentifier);
+		});
+	}, function(err) {
+		console.log(err);
+	});
+```
+
 ### Module liveSyncService
 > Stability: 1 - Could be changed due to some new requirments.
 
