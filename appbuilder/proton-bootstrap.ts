@@ -26,7 +26,7 @@ $injector.register("emulatorSettingsService", {
 });
 
 $injector.require("logger", "./logger");
-// When debugging uncomment the lines below and comment the line #6 (requiring logger).
+// When debugging uncomment the lines below
 // $injector.resolve("logger").setLevel("TRACE");
 
 // Mock as it is used in LiveSync logic to deploy on devices.

@@ -17,7 +17,28 @@ export class MobileServices {
 	public static DEBUG_SERVER: string = "com.apple.debugserver";
 }
 
-export class AfcFile implements Mobile.IAfcFile {
+export class AfcBase {
+	// Some operations may fail first time when executing them.
+	// We'll retry them several times in order to try make them work.
+	private static NUMBER_OF_RETRIES = 5;
+
+	constructor(protected $logger: ILogger) { }
+
+	protected tryExecuteAfcAction(action: Function): number {
+		let result: number;
+		for (let currentTry = 0; currentTry < AfcBase.NUMBER_OF_RETRIES && result !== 0; currentTry++) {
+			try {
+				result = action();
+			} catch (err) {
+				this.$logger.trace(`Error #${currentTry} while trying to execute action. Error is: `, err);
+			}
+		}
+
+		return result;
+	}
+}
+
+export class AfcFile extends AfcBase implements Mobile.IAfcFile {
 	private open: boolean = false;
 	private afcFile: number;
 
@@ -25,7 +46,10 @@ export class AfcFile implements Mobile.IAfcFile {
 		mode: string,
 		private afcConnection: NodeBuffer,
 		private $mobileDevice: Mobile.IMobileDevice,
-		private $errors: IErrors) {
+		private $errors: IErrors,
+		protected $logger: ILogger) {
+
+		super($logger);
 		let modeValue = 0;
 		if (mode.indexOf("r") > -1) {
 			modeValue = 0x1;
@@ -36,7 +60,7 @@ export class AfcFile implements Mobile.IAfcFile {
 		let afcFileRef = ref.alloc(ref.types.uint64);
 		this.open = false;
 
-		let result = this.$mobileDevice.afcFileRefOpen(this.afcConnection, path, modeValue, afcFileRef);
+		let result = this.tryExecuteAfcAction(() => this.$mobileDevice.afcFileRefOpen(this.afcConnection, path, modeValue, afcFileRef));
 		if (result !== 0) {
 			this.$errors.fail("Unable to open file reference: '%s' with path '%s", result, path);
 		}
@@ -52,7 +76,11 @@ export class AfcFile implements Mobile.IAfcFile {
 	public read(len: number): any {
 		let readLengthRef = ref.alloc(iOSCore.CoreTypes.uintType, len);
 		let data = new Buffer(len * iOSCore.CoreTypes.pointerSize);
-		let result = this.$mobileDevice.afcFileRefRead(this.afcConnection, this.afcFile, data, readLengthRef);
+		let result = this.tryExecuteAfcAction(() => {
+			data = new Buffer(len * iOSCore.CoreTypes.pointerSize);
+			this.$mobileDevice.afcFileRefRead(this.afcConnection, this.afcFile, data, readLengthRef);
+		});
+
 		if(result !== 0) {
 			this.$errors.fail("Unable to read data from file '%s'. Result is: '%s'", this.afcFile, result);
 		}
@@ -62,7 +90,8 @@ export class AfcFile implements Mobile.IAfcFile {
 	}
 
 	public write(buffer: any, byteLength?: any): boolean {
-		let result = this.$mobileDevice.afcFileRefWrite(this.afcConnection, this.afcFile, buffer, byteLength);
+		let result = this.tryExecuteAfcAction(() => this.$mobileDevice.afcFileRefWrite(this.afcConnection, this.afcFile, buffer, byteLength));
+
 		if (result !== 0) {
 			this.$errors.fail("Unable to write to file: '%s'. Result is: '%s'", this.afcFile, result);
 		}
@@ -72,7 +101,8 @@ export class AfcFile implements Mobile.IAfcFile {
 
 	public close(): void {
 		if (this.open) {
-			let result = this.$mobileDevice.afcFileRefClose(this.afcConnection, this.afcFile);
+			let result = this.tryExecuteAfcAction(() => this.$mobileDevice.afcFileRefClose(this.afcConnection, this.afcFile));
+
 			if (result !== 0) {
 				this.$errors.fail("Unable to close afc file connection: '%s'. Result is: '%s'", this.afcFile, result);
 			}
@@ -85,7 +115,7 @@ export class AfcFile implements Mobile.IAfcFile {
 	}
 }
 
-export class AfcClient implements Mobile.IAfcClient {
+export class AfcClient extends AfcBase implements Mobile.IAfcClient {
 	private afcConnection: NodeBuffer = null;
 
 	constructor(private service: number,
@@ -93,8 +123,10 @@ export class AfcClient implements Mobile.IAfcClient {
 		private $coreFoundation: Mobile.ICoreFoundation,
 		private $fs: IFileSystem,
 		private $errors: IErrors,
-		private $logger: ILogger,
-		private $injector: IInjector) {
+		private $injector: IInjector,
+		protected $logger: ILogger) {
+
+		super($logger);
 		let afcConnection = ref.alloc(ref.refType(ref.types.void));
 		let result = $mobileDevice.afcConnectionOpen(this.service, 0, afcConnection);
 		if (result !== 0) {
@@ -109,15 +141,16 @@ export class AfcClient implements Mobile.IAfcClient {
 	}
 
 	public mkdir(path: string) {
-		let result = this.$mobileDevice.afcDirectoryCreate(this.afcConnection, path);
+		let result = this.tryExecuteAfcAction(() => this.$mobileDevice.afcDirectoryCreate(this.afcConnection, path));
+
 		if (result !== 0) {
-			this.$errors.fail("Unable to make directory: %s. Result is %s", path, result);
+			this.$errors.fail(`Unable to make directory: ${path}. Result is ${result}.`);
 		}
 	}
 
 	public listDir(path: string): string[] {
 		let afcDirectoryRef = ref.alloc(ref.refType(ref.types.void));
-		let result = this.$mobileDevice.afcDirectoryOpen(this.afcConnection, path, afcDirectoryRef);
+		let result = this.tryExecuteAfcAction(() => this.$mobileDevice.afcDirectoryOpen(this.afcConnection, path, afcDirectoryRef));
 		if (result !== 0) {
 			this.$errors.fail("Unable to open AFC directory: '%s' %s ", path, result);
 		}
@@ -143,7 +176,7 @@ export class AfcClient implements Mobile.IAfcClient {
 	}
 
 	public close(): void {
-		let result = this.$mobileDevice.afcConnectionClose(this.afcConnection);
+		let result = this.tryExecuteAfcAction(() => this.$mobileDevice.afcConnectionClose(this.afcConnection));
 		if (result !== 0) {
 			this.$errors.failWithoutHelp(`Unable to close apple file connection: ${result}`);
 		}
@@ -163,48 +196,54 @@ export class AfcClient implements Mobile.IAfcClient {
 	public transfer(localFilePath: string, devicePath: string): IFuture<void> {
 		return(() => {
 			let future = new Future<void>();
-			this.ensureDevicePathExist(path.dirname(devicePath));
-			let reader = this.$fs.createReadStream(localFilePath);
-			devicePath = helpers.fromWindowsRelativePathToUnix(devicePath);
+			try {
+				this.ensureDevicePathExist(path.dirname(devicePath));
+				let reader = this.$fs.createReadStream(localFilePath);
+				devicePath = helpers.fromWindowsRelativePathToUnix(devicePath);
 
-			this.deleteFile(devicePath);
+				this.deleteFile(devicePath);
 
-			let target = this.open(devicePath, "w");
- 			let localFilePathSize = this.$fs.getFileSize(localFilePath).wait(),
- 				futureThrow = (err: Error) => {
-					if (!future.isResolved()) {
-						future.throw(err);
+				let target = this.open(devicePath, "w");
+				let localFilePathSize = this.$fs.getFileSize(localFilePath).wait(),
+					futureThrow = (err: Error) => {
+						if (!future.isResolved()) {
+							future.throw(err);
+						}
+					};
+
+				reader.on("data", (data: NodeBuffer) => {
+					try {
+						target.write(data, data.length);
+						this.$logger.trace("transfer-> localFilePath: '%s', devicePath: '%s', localFilePathSize: '%s', transferred bytes: '%s'",
+							localFilePath, devicePath, localFilePathSize.toString(), data.length.toString());
+					} catch(err) {
+						if(err.message.indexOf("Result is: '21'") !== -1) {
+							// Error code 21 is kAFCInterruptedError. It looks like in most cases it is raised during package transfer.
+							// However ignoring this error, does not prevent the application from installing and working correctly.
+							this.$logger.warn(err.message);
+						} else {
+							futureThrow(err);
+						}
 					}
-				};
+				});
 
-			reader.on("data", (data: NodeBuffer) => {
-				try {
-					target.write(data, data.length);
-					this.$logger.trace("transfer-> localFilePath: '%s', devicePath: '%s', localFilePathSize: '%s', transferred bytes: '%s'",
-						localFilePath, devicePath, localFilePathSize.toString(), data.length.toString());
-				} catch(err) {
-					if(err.message.indexOf("Result is: '21'") !== -1) {
-						// Error code 21 is kAFCInterruptedError. It looks like in most cases it is raised during package transfer.
-						// However ignoring this error, does not prevent the application from installing and working correctly.
-						this.$logger.warn(err.message);
-					} else {
-						futureThrow(err);
+				reader.on("error", (error: Error) => {
+					futureThrow(error);
+				});
+
+				reader.on("end", () => target.close());
+
+				reader.on("close", () => {
+					if(!future.isResolved()) {
+						future.return();
 					}
-				}
-			});
-
-			reader.on("error", (error: Error) => {
-				futureThrow(error);
-			});
-
-			reader.on("end", () => target.close());
-
-			reader.on("close", () => {
+				});
+			} catch (err) {
+				this.$logger.trace("Error while transferring files. Error is: ", err);
 				if(!future.isResolved()) {
-					future.return();
+					future.throw(err);
 				}
-			});
-
+			}
 			future.wait();
 		}).future<void>()();
 	}
