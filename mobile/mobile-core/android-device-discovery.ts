@@ -34,9 +34,11 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 	}
 
 	public startLookingForDevices(): IFuture<void> {
-		this.ensureAdbServerStarted().wait();
-		let blockingFuture = new Future<void>();
-		return this.checkForDevices(blockingFuture);
+		return (() => {
+			this.ensureAdbServerStarted().wait();
+			let blockingFuture = new Future<void>();
+			this.checkForDevices(blockingFuture).wait();
+		}).future<void>()();
 	}
 
 	public checkForDevices(future?: IFuture<void>): IFuture<void> {
