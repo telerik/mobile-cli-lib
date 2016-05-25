@@ -29,15 +29,25 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 			});
 
 			adbLogcat.on("close", (code: number) => {
-				this.mapDeviceToLoggingStarted[deviceIdentifier] = false;
-				if (code !== 0) {
-					this.$logger.trace("ADB process exited with code " + code.toString());
+				try {
+					this.mapDeviceToLoggingStarted[deviceIdentifier] = false;
+					if (code !== 0) {
+						this.$logger.trace("ADB process exited with code " + code.toString());
+					}
+				} catch (err) {
+					// Ignore the error, the process is dead.
 				}
 			});
 
 			lineStream.on('data', (line: NodeBuffer) => {
 				let lineText = line.toString();
 				this.$deviceLogProvider.logData(lineText, this.$devicePlatformsConstants.Android, deviceIdentifier);
+			});
+
+			process.on("exit", () => {
+				if (adbLogcat) {
+					adbLogcat.kill();
+				}
 			});
 
 			this.mapDeviceToLoggingStarted[deviceIdentifier] = true;
