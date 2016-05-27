@@ -96,7 +96,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 								that.syncRemovedFile(data, mappedFilePath).wait();
 							}
 						} catch (err) {
-							that.$logger.warn(`Unable to sync file ${filePath}. Error is:`, err.message);
+							that.$logger.info(`Unable to sync file ${filePath}. Error is:${err.message}`.red.bold);
 							that.$logger.info("Try saving it again or restart the livesync operation.");
 						}
 					}).future<void>()());
