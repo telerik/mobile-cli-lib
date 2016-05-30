@@ -7,6 +7,7 @@ import * as shell from "shelljs";
 import * as path from "path";
 import * as temp from "temp";
 import * as minimatch from "minimatch";
+import * as constants from "../../constants";
 let gaze = require("gaze");
 
 class LiveSyncServiceBase implements ILiveSyncServiceBase {
@@ -66,6 +67,11 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 				fiberBootstrap.run(() => {
 					that.$dispatcher.dispatch(() => (() => {
 						try {
+							if (filePath.indexOf(constants.APP_RESOURCES_FOLDER_NAME) !== -1) {
+								that.$logger.warn(`Skipping livesync for changed file ${filePath}. This change requires a full build to update your application. `.yellow.bold);
+								return;
+							}
+							
 							if (that.isFileExcluded(filePath, data.excludedProjectDirsAndFiles)) {
 								that.$logger.trace(`Skipping livesync for changed file ${filePath} as it is excluded in the patterns: ${data.excludedProjectDirsAndFiles.join(", ")}`);
 								return;
