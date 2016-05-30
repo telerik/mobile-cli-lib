@@ -71,7 +71,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 								that.$logger.warn(`Skipping livesync for changed file ${filePath}. This change requires a full build to update your application. `.yellow.bold);
 								return;
 							}
-							
+
 							if (that.isFileExcluded(filePath, data.excludedProjectDirsAndFiles)) {
 								that.$logger.trace(`Skipping livesync for changed file ${filePath} as it is excluded in the patterns: ${data.excludedProjectDirsAndFiles.join(", ")}`);
 								return;
