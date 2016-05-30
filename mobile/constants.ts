@@ -8,6 +8,8 @@ export class ProvisionType {
 	static Enterprise = "Enterprise";
 }
 
+export let APP_RESOURCES_FOLDER_NAME = "App_Resources";
+
 export let ERROR_NO_DEVICES = "Cannot find connected devices. Reconnect any connected devices, verify that your system recognizes them, and run this command again.";
 
 export let UNREACHABLE_STATUS = "Unreachable";
