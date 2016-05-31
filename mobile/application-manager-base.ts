@@ -6,6 +6,10 @@ import { EventEmitter } from "events";
 export abstract class ApplicationManagerBase extends EventEmitter implements Mobile.IDeviceApplicationManager {
 	private lastInstalledAppIdentifiers: string[];
 
+	constructor(protected $logger: ILogger) {
+		super();
+	}
+
 	public reinstallApplication(appIdentifier: string, packageFilePath: string): IFuture<void> {
 		return (() => {
 			this.uninstallApplication(appIdentifier).wait();
@@ -13,10 +17,10 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 		}).future<void>()();
 	}
 
-	public restartApplication(appIdentifier: string, bundleExecutable?: string): IFuture<void> {
+	public restartApplication(appIdentifier: string, bundleExecutable?: string, framework?: string): IFuture<void> {
 		return (() => {
 			this.stopApplication(bundleExecutable || appIdentifier).wait();
-			this.startApplication(appIdentifier).wait();
+			this.startApplication(appIdentifier, framework).wait();
 		}).future<void>()();
 	}
 
@@ -45,13 +49,25 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 					let newAppIdentifiers = _.difference(currentlyInstalledAppIdentifiers, previouslyInstalledAppIdentifiers);
 					let removedAppIdentifiers = _.difference(previouslyInstalledAppIdentifiers, currentlyInstalledAppIdentifiers);
 
+					this.lastInstalledAppIdentifiers = currentlyInstalledAppIdentifiers;
+
 					_.each(newAppIdentifiers, appIdentifier => this.emit("applicationInstalled", appIdentifier));
 					_.each(removedAppIdentifiers, appIdentifier => this.emit("applicationUninstalled", appIdentifier));
-
-					this.lastInstalledAppIdentifiers = currentlyInstalledAppIdentifiers;
 				} finally {
 					this.isChecking = false;
 				}
+			}
+		}).future<void>()();
+	}
+
+	public tryStartApplication(appIdentifier: string, framework?: string): IFuture<void> {
+		return (() => {
+			try {
+				if (this.isApplicationInstalled(appIdentifier).wait() && this.canStartApplication()) {
+					this.startApplication(appIdentifier, framework).wait();
+				}
+			} catch(err) {
+				this.$logger.trace(`Unable to start application ${appIdentifier}. Error is: ${err.message}`);
 			}
 		}).future<void>()();
 	}
@@ -60,7 +76,7 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 
 	public abstract installApplication(packageFilePath: string): IFuture<void>;
 	public abstract uninstallApplication(appIdentifier: string): IFuture<void>;
-	public abstract startApplication(appIdentifier: string): IFuture<void>;
+	public abstract startApplication(appIdentifier: string, framework?: string): IFuture<void>;
 	public abstract stopApplication(appIdentifier: string): IFuture<void>;
 	public abstract getInstalledApplications(): IFuture<string[]>;
 	public abstract canStartApplication(): boolean;

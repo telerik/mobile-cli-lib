@@ -3,6 +3,7 @@
 import {EOL} from "os";
 import {ApplicationManagerBase} from "../application-manager-base";
 import { LiveSyncConstants } from "../../mobile/constants";
+import { StartPackageActivityNames } from "../../mobile/constants";
 
 export class AndroidApplicationManager extends ApplicationManagerBase {
 
@@ -10,8 +11,10 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		private identifier: string,
 		private $staticConfig: Config.IStaticConfig,
 		private $options: ICommonOptions,
-		private $logcatHelper: Mobile.ILogcatHelper) {
-			super();
+		private $logcatHelper: Mobile.ILogcatHelper,
+		private $projectConstants: Project.IConstants,
+		$logger: ILogger) {
+			super($logger);
 		}
 
 	public getInstalledApplications(): IFuture<string[]> {
@@ -37,11 +40,12 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		return this.adb.executeShellCommand(["pm", "uninstall", `${appIdentifier}`], {treatErrorsAsWarnings: true});
 	}
 
-	public startApplication(appIdentifier: string): IFuture<void> {
+	public startApplication(appIdentifier: string, framework?: string): IFuture<void> {
 		return (() => {
+			let startPackageActivity = this.getStartPackageActivity(framework);
 			this.adb.executeShellCommand(["am", "start",
 				"-a", "android.intent.action.MAIN",
-				"-n", `${appIdentifier}/${this.$staticConfig.START_PACKAGE_ACTIVITY_NAME}`,
+				"-n", `${appIdentifier}/${startPackageActivity}`,
 				"-c", "android.intent.category.LAUNCHER"]).wait();
 			if (!this.$options.justlaunch) {
 				this.$logcatHelper.start(this.identifier);
@@ -62,5 +66,14 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 			let liveSyncVersion = this.adb.sendBroadcastToDevice(LiveSyncConstants.CHECK_LIVESYNC_INTENT_NAME, {"app-id": appIdentifier}).wait();
 			return liveSyncVersion === LiveSyncConstants.VERSION_2 || liveSyncVersion === LiveSyncConstants.VERSION_3;
 		}).future<boolean>()();
+	}
+
+	private getStartPackageActivity(framework?: string): string {
+		if (framework) {
+			return framework.toLowerCase() === this.$projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript.toLowerCase() ?
+				StartPackageActivityNames.NATIVESCRIPT : StartPackageActivityNames.CORDOVA;
+		}
+
+		return this.$staticConfig.START_PACKAGE_ACTIVITY_NAME;
 	}
 }

@@ -19,7 +19,7 @@ export class Project implements Project.IProjectBase {
 	public get projectData(): Project.IData {
 		if(this.projectDir) {
 			let projectFile = path.join(this.projectDir, this.$projectConstants.PROJECT_FILE);
-			let jsonContent = this.$fs.readJson(projectFile).wait();
+			let jsonContent: Project.IData = this.$fs.readJson(projectFile).wait();
 			this.$logger.trace("Project data is: ", jsonContent);
 			return jsonContent;
 		}
@@ -40,7 +40,6 @@ export class Project implements Project.IProjectBase {
 		return null;
 	}
 
-	// Will be set to new value on each deploy.
 	public startPackageActivity = StartPackageActivityNames.CORDOVA;
 }
 $injector.register("project", Project);

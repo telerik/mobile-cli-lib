@@ -274,18 +274,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	@exportedPromise("devicesService")
 	public deployOnDevices(deviceIdentifiers: string[], packageFile: string, packageName: string, framework: string): IFuture<void>[] {
 		this.$logger.trace(`Called deployOnDevices for identifiers ${deviceIdentifiers} for packageFile: ${packageFile}. packageName is ${packageName}.`);
-		try {
-			let project = this.$injector.resolve("project"),
-				projectConstants: Project.IConstants = this.$injector.resolve("projectConstants");
-			if (project) {
-				framework = framework || "";
-				project.startPackageActivity = framework.toLowerCase() === projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript.toLowerCase() ?
-					constants.StartPackageActivityNames.NATIVESCRIPT : constants.StartPackageActivityNames.CORDOVA;
-			}
-		} catch (err) {
-			this.$logger.trace("Error while trying to set startPackageActivity during deploy. Error is: ", err);
-		}
-		return _.map(deviceIdentifiers, deviceIdentifier => this.deployOnDevice(deviceIdentifier, packageFile, packageName));
+		return _.map(deviceIdentifiers, deviceIdentifier => this.deployOnDevice(deviceIdentifier, packageFile, packageName, framework));
 	}
 
 	public execute(action: (device: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: { allowNoDevices?: boolean }): IFuture<void> {
@@ -405,18 +394,12 @@ export class DevicesService implements Mobile.IDevicesService {
 		return this.$androidProcessService.getApplicationsAvailableForDebugging(deviceIdentifier);
 	}
 
-	private deployOnDevice(deviceIdentifier: string, packageFile: string, packageName: string): IFuture<void> {
+	private deployOnDevice(deviceIdentifier: string, packageFile: string, packageName: string, framework: string): IFuture<void> {
 		return (() => {
 			let device = this.getDeviceByIdentifier(deviceIdentifier);
 			device.applicationManager.reinstallApplication(packageName, packageFile).wait();
 			this.$logger.info(`Successfully deployed on device with identifier '${device.deviceInfo.identifier}'.`);
-			if (device.applicationManager.canStartApplication()) {
-				try {
-					device.applicationManager.startApplication(packageName).wait();
-				} catch (err) {
-					this.$logger.trace("Unable to start application on device. Error is: ", err);
-				}
-			}
+			device.applicationManager.tryStartApplication(packageName, framework).wait();
 		}).future<void>()();
 	}
 
