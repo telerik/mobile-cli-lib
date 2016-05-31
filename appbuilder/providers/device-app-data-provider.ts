@@ -1,24 +1,23 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 
-import { DeviceAppDataBase } from "../../mobile/device-app-data/device-app-data-base";
-import Future = require("fibers/future");
-import * as querystring from "querystring";
+import { DeviceAppDataBase, CompanionDeviceAppDataBase } from "../../mobile/device-app-data/device-app-data-base";
+import { LiveSyncConstants } from "../../mobile/constants";
 import * as path from "path";
 import * as util from "util";
-import { LiveSyncConstants } from "../../mobile/constants";
+import Future = require("fibers/future");
 
 export class AndroidAppIdentifier extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
 	private _deviceProjectRootPath: string = null;
 	private _liveSyncVersion: number;
 
 	constructor(_appIdentifier: string,
-		public device: Mobile.IDevice,
-		public platform: string,
-		private $errors: IErrors,
-		private $deployHelper: IDeployHelper,
-		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
-		super(_appIdentifier);
+		device: Mobile.IDevice,
+		platform: string,
+		$deployHelper: IDeployHelper,
+		$devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
+		private $errors: IErrors) {
+		super(_appIdentifier, device, platform, $deployHelper, $devicePlatformsConstants);
 	}
 
 	public get deviceProjectRootPath(): string {
@@ -40,47 +39,34 @@ export class AndroidAppIdentifier extends DeviceAppDataBase implements ILiveSync
 		return this._deviceProjectRootPath;
 	}
 
-	public get liveSyncFormat(): string {
-		return null;
-	}
-
 	public encodeLiveSyncHostUri(hostUri: string): string {
 		return hostUri;
 	}
 
-	public getLiveSyncNotSupportedError(): string {
-		return `You can't LiveSync on device with id ${this.device.deviceInfo.identifier}! Deploy the app with LiveSync enabled and wait for the initial start up before LiveSyncing.`;
-	}
-
 	public isLiveSyncSupported(): IFuture<boolean> {
 		return (() => {
-			let isApplicationInstalled = this.device.applicationManager.isApplicationInstalled(this.appIdentifier).wait();
-			if (!isApplicationInstalled) {
-				this.$deployHelper.deploy(this.$devicePlatformsConstants.Android.toLowerCase()).wait();
-				// Update cache of installed apps
-				this.device.applicationManager.checkForApplicationUpdates().wait();
-			}
-		 	return this.getLiveSyncVersion().wait() !== 0;
+			return this.getLiveSyncVersion().wait() !== 0 && super.isLiveSyncSupported().wait();
 		}).future<boolean>()();
 	}
 
 	private getLiveSyncVersion(): IFuture<number> {
 		return (() => {
 			if (!this._liveSyncVersion) {
-				this._liveSyncVersion = (<Mobile.IAndroidDevice>this.device).adb.sendBroadcastToDevice(LiveSyncConstants.CHECK_LIVESYNC_INTENT_NAME, {"app-id": this.appIdentifier}).wait();
+				this._liveSyncVersion = (<Mobile.IAndroidDevice>this.device).adb.sendBroadcastToDevice(LiveSyncConstants.CHECK_LIVESYNC_INTENT_NAME, { "app-id": this.appIdentifier }).wait();
 			}
 			return this._liveSyncVersion;
 		}).future<number>()();
 	}
 }
 
-export class AndroidCompanionAppIdentifier extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
-	constructor(_appIdentifier: string,
-		public device: Mobile.IDevice,
-		public platform: string,
+export class AndroidCompanionAppIdentifier extends CompanionDeviceAppDataBase implements ILiveSyncDeviceAppData {
+	constructor(device: Mobile.IDevice,
+		platform: string,
+		$deployHelper: IDeployHelper,
+		$devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $companionAppsService: ICompanionAppsService,
 		private $projectConstants: Project.IConstants) {
-		super($companionAppsService.getCompanionAppIdentifier($projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform));
+		super($companionAppsService.getCompanionAppIdentifier($projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform), device, platform, $deployHelper, $devicePlatformsConstants);
 	}
 
 	public get deviceProjectRootPath(): string {
@@ -91,26 +77,19 @@ export class AndroidCompanionAppIdentifier extends DeviceAppDataBase implements 
 		return "icenium://%s?token=%s&appId=%s&configuration=%s";
 	}
 
-	public encodeLiveSyncHostUri(hostUri: string): string {
-		return querystring.escape(hostUri);
-	}
-
-	public getLiveSyncNotSupportedError(): string {
-		return `Cannot LiveSync changes to the companion app. The companion app is not installed on ${this.device.deviceInfo.identifier}.`;
-	}
-
-	public isLiveSyncSupported(): IFuture<boolean> {
-		return this.device.applicationManager.isApplicationInstalled(this.appIdentifier);
+	protected getCompanionAppName(): string {
+		return "companion app";
 	}
 }
 
-export class AndroidNativeScriptCompanionAppIdentifier extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
-	constructor(_appIdentifier: string,
-		public device: Mobile.IDevice,
-		public platform: string,
+export class AndroidNativeScriptCompanionAppIdentifier extends CompanionDeviceAppDataBase implements ILiveSyncDeviceAppData {
+	constructor(device: Mobile.IDevice,
+		platform: string,
+		$deployHelper: IDeployHelper,
+		$devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $companionAppsService: ICompanionAppsService,
 		private $projectConstants: Project.IConstants) {
-		super($companionAppsService.getCompanionAppIdentifier($projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript, platform));
+		super($companionAppsService.getCompanionAppIdentifier($projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript, platform), device, platform, $deployHelper, $devicePlatformsConstants);
 	}
 
 	public get deviceProjectRootPath(): string {
@@ -121,16 +100,8 @@ export class AndroidNativeScriptCompanionAppIdentifier extends DeviceAppDataBase
 		return "nativescript://%s?token=%s&appId=%s&configuration=%s";
 	}
 
-	public encodeLiveSyncHostUri(hostUri: string): string {
-		return querystring.escape(hostUri);
-	}
-
-	public getLiveSyncNotSupportedError(): string {
-		return `Cannot LiveSync changes to the NativeScript companion app. The NativeScript companion app is not installed on ${this.device.deviceInfo.identifier}.`;
-	}
-
-	public isLiveSyncSupported(): IFuture<boolean> {
-		return this.device.applicationManager.isApplicationInstalled(this.appIdentifier);
+	protected getCompanionAppName(): string {
+		return "NativeScript companion app";
 	}
 }
 
@@ -138,10 +109,12 @@ export class IOSAppIdentifier extends DeviceAppDataBase implements ILiveSyncDevi
 	private _deviceProjectRootPath: string = null;
 
 	constructor(_appIdentifier: string,
-		public device: Mobile.IDevice,
-		public platform: string,
+		device: Mobile.IDevice,
+		platform: string,
+		$deployHelper: IDeployHelper,
+		$devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $iOSSimResolver: Mobile.IiOSSimResolver) {
-		super(_appIdentifier);
+		super(_appIdentifier, device, platform, $deployHelper, $devicePlatformsConstants);
 	}
 
 	public get deviceProjectRootPath(): string {
@@ -157,20 +130,8 @@ export class IOSAppIdentifier extends DeviceAppDataBase implements ILiveSyncDevi
 		return this._deviceProjectRootPath;
 	}
 
-	get liveSyncFormat(): string {
-		return null;
-	}
-
-	encodeLiveSyncHostUri(hostUri: string): string {
-		return querystring.escape(hostUri);
-	}
-
-	getLiveSyncNotSupportedError(): string {
+	public getLiveSyncNotSupportedError(): string {
 		return `You can't LiveSync on device with id ${this.device.deviceInfo.identifier}! Deploy the app with LiveSync enabled and wait for the initial start up before LiveSyncing.`;
-	}
-
-	isLiveSyncSupported(): IFuture<boolean> {
-		return Future.fromResult(true);
 	}
 }
 
@@ -178,10 +139,12 @@ export class IOSNativeScriptAppIdentifier extends DeviceAppDataBase implements I
 	private _deviceProjectRootPath: string = null;
 
 	constructor(_appIdentifier: string,
-		public device: Mobile.IDevice,
-		public platform: string,
+		device: Mobile.IDevice,
+		platform: string,
+		$deployHelper: IDeployHelper,
+		$devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $iOSSimResolver: Mobile.IiOSSimResolver) {
-		super(_appIdentifier);
+		super(_appIdentifier, device, platform, $deployHelper, $devicePlatformsConstants);
 	}
 
 	public get deviceProjectRootPath(): string {
@@ -196,30 +159,16 @@ export class IOSNativeScriptAppIdentifier extends DeviceAppDataBase implements I
 
 		return this._deviceProjectRootPath;
 	}
-
-	get liveSyncFormat(): string {
-		return null;
-	}
-
-	encodeLiveSyncHostUri(hostUri: string): string {
-		return querystring.escape(hostUri);
-	}
-
-	getLiveSyncNotSupportedError(): string {
-		return `You can't LiveSync on device with id ${this.device.deviceInfo.identifier}! Deploy the app with LiveSync enabled and wait for the initial start up before LiveSyncing.`;
-	}
-
-	isLiveSyncSupported(): IFuture<boolean> {
-		return Future.fromResult(true);
-	}
 }
 
-export class IOSCompanionAppIdentifier extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
-	constructor(public device: Mobile.IDevice,
-		public platform: string,
+export class IOSCompanionAppIdentifier extends CompanionDeviceAppDataBase implements ILiveSyncDeviceAppData {
+	constructor(device: Mobile.IDevice,
+		platform: string,
+		$deployHelper: IDeployHelper,
+		$devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $companionAppsService: ICompanionAppsService,
 		private $projectConstants: Project.IConstants) {
-		super($companionAppsService.getCompanionAppIdentifier($projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform));
+		super($companionAppsService.getCompanionAppIdentifier($projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform), device, platform, $deployHelper, $devicePlatformsConstants);
 	}
 
 	public get deviceProjectRootPath(): string {
@@ -230,25 +179,19 @@ export class IOSCompanionAppIdentifier extends DeviceAppDataBase implements ILiv
 		return "icenium://%s?LiveSyncToken=%s&appId=%s&configuration=%s";
 	}
 
-	public encodeLiveSyncHostUri(hostUri: string): string {
-		return querystring.escape(hostUri);
-	}
-
-	public getLiveSyncNotSupportedError(): string {
-		return `Cannot LiveSync changes to the companion app. The companion app is not installed on ${this.device.deviceInfo.identifier}.`;
-	}
-
-	public isLiveSyncSupported(): IFuture<boolean> {
-		return this.device.applicationManager.isApplicationInstalled(this.appIdentifier);
+	protected getCompanionAppName(): string {
+		return "companion app";
 	}
 }
 
-export class IOSNativeScriptCompanionAppIdentifier extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
-	constructor(public device: Mobile.IDevice,
-		public platform: string,
+export class IOSNativeScriptCompanionAppIdentifier extends CompanionDeviceAppDataBase implements ILiveSyncDeviceAppData {
+	constructor(device: Mobile.IDevice,
+		platform: string,
+		$deployHelper: IDeployHelper,
+		$devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $companionAppsService: ICompanionAppsService,
 		private $projectConstants: Project.IConstants) {
-		super($companionAppsService.getCompanionAppIdentifier($projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript, platform));
+		super($companionAppsService.getCompanionAppIdentifier($projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript, platform), device, platform, $deployHelper, $devicePlatformsConstants);
 	}
 
 	public get deviceProjectRootPath(): string {
@@ -259,25 +202,19 @@ export class IOSNativeScriptCompanionAppIdentifier extends DeviceAppDataBase imp
 		return "nativescript://%s?LiveSyncToken=%s&appId=%s&configuration=%s";
 	}
 
-	public encodeLiveSyncHostUri(hostUri: string): string {
-		return querystring.escape(hostUri);
-	}
-
-	public getLiveSyncNotSupportedError(): string {
-		return `Cannot LiveSync changes to the NativeScript companion app. The NativeScript companion app is not installed on ${this.device.deviceInfo.identifier}.`;
-	}
-
-	public isLiveSyncSupported(): IFuture<boolean> {
-		return this.device.applicationManager.isApplicationInstalled(this.appIdentifier);
+	protected getCompanionAppName(): string {
+		return "NativeScript companion app";
 	}
 }
 
-export class WP8CompanionAppIdentifier extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
-	constructor(public device: Mobile.IDevice,
+export class WP8CompanionAppIdentifier extends CompanionDeviceAppDataBase implements ILiveSyncDeviceAppData {
+	constructor(device: Mobile.IDevice,
+		$deployHelper: IDeployHelper,
+		$devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		public platform: string,
 		private $companionAppsService: ICompanionAppsService,
 		private $projectConstants: Project.IConstants) {
-		super($companionAppsService.getCompanionAppIdentifier($projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform));
+		super($companionAppsService.getCompanionAppIdentifier($projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform), device, platform, $deployHelper, $devicePlatformsConstants);
 	}
 
 	public get deviceProjectRootPath(): string {
@@ -299,13 +236,17 @@ export class WP8CompanionAppIdentifier extends DeviceAppDataBase implements ILiv
 	public getLiveSyncNotSupportedError(): string {
 		return "";
 	}
+
+	protected getCompanionAppName(): string {
+		return "companion app";
+	}
 }
 
 export class DeviceAppDataProvider implements Mobile.IDeviceAppDataProvider {
 	constructor(private $project: any) { }
 
 	public createFactoryRules(): IDictionary<Mobile.IDeviceAppDataFactoryRule> {
-		let rules: IDictionary<IDictionary<Mobile.IDeviceAppDataFactoryRule>>= {
+		let rules: IDictionary<IDictionary<Mobile.IDeviceAppDataFactoryRule>> = {
 			Cordova: {
 				Android: {
 					vanilla: AndroidAppIdentifier,
@@ -335,4 +276,5 @@ export class DeviceAppDataProvider implements Mobile.IDeviceAppDataProvider {
 		return rules[this.$project.projectData.Framework];
 	}
 }
+
 $injector.register("deviceAppDataProvider", DeviceAppDataProvider);
