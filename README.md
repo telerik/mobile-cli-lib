@@ -422,6 +422,35 @@ Sample result will be:
 }]
 ```
 
+* `isCompanionAppInstalledOnDevices(deviceIdentifiers: string[], framework: string): Promise<IAppInstalledInfo>[]` - checks if the companion application is installed on each of the specified devices and is LiveSync supported for this application.
+The returned type for each device is `IAppInstalledInfo` (check above for full description of the interface).
+Sample usage:
+```JavaScript
+Promise.all(require("mobile-cli-lib")
+				.devicesService
+				.isCompanionAppInstalledOnDevices(devicesFound, "cordova"))
+		.then(function(data) {
+			console.log(data);
+		}, function(err) {
+			console.log(err);
+		});
+```
+Sample result will be:
+```JSON
+[{
+	"deviceIdentifier": "deviceId1",
+	"appIdentifier": "com.telerik.AppBuilder",
+	"isInstalled": true,
+	"isLiveSyncSupported": true
+}, {
+	"deviceIdentifier": "deviceId2",
+	"appIdentifier": "com.telerik.AppBuilder",
+	"isInstalled": false,
+	"isLiveSyncSupported": false
+}]
+```
+
+
 * `mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string): Promise<string>` - This function forwards the abstract port of the web view on the device to available tcp port on the host and returns the tcp port.
 
 Sample usage:

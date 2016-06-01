@@ -32,7 +32,8 @@ export class DevicesService implements Mobile.IDevicesService {
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $injector: IInjector,
 		private $options: ICommonOptions,
-		private $androidProcessService: Mobile.IAndroidProcessService) {
+		private $androidProcessService: Mobile.IAndroidProcessService,
+		private $companionAppsService: ICompanionAppsService) {
 		this.attachToDeviceDiscoveryEvents();
 	}
 
@@ -74,8 +75,14 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	@exportedPromise("devicesService")
 	public isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string, framework: string): IFuture<IAppInstalledInfo>[] {
-		this.$logger.trace(`Called isInstalledOnDevices for identifiers ${deviceIdentifiers}. AppIdentifier is ${appIdentifier}.`);
+		this.$logger.trace(`Called isInstalledOnDevices for identifiers ${deviceIdentifiers}. AppIdentifier is ${appIdentifier}. Framework is: ${framework}.`);
 		return _.map(deviceIdentifiers, deviceIdentifier => this.isApplicationInstalledOnDevice(deviceIdentifier, appIdentifier, framework));
+	}
+
+	@exportedPromise("devicesService")
+	public isCompanionAppInstalledOnDevices(deviceIdentifiers: string[], framework: string): IFuture<IAppInstalledInfo>[] {
+		this.$logger.trace(`Called isCompanionAppInstalledOnDevices for identifiers ${deviceIdentifiers}. Framework is ${framework}.`);
+		return _.map(deviceIdentifiers, deviceIdentifier => this.isCompanionAppInstalledOnDevice(deviceIdentifier, framework));
 	}
 
 	public getDeviceInstances(): Mobile.IDevice[] {
@@ -461,6 +468,28 @@ export class DevicesService implements Mobile.IDevicesService {
 				isInstalled = device.applicationManager.isApplicationInstalled(appIdentifier).wait();
 				device.applicationManager.tryStartApplication(appIdentifier, framework).wait();
 				isLiveSyncSupported = isInstalled && !!device.applicationManager.isLiveSyncSupported(appIdentifier).wait();
+			} catch (err) {
+				this.$logger.trace("Error while checking is application installed. Error is: ", err);
+			}
+
+			return {
+				appIdentifier,
+				deviceIdentifier,
+				isInstalled,
+				isLiveSyncSupported
+			};
+		}).future<IAppInstalledInfo>()();
+	}
+
+	private isCompanionAppInstalledOnDevice(deviceIdentifier: string, framework: string): IFuture<IAppInstalledInfo> {
+		return ((): IAppInstalledInfo => {
+			let isInstalled = false,
+				isLiveSyncSupported = false,
+				device = this.getDeviceByIdentifier(deviceIdentifier),
+				appIdentifier = this.$companionAppsService.getCompanionAppIdentifier(framework, device.deviceInfo.platform);
+
+			try {
+				isLiveSyncSupported = isInstalled = device.applicationManager.isApplicationInstalled(appIdentifier).wait();
 			} catch (err) {
 				this.$logger.trace("Error while checking is application installed. Error is: ", err);
 			}
