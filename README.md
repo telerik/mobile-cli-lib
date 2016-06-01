@@ -7,9 +7,9 @@ Contains common infrastructure for CLIs - mainly AppBuilder and NativeScript.
 Installation
 ===
 
-Latest version: 0.11.1
+Latest version: 0.12.0
 
-Release date: 2016, May 25
+Release date: 2016, June 1
 
 ### System Requirements
 
@@ -365,7 +365,7 @@ require("mobile-cli-lib").devicesService.setLogLevel("INFO", "129604ab96a4d00530
 This will set the logging level to `INFO` only for device with identifier `129604ab96a4d0053023b4bf5b288cf34a9ed5fa`.
 
 
-* `isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string): Promise<IAppInstalledInfo>[]` - checks if the specified application is installed on each of the specified devices and is LiveSync supported for this application.
+* `isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string, framework: string): Promise<IAppInstalledInfo>[]` - checks if the specified application is installed on each of the specified devices and is LiveSync supported for this application.
 The returned type for each device is `IAppInstalledInfo`:
 ```JavaScript
 /**
@@ -394,11 +394,13 @@ interface IAppInstalledInfo extends ILiveSyncSupportedInfo {
 	isLiveSyncSupported: boolean;
 }
 ```
+
+> NOTE: This method will try to start the application on each device in order to understand is LiveSync supported.
 Sample usage:
 ```JavaScript
 Promise.all(require("mobile-cli-lib")
 				.devicesService
-				.isAppInstalledOnDevices(devicesFound, "com.telerik.myApp"))
+				.isAppInstalledOnDevices(devicesFound, "com.telerik.myApp", "cordova"))
 		.then(function(data) {
 			console.log(data);
 		}, function(err) {
@@ -419,6 +421,35 @@ Sample result will be:
 	"isLiveSyncSupported": false
 }]
 ```
+
+* `isCompanionAppInstalledOnDevices(deviceIdentifiers: string[], framework: string): Promise<IAppInstalledInfo>[]` - checks if the companion application is installed on each of the specified devices and is LiveSync supported for this application.
+The returned type for each device is `IAppInstalledInfo` (check above for full description of the interface).
+Sample usage:
+```JavaScript
+Promise.all(require("mobile-cli-lib")
+				.devicesService
+				.isCompanionAppInstalledOnDevices(devicesFound, "cordova"))
+		.then(function(data) {
+			console.log(data);
+		}, function(err) {
+			console.log(err);
+		});
+```
+Sample result will be:
+```JSON
+[{
+	"deviceIdentifier": "deviceId1",
+	"appIdentifier": "com.telerik.AppBuilder",
+	"isInstalled": true,
+	"isLiveSyncSupported": true
+}, {
+	"deviceIdentifier": "deviceId2",
+	"appIdentifier": "com.telerik.AppBuilder",
+	"isInstalled": false,
+	"isLiveSyncSupported": false
+}]
+```
+
 
 * `mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string): Promise<string>` - This function forwards the abstract port of the web view on the device to available tcp port on the host and returns the tcp port.
 
@@ -534,54 +565,6 @@ Promise.all(require("mobile-cli-lib").liveSyncService.livesync(deviceInfos, proj
 	}).catch(function(err) {
 			console.log("Error while livesyncing: ", err);
 	});
-```
-
-* `isLiveSyncSupported(deviceIdentifiers: string[], appIdentifier: string): Promise<ILiveSyncSupportedInfo>[]` - checks if user can use LiveSync for application and for specified devices.
-For each device the following object will be returned:
-```JavaScript
-/**
- * Describes if LiveSync is supported for specific device and application.
- */
-interface ILiveSyncSupportedInfo {
-	/**
-	 * Unique identifier of the device.
-	 */
-	deviceIdentifier: string;
-
-	/**
-	 * Application identifier.
-	 */
-	appIdentifier: string;
-
-	/**
-	 * Result, indicating is livesync supported for specified device and specified application.
-	 * `true` in case livesync is supported and false otherwise.
-	 */
-	isLiveSyncSupported: boolean;
-}
-```
-
-Sample usage:
-```JavaScript
-Promise.all(require("mobile-cli-lib").liveSyncService.isLiveSyncSupported(["deviceId1", "deviceId2"], "appIdentifier"))
-	.then(function(result) {
-			console.log("Result is: ", result);
-	}).catch(function(err) {
-			console.log("Error while checking is LiveSync supported: ", err);
-	});
-```
-
-Sample result will be:
-```JSON
-[{
-	"deviceIdentifier": "deviceId1",
-	"appIdentifier": "appIdentifier",
-	"isLiveSyncSupported": true
-}, {
-	"deviceIdentifier": "deviceId2",
-	"appIdentifier": "appIdentifier",
-	"isLiveSyncSupported": false
-}]
 ```
 
 Technical details

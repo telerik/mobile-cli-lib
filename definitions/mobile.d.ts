@@ -261,7 +261,7 @@ declare module Mobile {
 		isiOSDevice(device: Mobile.IDevice): boolean;
 		isiOSSimulator(device: Mobile.IDevice): boolean;
 		isOnlyiOSSimultorRunning(): boolean;
-		isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string): IFuture<IAppInstalledInfo>[];
+		isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string, framework: string): IFuture<IAppInstalledInfo>[];
 		setLogLevel(logLevel: string, deviceIdentifier?: string): void;
 		deployOnDevices(deviceIdentifiers: string[], packageFile: string, packageName: string, framework: string): IFuture<void>[];
 		startDeviceDetectionInterval(): void;

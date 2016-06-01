@@ -94,6 +94,7 @@ function createTestInjector(): IInjector {
 	testInjector.register("androidEmulatorServices", AndroidEmulatorServices);
 	testInjector.register("iOSEmulatorServices", IOSEmulatorServices);
 	testInjector.register("messages", Messages);
+	testInjector.register("companionAppsService", {});
 	testInjector.register("mobileHelper", {
 		platformNames: ["ios", "android"],
 		validatePlatformName: (platform: string) => platform.toLowerCase(),
@@ -254,7 +255,7 @@ describe("devicesService", () => {
 		it("returns true for each device on which the app is installed", () => {
 			let deviceIdentifiers = [androidDevice.deviceInfo.identifier, iOSDevice.deviceInfo.identifier],
 				appId = "com.telerik.unitTest1";
-			let results = devicesService.isAppInstalledOnDevices(deviceIdentifiers, appId);
+			let results = devicesService.isAppInstalledOnDevices(deviceIdentifiers, appId, "cordova");
 			assert.isTrue(results.length > 0);
 			_.each(results, (futurizedResult: IFuture<IAppInstalledInfo>, index: number) => {
 				let realResult = futurizedResult.wait();
@@ -266,14 +267,14 @@ describe("devicesService", () => {
 		});
 
 		it("returns false for each device on which the app is not installed", () => {
-			let results = devicesService.isAppInstalledOnDevices([androidDevice.deviceInfo.identifier, iOSDevice.deviceInfo.identifier], "com.telerik.unitTest3");
+			let results = devicesService.isAppInstalledOnDevices([androidDevice.deviceInfo.identifier, iOSDevice.deviceInfo.identifier], "com.telerik.unitTest3", "cordova");
 			assert.isTrue(results.length > 0);
 			Future.wait(results);
 			assert.deepEqual(results.map(r => r.get().isInstalled), [true, false]);
 		});
 
 		it("throws error when invalid identifier is passed", () => {
-			let results = devicesService.isAppInstalledOnDevices(["invalidDeviceId", iOSDevice.deviceInfo.identifier], "com.telerik.unitTest1");
+			let results = devicesService.isAppInstalledOnDevices(["invalidDeviceId", iOSDevice.deviceInfo.identifier], "com.telerik.unitTest1", "cordova");
 			assert.throws(() => Future.wait(results));
 			_.each(results, futurizedResult => {
 				let error = futurizedResult.error;
