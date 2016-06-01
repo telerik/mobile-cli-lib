@@ -27,12 +27,6 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 		return _.map(deviceDescriptors, deviceDescriptor => this.liveSyncOnDevice(deviceDescriptor, filePaths));
 	}
 
-	@exportedPromise("liveSyncService")
-	public isLiveSyncSupported(deviceIdentifiers: string[], appIdentifier: string, framework: string): IFuture<ILiveSyncSupportedInfo>[] {
-		this.$logger.trace(`Called isLiveSyncSupported for identifiers ${deviceIdentifiers}. AppIdentifier is ${appIdentifier}.`);
-		return _.map(deviceIdentifiers, deviceId => this.isLiveSyncSupportedOnDevice(deviceId, appIdentifier, framework));
-	}
-
 	private liveSyncOnDevice(deviceDescriptor: IDeviceLiveSyncInfo, filePaths: string[]): IFuture<IDeviceLiveSyncResult> {
 		return ((): IDeviceLiveSyncResult => {
 			let result: IDeviceLiveSyncResult = {
@@ -100,19 +94,6 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 
 			return liveSyncOperationResult;
 		}).future<ILiveSyncOperationResult>()();
-	}
-
-	private isLiveSyncSupportedOnDevice(deviceIdentifier: string, appIdentifier: string, framework: string): IFuture<ILiveSyncSupportedInfo> {
-		return ((): ILiveSyncSupportedInfo => {
-			let device = this.$devicesService.getDeviceByIdentifier(deviceIdentifier);
-			device.applicationManager.tryStartApplication(appIdentifier, framework).wait();
-			let isLiveSyncSupported = !!device.applicationManager.isLiveSyncSupported(appIdentifier).wait();
-			return {
-				deviceIdentifier,
-				appIdentifier,
-				isLiveSyncSupported
-			};
-		}).future<ILiveSyncSupportedInfo>()();
 	}
 }
 $injector.register("liveSyncService", ProtonLiveSyncService);

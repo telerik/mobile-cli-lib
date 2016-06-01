@@ -73,9 +73,9 @@ export class DevicesService implements Mobile.IDevicesService {
 	/* tslint:enable:no-unused-variable */
 
 	@exportedPromise("devicesService")
-	public isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string): IFuture<IAppInstalledInfo>[] {
+	public isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string, framework: string): IFuture<IAppInstalledInfo>[] {
 		this.$logger.trace(`Called isInstalledOnDevices for identifiers ${deviceIdentifiers}. AppIdentifier is ${appIdentifier}.`);
-		return _.map(deviceIdentifiers, deviceIdentifier => this.isApplicationInstalledOnDevice(deviceIdentifier, appIdentifier));
+		return _.map(deviceIdentifiers, deviceIdentifier => this.isApplicationInstalledOnDevice(deviceIdentifier, appIdentifier, framework));
 	}
 
 	public getDeviceInstances(): Mobile.IDevice[] {
@@ -452,15 +452,15 @@ export class DevicesService implements Mobile.IDevicesService {
 		return this.executeOnAllConnectedDevices(action, canExecute);
 	}
 
-	private isApplicationInstalledOnDevice(deviceIdentifier: string, appIdentifier: string): IFuture<IAppInstalledInfo> {
+	private isApplicationInstalledOnDevice(deviceIdentifier: string, appIdentifier: string, framework: string): IFuture<IAppInstalledInfo> {
 		return ((): IAppInstalledInfo => {
 			let isInstalled = false,
 				isLiveSyncSupported = false,
 				device = this.getDeviceByIdentifier(deviceIdentifier);
-
 			try {
 				isInstalled = device.applicationManager.isApplicationInstalled(appIdentifier).wait();
-				isLiveSyncSupported = isInstalled && device.applicationManager.isLiveSyncSupported(appIdentifier).wait();
+				device.applicationManager.tryStartApplication(appIdentifier, framework).wait();
+				isLiveSyncSupported = isInstalled && !!device.applicationManager.isLiveSyncSupported(appIdentifier).wait();
 			} catch (err) {
 				this.$logger.trace("Error while checking is application installed. Error is: ", err);
 			}
