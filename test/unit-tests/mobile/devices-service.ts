@@ -52,7 +52,8 @@ let androidDeviceDiscovery: EventEmitter,
 		applicationManager: {
 			getInstalledApplications: () => Future.fromResult(["com.telerik.unitTest1", "com.telerik.unitTest2"]),
 			canStartApplication: () => true,
-			startApplication: (packageName: string) => Future.fromResult(),
+			startApplication: (packageName: string, framework: string) => Future.fromResult(),
+			tryStartApplication: (packageName: string, framework: string) => Future.fromResult(),
 			reinstallApplication: (packageName: string, packageFile: string) => Future.fromResult(),
 			isApplicationInstalled: (packageName: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2"], packageName)),
 			isLiveSyncSupported: (appIdentifier: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2"], appIdentifier))
@@ -125,7 +126,8 @@ describe("devicesService", () => {
 			applicationManager: {
 				getInstalledApplications: () => Future.fromResult(["com.telerik.unitTest1", "com.telerik.unitTest2"]),
 				canStartApplication: () => true,
-				startApplication: (packageName: string) => Future.fromResult(),
+				startApplication: (packageName: string, framework: string) => Future.fromResult(),
+				tryStartApplication: (packageName: string, framework: string) => Future.fromResult(),
 				reinstallApplication: (packageName: string, packageFile: string) => Future.fromResult(),
 				isApplicationInstalled: (packageName: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2"], packageName)),
 				isLiveSyncSupported: (appIdentifier: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2"], appIdentifier))
@@ -140,7 +142,8 @@ describe("devicesService", () => {
 			applicationManager: {
 				getInstalledApplications: () => Future.fromResult(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"]),
 				canStartApplication: () => true,
-				startApplication: (packageName: string) => Future.fromResult(),
+				startApplication: (packageName: string, framework: string) => Future.fromResult(),
+				tryStartApplication: (packageName: string, framework: string) => Future.fromResult(),
 				reinstallApplication: (packageName: string, packageFile: string) => Future.fromResult(),
 				isApplicationInstalled: (packageName: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], packageName)),
 				isLiveSyncSupported: (appIdentifier: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], appIdentifier))

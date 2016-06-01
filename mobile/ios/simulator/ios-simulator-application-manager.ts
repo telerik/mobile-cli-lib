@@ -11,8 +11,9 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		private identifier: string,
 		private $options: ICommonOptions,
 		private $fs: IFileSystem,
-		private $bplistParser: IBinaryPlistParser) {
-			super();
+		private $bplistParser: IBinaryPlistParser,
+		$logger: ILogger) {
+			super($logger);
 		}
 
 	public getInstalledApplications(): IFuture<string[]> {
