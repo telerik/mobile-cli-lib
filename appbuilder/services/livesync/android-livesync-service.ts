@@ -2,7 +2,8 @@
 "use strict";
 
 import { AndroidLiveSyncService } from "../../../mobile/android/android-livesync-service";
-import Future = require("fibers/future");
+import * as path from "path";
+import * as helpers from "../../../helpers";
 
 export class AppBuilderAndroidLiveSyncService extends AndroidLiveSyncService implements IPlatformLiveSyncService {
 	constructor(private _device: Mobile.IAndroidDevice,
@@ -25,8 +26,20 @@ export class AppBuilderAndroidLiveSyncService extends AndroidLiveSyncService imp
 		}).future<void>()();
 	}
 
-	public removeFiles(): IFuture<void> {
-		return Future.fromResult();
+	public removeFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void> {
+		return (() => {
+			if (localToDevicePaths && localToDevicePaths.length) {
+				let deviceProjectRootPath = localToDevicePaths[0].deviceProjectRootPath;
+				let commands =_.map(localToDevicePaths, ldp => {
+
+					let relativePath = path.relative(deviceProjectRootPath, ldp.getDevicePath()),
+						unixPath = helpers.fromWindowsRelativePathToUnix(relativePath);
+
+					return this.liveSyncCommands.DeleteFile(unixPath);
+				});
+				this.livesync(appIdentifier, deviceProjectRootPath, commands).wait();
+			}
+		}).future<void>()();
 	}
 }
 $injector.register("androidLiveSyncServiceLocator", {factory: AppBuilderAndroidLiveSyncService});

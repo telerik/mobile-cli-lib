@@ -159,13 +159,18 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 
 	private syncRemovedFile(data: ILiveSyncData, filePath: string): IFuture<void> {
 		return (() => {
-			let deviceFilesAction = (device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => {
-				let platformLiveSyncService = this.resolvePlatformLiveSyncService(data.platform, device);
-				return platformLiveSyncService.removeFiles(data.appIdentifier, localToDevicePaths);
-			};
+			let filePathArray = [filePath],
+				deviceFilesAction = this.getSyncRemovedFilesAction(data);
 
-			this.syncCore(data, [filePath], deviceFilesAction).wait();
+			this.syncCore(data, filePathArray, deviceFilesAction).wait();
 		}).future<void>()();
+	}
+
+	public getSyncRemovedFilesAction(data: ILiveSyncData): (device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void> {
+		return (device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => {
+			let platformLiveSyncService = this.resolvePlatformLiveSyncService(data.platform, device);
+			return platformLiveSyncService.removeFiles(data.appIdentifier, localToDevicePaths);
+		};
 	}
 
 	public getSyncAction(data: ILiveSyncData, filesToSync?: string[], deviceFilesAction?: (device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>, liveSyncOptions?: { isForCompanionApp: boolean }): (device: Mobile.IDevice) => IFuture<void> {

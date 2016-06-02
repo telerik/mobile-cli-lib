@@ -17,6 +17,10 @@ class LiveSyncCommands {
 	public static RefreshCurrentViewCommand(): string {
 		return "RefreshCurrentView \r";
 	}
+
+	public static DeleteFile(relativePath: string): string {
+		return `DeleteFile "${relativePath}" \r`;
+	}
 }
 
 export class AndroidLiveSyncService implements Mobile.IAndroidLiveSyncService {

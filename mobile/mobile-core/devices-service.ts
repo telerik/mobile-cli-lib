@@ -19,6 +19,10 @@ export class DevicesService implements Mobile.IDevicesService {
 	private _data: Mobile.IDevicesServicesInitializationOptions;
 	private deviceDetectionInterval: any;
 
+	private get $companionAppsService(): ICompanionAppsService {
+		return this.$injector.resolve("companionAppsService");
+	}
+
 	constructor(private $logger: ILogger,
 		private $errors: IErrors,
 		private $iOSSimulatorDiscovery: Mobile.IDeviceDiscovery,
@@ -32,8 +36,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $injector: IInjector,
 		private $options: ICommonOptions,
-		private $androidProcessService: Mobile.IAndroidProcessService,
-		private $companionAppsService: ICompanionAppsService) {
+		private $androidProcessService: Mobile.IAndroidProcessService) {
 		this.attachToDeviceDiscoveryEvents();
 	}
 
