@@ -10,7 +10,7 @@ class LocalToDevicePathData implements Mobile.ILocalToDevicePathData {
 	constructor(private filePath: string,
 		private localProjectRootPath: string,
 		private onDeviceFileName: string,
-		private deviceProjectRootPath: string) { }
+		public deviceProjectRootPath: string) { }
 
 	public getLocalPath(): string {
 		return this.filePath;

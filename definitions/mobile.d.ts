@@ -405,6 +405,7 @@ declare module Mobile {
 		getLocalPath(): string;
 		getDevicePath(): string;
 		getRelativeToProjectBasePath(): string;
+		deviceProjectRootPath: string;
 	}
 
 	interface ILocalToDevicePathDataFactory {
