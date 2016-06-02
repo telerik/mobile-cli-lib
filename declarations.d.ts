@@ -147,6 +147,7 @@ interface IFileSystem {
 	appendFile(filename: string, data: any, encoding?: string): IFuture<void>;
 	writeJson(filename: string, data: any, space?: string, encoding?: string): IFuture<void>;
 	copyFile(sourceFileName: string, destinationFileName: string): IFuture<void>;
+	copyDirRecursive(sourceDirName: string, destinationDirName: string): IFuture<void>;
 	getUniqueFileName(baseName: string): IFuture<string>;
 	isEmptyDir(directoryPath: string): IFuture<boolean>;
 	isRelativePath(path: string): boolean /* feels so lonely here, I don't have a Future */;
