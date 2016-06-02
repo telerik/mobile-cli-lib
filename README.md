@@ -7,9 +7,9 @@ Contains common infrastructure for CLIs - mainly AppBuilder and NativeScript.
 Installation
 ===
 
-Latest version: 0.12.0
+Latest version: 0.13.0
 
-Release date: 2016, June 1
+Release date: 2016, June 2
 
 ### System Requirements
 
@@ -564,6 +564,24 @@ Promise.all(require("mobile-cli-lib").liveSyncService.livesync(deviceInfos, proj
 			console.log("Finished with partial sync, result is: ", result);
 	}).catch(function(err) {
 			console.log("Error while livesyncing: ", err);
+	});
+```
+
+* `deleteFiles(devicesInfo: IDeviceLiveSyncInfo[], projectDir: string, filePaths: string[]): Promise<IDeviceLiveSyncResult>[]` - Deletes specified files from devices's livesync directories.
+The `devicesInfo` array describes livesync operations for each device. Check `livesync` method above fore more information.
+
+Sample usage:
+```JavaScript
+var deviceInfos = [{"deviceIdentifier": "129604ab96a4d0053023b4bf5b288cf34a9ed5fa", "syncToApp": true, "syncToCompanion": false},
+					{"deviceIdentifier": "153544fa45f4a5646543b5bf1b221fe31a8fa6bc", "syncToApp": true, "syncToCompanion": false}];
+
+var filesToSync = [path.join(projectDir,"app","components", "homeView", "homeView.xml"),
+					path.join(projectDir,"app","components", "addressView", "addressView.xml")]
+Promise.all(require("mobile-cli-lib").liveSyncService.deleteFiles(deviceInfos, projectDir, filesToSync))
+	.then(function(result) {
+			console.log("Finished with deleting files, result is: ", result);
+	}).catch(function(err) {
+			console.log("Error while deleting files: ", err);
 	});
 ```
 
