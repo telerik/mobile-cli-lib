@@ -3,7 +3,7 @@
 import {EOL} from "os";
 import {ApplicationManagerBase} from "../application-manager-base";
 import { LiveSyncConstants } from "../../mobile/constants";
-import { StartPackageActivityNames } from "../../mobile/constants";
+import { startPackageActivityNames } from "../../mobile/constants";
 
 export class AndroidApplicationManager extends ApplicationManagerBase {
 
@@ -12,7 +12,6 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		private $staticConfig: Config.IStaticConfig,
 		private $options: ICommonOptions,
 		private $logcatHelper: Mobile.ILogcatHelper,
-		private $projectConstants: Project.IConstants,
 		$logger: ILogger) {
 			super($logger);
 		}
@@ -69,11 +68,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 	}
 
 	private getStartPackageActivity(framework?: string): string {
-		if (framework) {
-			return framework.toLowerCase() === this.$projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript.toLowerCase() ?
-				StartPackageActivityNames.NATIVESCRIPT : StartPackageActivityNames.CORDOVA;
-		}
-
-		return this.$staticConfig.START_PACKAGE_ACTIVITY_NAME;
+		framework = framework || "";
+		return startPackageActivityNames[framework.toLowerCase()] || this.$staticConfig.START_PACKAGE_ACTIVITY_NAME;
 	}
 }
