@@ -6,7 +6,7 @@ import * as fiberBootstrap from "./fiber-bootstrap";
 import * as assert from "assert";
 import {isFuture} from "./helpers";
 
-export function exportedPromise(moduleName: string): any {
+export function exportedPromise(moduleName: string, action?: Function): any {
 	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> => {
 		$injector.publicApi.__modules__[moduleName] = $injector.publicApi.__modules__[moduleName] || {};
 		$injector.publicApi.__modules__[moduleName][propertyKey] = (...args: any[]): Promise<any>[] | Promise<any>=> {
@@ -28,12 +28,30 @@ export function exportedPromise(moduleName: string): any {
 						.keys()
 						.value();
 
+			let finalResult: any,
+				arrayResult: Promise<any>[];
 			// Check if method returns IFuture<T>[]. In this case we will return Promise<T>[]
 			if(_.isArray(result) && types.length === 1 && isFuture(_.first<any>(result))) {
-				return _.map(result, (future: IFuture<any>) => getPromise(future));
+				finalResult = _.map(result, (future: IFuture<any>) => getPromise(future));
+				arrayResult = finalResult;
 			} else {
-				return getPromise(result);
+				finalResult = getPromise(result);
+				arrayResult = [finalResult];
 			}
+
+			if (action) {
+				let settledPromises = 0;
+				_.each(arrayResult, (prom: Promise<any>) => {
+					prom.lastly(() => {
+						settledPromises++;
+						if(settledPromises === arrayResult.length) {
+							action.bind(originalModule)();
+						}
+					});
+				});
+			}
+
+			return finalResult;
 		};
 
 		return descriptor;

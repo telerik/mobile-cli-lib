@@ -281,8 +281,11 @@ export class DevicesService implements Mobile.IDevicesService {
 		}).future<void>()();
 	}
 
-	@exportedPromise("devicesService")
+	@exportedPromise("devicesService", function() {
+		this.startDeviceDetectionInterval();
+	})
 	public deployOnDevices(deviceIdentifiers: string[], packageFile: string, packageName: string, framework: string): IFuture<void>[] {
+		this.stopDeviceDetectionInterval();
 		this.$logger.trace(`Called deployOnDevices for identifiers ${deviceIdentifiers} for packageFile: ${packageFile}. packageName is ${packageName}.`);
 		return _.map(deviceIdentifiers, deviceIdentifier => this.deployOnDevice(deviceIdentifier, packageFile, packageName, framework));
 	}
