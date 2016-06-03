@@ -3,7 +3,7 @@
 
 import Future = require("fibers/future");
 import * as path from "path";
-import { StartPackageActivityNames } from "../../mobile/constants";
+import { startPackageActivityNames } from "../../mobile/constants";
 export class Project implements Project.IProjectBase {
 	constructor(private $cordovaProjectCapabilities: Project.ICapabilities,
 		private $fs: IFileSystem,
@@ -40,6 +40,6 @@ export class Project implements Project.IProjectBase {
 		return null;
 	}
 
-	public startPackageActivity = StartPackageActivityNames.CORDOVA;
+	public startPackageActivity = startPackageActivityNames[this.$projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova.toLowerCase()];
 }
 $injector.register("project", Project);
