@@ -15,6 +15,7 @@ interface IAdbAndroidDeviceInfo {
 
 export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IAndroidDeviceDiscovery {
 	private _devices: IAdbAndroidDeviceInfo[] = [];
+	private isStarted: boolean;
 
 	constructor(private $childProcess: IChildProcess,
 		private $injector: IInjector,
@@ -104,7 +105,18 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 	}
 
 	public ensureAdbServerStarted(): IFuture<any> {
-		return this.$adb.executeCommand(["start-server"]);
+		return ((): any => {
+			if (!this.isStarted) {
+				this.isStarted = true;
+
+				try {
+					return this.$adb.executeCommand(["start-server"]).wait();
+				} catch (err) {
+					this.isStarted = false;
+					throw err;
+				}
+			}
+		}).future<any>()();
 	}
 }
 $injector.register("androidDeviceDiscovery", AndroidDeviceDiscovery);
