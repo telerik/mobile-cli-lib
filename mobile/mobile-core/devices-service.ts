@@ -18,6 +18,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	private _isInitialized = false;
 	private _data: Mobile.IDevicesServicesInitializationOptions;
 	private deviceDetectionInterval: any;
+	private deviceDetectionIntervalFuture: IFuture<void>;
 
 	private get $companionAppsService(): ICompanionAppsService {
 		return this.$injector.resolve("companionAppsService");
@@ -153,6 +154,11 @@ export class DevicesService implements Mobile.IDevicesService {
 		} else {
 			this.deviceDetectionInterval = setInterval(() => {
 				fiberBootstrap.run(() => {
+					if(this.deviceDetectionIntervalFuture) {
+						return;
+					}
+
+					this.deviceDetectionIntervalFuture = new Future<void>();
 					if (!this.$hostInfo.isDarwin) {
 						try {
 							this.$iOSDeviceDiscovery.checkForDevices().wait();
@@ -162,7 +168,7 @@ export class DevicesService implements Mobile.IDevicesService {
 					}
 
 					try {
-						this.$androidDeviceDiscovery.checkForDevices().wait();
+						this.$androidDeviceDiscovery.startLookingForDevices().wait();
 					} catch (err) {
 						this.$logger.trace("Error while checking for new Android devices.", err);
 					}
@@ -182,18 +188,25 @@ export class DevicesService implements Mobile.IDevicesService {
 							this.$logger.trace(`Error checking for application updates on device ${device.deviceInfo.identifier}.`, err);
 						}
 					});
+
+					this.deviceDetectionIntervalFuture.return();
+					this.deviceDetectionIntervalFuture.wait();
+					this.deviceDetectionIntervalFuture = null;
 				});
 			}, DevicesService.DEVICE_LOOKING_INTERVAL).unref();
 		}
 	}
 
-	public stopDeviceDetectionInterval(): void {
-		if (this.deviceDetectionInterval) {
-			clearInterval(this.deviceDetectionInterval);
-			this.deviceDetectionInterval = null;
-		} else {
-			this.$logger.trace("Device detection interval is not started, so it cannot be stopped.");
-		}
+	public stopDeviceDetectionInterval(): IFuture<void> {
+		return (() => {
+			if (this.deviceDetectionInterval) {
+				clearInterval(this.deviceDetectionInterval);
+				this.deviceDetectionInterval = null;
+				this.clearCurrentDeviceDetectionIntervalFuture().wait();
+			} else {
+				this.$logger.trace("Device detection interval is not started, so it cannot be stopped.");
+			}
+		}).future<void>()();
 	}
 
 	public getDeviceByIdentifier(identifier: string): Mobile.IDevice {
@@ -285,7 +298,6 @@ export class DevicesService implements Mobile.IDevicesService {
 		this.startDeviceDetectionInterval();
 	})
 	public deployOnDevices(deviceIdentifiers: string[], packageFile: string, packageName: string, framework: string): IFuture<void>[] {
-		this.stopDeviceDetectionInterval();
 		this.$logger.trace(`Called deployOnDevices for identifiers ${deviceIdentifiers} for packageFile: ${packageFile}. packageName is ${packageName}.`);
 		return _.map(deviceIdentifiers, deviceIdentifier => this.deployOnDevice(deviceIdentifier, packageFile, packageName, framework));
 	}
@@ -409,6 +421,7 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	private deployOnDevice(deviceIdentifier: string, packageFile: string, packageName: string, framework: string): IFuture<void> {
 		return (() => {
+			this.stopDeviceDetectionInterval().wait();
 			let device = this.getDeviceByIdentifier(deviceIdentifier);
 			device.applicationManager.reinstallApplication(packageName, packageFile).wait();
 			this.$logger.info(`Successfully deployed on device with identifier '${device.deviceInfo.identifier}'.`);
@@ -507,6 +520,10 @@ export class DevicesService implements Mobile.IDevicesService {
 				isLiveSyncSupported
 			};
 		}).future<IAppInstalledInfo>()();
+	}
+
+	private clearCurrentDeviceDetectionIntervalFuture(): IFuture<void> {
+		return this.deviceDetectionIntervalFuture || Future.fromResult();
 	}
 }
 

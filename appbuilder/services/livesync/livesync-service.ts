@@ -20,7 +20,9 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 		private $logger: ILogger,
 		private $companionAppsService: ICompanionAppsService) { }
 
-	@exportedPromise("liveSyncService")
+	@exportedPromise("liveSyncService", function() {
+		this.$devicesService.startDeviceDetectionInterval();
+	})
 	public livesync(deviceDescriptors: IDeviceLiveSyncInfo[], projectDir: string, filePaths?: string[]): IFuture<IDeviceLiveSyncResult>[] {
 		this.$project.projectDir = projectDir;
 		this.$logger.trace(`Called livesync for identifiers ${_.map(deviceDescriptors, d => d.deviceIdentifier)}. Project dir is ${projectDir}. Files are: ${filePaths}`);
@@ -36,6 +38,7 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 
 	private liveSyncOnDevice(deviceDescriptor: IDeviceLiveSyncInfo, filePaths: string[], liveSyncOptions?: { isForDeletedFiles: boolean }): IFuture<IDeviceLiveSyncResult> {
 		return ((): IDeviceLiveSyncResult => {
+			this.$devicesService.stopDeviceDetectionInterval().wait();
 			let result: IDeviceLiveSyncResult = {
 				deviceIdentifier: deviceDescriptor.deviceIdentifier
 			};
@@ -44,7 +47,7 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 			if(!device) {
 				result.liveSyncToApp = result.liveSyncToCompanion = {
 					isResolved: false,
-					error: new Error(`Cannot find connected device with identifier ${deviceDescriptor.deviceIdentifier}.`)
+					error: new Error(`Cannot find connected device with identifier ${deviceDescriptor.deviceIdentifier}. Available device identifiers are: ${this.$devicesService.getDeviceInstances()}`)
 				};
 
 				return result;

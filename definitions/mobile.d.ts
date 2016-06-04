@@ -265,7 +265,7 @@ declare module Mobile {
 		setLogLevel(logLevel: string, deviceIdentifier?: string): void;
 		deployOnDevices(deviceIdentifiers: string[], packageFile: string, packageName: string, framework: string): IFuture<void>[];
 		startDeviceDetectionInterval(): void;
-		stopDeviceDetectionInterval(): void;
+		stopDeviceDetectionInterval(): IFuture<void>;
 		getDeviceByIdentifier(identifier: string): Mobile.IDevice;
 		mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string): IFuture<string>;
 		detectCurrentlyAttachedDevices(): IFuture<void>;
