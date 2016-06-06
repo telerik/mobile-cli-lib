@@ -7,6 +7,7 @@ import * as shell from "shelljs";
 import * as path from "path";
 import * as temp from "temp";
 import * as minimatch from "minimatch";
+import * as util from "util";
 let gaze = require("gaze");
 
 class LiveSyncServiceBase implements ILiveSyncServiceBase {
@@ -235,7 +236,8 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 
 	private transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string, isFullSync: boolean): IFuture<void> {
 		return (() => {
-			this.$logger.info("Transferring project files...");
+			this.logFilesSyncInformation(localToDevicePaths, "Transferring %s.");
+
 			let canTransferDirectory = isFullSync && (this.$devicesService.isAndroidDevice(deviceAppData.device) || this.$devicesService.isiOSSimulator(deviceAppData.device));
 			if (canTransferDirectory) {
 				let tempDir = temp.mkdirSync("tempDir");
@@ -245,8 +247,15 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 			} else {
 				deviceAppData.device.fileSystem.transferFiles(deviceAppData, localToDevicePaths).wait();
 			}
-			this.$logger.info("Successfully transferred all project files.");
+
+			this.logFilesSyncInformation(localToDevicePaths, "Successfully transferred %s.");
 		}).future<void>()();
+	}
+
+	private logFilesSyncInformation(localToDevicePaths: Mobile.ILocalToDevicePathData[], message: string): void {
+		_.each(localToDevicePaths, (file: Mobile.ILocalToDevicePathData) => {
+			this.$logger.info(util.format(message, path.basename(file.getLocalPath()).yellow));
+		});
 	}
 
 	private resolvePlatformLiveSyncService(platform: string, device: Mobile.IDevice): IPlatformLiveSyncService {
