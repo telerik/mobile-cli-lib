@@ -1,6 +1,3 @@
-///<reference path="./../../.d.ts"/>
-"use strict";
-
 import {EOL} from "os";
 import {DeviceAndroidDebugBridge} from "../android/device-android-debug-bridge";
 

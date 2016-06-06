@@ -1,6 +1,3 @@
-///<reference path="../../.d.ts"/>
-"use strict";
-
 import * as fiberBootstrap from "../../fiber-bootstrap";
 
 // https://github.com/Microsoft/TypeScript/blob/master/src/compiler/tsc.ts#L487-L489

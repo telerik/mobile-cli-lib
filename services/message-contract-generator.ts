@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 import {Block} from "../codeGeneration/code-entity";
 import {CodePrinter} from "../codeGeneration/code-printer";
 
@@ -13,20 +10,16 @@ export class MessageContractGenerator implements IServiceContractGenerator {
 		this.pendingModels = {};
 	}
 
-	public generate(definitionsPath?: string): IFuture<IServiceContractClientCode> {
+	public generate(): IFuture<IServiceContractClientCode> {
 		return ((): IServiceContractClientCode => {
 			let interfacesFile= new Block();
 			let implementationsFile = new Block();
-			definitionsPath = definitionsPath || `"${this.$staticConfig.CLIENT_NAME ? "" : "../"}.d.ts"`;
 
-			implementationsFile.writeLine(`///<reference path=${definitionsPath}/>`);
-			implementationsFile.writeLine('"use strict";');
 			implementationsFile.writeLine("//");
 			implementationsFile.writeLine("// automatically generated code; do not edit manually!");
 			implementationsFile.writeLine("//");
 			implementationsFile.writeLine("");
 
-			interfacesFile.writeLine(`///<reference path=${definitionsPath}/>`);
 			interfacesFile.writeLine("//");
 			interfacesFile.writeLine("// automatically generated code; do not edit manually!");
 			interfacesFile.writeLine("//");

@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 import { AndroidLogFilter } from "../../mobile/android/android-log-filter";
 import { LoggingLevels } from "../../mobile/logging-levels";
 import { Yok } from "../../yok";

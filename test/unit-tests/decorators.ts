@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 import * as decoratorsLib from "../../decorators";
 import { Yok } from "../../yok";
 import {assert} from "chai";

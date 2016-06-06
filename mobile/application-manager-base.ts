@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 import { EventEmitter } from "events";
 
 export abstract class ApplicationManagerBase extends EventEmitter implements Mobile.IDeviceApplicationManager {

@@ -1,5 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
 import * as helpers from "../helpers";
 import * as path from "path";
 

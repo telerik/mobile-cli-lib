@@ -1,7 +1,3 @@
-///<reference path="../.d.ts"/>
-
-"use strict";
-
 export class ValidationResult implements IValidationResult {
 	public static Successful = new ValidationResult(null);
 

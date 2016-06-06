@@ -1,6 +1,3 @@
-///<reference path="../../.d.ts"/>
-"use strict";
-
 interface IComposeCommandResult {
 	command: string;
 	args: string[];

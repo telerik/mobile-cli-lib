@@ -1,6 +1,3 @@
-///<reference path="../../../.d.ts"/>
-"use strict";
-
 import {ApplicationManagerBase} from "../../application-manager-base";
 import Future = require("fibers/future");
 import * as path from "path";

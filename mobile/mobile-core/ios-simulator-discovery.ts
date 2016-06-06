@@ -1,6 +1,3 @@
-///<reference path="./../../.d.ts"/>
-"use strict";
-
 import {DeviceDiscovery} from "./device-discovery";
 import Future = require("fibers/future");
 import {IOSSimulator} from "./../ios/simulator/ios-simulator-device";

@@ -1,6 +1,3 @@
-///<reference path="./../../.d.ts"/>
-"use strict";
-
 import {DeviceDiscovery} from "./device-discovery";
 import * as helpers from "../../helpers";
 import {AndroidDevice} from "../android/android-device";

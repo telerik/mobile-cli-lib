@@ -1,6 +1,3 @@
-///<reference path=".d.ts"/>
-"use strict";
-
 import * as uuid from "node-uuid";
 import * as Fiber from "fibers";
 import * as net from "net";

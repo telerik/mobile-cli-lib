@@ -1,6 +1,3 @@
-///<reference path="../../.d.ts"/>
-"use strict";
-
 export class NativeScriptProjectCapabilities implements Project.ICapabilities {
 	public get build(): boolean {
 		return true;

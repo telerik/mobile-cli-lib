@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 class AnalyticsCommand implements ICommand {
 	constructor(private $analyticsService: IAnalyticsService,
 		private $logger: ILogger,

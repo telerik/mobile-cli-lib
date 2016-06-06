@@ -597,9 +597,6 @@ Similar to `AngularJS`, `mobile-cli-lib` is using `$injector` to retrive object 
 * Add your class in the file. The class name should be in <a href="https://msdn.microsoft.com/en-us/library/x2dbyw72(v=vs.71).aspx">Pascal case</a>
 
 ```TypeScript
-///<reference path="../.d.ts"/>
-"use strict";
-
 class DeviceService {
 }
 ```

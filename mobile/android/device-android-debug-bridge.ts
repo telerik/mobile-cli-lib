@@ -1,6 +1,3 @@
-///<reference path="../../.d.ts"/>
-"use strict";
-
 import {AndroidDebugBridge} from "./android-debug-bridge";
 
 interface IComposeCommandResult {

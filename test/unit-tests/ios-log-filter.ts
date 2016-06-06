@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 import { IOSLogFilter } from "../../mobile/ios/ios-log-filter";
 import { LoggingLevels } from "../../mobile/logging-levels";
 import { Yok } from "../../yok";

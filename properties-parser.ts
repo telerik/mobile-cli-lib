@@ -1,5 +1,3 @@
-///<reference path=".d.ts"/>
-"use strict";
 import * as propertiesParser from "properties-parser";
 import Future = require("fibers/future");
 import * as assert from "assert";

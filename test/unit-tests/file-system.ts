@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 import {Yok} from "../../yok";
 import * as path from "path";
 import temp = require("temp");

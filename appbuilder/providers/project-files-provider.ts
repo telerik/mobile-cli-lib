@@ -1,6 +1,3 @@
-///<reference path="../../.d.ts"/>
-"use strict";
-
 import * as path from "path";
 import { ProjectFilesProviderBase } from "../../services/project-files-provider-base";
 

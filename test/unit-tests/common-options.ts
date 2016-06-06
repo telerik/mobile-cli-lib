@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 import { Errors } from "../../errors";
 import { Yok } from "../../yok";
 import { assert } from "chai";

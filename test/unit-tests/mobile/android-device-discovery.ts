@@ -1,5 +1,3 @@
-///<reference path="../../.d.ts"/>
-"use strict";
 import {AndroidDeviceDiscovery} from "../../../mobile/mobile-core/android-device-discovery";
 import {AndroidDebugBridge} from "../../../mobile/android/android-debug-bridge";
 import {AndroidDebugBridgeResultHandler} from "../../../mobile/android/android-debug-bridge-result-handler";

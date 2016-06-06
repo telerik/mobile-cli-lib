@@ -1,6 +1,3 @@
-///<reference path="../../.d.ts"/>
-"use strict";
-
 class LiveSyncCommands {
 	public static DeployProjectCommand(liveSyncUrl: string): string {
 		return `DeployProject ${liveSyncUrl} \r`;

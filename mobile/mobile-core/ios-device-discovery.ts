@@ -1,6 +1,3 @@
-///<reference path="./../../.d.ts"/>
-"use strict";
-
 import {DeviceDiscovery} from "./device-discovery";
 import {CoreTypes} from "../ios/device/ios-core";
 import * as ref from "ref";

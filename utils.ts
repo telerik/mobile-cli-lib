@@ -1,6 +1,3 @@
-///<reference path=".d.ts"/>
-"use strict";
-
 export class Utils implements IUtils {
 	constructor(private $options: ICommonOptions,
 		private $logger: ILogger) { }

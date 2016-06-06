@@ -1,6 +1,3 @@
-///<reference path="../../../.d.ts"/>
-"use strict";
-
 export class IOSSimResolver implements Mobile.IiOSSimResolver {
 	private static iOSSimName = "ios-sim-portable";
 

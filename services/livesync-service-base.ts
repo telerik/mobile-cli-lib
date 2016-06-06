@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 import * as fiberBootstrap from "../fiber-bootstrap";
 import syncBatchLib = require("./livesync/sync-batch");
 import * as shell from "shelljs";

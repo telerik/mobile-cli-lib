@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 require("../bootstrap");
 $injector.require("projectConstants", "./appbuilder/project-constants");
 $injector.require("projectFilesProvider", "./appbuilder/providers/project-files-provider");

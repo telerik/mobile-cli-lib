@@ -1,6 +1,3 @@
-///<reference path="../../.d.ts"/>
-"use strict";
-
 export class IOSLogFilter implements Mobile.IPlatformLogFilter {
 	private static INFO_FILTER_REGEX = /^.*?(AppBuilder|Cordova|NativeScript).*?(<Notice>:.*?(CONSOLE LOG|JS ERROR).*?|<Warning>:.*?|<Error>:.*?)$/im;
 

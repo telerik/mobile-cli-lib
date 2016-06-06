@@ -1,6 +1,3 @@
-///<reference path="../../.d.ts"/>
-"use strict";
-
 export class DeviceAppDataFactory implements Mobile.IDeviceAppDataFactory {
 	constructor(private $deviceAppDataProvider: Mobile.IDeviceAppDataProvider,
 		private $injector: IInjector,

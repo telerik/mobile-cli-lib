@@ -1,4 +1,3 @@
-///<reference path="../.d.ts"/>
 //
 // automatically generated code; do not edit manually!
 //

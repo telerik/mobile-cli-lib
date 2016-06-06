@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 import { EventEmitter } from "events";
 
 export class DeviceLogProvider extends EventEmitter implements Mobile.IDeviceLogProvider {

@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 export class LogFilter implements Mobile.ILogFilter {
 	private _loggingLevel: string = this.$loggingLevels.info;
 

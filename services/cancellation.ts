@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 let gaze = require("gaze");
 import * as path from "path";
 import * as os from "os";

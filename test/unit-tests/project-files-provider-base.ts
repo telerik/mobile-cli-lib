@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 import {Yok} from "../../yok";
 import { ProjectFilesProviderBase } from "../../services/project-files-provider-base";
 import {assert} from "chai";

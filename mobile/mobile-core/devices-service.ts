@@ -1,6 +1,3 @@
-///<reference path="./../../.d.ts"/>
-"use strict";
-
 import * as util from "util";
 import Future = require("fibers/future");
 import * as helpers from "../../helpers";

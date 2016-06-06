@@ -1,9 +1,7 @@
-///<reference path="../.d.ts"/>
-"use strict";
 import * as path from "path";
 
 export class GenerateMessages implements ICommand {
-	private static MESSAGES_DEFINITIONS_FILE_NAME = "messages.d.ts";
+	private static MESSAGES_DEFINITIONS_FILE_NAME = "messages.interface.d.ts";
 	private static MESSAGES_IMPLEMENTATION_FILE_NAME = "messages.ts";
 
 	constructor(private $fs: IFileSystem,
@@ -15,8 +13,7 @@ export class GenerateMessages implements ICommand {
 
 	execute(args: string[]): IFuture<void> {
 		return (() => {
-			let definitionsPath = `"${this.$options.default ? "../" : ""}.d.ts"`,
-				result = this.$messageContractGenerator.generate(definitionsPath).wait(),
+			let result = this.$messageContractGenerator.generate().wait(),
 				innerMessagesDirectory = path.join(__dirname, "../messages"),
 				outerMessagesDirectory = path.join(__dirname, "../.."),
 				interfaceFilePath: string,

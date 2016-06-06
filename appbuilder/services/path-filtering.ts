@@ -1,5 +1,3 @@
-///<reference path="../../.d.ts"/>
-"use strict";
 import minimatch = require("minimatch");
 
 export class PathFilteringService implements IPathFilteringService {

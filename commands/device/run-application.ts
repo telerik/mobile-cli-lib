@@ -1,6 +1,3 @@
-///<reference path="../../.d.ts"/>
-"use strict";
-
 export class RunApplicationOnDeviceCommand implements ICommand {
 
 	constructor(private $devicesService: Mobile.IDevicesService,

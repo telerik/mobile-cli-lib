@@ -1,6 +1,3 @@
-///<reference path="../../../.d.ts"/>
-"use strict";
-
 import * as net from "net";
 import * as ref from "ref";
 import * as path from "path";
