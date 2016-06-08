@@ -415,8 +415,8 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	@exportedPromise("devicesService")
-	public getApplicationsAvailableForDebugging(deviceIdentifier: string): IFuture<string[]> {
-		return this.$androidProcessService.getApplicationsAvailableForDebugging(deviceIdentifier);
+	public getDebuggableApps(deviceIdentifier: string): IFuture<string[]> {
+		return this.$androidProcessService.getDebuggableApps(deviceIdentifier);
 	}
 
 	private deployOnDevice(deviceIdentifier: string, packageFile: string, packageName: string, framework: string): IFuture<void> {

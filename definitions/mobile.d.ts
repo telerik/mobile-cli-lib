@@ -288,7 +288,7 @@ declare module Mobile {
 		 * @param deviceIdentifier The identifier of the device.
 		 * @return {string[]} Returns array of applications identifiers which are available for debugging.
 		 */
-		getApplicationsAvailableForDebugging(deviceIdentifier: string): IFuture<string[]>;
+		getDebuggableApps(deviceIdentifier: string): IFuture<string[]>;
 	}
 
 	interface IiTunesValidator {

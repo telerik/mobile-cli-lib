@@ -463,11 +463,11 @@ require("mobile-cli-lib").devicesService.mapAbstractToTcpPort("4df18f307d8a8f1b"
 	});
 ```
 
-* `getApplicationsAvailableForDebugging(deviceIdentifier: string): Promise<string[]>` - This function checks the proc/net/unix file of the device for web views connected to abstract ports and returns the applications identifiers.
+* `getDebuggableApps(deviceIdentifier: string): Promise<string[]>` - This function checks the proc/net/unix file of the device for web views connected to abstract ports and returns the applications identifiers.
 
 Sample usage:
 ```JavaScript
-require("mobile-cli-lib").devicesService.getApplicationsAvailableForDebugging("4df18f307d8a8f1b")
+require("mobile-cli-lib").devicesService.getDebuggableApps("4df18f307d8a8f1b")
 	.then(function(applicationsIdentifiers) {
 		applicationsIdentifiers.forEach(function(applicationIdentifier) {
 			console.log(applicationIdentifier);
