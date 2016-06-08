@@ -54,7 +54,7 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 		}).future<string>()();
 	}
 
-	public getApplicationsAvailableForDebugging(deviceIdentifier: string): IFuture<string[]> {
+	public getDebuggableApps(deviceIdentifier: string): IFuture<string[]> {
 		return (() => {
 			let adb = this.getAdb(deviceIdentifier);
 			let androidWebViewPortInformation = (<string>this.getAbstractPortsInformation(adb).wait()).split(EOL);
@@ -75,7 +75,7 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 				// Process information will look like this (without the columns names):
 				// USER     PID   PPID  VSIZE   RSS   WCHAN    PC         NAME
 				// u0_a63   25512 1334  1519560 96040 ffffffff f76a8f75 S com.telerik.appbuildertabstest
-				let processIdInformation: string = adb.executeShellCommand(["ps", "|grep", "-a", "--text", processId]).wait();
+				let processIdInformation: string = adb.executeShellCommand(["ps", "|grep", processId]).wait();
 
 				return _.last(processIdInformation.trim().split(/[ \t]/));
 			}
@@ -123,7 +123,7 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 			// USER     PID   PPID  VSIZE   RSS   WCHAN    PC         NAME
 			// u0_a63   25512 1334  1519560 96040 ffffffff f76a8f75 S com.telerik.appbuildertabstest
 			let processIdRegExp = /^\w*\s*(\d+)/;
-			let processIdInformation: string = adb.executeShellCommand(["ps", "|grep", "-a", "--text", appIdentifier]).wait();
+			let processIdInformation: string = adb.executeShellCommand(["ps", "|grep", appIdentifier]).wait();
 
 			let matches = processIdRegExp.exec(processIdInformation);
 
