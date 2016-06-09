@@ -1,6 +1,3 @@
-///<reference path="../../.d.ts"/>
-"use strict";
-
 import { DeviceAppDataBase } from "../../mobile/device-app-data/device-app-data-base";
 import Future = require("fibers/future");
 import * as querystring from "querystring";

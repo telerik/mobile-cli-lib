@@ -1,6 +1,3 @@
-///<reference path="../../../.d.ts"/>
-"use strict";
-
 import * as iOSProxyServices from "./ios-proxy-services";
 import * as path from "path";
 import * as ref from "ref";

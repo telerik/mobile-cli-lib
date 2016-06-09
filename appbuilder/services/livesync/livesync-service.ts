@@ -1,6 +1,3 @@
-///<reference path="../../../.d.ts"/>
-"use strict";
-
 import { exportedPromise } from "../../../decorators";
 
 export class ProtonLiveSyncService implements IProtonLiveSyncService {

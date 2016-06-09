@@ -1,6 +1,3 @@
-///<reference path=".d.ts"/>
-"use strict";
-
 import * as Promise from "bluebird";
 import * as fiberBootstrap from "./fiber-bootstrap";
 import * as assert from "assert";

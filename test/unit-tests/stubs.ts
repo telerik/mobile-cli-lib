@@ -1,6 +1,4 @@
-///<reference path="../.d.ts"/>
 /* tslint:disable:no-empty */
-"use strict";
 
 import * as util from "util";
 

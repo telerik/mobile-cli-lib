@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 export class PostInstallCommand implements ICommand {
 
 	constructor(private $fs: IFileSystem,

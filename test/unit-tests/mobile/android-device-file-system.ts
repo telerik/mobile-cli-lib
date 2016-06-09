@@ -1,6 +1,3 @@
-///<reference path="../../.d.ts"/>
-"use strict";
-
 import {AndroidDeviceFileSystem} from "../../../mobile/android/android-device-file-system";
 import {Yok} from "../../../yok";
 import {Errors} from "../../../errors";

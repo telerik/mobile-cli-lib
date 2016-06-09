@@ -1,6 +1,3 @@
-///<reference path="../../.d.ts"/>
-"use strict";
-
 import { AppBuilderLiveSyncProviderBase } from "./appbuilder-livesync-provider-base";
 
 export class LiveSyncProvider extends AppBuilderLiveSyncProviderBase {

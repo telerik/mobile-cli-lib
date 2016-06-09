@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 import { LogFilter } from "../../mobile/log-filter";
 import { Yok } from "../../yok";
 import { DevicePlatformsConstants } from "../../mobile/device-platforms-constants";

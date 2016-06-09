@@ -1,5 +1,3 @@
-///<reference path="../../.d.ts"/>
-"use strict";
 import {EOL} from "os";
 
 export class AndroidDebugBridgeResultHandler implements Mobile.IAndroidDebugBridgeResultHandler {

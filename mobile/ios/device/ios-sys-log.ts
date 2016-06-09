@@ -1,6 +1,3 @@
-///<reference path="../../../.d.ts"/>
-"use strict";
-
 require(process.argv[2]);
 import * as fiberBootstrap from "../../../fiber-bootstrap";
 import  {WinSocket} from "./ios-core";

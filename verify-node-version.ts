@@ -1,7 +1,6 @@
 
 // This function must be separate to avoid dependencies on C++ modules - it must execute precisely when other functions cannot
 
-"use strict";
 import {EOL} from "os";
 import * as semver from "semver";
 

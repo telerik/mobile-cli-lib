@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 export class UserSettingsServiceBase implements IUserSettingsService {
 	private userSettingsFilePath: string = null;
 	protected userSettingsData: any = null;

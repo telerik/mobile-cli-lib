@@ -1,6 +1,3 @@
-///<reference path="../../.d.ts"/>
-"use strict";
-
 import * as Fiber from "fibers";
 import Future = require("fibers/future");
 import * as iconv from "iconv-lite";

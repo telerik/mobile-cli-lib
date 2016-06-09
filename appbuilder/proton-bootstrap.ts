@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 require("./appbuilder-bootstrap");
 $injector.require("messages", "./messages/messages");
 

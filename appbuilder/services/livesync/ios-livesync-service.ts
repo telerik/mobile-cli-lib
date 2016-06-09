@@ -1,6 +1,3 @@
-///<reference path="../../../.d.ts"/>
-"use strict";
-
 import iOSProxyServices = require("../../../mobile/ios/device/ios-proxy-services");
 import * as path from "path";
 import * as shell from "shelljs";

@@ -1,6 +1,3 @@
-///<reference path=".d.ts"/>
-"use strict";
-
 import * as os from "os";
 import * as osenv from "osenv";
 import * as path from "path";

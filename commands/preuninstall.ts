@@ -1,7 +1,4 @@
-﻿///<reference path="../.d.ts"/>
-"use strict";
-
-import * as path from "path";
+﻿import * as path from "path";
 
 export class PreUninstallCommand implements ICommand {
 

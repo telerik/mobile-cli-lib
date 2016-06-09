@@ -1,7 +1,3 @@
-///<reference path=".d.ts"/>
-
-"use strict";
-
 import xopen = require("open");
 
 export class Opener implements IOpener {

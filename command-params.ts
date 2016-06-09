@@ -1,6 +1,3 @@
-///<reference path=".d.ts"/>
-"use strict";
-
 export class StringCommandParameter implements ICommandParameter {
 	public mandatory = false;
 	public errorMessage: string;

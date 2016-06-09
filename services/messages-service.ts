@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 import * as util from "util";
 import * as path from "path";
 import * as fiberBootstrap from "../fiber-bootstrap";

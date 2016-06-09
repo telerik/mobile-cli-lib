@@ -1,5 +1,3 @@
-///<reference path="../../../.d.ts"/>
-"use strict";
 import * as ref from "ref";
 import * as path from "path";
 import * as iOSCore from "./ios-core";

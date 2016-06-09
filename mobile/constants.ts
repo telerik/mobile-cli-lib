@@ -1,6 +1,4 @@
- // enumeration taken from ProvisionType.cs
-"use strict";
-
+// enumeration taken from ProvisionType.cs
 export class ProvisionType {
 	static Development = "Development";
 	static AdHoc = "AdHoc";

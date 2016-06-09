@@ -3,8 +3,6 @@
 // Definitions by: Paul Loyd <https://github.com/loyd>
 // Definitions: https://github.com/borisyankov/DefinitelyTyped
 
-/// <reference path="../.d.ts" />
-
 declare module "ffi" {
 	import ref = require('ref');
 	import StructType = require('ref-struct');

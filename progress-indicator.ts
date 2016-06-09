@@ -1,6 +1,3 @@
-///<reference path=".d.ts"/>
-"use strict";
-
 export class ProgressIndicator implements IProgressIndicator {
 	constructor(private $logger: ILogger) { }
 

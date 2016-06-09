@@ -1,6 +1,3 @@
-///<reference path="../../.d.ts"/>
-"use strict";
-
 import { createTable } from "../../helpers";
 
 export class ListDevicesCommand implements ICommand {

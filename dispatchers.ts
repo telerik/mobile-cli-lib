@@ -1,6 +1,3 @@
-///<reference path=".d.ts"/>
-"use strict";
-
 import * as queue from "./queue";
 import * as path from "path";
 

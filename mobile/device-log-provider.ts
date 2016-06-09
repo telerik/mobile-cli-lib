@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 export class DeviceLogProvider implements Mobile.IDeviceLogProvider {
 	constructor(private $logFilter: Mobile.ILogFilter,
 		private $logger: ILogger) { }

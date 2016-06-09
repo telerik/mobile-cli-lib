@@ -1,6 +1,3 @@
-///<reference path="../../.d.ts"/>
-"use strict";
-
 import { EventEmitter } from "events";
 import Future = require("fibers/future");
 

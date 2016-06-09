@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 let jaroWinklerDistance = require("../vendor/jaro-winkler_distance");
 import * as helpers from "../helpers";
 import { EOL } from "os";

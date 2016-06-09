@@ -1,6 +1,3 @@
-///<reference path="../../../.d.ts"/>
-"use strict";
-
 import * as applicationManagerPath from "./ios-simulator-application-manager";
 import * as fileSystemPath from "./ios-simulator-file-system";
 import * as constants from "../../constants";

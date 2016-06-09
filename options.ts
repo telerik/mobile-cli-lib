@@ -1,5 +1,3 @@
-///<reference path=".d.ts"/>
-"use strict";
 import * as util from "util";
 import * as helpers from "./helpers";
 import * as yargs from "yargs";

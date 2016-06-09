@@ -1,6 +1,3 @@
-///<reference path=".d.ts"/>
-"use strict";
-
 import * as log4js from "log4js";
 import * as util from "util";
 import * as stream from "stream";

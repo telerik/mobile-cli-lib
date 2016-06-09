@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 import {Yok} from "../../yok";
 import {format} from "util";
 import {join} from "path";

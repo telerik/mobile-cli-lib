@@ -1,5 +1,3 @@
-///<reference path="../../.d.ts"/>
-"use strict";
 import {DevicesService} from "../../../mobile/mobile-core/devices-service";
 import {Yok} from "../../../yok";
 import Future = require("fibers/future");

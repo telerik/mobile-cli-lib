@@ -1,6 +1,3 @@
-///<reference path="../../../.d.ts"/>
-"use strict";
-
 import { exported } from "../../../decorators";
 
 const NS_COMPANION_APP_IDENTIFIER = "com.telerik.NativeScript";

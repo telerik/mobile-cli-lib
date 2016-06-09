@@ -1,5 +1,3 @@
-///<reference path="../../.d.ts"/>
-"use strict";
 import byline = require("byline");
 import {DeviceAndroidDebugBridge} from "./device-android-debug-bridge";
 

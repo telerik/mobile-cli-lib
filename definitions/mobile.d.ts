@@ -1,4 +1,3 @@
-///<reference path="../.d.ts"/>
 
 declare module Mobile {
 	interface ISyncOptions {

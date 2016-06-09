@@ -1,5 +1,3 @@
-///<reference path="../../.d.ts"/>
-"use strict";
 import {IOSSimulatorDiscovery} from "../../../mobile/mobile-core/ios-simulator-discovery";
 import {Yok} from "../../../yok";
 import Future = require("fibers/future");

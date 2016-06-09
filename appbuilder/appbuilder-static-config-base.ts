@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 import { StaticConfigBase } from "../static-config-base";
 
 export abstract class AppBuilderStaticConfigBase extends StaticConfigBase {

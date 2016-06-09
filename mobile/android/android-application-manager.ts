@@ -1,5 +1,3 @@
-///<reference path="../../.d.ts"/>
-"use strict";
 import {EOL} from "os";
 import {ApplicationManagerBase} from "../application-manager-base";
 import { LiveSyncConstants } from "../../mobile/constants";

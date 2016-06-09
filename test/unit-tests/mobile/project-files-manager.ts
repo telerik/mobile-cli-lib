@@ -1,6 +1,3 @@
-///<reference path="../../.d.ts"/>
-"use strict";
-
 import {assert} from "chai";
 import {DeviceAppDataFactory} from "../../../mobile/device-app-data/device-app-data-factory";
 import {DevicePlatformsConstants} from "../../../mobile/device-platforms-constants";

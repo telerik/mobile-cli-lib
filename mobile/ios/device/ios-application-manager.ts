@@ -1,6 +1,3 @@
-///<reference path="../../../.d.ts"/>
-"use strict";
-
 import {ApplicationManagerBase} from "../../application-manager-base";
 import * as net from "net";
 import * as ref from "ref";

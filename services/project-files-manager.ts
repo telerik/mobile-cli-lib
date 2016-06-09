@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 import minimatch = require("minimatch");
 import * as path from "path";
 import * as util from "util";

@@ -1,6 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
-
 import {Yok} from "../../yok";
 import {XcodeSelectService} from "../../services/xcode-select-service";
 import {assert} from "chai";

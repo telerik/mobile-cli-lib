@@ -1,5 +1,3 @@
-///<reference path="../.d.ts"/>
-"use strict";
 import {assert} from "chai";
 import {Yok} from "../../yok";
 import * as path from "path";

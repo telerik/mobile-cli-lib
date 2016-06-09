@@ -1,6 +1,3 @@
-///<reference path="../../.d.ts"/>
-"use strict";
-
 export class ClassWithFuturizedInitializeMethod {
 	public initialize(): IFuture<void> {
 		return (() => {
