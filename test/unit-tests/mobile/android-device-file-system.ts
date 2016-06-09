@@ -186,9 +186,9 @@ describe("Android device file system tests", () => {
 			androidDeviceFileSystem.transferDirectory(deviceAppData, localToDevicePaths, "~/TestApp/app").wait();
 
 			assert.equal(transferedFilesOnDevice.length, 2);
-			assert.isTrue(_.contains(transferedFilesOnDevice, "~/TestApp/app/test.js"));
-			assert.isTrue(_.contains(transferedFilesOnDevice, "~/TestApp/app/myfile.js"));
-			assert.isFalse(_.contains(transferedFilesOnDevice, "~/TestApp/app/notchangedFile.js"));
+			assert.isTrue(_.includes(transferedFilesOnDevice, "~/TestApp/app/test.js"));
+			assert.isTrue(_.includes(transferedFilesOnDevice, "~/TestApp/app/myfile.js"));
+			assert.isFalse(_.includes(transferedFilesOnDevice, "~/TestApp/app/notchangedFile.js"));
 		});
 
 		it("pushes files which has different location when hash file exists on device", () => {

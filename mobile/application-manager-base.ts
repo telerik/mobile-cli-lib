@@ -30,7 +30,7 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 				this.checkForApplicationUpdates().wait();
 			}
 
-			return _.contains(this.lastInstalledAppIdentifiers, appIdentifier);
+			return _.includes(this.lastInstalledAppIdentifiers, appIdentifier);
 		}).future<boolean>()();
 	}
 

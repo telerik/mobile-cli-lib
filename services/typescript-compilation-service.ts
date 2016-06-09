@@ -231,7 +231,7 @@ export class TypeScriptCompilationService implements ITypeScriptCompilationServi
 			let defaultDefinitionsFiles = this.$fs.readDirectory(defaultTypeScriptDefinitionsFilesPath).wait();
 
 			// Exclude definition files from default path, which are already part of the project (check only the name of the file)
-			let remainingDefaultDefinitionFiles = _.filter(defaultDefinitionsFiles, defFile => !_.any(this.definitionFiles, f => path.basename(f) === defFile));
+			let remainingDefaultDefinitionFiles = _.filter(defaultDefinitionsFiles, defFile => !_.some(this.definitionFiles, f => path.basename(f) === defFile));
 			return _.map(remainingDefaultDefinitionFiles,(definitionFilePath: string) => {
 				return path.join(defaultTypeScriptDefinitionsFilesPath, definitionFilePath);
 			}).concat(this.definitionFiles);

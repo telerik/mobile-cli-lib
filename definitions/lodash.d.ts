@@ -26,7 +26,7 @@ declare module _ {
         * toArray, transform, union, uniq, unshift, unzip, values, where, without, wrap, and zip
         *
         * The non-chainable wrapper functions are:
-        * clone, cloneDeep, contains, escape, every, find, findIndex, findKey, findLast,
+        * clone, cloneDeep, includes, escape, every, find, findIndex, findKey, findLast,
         * findLastIndex, findLastKey, has, identity, indexOf, isArguments, isArray, isBoolean,
         * isDate, isElement, isEmpty, isEqual, isFinite, isFunction, isNaN, isNull, isNumber,
         * isObject, isPlainObject, isRegExp, isString, isUndefined, join, lastIndexOf, mixin,
@@ -2135,7 +2135,7 @@ declare module _ {
             ...indexes: number[]): T[];
     }
 
-    //_.contains
+    //_.includes
     interface LoDashStatic {
         /**
         * Checks if a given value is present in a collection using strict equality for comparisons,
@@ -2145,41 +2145,41 @@ declare module _ {
         * @param fromIndex The index to search from.
         * @return True if the target element is found, else false.
         **/
-        contains<T>(
+        includes<T>(
             collection: Array<T>,
             target: T,
             fromIndex?: number): boolean;
 
         /**
-        * @see _.contains
+        * @see _.includes
         **/
-        contains<T>(
+        includes<T>(
             collection: List<T>,
             target: T,
             fromIndex?: number): boolean;
 
         /**
-        * @see _.contains
+        * @see _.includes
         * @param dictionary The dictionary to iterate over.
         * @param key The key in the dictionary to search for.
         **/
-        contains<T>(
+        includes<T>(
             dictionary: Dictionary<T>,
             key: string,
             fromIndex?: number): boolean;
 
         /**
-        * @see _.contains
+        * @see _.includes
         * @param searchString the string to search
         * @param targetString the string to search for
         **/
-        contains(
+        includes(
             searchString: string,
             targetString: string,
             fromIndex?: number): boolean;
 
         /**
-        * @see _.contains
+        * @see _.includes
         **/
         include<T>(
             collection: Array<T>,
@@ -2187,7 +2187,7 @@ declare module _ {
             fromIndex?: number): boolean;
 
         /**
-        * @see _.contains
+        * @see _.includes
         **/
         include<T>(
             collection: List<T>,
@@ -2195,7 +2195,7 @@ declare module _ {
             fromIndex?: number): boolean;
 
         /**
-        * @see _.contains
+        * @see _.includes
         **/
         include<T>(
             dictionary: Dictionary<T>,
@@ -2203,7 +2203,7 @@ declare module _ {
             fromIndex?: number): boolean;
 
         /**
-        * @see _.contains
+        * @see _.includes
         **/
         include(
             searchString: string,
@@ -4537,7 +4537,7 @@ declare module _ {
         /**
         * @see _.some
         **/
-        any<T>(
+        some<T>(
             collection: Array<T>,
             callback?: ListIterator<T, boolean>,
             thisArg?: any): boolean;
@@ -4545,7 +4545,7 @@ declare module _ {
         /**
         * @see _.some
         **/
-        any<T>(
+        some<T>(
             collection: List<T>,
             callback?: ListIterator<T, boolean>,
             thisArg?: any): boolean;
@@ -4553,7 +4553,7 @@ declare module _ {
         /**
         * @see _.some
         **/
-        any<T>(
+        some<T>(
             collection: Dictionary<T>,
             callback?: ListIterator<T, boolean>,
             thisArg?: any): boolean;
@@ -4561,7 +4561,7 @@ declare module _ {
         /**
          * @see _.some
          **/
-        any(
+        some(
             collection: {},
             callback?: ListIterator<{}, boolean>,
             thisArg?: any): boolean;
@@ -4570,7 +4570,7 @@ declare module _ {
         * @see _.some
         * @param pluckValue _.pluck style callback
         **/
-        any<T>(
+        some<T>(
             collection: Array<T>,
             pluckValue: string): boolean;
 
@@ -4578,7 +4578,7 @@ declare module _ {
         * @see _.some
         * @param pluckValue _.pluck style callback
         **/
-        any<T>(
+        some<T>(
             collection: List<T>,
             pluckValue: string): boolean;
 
@@ -4586,7 +4586,7 @@ declare module _ {
         * @see _.some
         * @param pluckValue _.pluck style callback
         **/
-        any<T>(
+        some<T>(
             collection: Dictionary<T>,
             pluckValue: string): boolean;
 
@@ -4594,7 +4594,7 @@ declare module _ {
         * @see _.some
         * @param whereValue _.where style callback
         **/
-        any<W, T>(
+        some<W, T>(
             collection: Array<T>,
             whereValue: W): boolean;
 
@@ -4602,7 +4602,7 @@ declare module _ {
         * @see _.some
         * @param whereValue _.where style callback
         **/
-        any<W, T>(
+        some<W, T>(
             collection: List<T>,
             whereValue: W): boolean;
 
@@ -4610,7 +4610,7 @@ declare module _ {
         * @see _.some
         * @param whereValue _.where style callback
         **/
-        any<W, T>(
+        some<W, T>(
             collection: Dictionary<T>,
             whereValue: W): boolean;
     }

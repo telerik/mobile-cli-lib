@@ -107,7 +107,7 @@ export class OptionsBase {
 
 			let optionName = this.getCorrectOptionName(originalOptionName);
 
-			if (!_.contains(this.optionsWhiteList, optionName)) {
+			if (!_.includes(this.optionsWhiteList, optionName)) {
 				if (!this.isOptionSupported(optionName)) {
 					this.$errors.failWithoutHelp(`The option '${originalOptionName}' is not supported. To see command's options, use '$ ${this.$staticConfig.CLIENT_NAME.toLowerCase()} help ${process.argv[2]}'. To see all commands use '$ ${this.$staticConfig.CLIENT_NAME.toLowerCase()} help'.`);
 				}
@@ -126,7 +126,7 @@ export class OptionsBase {
 
 	private getCorrectOptionName(optionName: string): string {
 		let secondaryOptionName = this.getSecondaryOptionName(optionName);
-		return _.contains(this.optionNames, secondaryOptionName) ? secondaryOptionName : optionName;
+		return _.includes(this.optionNames, secondaryOptionName) ? secondaryOptionName : optionName;
 	}
 
 	private getOptionType(optionName: string): string {

@@ -159,7 +159,7 @@ describe("yok", () => {
 	it("adds module to public api when requirePublic is used", () => {
 		let injector = new Yok();
 		injector.requirePublic("foo", "test");
-		assert.isTrue(_.contains(Object.getOwnPropertyNames(injector.publicApi), "foo"));
+		assert.isTrue(_.includes(Object.getOwnPropertyNames(injector.publicApi), "foo"));
 	});
 
 	describe("buildHierarchicalCommand", () => {
@@ -348,7 +348,7 @@ describe("yok", () => {
 		if (!deleteDirectory(filepath)) {
 			console.log(`Unable to delete file used for tests: ${filepath}.`);
 		}
-		assert.isTrue(_.contains(Object.getOwnPropertyNames(injector.publicApi), "foo"));
+		assert.isTrue(_.includes(Object.getOwnPropertyNames(injector.publicApi), "foo"));
 		assert.deepEqual(resultFooObject, dataObject);
 	});
 
@@ -358,7 +358,7 @@ describe("yok", () => {
 		injector.requirePublicClass("classWithInitMethod", "./test/unit-tests/mocks/mockClassesWithInitializeMethod");
 		injector.register("classWithInitMethod", classesWithInitMethod.ClassWithFuturizedInitializeMethod);
 		let resultClassWithInitMethod = injector.publicApi.classWithInitMethod;
-		assert.isTrue(_.contains(Object.getOwnPropertyNames(injector.publicApi), "classWithInitMethod"));
+		assert.isTrue(_.includes(Object.getOwnPropertyNames(injector.publicApi), "classWithInitMethod"));
 		assert.isTrue(resultClassWithInitMethod.isInitializedCalled, "isInitalizedCalled is not set to true, so method had not been called");
 	});
 
@@ -368,7 +368,7 @@ describe("yok", () => {
 		injector.requirePublicClass("classWithInitMethod", "./test/unit-tests/mocks/mockClassesWithInitializeMethod");
 		injector.register("classWithInitMethod", classesWithInitMethod.ClassWithInitializeMethod);
 		let resultClassWithInitMethod = injector.publicApi.classWithInitMethod;
-		assert.isTrue(_.contains(Object.getOwnPropertyNames(injector.publicApi), "classWithInitMethod"));
+		assert.isTrue(_.includes(Object.getOwnPropertyNames(injector.publicApi), "classWithInitMethod"));
 		assert.isTrue(resultClassWithInitMethod.isInitializedCalled, "isInitalizedCalled is not set to true, so method had not been called");
 	});
 });

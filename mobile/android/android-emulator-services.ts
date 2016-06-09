@@ -367,7 +367,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 			}
 
 			let buildProduct = this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.build.product"]).wait();
-			if (buildProduct && _.contains(buildProduct.toLowerCase(), "vbox")) {
+			if (buildProduct && _.includes(buildProduct.toLowerCase(), "vbox")) {
 				return true;
 			}
 

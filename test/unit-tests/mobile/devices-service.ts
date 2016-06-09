@@ -55,8 +55,8 @@ let androidDeviceDiscovery: EventEmitter,
 			startApplication: (packageName: string, framework: string) => Future.fromResult(),
 			tryStartApplication: (packageName: string, framework: string) => Future.fromResult(),
 			reinstallApplication: (packageName: string, packageFile: string) => Future.fromResult(),
-			isApplicationInstalled: (packageName: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2"], packageName)),
-			isLiveSyncSupported: (appIdentifier: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2"], appIdentifier))
+			isApplicationInstalled: (packageName: string) => Future.fromResult(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], packageName)),
+			isLiveSyncSupported: (appIdentifier: string) => Future.fromResult(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], appIdentifier))
 		},
 		deploy: (packageFile: string, packageName: string) => Future.fromResult(),
 		isEmulator: true
@@ -130,8 +130,8 @@ describe("devicesService", () => {
 				startApplication: (packageName: string, framework: string) => Future.fromResult(),
 				tryStartApplication: (packageName: string, framework: string) => Future.fromResult(),
 				reinstallApplication: (packageName: string, packageFile: string) => Future.fromResult(),
-				isApplicationInstalled: (packageName: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2"], packageName)),
-				isLiveSyncSupported: (appIdentifier: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2"], appIdentifier))
+				isApplicationInstalled: (packageName: string) => Future.fromResult(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], packageName)),
+				isLiveSyncSupported: (appIdentifier: string) => Future.fromResult(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], appIdentifier))
 			},
 			deploy: (packageFile: string, packageName: string) => Future.fromResult()
 		},
@@ -146,8 +146,8 @@ describe("devicesService", () => {
 				startApplication: (packageName: string, framework: string) => Future.fromResult(),
 				tryStartApplication: (packageName: string, framework: string) => Future.fromResult(),
 				reinstallApplication: (packageName: string, packageFile: string) => Future.fromResult(),
-				isApplicationInstalled: (packageName: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], packageName)),
-				isLiveSyncSupported: (appIdentifier: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], appIdentifier))
+				isApplicationInstalled: (packageName: string) => Future.fromResult(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], packageName)),
+				isLiveSyncSupported: (appIdentifier: string) => Future.fromResult(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], appIdentifier))
 			},
 			deploy: (packageFile: string, packageName: string) => Future.fromResult()
 		},
@@ -295,8 +295,8 @@ describe("devicesService", () => {
 			},
 			applicationManager: {
 				getInstalledApplications: () => Future.fromResult(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"]),
-				isApplicationInstalled: (packageName: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], packageName)),
-				isLiveSyncSupported: (appIdentifier: string) => Future.fromResult(_.contains(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], appIdentifier))
+				isApplicationInstalled: (packageName: string) => Future.fromResult(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], packageName)),
+				isLiveSyncSupported: (appIdentifier: string) => Future.fromResult(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], appIdentifier))
 			}
 		};
 

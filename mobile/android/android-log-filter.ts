@@ -37,7 +37,7 @@ export class AndroidLogFilter implements Mobile.IPlatformLogFilter {
 		if (match && acceptedTags.indexOf(match[1].trim()) !== -1) {
 			return { tag: match[1].trim(), message: match[2] };
 		}
-		let matchingTag = _.any(acceptedTags, (tag: string) => { return lineText.indexOf(tag) !== -1; });
+		let matchingTag = _.some(acceptedTags, (tag: string) => { return lineText.indexOf(tag) !== -1; });
 		return matchingTag ? { message: lineText } : null;
 	}
 }

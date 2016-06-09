@@ -220,7 +220,7 @@ export class Yok implements IInjector {
 								commandName = defaultCommand ? this.getHierarchicalCommandName(name, defaultCommand) : "help";
 								// If we'll execute the default command, but it's full name had been written by the user
 								// for example "appbuilder cloud list", we have to remove the "list" option from the arguments that we'll pass to the command.
-								if(_.contains(this.hierarchicalCommands[name], "*" + args[0])) {
+								if(_.includes(this.hierarchicalCommands[name], "*" + args[0])) {
 									commandArguments = _.rest(args);
 								} else {
 									commandArguments = args;
@@ -253,7 +253,7 @@ export class Yok implements IInjector {
 	}
 
 	public isValidHierarchicalCommand(commandName: string, commandArguments: string[]): boolean {
-		if(_.contains(Object.keys(this.hierarchicalCommands), commandName)) {
+		if(_.includes(Object.keys(this.hierarchicalCommands), commandName)) {
 			let defaultCommandName = this.getDefaultCommand(commandName);
 			if(defaultCommandName && (!commandArguments || commandArguments.length === 0)) {
 				// Will execute default command as there aren't passed arguments.
