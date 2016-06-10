@@ -463,7 +463,7 @@ require("mobile-cli-lib").devicesService.mapAbstractToTcpPort("4df18f307d8a8f1b"
 	});
 ```
 
-* `getDebuggableApps(deviceIdentifier: string): Promise<Mobile.IAndroidApplicationInformation[]>` - This function checks the proc/net/unix file of the device for web views connected to abstract ports and returns information about the applications.
+* `getDebuggableApps(deviceIdentifier: string): Promise<IAndroidApplicationInformation[]>` - This function checks the proc/net/unix file of the device for web views connected to abstract ports and returns information about the applications.
 ```JavaScript
 /**
  * Describes basic information about Android application.
