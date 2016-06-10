@@ -144,7 +144,7 @@ describe("ProjectFilesProviderBase", () => {
 		it("process file with release configuration in the name, shouldIncludeFile must be true when options.release is true", () => {
 			let filePath = "/test/filePath.release.ts";
 			testInjector.resolve("options").release = true;
-			let projectFileInfo = projectFilesProviderBase.getProjectFileInfo(filePath, "android");
+			let projectFileInfo = projectFilesProviderBase.getProjectFileInfo(filePath, "android", { configuration: "release" });
 
 			assert.deepEqual(projectFileInfo, getExpectedProjectFileInfo(filePath, true));
 		});
