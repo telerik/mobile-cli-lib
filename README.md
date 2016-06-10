@@ -7,9 +7,9 @@ Contains common infrastructure for CLIs - mainly AppBuilder and NativeScript.
 Installation
 ===
 
-Latest version: 0.13.2
+Latest version: 0.14.0
 
-Release date: 2016, June 4
+Release date: 2016, June 10
 
 ### System Requirements
 
@@ -463,18 +463,51 @@ require("mobile-cli-lib").devicesService.mapAbstractToTcpPort("4df18f307d8a8f1b"
 	});
 ```
 
-* `getApplicationsAvailableForDebugging(deviceIdentifier: string): Promise<string[]>` - This function checks the proc/net/unix file of the device for web views connected to abstract ports and returns the applications identifiers.
+* `getDebuggableApps(deviceIdentifier: string): Promise<Mobile.IAndroidApplicationInformation[]>` - This function checks the proc/net/unix file of the device for web views connected to abstract ports and returns information about the applications.
+```JavaScript
+/**
+ * Describes basic information about Android application.
+ */
+interface IAndroidApplicationInformation {
+	/**
+	 * The package identifier of the application.
+	 */
+	packageId: string;
+
+	/**
+	 * The framework of the project (Cordova or NativeScript).
+	 */
+	framework: string;
+
+	/**
+	 * The title of the current html view which is loaded in the Android WebView. For NativeScript applications the title cannot be acquired.
+	 */
+	title?: string;
+}
+```
 
 Sample usage:
 ```JavaScript
 require("mobile-cli-lib").devicesService.getApplicationsAvailableForDebugging("4df18f307d8a8f1b")
-	.then(function(applicationsIdentifiers) {
-		applicationsIdentifiers.forEach(function(applicationIdentifier) {
-			console.log(applicationIdentifier);
+	.then(function(applicationsInfo) {
+		applicationsInfo.forEach(function(applicationInfo) {
+			console.log(applicationInfo);
 		});
 	}, function(err) {
 		console.log(err);
 	});
+```
+Sample result will be:
+```JSON
+[{
+	"packageId": "com.telerik.Fitness",
+	"framework": "NativeScript",
+	"title": "NativeScript Application"
+}, {
+	"packageId": "com.telerik.livesynctest",
+	"framework": "Cordova",
+	"title": "Home View"
+}]
 ```
 
 ### Module liveSyncService

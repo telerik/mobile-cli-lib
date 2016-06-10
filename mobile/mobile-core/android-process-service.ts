@@ -6,7 +6,9 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 
 	constructor(private $errors: IErrors,
 		private $staticConfig: Config.IStaticConfig,
-		private $injector: IInjector) {
+		private $injector: IInjector,
+		private $httpClient: Server.IHttpClient,
+		private $projectConstants: Project.IConstants) {
 		this._devicesAdbs = {};
 	}
 
@@ -51,42 +53,86 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 		}).future<string>()();
 	}
 
-	public getApplicationsAvailableForDebugging(deviceIdentifier: string): IFuture<string[]> {
-		return (() => {
+	public getDebuggableApps(deviceIdentifier: string): IFuture<Mobile.IAndroidApplicationInformation[]> {
+		return ((): Mobile.IAndroidApplicationInformation[] => {
 			let adb = this.getAdb(deviceIdentifier);
 			let androidWebViewPortInformation = (<string>this.getAbstractPortsInformation(adb).wait()).split(EOL);
 
 			return androidWebViewPortInformation
-				.map((line: string) => this.getApplicationNameFromWebViewPortInformation(adb, line).wait())
-				.filter((appIdentifier: string) => !!appIdentifier);
-		}).future<string[]>()();
+				.map((line: string) => this.getApplicationInfoFromWebViewPortInformation(adb, deviceIdentifier, line).wait())
+				.filter((appIdentifier: Mobile.IAndroidApplicationInformation) => !!appIdentifier);
+		}).future<Mobile.IAndroidApplicationInformation[]>()();
 	}
 
-	private getApplicationNameFromWebViewPortInformation(adb: Mobile.IDeviceAndroidDebugBridge, information: string): IFuture<string> {
-		return (() => {
+	private getApplicationInfoFromWebViewPortInformation(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, information: string): IFuture<Mobile.IAndroidApplicationInformation> {
+		return ((): Mobile.IAndroidApplicationInformation => {
 			// Need to search by processId to check for old Android webviews (@webview_devtools_remote_<processId>).
 			let processIdRegExp = /@webview_devtools_remote_(.+)/g;
 			let processIdMatches = processIdRegExp.exec(information);
+			let oldAndroidWebViewAppIdentifier: string;
 			if (processIdMatches) {
 				let processId = processIdMatches[1];
 				// Process information will look like this (without the columns names):
 				// USER     PID   PPID  VSIZE   RSS   WCHAN    PC         NAME
 				// u0_a63   25512 1334  1519560 96040 ffffffff f76a8f75 S com.telerik.appbuildertabstest
-				let processIdInformation: string = adb.executeShellCommand(["ps", "|grep", "-a", "--text", processId]).wait();
-
-				return _.last(processIdInformation.trim().split(/[ \t]/));
+				let processIdInformation: string = adb.executeShellCommand(["ps", "|grep", processId]).wait();
+				oldAndroidWebViewAppIdentifier = _.last(processIdInformation.trim().split(/[ \t]/));
 			}
 
 			// Search for appIdentifier (@<appIdentifier>_devtools_remote).
 			let chromeAppIdentifierRegExp = /@(.+)_devtools_remote\s?/g;
+			let chromeAppIdentifierMatches = chromeAppIdentifierRegExp.exec(information);
+			let chromeAppIdentifier: string;
+
+			if (chromeAppIdentifierMatches && chromeAppIdentifierMatches.length > 0) {
+				chromeAppIdentifier = chromeAppIdentifierMatches[1];
+			}
+
+			let cordovaAppIdentifier = oldAndroidWebViewAppIdentifier || chromeAppIdentifier;
+
+			if (cordovaAppIdentifier) {
+				return {
+					packageId: cordovaAppIdentifier,
+					framework: this.$projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova,
+					title: this.getPageTitleFromWebView(adb, deviceIdentifier, cordovaAppIdentifier).wait()
+				};
+			}
 
 			// Search for appIdentifier (@<appIdentifier-debug>).
 			let nativeScriptAppIdentifierRegExp = /@(.+)-debug/g;
-
-			let chromeAppIdentifierMatches = chromeAppIdentifierRegExp.exec(information);
 			let nativeScriptAppIdentifierMatches = nativeScriptAppIdentifierRegExp.exec(information);
 
-			return (chromeAppIdentifierMatches && chromeAppIdentifierMatches[1]) || (nativeScriptAppIdentifierMatches && nativeScriptAppIdentifierMatches[1]);
+			if (nativeScriptAppIdentifierMatches && nativeScriptAppIdentifierMatches.length > 0) {
+				let appIdentifier = nativeScriptAppIdentifierMatches[1];
+				return {
+					packageId: appIdentifier,
+					framework: this.$projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript,
+					title: "NativeScript Application"
+				};
+			}
+
+			return null;
+		}).future<Mobile.IAndroidApplicationInformation>()();
+	}
+
+	private getPageTitleFromWebView(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, appIdentifier: string): IFuture<string> {
+		return ((): string => {
+			let tcpPort = this.mapAbstractToTcpPort(deviceIdentifier, appIdentifier).wait();
+
+			// The /json is important because without it the response will be html with message to use chrome://inspect to debug the application.
+			let response = this.$httpClient.httpRequest(`http://localhost:${tcpPort}/json`).wait().body;
+
+			// Remove the port forward because we do not need it anymore.
+			adb.executeCommand(["forward", "--remove", `tcp:${tcpPort}`]).wait();
+
+			if (response) {
+				response = JSON.parse(response);
+				let responseItem = response[0];
+
+				return responseItem && responseItem.title;
+			}
+
+			return null;
 		}).future<string>()();
 	}
 
@@ -120,7 +166,7 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 			// USER     PID   PPID  VSIZE   RSS   WCHAN    PC         NAME
 			// u0_a63   25512 1334  1519560 96040 ffffffff f76a8f75 S com.telerik.appbuildertabstest
 			let processIdRegExp = /^\w*\s*(\d+)/;
-			let processIdInformation: string = adb.executeShellCommand(["ps", "|grep", "-a", "--text", appIdentifier]).wait();
+			let processIdInformation: string = adb.executeShellCommand(["ps", "|grep", appIdentifier]).wait();
 
 			let matches = processIdRegExp.exec(processIdInformation);
 
