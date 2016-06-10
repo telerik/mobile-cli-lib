@@ -286,9 +286,9 @@ declare module Mobile {
 		/**
 		 * Gets the applications which are available for debugging on the specified device.
 		 * @param deviceIdentifier The identifier of the device.
-		 * @return {string[]} Returns array of applications identifiers which are available for debugging.
+		 * @return {Mobile.IAndroidApplicationInformation[]} Returns array of applications information for the applications which are available for debugging.
 		 */
-		getApplicationsAvailableForDebugging(deviceIdentifier: string): IFuture<string[]>;
+		getDebuggableApps(deviceIdentifier: string): IFuture<Mobile.IAndroidApplicationInformation[]>;
 	}
 
 	interface IiTunesValidator {
@@ -635,5 +635,25 @@ declare module Mobile {
 		 * Hex port number.
 		 */
 		numberHex: string;
+	}
+
+	/**
+	 * Describes basic information about Android application.
+	 */
+	interface IAndroidApplicationInformation {
+		/**
+		 * The package identifier of the application.
+		 */
+		packageId: string;
+
+		/**
+		 * The framework of the project (Cordova or NativeScript).
+		 */
+		framework: string;
+
+		/**
+		 * The title of the current html view which is loaded in the Android WebView. For NativeScript applications the title cannot be acquired.
+		 */
+		title?: string;
 	}
 }

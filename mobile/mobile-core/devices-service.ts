@@ -154,7 +154,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		} else {
 			this.deviceDetectionInterval = setInterval(() => {
 				fiberBootstrap.run(() => {
-					if(this.deviceDetectionIntervalFuture) {
+					if (this.deviceDetectionIntervalFuture) {
 						return;
 					}
 
@@ -294,7 +294,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		}).future<void>()();
 	}
 
-	@exportedPromise("devicesService", function() {
+	@exportedPromise("devicesService", function () {
 		this.startDeviceDetectionInterval();
 	})
 	public deployOnDevices(deviceIdentifiers: string[], packageFile: string, packageName: string, framework: string): IFuture<void>[] {
@@ -415,8 +415,8 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	@exportedPromise("devicesService")
-	public getApplicationsAvailableForDebugging(deviceIdentifier: string): IFuture<string[]> {
-		return this.$androidProcessService.getApplicationsAvailableForDebugging(deviceIdentifier);
+	public getDebuggableApps(deviceIdentifier: string): IFuture<Mobile.IAndroidApplicationInformation[]> {
+		return this.$androidProcessService.getDebuggableApps(deviceIdentifier);
 	}
 
 	private deployOnDevice(deviceIdentifier: string, packageFile: string, packageName: string, framework: string): IFuture<void> {
