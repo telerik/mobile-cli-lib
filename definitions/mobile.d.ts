@@ -389,6 +389,11 @@ declare module Mobile {
 	interface IAfcClient {
 		open(path: string, mode: string): Mobile.IAfcFile;
 		transfer(localFilePath: string, devicePath: string): IFuture<void>;
+		/**
+		 * Transfer multiple files from the local file system to the device.
+		 * Similar to the single file transfer, but with better performance due to shared directory checks.
+		 */
+		transferFiles(files: { from: string, to: string }[]): IFuture<void>;
 		deleteFile(devicePath: string): void;
 		mkdir(path: string): void;
 		listDir(path: string): string[];
