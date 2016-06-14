@@ -27,7 +27,7 @@ export class ProjectFilesManager implements IProjectFilesManager {
 	}
 
 	public createLocalToDevicePaths(deviceAppData: Mobile.IDeviceAppData, projectFilesPath: string, files?: string[], excludedProjectDirsAndFiles?: string[]): Mobile.ILocalToDevicePathData[] {
-		files = files || this.getProjectFiles(projectFilesPath, excludedProjectDirsAndFiles, null, { enumerateDirectories: true});
+		files = files || this.getProjectFiles(projectFilesPath, excludedProjectDirsAndFiles, null, { enumerateDirectories: true });
 		let localToDevicePaths = files
 			.map(projectFile => this.$projectFilesProvider.getProjectFileInfo(projectFile, deviceAppData.platform))
 			.filter(projectFileInfo => projectFileInfo.shouldIncludeFile)
@@ -44,9 +44,9 @@ export class ProjectFilesManager implements IProjectFilesManager {
 			_.each(contents, fileName => {
 				let filePath = path.join(directoryPath, fileName);
 				let fsStat = this.$fs.getFsStats(filePath).wait();
-				if(fsStat.isDirectory() && !_.contains(excludedDirs, fileName)) {
+				if (fsStat.isDirectory() && !_.contains(excludedDirs, fileName)) {
 					this.processPlatformSpecificFilesCore(platform, this.$fs.enumerateFilesInDirectorySync(filePath)).wait();
-				} else if(fsStat.isFile()) {
+				} else if (fsStat.isFile()) {
 					files.push(filePath);
 				}
 			});
@@ -63,10 +63,28 @@ export class ProjectFilesManager implements IProjectFilesManager {
 				if (!projectFileInfo.shouldIncludeFile) {
 					this.$fs.deleteFile(filePath).wait();
 				} else if (projectFileInfo.onDeviceFileName) {
-					this.$fs.rename(filePath, path.join(path.dirname(filePath), projectFileInfo.onDeviceFileName)).wait();
+					let onDeviceFilePath = path.join(path.dirname(filePath), projectFileInfo.onDeviceFileName);
+
+					// Fix .js.map entries
+					let extension = path.extname(projectFileInfo.onDeviceFileName);
+					if ((extension === ".js" || extension === ".map") && onDeviceFilePath !== filePath) {
+						let oldName = this.getFileName(filePath, extension);
+						let newName = this.getFileName(projectFileInfo.onDeviceFileName, extension);
+
+						let fileContent = this.$fs.readText(filePath).wait();
+						fileContent = fileContent.replace(new RegExp(oldName, 'g'), newName);
+						this.$fs.writeFile(filePath, fileContent).wait();
+					}
+
+					// Rename the file
+					this.$fs.rename(filePath, onDeviceFilePath).wait();
 				}
 			});
 		}).future<void>()();
+	}
+
+	private getFileName(filePath: string, extension: string): string {
+		return path.basename(filePath.replace(extension === ".map" ? ".js.map" : ".js", ""));
 	}
 }
 $injector.register("projectFilesManager", ProjectFilesManager);
