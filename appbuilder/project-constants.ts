@@ -15,11 +15,6 @@ export class ProjectConstants implements Project.IConstants {
 	public ADDITIONAL_FILE_DISPOSITION = "AdditionalFile";
 	public ADDITIONAL_FILES_DIRECTORY = ".ab";
 
-	public TARGET_FRAMEWORK_IDENTIFIERS = {
-		Cordova: "Cordova",
-		NativeScript: "NativeScript"
-	};
-
 	public APPBUILDER_PROJECT_PLATFORMS_NAMES: IDictionary<string> = {
 		android: "Android",
 		ios: "iOS",

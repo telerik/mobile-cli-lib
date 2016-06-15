@@ -1,4 +1,5 @@
 import { exported } from "../../../decorators";
+import { TARGET_FRAMEWORK_IDENTIFIERS } from "../../../mobile/constants";
 
 const NS_COMPANION_APP_IDENTIFIER = "com.telerik.NativeScript";
 const APPBUILDER_ANDROID_COMPANION_APP_IDENTIFIER = "com.telerik.AppBuilder";
@@ -6,8 +7,7 @@ const APPBUILDER_IOS_COMPANION_APP_IDENTIFIER = "com.telerik.Icenium";
 const APPBUILDER_WP8_COMPANION_APP_IDENTIFIER = "{9155af5b-e7ed-486d-bc6b-35087fb59ecc}";
 
 export class CompanionAppsService implements ICompanionAppsService {
-	constructor(private $projectConstants: Project.IConstants,
-		private $mobileHelper: Mobile.IMobileHelper,
+	constructor(private $mobileHelper: Mobile.IMobileHelper,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) { }
 
 	@exported("companionAppsService")
@@ -15,7 +15,7 @@ export class CompanionAppsService implements ICompanionAppsService {
 		let lowerCasedFramework = (framework || "").toLowerCase();
 		let lowerCasedPlatform = (platform || "").toLowerCase();
 
-		if (lowerCasedFramework === this.$projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova.toLowerCase()) {
+		if (lowerCasedFramework === TARGET_FRAMEWORK_IDENTIFIERS.Cordova.toLowerCase()) {
 			if(this.$mobileHelper.isAndroidPlatform(lowerCasedPlatform)) {
 				return APPBUILDER_ANDROID_COMPANION_APP_IDENTIFIER;
 			} else if(this.$mobileHelper.isiOSPlatform(lowerCasedPlatform)) {
@@ -23,7 +23,7 @@ export class CompanionAppsService implements ICompanionAppsService {
 			} else if(this.$mobileHelper.isWP8Platform(lowerCasedPlatform)) {
 				return APPBUILDER_WP8_COMPANION_APP_IDENTIFIER;
 			}
-		} else if (lowerCasedFramework === this.$projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript.toLowerCase()) {
+		} else if (lowerCasedFramework === TARGET_FRAMEWORK_IDENTIFIERS.NativeScript.toLowerCase()) {
 			if(!this.$mobileHelper.isWP8Platform(lowerCasedPlatform)) {
 				return NS_COMPANION_APP_IDENTIFIER;
 			}
@@ -41,8 +41,8 @@ export class CompanionAppsService implements ICompanionAppsService {
 		];
 
 		let frameworks = [
-			this.$projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova.toLowerCase(),
-			this.$projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript.toLowerCase()
+			TARGET_FRAMEWORK_IDENTIFIERS.Cordova.toLowerCase(),
+			TARGET_FRAMEWORK_IDENTIFIERS.NativeScript.toLowerCase()
 		];
 
 		let companionAppIdentifiers: IDictionary<IStringDictionary> = {};
