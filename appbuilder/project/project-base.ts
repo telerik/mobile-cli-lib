@@ -1,6 +1,8 @@
 import Future = require("fibers/future");
+import { TARGET_FRAMEWORK_IDENTIFIERS } from "../../mobile/constants";
 import * as path from "path";
 import { startPackageActivityNames } from "../../mobile/constants";
+
 export class Project implements Project.IProjectBase {
 	constructor(private $cordovaProjectCapabilities: Project.ICapabilities,
 		private $fs: IFileSystem,
@@ -27,9 +29,9 @@ export class Project implements Project.IProjectBase {
 	public get capabilities(): Project.ICapabilities {
 		let projectData = this.projectData;
 		if(projectData) {
-			if(projectData.Framework && projectData.Framework.toLowerCase() === this.$projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript.toLowerCase()) {
+			if(projectData.Framework && projectData.Framework.toLowerCase() === TARGET_FRAMEWORK_IDENTIFIERS.NativeScript.toLowerCase()) {
 				return this.$nativeScriptProjectCapabilities;
-			} else if(projectData.Framework && projectData.Framework.toLowerCase() === this.$projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova.toLowerCase()) {
+			} else if(projectData.Framework && projectData.Framework.toLowerCase() === TARGET_FRAMEWORK_IDENTIFIERS.Cordova.toLowerCase()) {
 				return this.$cordovaProjectCapabilities;
 			}
 		}
@@ -37,6 +39,6 @@ export class Project implements Project.IProjectBase {
 		return null;
 	}
 
-	public startPackageActivity = startPackageActivityNames[this.$projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova.toLowerCase()];
+	public startPackageActivity = startPackageActivityNames[TARGET_FRAMEWORK_IDENTIFIERS.Cordova.toLowerCase()];
 }
 $injector.register("project", Project);

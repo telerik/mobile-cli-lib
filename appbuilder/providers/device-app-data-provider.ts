@@ -4,6 +4,7 @@ import * as querystring from "querystring";
 import * as path from "path";
 import * as util from "util";
 import { LiveSyncConstants } from "../../mobile/constants";
+import { TARGET_FRAMEWORK_IDENTIFIERS } from "../../mobile/constants";
 
 export class AndroidAppIdentifier extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
 	private _deviceProjectRootPath: string = null;
@@ -75,9 +76,8 @@ export class AndroidCompanionAppIdentifier extends DeviceAppDataBase implements 
 	constructor(_appIdentifier: string,
 		public device: Mobile.IDevice,
 		public platform: string,
-		private $companionAppsService: ICompanionAppsService,
-		private $projectConstants: Project.IConstants) {
-		super($companionAppsService.getCompanionAppIdentifier($projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform));
+		private $companionAppsService: ICompanionAppsService) {
+		super($companionAppsService.getCompanionAppIdentifier(TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform));
 	}
 
 	public get deviceProjectRootPath(): string {
@@ -105,9 +105,8 @@ export class AndroidNativeScriptCompanionAppIdentifier extends DeviceAppDataBase
 	constructor(_appIdentifier: string,
 		public device: Mobile.IDevice,
 		public platform: string,
-		private $companionAppsService: ICompanionAppsService,
-		private $projectConstants: Project.IConstants) {
-		super($companionAppsService.getCompanionAppIdentifier($projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript, platform));
+		private $companionAppsService: ICompanionAppsService) {
+		super($companionAppsService.getCompanionAppIdentifier(TARGET_FRAMEWORK_IDENTIFIERS.NativeScript, platform));
 	}
 
 	public get deviceProjectRootPath(): string {
@@ -214,9 +213,8 @@ export class IOSNativeScriptAppIdentifier extends DeviceAppDataBase implements I
 export class IOSCompanionAppIdentifier extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
 	constructor(public device: Mobile.IDevice,
 		public platform: string,
-		private $companionAppsService: ICompanionAppsService,
-		private $projectConstants: Project.IConstants) {
-		super($companionAppsService.getCompanionAppIdentifier($projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform));
+		private $companionAppsService: ICompanionAppsService) {
+		super($companionAppsService.getCompanionAppIdentifier(TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform));
 	}
 
 	public get deviceProjectRootPath(): string {
@@ -243,9 +241,8 @@ export class IOSCompanionAppIdentifier extends DeviceAppDataBase implements ILiv
 export class IOSNativeScriptCompanionAppIdentifier extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
 	constructor(public device: Mobile.IDevice,
 		public platform: string,
-		private $companionAppsService: ICompanionAppsService,
-		private $projectConstants: Project.IConstants) {
-		super($companionAppsService.getCompanionAppIdentifier($projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript, platform));
+		private $companionAppsService: ICompanionAppsService) {
+		super($companionAppsService.getCompanionAppIdentifier(TARGET_FRAMEWORK_IDENTIFIERS.NativeScript, platform));
 	}
 
 	public get deviceProjectRootPath(): string {
@@ -272,9 +269,8 @@ export class IOSNativeScriptCompanionAppIdentifier extends DeviceAppDataBase imp
 export class WP8CompanionAppIdentifier extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
 	constructor(public device: Mobile.IDevice,
 		public platform: string,
-		private $companionAppsService: ICompanionAppsService,
-		private $projectConstants: Project.IConstants) {
-		super($companionAppsService.getCompanionAppIdentifier($projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform));
+		private $companionAppsService: ICompanionAppsService) {
+		super($companionAppsService.getCompanionAppIdentifier(TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform));
 	}
 
 	public get deviceProjectRootPath(): string {

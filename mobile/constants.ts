@@ -26,3 +26,8 @@ export let startPackageActivityNames: IStringDictionary = {
 	"nativescript": "com.tns.NativeScriptActivity",
 	"cordova": ".TelerikCallbackActivity"
 };
+
+export let TARGET_FRAMEWORK_IDENTIFIERS = {
+	Cordova: "Cordova",
+	NativeScript: "NativeScript"
+};

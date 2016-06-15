@@ -1078,4 +1078,3 @@ interface IVersionData {
 	minor: string;
 	patch: string;
 }
-

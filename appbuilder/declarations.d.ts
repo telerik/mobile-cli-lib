@@ -9,11 +9,6 @@ interface IDeployHelper {
 }
 
 declare module Project {
-	interface ITargetFrameworkIdentifiers {
-		Cordova: string;
-		NativeScript: string;
-	}
-
 	interface IConstants {
 		PROJECT_FILE: string;
 		PROJECT_IGNORE_FILE: string;
@@ -23,7 +18,6 @@ declare module Project {
 		RELEASE_PROJECT_FILE_NAME: string;
 		CORE_PLUGINS_PROPERTY_NAME: string;
 		CORDOVA_PLUGIN_VARIABLES_PROPERTY_NAME: string;
-		TARGET_FRAMEWORK_IDENTIFIERS: ITargetFrameworkIdentifiers;
 		APPIDENTIFIER_PROPERTY_NAME: string;
 		EXPERIMENTAL_TAG: string;
 		NATIVESCRIPT_APP_DIR_NAME: string;

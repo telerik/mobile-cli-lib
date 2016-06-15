@@ -3,6 +3,7 @@ import * as path from "path";
 import * as shell from "shelljs";
 let osenv = require("osenv");
 import { LiveSyncConstants } from "../../../mobile/constants";
+import { TARGET_FRAMEWORK_IDENTIFIERS } from "../../../mobile/constants";
 
 export class IOSLiveSyncService implements IPlatformLiveSyncService {
 	private get $project(): any {
@@ -13,8 +14,7 @@ export class IOSLiveSyncService implements IPlatformLiveSyncService {
 		private $fs: IFileSystem,
 		private $injector: IInjector,
 		private $logger: ILogger,
-		private $errors: IErrors,
-		private $projectConstants: Project.IConstants) { }
+		private $errors: IErrors) { }
 
 	private get device(): Mobile.IiOSDevice {
 		return this._device;
@@ -53,7 +53,7 @@ export class IOSLiveSyncService implements IPlatformLiveSyncService {
 			} else {
 				this.device.fileSystem.deleteFile("/Library/Preferences/ServerInfo.plist", deviceAppData.appIdentifier);
 				let notificationProxyClient = this.$injector.resolve(iOSProxyServices.NotificationProxyClient, {device: this.device});
-				let notification = this.$project.projectData.Framework === this.$projectConstants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript ? "com.telerik.app.refreshApp" : "com.telerik.app.refreshWebView";
+				let notification = this.$project.projectData.Framework === TARGET_FRAMEWORK_IDENTIFIERS.NativeScript ? "com.telerik.app.refreshApp" : "com.telerik.app.refreshWebView";
 				notificationProxyClient.postNotification(notification);
 				notificationProxyClient.closeSocket();
 			}
