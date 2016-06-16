@@ -68,8 +68,8 @@ export class ProjectFilesManager implements IProjectFilesManager {
 					// Fix .js.map entries
 					let extension = path.extname(projectFileInfo.onDeviceFileName);
 					if ((extension === ".js" || extension === ".map") && onDeviceFilePath !== filePath) {
-						let oldName = this.getFileName(filePath, extension);
-						let newName = this.getFileName(projectFileInfo.onDeviceFileName, extension);
+						let oldName = extension === ".map" ? this.getFileName(filePath, extension) : path.basename(filePath);
+						let newName = extension === ".map" ? this.getFileName(projectFileInfo.onDeviceFileName, extension) : path.basename(projectFileInfo.onDeviceFileName);
 
 						let fileContent = this.$fs.readText(filePath).wait();
 						fileContent = fileContent.replace(new RegExp(oldName, 'g'), newName);
