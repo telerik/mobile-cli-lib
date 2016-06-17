@@ -18,10 +18,13 @@ function createTestInjector(config: { xcodeSelectStdout: string, isDarwin: boole
 			return Future.fromResult({
 				xcodeVer: config.xcodeVersionOutput
 			});
+		},
+		getXcodeVersion: () => {
+			return Future.fromResult(config.xcodeVersionOutput);
 		}
 	});
 	testInjector.register("errors", {
-		failWithoutHelp: (message: string, ...args: any[]): void => { executionStopped=true; }
+		failWithoutHelp: (message: string, ...args: any[]): void => { executionStopped = true; }
 	});
 
 	testInjector.register("hostInfo", {
