@@ -24,4 +24,9 @@ export abstract class AppBuilderLiveSyncProviderBase implements ILiveSyncProvide
 	public canExecuteFastSync(filePath: string): boolean {
 		return false;
 	}
+
+	public transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string, isFullSync: boolean): IFuture<void> {
+		return Future.fromResult();
+	}
+
 }
