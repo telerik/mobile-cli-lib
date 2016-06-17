@@ -10,6 +10,7 @@ import * as util from "util";
 let gaze = require("gaze");
 
 class LiveSyncServiceBase implements ILiveSyncServiceBase {
+	private showFullLiveSyncInformation: boolean = false;
 	private fileHashes: IDictionary<string>;
 
 	constructor(protected $devicesService: Mobile.IDevicesService,
@@ -61,6 +62,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 
 	private partialSync(data: ILiveSyncData): void {
 		let that = this;
+		this.showFullLiveSyncInformation = true;
 		gaze("**/*", { cwd: data.syncWorkingDirectory }, function (err: any, watcher: any) {
 			this.on('all', (event: string, filePath: string) => {
 				fiberBootstrap.run(() => {
@@ -245,7 +247,8 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 
 	private transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string, isFullSync: boolean): IFuture<void> {
 		return (() => {
-			this.logFilesSyncInformation(localToDevicePaths, "Transferring %s.");
+			this.$logger.info("Transferring project files...");
+			this.logFilesSyncInformation(localToDevicePaths, "Transferring %s.", this.$logger.trace);
 
 			let canTransferDirectory = isFullSync && (this.$devicesService.isAndroidDevice(deviceAppData.device) || this.$devicesService.isiOSSimulator(deviceAppData.device));
 			if (canTransferDirectory) {
@@ -257,14 +260,18 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 				deviceAppData.device.fileSystem.transferFiles(deviceAppData, localToDevicePaths).wait();
 			}
 
-			this.logFilesSyncInformation(localToDevicePaths, "Successfully transferred %s.");
+			this.logFilesSyncInformation(localToDevicePaths, "Successfully transferred %s.", this.$logger.info);
 		}).future<void>()();
 	}
 
-	private logFilesSyncInformation(localToDevicePaths: Mobile.ILocalToDevicePathData[], message: string): void {
-		_.each(localToDevicePaths, (file: Mobile.ILocalToDevicePathData) => {
-			this.$logger.info(util.format(message, path.basename(file.getLocalPath()).yellow));
-		});
+	private logFilesSyncInformation(localToDevicePaths: Mobile.ILocalToDevicePathData[], message: string, action: Function): void {
+		if (this.showFullLiveSyncInformation) {
+			_.each(localToDevicePaths, (file: Mobile.ILocalToDevicePathData) => {
+				action.call(this.$logger, util.format(message, path.basename(file.getLocalPath()).yellow));
+			});
+		} else {
+			action.call(this.$logger, util.format(message, "all files"));
+		}
 	}
 
 	private resolvePlatformLiveSyncService(platform: string, device: Mobile.IDevice): IPlatformLiveSyncService {
