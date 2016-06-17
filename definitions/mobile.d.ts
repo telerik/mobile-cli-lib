@@ -111,6 +111,7 @@ declare module Mobile {
 		device: Mobile.IDevice;
 		platform: string;
 		deviceProjectRootPath: string;
+		deviceSyncZipPath?: string;
 		isLiveSyncSupported(): IFuture<boolean>;
 	}
 
