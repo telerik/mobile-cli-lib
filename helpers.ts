@@ -102,8 +102,8 @@ export function isInteractive(): boolean {
 	return process.stdout.isTTY && process.stdin.isTTY;
 }
 
-export function toBoolean(str: string) {
-	return str && str.toLowerCase() === "true";
+export function toBoolean(str: any) {
+	return str && str.toString().toLowerCase() === "true";
 }
 
 export function block(operation: () => void): void {
