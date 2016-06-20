@@ -35,6 +35,8 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 
 	private liveSyncOnDevice(deviceDescriptor: IDeviceLiveSyncInfo, filePaths: string[], liveSyncOptions?: { isForDeletedFiles: boolean }): IFuture<IDeviceLiveSyncResult> {
 		return ((): IDeviceLiveSyncResult => {
+			let isForDeletedFiles = liveSyncOptions && liveSyncOptions.isForDeletedFiles;
+
 			this.$devicesService.stopDeviceDetectionInterval().wait();
 			let result: IDeviceLiveSyncResult = {
 				deviceIdentifier: deviceDescriptor.deviceIdentifier
@@ -50,6 +52,27 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 				return result;
 			}
 
+			if (!this.$fs.exists(this.$project.projectDir).wait()) {
+				result.liveSyncToApp = result.liveSyncToCompanion = {
+					isResolved: false,
+					error: new Error(`Cannot execute LiveSync operation as the project dir ${this.$project.projectDir} does not exist on the file system.`)
+				};
+
+				return result;
+			}
+
+			if (!isForDeletedFiles && filePaths && filePaths.length) {
+				let missingFiles = filePaths.filter(filePath => !this.$fs.exists(filePath).wait());
+				if (missingFiles && missingFiles.length) {
+					result.liveSyncToApp = result.liveSyncToCompanion = {
+						isResolved: false,
+						error: new Error(`Cannot LiveSync files ${missingFiles.join(", ")} as they do not exist on the file system.`)
+					};
+
+					return result;
+				}
+			}
+
 			let appIdentifier = this.$project.projectData.AppIdentifier,
 				canExecute = (d: Mobile.IDevice) => d.deviceInfo.identifier === device.deviceInfo.identifier,
 				livesyncData: ILiveSyncData = {
@@ -61,8 +84,8 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 					canExecuteFastSync: false
 				};
 
-			let canExecuteAction = this.$liveSyncServiceBase.getCanExecuteAction(device.deviceInfo.platform, appIdentifier, canExecute),
-				isForDeletedFiles = liveSyncOptions && liveSyncOptions.isForDeletedFiles;
+			let canExecuteAction = this.$liveSyncServiceBase.getCanExecuteAction(device.deviceInfo.platform, appIdentifier, canExecute);
+
 			if(deviceDescriptor.syncToApp) {
 				result.liveSyncToApp = this.liveSyncCore(livesyncData, device, appIdentifier, canExecuteAction, { isForCompanionApp: false, isForDeletedFiles: isForDeletedFiles }, filePaths).wait();
 			}
