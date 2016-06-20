@@ -12,6 +12,122 @@ export class SysInfoBase implements ISysInfo {
 
 	private monoVerRegExp = /version (\d+[.]\d+[.]\d+) /gm;
 	private sysInfoCache: ISysInfoData = undefined;
+	private javaVerCache: string = null;
+	public getJavaVersion(): IFuture<string> {
+		return ((): string => {
+			if (!this.javaVerCache) {
+				try {
+					// different java has different format for `java -version` command
+					let output = this.$childProcess.spawnFromEvent("java", ["-version"], "exit").wait().stderr;
+					this.javaVerCache = /(?:openjdk|java) version \"((?:\d+\.)+(?:\d+))/i.exec(output)[1];
+				} catch (e) {
+					this.javaVerCache = null;
+				}
+			}
+			return this.javaVerCache;
+		}).future<string>()();
+	}
+
+	private javaCompilerVerCache: string = null;
+	public getJavaCompilerVersion(): IFuture<string> {
+		return ((): string => {
+			if (!this.javaCompilerVerCache) {
+				try {
+					let javaCompileExecutableName = "javac";
+					let javaHome = process.env.JAVA_HOME;
+					let pathToJavaCompilerExecutable = javaHome ? path.join(javaHome, "bin", javaCompileExecutableName) : javaCompileExecutableName;
+					let output = this.exec(`"${pathToJavaCompilerExecutable}" -version`, { showStderr: true });
+					// for other versions of java javac version output is not on first line
+					// thus can't use ^ for starts with in regex
+					this.javaCompilerVerCache = output ? /javac (.*)/i.exec(output.stderr)[1] : null;
+				} catch (e) {
+					this.javaCompilerVerCache = null;
+				}
+			}
+			return this.javaCompilerVerCache;
+		}).future<string>()();
+	}
+
+	private xCodeVerCache: string = null;
+	public getXCodeVersion(): IFuture<string> {
+		return ((): string => {
+			if (!this.xCodeVerCache) {
+				try {
+					this.xCodeVerCache = this.$hostInfo.isDarwin ? this.exec("xcodebuild -version") : null;
+				} catch (e) {
+					this.xCodeVerCache = null;
+				}
+			}
+			return this.xCodeVerCache;
+		}).future<string>()();
+	}
+
+	private nodeGypVerCache: string = null;
+	public getNodeGypVersion(): IFuture<string> {
+		return ((): string => {
+				if (!this.nodeGypVerCache) {
+					try {
+						this.nodeGypVerCache = this.exec("node-gyp -v");
+					 } catch (e) {
+						this.nodeGypVerCache = null;
+					}
+				}
+				return this.nodeGypVerCache;
+		}).future<string>()();
+	}
+
+	private xcodeprojGemLocationCache: string = null;
+	public getXCodeProjGemLocation(): IFuture<string> {
+		return ((): string => {
+			if (!this.xcodeprojGemLocationCache) {
+				try {
+					this.xcodeprojGemLocationCache = this.$hostInfo.isDarwin ? this.exec("gem which xcodeproj") : null;
+				} catch (e) {
+					this.xcodeprojGemLocationCache = null;
+				}
+			}
+			return this.xcodeprojGemLocationCache;
+		}).future<string>()();
+	}
+
+	private itunesInstalledCache: boolean = null;
+	public getITunesInstalled(): IFuture<boolean> {
+		return ((): boolean => {
+			if (!this.itunesInstalledCache) {
+				try {
+					this.itunesInstalledCache = this.$iTunesValidator.getError().wait() === null;
+				} catch (e) {
+					this.itunesInstalledCache = null;
+				}
+			}
+			return this.itunesInstalledCache;
+		}).future<boolean>()();
+	}
+
+	private cocoapodVersionCache: string = null;
+	public getCocoapodVersion(): IFuture<string> {
+		return ((): string => {
+			if (!this.cocoapodVersionCache) {
+				try {
+					if (this.$hostInfo.isDarwin) {
+						let cocoapodVersion = this.exec("pod --version");
+						if (cocoapodVersion) {
+							// Output of pod --version could contain some warnings. Find the version in it.
+							let cocoapodVersionMatch = cocoapodVersion.match(/^((?:\d+\.){2}\d+.*?)$/gm);
+							if (cocoapodVersionMatch && cocoapodVersionMatch[0]) {
+								cocoapodVersion = cocoapodVersionMatch[0].trim();
+							}
+							this.cocoapodVersionCache = cocoapodVersion;
+						}
+					}
+				} catch (e) {
+					this.cocoapodVersionCache = null;
+				}
+			}
+
+			return this.cocoapodVersionCache;
+		}).future<string>()();
+	}
 
 	public getSysInfo(pathToPackageJson: string, androidToolsInfo?: {pathToAdb: string, pathToAndroid: string}): IFuture<ISysInfoData> {
 		return((): ISysInfoData => {
@@ -39,21 +155,14 @@ export class SysInfoBase implements ISysInfo {
 				procOutput = this.exec("npm -v");
 				res.npmVer = procOutput ? procOutput.split("\n")[0] : null;
 
-				// dependencies
-				try {
-					// different java has different format for `java -version` command
-					let output = this.$childProcess.spawnFromEvent("java", ["-version"], "exit").wait().stderr;
-					res.javaVer = /(?:openjdk|java) version \"((?:\d+\.)+(?:\d+))/i.exec(output)[1];
-				} catch(e) {
-					res.javaVer = null;
-				}
+				res.javaVer = this.getJavaVersion().wait();
 
-				res.nodeGypVer = this.exec("node-gyp -v");
-				res.xcodeVer = this.$hostInfo.isDarwin ? this.exec("xcodebuild -version") : null;
-				res.xcodeprojGemLocation = this.$hostInfo.isDarwin ? this.exec("gem which xcodeproj") : null;
-				res.itunesInstalled = this.$iTunesValidator.getError().wait() === null;
+				res.nodeGypVer = this.getNodeGypVersion().wait();
+				res.xcodeVer = this.getXCodeVersion().wait();
+				res.xcodeprojGemLocation = this.getXCodeProjGemLocation().wait();
+				res.itunesInstalled = this.getITunesInstalled().wait();
 
-				res.cocoapodVer = this.getCocoapodVersion();
+				res.cocoapodVer = this.getCocoapodVersion().wait();
 				let pathToAdb = androidToolsInfo ? androidToolsInfo.pathToAdb : "adb";
 				let pathToAndroid = androidToolsInfo ? androidToolsInfo.pathToAndroid : "android";
 
@@ -138,35 +247,6 @@ export class SysInfoBase implements ISysInfo {
 
 	private unixVer(): string {
 		return this.exec("uname -a");
-	}
-
-	private getJavaCompilerVersion(): IFuture<string> {
-		return ((): string => {
-			let javaCompileExecutableName = "javac";
-			let javaHome = process.env.JAVA_HOME;
-			let pathToJavaCompilerExecutable = javaHome ? path.join(javaHome, "bin", javaCompileExecutableName) : javaCompileExecutableName;
-			let output = this.exec(`"${pathToJavaCompilerExecutable}" -version`, { showStderr: true });
-			// for other versions of java javac version output is not on first line
-			// thus can't use ^ for starts with in regex
-			return output ? /javac (.*)/i.exec(output.stderr)[1]: null;
-		}).future<string>()();
-	}
-
-	private getCocoapodVersion(): string {
-		if(this.$hostInfo.isDarwin) {
-			let cocoapodVersion = this.exec("pod --version");
-			if(cocoapodVersion) {
-				// Output of pod --version could contain some warnings. Find the version in it.
-				let cocoapodVersionMatch = cocoapodVersion.match(/^((?:\d+\.){2}\d+.*?)$/gm);
-				if(cocoapodVersionMatch && cocoapodVersionMatch[0]) {
-					cocoapodVersion = cocoapodVersionMatch[0].trim();
-				}
-
-				return cocoapodVersion;
-			}
-		}
-
-		return null;
 	}
 }
 $injector.register("sysInfoBase", SysInfoBase);

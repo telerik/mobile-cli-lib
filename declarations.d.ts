@@ -607,6 +607,27 @@ interface ISysInfo {
 	 * @return {IFuture<ISysInfoData>} Object containing information for current system.
 	 */
 	getSysInfo(pathToPackageJson: string, androidToolsInfo?: { pathToAdb: string, pathToAndroid: string }): IFuture<ISysInfoData>;
+
+	/** Returns Java version. **/
+	getJavaVersion(): IFuture<string>;
+
+	/** Returns Java compiler version. **/
+	getJavaCompilerVersion(): IFuture<string>;
+
+	/** Returns XCode version. **/
+	getXCodeVersion(): IFuture<string>;
+
+	/** Returns node-gyp version. **/
+	getNodeGypVersion(): IFuture<string>;
+
+	/** Returns XCode project gem location. **/
+	getXCodeProjGemLocation(): IFuture<string>;
+
+	/** Returns if ITunes is installed or not. **/
+	getITunesInstalled(): IFuture<boolean>;
+
+	/** Returns Cocoapod version. **/
+	getCocoapodVersion(): IFuture<string>;
 }
 
 interface IHostInfo {
