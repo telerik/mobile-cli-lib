@@ -36,7 +36,7 @@ export class XcodeSelectService implements IXcodeSelectService {
 		return ((): IVersionData => {
 			if (!this._xcodeVerionCache) {
 				let sysInfoBase = this.$injector.resolve("sysInfoBase");
-				let xcodeVer = sysInfoBase.getXcodeVersion().wait(),
+				let xcodeVer = sysInfoBase.getXCodeVersion().wait(),
 					xcodeVersionMatch = xcodeVer.match(/Xcode (.*)/),
 					xcodeVersionGroup = xcodeVersionMatch && xcodeVersionMatch[1],
 					xcodeVersionSplit = xcodeVersionGroup && xcodeVersionGroup.split(".");
