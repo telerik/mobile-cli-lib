@@ -19,7 +19,7 @@ function createTestInjector(config: { xcodeSelectStdout: string, isDarwin: boole
 				xcodeVer: config.xcodeVersionOutput
 			});
 		},
-		getXcodeVersion: () => {
+		getXCodeVersion: () => {
 			return Future.fromResult(config.xcodeVersionOutput);
 		}
 	});
