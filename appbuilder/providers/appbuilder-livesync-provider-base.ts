@@ -26,7 +26,7 @@ export abstract class AppBuilderLiveSyncProviderBase implements ILiveSyncProvide
 	}
 
 	public transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string, isFullSync: boolean): IFuture<void> {
-		return Future.fromResult();
+		return deviceAppData.device.fileSystem.transferFiles(deviceAppData, localToDevicePaths);
 	}
 
 }
