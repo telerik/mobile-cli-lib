@@ -18,6 +18,7 @@ temp.track();
 
 let testedApplicationIdentifier = "com.telerik.myApp";
 let iOSDeviceProjectRootPath = "/Library/Application Support/LiveSync/app";
+let iOSDeviceSyncZipPath = "/Library/Application Support/LiveSync/sync.zip";
 let androidDeviceProjectRootPath = "/data/local/tmp/sync";
 
 class IOSAppIdentifierMock implements Mobile.IDeviceAppData {
@@ -25,6 +26,7 @@ class IOSAppIdentifierMock implements Mobile.IDeviceAppData {
 	public appIdentifier = testedApplicationIdentifier;
 	public device: Mobile.IDevice = null;
 	public deviceProjectRootPath = iOSDeviceProjectRootPath;
+	public deviceSyncZipPath = iOSDeviceSyncZipPath;
 
 	public isLiveSyncSupported(): IFuture<boolean> {
 		return Future.fromResult(true);

@@ -175,6 +175,7 @@ interface IFileSystem {
 		bufferSize?: number;
 		start?: number;
 		end?: number;
+		highWaterMark?: number;
 	}): NodeJS.ReadableStream;
 	createWriteStream(path: string, options?: {
 		flags?: string;
@@ -1074,6 +1075,8 @@ interface ILiveSyncProvider {
 	 * Checks if the specified file can be fast synced.
 	 */
 	canExecuteFastSync(filePath: string, platform?: string): boolean;
+
+	transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string, isFullSync: boolean): IFuture<void>;
 }
 
 /**

@@ -196,7 +196,7 @@ export class AfcClient extends AfcBase implements Mobile.IAfcClient {
 			let future = new Future<void>();
 			try {
 				this.ensureDevicePathExist(path.dirname(devicePath));
-				let reader = this.$fs.createReadStream(localFilePath);
+				let reader = this.$fs.createReadStream(localFilePath, { bufferSize: 1024*1024*15, highWaterMark: 1024*1024*15 });
 				devicePath = helpers.fromWindowsRelativePathToUnix(devicePath);
 
 				this.deleteFile(devicePath);

@@ -257,7 +257,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 				this.$projectFilesManager.processPlatformSpecificFiles(tempDir, deviceAppData.platform).wait();
 				deviceAppData.device.fileSystem.transferDirectory(deviceAppData, localToDevicePaths, tempDir).wait();
 			} else {
-				deviceAppData.device.fileSystem.transferFiles(deviceAppData, localToDevicePaths).wait();
+				this.$liveSyncProvider.transferFiles(deviceAppData, localToDevicePaths, projectFilesPath, isFullSync).wait();
 			}
 
 			this.logFilesSyncInformation(localToDevicePaths, "Successfully transferred %s.", this.$logger.info);
