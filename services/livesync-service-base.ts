@@ -94,10 +94,8 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 								return;
 							}
 
-							data.canExecuteFastSync = data.forceExecuteFullSync ? false : that.$liveSyncProvider.canExecuteFastSync(filePath, data.platform);
-
 							if (event === "added" || event === "changed" || event === "renamed") {
-								that.syncAddedOrChangedFile(data, mappedFilePath).wait();
+								that.batchSync(data, mappedFilePath);
 							} else if (event === "deleted") {
 								that.fileHashes = <any>(_.omit(that.fileHashes, filePath));
 								that.syncRemovedFile(data, mappedFilePath).wait();
@@ -139,23 +137,6 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		}
 
 		this.batch.addFile(filePath);
-	}
-
-	private fastSync(data: ILiveSyncData, filePath: string): IFuture<void> {
-		return (() => {
-			this.$liveSyncProvider.preparePlatformForSync(data.platform).wait();
-			this.syncCore(data, [filePath]).wait();
-		}).future<void>()();
-	}
-
-	private syncAddedOrChangedFile(data: ILiveSyncData, filePath: string): IFuture<void> {
-		return (() => {
-			if (data.canExecuteFastSync) {
-				this.fastSync(data, filePath).wait();
-			} else {
-				this.batchSync(data, filePath);
-			}
-		}).future<void>()();
 	}
 
 	private syncRemovedFile(data: ILiveSyncData, filePath: string): IFuture<void> {
@@ -221,7 +202,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 						}
 
 						this.$logger.info("Applying changes...");
-						platformLiveSyncService.refreshApplication(deviceAppData, localToDevicePaths, data.canExecuteFastSync).wait();
+						platformLiveSyncService.refreshApplication(deviceAppData, localToDevicePaths, data.forceExecuteFullSync).wait();
 						this.$logger.info(`Successfully synced application ${data.appIdentifier} on device ${device.deviceInfo.identifier}.`);
 					}
 				} else {

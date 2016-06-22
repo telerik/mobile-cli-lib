@@ -525,7 +525,6 @@ interface ILiveSyncData {
 	projectFilesPath: string;
 	/** The path to a directory that is watched */
 	syncWorkingDirectory: string;
-	canExecuteFastSync?: boolean;
 	forceExecuteFullSync?: boolean;
 	excludedProjectDirsAndFiles?: string[];
 	/**
@@ -539,7 +538,7 @@ interface IPlatformLiveSyncService {
 	/**
 	 * Refreshes the application's content on a device
 	 */
-	refreshApplication(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], canExecuteFastSync?: boolean): IFuture<void>;
+	refreshApplication(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], forceExecuteFullSync: boolean): IFuture<void>;
 	/**
 	 * Removes specified files from a connected device
 	 */
