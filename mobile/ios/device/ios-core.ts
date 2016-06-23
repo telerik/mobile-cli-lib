@@ -905,7 +905,7 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 												if (message.PercentComplete) {
 													output += util.format(" PercentComplete: %s", message.PercentComplete);
 												}
-												this.$logger.out(output);
+												this.$logger.trace(output);
 
 												let errorMessage: string = "";
 												if (message.Error) {
