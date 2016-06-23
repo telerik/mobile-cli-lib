@@ -81,7 +81,7 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 					projectFilesPath: this.$project.projectDir,
 					syncWorkingDirectory: this.$project.projectDir,
 					excludedProjectDirsAndFiles: this.excludedProjectDirsAndFiles,
-					canExecuteFastSync: false
+					forceExecuteFullSync: true
 				};
 
 			let canExecuteAction = this.$liveSyncServiceBase.getCanExecuteAction(device.deviceInfo.platform, appIdentifier, canExecute);
