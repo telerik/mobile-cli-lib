@@ -49,7 +49,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 
 		result.stderr.on("data", (data: NodeBuffer) => {
 			let error = new Error(data.toString());
-			if (future) {
+			if (future && !future.isResolved()) {
 				return future.throw(error);
 			} else {
 				throw (error);
@@ -57,7 +57,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 		});
 
 		result.on("error", (err: Error) => {
-			if (future) {
+			if (future && !future.isResolved()) {
 				return future.throw(err);
 			} else {
 				throw (err);
@@ -67,7 +67,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 		result.on("close", (exitCode: any) => {
 			fiberBootstrap.run(() => {
 				this.checkCurrentData(adbData).wait();
-				if (future) {
+				if (future && !future.isResolved()) {
 					future.return();
 				}
 			});
