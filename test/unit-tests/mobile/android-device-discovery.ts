@@ -106,7 +106,7 @@ describe("androidDeviceDiscovery", () => {
 	describe("ensureAdbServerStarted", () => {
 		it("should spawn adb with start-server parameter", () => {
 			let ensureAdbServerStartedOutput = androidDeviceDiscovery.ensureAdbServerStarted().wait();
-			assert.isTrue(_.contains(ensureAdbServerStartedOutput, "start-server"), "start-server should be passed to adb.");
+			assert.isTrue(_.includes(ensureAdbServerStartedOutput, "start-server"), "start-server should be passed to adb.");
 		});
 	});
 

@@ -32,15 +32,13 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 				.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).wait().isFile())
 				.each(localToDevicePathData =>
 					this.adb.executeCommand(["push", localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()]).wait()
-				)
-				.value();
+				);
 
 			_(localToDevicePaths)
 				.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).wait().isDirectory())
 				.each(localToDevicePathData =>
 					this.adb.executeShellCommand(["chmod", "0777", localToDevicePathData.getDevicePath()]).wait()
-				)
-				.value();
+				);
 
 			// Update hashes
 			let deviceHashService = this.getDeviceHashService(deviceAppData.appIdentifier);
@@ -76,7 +74,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 				// Create or update file hashes on device
 				let oldShasums = deviceHashService.getShasumsFromDevice().wait();
 				if (oldShasums) {
-					let changedShasums: any = _.omit(currentShasums, (hash: string, pathToFile: string) => !!_.find(oldShasums, (oldHash: string, oldPath: string) => pathToFile === oldPath && hash === oldHash));
+					let changedShasums: any = _.omitBy(currentShasums, (hash: string, pathToFile: string) => !!_.find(oldShasums, (oldHash: string, oldPath: string) => pathToFile === oldPath && hash === oldHash));
 					this.$logger.trace("Changed file hashes are:", changedShasums);
 					filesToChmodOnDevice = [];
 					let futures = _(changedShasums)
@@ -92,7 +90,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 				}
 			}
 
-			if(filesToChmodOnDevice.length) {
+			if (filesToChmodOnDevice.length) {
 				this.createFileOnDevice(commandsDeviceFilePath, "chmod 0777 " + filesToChmodOnDevice.join(" ")).wait();
 				this.adb.executeShellCommand([commandsDeviceFilePath]).wait();
 			}
@@ -131,7 +129,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 
 	private getDeviceHashService(appIdentifier: string): Mobile.IAndroidDeviceHashService {
 		if (!this._deviceHashServices[appIdentifier]) {
-			this._deviceHashServices[appIdentifier] = this.$injector.resolve(AndroidDeviceHashService, {adb: this.adb, appIdentifier: appIdentifier});
+			this._deviceHashServices[appIdentifier] = this.$injector.resolve(AndroidDeviceHashService, { adb: this.adb, appIdentifier: appIdentifier });
 		}
 
 		return this._deviceHashServices[appIdentifier];

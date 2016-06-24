@@ -117,7 +117,12 @@ export class Errors implements IErrors {
 
 		let exception: any = new (<any>Exception)();
 		exception.name = opts.name || "Exception";
-		exception.message = this.$injector.resolve("messagesService").getMessage(opts.formatStr, ...args);
+		exception.message = util.format(opts.formatStr, ...args);
+		try {
+			exception.message = this.$injector.resolve("messagesService").getMessage(opts.formatStr, ...args);
+		} catch (err) {
+			// Ignore
+		}
 		exception.stack = (new Error(exception.message)).stack;
 		exception.errorCode = opts.errorCode || ErrorCodes.UNKNOWN;
 		exception.suppressCommandHelp = opts.suppressCommandHelp;

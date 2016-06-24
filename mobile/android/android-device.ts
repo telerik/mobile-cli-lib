@@ -128,13 +128,13 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 
 	private getIsTablet(details: any): boolean {
 		//version 3.x.x (also known as Honeycomb) is a tablet only version
-		return details && ( _.startsWith(details.release, "3.") || _.contains((details.characteristics || '').toLowerCase(), "tablet") );
+		return details && ( _.startsWith(details.release, "3.") || _.includes((details.characteristics || '').toLowerCase(), "tablet") );
 	}
 
 	private getType(): IFuture<string> {
 		return (() => {
 			let runningEmulators = this.$androidEmulatorServices.getAllRunningEmulators().wait();
-			if (_.contains(runningEmulators, this.identifier)) {
+			if (_.includes(runningEmulators, this.identifier)) {
 				return "Emulator";
 			}
 

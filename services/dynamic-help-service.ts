@@ -10,7 +10,7 @@ export class DynamicHelpService implements IDynamicHelpService {
 
 	public isPlatform(...args: string[]): boolean {
 		let platform = os.platform().toLowerCase();
-		return _.any(args, arg => arg.toLowerCase() === platform);
+		return _.some(args, arg => arg.toLowerCase() === platform);
 	}
 
 	public getLocalVariables(options: { isHtml: boolean }): IFuture<IDictionary<any>> {

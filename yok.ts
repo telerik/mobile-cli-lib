@@ -21,7 +21,7 @@ function popIndent() {
 }
 
 function forEachName(names: any, action: (name: string) => void): void {
-	if(_.isString(names)) {
+	if (_.isString(names)) {
 		action(names);
 	} else {
 		names.forEach(action);
@@ -29,7 +29,7 @@ function forEachName(names: any, action: (name: string) => void): void {
 }
 
 export function register(...rest: any[]) {
-	return function(target: any): void {
+	return function (target: any): void {
 		// TODO: Check if 'rest' has more arguments that have to be registered
 		$injector.register(rest[0], target);
 	};
@@ -59,23 +59,23 @@ export class Yok implements IInjector {
 		forEachName(names, (commandName) => {
 			let commands = commandName.split("|");
 
-			if(commands.length > 1) {
-				if(_.startsWith(commands[1], '*') && this.modules[this.createCommandName(commands[0])]) {
+			if (commands.length > 1) {
+				if (_.startsWith(commands[1], '*') && this.modules[this.createCommandName(commands[0])]) {
 					throw new Error("Default commands should be required before child commands");
 				}
 
 				let parentCommandName = commands[0];
 
-				if(!this.hierarchicalCommands[parentCommandName]) {
+				if (!this.hierarchicalCommands[parentCommandName]) {
 					this.hierarchicalCommands[parentCommandName] = [];
 				}
 
-				this.hierarchicalCommands[parentCommandName].push(_.rest(commands).join("|"));
+				this.hierarchicalCommands[parentCommandName].push(_.tail(commands).join("|"));
 			}
 
-			if(commands.length > 1 && !this.modules[this.createCommandName(commands[0])]) {
+			if (commands.length > 1 && !this.modules[this.createCommandName(commands[0])]) {
 				this.require(this.createCommandName(commands[0]), file);
-				if(commands[1] && !commandName.match(/\|\*/)) {
+				if (commands[1] && !commandName.match(/\|\*/)) {
 					this.require(this.createCommandName(commandName), file);
 				}
 			} else {
@@ -125,13 +125,13 @@ export class Yok implements IInjector {
 
 	private tryCallInitializeMethod(name: string): any {
 		let classInstance = this.modules[name].instance;
-		if(!classInstance) {
+		if (!classInstance) {
 			classInstance = this.resolve(name);
 			// This is in order to remove .wait() from constructors
 			// as we cannot wait without fiber.
-			if(classInstance.initialize) {
+			if (classInstance.initialize) {
 				let result = classInstance.initialize.apply(classInstance);
-				if(isFuture(result)) {
+				if (isFuture(result)) {
 					let fiberBootstrap = require("./fiber-bootstrap");
 					fiberBootstrap.run(() => {
 						result.wait();
@@ -150,7 +150,7 @@ export class Yok implements IInjector {
 			shared: true
 		};
 
-		if(!this.modules[name]) {
+		if (!this.modules[name]) {
 			this.modules[name] = dependency;
 		} else {
 			throw new Error(`module '${name}' require'd twice.`);
@@ -162,7 +162,7 @@ export class Yok implements IInjector {
 			let commands = name.split("|");
 			this.register(this.createCommandName(name), resolver);
 
-			if(commands.length > 1) {
+			if (commands.length > 1) {
 				this.createHierarchicalCommand(commands[0]);
 			}
 		});
@@ -183,15 +183,15 @@ export class Yok implements IInjector {
 		_.each(commandLineArguments, arg => {
 			arg = arg.toLowerCase();
 			currentSubCommandName = currentSubCommandName ? this.getHierarchicalCommandName(currentSubCommandName, arg) : arg;
-			remainingArguments = _.rest(remainingArguments);
-			if(matchingSubCommandName = _.find(subCommands, (sc) => sc === currentSubCommandName || sc === "*" + currentSubCommandName)) {
+			remainingArguments = _.tail(remainingArguments);
+			if (matchingSubCommandName = _.find(subCommands, (sc) => sc === currentSubCommandName || sc === "*" + currentSubCommandName)) {
 				finalSubCommandName = matchingSubCommandName;
 				finalRemainingArguments = remainingArguments;
 				foundSubCommand = true;
 			}
 		});
 
-		if(foundSubCommand) {
+		if (foundSubCommand) {
 			return { commandName: this.getHierarchicalCommandName(parentCommandName, finalSubCommandName), remainingArguments: finalRemainingArguments };
 		}
 
@@ -208,24 +208,24 @@ export class Yok implements IInjector {
 						let defaultCommand = this.getDefaultCommand(name);
 						let commandArguments: ICommandArgument[] = [];
 
-						if(args.length > 0) {
+						if (args.length > 0) {
 							let hierarchicalCommand = this.buildHierarchicalCommand(name, args);
-							if(hierarchicalCommand) {
+							if (hierarchicalCommand) {
 								commandName = hierarchicalCommand.commandName;
 								commandArguments = hierarchicalCommand.remainingArguments;
 							} else {
 								commandName = defaultCommand ? this.getHierarchicalCommandName(name, defaultCommand) : "help";
 								// If we'll execute the default command, but it's full name had been written by the user
 								// for example "appbuilder cloud list", we have to remove the "list" option from the arguments that we'll pass to the command.
-								if(_.contains(this.hierarchicalCommands[name], "*" + args[0])) {
-									commandArguments = _.rest(args);
+								if (_.includes(this.hierarchicalCommands[name], "*" + args[0])) {
+									commandArguments = _.tail(args);
 								} else {
 									commandArguments = args;
 								}
 							}
 						} else {
 							//Execute only default command without arguments
-							if(defaultCommand) {
+							if (defaultCommand) {
 								commandName = this.getHierarchicalCommandName(name, defaultCommand);
 							} else {
 								commandName = "help";
@@ -250,22 +250,22 @@ export class Yok implements IInjector {
 	}
 
 	public isValidHierarchicalCommand(commandName: string, commandArguments: string[]): boolean {
-		if(_.contains(Object.keys(this.hierarchicalCommands), commandName)) {
+		if (_.includes(Object.keys(this.hierarchicalCommands), commandName)) {
 			let defaultCommandName = this.getDefaultCommand(commandName);
-			if(defaultCommandName && (!commandArguments || commandArguments.length === 0)) {
+			if (defaultCommandName && (!commandArguments || commandArguments.length === 0)) {
 				// Will execute default command as there aren't passed arguments.
 				return true;
 			}
 
 			let subCommands = this.hierarchicalCommands[commandName];
-			if(subCommands) {
+			if (subCommands) {
 				let fullCommandName = this.buildHierarchicalCommand(commandName, commandArguments);
-				if(!fullCommandName) {
+				if (!fullCommandName) {
 					// The passed arguments are not one of the subCommands.
 					// Check if the default command accepts arguments - if no, return false;
 
 					let defaultCommand = this.resolveCommand(`${commandName}|${defaultCommandName}`);
-					if(defaultCommand) {
+					if (defaultCommand) {
 						if (defaultCommand.canExecute) {
 							return defaultCommand.canExecute(commandArguments).wait();
 						}
@@ -297,7 +297,7 @@ export class Yok implements IInjector {
 		let dependency: any = this.modules[name] || {};
 		dependency.shared = shared;
 
-		if(_.isFunction(resolver)) {
+		if (_.isFunction(resolver)) {
 			dependency.resolver = resolver;
 		} else {
 			dependency.instance = resolver;
@@ -309,7 +309,7 @@ export class Yok implements IInjector {
 	public resolveCommand(name: string): ICommand {
 		let command: ICommand;
 		let commandModuleName = this.createCommandName(name);
-		if(!this.modules[commandModuleName]) {
+		if (!this.modules[commandModuleName]) {
 			return null;
 		}
 		command = this.resolve(commandModuleName);
@@ -318,10 +318,10 @@ export class Yok implements IInjector {
 	}
 
 	public resolve(param: any, ctorArguments?: IDictionary<any>): any {
-		if(_.isFunction(param)) {
-			return this.resolveConstructor(<Function> param, ctorArguments);
+		if (_.isFunction(param)) {
+			return this.resolveConstructor(<Function>param, ctorArguments);
 		} else {
-			return this.resolveByName(<string> param, ctorArguments);
+			return this.resolveByName(<string>param, ctorArguments);
 		}
 	}
 
@@ -339,12 +339,12 @@ export class Yok implements IInjector {
 		return (() => {
 			let parsed = call.match(this.dynamicCallRegex);
 			let module = this.resolve(parsed[1]);
-			if(!args && parsed[3]) {
+			if (!args && parsed[3]) {
 				args = _.map(parsed[4].split(","), arg => arg.trim());
 			}
 
 			let data = module[parsed[2]].apply(module, args);
-			if(isFuture(data)) {
+			if (isFuture(data)) {
 				return data.wait();
 			}
 			return data;
@@ -355,7 +355,7 @@ export class Yok implements IInjector {
 		annotate(ctor);
 
 		let resolvedArgs = ctor.$inject.args.map(paramName => {
-			if(ctorArguments && ctorArguments.hasOwnProperty(paramName)) {
+			if (ctorArguments && ctorArguments.hasOwnProperty(paramName)) {
 				return ctorArguments[paramName];
 			} else {
 				return this.resolve(paramName);
@@ -363,8 +363,8 @@ export class Yok implements IInjector {
 		});
 
 		let name = ctor.$inject.name;
-		if(name && name[0] === name[0].toUpperCase()) {
-			let EmptyCtor = function() { /* intentionally left blank */ };
+		if (name && name[0] === name[0].toUpperCase()) {
+			let EmptyCtor = function () { /* intentionally left blank */ };
 			EmptyCtor.prototype = ctor.prototype;
 			let obj = new (<any>EmptyCtor)();
 
@@ -376,11 +376,11 @@ export class Yok implements IInjector {
 	}
 
 	private resolveByName(name: string, ctorArguments?: IDictionary<any>): any {
-		if(name[0] === "$") {
+		if (name[0] === "$") {
 			name = name.substr(1);
 		}
 
-		if(this.resolutionProgress[name]) {
+		if (this.resolutionProgress[name]) {
 			throw new Error(`Cyclic dependency detected on dependency '${name}'`);
 		}
 		this.resolutionProgress[name] = true;
@@ -392,12 +392,12 @@ export class Yok implements IInjector {
 		try {
 			dependency = this.resolveDependency(name);
 
-			if(!dependency) {
+			if (!dependency) {
 				throw new Error("unable to resolve " + name);
 			}
 
-			if(!dependency.instance || !dependency.shared) {
-				if(!dependency.resolver) {
+			if (!dependency.instance || !dependency.shared) {
+				if (!dependency.resolver) {
 					throw new Error("no resolver registered for " + name);
 				}
 
@@ -414,11 +414,11 @@ export class Yok implements IInjector {
 
 	private resolveDependency(name: string): IDependency {
 		let module = this.modules[name];
-		if(!module) {
+		if (!module) {
 			throw new Error("unable to resolve " + name);
 		}
 
-		if(module.require) {
+		if (module.require) {
 			require(module.require);
 		}
 		return module;
@@ -428,13 +428,13 @@ export class Yok implements IInjector {
 		let modulesNames: string[] = _.keys(this.modules);
 		let commandsNames: string[] = _.filter(modulesNames, moduleName => _.startsWith(moduleName, `${this.COMMANDS_NAMESPACE}.`));
 		let commands = _.map(commandsNames, (commandName: string) => commandName.substr(this.COMMANDS_NAMESPACE.length + 1));
-		if(!includeDev) {
+		if (!includeDev) {
 			commands = _.reject(commands, (command) => _.startsWith(command, "dev-"));
 		}
 		return commands;
 	}
 
-	public getChildrenCommandsNames(commandName: string): string[]{
+	public getChildrenCommandsNames(commandName: string): string[] {
 		return this.hierarchicalCommands[commandName];
 	}
 
@@ -445,7 +445,7 @@ export class Yok implements IInjector {
 	public dispose(): void {
 		Object.keys(this.modules).forEach((moduleName) => {
 			let instance = this.modules[moduleName].instance;
-			if(instance && instance.dispose && instance !== this) {
+			if (instance && instance.dispose && instance !== this) {
 				instance.dispose();
 			}
 		});

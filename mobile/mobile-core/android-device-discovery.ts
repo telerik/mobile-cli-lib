@@ -91,13 +91,11 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 
 			_(this._devices)
 				.reject(d => _.find(currentDevices, device => device.identifier === d.identifier && device.status === d.status))
-				.each(d => this.deleteAndRemoveDevice(d.identifier))
-				.value();
+				.each(d => this.deleteAndRemoveDevice(d.identifier));
 
 			_(currentDevices)
 				.reject(d => _.find(this._devices, device => device.identifier === d.identifier && device.status === d.status))
-				.each(d => this.createAndAddDevice(d))
-				.value();
+				.each(d => this.createAndAddDevice(d));
 		}).future<void>()();
 	}
 

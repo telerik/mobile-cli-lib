@@ -52,7 +52,7 @@ class CancellationService implements ICancellationService {
 	}
 
 	public dispose(): void {
-		_(this.watches).keys().each(name => this.end(name)).value();
+		_(this.watches).keys().each(name => this.end(name));
 	}
 
 	private static get killSwitchDir(): string {

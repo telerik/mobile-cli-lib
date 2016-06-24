@@ -30,7 +30,7 @@ export class CommandsService implements ICommandsService {
 
 	public allCommands(opts: { includeDevCommands: boolean }): string[] {
 		let commands = this.$injector.getRegisteredCommandsNames(opts.includeDevCommands);
-		return _.reject(commands, (command) => _.contains(command, '|'));
+		return _.reject(commands, (command) => _.includes(command, '|'));
 	}
 
 	public executeCommandUnchecked(commandName: string, commandArguments: string[]): IFuture<boolean> {
@@ -136,7 +136,7 @@ export class CommandsService implements ICommandsService {
 				this.$errors.fail("Unable to execute command '%s'. Use '$ %s %s --help' for help.", beautifiedName, this.$staticConfig.CLIENT_NAME.toLowerCase(), beautifiedName);
 				return false;
 			} else if (!isDynamicCommand && _.startsWith(commandName, this.$commandsServiceProvider.dynamicCommandsPrefix)) {
-				if (_.any(this.$commandsServiceProvider.getDynamicCommands().wait())) {
+				if (_.some(this.$commandsServiceProvider.getDynamicCommands().wait())) {
 					this.$commandsServiceProvider.generateDynamicCommands().wait();
 					return this.canExecuteCommand(commandName, commandArguments, true).wait();
 				}

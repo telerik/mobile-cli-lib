@@ -16,7 +16,7 @@ export class HelpCommand implements ICommand {
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
 			let topic = (args[0] || "").toLowerCase();
-			let hierarchicalCommand = this.$injector.buildHierarchicalCommand(args[0], _.rest(args));
+			let hierarchicalCommand = this.$injector.buildHierarchicalCommand(args[0], _.tail(args));
 			if(hierarchicalCommand) {
 				topic = hierarchicalCommand.commandName;
 			}
