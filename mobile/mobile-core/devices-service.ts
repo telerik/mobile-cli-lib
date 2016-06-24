@@ -247,7 +247,7 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	private getDevice(deviceOption: string): IFuture<Mobile.IDevice> {
 		return (() => {
-			this.startLookingForDevices().wait();
+			this.detectCurrentlyAttachedDevices().wait();
 			let device: Mobile.IDevice = null;
 
 			if (this.hasDevice(deviceOption)) {
