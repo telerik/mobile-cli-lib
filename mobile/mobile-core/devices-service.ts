@@ -156,12 +156,11 @@ export class DevicesService implements Mobile.IDevicesService {
 					}
 
 					this.deviceDetectionIntervalFuture = new Future<void>();
-					if (!this.$hostInfo.isDarwin) {
-						try {
-							this.$iOSDeviceDiscovery.checkForDevices().wait();
-						} catch (err) {
-							this.$logger.trace("Error while checking for new iOS devices.", err);
-						}
+
+					try {
+						this.$iOSDeviceDiscovery.checkForDevices().wait();
+					} catch (err) {
+						this.$logger.trace("Error while checking for new iOS devices.", err);
 					}
 
 					try {
