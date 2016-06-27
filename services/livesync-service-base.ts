@@ -174,21 +174,25 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 					}
 
 					// Not installed application
+					device.applicationManager.checkForApplicationUpdates().wait();
+
 					if (!device.applicationManager.isApplicationInstalled(appIdentifier).wait() && !this.$options.companion) {
 						this.$logger.warn(`The application with id "${appIdentifier}" is not installed on device with identifier ${device.deviceInfo.identifier}.`);
 						if (!packageFilePath) {
 							packageFilePath = this.$liveSyncProvider.buildForDevice(device).wait();
 						}
 						device.applicationManager.installApplication(packageFilePath).wait();
-						if (device.applicationManager.canStartApplication()) {
-							device.applicationManager.startApplication(appIdentifier).wait();
-						}
 
 						if (platformLiveSyncService.afterInstallApplicationAction) {
 							let localToDevicePaths = this.$projectFilesManager.createLocalToDevicePaths(deviceAppData, projectFilesPath, filesToSync, data.excludedProjectDirsAndFiles);
-							platformLiveSyncService.afterInstallApplicationAction(deviceAppData, localToDevicePaths).wait();
+							shouldRefreshApplication = platformLiveSyncService.afterInstallApplicationAction(deviceAppData, localToDevicePaths).wait();
+						} else {
+							shouldRefreshApplication = false;
 						}
-						shouldRefreshApplication = false;
+
+						if (device.applicationManager.canStartApplication() && !shouldRefreshApplication) {
+							device.applicationManager.startApplication(appIdentifier).wait();
+						}
 					}
 
 					// Restart application or reload page
