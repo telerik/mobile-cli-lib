@@ -44,7 +44,7 @@ export class ProjectFilesManager implements IProjectFilesManager {
 			_.each(contents, fileName => {
 				let filePath = path.join(directoryPath, fileName);
 				let fsStat = this.$fs.getFsStats(filePath).wait();
-				if (fsStat.isDirectory() && !_.contains(excludedDirs, fileName)) {
+				if (fsStat.isDirectory() && !_.includes(excludedDirs, fileName)) {
 					this.processPlatformSpecificFilesCore(platform, this.$fs.enumerateFilesInDirectorySync(filePath)).wait();
 				} else if (fsStat.isFile()) {
 					files.push(filePath);

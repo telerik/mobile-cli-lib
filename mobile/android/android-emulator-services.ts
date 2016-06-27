@@ -364,7 +364,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 			}
 
 			let buildProduct = this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.build.product"]).wait();
-			if (buildProduct && _.contains(buildProduct.toLowerCase(), "vbox")) {
+			if (buildProduct && _.includes(buildProduct.toLowerCase(), "vbox")) {
 				return true;
 			}
 
@@ -397,7 +397,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 
 			let best = _(this.getAvds().wait())
 				.map(avd => this.getInfoFromAvd(avd).wait())
-				.max(avd => avd.targetNum);
+				.maxBy(avd => avd.targetNum);
 
 			return (best.targetNum >= minVersion) ? best.name : null;
 		}).future<string>()();
@@ -494,7 +494,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 			let result: string[] = [];
 			if (this.$fs.exists(this.avdDir).wait()) {
 				let entries = this.$fs.readDirectory(this.avdDir).wait();
-				result = _.select(entries, (e: string) => e.match(AndroidEmulatorServices.INI_FILES_MASK) !== null)
+				result = _.filter(entries, (e: string) => e.match(AndroidEmulatorServices.INI_FILES_MASK) !== null)
 					.map((e) => e.match(AndroidEmulatorServices.INI_FILES_MASK)[1]);
 			}
 			return result;

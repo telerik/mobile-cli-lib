@@ -217,7 +217,7 @@ export class SysInfoBase implements ISysInfo {
 			try {
 				if(pathToAndroid) {
 					let androidChildProcess = this.$childProcess.spawnFromEvent(pathToAndroid, ["-h"], "close", {}, {throwError: false}).wait();
-					result = androidChildProcess && androidChildProcess.stdout && _.contains(androidChildProcess.stdout, "android");
+					result = androidChildProcess && androidChildProcess.stdout && _.includes(androidChildProcess.stdout, "android");
 				}
 			} catch(err) {
 				this.$logger.trace(`Error while checking is ${pathToAndroid} installed. Error is: ${err.messge}`);

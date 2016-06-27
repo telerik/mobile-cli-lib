@@ -50,7 +50,7 @@ export function isRequestSuccessful(request: Server.IRequestResponseData) {
 }
 
 export function isResponseRedirect(response: Server.IRequestResponseData) {
-	return _.contains([301, 302, 303, 307, 308], response.statusCode);
+	return _.includes([301, 302, 303, 307, 308], response.statusCode);
 }
 
 export function formatListOfNames(names: string[], conjunction = "or"): string {

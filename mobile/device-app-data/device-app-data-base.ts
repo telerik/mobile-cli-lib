@@ -16,7 +16,7 @@ export class CompanionDeviceAppDataBase extends DeviceAppDataBase {
 	public isLiveSyncSupported(device: Mobile.IDevice): IFuture<boolean> {
 		return (() => {
 			let applications = device.applicationManager.getInstalledApplications().wait();
-			return _.contains(applications, this.appIdentifier);
+			return _.includes(applications, this.appIdentifier);
 		}).future<boolean>()();
 	}
 }

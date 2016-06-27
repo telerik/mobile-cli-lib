@@ -28,7 +28,7 @@ export class Prompter implements IPrompter {
 
 				let future = new Future;
 				if (!helpers.isInteractive()) {
-					if (_.any(schemas, s => !s.default)) {
+					if (_.some(schemas, s => !s.default)) {
 						future.throw(new Error("Console is not interactive and no default action specified."));
 					} else {
 						let result: any = {};

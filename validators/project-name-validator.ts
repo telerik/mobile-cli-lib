@@ -27,10 +27,10 @@ export class ProjectNameValidator implements IProjectNameValidator {
 		if(!validNameRegex.test(name)) {
 			return new ValidationResult.ValidationResult(ProjectNameValidator.NOT_VALID_NAME_ERROR_MESSAGE);
 		}
-		if(_.contains(ProjectNameValidator.INVALID_FILENAMES, name.split(".")[0])) {
+		if(_.includes(ProjectNameValidator.INVALID_FILENAMES, name.split(".")[0])) {
 			return new ValidationResult.ValidationResult(ProjectNameValidator.RESERVED_NAME_ERROR_MESSAGE);
 		}
-		if(ext !== "" && _.contains(ProjectNameValidator.INVALID_EXTENSIONS, ext)) {
+		if(ext !== "" && _.includes(ProjectNameValidator.INVALID_EXTENSIONS, ext)) {
 			return new ValidationResult.ValidationResult(ProjectNameValidator.INVALID_EXTENSION_ERROR_MESSAGE);
 		}
 		if(name.length > ProjectNameValidator.MAX_FILENAME_LENGTH) {

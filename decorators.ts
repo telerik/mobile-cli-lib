@@ -6,14 +6,14 @@ import {isFuture} from "./helpers";
 export function exportedPromise(moduleName: string, action?: Function): any {
 	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> => {
 		$injector.publicApi.__modules__[moduleName] = $injector.publicApi.__modules__[moduleName] || {};
-		$injector.publicApi.__modules__[moduleName][propertyKey] = (...args: any[]): Promise<any>[] | Promise<any>=> {
+		$injector.publicApi.__modules__[moduleName][propertyKey] = (...args: any[]): Promise<any>[] | Promise<any> => {
 			let originalModule = $injector.resolve(moduleName);
 			let originalMethod: Function = originalModule[propertyKey];
 			let result: any;
 			try {
 				result = originalMethod.apply(originalModule, args);
-			} catch(err) {
-				let promise = new Promise(function(onFulfilled : Function, onRejected: Function) {
+			} catch (err) {
+				let promise = new Promise(function (onFulfilled: Function, onRejected: Function) {
 					onRejected(err);
 				});
 
@@ -21,14 +21,14 @@ export function exportedPromise(moduleName: string, action?: Function): any {
 			}
 
 			let types = _(result)
-						.groupBy(f => typeof f)
-						.keys()
-						.value();
+				.groupBy((f: any) => typeof f)
+				.keys()
+				.value();
 
 			let finalResult: any,
 				arrayResult: Promise<any>[];
 			// Check if method returns IFuture<T>[]. In this case we will return Promise<T>[]
-			if(_.isArray(result) && types.length === 1 && isFuture(_.first<any>(result))) {
+			if (_.isArray(result) && types.length === 1 && isFuture(_.first<any>(result))) {
 				finalResult = _.map(result, (future: IFuture<any>) => getPromise(future));
 				arrayResult = finalResult;
 			} else {
@@ -41,7 +41,7 @@ export function exportedPromise(moduleName: string, action?: Function): any {
 				_.each(arrayResult, (prom: Promise<any>) => {
 					prom.lastly(() => {
 						settledPromises++;
-						if(settledPromises === arrayResult.length) {
+						if (settledPromises === arrayResult.length) {
 							action.bind(originalModule)();
 						}
 					});
@@ -56,13 +56,13 @@ export function exportedPromise(moduleName: string, action?: Function): any {
 }
 
 function getPromise(originalValue: any): Promise<any> {
-	return new Promise(function(onFulfilled : Function, onRejected: Function) {
-		if(isFuture(originalValue)) {
+	return new Promise(function (onFulfilled: Function, onRejected: Function) {
+		if (isFuture(originalValue)) {
 			fiberBootstrap.run(function () {
 				try {
 					let realResult = originalValue.wait();
 					onFulfilled(realResult);
-				} catch(err) {
+				} catch (err) {
 					onRejected(err);
 				}
 			});
