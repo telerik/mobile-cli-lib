@@ -176,6 +176,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 					// Not installed application
 					device.applicationManager.checkForApplicationUpdates().wait();
 
+					let wasInstalled = true;
 					if (!device.applicationManager.isApplicationInstalled(appIdentifier).wait() && !this.$options.companion) {
 						this.$logger.warn(`The application with id "${appIdentifier}" is not installed on device with identifier ${device.deviceInfo.identifier}.`);
 						if (!packageFilePath) {
@@ -193,6 +194,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 						if (device.applicationManager.canStartApplication() && !shouldRefreshApplication) {
 							device.applicationManager.startApplication(appIdentifier).wait();
 						}
+						wasInstalled = false;
 					}
 
 					// Restart application or reload page
@@ -206,7 +208,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 						}
 
 						this.$logger.info("Applying changes...");
-						platformLiveSyncService.refreshApplication(deviceAppData, localToDevicePaths, data.forceExecuteFullSync).wait();
+						platformLiveSyncService.refreshApplication(deviceAppData, localToDevicePaths, data.forceExecuteFullSync || !wasInstalled).wait();
 						this.$logger.info(`Successfully synced application ${data.appIdentifier} on device ${device.deviceInfo.identifier}.`);
 					}
 				} else {
