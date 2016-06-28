@@ -548,7 +548,7 @@ interface IPlatformLiveSyncService {
 	 * Specifies some action that will be executed before every sync operation
 	 */
 	beforeLiveSyncAction?(deviceAppData: Mobile.IDeviceAppData): IFuture<void>;
-	afterInstallApplicationAction?(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void>;
+	afterInstallApplicationAction?(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<boolean>;
 }
 
 interface ISysInfoData {
