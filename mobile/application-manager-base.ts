@@ -37,7 +37,7 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 			// As this method is called on 500ms, but it's execution may last much longer
 			// use locking, so the next executions will not get into the body, while the first one is still working.
 			// In case we do not break the next executions, we'll report each app as newly installed several times.
-			if(!this.isChecking) {
+			if (!this.isChecking) {
 				try {
 					this.isChecking = true;
 					let currentlyInstalledAppIdentifiers = this.getInstalledApplications().wait();
@@ -63,7 +63,7 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 				if (this.isApplicationInstalled(appIdentifier).wait() && this.canStartApplication()) {
 					this.startApplication(appIdentifier, framework).wait();
 				}
-			} catch(err) {
+			} catch (err) {
 				this.$logger.trace(`Unable to start application ${appIdentifier}. Error is: ${err.message}`);
 			}
 		}).future<void>()();

@@ -189,7 +189,7 @@ declare module Mobile {
 		reinstallApplication(appIdentifier: string, packageFilePath: string): IFuture<void>;
 		startApplication(appIdentifier: string, framework?: string): IFuture<void>;
 		stopApplication(appIdentifier: string): IFuture<void>;
-		restartApplication(appIdentifier: string, bundleExecutable?: string, framework?: string): IFuture<void>
+		restartApplication(appIdentifier: string, bundleExecutable?: string, framework?: string): IFuture<void>;
 		canStartApplication(): boolean;
 		checkForApplicationUpdates(): IFuture<void>;
 		isLiveSyncSupported(appIdentifier: string): IFuture<boolean>;
