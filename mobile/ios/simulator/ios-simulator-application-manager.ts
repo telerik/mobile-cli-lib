@@ -10,8 +10,8 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		private $fs: IFileSystem,
 		private $bplistParser: IBinaryPlistParser,
 		$logger: ILogger) {
-			super($logger);
-		}
+		super($logger);
+	}
 
 	public getInstalledApplications(): IFuture<string[]> {
 		return Future.fromResult(this.iosSim.getInstalledApplications(this.identifier));
@@ -19,7 +19,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 
 	public installApplication(packageFilePath: string): IFuture<void> {
 		return (() => {
-			if(this.$fs.exists(packageFilePath).wait() && path.extname(packageFilePath) === ".zip") {
+			if (this.$fs.exists(packageFilePath).wait() && path.extname(packageFilePath) === ".zip") {
 				temp.track();
 				let dir = temp.mkdirSync("simulatorPackage");
 				this.$fs.unzip(packageFilePath, dir).wait();
@@ -59,12 +59,16 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		return ((): boolean => {
 			let applicationPath = this.iosSim.getApplicationPath(this.identifier, appIdentifier);
 			let pathToInfoPlist = path.join(applicationPath, "Info.plist");
-			if(this.$fs.exists(pathToInfoPlist).wait()) {
+			if (this.$fs.exists(pathToInfoPlist).wait()) {
 				let plistContent: any = this.$bplistParser.parseFile(pathToInfoPlist).wait()[0];
 				return !!plistContent && !!plistContent.IceniumLiveSyncEnabled;
 			}
 
 			return false;
 		}).future<boolean>()();
+	}
+
+	public getDebuggableApps(): IFuture<Mobile.IAndroidApplicationInformation[]> {
+		return Future.fromResult([]);
 	}
 }

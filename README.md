@@ -293,6 +293,40 @@ require("mobile-cli-lib").deviceEmitter.on("applicationInstalled",  function(ide
 });
 ```
 
+* `debuggableAppFound` - Raised when application on a device becomes available for debugging. The callback has one argument - `applicationInfo`. <br/><br/>
+Sample usage:
+```JavaScript
+require("mobile-cli-lib").deviceEmitter.on("debuggableAppFound",  function(applicationInfo) {
+	console.log("Application " + applicationInfo.appIdentifier  + " is available for debugging on device with id: " + applicationInfo.deviceIdentifier);
+});
+```
+Sample result for `applicationInfo` will be:
+```JSON
+{
+	"deviceIdentifier": "4df18f307d8a8f1b",
+	"appIdentifier": "com.telerik.Fitness",
+	"framework": "NativeScript",
+	"title": "NativeScript Application"
+}
+```
+
+* `debuggableAppLost` - Raised when application on a device is not available for debugging anymore. The callback has one argument - `applicationInfo`. <br/><br/>
+Sample usage:
+```JavaScript
+require("mobile-cli-lib").deviceEmitter.on("debuggableAppLost",  function(applicationInfo) {
+	console.log("Application " + applicationInfo.appIdentifier  + " is not available for debugging anymore on device with id: " + applicationInfo.deviceIdentifier);
+});
+```
+Sample result for `applicationInfo` will be:
+```JSON
+{
+	"deviceIdentifier": "4df18f307d8a8f1b",
+	"appIdentifier": "com.telerik.Fitness",
+	"framework": "NativeScript",
+	"title": "NativeScript Application"
+}
+```
+
 * `applicationUninstalled` - Raised when application is removed from device. The callback has two arguments - `deviceIdentifier` and `applicationIdentifier`. <br/><br/>
 Sample usage:
 ```JavaScript
@@ -463,16 +497,21 @@ require("mobile-cli-lib").devicesService.mapAbstractToTcpPort("4df18f307d8a8f1b"
 	});
 ```
 
-* `getDebuggableApps(deviceIdentifier: string): Promise<IAndroidApplicationInformation[]>` - This function checks the proc/net/unix file of the device for web views connected to abstract ports and returns information about the applications.
+* `getDebuggableApps(deviceIdentifiers: string[]): Promise<IAndroidApplicationInformation[]>[]` - This function checks the proc/net/unix file of each device from the deviceIdentifiers argument for web views connected to abstract ports and returns information about the applications.
 ```JavaScript
 /**
  * Describes basic information about Android application.
  */
 interface IAndroidApplicationInformation {
 	/**
-	 * The package identifier of the application.
+	 * The device identifier.
 	 */
-	packageId: string;
+	deviceIdentifier: string;
+
+	/**
+	 * The application identifier.
+	 */
+	appIdentifier: string;
 
 	/**
 	 * The framework of the project (Cordova or NativeScript).
@@ -488,10 +527,10 @@ interface IAndroidApplicationInformation {
 
 Sample usage:
 ```JavaScript
-require("mobile-cli-lib").devicesService.getApplicationsAvailableForDebugging("4df18f307d8a8f1b")
-	.then(function(applicationsInfo) {
-		applicationsInfo.forEach(function(applicationInfo) {
-			console.log(applicationInfo);
+Promise.all(require("mobile-cli-lib").devicesService.getDebuggableApps(["4df18f307d8a8f1b", "JJY5KBTW75TCHQUK"]))
+	.then(function(data) {
+		data.forEach(function(apps) {
+			console.log(apps);
 		});
 	}, function(err) {
 		console.log(err);
@@ -499,15 +538,22 @@ require("mobile-cli-lib").devicesService.getApplicationsAvailableForDebugging("4
 ```
 Sample result will be:
 ```JSON
-[{
-	"packageId": "com.telerik.Fitness",
+[[{
+	"deviceIdentifier": "4df18f307d8a8f1b",
+	"appIdentifier": "com.telerik.Fitness",
 	"framework": "NativeScript",
 	"title": "NativeScript Application"
 }, {
-	"packageId": "com.telerik.livesynctest",
+	"deviceIdentifier": "4df18f307d8a8f1b",
+	"appIdentifier": "com.telerik.livesynctest",
 	"framework": "Cordova",
 	"title": "Home View"
-}]
+}], [{
+	"deviceIdentifier": "JJY5KBTW75TCHQUK",
+	"appIdentifier": "com.telerik.PhotoAlbum",
+	"framework": "NativeScript",
+	"title": "NativeScript Application"
+}]]
 ```
 
 ### Module liveSyncService

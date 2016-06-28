@@ -1,6 +1,6 @@
 import {EOL} from "os";
 import {DeviceAndroidDebugBridge} from "../android/device-android-debug-bridge";
-import { TARGET_FRAMEWORK_IDENTIFIERS } from "../constants";
+import {TARGET_FRAMEWORK_IDENTIFIERS} from "../constants";
 
 export class AndroidProcessService implements Mobile.IAndroidProcessService {
 	private _devicesAdbs: IDictionary<Mobile.IDeviceAndroidDebugBridge>;
@@ -92,7 +92,8 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 
 			if (cordovaAppIdentifier) {
 				return {
-					packageId: cordovaAppIdentifier,
+					deviceIdentifier: deviceIdentifier,
+					appIdentifier: cordovaAppIdentifier,
 					framework: TARGET_FRAMEWORK_IDENTIFIERS.Cordova,
 					title: this.getPageTitleFromWebView(adb, deviceIdentifier, cordovaAppIdentifier).wait()
 				};
@@ -105,7 +106,8 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 			if (nativeScriptAppIdentifierMatches && nativeScriptAppIdentifierMatches.length > 0) {
 				let appIdentifier = nativeScriptAppIdentifierMatches[1];
 				return {
-					packageId: appIdentifier,
+					deviceIdentifier: deviceIdentifier,
+					appIdentifier: appIdentifier,
 					framework: TARGET_FRAMEWORK_IDENTIFIERS.NativeScript,
 					title: "NativeScript Application"
 				};

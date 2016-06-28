@@ -2,6 +2,7 @@ import { EventEmitter } from "events";
 
 export abstract class ApplicationManagerBase extends EventEmitter implements Mobile.IDeviceApplicationManager {
 	private lastInstalledAppIdentifiers: string[];
+	private lastAvailableDebuggableApps: Mobile.IAndroidApplicationInformation[];
 
 	constructor(protected $logger: ILogger) {
 		super();
@@ -50,6 +51,8 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 
 					_.each(newAppIdentifiers, appIdentifier => this.emit("applicationInstalled", appIdentifier));
 					_.each(removedAppIdentifiers, appIdentifier => this.emit("applicationUninstalled", appIdentifier));
+
+					this.checkForAvailableDebuggableAppsChanges().wait();
 				} finally {
 					this.isChecking = false;
 				}
@@ -77,4 +80,20 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 	public abstract stopApplication(appIdentifier: string): IFuture<void>;
 	public abstract getInstalledApplications(): IFuture<string[]>;
 	public abstract canStartApplication(): boolean;
+	public abstract getDebuggableApps(): IFuture<Mobile.IAndroidApplicationInformation[]>;
+
+	private checkForAvailableDebuggableAppsChanges(): IFuture<void> {
+		return (() => {
+			let currentlyAvailableDebuggableApps = this.getDebuggableApps().wait();
+			let previouslyAvailableDebuggableApps = this.lastAvailableDebuggableApps || [];
+
+			let newAvailableDebuggableApps = _.differenceBy(currentlyAvailableDebuggableApps, previouslyAvailableDebuggableApps, "packageId");
+			let notAvailableAppsForDebugging = _.differenceBy(previouslyAvailableDebuggableApps, currentlyAvailableDebuggableApps, "packageId");
+
+			this.lastAvailableDebuggableApps = currentlyAvailableDebuggableApps;
+
+			_.each(newAvailableDebuggableApps, (appInfo: Mobile.IAndroidApplicationInformation) => this.emit("debuggableAppFound", appInfo));
+			_.each(notAvailableAppsForDebugging, (appInfo: Mobile.IAndroidApplicationInformation) => this.emit("debuggableAppLost", appInfo));
+		}).future<void>()();
+	}
 }

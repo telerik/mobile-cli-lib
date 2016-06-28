@@ -194,6 +194,7 @@ declare module Mobile {
 		checkForApplicationUpdates(): IFuture<void>;
 		isLiveSyncSupported(appIdentifier: string): IFuture<boolean>;
 		tryStartApplication(appIdentifier: string, framework?: string): IFuture<void>;
+		getDebuggableApps(): IFuture<Mobile.IAndroidApplicationInformation[]>;
 	}
 
 	interface IApplicationLiveSyncStatus {
@@ -642,9 +643,14 @@ declare module Mobile {
 	 */
 	interface IAndroidApplicationInformation {
 		/**
-		 * The package identifier of the application.
+		 * The device identifier.
 		 */
-		packageId: string;
+		deviceIdentifier: string;
+
+		/**
+		 * The application identifier.
+		 */
+		appIdentifier: string;
 
 		/**
 		 * The framework of the project (Cordova or NativeScript).
