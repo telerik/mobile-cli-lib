@@ -66,7 +66,12 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 		return (() => {
 			let oldShasums = this.getShasumsFromDevice().wait();
 			if (oldShasums) {
-				_.each(localToDevicePaths, ldp => oldShasums[ldp.getLocalPath()] = this.$fs.getFileShasum(ldp.getLocalPath()).wait());
+				_.each(localToDevicePaths, ldp => {
+					let localPath = ldp.getLocalPath();
+					if (this.$fs.getFsStats(localPath).wait().isFile()) {
+						oldShasums[localPath] = this.$fs.getFileShasum(localPath).wait();
+					}
+				});
 				this.uploadHashFileToDevice(oldShasums).wait();
 				return true;
 			}
