@@ -1,7 +1,7 @@
 import { EventEmitter } from "events";
 
 class DeviceEmitter extends EventEmitter {
-	constructor(private $androidDeviceDiscovery:Mobile.IAndroidDeviceDiscovery,
+	constructor(private $androidDeviceDiscovery: Mobile.IAndroidDeviceDiscovery,
 		private $iOSDeviceDiscovery: Mobile.IDeviceDiscovery,
 		private $iOSSimulatorDiscovery: Mobile.IDeviceDiscovery,
 		private $devicesService: Mobile.IDevicesService,
@@ -14,7 +14,7 @@ class DeviceEmitter extends EventEmitter {
 
 	private _companionAppIdentifiers: IDictionary<IStringDictionary>;
 	private get companionAppIdentifiers(): IDictionary<IStringDictionary> {
-		if(!this._companionAppIdentifiers) {
+		if (!this._companionAppIdentifiers) {
 			this._companionAppIdentifiers = this.$companionAppsService.getAllCompanionAppIdentifiers();
 		}
 
@@ -54,7 +54,7 @@ class DeviceEmitter extends EventEmitter {
 				this.emit("deviceLost", device.deviceInfo);
 			});
 
-			this.$devicesService.initialize({skipInferPlatform: true}).wait();
+			this.$devicesService.initialize({ skipInferPlatform: true }).wait();
 
 			this.$deviceLogProvider.on("data", (identifier: string, data: any) => {
 				this.emit('deviceLogData', identifier, data.toString());
@@ -72,12 +72,20 @@ class DeviceEmitter extends EventEmitter {
 			this.emit("applicationUninstalled", device.deviceInfo.identifier, appIdentifier);
 			this.checkCompanionAppChanged(device, appIdentifier, "companionAppUninstalled");
 		});
+
+		device.applicationManager.on("debuggableAppFound", (appIdentifier: string) => {
+			this.emit("debuggableAppFound", appIdentifier);
+		});
+
+		device.applicationManager.on("debuggableAppLost", (appIdentifier: string) => {
+			this.emit("debuggableAppLost", appIdentifier);
+		});
 	}
 
 	private checkCompanionAppChanged(device: Mobile.IDevice, applicationName: string, eventName: string): void {
 		let devicePlatform = device.deviceInfo.platform.toLowerCase();
 		_.each(this.companionAppIdentifiers, (platformsCompanionAppIdentifiers: IStringDictionary, framework: string) => {
-			if(applicationName === platformsCompanionAppIdentifiers[devicePlatform]) {
+			if (applicationName === platformsCompanionAppIdentifiers[devicePlatform]) {
 				this.emit(eventName, device.deviceInfo.identifier, framework);
 				// break each
 				return false;

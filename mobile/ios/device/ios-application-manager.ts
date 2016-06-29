@@ -1,9 +1,10 @@
-import {ApplicationManagerBase} from "../../application-manager-base";
 import * as net from "net";
 import * as ref from "ref";
 import * as os from "os";
-import {CoreTypes, GDBServer} from "./ios-core";
 import * as iOSProxyServices from "./ios-proxy-services";
+import {ApplicationManagerBase} from "../../application-manager-base";
+import {CoreTypes, GDBServer} from "./ios-core";
+import Future = require("fibers/future");
 
 export class IOSApplicationManager extends ApplicationManagerBase {
 	private uninstallApplicationCallbackPtr: NodeBuffer = null;
@@ -22,9 +23,9 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		private $staticConfig: Config.IStaticConfig,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $options: ICommonOptions) {
-			super($logger);
-			this.uninstallApplicationCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSApplicationManager.uninstallCallback);
-		}
+		super($logger);
+		this.uninstallApplicationCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSApplicationManager.uninstallCallback);
+	}
 
 	private static uninstallCallback(dictionary: NodeBuffer, user: NodeBuffer): void { /* intentionally empty body */ }
 
@@ -32,12 +33,12 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		return this.$injector.resolve(iOSProxyServices.InstallationProxyClient, { device: this.device });
 	}
 
-	public getInstalledApplications():  IFuture<string[]> {
+	public getInstalledApplications(): IFuture<string[]> {
 		return (() => {
 			return _(this.getApplicationsLiveSyncSupportedStatus().wait())
-					.map(appLiveSyncStatus => appLiveSyncStatus.applicationIdentifier)
-					.sortBy((identifier: string) => identifier.toLowerCase())
-					.value();
+				.map(appLiveSyncStatus => appLiveSyncStatus.applicationIdentifier)
+				.sortBy((identifier: string) => identifier.toLowerCase())
+				.value();
 		}).future<string[]>()();
 	}
 
@@ -57,14 +58,15 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 			let installationProxy = this.getInstallationProxy();
 			try {
 				let result = installationProxy.sendMessage({
-						"Command": "Browse",
-						"ClientOptions": {
-							"ApplicationType": "User",
-							"ReturnAttributes": [
-								"CFBundleIdentifier",
-								"IceniumLiveSyncEnabled"
-							]}
-					}).wait();
+					"Command": "Browse",
+					"ClientOptions": {
+						"ApplicationType": "User",
+						"ReturnAttributes": [
+							"CFBundleIdentifier",
+							"IceniumLiveSyncEnabled"
+						]
+					}
+				}).wait();
 
 				/*
 					Sample Result:
@@ -137,7 +139,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 				this.$logger.trace("Result when getting applications for which LiveSync is enabled: ", JSON.stringify(result, null, 2));
 				this.applicationsLiveSyncStatus = [];
 				_.each(result, (singleResult: any) => {
-					let currentList = _.map(singleResult.CurrentList, (app: any) => ({applicationIdentifier: app.CFBundleIdentifier, isLiveSyncSupported: app.IceniumLiveSyncEnabled }));
+					let currentList = _.map(singleResult.CurrentList, (app: any) => ({ applicationIdentifier: app.CFBundleIdentifier, isLiveSyncSupported: app.IceniumLiveSyncEnabled }));
 					this.applicationsLiveSyncStatus = this.applicationsLiveSyncStatus.concat(currentList);
 				});
 
@@ -160,10 +162,10 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 			let afc = this.device.startService(iOSProxyServices.MobileServices.INSTALLATION_PROXY);
 			try {
 				let result = this.$mobileDevice.deviceUninstallApplication(afc, this.$coreFoundation.createCFString(appIdentifier), null, this.uninstallApplicationCallbackPtr);
-				if(result) {
+				if (result) {
 					this.$errors.failWithoutHelp("AMDeviceUninstallApplication returned '%d'.", result);
 				}
-			} catch(e) {
+			} catch (e) {
 				this.$logger.trace(`Error while uninstalling application ${e}.`);
 			}
 
@@ -173,7 +175,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 
 	public startApplication(appIdentifier: string): IFuture<void> {
 		return (() => {
-			if(this.$hostInfo.isWindows && !this.$staticConfig.enableDeviceRunCommandOnWindows) {
+			if (this.$hostInfo.isWindows && !this.$staticConfig.enableDeviceRunCommandOnWindows) {
 				this.$errors.fail("$%s device run command is not supported on Windows for iOS devices.", this.$staticConfig.CLIENT_NAME.toLowerCase());
 			}
 
@@ -181,7 +183,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 			this.device.mountImage().wait();
 
 			this.runApplicationCore(appIdentifier).wait();
-			this.$logger.info(`Successfully run application ${appIdentifier} on device with ID ${ this.device.deviceInfo.identifier}.`);
+			this.$logger.info(`Successfully run application ${appIdentifier} on device with ID ${this.device.deviceInfo.identifier}.`);
 		}).future<void>()();
 	}
 
@@ -202,11 +204,16 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		return this.$hostInfo.isDarwin || (this.$hostInfo.isWindows && this.$staticConfig.enableDeviceRunCommandOnWindows);
 	}
 
+	public getDebuggableApps(): IFuture<Mobile.IAndroidApplicationInformation[]> {
+		// Implement when we can find debuggable applications for iOS.
+		return Future.fromResult([]);
+	}
+
 	private lookupApplications(): IDictionary<Mobile.IDeviceApplication> {
 		let func = () => {
 			let dictionaryPointer = ref.alloc(CoreTypes.cfDictionaryRef);
 			let result = this.$mobileDevice.deviceLookupApplications(this.devicePointer, 0, dictionaryPointer);
-			if(result) {
+			if (result) {
 				this.$errors.fail("Invalid result code %s from device lookup applications.", result);
 			}
 			let cfDictionary = dictionaryPointer.deref();
@@ -220,7 +227,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	private validateApplicationId(appIdentifier: string): Mobile.IDeviceApplication {
 		let applications = this.lookupApplications();
 		let application = applications[appIdentifier];
-		if(!application) {
+		if (!application) {
 			let sortedKeys = _.sortBy(_.keys(applications));
 			this.$errors.failWithoutHelp("Invalid application id: %s. All available application ids are: %s%s ", appIdentifier, os.EOL, sortedKeys.join(os.EOL));
 		}
@@ -240,9 +247,9 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	}
 
 	private createGdbServer(): Mobile.IGDBServer {
-		if(!this._gdbServer) {
+		if (!this._gdbServer) {
 			let service = this.device.startService(iOSProxyServices.MobileServices.DEBUG_SERVER);
-			let socket = this.$hostInfo.isWindows ? service :  new net.Socket({ fd: service });
+			let socket = this.$hostInfo.isWindows ? service : new net.Socket({ fd: service });
 			this._gdbServer = this.$injector.resolve(GDBServer, { socket: socket });
 		}
 		return this._gdbServer;

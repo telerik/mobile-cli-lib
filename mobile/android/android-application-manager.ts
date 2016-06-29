@@ -9,6 +9,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		private $staticConfig: Config.IStaticConfig,
 		private $options: ICommonOptions,
 		private $logcatHelper: Mobile.ILogcatHelper,
+		private $androidProcessService: Mobile.IAndroidProcessService,
 		$logger: ILogger) {
 		super($logger);
 	}
@@ -70,6 +71,10 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 			let liveSyncVersion = this.adb.sendBroadcastToDevice(LiveSyncConstants.CHECK_LIVESYNC_INTENT_NAME, { "app-id": appIdentifier }).wait();
 			return liveSyncVersion === LiveSyncConstants.VERSION_2 || liveSyncVersion === LiveSyncConstants.VERSION_3;
 		}).future<boolean>()();
+	}
+
+	public getDebuggableApps(): IFuture<Mobile.IAndroidApplicationInformation[]> {
+		return this.$androidProcessService.getDebuggableApps(this.identifier);
 	}
 
 	private getStartPackageActivity(framework?: string): string {
