@@ -4,3 +4,6 @@ coverage
 .tscache
 test-reports.xml
 *.tgz
+.vscode
+.npmignore
+
