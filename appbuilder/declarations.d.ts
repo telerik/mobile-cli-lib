@@ -201,17 +201,7 @@ interface IDeviceLiveSyncInfo {
 /**
  * Describes if LiveSync is supported for specific device and application.
  */
-interface ILiveSyncSupportedInfo {
-	/**
-	 * Unique identifier of the device.
-	 */
-	deviceIdentifier: string;
-
-	/**
-	 * Application identifier.
-	 */
-	appIdentifier: string;
-
+interface ILiveSyncSupportedInfo extends Mobile.IDeviceApplicationInformationBase {
 	/**
 	 * Result, indicating is livesync supported for specified device and specified application.
 	 * `true` in case livesync is supported and false otherwise.
