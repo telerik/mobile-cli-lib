@@ -194,7 +194,7 @@ declare module Mobile {
 		checkForApplicationUpdates(): IFuture<void>;
 		isLiveSyncSupported(appIdentifier: string): IFuture<boolean>;
 		tryStartApplication(appIdentifier: string, framework?: string): IFuture<void>;
-		getDebuggableApps(): IFuture<Mobile.IAndroidApplicationInformation[]>;
+		getDebuggableApps(): IFuture<Mobile.IDeviceApplicationInformation[]>;
 	}
 
 	interface IApplicationLiveSyncStatus {
@@ -287,9 +287,9 @@ declare module Mobile {
 		/**
 		 * Gets the applications which are available for debugging on the specified device.
 		 * @param deviceIdentifier The identifier of the device.
-		 * @return {Mobile.IAndroidApplicationInformation[]} Returns array of applications information for the applications which are available for debugging.
+		 * @return {Mobile.IDeviceApplicationInformation[]} Returns array of applications information for the applications which are available for debugging.
 		 */
-		getDebuggableApps(deviceIdentifier: string): IFuture<Mobile.IAndroidApplicationInformation[]>;
+		getDebuggableApps(deviceIdentifier: string): IFuture<Mobile.IDeviceApplicationInformation[]>;
 	}
 
 	interface IiTunesValidator {
@@ -639,9 +639,9 @@ declare module Mobile {
 	}
 
 	/**
-	 * Describes basic information about Android application.
+	 * Describes basic information about application on device.
 	 */
-	interface IAndroidApplicationInformation {
+	interface IDeviceApplicationInformationBase {
 		/**
 		 * The device identifier.
 		 */
@@ -651,15 +651,15 @@ declare module Mobile {
 		 * The application identifier.
 		 */
 		appIdentifier: string;
+	}
 
+	/**
+	 * Describes information about application on device.
+	 */
+	interface IDeviceApplicationInformation extends IDeviceApplicationInformationBase {
 		/**
 		 * The framework of the project (Cordova or NativeScript).
 		 */
 		framework: string;
-
-		/**
-		 * The title of the current html view which is loaded in the Android WebView. For NativeScript applications the title cannot be acquired.
-		 */
-		title?: string;
 	}
 }

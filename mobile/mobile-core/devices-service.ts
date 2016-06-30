@@ -411,15 +411,15 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	@exportedPromise("devicesService")
-	public getDebuggableApps(deviceIdentifiers: string[]): IFuture<Mobile.IAndroidApplicationInformation[]>[] {
+	public getDebuggableApps(deviceIdentifiers: string[]): IFuture<Mobile.IDeviceApplicationInformation[]>[] {
 		return _.map(deviceIdentifiers, (deviceIdentifier: string) => this.getDebuggableAppsCore(deviceIdentifier));
 	}
 
-	private getDebuggableAppsCore(deviceIdentifier: string): IFuture<Mobile.IAndroidApplicationInformation[]> {
-		return ((): Mobile.IAndroidApplicationInformation[] => {
+	private getDebuggableAppsCore(deviceIdentifier: string): IFuture<Mobile.IDeviceApplicationInformation[]> {
+		return ((): Mobile.IDeviceApplicationInformation[] => {
 			let device = this.getDeviceByIdentifier(deviceIdentifier);
 			return device.applicationManager.getDebuggableApps().wait();
-		}).future<Mobile.IAndroidApplicationInformation[]>()();
+		}).future<Mobile.IDeviceApplicationInformation[]>()();
 	}
 
 	private deployOnDevice(deviceIdentifier: string, packageFile: string, packageName: string, framework: string): IFuture<void> {

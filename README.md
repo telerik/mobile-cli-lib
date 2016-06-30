@@ -497,12 +497,12 @@ require("mobile-cli-lib").devicesService.mapAbstractToTcpPort("4df18f307d8a8f1b"
 	});
 ```
 
-* `getDebuggableApps(deviceIdentifiers: string[]): Promise<IAndroidApplicationInformation[]>[]` - This function checks the proc/net/unix file of each device from the deviceIdentifiers argument for web views connected to abstract ports and returns information about the applications.
+* `getDebuggableApps(deviceIdentifiers: string[]): Promise<IDeviceApplicationInformation[]>[]` - This function checks the proc/net/unix file of each device from the deviceIdentifiers argument for web views connected to abstract ports and returns information about the applications.
 ```JavaScript
 /**
- * Describes basic information about Android application.
+ * Describes basic information about application on device.
  */
-interface IAndroidApplicationInformation {
+interface IDeviceApplicationInformation {
 	/**
 	 * The device identifier.
 	 */
@@ -517,11 +517,6 @@ interface IAndroidApplicationInformation {
 	 * The framework of the project (Cordova or NativeScript).
 	 */
 	framework: string;
-
-	/**
-	 * The title of the current html view which is loaded in the Android WebView. For NativeScript applications the title cannot be acquired.
-	 */
-	title?: string;
 }
 ```
 
@@ -541,18 +536,15 @@ Sample result will be:
 [[{
 	"deviceIdentifier": "4df18f307d8a8f1b",
 	"appIdentifier": "com.telerik.Fitness",
-	"framework": "NativeScript",
-	"title": "NativeScript Application"
+	"framework": "NativeScript"
 }, {
 	"deviceIdentifier": "4df18f307d8a8f1b",
 	"appIdentifier": "com.telerik.livesynctest",
-	"framework": "Cordova",
-	"title": "Home View"
+	"framework": "Cordova"
 }], [{
 	"deviceIdentifier": "JJY5KBTW75TCHQUK",
 	"appIdentifier": "com.telerik.PhotoAlbum",
-	"framework": "NativeScript",
-	"title": "NativeScript Application"
+	"framework": "NativeScript"
 }]]
 ```
 
