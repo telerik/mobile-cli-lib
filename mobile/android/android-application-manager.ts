@@ -73,7 +73,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		}).future<boolean>()();
 	}
 
-	public getDebuggableApps(): IFuture<Mobile.IAndroidApplicationInformation[]> {
+	public getDebuggableApps(): IFuture<Mobile.IDeviceApplicationInformation[]> {
 		return this.$androidProcessService.getDebuggableApps(this.identifier);
 	}
 

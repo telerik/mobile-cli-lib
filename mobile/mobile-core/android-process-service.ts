@@ -53,19 +53,19 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 		}).future<string>()();
 	}
 
-	public getDebuggableApps(deviceIdentifier: string): IFuture<Mobile.IAndroidApplicationInformation[]> {
-		return ((): Mobile.IAndroidApplicationInformation[] => {
+	public getDebuggableApps(deviceIdentifier: string): IFuture<Mobile.IDeviceApplicationInformation[]> {
+		return ((): Mobile.IDeviceApplicationInformation[] => {
 			let adb = this.getAdb(deviceIdentifier);
 			let androidWebViewPortInformation = (<string>this.getAbstractPortsInformation(adb).wait()).split(EOL);
 
 			return androidWebViewPortInformation
 				.map((line: string) => this.getApplicationInfoFromWebViewPortInformation(adb, deviceIdentifier, line).wait())
-				.filter((appIdentifier: Mobile.IAndroidApplicationInformation) => !!appIdentifier);
-		}).future<Mobile.IAndroidApplicationInformation[]>()();
+				.filter((appIdentifier: Mobile.IDeviceApplicationInformation) => !!appIdentifier);
+		}).future<Mobile.IDeviceApplicationInformation[]>()();
 	}
 
-	private getApplicationInfoFromWebViewPortInformation(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, information: string): IFuture<Mobile.IAndroidApplicationInformation> {
-		return ((): Mobile.IAndroidApplicationInformation => {
+	private getApplicationInfoFromWebViewPortInformation(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, information: string): IFuture<Mobile.IDeviceApplicationInformation> {
+		return ((): Mobile.IDeviceApplicationInformation => {
 			// Need to search by processId to check for old Android webviews (@webview_devtools_remote_<processId>).
 			let processIdRegExp = /@webview_devtools_remote_(.+)/g;
 			let processIdMatches = processIdRegExp.exec(information);
@@ -94,8 +94,7 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 				return {
 					deviceIdentifier: deviceIdentifier,
 					appIdentifier: cordovaAppIdentifier,
-					framework: TARGET_FRAMEWORK_IDENTIFIERS.Cordova,
-					title: this.getPageTitleFromWebView(adb, deviceIdentifier, cordovaAppIdentifier).wait()
+					framework: TARGET_FRAMEWORK_IDENTIFIERS.Cordova
 				};
 			}
 
@@ -108,34 +107,12 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 				return {
 					deviceIdentifier: deviceIdentifier,
 					appIdentifier: appIdentifier,
-					framework: TARGET_FRAMEWORK_IDENTIFIERS.NativeScript,
-					title: "NativeScript Application"
+					framework: TARGET_FRAMEWORK_IDENTIFIERS.NativeScript
 				};
 			}
 
 			return null;
-		}).future<Mobile.IAndroidApplicationInformation>()();
-	}
-
-	private getPageTitleFromWebView(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, appIdentifier: string): IFuture<string> {
-		return ((): string => {
-			let tcpPort = this.mapAbstractToTcpPort(deviceIdentifier, appIdentifier).wait();
-
-			// The /json is important because without it the response will be html with message to use chrome://inspect to debug the application.
-			let response = this.$httpClient.httpRequest(`http://localhost:${tcpPort}/json`).wait().body;
-
-			// Remove the port forward because we do not need it anymore.
-			adb.executeCommand(["forward", "--remove", `tcp:${tcpPort}`]).wait();
-
-			if (response) {
-				response = JSON.parse(response);
-				let responseItem = response[0];
-
-				return responseItem && responseItem.title;
-			}
-
-			return null;
-		}).future<string>()();
+		}).future<Mobile.IDeviceApplicationInformation>()();
 	}
 
 	private getAbstractPortForApplication(adb: Mobile.IDeviceAndroidDebugBridge, processId: string, appIdentifier: string): IFuture<string> {

@@ -68,7 +68,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		}).future<boolean>()();
 	}
 
-	public getDebuggableApps(): IFuture<Mobile.IAndroidApplicationInformation[]> {
+	public getDebuggableApps(): IFuture<Mobile.IDeviceApplicationInformation[]> {
 		return Future.fromResult([]);
 	}
 }
