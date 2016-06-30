@@ -1,6 +1,6 @@
 import {EOL} from "os";
 import {DeviceAndroidDebugBridge} from "../android/device-android-debug-bridge";
-import {TARGET_FRAMEWORK_IDENTIFIERS} from "../constants";
+import {TARGET_FRAMEWORK_IDENTIFIERS} from "../../constants";
 
 export class AndroidProcessService implements Mobile.IAndroidProcessService {
 	private _devicesAdbs: IDictionary<Mobile.IDeviceAndroidDebugBridge>;

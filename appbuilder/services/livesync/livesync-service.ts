@@ -33,7 +33,7 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 		return _.map(deviceDescriptors, deviceDescriptor => this.liveSyncOnDevice(deviceDescriptor, filePaths, { isForDeletedFiles: true}));
 	}
 
-	private liveSyncOnDevice(deviceDescriptor: IDeviceLiveSyncInfo, filePaths: string[], liveSyncOptions?: { isForDeletedFiles: boolean }): IFuture<IDeviceLiveSyncResult> {
+	private liveSyncOnDevice(deviceDescriptor: IDeviceLiveSyncInfo, filePaths: string[], liveSyncOptions?: ILiveSyncDeletionOptions): IFuture<IDeviceLiveSyncResult> {
 		return ((): IDeviceLiveSyncResult => {
 			let isForDeletedFiles = liveSyncOptions && liveSyncOptions.isForDeletedFiles;
 
@@ -97,7 +97,7 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 		}).future<IDeviceLiveSyncResult>()();
 	}
 
-	private liveSyncCore(livesyncData: ILiveSyncData, device: Mobile.IDevice, appIdentifier: string, canExecuteAction: (dev: Mobile.IDevice) => boolean, liveSyncOptions: { isForCompanionApp: boolean, isForDeletedFiles?: boolean }, filePaths: string[]): IFuture<ILiveSyncOperationResult> {
+	private liveSyncCore(livesyncData: ILiveSyncData, device: Mobile.IDevice, appIdentifier: string, canExecuteAction: (dev: Mobile.IDevice) => boolean, liveSyncOptions: ILiveSyncOptions, filePaths: string[]): IFuture<ILiveSyncOperationResult> {
 		return (() => {
 			let liveSyncOperationResult: ILiveSyncOperationResult = {
 				isResolved: false

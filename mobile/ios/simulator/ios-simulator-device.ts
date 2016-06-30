@@ -1,6 +1,6 @@
 import * as applicationManagerPath from "./ios-simulator-application-manager";
 import * as fileSystemPath from "./ios-simulator-file-system";
-import * as constants from "../../constants";
+import * as constants from "../../../constants";
 
 export class IOSSimulator implements Mobile.IiOSSimulator {
 	private _applicationManager: Mobile.IDeviceApplicationManager;
@@ -28,6 +28,10 @@ export class IOSSimulator implements Mobile.IiOSSimulator {
 
 	public get isEmulator(): boolean {
 		return true;
+	}
+
+	public getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo> {
+		return this.applicationManager.getApplicationInfo(applicationIdentifier);
 	}
 
 	public get applicationManager(): Mobile.IDeviceApplicationManager {

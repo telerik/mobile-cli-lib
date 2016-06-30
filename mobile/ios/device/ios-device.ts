@@ -6,7 +6,7 @@ import {CoreTypes, PlistService} from "./ios-core";
 import * as iOSProxyServices from "./ios-proxy-services";
 import * as applicationManagerPath from "./ios-application-manager";
 import * as fileSystemPath from "./ios-device-file-system";
-import * as constants from "../../constants";
+import * as constants from "../../../constants";
 
 export class IOSDevice implements Mobile.IiOSDevice {
 	// iOS errors are described here with HEX representation
@@ -87,6 +87,10 @@ export class IOSDevice implements Mobile.IiOSDevice {
 
 	public get isEmulator(): boolean {
 		return false;
+	}
+
+	public getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo> {
+		return this.applicationManager.getApplicationInfo(applicationIdentifier);
 	}
 
 	private static mountImageCallback(dictionary: NodeBuffer, user: NodeBuffer): void {

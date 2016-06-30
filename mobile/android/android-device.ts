@@ -1,7 +1,7 @@
 import {DeviceAndroidDebugBridge} from "./device-android-debug-bridge";
 import * as applicationManagerPath from "./android-application-manager";
 import * as fileSystemPath from "./android-device-file-system";
-import * as constants from "../constants";
+import * as constants from "../../constants";
 
 interface IAndroidDeviceDetails {
 	model: string;
@@ -63,7 +63,6 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		this.adb = this.$injector.resolve(DeviceAndroidDebugBridge, { identifier: this.identifier });
 		this.applicationManager = this.$injector.resolve(applicationManagerPath.AndroidApplicationManager, { adb: this.adb, identifier: this.identifier });
 		this.fileSystem = this.$injector.resolve(fileSystemPath.AndroidDeviceFileSystem, { adb: this.adb, identifier: this.identifier });
-
 		let details: IAndroidDeviceDetails;
 		try {
 			details = this.getDeviceDetails(["getprop"]).wait();
@@ -98,6 +97,24 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 
 	public get isEmulator(): boolean {
 		return this.deviceInfo.type === "Emulator";
+	}
+
+	public getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo> {
+		return ((): Mobile.IApplicationInfo => {
+			let files = this.fileSystem.listFiles(constants.LiveSyncConstants.ANDROID_FILES_PATH, applicationIdentifier).wait(),
+				androidFilesMatch = files.match(/(\S+)\.abproject/),
+				result: Mobile.IApplicationInfo = null;
+
+			if (androidFilesMatch && androidFilesMatch[1]) {
+				result = {
+					deviceIdentifier: this.deviceInfo.identifier,
+					configuration: androidFilesMatch[1],
+					applicationIdentifier
+				};
+			}
+
+			return result;
+		}).future<Mobile.IApplicationInfo>()();
 	}
 
 	public openDeviceLogStream(): void {

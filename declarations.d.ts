@@ -492,10 +492,10 @@ interface ILiveSyncServiceBase {
 	 * @param {ILiveSyncData} data LiveSync data describing the LiveSync operation.
 	 * @param {string[]} filesToSync Files that have to be synced.
 	 * @param {Function} deviceFilesAction Custom action that has to be executed instead of just copying the files.
-	 * @param {any} liveSyncOptions Defines if the LiveSync operation is for Companion app.
+	 * @param {ILiveSyncOptions} liveSyncOptions Additional options for LiveSyncing
 	 * @return {Function} Function that returns IFuture<void>.
 	 */
-	getSyncAction(data: ILiveSyncData, filesToSync?: string[], deviceFilesAction?: (device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>, liveSyncOptions?: { isForCompanionApp: boolean }): (device: Mobile.IDevice) => IFuture<void>;
+	getSyncAction(data: ILiveSyncData, filesToSync: string[], deviceFilesAction: (device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>, liveSyncOptions: ILiveSyncOptions): (device: Mobile.IDevice) => IFuture<void>;
 
 	/**
 	 * Gets LiveSync action that should be executed per device when files should be deleted.
@@ -503,6 +503,28 @@ interface ILiveSyncServiceBase {
 	 * @return {Function} Function that returns IFuture<void>.
 	 */
 	getSyncRemovedFilesAction(data: ILiveSyncData): (device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>;
+}
+
+/**
+ * Describes deletion options for a LiveSync operation
+ */
+interface ILiveSyncDeletionOptions {
+	/**
+	 * Defines if the LiveSync operation is for file deletion instead of addition.
+	 * @type {boolean}
+	 */
+	isForDeletedFiles: boolean
+}
+
+/**
+ * Describes additional options for LiveSyncing
+ */
+interface ILiveSyncOptions extends IProjectFilesConfig, ILiveSyncDeletionOptions {
+	/**
+	 * Defines if the LiveSync operation is for Companion app.
+	 * @type {boolean}
+	 */
+	isForCompanionApp: boolean
 }
 
 interface ISyncBatch {
@@ -526,6 +548,10 @@ interface ILiveSyncData {
 	/** The path to a directory that is watched */
 	syncWorkingDirectory: string;
 	forceExecuteFullSync?: boolean;
+	/** Additional configurations for which to get the information. The basic configurations are `debug` and `release`. */
+	additionalConfigurations?: string[];
+	/** Configurations for which to get the information. */
+	configuration?: string;
 	excludedProjectDirsAndFiles?: string[];
 	/**
 	 * Describes if the livesync action can be executed on specified device.
@@ -671,6 +697,11 @@ interface ICommonOptions {
 	options: IDictionary<any>;
 	shorthands: string[];
 
+
+	/**
+	 * Project Configuration
+	 */
+	config: string[];
 	log: string;
 	verbose: boolean;
 	path: string;
@@ -706,6 +737,7 @@ interface ICommonOptions {
 	release: boolean;
 	count: number;
 	hooks: boolean;
+	debug: boolean;
 }
 
 interface IYargArgv extends IDictionary<any> {
@@ -1025,7 +1057,7 @@ interface IProjectFilesManager {
 	 * Returns an object that maps every local file path to device file path
 	 * If projectFiles parameter is not specified enumerates the files from the specified projectFilesPath
 	 */
-	createLocalToDevicePaths(deviceAppData: Mobile.IDeviceAppData, projectFilesPath: string, files?: string[], excludedProjectDirsAndFiles?: string[]): Mobile.ILocalToDevicePathData[];
+	createLocalToDevicePaths(deviceAppData: Mobile.IDeviceAppData, projectFilesPath: string, files: string[], excludedProjectDirsAndFiles: string[], projectFilesConfig?: IProjectFilesConfig): Mobile.ILocalToDevicePathData[];
 	/**
 	 * Handle platform specific files
 	 */
@@ -1045,16 +1077,33 @@ interface IProjectFilesProvider {
 	/**
 	 * Returns information about file in the project, that includes file's name on device after removing platform or configuration from the name.
 	 * @param {string} filePath Path to the project file.
-	 * @param {string} optional Platform for which to get the information.
+	 * @param  {string} platform platform for which to get the information.
+	 * @param  {IProjectFilesConfig} projectFilesConfig configuration for additional parsing
 	 * @return {IProjectFileInfo}
 	 */
-	getProjectFileInfo(filePath: string, platform?: string): IProjectFileInfo;
+	getProjectFileInfo(filePath: string, platform: string, projectFilesConfig?: IProjectFilesConfig): IProjectFileInfo;
 	/**
 	 * Parses file by removing platform or configuration from its name.
 	 * @param {string} filePath Path to the project file.
 	 * @return {string} Parsed file name or original file name in case it does not have platform/configuration in the filename.
 	 */
 	getPreparedFilePath(filePath: string): string;
+}
+
+/**
+ * Describes configuration for additional parsing.
+ */
+interface IProjectFilesConfig {
+	/**
+	 * additional configurations for which to get the information. The basic configurations are `debug` and `release`.
+	 * @type {string[]}
+	 */
+	additionalConfigurations?: string[];
+	/**
+	 * configuration for which to get information.
+	 * @type {string}
+	 */
+	configuration?: string;
 }
 
 interface ILiveSyncProvider {

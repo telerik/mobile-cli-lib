@@ -5,7 +5,7 @@ import { EventEmitter } from "events";
 import { assert } from "chai";
 import { CommonLoggerStub, ErrorsStub } from "../stubs";
 import { Messages } from "../../../messages/messages";
-import * as constants from "../../../mobile/constants";
+import * as constants from "../../../constants";
 import { DevicePlatformsConstants } from "../../../mobile/device-platforms-constants";
 
 class IOSDeviceDiscoveryStub extends EventEmitter {

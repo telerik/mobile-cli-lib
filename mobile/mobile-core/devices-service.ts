@@ -2,7 +2,7 @@ import * as util from "util";
 import Future = require("fibers/future");
 import * as helpers from "../../helpers";
 import * as assert from "assert";
-import * as constants from "../constants";
+import * as constants from "../../constants";
 import * as fiberBootstrap from "../../fiber-bootstrap";
 import {exportedPromise, exported} from "../../decorators";
 
