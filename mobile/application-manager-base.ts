@@ -2,7 +2,7 @@ import { EventEmitter } from "events";
 
 export abstract class ApplicationManagerBase extends EventEmitter implements Mobile.IDeviceApplicationManager {
 	private lastInstalledAppIdentifiers: string[];
-	private lastAvailableDebuggableApps: Mobile.IAndroidApplicationInformation[];
+	private lastAvailableDebuggableApps: Mobile.IDeviceApplicationInformation[];
 
 	constructor(protected $logger: ILogger) {
 		super();
@@ -81,7 +81,7 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 	public abstract getInstalledApplications(): IFuture<string[]>;
 	public abstract getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo>;
 	public abstract canStartApplication(): boolean;
-	public abstract getDebuggableApps(): IFuture<Mobile.IAndroidApplicationInformation[]>;
+	public abstract getDebuggableApps(): IFuture<Mobile.IDeviceApplicationInformation[]>;
 
 	private checkForAvailableDebuggableAppsChanges(): IFuture<void> {
 		return (() => {
@@ -93,8 +93,8 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 
 			this.lastAvailableDebuggableApps = currentlyAvailableDebuggableApps;
 
-			_.each(newAvailableDebuggableApps, (appInfo: Mobile.IAndroidApplicationInformation) => this.emit("debuggableAppFound", appInfo));
-			_.each(notAvailableAppsForDebugging, (appInfo: Mobile.IAndroidApplicationInformation) => this.emit("debuggableAppLost", appInfo));
+			_.each(newAvailableDebuggableApps, (appInfo: Mobile.IDeviceApplicationInformation) => this.emit("debuggableAppFound", appInfo));
+			_.each(notAvailableAppsForDebugging, (appInfo: Mobile.IDeviceApplicationInformation) => this.emit("debuggableAppLost", appInfo));
 		}).future<void>()();
 	}
 }

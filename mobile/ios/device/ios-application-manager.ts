@@ -226,7 +226,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		return this.$hostInfo.isDarwin || (this.$hostInfo.isWindows && this.$staticConfig.enableDeviceRunCommandOnWindows);
 	}
 
-	public getDebuggableApps(): IFuture<Mobile.IAndroidApplicationInformation[]> {
+	public getDebuggableApps(): IFuture<Mobile.IDeviceApplicationInformation[]> {
 		// Implement when we can find debuggable applications for iOS.
 		return Future.fromResult([]);
 	}
