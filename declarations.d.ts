@@ -476,7 +476,7 @@ interface ILiveSyncServiceBase {
 	 * If watch option is not specified executes full sync
 	 * If watch option is specified executes partial sync
 	 */
-	sync(data: ILiveSyncData, filePaths?: string[]): IFuture<void>;
+	sync(data: ILiveSyncData[], filePaths?: string[]): IFuture<void>;
 
 	/**
 	 * Returns the `canExecute` method which defines if LiveSync operation can be executed on specified device.
@@ -527,6 +527,11 @@ interface ILiveSyncOptions extends IProjectFilesConfig, ILiveSyncDeletionOptions
 	isForCompanionApp: boolean
 }
 
+interface ISyncBatchFile {
+	data: ILiveSyncData;
+	filePath: string;
+}
+
 interface ISyncBatch {
 	/**
 	 * Checks if there is a pending sync
@@ -535,8 +540,8 @@ interface ISyncBatch {
 	/**
 	 * Adds the file to the sync queue. All files from the queue will be pushed on the device after 250ms.
 	 */
-	addFile(filePath: string): void;
-	syncFiles(syncAction: (filesToSync: string[]) => IFuture<void>): IFuture<void>;
+	addFile(file: ISyncBatchFile): void;
+	syncFiles(syncAction: (filesToSync: ISyncBatchFile[]) => IFuture<void>): IFuture<void>;
 }
 
 interface ILiveSyncData {

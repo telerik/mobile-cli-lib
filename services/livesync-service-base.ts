@@ -37,13 +37,12 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		}).future<string>()();
 	}
 
-	public sync(data: ILiveSyncData, filePaths?: string[]): IFuture<void> {
+	public sync(data: ILiveSyncData[], filePaths?: string[]): IFuture<void> {
 		return (() => {
 			this.syncCore(data, filePaths).wait();
-
 			if (this.$options.watch) {
 				this.$hooksService.executeBeforeHooks('watch').wait();
-				this.partialSync(data);
+				this.partialSync(data, data[0].syncWorkingDirectory);
 			}
 		}).future<void>()();
 	}
@@ -60,21 +59,17 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		return isFileExcluded;
 	}
 
-	private partialSync(data: ILiveSyncData): void {
+	private partialSync(data: ILiveSyncData[], syncWorkingDirectory: string): void {
 		let that = this;
 		this.showFullLiveSyncInformation = true;
-		gaze("**/*", { cwd: data.syncWorkingDirectory }, function (err: any, watcher: any) {
+		gaze("**/*", { cwd: syncWorkingDirectory }, function (err: any, watcher: any) {
 			this.on('all', (event: string, filePath: string) => {
 				fiberBootstrap.run(() => {
 					that.$dispatcher.dispatch(() => (() => {
 						try {
+
 							if (filePath.indexOf(constants.APP_RESOURCES_FOLDER_NAME) !== -1) {
 								that.$logger.warn(`Skipping livesync for changed file ${filePath}. This change requires a full build to update your application. `.yellow.bold);
-								return;
-							}
-
-							if (that.isFileExcluded(filePath, data.excludedProjectDirsAndFiles)) {
-								that.$logger.trace(`Skipping livesync for changed file ${filePath} as it is excluded in the patterns: ${data.excludedProjectDirsAndFiles.join(", ")}`);
 								return;
 							}
 
@@ -87,18 +82,24 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 							that.$logger.trace(`Adding ${filePath} file with ${fileHash} hash.`);
 							that.fileHashes[filePath] = fileHash;
 
-							let mappedFilePath = that.$projectFilesProvider.mapFilePath(filePath, data.platform);
-							that.$logger.trace(`Syncing filePath ${filePath}, mappedFilePath is ${mappedFilePath}`);
-							if (!mappedFilePath) {
-								that.$logger.warn(`Unable to sync ${filePath}.`);
-								return;
-							}
+							for (let dataItem of data) {
+								if (that.isFileExcluded(filePath, dataItem.excludedProjectDirsAndFiles)) {
+									that.$logger.trace(`Skipping livesync for changed file ${filePath} as it is excluded in the patterns: ${dataItem.excludedProjectDirsAndFiles.join(", ")}`);
+									continue;
+								}
+								let mappedFilePath = that.$projectFilesProvider.mapFilePath(filePath, dataItem.platform);
+								that.$logger.trace(`Syncing filePath ${filePath}, mappedFilePath is ${mappedFilePath}`);
+								if (!mappedFilePath) {
+									that.$logger.warn(`Unable to sync ${filePath}.`);
+									continue;
+								}
 
-							if (event === "added" || event === "changed" || event === "renamed") {
-								that.batchSync(data, mappedFilePath);
-							} else if (event === "deleted") {
-								that.fileHashes = <any>(_.omit(that.fileHashes, filePath));
-								that.syncRemovedFile(data, mappedFilePath).wait();
+								if (event === "added" || event === "changed" || event === "renamed") {
+									that.batchSync(dataItem, mappedFilePath);
+								} else if (event === "deleted") {
+									that.fileHashes = <any>(_.omit(that.fileHashes, filePath));
+									that.syncRemovedFile(dataItem, mappedFilePath).wait();
+								}
 							}
 						} catch (err) {
 							that.$logger.info(`Unable to sync file ${filePath}. Error is:${err.message}`.red.bold);
@@ -122,8 +123,12 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 						fiberBootstrap.run(() => {
 							this.$dispatcher.dispatch(() => (() => {
 								try {
-									this.$liveSyncProvider.preparePlatformForSync(data.platform).wait();
-									this.batch.syncFiles(filesToSync => this.syncCore(data, filesToSync)).wait();
+									this.batch.syncFiles(((filesToSync:ISyncBatchFile[]) => {
+										for (let fileInfo of filesToSync) {
+											this.$liveSyncProvider.preparePlatformForSync(fileInfo.data.platform).wait();
+											this.syncCore([fileInfo.data], [fileInfo.filePath]);
+										}
+									}).future<void>());
 								} catch (err) {
 									this.$logger.warn(`Unable to sync files. Error is:`, err.message);
 								}
@@ -136,7 +141,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 			this.batch = this.$injector.resolve(syncBatchLib.SyncBatch, { done: done });
 		}
 
-		this.batch.addFile(filePath);
+		this.batch.addFile({ data: data, filePath: filePath });
 	}
 
 	private syncRemovedFile(data: ILiveSyncData, filePath: string): IFuture<void> {
@@ -144,7 +149,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 			let filePathArray = [filePath],
 				deviceFilesAction = this.getSyncRemovedFilesAction(data);
 
-			this.syncCore(data, filePathArray, deviceFilesAction).wait();
+			this.syncCore([data], filePathArray, deviceFilesAction).wait();
 		}).future<void>()();
 	}
 
@@ -220,15 +225,15 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		return action;
 	}
 
-	private syncCore(data: ILiveSyncData, filesToSync: string[], deviceFilesAction?: (device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>): IFuture<void> {
+	private syncCore(data: ILiveSyncData[], filesToSync: string[], deviceFilesAction?: (device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>): IFuture<void> {
 		return (() => {
-			let appIdentifier = data.appIdentifier;
-			let platform = data.platform;
-
-			let canExecute = this.getCanExecuteAction(platform, appIdentifier, data.canExecute);
-			let action = this.getSyncAction(data, filesToSync, deviceFilesAction, { isForCompanionApp: this.$options.companion, additionalConfigurations: data.additionalConfigurations, configuration: data.configuration, isForDeletedFiles: false });
-
-			this.$devicesService.execute(action, canExecute).wait();
+			for (let dataItem of data) {
+				let appIdentifier = dataItem.appIdentifier;
+				let platform = dataItem.platform;
+				let canExecute = this.getCanExecuteAction(platform, appIdentifier, dataItem.canExecute);
+				let action = this.getSyncAction(dataItem, filesToSync, deviceFilesAction, { isForCompanionApp: this.$options.companion, additionalConfigurations: dataItem.additionalConfigurations, configuration: dataItem.configuration, isForDeletedFiles: false });
+				this.$devicesService.execute(action, canExecute).wait();
+			}
 		}).future<void>()();
 	}
 

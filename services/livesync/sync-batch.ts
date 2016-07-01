@@ -5,15 +5,15 @@ export const SYNC_WAIT_THRESHOLD = 250; //milliseconds
 
 export class SyncBatch {
 	private timer: NodeJS.Timer = null;
-	private syncQueue: string[] = [];
+	private syncQueue: ISyncBatchFile[] = [];
 	private syncInProgress: boolean = false;
 
 	constructor(private $logger: ILogger,
 		private $projectFilesManager: IProjectFilesManager,
 		private done: () => IFuture<void>) { }
 
-	private get filesToSync(): string[] {
-		let filteredFiles = this.syncQueue.filter(syncFilePath => !this.$projectFilesManager.isFileExcluded(syncFilePath));
+	private get filesToSync(): ISyncBatchFile[] {
+		let filteredFiles = this.syncQueue.filter(syncFile => !this.$projectFilesManager.isFileExcluded(syncFile.filePath));
 		return filteredFiles;
 	}
 
@@ -21,7 +21,7 @@ export class SyncBatch {
 		return this.syncQueue.length > 0;
 	}
 
-	public syncFiles(syncAction: (filesToSync: string[]) => IFuture<void>): IFuture<void> {
+	public syncFiles(syncAction: (filesToSync: ISyncBatchFile[]) => IFuture<void>): IFuture<void> {
 		return (() => {
 			if (this.filesToSync.length > 0) {
 				syncAction(this.filesToSync).wait();
@@ -30,13 +30,13 @@ export class SyncBatch {
 		}).future<void>()();
 	}
 
-	public addFile(filePath: string): void {
+	public addFile(file: ISyncBatchFile): void {
 		if (this.timer) {
 			clearTimeout(this.timer);
 			this.timer = null;
 		}
 
-		this.syncQueue.push(filePath);
+		this.syncQueue.push(file);
 
 		if (!this.syncInProgress) {
 			this.timer = setTimeout(() => {
