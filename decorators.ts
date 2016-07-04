@@ -3,7 +3,7 @@ import * as fiberBootstrap from "./fiber-bootstrap";
 import * as assert from "assert";
 import {isFuture} from "./helpers";
 
-export function exportedPromise(moduleName: string, action?: Function): any {
+export function exportedPromise(moduleName: string, postAction?: () => void): any {
 	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> => {
 		$injector.publicApi.__modules__[moduleName] = $injector.publicApi.__modules__[moduleName] || {};
 		$injector.publicApi.__modules__[moduleName][propertyKey] = (...args: any[]): Promise<any>[] | Promise<any> => {
@@ -13,7 +13,7 @@ export function exportedPromise(moduleName: string, action?: Function): any {
 			try {
 				result = originalMethod.apply(originalModule, args);
 			} catch (err) {
-				let promise = new Promise(function (onFulfilled: Function, onRejected: Function) {
+				let promise = new Promise((onFulfilled: Function, onRejected: Function) => {
 					onRejected(err);
 				});
 
@@ -23,40 +23,31 @@ export function exportedPromise(moduleName: string, action?: Function): any {
 			let types = _(result)
 				.groupBy((f: any) => typeof f)
 				.keys()
-				.value();
+				.value(),
+				postActionMethod = postAction && postAction.bind(originalModule);
 
-			let finalResult: any,
-				arrayResult: Promise<any>[];
 			// Check if method returns IFuture<T>[]. In this case we will return Promise<T>[]
 			if (_.isArray(result) && types.length === 1 && isFuture(_.first<any>(result))) {
-				finalResult = _.map(result, (future: IFuture<any>) => getPromise(future));
-				arrayResult = finalResult;
+				return _.map(result, (future: IFuture<any>, index: number) => getPromise(future,
+					{
+						postActionMethod,
+						shouldExecutePostAction: (index + 1) === result.length
+					}));
 			} else {
-				finalResult = getPromise(result);
-				arrayResult = [finalResult];
-			}
-
-			if (action) {
-				let settledPromises = 0;
-				_.each(arrayResult, (prom: Promise<any>) => {
-					prom.lastly(() => {
-						settledPromises++;
-						if (settledPromises === arrayResult.length) {
-							action.bind(originalModule)();
-						}
+				return getPromise(result,
+					{
+						postActionMethod,
+						shouldExecutePostAction: !!postAction
 					});
-				});
 			}
-
-			return finalResult;
 		};
 
 		return descriptor;
 	};
 }
 
-function getPromise(originalValue: any): Promise<any> {
-	return new Promise(function (onFulfilled: Function, onRejected: Function) {
+function getPromise(originalValue: any, config?: { postActionMethod: () => void, shouldExecutePostAction?: boolean }): Promise<any> {
+	return new Promise((onFulfilled: Function, onRejected: Function) => {
 		if (isFuture(originalValue)) {
 			fiberBootstrap.run(function () {
 				try {
@@ -69,6 +60,10 @@ function getPromise(originalValue: any): Promise<any> {
 		} else {
 			onFulfilled(originalValue);
 		}
+	}).lastly(() => {
+		if (config && config.postActionMethod && config.shouldExecutePostAction) {
+			config.postActionMethod();
+		}
 	});
 }
 
@@ -76,9 +71,10 @@ export function exported(moduleName: string): any {
 	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> => {
 		$injector.publicApi.__modules__[moduleName] = $injector.publicApi.__modules__[moduleName] || {};
 		$injector.publicApi.__modules__[moduleName][propertyKey] = (...args: any[]): any => {
-			let originalModule = $injector.resolve(moduleName);
-			let originalMethod: any = target[propertyKey];
-			let result = originalMethod.apply(originalModule, args);
+			let originalModule = $injector.resolve(moduleName),
+				originalMethod: any = originalModule[propertyKey],
+				result = originalMethod.apply(originalModule, args);
+
 			assert.strictEqual(isFuture(result), false, "Cannot use exported decorator with function returning IFuture<T>.");
 			return result;
 		};
