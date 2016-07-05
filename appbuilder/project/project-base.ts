@@ -7,10 +7,12 @@ export abstract class ProjectBase implements Project.IProjectBase {
 	private static VALID_CONFIGURATION_CHARACTERS_REGEX = "[-_A-Za-z0-9]";
 	private static CONFIGURATION_FROM_FILE_NAME_REGEX = new RegExp(`^[.](${ProjectBase.VALID_CONFIGURATION_CHARACTERS_REGEX}+?)[.]abproject$`, "i");
 
-	private _hasBuildConfigurations = false;
+	public configurationSpecificData: IDictionary<Project.IData>;
+
 	protected _shouldSaveProject = false;
 	protected _projectData: Project.IData;
-	public configurationSpecificData: IDictionary<Project.IData>;
+
+	private _hasBuildConfigurations = false;
 
 	constructor(protected $cordovaProjectCapabilities: Project.ICapabilities,
 		protected $errors: IErrors,
@@ -20,7 +22,6 @@ export abstract class ProjectBase implements Project.IProjectBase {
 		protected $options: ICommonOptions,
 		protected $projectConstants: Project.IConstants,
 		protected $staticConfig: Config.IStaticConfig) {
-
 		this.configurationSpecificData = Object.create(null);
 	}
 
@@ -49,10 +50,10 @@ export abstract class ProjectBase implements Project.IProjectBase {
 
 	public get capabilities(): Project.ICapabilities {
 		let projectData = this.projectData;
-		if(projectData) {
-			if(projectData.Framework && projectData.Framework.toLowerCase() === TARGET_FRAMEWORK_IDENTIFIERS.NativeScript.toLowerCase()) {
+		if (projectData) {
+			if (projectData.Framework && projectData.Framework.toLowerCase() === TARGET_FRAMEWORK_IDENTIFIERS.NativeScript.toLowerCase()) {
 				return this.$nativeScriptProjectCapabilities;
-			} else if(projectData.Framework && projectData.Framework.toLowerCase() === TARGET_FRAMEWORK_IDENTIFIERS.Cordova.toLowerCase()) {
+			} else if (projectData.Framework && projectData.Framework.toLowerCase() === TARGET_FRAMEWORK_IDENTIFIERS.Cordova.toLowerCase()) {
 				return this.$cordovaProjectCapabilities;
 			}
 		}
@@ -82,25 +83,24 @@ export abstract class ProjectBase implements Project.IProjectBase {
 		return (() => {
 			let projectDir = this.getProjectDir().wait();
 			this.setShouldSaveProject(false);
-			if(projectDir) {
+			if (projectDir) {
 				let projectFilePath = path.join(projectDir, this.$projectConstants.PROJECT_FILE);
 				try {
 					this.projectData = this.getProjectData(projectFilePath);
 					this.validate();
-
 					let debugProjectFile = path.join(projectDir, this.$projectConstants.DEBUG_PROJECT_FILE_NAME);
-					if(this.$options.debug && !this.$fs.exists(debugProjectFile).wait()) {
+					if (this.$options.debug && !this.$fs.exists(debugProjectFile).wait()) {
 						this.$fs.writeJson(debugProjectFile, {}).wait();
 					}
 
 					let releaseProjectFile = path.join(projectDir, this.$projectConstants.RELEASE_PROJECT_FILE_NAME);
-					if(this.$options.release && !this.$fs.exists(releaseProjectFile).wait()) {
+					if (this.$options.release && !this.$fs.exists(releaseProjectFile).wait()) {
 						this.$fs.writeJson(releaseProjectFile, {}).wait();
 					}
 
 					_.each(this.$fs.enumerateFilesInDirectorySync(projectDir), (configProjectFile: string) => {
 						let configMatch = path.basename(configProjectFile).match(ProjectBase.CONFIGURATION_FROM_FILE_NAME_REGEX);
-						if(configMatch && configMatch.length > 1) {
+						if (configMatch && configMatch.length > 1) {
 							let configurationName = configMatch[1];
 							let configProjectContent = this.$fs.readJson(configProjectFile).wait(),
 								configurationLowerCase = configurationName.toLowerCase();
@@ -108,8 +108,8 @@ export abstract class ProjectBase implements Project.IProjectBase {
 							this._hasBuildConfigurations = true;
 						}
 					});
-				} catch(err) {
-					if(err.message === "FUTURE_PROJECT_VER") {
+				} catch (err) {
+					if (err.message === "FUTURE_PROJECT_VER") {
 						this.$errors.failWithoutHelp("This project is created by a newer version of AppBuilder. Upgrade AppBuilder CLI to work with it.");
 					}
 
@@ -126,12 +126,12 @@ export abstract class ProjectBase implements Project.IProjectBase {
 
 	private getProjectData(projectFilePath: string): Project.IData {
 		let data = this.$fs.readJson(projectFilePath).wait();
-		if(data.projectVersion && data.projectVersion.toString() !== "1") {
+		if (data.projectVersion && data.projectVersion.toString() !== "1") {
 			this.$errors.fail("FUTURE_PROJECT_VER");
 		}
 
-		if(!_.has(data, "Framework")) {
-			if(_.has(data, "projectType")) {
+		if (!_.has(data, "Framework")) {
+			if (_.has(data, "projectType")) {
 				data["Framework"] = data["projectType"];
 				delete data["projectType"];
 			} else {

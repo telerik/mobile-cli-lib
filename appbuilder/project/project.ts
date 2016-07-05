@@ -12,10 +12,10 @@ export class Project extends ProjectBase {
 		protected $options: ICommonOptions,
 		protected $projectConstants: Project.IConstants,
 		protected $staticConfig: Config.IStaticConfig) {
-			super($cordovaProjectCapabilities, $errors, $fs, $logger, $nativeScriptProjectCapabilities, $options, $projectConstants, $staticConfig);
-		}
+		super($cordovaProjectCapabilities, $errors, $fs, $logger, $nativeScriptProjectCapabilities, $options, $projectConstants, $staticConfig);
+	}
 
-	protected validate(): void { /* Currently unused */}
-	protected saveProjectIfNeeded(): void { /* Currently unused */}
+	protected validate(): void { /* Currently unused */ }
+	protected saveProjectIfNeeded(): void { /* Currently unused */ }
 }
 $injector.register("project", Project);
