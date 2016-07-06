@@ -11,7 +11,6 @@ export abstract class ProjectBase implements Project.IProjectBase {
 	protected _shouldSaveProject = false;
 	protected _projectData: Project.IData;
 	public configurationSpecificData: IDictionary<Project.IData>;
-	public configurationSpecificKeys: IDictionary<string[]>;
 
 	constructor(protected $cordovaProjectCapabilities: Project.ICapabilities,
 		protected $errors: IErrors,
@@ -23,7 +22,6 @@ export abstract class ProjectBase implements Project.IProjectBase {
 		protected $staticConfig: Config.IStaticConfig) {
 
 		this.configurationSpecificData = Object.create(null);
-		this.configurationSpecificKeys = Object.create(null);
 	}
 
 	// This property is purposely written as two separate methods so that only get/set can be overriden
@@ -106,7 +104,6 @@ export abstract class ProjectBase implements Project.IProjectBase {
 							let configurationName = configMatch[1];
 							let configProjectContent = this.$fs.readJson(configProjectFile).wait(),
 								configurationLowerCase = configurationName.toLowerCase();
-							this.configurationSpecificKeys[configurationLowerCase] = _.keys(configProjectContent);
 							this.configurationSpecificData[configurationLowerCase] = <any>_.merge(_.cloneDeep(this.projectData), configProjectContent);
 							this._hasBuildConfigurations = true;
 						}
