@@ -217,7 +217,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 						this.$logger.info(`Successfully synced application ${data.appIdentifier} on device ${device.deviceInfo.identifier}.`);
 					}
 				} else {
-					throw new Error(`LiveSync is not supported for application: ${deviceAppData.appIdentifier} on device with identifier ${device.deviceInfo.identifier}.`);
+					this.$logger.warn(`LiveSync is not supported for application: ${deviceAppData.appIdentifier} on device with identifier ${device.deviceInfo.identifier}.`);
 				}
 			}).future<void>()();
 		};
