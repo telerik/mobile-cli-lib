@@ -300,6 +300,7 @@ declare module Mobile {
 		getDeviceByIdentifier(identifier: string): Mobile.IDevice;
 		mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string): IFuture<string>;
 		detectCurrentlyAttachedDevices(): IFuture<void>;
+		startEmulator(platform?: string): IFuture<void>; 
 	}
 
 	/**

@@ -446,30 +446,33 @@ export class DevicesService implements Mobile.IDevicesService {
 		}
 	}
 
-	private resolveEmulatorServices(): Mobile.IEmulatorPlatformServices {
-		if (this.$mobileHelper.isiOSPlatform(this._platform) && this.$hostInfo.isDarwin) {
+	private resolveEmulatorServices(platform?: string): Mobile.IEmulatorPlatformServices {
+		platform = platform || this._platform;
+		if (this.$mobileHelper.isiOSPlatform(platform) && this.$hostInfo.isDarwin) {
 			return this.$injector.resolve("iOSEmulatorServices");
-		} else if (this.$mobileHelper.isAndroidPlatform(this._platform)) {
+		} else if (this.$mobileHelper.isAndroidPlatform(platform)) {
 			return this.$injector.resolve("androidEmulatorServices");
 		}
 
 		return null;
 	}
 
-	private startEmulator(): IFuture<void> {
+	public startEmulator(platform?: string): IFuture<void> {
 		return (() => {
-			let emulatorServices = this.resolveEmulatorServices();
+
+			platform = platform || this._platform;
+
+			let emulatorServices = this.resolveEmulatorServices(platform);
 			if (!emulatorServices) {
 				this.$errors.failWithoutHelp("Unable to detect platform for which to start emulator.");
 			}
 			emulatorServices.startEmulator().wait();
 
-			if (this.$mobileHelper.isAndroidPlatform(this._platform)) {
+			if (this.$mobileHelper.isAndroidPlatform(platform)) {
 				this.$androidDeviceDiscovery.startLookingForDevices().wait();
-			} else if (this.$mobileHelper.isiOSPlatform(this._platform) && this.$hostInfo.isDarwin) {
+			} else if (this.$mobileHelper.isiOSPlatform(platform) && this.$hostInfo.isDarwin) {
 				this.$iOSSimulatorDiscovery.startLookingForDevices().wait();
 			}
-
 		}).future<void>()();
 	}
 
