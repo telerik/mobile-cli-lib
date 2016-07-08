@@ -24,7 +24,6 @@ $injector.require("commandsService", "./services/commands-service");
 $injector.require("messagesService", "./services/messages-service");
 
 $injector.require("cancellation", "./services/cancellation");
-$injector.require("analyticsService", "./services/analytics-service");
 $injector.require("hooksService", "./services/hooks-service");
 
 $injector.require("httpClient", "./http-client");

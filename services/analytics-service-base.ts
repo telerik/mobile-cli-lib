@@ -6,23 +6,24 @@ global.XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 global.XMLHttpRequest.prototype.withCredentials = false;
 // HACK -end
 
-export class AnalyticsService implements IAnalyticsService {
+export class AnalyticsServiceBase implements IAnalyticsService {
 	private static MAX_WAIT_SENDING_INTERVAL = 30000; // in milliseconds
 	private _eqatecMonitor: any;
 	private analyticsStatuses: IDictionary<AnalyticsStatus> = {};
 	private isAnalyticsStatusesInitialized = false;
-	private get acceptTrackFeatureSetting(): string {
-		return `Accept${this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME}`;
-	}
 
-	constructor(private $staticConfig: Config.IStaticConfig,
-		private $logger: ILogger,
+	constructor(protected $logger: ILogger,
+		protected $options: ICommonOptions,
+		private $staticConfig: Config.IStaticConfig,
 		private $errors: IErrors,
 		private $prompter: IPrompter,
 		private $userSettingsService: UserSettings.IUserSettingsService,
 		private $analyticsSettingsService: IAnalyticsSettingsService,
-		private $options: ICommonOptions,
 		private $progressIndicator: IProgressIndicator) { }
+
+	protected get acceptTrackFeatureSetting(): string {
+		return `Accept${this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME}`;
+	}
 
 	public checkConsent(): IFuture<void> {
 		return ((): void => {
@@ -40,11 +41,8 @@ export class AnalyticsService implements IAnalyticsService {
 						// In case user selects to disable feature tracking, disable the exceptions reporting as well.
 						this.setStatus(this.$staticConfig.ERROR_REPORT_SETTING_NAME, trackFeatureUsage, true).wait();
 					}
-					this.restartEqatecMonitor(this.$staticConfig.ANALYTICS_FEATURE_USAGE_TRACKING_API_KEY).wait();
-					this.trackFeatureCore(`${this.acceptTrackFeatureSetting}.${!!trackFeatureUsage}`).wait();
 
-					// Stop the monitor, so correct API_KEY will be used when features are tracked.
-					this.tryStopEqatecMonitor();
+					this.checkConsentCore(trackFeatureUsage).wait();
 				}
 
 				if (this.isNotConfirmed(this.$staticConfig.ERROR_REPORT_SETTING_NAME).wait()) {
@@ -68,22 +66,6 @@ export class AnalyticsService implements IAnalyticsService {
 
 			if (this.analyticsStatuses[this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME] === AnalyticsStatus.enabled) {
 				this.trackFeatureCore(`${featureName}.${featureValue}`).wait();
-			}
-		}).future<void>()();
-	}
-
-	private trackFeatureCore(featureTrackString: string): IFuture<void> {
-		return (() => {
-			try {
-				if (this.$analyticsSettingsService.canDoRequest().wait()) {
-					this.start().wait();
-					if (this._eqatecMonitor) {
-						this._eqatecMonitor.trackFeature(featureTrackString);
-						this.waitForSending().wait();
-					}
-				}
-			} catch (e) {
-				this.$logger.trace("Analytics exception: '%s'", e.toString());
 			}
 		}).future<void>()();
 	}
@@ -125,6 +107,57 @@ export class AnalyticsService implements IAnalyticsService {
 			if (this.analyticsStatuses[settingName] === AnalyticsStatus.disabled
 				&& this.analyticsStatuses[settingName] === AnalyticsStatus.disabled) {
 				this.tryStopEqatecMonitor();
+			}
+		}).future<void>()();
+	}
+
+	public isEnabled(settingName: string): IFuture<boolean> {
+		return (() => {
+			let analyticsStatus = this.getStatus(settingName).wait();
+			return analyticsStatus === AnalyticsStatus.enabled;
+		}).future<boolean>()();
+	}
+
+	public tryStopEqatecMonitor(code?: string | number): void {
+		if (this._eqatecMonitor) {
+			// remove the listener for exit event and explicitly call stop of monitor
+			process.removeListener("exit", this.tryStopEqatecMonitor);
+			this._eqatecMonitor.stop();
+			this._eqatecMonitor = null;
+		}
+	}
+
+	public getStatusMessage(settingName: string, jsonFormat: boolean, readableSettingName: string): IFuture<string> {
+		if (jsonFormat) {
+			return this.getJsonStatusMessage(settingName);
+		}
+
+		return this.getHumanReadableStatusMessage(settingName, readableSettingName);
+	}
+
+	protected restartEqatecMonitor(projectApiKey: string): IFuture<void> {
+		return ((): void => {
+			this.tryStopEqatecMonitor();
+			this.start(projectApiKey).wait();
+		}).future<void>()();
+	}
+
+	protected checkConsentCore(trackFeatureUsage: boolean): IFuture<void> {
+		return this.trackFeatureCore(`${this.acceptTrackFeatureSetting}.${!!trackFeatureUsage}`);
+	}
+
+	protected trackFeatureCore(featureTrackString: string): IFuture<void> {
+		return (() => {
+			try {
+				if (this.$analyticsSettingsService.canDoRequest().wait()) {
+					this.start().wait();
+					if (this._eqatecMonitor) {
+						this._eqatecMonitor.trackFeature(featureTrackString);
+						this.waitForSending().wait();
+					}
+				}
+			} catch (e) {
+				this.$logger.trace("Analytics exception: '%s'", e.toString());
 			}
 		}).future<void>()();
 	}
@@ -219,35 +252,11 @@ export class AnalyticsService implements IAnalyticsService {
 		return userAgentString;
 	}
 
-	public isEnabled(settingName: string): IFuture<boolean> {
-		return (() => {
-			let analyticsStatus = this.getStatus(settingName).wait();
-			return analyticsStatus === AnalyticsStatus.enabled;
-		}).future<boolean>()();
-	}
-
-	public tryStopEqatecMonitor(code?: string | number): void {
-		if (this._eqatecMonitor) {
-			// remove the listener for exit event and explicitly call stop of monitor
-			process.removeListener("exit", this.tryStopEqatecMonitor);
-			this._eqatecMonitor.stop();
-			this._eqatecMonitor = null;
-		}
-	}
-
 	private isNotConfirmed(settingName: string): IFuture<boolean> {
 		return (() => {
 			let analyticsStatus = this.getStatus(settingName).wait();
 			return analyticsStatus === AnalyticsStatus.notConfirmed;
 		}).future<boolean>()();
-	}
-
-	public getStatusMessage(settingName: string, jsonFormat: boolean, readableSettingName: string): IFuture<string> {
-		if (jsonFormat) {
-			return this.getJsonStatusMessage(settingName);
-		}
-
-		return this.getHumanReadableStatusMessage(settingName, readableSettingName);
 	}
 
 	private getHumanReadableStatusMessage(settingName: string, readableSettingName: string): IFuture<string> {
@@ -294,7 +303,7 @@ export class AnalyticsService implements IAnalyticsService {
 	private waitForSending(): IFuture<void> {
 		let future = new Future<void>();
 		let intervalTime = 1000;
-		let remainingTime = AnalyticsService.MAX_WAIT_SENDING_INTERVAL;
+		let remainingTime = AnalyticsServiceBase.MAX_WAIT_SENDING_INTERVAL;
 		if (this.getIsSending()) {
 			this.$logger.trace(`Waiting for analytics to send information. Will check in a ${intervalTime}ms.`);
 			let interval = setInterval(() => {
@@ -311,15 +320,7 @@ export class AnalyticsService implements IAnalyticsService {
 
 		return future;
 	}
-
-	private restartEqatecMonitor(projectApiKey: string): IFuture<void> {
-		return ((): void => {
-			this.tryStopEqatecMonitor();
-			this.start(projectApiKey).wait();
-		}).future<void>()();
-	}
 }
-$injector.register("analyticsService", AnalyticsService);
 
 export enum AnalyticsStatus {
 	enabled,

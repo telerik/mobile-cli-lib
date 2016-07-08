@@ -1,10 +1,10 @@
 import { CommonLoggerStub, ErrorsStub } from "./stubs";
 import { Yok } from "../../yok";
-import { AnalyticsService } from "../../services/analytics-service";
+import { AnalyticsServiceBase } from "../../services/analytics-service-base";
 import Future = require("fibers/future");
 import * as os from "os";
 import helpersLib = require("../../helpers");
-import  { HostInfo } from "../../host-info";
+import { HostInfo } from "../../host-info";
 let assert = require("chai").assert;
 
 let trackedFeatureNamesAndValues = "";
@@ -32,17 +32,17 @@ function setGlobalEqatec(shouldSetUserThrowException: boolean, shouldStartThrow:
 				stop: () => { isEqatecStopCalled = true; },
 				setInstallationID: (guid: string) => { /*a mock*/ },
 				setUserID: (userId: string) => {
-					if(shouldSetUserThrowException) {
+					if (shouldSetUserThrowException) {
 						throw new Error("setUserID throws");
 					}
 				},
 				start: () => {
-					if(shouldStartThrow) {
+					if (shouldStartThrow) {
 						throw new Error("start throws");
 					}
 				},
 				setStartCount: (count: number) => { /*a mock */ },
-				status: () => ({isSending: false})
+				status: () => ({ isSending: false })
 			};
 		},
 
@@ -52,15 +52,15 @@ function setGlobalEqatec(shouldSetUserThrowException: boolean, shouldStartThrow:
 class UserSettingsServiceStub {
 	constructor(public featureTracking: boolean,
 		public exceptionsTracking: boolean,
-		public testInjector: IInjector) {}
+		public testInjector: IInjector) { }
 
 	getSettingValue<T>(settingName: string): IFuture<T> {
 		return (() => {
 			let $staticConfig: Config.IStaticConfig = this.testInjector.resolve("staticConfig");
 
-			if(settingName === $staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME) {
+			if (settingName === $staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME) {
 				return this.featureTracking !== undefined ? this.featureTracking.toString() : undefined;
-			} else if(settingName === $staticConfig.ERROR_REPORT_SETTING_NAME) {
+			} else if (settingName === $staticConfig.ERROR_REPORT_SETTING_NAME) {
 				return this.exceptionsTracking !== undefined ? this.exceptionsTracking.toString() : undefined;
 			}
 
@@ -91,7 +91,7 @@ function createTestInjector(testScenario: ITestScenario): IInjector {
 	let testInjector = new Yok();
 	testInjector.register("logger", CommonLoggerStub);
 	testInjector.register("errors", ErrorsStub);
-	testInjector.register("analyticsService", AnalyticsService);
+	testInjector.register("analyticsService", AnalyticsServiceBase);
 	testInjector.register("analyticsSettingsService", {
 		canDoRequest: () => {
 			return Future.fromResult(testScenario.canDoRequest);
@@ -124,13 +124,13 @@ function createTestInjector(testScenario: ITestScenario): IInjector {
 		ANALYTICS_API_KEY: "AnalyticsAPIKey"
 	});
 	testInjector.register("hostInfo", HostInfo);
-	testInjector.register("userSettingsService",  new UserSettingsServiceStub(testScenario.featureTracking, testScenario.exceptionsTracking, testInjector));
+	testInjector.register("userSettingsService", new UserSettingsServiceStub(testScenario.featureTracking, testScenario.exceptionsTracking, testInjector));
 	testInjector.register("progressIndicator", {
 		showProgressIndicator: (future: IFuture<any>, timeout: number, options?: { surpressTrailingNewLine?: boolean }) => {
 			return future;
 		}
 	});
-	helpersLib.isInteractive = () =>  {
+	helpersLib.isInteractive = () => {
 		return testScenario.isInteractive;
 	};
 
@@ -162,7 +162,7 @@ describe("analytics-service", () => {
 
 	afterEach(() => {
 		// clean up the process.exit event handler
-		if(service) {
+		if (service) {
 			service.tryStopEqatecMonitor();
 		}
 	});
