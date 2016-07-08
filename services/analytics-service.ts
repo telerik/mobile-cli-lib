@@ -22,12 +22,12 @@ export class AnalyticsService implements IAnalyticsService {
 		private $userSettingsService: UserSettings.IUserSettingsService,
 		private $analyticsSettingsService: IAnalyticsSettingsService,
 		private $options: ICommonOptions,
-		private $progressIndicator: IProgressIndicator) {}
+		private $progressIndicator: IProgressIndicator) { }
 
 	public checkConsent(): IFuture<void> {
 		return ((): void => {
-			if(this.$analyticsSettingsService.canDoRequest().wait()) {
-				if(this.isNotConfirmed(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME).wait() && helpers.isInteractive()) {
+			if (this.$analyticsSettingsService.canDoRequest().wait()) {
+				if (this.isNotConfirmed(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME).wait() && helpers.isInteractive()) {
 					this.$logger.out("Do you want to help us improve "
 						+ this.$analyticsSettingsService.getClientName()
 						+ " by automatically sending anonymous usage statistics? We will not use this information to identify or contact you."
@@ -36,7 +36,7 @@ export class AnalyticsService implements IAnalyticsService {
 
 					let trackFeatureUsage = this.$prompter.confirm(message, () => true).wait();
 					this.setStatus(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, trackFeatureUsage, true).wait();
-					if(!trackFeatureUsage) {
+					if (!trackFeatureUsage) {
 						// In case user selects to disable feature tracking, disable the exceptions reporting as well.
 						this.setStatus(this.$staticConfig.ERROR_REPORT_SETTING_NAME, trackFeatureUsage, true).wait();
 					}
@@ -47,7 +47,7 @@ export class AnalyticsService implements IAnalyticsService {
 					this.tryStopEqatecMonitor();
 				}
 
-				if(this.isNotConfirmed(this.$staticConfig.ERROR_REPORT_SETTING_NAME).wait()) {
+				if (this.isNotConfirmed(this.$staticConfig.ERROR_REPORT_SETTING_NAME).wait()) {
 					this.$logger.out(`Error reporting will be enabled. You can disable it by running '$ ${this.$staticConfig.CLIENT_NAME.toLowerCase()} error-reporting disable'.`);
 					this.setStatus(this.$staticConfig.ERROR_REPORT_SETTING_NAME, true).wait();
 				}
@@ -57,7 +57,7 @@ export class AnalyticsService implements IAnalyticsService {
 
 	public trackFeature(featureName: string): IFuture<void> {
 		let category = this.$options.analyticsClient ||
-						(helpers.isInteractive() ? "CLI" : "Non-interactive");
+			(helpers.isInteractive() ? "CLI" : "Non-interactive");
 		return this.track(category, featureName);
 	}
 
@@ -66,7 +66,7 @@ export class AnalyticsService implements IAnalyticsService {
 			this.initAnalyticsStatuses().wait();
 			this.$logger.trace(`Trying to track feature '${featureName}' with value '${featureValue}'.`);
 
-			if(this.analyticsStatuses[this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME] === AnalyticsStatus.enabled) {
+			if (this.analyticsStatuses[this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME] === AnalyticsStatus.enabled) {
 				this.trackFeatureCore(`${featureName}.${featureValue}`).wait();
 			}
 		}).future<void>()();
@@ -75,14 +75,14 @@ export class AnalyticsService implements IAnalyticsService {
 	private trackFeatureCore(featureTrackString: string): IFuture<void> {
 		return (() => {
 			try {
-				if(this.$analyticsSettingsService.canDoRequest().wait()) {
+				if (this.$analyticsSettingsService.canDoRequest().wait()) {
 					this.start().wait();
-					if(this._eqatecMonitor) {
+					if (this._eqatecMonitor) {
 						this._eqatecMonitor.trackFeature(featureTrackString);
 						this.waitForSending().wait();
 					}
 				}
-			} catch(e) {
+			} catch (e) {
 				this.$logger.trace("Analytics exception: '%s'", e.toString());
 			}
 		}).future<void>()();
@@ -93,12 +93,12 @@ export class AnalyticsService implements IAnalyticsService {
 			this.initAnalyticsStatuses().wait();
 			this.$logger.trace(`Trying to track exception with message '${message}'.`);
 
-			if(this.analyticsStatuses[this.$staticConfig.ERROR_REPORT_SETTING_NAME] === AnalyticsStatus.enabled
+			if (this.analyticsStatuses[this.$staticConfig.ERROR_REPORT_SETTING_NAME] === AnalyticsStatus.enabled
 				&& this.$analyticsSettingsService.canDoRequest().wait()) {
 				try {
 					this.start().wait();
 
-					if(this._eqatecMonitor) {
+					if (this._eqatecMonitor) {
 						this.$logger.printInfoMessageOnSameLine("Sending exception report (press Ctrl+C to stop)...");
 						this._eqatecMonitor.trackException(exception, message);
 						// Sending the exception might take a while.
@@ -106,7 +106,7 @@ export class AnalyticsService implements IAnalyticsService {
 						// wait for tracking the exception.
 						this.$progressIndicator.showProgressIndicator(this.waitForSending(), 500).wait();
 					}
-				} catch(e) {
+				} catch (e) {
 					this.$logger.trace("Analytics exception: '%s'", e.toString());
 				}
 			}
@@ -118,11 +118,11 @@ export class AnalyticsService implements IAnalyticsService {
 			this.analyticsStatuses[settingName] = enabled ? AnalyticsStatus.enabled : AnalyticsStatus.disabled;
 			this.$userSettingsService.saveSetting(settingName, enabled.toString()).wait();
 
-			if(!doNotTrackSetting) {
+			if (!doNotTrackSetting) {
 				this.trackFeatureCore(`${settingName}.${enabled ? "enabled" : "disabled"}`).wait();
 			}
 
-			if(this.analyticsStatuses[settingName] === AnalyticsStatus.disabled
+			if (this.analyticsStatuses[settingName] === AnalyticsStatus.disabled
 				&& this.analyticsStatuses[settingName] === AnalyticsStatus.disabled) {
 				this.tryStopEqatecMonitor();
 			}
@@ -131,12 +131,12 @@ export class AnalyticsService implements IAnalyticsService {
 
 	private getStatus(settingName: string): IFuture<AnalyticsStatus> {
 		return (() => {
-			if(!this.analyticsStatuses[settingName]) {
+			if (!this.analyticsStatuses[settingName]) {
 				let settingValue = this.$userSettingsService.getSettingValue<string>(settingName).wait();
 
-				if(settingValue) {
+				if (settingValue) {
 					let isEnabled = helpers.toBoolean(settingValue);
-					if(isEnabled) {
+					if (isEnabled) {
 						this.analyticsStatuses[settingName] = AnalyticsStatus.enabled;
 					} else {
 						this.analyticsStatuses[settingName] = AnalyticsStatus.disabled;
@@ -152,7 +152,7 @@ export class AnalyticsService implements IAnalyticsService {
 
 	private start(analyticsProjectKey?: string): IFuture<void> {
 		return (() => {
-			if(this._eqatecMonitor) {
+			if (this._eqatecMonitor) {
 				return;
 			}
 
@@ -171,7 +171,7 @@ export class AnalyticsService implements IAnalyticsService {
 			this._eqatecMonitor = global._eqatec.createMonitor(settings);
 
 			let guid = this.$userSettingsService.getSettingValue(this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME).wait();
-			if(!guid) {
+			if (!guid) {
 				guid = helpers.createGUID(false);
 				this.$userSettingsService.saveSetting(this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME, guid).wait();
 			}
@@ -184,7 +184,7 @@ export class AnalyticsService implements IAnalyticsService {
 				// increment with 1 every time and persist the new value so next execution will be marked as new session
 				this.$analyticsSettingsService.setUserSessionsCount(++currentCount, analyticsProjectKey).wait();
 				this._eqatecMonitor.setStartCount(currentCount);
-			} catch(e) {
+			} catch (e) {
 				// user not logged in. don't care.
 				this.$logger.trace("Error while initializing eqatecMonitor", e);
 			}
@@ -208,12 +208,12 @@ export class AnalyticsService implements IAnalyticsService {
 	private getUserAgentString(): string {
 		let userAgentString: string;
 		let osType = os.type();
-		if(osType === "Windows_NT") {
+		if (osType === "Windows_NT") {
 			userAgentString = "(Windows NT " + os.release() + ")";
-		} else if(osType === "Darwin") {
+		} else if (osType === "Darwin") {
 			userAgentString = "(Mac OS X " + os.release() + ")";
 		} else {
-			userAgentString = "(" + osType +")";
+			userAgentString = "(" + osType + ")";
 		}
 
 		return userAgentString;
@@ -226,8 +226,8 @@ export class AnalyticsService implements IAnalyticsService {
 		}).future<boolean>()();
 	}
 
-	public tryStopEqatecMonitor(code?: string|number): void {
-		if(this._eqatecMonitor) {
+	public tryStopEqatecMonitor(code?: string | number): void {
+		if (this._eqatecMonitor) {
 			// remove the listener for exit event and explicitly call stop of monitor
 			process.removeListener("exit", this.tryStopEqatecMonitor);
 			this._eqatecMonitor.stop();
@@ -243,7 +243,7 @@ export class AnalyticsService implements IAnalyticsService {
 	}
 
 	public getStatusMessage(settingName: string, jsonFormat: boolean, readableSettingName: string): IFuture<string> {
-		if(jsonFormat) {
+		if (jsonFormat) {
 			return this.getJsonStatusMessage(settingName);
 		}
 
@@ -254,7 +254,7 @@ export class AnalyticsService implements IAnalyticsService {
 		return (() => {
 			let status: string = null;
 
-			if(this.isNotConfirmed(settingName).wait()) {
+			if (this.isNotConfirmed(settingName).wait()) {
 				status = "disabled until confirmed";
 			} else {
 				status = AnalyticsStatus[this.getStatus(settingName).wait()];
@@ -274,8 +274,8 @@ export class AnalyticsService implements IAnalyticsService {
 
 	private initAnalyticsStatuses(): IFuture<void> {
 		return (() => {
-			if(this.$analyticsSettingsService.canDoRequest().wait()) {
-				if(!this.isAnalyticsStatusesInitialized) {
+			if (this.$analyticsSettingsService.canDoRequest().wait()) {
+				if (!this.isAnalyticsStatusesInitialized) {
 					this.$logger.trace("Initializing analytics statuses.");
 					let settingsNames = [this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, this.$staticConfig.ERROR_REPORT_SETTING_NAME];
 					settingsNames.forEach(settingName => this.getStatus(settingName).wait());
@@ -295,13 +295,19 @@ export class AnalyticsService implements IAnalyticsService {
 		let future = new Future<void>();
 		let intervalTime = 1000;
 		let remainingTime = AnalyticsService.MAX_WAIT_SENDING_INTERVAL;
-		let interval = setInterval(() => {
-			if(!this.getIsSending() || (remainingTime <= 0)) {
-				clearInterval(interval);
-				future.return();
-			}
-			remainingTime -= intervalTime;
-		}, intervalTime);
+		if (this.getIsSending()) {
+			this.$logger.trace(`Waiting for analytics to send information. Will check in a ${intervalTime}ms.`);
+			let interval = setInterval(() => {
+				if (!this.getIsSending() || (remainingTime <= 0)) {
+					clearInterval(interval);
+					future.return();
+				}
+				remainingTime -= intervalTime;
+				this.$logger.trace(`Waiting for analytics to send information. Will check in a ${intervalTime}ms. Remaining time is: ${remainingTime}`);
+			}, intervalTime);
+		} else {
+			future.return();
+		}
 
 		return future;
 	}
