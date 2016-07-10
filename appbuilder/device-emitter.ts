@@ -73,12 +73,12 @@ class DeviceEmitter extends EventEmitter {
 			this.checkCompanionAppChanged(device, appIdentifier, "companionAppUninstalled");
 		});
 
-		device.applicationManager.on("debuggableAppFound", (appIdentifier: string) => {
-			this.emit("debuggableAppFound", appIdentifier);
+		device.applicationManager.on("debuggableAppFound", (debuggableAppInfo: Mobile.IDeviceApplicationInformation) => {
+			this.emit("debuggableAppFound", debuggableAppInfo);
 		});
 
-		device.applicationManager.on("debuggableAppLost", (appIdentifier: string) => {
-			this.emit("debuggableAppLost", appIdentifier);
+		device.applicationManager.on("debuggableAppLost", (debuggableAppInfo: Mobile.IDeviceApplicationInformation) => {
+			this.emit("debuggableAppLost", debuggableAppInfo);
 		});
 	}
 
