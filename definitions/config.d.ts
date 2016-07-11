@@ -4,6 +4,7 @@ declare module Config {
 		CLIENT_NAME_KEY_IN_PROJECT_FILE?: string;
 		CLIENT_NAME: string;
 		CLIENT_NAME_ALIAS?: string;
+		FULL_CLIENT_NAME?: string;
 		ANALYTICS_API_KEY: string;
 		ANALYTICS_INSTALLATION_ID_SETTING_NAME: string;
 		TRACK_FEATURE_USAGE_SETTING_NAME: string;
