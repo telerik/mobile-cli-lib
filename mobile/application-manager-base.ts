@@ -88,8 +88,8 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 			let currentlyAvailableDebuggableApps = this.getDebuggableApps().wait();
 			let previouslyAvailableDebuggableApps = this.lastAvailableDebuggableApps || [];
 
-			let newAvailableDebuggableApps = _.differenceBy(currentlyAvailableDebuggableApps, previouslyAvailableDebuggableApps, "packageId");
-			let notAvailableAppsForDebugging = _.differenceBy(previouslyAvailableDebuggableApps, currentlyAvailableDebuggableApps, "packageId");
+			let newAvailableDebuggableApps = _.differenceBy(currentlyAvailableDebuggableApps, previouslyAvailableDebuggableApps, "appIdentifier");
+			let notAvailableAppsForDebugging = _.differenceBy(previouslyAvailableDebuggableApps, currentlyAvailableDebuggableApps, "appIdentifier");
 
 			this.lastAvailableDebuggableApps = currentlyAvailableDebuggableApps;
 

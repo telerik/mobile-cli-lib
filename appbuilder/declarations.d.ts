@@ -234,7 +234,7 @@ interface ICompanionAppsService {
 	/**
 	 * Returns all companion application identifiers in a dictionary where the top level keys are framwork identifiers.
 	 * For each framework there are three values, specified in a dictionary. The keys of the dictionary are platforms (android, ios and wp8).
-	 * @return {string} Companion appIdentifier or null.
+	 * @return {IDictionary<IStringDictionary>} Companion appIdentifiers separated in different properties of object.
 	 */
 	getAllCompanionAppIdentifiers(): IDictionary<IStringDictionary>;
 }
