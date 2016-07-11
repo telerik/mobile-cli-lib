@@ -104,7 +104,7 @@ export abstract class ProjectBase implements Project.IProjectBase {
 							let configurationName = configMatch[1];
 							let configProjectContent = this.$fs.readJson(configProjectFile).wait(),
 								configurationLowerCase = configurationName.toLowerCase();
-							this.configurationSpecificData[configurationLowerCase] = <any>_.merge(_.cloneDeep(this.projectData), configProjectContent);
+							this.configurationSpecificData[configurationLowerCase] = <any>_.merge(_.cloneDeep(this._projectData), configProjectContent);
 							this._hasBuildConfigurations = true;
 						}
 					});
