@@ -527,11 +527,6 @@ interface ILiveSyncOptions extends IProjectFilesConfig, ILiveSyncDeletionOptions
 	isForCompanionApp: boolean
 }
 
-interface ISyncBatchFile {
-	data: ILiveSyncData;
-	filePath: string;
-}
-
 interface ISyncBatch {
 	/**
 	 * Checks if there is a pending sync
@@ -540,8 +535,8 @@ interface ISyncBatch {
 	/**
 	 * Adds the file to the sync queue. All files from the queue will be pushed on the device after 250ms.
 	 */
-	addFile(file: ISyncBatchFile): void;
-	syncFiles(syncAction: (filesToSync: ISyncBatchFile[]) => IFuture<void>): IFuture<void>;
+	addFile(file: string): void;
+	syncFiles(syncAction: (filesToSync: string[]) => IFuture<void>): IFuture<void>;
 }
 
 interface ILiveSyncData {

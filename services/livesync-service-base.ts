@@ -113,24 +113,28 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		this.$dispatcher.run();
 	}
 
-	private batch: ISyncBatch = null;
+	private batch: IDictionary<ISyncBatch> = Object.create(null);
+	private livesyncData: IDictionary<ILiveSyncData> = Object.create(null);
 
 	private batchSync(data: ILiveSyncData, filePath: string): void {
-		if (!this.batch || !this.batch.syncPending) {
+		let platformBatch: ISyncBatch = this.batch[data.platform];
+		if (!platformBatch || !platformBatch.syncPending) {
 			let done = () => {
 				return (() => {
 					setTimeout(() => {
 						fiberBootstrap.run(() => {
 							this.$dispatcher.dispatch(() => (() => {
 								try {
-									this.batch.syncFiles(((filesToSync:ISyncBatchFile[]) => {
-										for (let fileInfo of filesToSync) {
-											this.$liveSyncProvider.preparePlatformForSync(fileInfo.data.platform).wait();
-											this.syncCore([fileInfo.data], [fileInfo.filePath]);
-										}
-									}).future<void>());
+									for (let platformName in this.batch) {
+									    let batch = this.batch[platformName];
+										let livesyncData = this.livesyncData[platformName];
+										batch.syncFiles(((filesToSync:string[]) => {
+											this.$liveSyncProvider.preparePlatformForSync(platformName).wait();
+										 	this.syncCore([livesyncData], filesToSync);
+										}).future<void>()).wait();
+									}
 								} catch (err) {
-									this.$logger.warn(`Unable to sync files. Error is:`, err.message);
+								 	this.$logger.warn(`Unable to sync files. Error is:`, err.message);
 								}
 							}).future<void>()());
 
@@ -138,10 +142,11 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 					}, syncBatchLib.SYNC_WAIT_THRESHOLD);
 				}).future<void>()();
 			};
-			this.batch = this.$injector.resolve(syncBatchLib.SyncBatch, { done: done });
+			this.batch[data.platform] = this.$injector.resolve(syncBatchLib.SyncBatch, { done: done });
+			this.livesyncData[data.platform] = data;
 		}
 
-		this.batch.addFile({ data: data, filePath: filePath });
+		this.batch[data.platform].addFile(filePath);
 	}
 
 	private syncRemovedFile(data: ILiveSyncData, filePath: string): IFuture<void> {
