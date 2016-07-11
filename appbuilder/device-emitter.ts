@@ -1,6 +1,6 @@
 import { EventEmitter } from "events";
 
-class DeviceEmitter extends EventEmitter {
+export class DeviceEmitter extends EventEmitter {
 	constructor(private $androidDeviceDiscovery: Mobile.IAndroidDeviceDiscovery,
 		private $iOSDeviceDiscovery: Mobile.IDeviceDiscovery,
 		private $iOSSimulatorDiscovery: Mobile.IDeviceDiscovery,
@@ -8,7 +8,7 @@ class DeviceEmitter extends EventEmitter {
 		private $deviceLogProvider: EventEmitter,
 		private $companionAppsService: ICompanionAppsService,
 		private $projectConstants: Project.IConstants,
-		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
+		private $logger: ILogger) {
 		super();
 	}
 
@@ -23,7 +23,12 @@ class DeviceEmitter extends EventEmitter {
 
 	public initialize(): IFuture<void> {
 		return (() => {
-			this.$androidDeviceDiscovery.ensureAdbServerStarted().wait();
+			try {
+				this.$androidDeviceDiscovery.ensureAdbServerStarted().wait();
+			} catch(err) {
+				this.$logger.warn(`Unable to start adb server. Error message is: ${err.message}`);
+			}
+
 			this.$androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
 				this.emit("deviceFound", device.deviceInfo);
 				this.attachApplicationChangedHandlers(device);
