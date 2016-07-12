@@ -1150,3 +1150,15 @@ interface IVersionData {
 	minor: string;
 	patch: string;
 }
+
+/**
+ * Wrapper for net module of Node.js.
+ */
+interface INet {
+
+	/**
+	 * Get free port on your local machine.
+	 * @return {IFuture<number>} The port.
+	 */
+	getFreePort(): IFuture<number>;
+}
