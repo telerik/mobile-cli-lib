@@ -8,7 +8,8 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 	constructor(private $errors: IErrors,
 		private $staticConfig: Config.IStaticConfig,
 		private $injector: IInjector,
-		private $httpClient: Server.IHttpClient) {
+		private $httpClient: Server.IHttpClient,
+		private $net: INet) {
 		this._devicesAdbs = {};
 	}
 
@@ -39,17 +40,14 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 				this.$errors.failWithoutHelp(applicationNotStartedErrorMessage);
 			}
 
-			// Get the available ports information as late as possible.
-			let availablePorts: Mobile.IAndroidPortInformation[] = this.getAvailableAndroidPortsInformation(adb, appIdentifier).wait();
-			if (!availablePorts || !availablePorts.length) {
-				this.$errors.failWithoutHelp("There are no available ports.");
+			let localPort = this.getAlreadyMappedPort(adb, deviceIdentifier, abstractPort).wait();
+
+			if (!localPort) {
+				localPort = this.$net.getFreePort().wait();
+				adb.executeCommand(["forward", `tcp:${localPort}`, `localabstract:${abstractPort}`]).wait();
 			}
 
-			let realPort = availablePorts[0];
-
-			adb.executeCommand(["forward", `tcp:${realPort.number}`, `localabstract:${abstractPort}`]).wait();
-
-			return realPort.number;
+			return localPort;
 		}).future<string>()();
 	}
 
@@ -58,9 +56,12 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 			let adb = this.getAdb(deviceIdentifier);
 			let androidWebViewPortInformation = (<string>this.getAbstractPortsInformation(adb).wait()).split(EOL);
 
-			return androidWebViewPortInformation
+			// TODO: Add tests and make sure only unique names are returned.
+			return _(androidWebViewPortInformation)
 				.map((line: string) => this.getApplicationInfoFromWebViewPortInformation(adb, deviceIdentifier, line).wait())
-				.filter((appIdentifier: Mobile.IDeviceApplicationInformation) => !!appIdentifier);
+				.filter(appIdentifier => !!appIdentifier)
+				.uniqBy("appIdentifier")
+				.value();
 		}).future<Mobile.IDeviceApplicationInformation[]>()();
 	}
 
@@ -144,76 +145,25 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 			// Process information will look like this (without the columns names):
 			// USER     PID   PPID  VSIZE   RSS   WCHAN    PC         NAME
 			// u0_a63   25512 1334  1519560 96040 ffffffff f76a8f75 S com.telerik.appbuildertabstest
-			let processIdRegExp = /^\w*\s*(\d+)/;
-			let processIdInformation: string = adb.executeShellCommand(["ps", "|grep", appIdentifier]).wait();
+			let processIdRegExp = new RegExp(`^\\w*\\s*(\\d+).*?${appIdentifier}$`);
+			let processIdInformation: string = adb.executeShellCommand(["ps"]).wait();
 
-			let matches = processIdRegExp.exec(processIdInformation);
-
-			if (!matches || !matches[0]) {
-				return null;
-			}
-
-			return matches[1];
+			return this.parseMultilineResult(processIdInformation, processIdRegExp);
 		}).future<string>()();
 	}
 
-	private getAvailableAndroidPortsInformation(adb: Mobile.IDeviceAndroidDebugBridge, appIdentifier: string): IFuture<Mobile.IAndroidPortInformation[]> {
-		return (() => {
-			// Get ports information.
-			// Result will look like this:
-			// sl local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt  uid  timeout inode
-			// 0: 0100007F:1C23 00000000:0000 0A 00000000:00000000 00:00000000 00000000  1001       0 2111 1 e22cc000 300 0 0 2 -1
-			let tcpPorts: string[] = adb.executeShellCommand(["cat", "proc/net/tcp"]).wait().split(EOL);
-			let tcp6Ports: string[] = adb.executeShellCommand(["cat", "proc/net/tcp6"]).wait().split(EOL);
+	private getAlreadyMappedPort(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, abstractPort: string): IFuture<number> {
+		return ((): number => {
+			let allForwardedPorts: string = adb.executeCommand(["forward", "--list"]).wait() || "";
+			// Sample output:
+			// 5e2e580b tcp:62503 localabstract:webview_devtools_remote_7985
+			// 5e2e580b tcp:62524 localabstract:webview_devtools_remote_7986
+			// 5e2e580b tcp:63160 localabstract:webview_devtools_remote_7987
+			// 5e2e580b tcp:57577 localabstract:com.telerik.nrel-debug
+			let regex = new RegExp(`${deviceIdentifier}\\s+?tcp:(\\d+?)\\s+?.*?${abstractPort}.*$`);
 
-			let allPorts: string[] = tcpPorts.concat(tcp6Ports);
-
-			// Get information only for the ports which are not in use - remote address is empty (only zeroes) and have host localhost.
-			let emptyAddressRegExp = /^00*/;
-
-			// Localhost hex representation is 0100007F or 0000000000000000FFFF00000100007F
-			let localHostHexRegExp = /^00*100007F/;
-			let localHostVersionSixHexRegExp = /^00*FFFF00000100007F/;
-			let availablePorts: Mobile.IAndroidPortInformation[] = _(allPorts)
-				.filter((line: string) => line.match(this.androidPortInformationRegExp))
-				.map((line: string) => this.parseAndroidPortInformation(line))
-				.filter((port: Mobile.IAndroidPortInformation) => {
-					return port.remAddress.match(emptyAddressRegExp) &&
-						(port.ipAddressHex.match(localHostHexRegExp) ||
-							port.ipAddressHex.match(localHostVersionSixHexRegExp) ||
-							port.ipAddressHex.match(emptyAddressRegExp));
-				})
-				.value();
-
-			return availablePorts;
-		}).future<Mobile.IAndroidPortInformation[]>()();
-	}
-
-	private parseAndroidPortInformation(portInformationRow: string): Mobile.IAndroidPortInformation {
-		let matches = this.androidPortInformationRegExp.exec(portInformationRow);
-		if (!matches || !matches[0]) {
-			// The input information does not match the regex.
-			return null;
-		}
-
-		// The local address will look like this IP_address:port both in hex format.
-		let localAddress = matches[2];
-		let localAddressParts = localAddress.split(":");
-
-		let hexIpAddress = localAddressParts[0];
-		let hexPort = localAddressParts[1];
-
-		// The first match is the whole row.
-		let portInformation: Mobile.IAndroidPortInformation = {
-			localAddress: localAddress,
-			remAddress: matches[3],
-			uid: parseInt(matches[4]),
-			ipAddressHex: hexIpAddress,
-			number: parseInt(hexPort, 16),
-			numberHex: hexPort
-		};
-
-		return portInformation;
+			return this.parseMultilineResult(allForwardedPorts, regex);
+		}).future<number>()();
 	}
 
 	private getAdb(deviceIdentifier: string): Mobile.IDeviceAndroidDebugBridge {
@@ -222,6 +172,23 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 		}
 
 		return this._devicesAdbs[deviceIdentifier];
+	}
+
+	private parseMultilineResult(input: string, regex: RegExp): number {
+		let selectedNumber: number;
+
+		_((input || "").split('\n'))
+			.map(line => line.trim())
+			.filter(line => !!line)
+			.each(line => {
+				let matches = line.match(regex);
+				if (matches && matches[1]) {
+					selectedNumber = +matches[1];
+					return false;
+				}
+			});
+
+		return selectedNumber;
 	}
 }
 

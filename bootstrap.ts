@@ -118,3 +118,4 @@ $injector.require("iOSLogFilter", "./mobile/ios/ios-log-filter");
 
 $injector.require("projectFilesManager", "./services/project-files-manager");
 $injector.require("xcodeSelectService", "./services/xcode-select-service");
+$injector.require("net", "./services/net-service");
