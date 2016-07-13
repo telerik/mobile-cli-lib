@@ -231,14 +231,6 @@ export class DevicesService implements Mobile.IDevicesService {
 		}).future<void>()();
 	}
 
-	private getAllConnectedDevices(): Mobile.IDevice[] {
-		if (!this._platform) {
-			return this.getDeviceInstances();
-		} else {
-			return this.filterDevicesByPlatform();
-		}
-	}
-
 	private getDeviceByIndex(index: number): Mobile.IDevice {
 		this.validateIndex(index - 1);
 		return this.getDeviceInstances()[index - 1];
@@ -273,7 +265,7 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	private executeOnAllConnectedDevices(action: (dev: Mobile.IDevice) => IFuture<void>, canExecute?: (_dev: Mobile.IDevice) => boolean): IFuture<void> {
 		return ((): void => {
-			let devices = this.getAllConnectedDevices();
+			let devices = this.filterDevicesByPlatform();
 			let sortedDevices = _.sortBy(devices, device => device.deviceInfo.platform);
 
 			let futures = _.map(sortedDevices, (device: Mobile.IDevice) => {
@@ -437,7 +429,15 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	private filterDevicesByPlatform(): Mobile.IDevice[] {
-		return _.filter(this.getDeviceInstances(), (device: Mobile.IDevice) => { return device.deviceInfo.platform === this._platform; });
+		return _.filter(this.getDeviceInstances(), (device: Mobile.IDevice) => {
+			if (this.$options.emulator && !device.isEmulator) {
+				return false;
+			}
+			if (this._platform) {
+				return device.deviceInfo.platform === this._platform;
+			}
+			return true;
+		});
 	}
 
 	private validateIndex(index: number): void {
