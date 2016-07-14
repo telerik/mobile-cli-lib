@@ -231,6 +231,11 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		return Future.fromResult([]);
 	}
 
+	public getDebuggableAppViews(appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>> {
+		// Implement when we can find debuggable applications for iOS.
+		return Future.fromResult(null);
+	}
+
 	private lookupApplications(): IDictionary<Mobile.IDeviceApplication> {
 		let func = () => {
 			let dictionaryPointer = ref.alloc(CoreTypes.cfDictionaryRef);

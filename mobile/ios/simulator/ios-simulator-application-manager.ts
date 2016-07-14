@@ -95,4 +95,9 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 	public getDebuggableApps(): IFuture<Mobile.IDeviceApplicationInformation[]> {
 		return Future.fromResult([]);
 	}
+
+	public getDebuggableAppViews(appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>> {
+		// Implement when we can find debuggable applications for iOS.
+		return Future.fromResult(null);
+	}
 }

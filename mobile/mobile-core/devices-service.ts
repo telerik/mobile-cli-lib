@@ -407,6 +407,16 @@ export class DevicesService implements Mobile.IDevicesService {
 		return _.map(deviceIdentifiers, (deviceIdentifier: string) => this.getDebuggableAppsCore(deviceIdentifier));
 	}
 
+	@exportedPromise("devicesService")
+	public getDebuggableViews(deviceIdentifier: string, appIdentifier: string): IFuture<Mobile.IDebugWebViewInfo[]> {
+		return ((): Mobile.IDebugWebViewInfo[] => {
+			let device = this.getDeviceByIdentifier(deviceIdentifier),
+				debuggableViewsPerApp = device.applicationManager.getDebuggableAppViews([appIdentifier]).wait();
+
+			return debuggableViewsPerApp && debuggableViewsPerApp[appIdentifier];
+		}).future<Mobile.IDebugWebViewInfo[]>()();
+	}
+
 	private getDebuggableAppsCore(deviceIdentifier: string): IFuture<Mobile.IDeviceApplicationInformation[]> {
 		return ((): Mobile.IDeviceApplicationInformation[] => {
 			let device = this.getDeviceByIdentifier(deviceIdentifier);

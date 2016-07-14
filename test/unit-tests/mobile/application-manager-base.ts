@@ -5,7 +5,8 @@ import { ApplicationManagerBase } from "../../../mobile/application-manager-base
 import Future = require("fibers/future");
 
 let currentlyAvailableAppsForDebugging: Mobile.IDeviceApplicationInformation[],
-	currentlyInstalledApps: string[];
+	currentlyInstalledApps: string[],
+	currentlyAvailableAppWebViewsForDebugging: IDictionary<Mobile.IDebugWebViewInfo[]>;
 
 class ApplicationManager extends ApplicationManagerBase {
 	constructor($logger: ILogger) {
@@ -47,6 +48,10 @@ class ApplicationManager extends ApplicationManagerBase {
 	public getDebuggableApps(): IFuture<Mobile.IDeviceApplicationInformation[]> {
 		return Future.fromResult(currentlyAvailableAppsForDebugging);
 	}
+
+	public getDebuggableAppViews(appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>> {
+		return Future.fromResult(_.cloneDeep(currentlyAvailableAppWebViewsForDebugging));
+	}
 }
 
 function createTestInjector(): IInjector {
@@ -64,6 +69,27 @@ function createAppsAvailableForDebugging(count: number): Mobile.IDeviceApplicati
 	}));
 }
 
+function createDebuggableWebView(uniqueId: string) {
+	return {
+		description: `description_${uniqueId}`,
+		devtoolsFrontendUrl: `devtoolsFrontendUrl_${uniqueId}`,
+		id: `${uniqueId}`,
+		title: `title_${uniqueId}`,
+		type: `type_${uniqueId}`,
+		url: `url_${uniqueId}`,
+		webSocketDebuggerUrl: `webSocketDebuggerUrl_${uniqueId}`,
+	};
+}
+
+function createDebuggableWebViews(appInfos: Mobile.IDeviceApplicationInformation[], numberOfViews: number): IDictionary<Mobile.IDebugWebViewInfo[]> {
+	let result: IDictionary<Mobile.IDebugWebViewInfo[]> = {};
+	_.each(appInfos, (appInfo, index) => {
+		result[appInfo.appIdentifier] = _.times(numberOfViews, (currentViewIndex: number) => createDebuggableWebView(`${index}_${currentViewIndex}`));
+	});
+
+	return result;
+}
+
 describe("ApplicationManagerBase", () => {
 	let applicationManager: ApplicationManager,
 		testInjector: IInjector;
@@ -71,6 +97,7 @@ describe("ApplicationManagerBase", () => {
 	beforeEach(() => {
 		testInjector = createTestInjector();
 		currentlyAvailableAppsForDebugging = null;
+		currentlyAvailableAppWebViewsForDebugging = null;
 		applicationManager = testInjector.resolve("applicationManager");
 	});
 
@@ -204,6 +231,171 @@ describe("ApplicationManagerBase", () => {
 				currentlyAvailableAppsForDebugging = _.drop(allAppsForDebug, 1);
 				applicationManager.checkForApplicationUpdates().wait();
 				Future.wait(futures);
+			});
+
+			it("emits debuggableViewFound when new views are available for debug", (done) => {
+				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(2);
+				let numberOfViewsPerApp = 2;
+				currentlyAvailableAppWebViewsForDebugging = createDebuggableWebViews(currentlyAvailableAppsForDebugging, numberOfViewsPerApp);
+				let currentDebuggableViews: IDictionary<Mobile.IDebugWebViewInfo[]> = {};
+				applicationManager.on("debuggableViewFound", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
+					currentDebuggableViews[appIdentifier] = currentDebuggableViews[appIdentifier] || [];
+					currentDebuggableViews[appIdentifier].push(d);
+					let numberOfFoundViewsPerApp = _.uniq(_.values(currentDebuggableViews).map(arr => arr.length));
+					if (_.keys(currentDebuggableViews).length === currentlyAvailableAppsForDebugging.length
+						&& numberOfFoundViewsPerApp.length === 1 // for all apps we've found exactly two apps.
+						&& numberOfFoundViewsPerApp[0] === numberOfViewsPerApp) {
+						_.each(currentDebuggableViews, (webViews, appId) => {
+							_.each(webViews, webView => {
+								let expectedWebView = _.find(currentlyAvailableAppWebViewsForDebugging[appId], c => c.id === webView.id);
+								assert.isTrue(_.isEqual(webView, expectedWebView));
+							});
+						});
+						setTimeout(done, 0);
+					}
+				});
+
+				applicationManager.checkForApplicationUpdates().wait();
+			});
+
+			it("emits debuggableViewLost when views for debug are removed", (done) => {
+				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(2);
+				let numberOfViewsPerApp = 2;
+				currentlyAvailableAppWebViewsForDebugging = createDebuggableWebViews(currentlyAvailableAppsForDebugging, numberOfViewsPerApp);
+				let expectedResults = _.cloneDeep(currentlyAvailableAppWebViewsForDebugging);
+				let currentDebuggableViews: IDictionary<Mobile.IDebugWebViewInfo[]> = {};
+
+				applicationManager.checkForApplicationUpdates().wait();
+
+				applicationManager.on("debuggableViewLost", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
+					currentDebuggableViews[appIdentifier] = currentDebuggableViews[appIdentifier] || [];
+					currentDebuggableViews[appIdentifier].push(d);
+					let numberOfFoundViewsPerApp = _.uniq(_.values(currentDebuggableViews).map(arr => arr.length));
+					if (_.keys(currentDebuggableViews).length === currentlyAvailableAppsForDebugging.length
+						&& numberOfFoundViewsPerApp.length === 1 // for all apps we've found exactly two apps.
+						&& numberOfFoundViewsPerApp[0] === numberOfViewsPerApp) {
+						_.each(currentDebuggableViews, (webViews, appId) => {
+							_.each(webViews, webView => {
+								let expectedWebView = _.find(expectedResults[appId], c => c.id === webView.id);
+								assert.isTrue(_.isEqual(webView, expectedWebView));
+							});
+						});
+						setTimeout(done, 0);
+					}
+				});
+
+				currentlyAvailableAppWebViewsForDebugging = _.mapValues(currentlyAvailableAppWebViewsForDebugging, (a) => []);
+
+				applicationManager.checkForApplicationUpdates().wait();
+			});
+
+			it("emits debuggableViewFound when new views are available for debug", (done) => {
+				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(2);
+				let numberOfViewsPerApp = 2;
+				currentlyAvailableAppWebViewsForDebugging = createDebuggableWebViews(currentlyAvailableAppsForDebugging, numberOfViewsPerApp);
+
+				applicationManager.checkForApplicationUpdates().wait();
+
+				let expectedViewToBeFound = createDebuggableWebView("uniqueId"),
+					expectedAppIdentifier = currentlyAvailableAppsForDebugging[0].appIdentifier,
+					isLastCheck = false;
+
+				applicationManager.on("debuggableViewFound", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
+					assert.deepEqual(appIdentifier, expectedAppIdentifier);
+					assert.isTrue(_.isEqual(d, expectedViewToBeFound));
+
+					if (isLastCheck) {
+						setTimeout(done, 0);
+					}
+				});
+
+				currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].push(_.cloneDeep(expectedViewToBeFound));
+				applicationManager.checkForApplicationUpdates().wait();
+
+				expectedViewToBeFound = createDebuggableWebView("uniqueId1");
+				currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].push(_.cloneDeep(expectedViewToBeFound));
+				applicationManager.checkForApplicationUpdates().wait();
+
+				expectedViewToBeFound = createDebuggableWebView("uniqueId2");
+				expectedAppIdentifier = currentlyAvailableAppsForDebugging[1].appIdentifier;
+				isLastCheck = true;
+
+				currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].push(_.cloneDeep(expectedViewToBeFound));
+				applicationManager.checkForApplicationUpdates().wait();
+			});
+
+			it("emits debuggableViewLost when views for debug are not available anymore", (done) => {
+				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(2);
+				let numberOfViewsPerApp = 2;
+				currentlyAvailableAppWebViewsForDebugging = createDebuggableWebViews(currentlyAvailableAppsForDebugging, numberOfViewsPerApp);
+
+				applicationManager.checkForApplicationUpdates().wait();
+
+				let expectedAppIdentifier = currentlyAvailableAppsForDebugging[0].appIdentifier,
+					expectedViewToBeLost = currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].splice(0, 1)[0],
+					isLastCheck = false;
+
+				applicationManager.on("debuggableViewLost", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
+					assert.deepEqual(appIdentifier, expectedAppIdentifier);
+					assert.isTrue(_.isEqual(d, expectedViewToBeLost));
+
+					if (isLastCheck) {
+						setTimeout(done, 0);
+					}
+				});
+
+				applicationManager.checkForApplicationUpdates().wait();
+
+				expectedViewToBeLost = currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].splice(0, 1)[0];
+				applicationManager.checkForApplicationUpdates().wait();
+
+				expectedAppIdentifier = currentlyAvailableAppsForDebugging[1].appIdentifier;
+				expectedViewToBeLost = currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].splice(0, 1)[0];
+
+				isLastCheck = true;
+				applicationManager.checkForApplicationUpdates().wait();
+			});
+
+			it("emits debuggableViewChanged when view's property is modified (each one except id)", (done) => {
+				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(1);
+				currentlyAvailableAppWebViewsForDebugging = createDebuggableWebViews(currentlyAvailableAppsForDebugging, 2);
+				let viewToChange = currentlyAvailableAppWebViewsForDebugging[currentlyAvailableAppsForDebugging[0].appIdentifier][0];
+				let expectedView = _.cloneDeep(viewToChange);
+				expectedView.title = "new title";
+
+				applicationManager.on("debuggableViewChanged", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
+					assert.isTrue(_.isEqual(d, expectedView));
+					setTimeout(done, 0);
+				});
+
+				applicationManager.checkForApplicationUpdates().wait();
+				viewToChange.title = "new title";
+				applicationManager.checkForApplicationUpdates().wait();
+			});
+
+			it("does not emit debuggableViewChanged when id is modified", (done) => {
+				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(1);
+				currentlyAvailableAppWebViewsForDebugging = createDebuggableWebViews(currentlyAvailableAppsForDebugging, 2);
+				let viewToChange = currentlyAvailableAppWebViewsForDebugging[currentlyAvailableAppsForDebugging[0].appIdentifier][0];
+				let expectedView = _.cloneDeep(viewToChange);
+
+				applicationManager.checkForApplicationUpdates().wait();
+				applicationManager.on("debuggableViewChanged", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
+					setTimeout(() => done(new Error("When id is changed, debuggableViewChanged must not be emitted.")), 0);
+				});
+
+				applicationManager.on("debuggableViewLost", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
+					assert.isTrue(_.isEqual(d, expectedView));
+				});
+
+				applicationManager.on("debuggableViewFound", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
+					expectedView.id = "new id";
+					assert.isTrue(_.isEqual(d, expectedView));
+					setTimeout(done, 0);
+				});
+
+				viewToChange.id = "new id";
+				applicationManager.checkForApplicationUpdates().wait();
 			});
 		});
 
@@ -556,7 +748,7 @@ describe("ApplicationManagerBase", () => {
 			it("when startApplications throws", () => {
 				applicationManager.canStartApplication = () => true;
 				applicationManager.isApplicationInstalled = (appId: string) => Future.fromResult(true);
-				assertDoesNotThrow({shouldStartApplicatinThrow: true});
+				assertDoesNotThrow({ shouldStartApplicatinThrow: true });
 			});
 		});
 

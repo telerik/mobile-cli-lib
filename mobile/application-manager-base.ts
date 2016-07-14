@@ -1,8 +1,10 @@
 import { EventEmitter } from "events";
+import {TARGET_FRAMEWORK_IDENTIFIERS} from "../constants";
 
 export abstract class ApplicationManagerBase extends EventEmitter implements Mobile.IDeviceApplicationManager {
 	private lastInstalledAppIdentifiers: string[];
 	private lastAvailableDebuggableApps: Mobile.IDeviceApplicationInformation[];
+	private lastAvailableDebuggableAppViews: IDictionary<Mobile.IDebugWebViewInfo[]> = {};
 
 	constructor(protected $logger: ILogger) {
 		super();
@@ -82,6 +84,7 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 	public abstract getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo>;
 	public abstract canStartApplication(): boolean;
 	public abstract getDebuggableApps(): IFuture<Mobile.IDeviceApplicationInformation[]>;
+	public abstract getDebuggableAppViews(appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>>;
 
 	private checkForAvailableDebuggableAppsChanges(): IFuture<void> {
 		return (() => {
@@ -93,8 +96,52 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 
 			this.lastAvailableDebuggableApps = currentlyAvailableDebuggableApps;
 
-			_.each(newAvailableDebuggableApps, (appInfo: Mobile.IDeviceApplicationInformation) => this.emit("debuggableAppFound", appInfo));
-			_.each(notAvailableAppsForDebugging, (appInfo: Mobile.IDeviceApplicationInformation) => this.emit("debuggableAppLost", appInfo));
+			_.each(newAvailableDebuggableApps, (appInfo: Mobile.IDeviceApplicationInformation) => {
+				this.emit("debuggableAppFound", appInfo);
+			});
+
+			_.each(notAvailableAppsForDebugging, (appInfo: Mobile.IDeviceApplicationInformation) => {
+				this.emit("debuggableAppLost", appInfo);
+
+				if (_.has(this.lastAvailableDebuggableAppViews, appInfo.appIdentifier)) {
+					// Prevent emitting debuggableViewLost when application cannot be debugged anymore.
+					delete this.lastAvailableDebuggableAppViews[appInfo.appIdentifier];
+				}
+			});
+
+			let cordovaDebuggableAppIdentifiers = _(currentlyAvailableDebuggableApps)
+				.filter(c => c.framework === TARGET_FRAMEWORK_IDENTIFIERS.Cordova)
+				.map(c => c.appIdentifier)
+				.value();
+
+			let currentlyAvailableAppViews = this.getDebuggableAppViews(cordovaDebuggableAppIdentifiers).wait();
+
+			_.each(currentlyAvailableAppViews, (currentlyAvailableViews, appIdentifier) => {
+				let previouslyAvailableViews = this.lastAvailableDebuggableAppViews[appIdentifier];
+
+				let newAvailableViews = _.differenceBy(currentlyAvailableViews, previouslyAvailableViews, "id");
+				let notAvailableViews = _.differenceBy(previouslyAvailableViews, currentlyAvailableViews, "id");
+
+				_.each(notAvailableViews, debugWebViewInfo => {
+					this.emit("debuggableViewLost", appIdentifier, debugWebViewInfo);
+				});
+
+				_.each(newAvailableViews, debugWebViewInfo => {
+					this.emit("debuggableViewFound", appIdentifier, debugWebViewInfo);
+				});
+
+				// Determine which of the views had changed since last check and raise debuggableViewChanged event for them:
+				let keptViews = _.differenceBy(currentlyAvailableViews, newAvailableViews, "id");
+				_.each(keptViews, view => {
+					let previousTimeViewInfo = _.find(previouslyAvailableViews, previousView => previousView.id === view.id);
+					if (!_.isEqual(view, previousTimeViewInfo)) {
+						this.emit("debuggableViewChanged", appIdentifier, view);
+					}
+				});
+
+				this.lastAvailableDebuggableAppViews[appIdentifier] = currentlyAvailableViews;
+			});
+
 		}).future<void>()();
 	}
 }
