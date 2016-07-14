@@ -293,6 +293,14 @@ require("mobile-cli-lib").deviceEmitter.on("applicationInstalled",  function(ide
 });
 ```
 
+* `applicationUninstalled` - Raised when application is removed from device. The callback has two arguments - `deviceIdentifier` and `applicationIdentifier`. <br/><br/>
+Sample usage:
+```JavaScript
+require("mobile-cli-lib").deviceEmitter.on("applicationUninstalled",  function(identifier, applicationIdentifier) {
+	console.log("Application " + applicationIdentifier  + " has been uninstalled from device with id: " + identifier);
+});
+```
+
 * `debuggableAppFound` - Raised when application on a device becomes available for debugging. The callback has one argument - `applicationInfo`. <br/><br/>
 Sample usage:
 ```JavaScript
@@ -327,12 +335,70 @@ Sample result for `applicationInfo` will be:
 }
 ```
 
-* `applicationUninstalled` - Raised when application is removed from device. The callback has two arguments - `deviceIdentifier` and `applicationIdentifier`. <br/><br/>
+* `debuggableViewFound` - Raised when a new debuggable WebView is found. The callback has three arguments - `deviceIdentifier`, `appIdentifier` and `webViewInfo`.
+
 Sample usage:
 ```JavaScript
-require("mobile-cli-lib").deviceEmitter.on("applicationUninstalled",  function(identifier, applicationIdentifier) {
-	console.log("Application " + applicationIdentifier  + " has been uninstalled from device with id: " + identifier);
+require("mobile-cli-lib")
+	.deviceEmitter.on("debuggableViewFound",  function(deviceIdentifier, appIdentifier, debuggableViewInfo) {
+	console.log("On device " + deviceIdentifier + " the application " + appIdentifier  + " now has new WebView: " + debuggableViewInfo);
 });
+```
+Sample result for `debuggableViewInfo` will be:
+```JSON
+{
+	"description": "",
+	"devtoolsFrontendUrl": "http://chrome-devtools-frontend.appspot.com/serve_rev/@211d45a5b74b06d12bb016f3c4d54095faf2646f/inspector.html?ws=127.0.0.1:53213/devtools/page/4050",
+	"id": "4050",
+	"title": "New tab",
+	"type": "page",
+	"url": "chrome-native://newtab/",
+	"webSocketDebuggerUrl": "ws://127.0.0.1:53213/devtools/page/4050"
+}
+```
+
+* `debuggableViewLost` - Raised when a debuggable WebView is lost. The callback has three arguments - `deviceIdentifier`, `appIdentifier` and `webViewInfo`.
+
+Sample usage:
+```JavaScript
+require("mobile-cli-lib")
+	.deviceEmitter.on("debuggableViewLost",  function(deviceIdentifier, appIdentifier, debuggableViewInfo) {
+	console.log("On device " + deviceIdentifier + " the application " + appIdentifier  + " now cannot debug WebView: " + debuggableViewInfo);
+});
+```
+Sample result for `debuggableViewInfo` will be:
+```JSON
+{
+	"description": "",
+	"devtoolsFrontendUrl": "http://chrome-devtools-frontend.appspot.com/serve_rev/@211d45a5b74b06d12bb016f3c4d54095faf2646f/inspector.html?ws=127.0.0.1:53213/devtools/page/4050",
+	"id": "4050",
+	"title": "New tab",
+	"type": "page",
+	"url": "chrome-native://newtab/",
+	"webSocketDebuggerUrl": "ws://127.0.0.1:53213/devtools/page/4050"
+}
+```
+
+* `debuggableViewChanged` - Raised when a property of debuggable WebView is changed, for example it's title. The callback has three arguments - `deviceIdentifier`, `appIdentifier` and `webViewInfo`.
+
+Sample usage:
+```JavaScript
+require("mobile-cli-lib")
+	.deviceEmitter.on("debuggableViewChanged",  function(deviceIdentifier, appIdentifier, debuggableViewInfo) {
+	console.log("On device " + deviceIdentifier + " the application " + appIdentifier  + " has changes in WebView: " + debuggableViewInfo);
+});
+```
+Sample result for `debuggableViewInfo` will be:
+```JSON
+{
+	"description": "",
+	"devtoolsFrontendUrl": "http://chrome-devtools-frontend.appspot.com/serve_rev/@211d45a5b74b06d12bb016f3c4d54095faf2646f/inspector.html?ws=127.0.0.1:53213/devtools/page/4050",
+	"id": "4050",
+	"title": "New tab 2",
+	"type": "page",
+	"url": "chrome-native://newtab/",
+	"webSocketDebuggerUrl": "ws://127.0.0.1:53213/devtools/page/4050"
+}
 ```
 
 * `companionAppInstalled` - Raised when application is removed from device. The callback has two arguments - `deviceIdentifier` and `framwork`. <br/><br/>
@@ -546,6 +612,144 @@ Sample result will be:
 	"appIdentifier": "com.telerik.PhotoAlbum",
 	"framework": "NativeScript"
 }]]
+```
+
+* `getDebuggableApps(deviceIdentifiers: string[]): Promise<IDeviceApplicationInformation[]>[]` - This function checks the proc/net/unix file of each device from the deviceIdentifiers argument for web views connected to abstract ports and returns information about the applications.
+```JavaScript
+/**
+ * Describes basic information about application on device.
+ */
+interface IDeviceApplicationInformation {
+	/**
+	 * The device identifier.
+	 */
+	deviceIdentifier: string;
+
+	/**
+	 * The application identifier.
+	 */
+	appIdentifier: string;
+
+	/**
+	 * The framework of the project (Cordova or NativeScript).
+	 */
+	framework: string;
+}
+```
+
+Sample usage:
+```JavaScript
+Promise.all(require("mobile-cli-lib").devicesService.getDebuggableApps(["4df18f307d8a8f1b", "JJY5KBTW75TCHQUK"]))
+	.then(function(data) {
+		data.forEach(function(apps) {
+			console.log(apps);
+		});
+	}, function(err) {
+		console.log(err);
+	});
+```
+Sample result will be:
+```JSON
+[[{
+	"deviceIdentifier": "4df18f307d8a8f1b",
+	"appIdentifier": "com.telerik.Fitness",
+	"framework": "NativeScript"
+}, {
+	"deviceIdentifier": "4df18f307d8a8f1b",
+	"appIdentifier": "com.telerik.livesynctest",
+	"framework": "Cordova"
+}], [{
+	"deviceIdentifier": "JJY5KBTW75TCHQUK",
+	"appIdentifier": "com.telerik.PhotoAlbum",
+	"framework": "NativeScript"
+}]]
+```
+
+* `getDebuggableViews(deviceIdentifier: string, appIdentifier: string): Promise<IDebugWebViewInfo[]>` - This function returns WebViews that can be debugged for specified application on specified device.
+> NOTE: This method works only for Cordova based applications. DO NOT pass appIdentifier of NativeScript application.
+
+```JavaScript
+/**
+ * Describes information for WebView that can be debugged.
+ */
+interface IDebugWebViewInfo {
+	/**
+	 * Short description of the view.
+	 */
+	description: string;
+
+	/**
+	 * Url to the devtools.
+	 * @example http://chrome-devtools-frontend.appspot.com/serve_rev/@211d45a5b74b06d12bb016f3c4d54095faf2646f/inspector.html?ws=127.0.0.1:53213/devtools/page/4024
+	 */
+	devtoolsFrontendUrl: string;
+
+	/**
+	 * Unique identifier of the web view. Could be number or GUID.
+	 * @example 4027
+	 */
+	id: string;
+
+	/**
+	 * Title of the WebView.
+	 * @example https://bit.ly/12345V is not available
+	 */
+	title: string;
+
+	/**
+	 * Type of the WebView.
+	 * @example page
+	 */
+	type: string;
+
+	/**
+	 * URL loaded in the view.
+	 * @example https://bit.ly/12345V
+	 */
+	url: string;
+
+	/**
+	 * Debugger URL.
+	 * @example ws://127.0.0.1:53213/devtools/page/4027
+	 */
+	webSocketDebuggerUrl: string;
+}
+```
+
+Sample usage:
+```JavaScript
+require("mobile-cli-lib")
+	.devicesService
+	.getDebuggableViews("4df18f307d8a8f1b", "com.telerik.cordovaApp")
+	.then(function(data) {
+		console.log(data);
+	}, function(err) {
+		console.log(err);
+	});
+```
+
+Sample result will be:
+```JSON
+[{
+		"description": "",
+		"devtoolsFrontendUrl": "http://chrome-devtools-frontend.appspot.com/serve_rev/@211d45a5b74b06d12bb016f3c4d54095faf2646f/inspector.html?ws=127.0.0.1:53213/devtools/page/4050",
+		"id": "4050",
+		"title": "New tab",
+		"type": "page",
+		"url": "chrome-native://newtab/",
+		"webSocketDebuggerUrl": "ws://127.0.0.1:53213/devtools/page/4050"
+	},
+
+	{
+		"description": "",
+		"devtoolsFrontendUrl": "http://chrome-devtools-frontend.appspot.com/serve_rev/@211d45a5b74b06d12bb016f3c4d54095faf2646f/inspector.html?ws=127.0.0.1:53213/devtools/page/4032",
+		"id": "4032",
+		"title": "New tab",
+		"type": "page",
+		"url": "chrome-native://newtab/",
+		"webSocketDebuggerUrl": "ws://127.0.0.1:53213/devtools/page/4032"
+	}
+]
 ```
 
 ### Module liveSyncService

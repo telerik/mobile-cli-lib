@@ -252,7 +252,6 @@ describe("deviceEmitter", () => {
 
 		_.each(["debuggableAppFound", "debuggableAppLost"], (applicationEvent: string) => {
 			describe(applicationEvent, () => {
-				// deviceIdentifier, appIdentifier, framework
 
 				let attachDebuggableEventVerificationHandler = (expectedDebuggableAppInfo: Mobile.IDeviceApplicationInformation, done: mocha.Done) => {
 					deviceEmitter.on(applicationEvent, (debuggableAppInfo: Mobile.IDeviceApplicationInformation) => {
@@ -297,6 +296,62 @@ describe("deviceEmitter", () => {
 					attachDebuggableEventVerificationHandler(debuggableAppInfo, done);
 					iOSSimulatorDiscovery.emit("deviceFound", iOSSimulator);
 					iOSSimulator.applicationManager.emit(applicationEvent, debuggableAppInfo);
+				});
+			});
+		});
+
+		_.each(["debuggableViewFound", "debuggableViewLost", "debuggableViewChanged"], (applicationEvent: string) => {
+			describe(applicationEvent, () => {
+
+				let createDebuggableWebView = (uniqueId: string) => {
+					return {
+						description: `description_${uniqueId}`,
+						devtoolsFrontendUrl: `devtoolsFrontendUrl_${uniqueId}`,
+						id: `${uniqueId}`,
+						title: `title_${uniqueId}`,
+						type: `type_${uniqueId}`,
+						url: `url_${uniqueId}`,
+						webSocketDebuggerUrl: `webSocketDebuggerUrl_${uniqueId}`,
+					};
+				};
+
+				let appId = "appId";
+
+				let attachDebuggableEventVerificationHandler = (expectedDeviceIdentifier: string, expectedAppIdentifier: string, expectedDebuggableViewInfo: Mobile.IDebugWebViewInfo, done: mocha.Done) => {
+					deviceEmitter.on(applicationEvent, (deviceIdentifier: string, appIdentifier: string, debuggableViewInfo: Mobile.IDebugWebViewInfo) => {
+						assert.deepEqual(deviceIdentifier, expectedDeviceIdentifier);
+
+						assert.deepEqual(appIdentifier, expectedAppIdentifier);
+
+						assert.deepEqual(debuggableViewInfo, expectedDebuggableViewInfo);
+
+						// Wait for all operations to be completed and call done after that.
+						setTimeout(done, 0);
+					});
+				};
+
+				it("is raised when working with android device", (done) => {
+					let expectedDebuggableViewInfo: Mobile.IDebugWebViewInfo = createDebuggableWebView("test1");
+
+					attachDebuggableEventVerificationHandler(androidDevice.deviceInfo.identifier, appId, expectedDebuggableViewInfo, done);
+					androidDeviceDiscovery.emit("deviceFound", androidDevice);
+					androidDevice.applicationManager.emit(applicationEvent, appId, expectedDebuggableViewInfo);
+				});
+
+				it("is raised when working with iOS device", (done) => {
+					let expectedDebuggableViewInfo: Mobile.IDebugWebViewInfo = createDebuggableWebView("test1");
+
+					attachDebuggableEventVerificationHandler(iOSDevice.deviceInfo.identifier, appId, expectedDebuggableViewInfo, done);
+					iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
+					iOSDevice.applicationManager.emit(applicationEvent, appId, expectedDebuggableViewInfo);
+				});
+
+				it("is raised when working with iOS simulator", (done) => {
+					let expectedDebuggableViewInfo: Mobile.IDebugWebViewInfo = createDebuggableWebView("test1");
+
+					attachDebuggableEventVerificationHandler(iOSSimulator.deviceInfo.identifier, appId, expectedDebuggableViewInfo, done);
+					iOSSimulatorDiscovery.emit("deviceFound", iOSSimulator);
+					iOSSimulator.applicationManager.emit(applicationEvent, appId, expectedDebuggableViewInfo);
 				});
 			});
 		});

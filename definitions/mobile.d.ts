@@ -197,6 +197,7 @@ declare module Mobile {
 		getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo>;
 		tryStartApplication(appIdentifier: string, framework?: string): IFuture<void>;
 		getDebuggableApps(): IFuture<Mobile.IDeviceApplicationInformation[]>;
+		getDebuggableAppViews(appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>>;
 	}
 
 	/**
@@ -300,7 +301,7 @@ declare module Mobile {
 		getDeviceByIdentifier(identifier: string): Mobile.IDevice;
 		mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string): IFuture<string>;
 		detectCurrentlyAttachedDevices(): IFuture<void>;
-		startEmulator(platform?: string): IFuture<void>; 
+		startEmulator(platform?: string): IFuture<void>;
 	}
 
 	/**
@@ -321,6 +322,60 @@ declare module Mobile {
 		 * @return {Mobile.IDeviceApplicationInformation[]} Returns array of applications information for the applications which are available for debugging.
 		 */
 		getDebuggableApps(deviceIdentifier: string): IFuture<Mobile.IDeviceApplicationInformation[]>;
+
+		/**
+		 * Gets all mapped abstract to tcp ports for specified device id and application identifiers.
+		 * @param deviceIdentifier {string} The identifier of the device.
+		 * @param appIdentifiers {string[]} Application identifiers that will be checked.
+		 * @return {IFuture<IDictionary<number>>} Dictionary, where the keys are app identifiers and the values are local ports.
+		 */
+		getMappedAbstractToTcpPorts(deviceIdentifier: string, appIdentifiers: string[]): IFuture<IDictionary<number>>;
+	}
+
+	/**
+	 * Describes information for WebView that can be debugged.
+	 */
+	interface IDebugWebViewInfo {
+		/**
+		 * Short description of the view.
+		 */
+		description: string;
+
+		/**
+		 * Url to the devtools.
+		 * @example http://chrome-devtools-frontend.appspot.com/serve_rev/@211d45a5b74b06d12bb016f3c4d54095faf2646f/inspector.html?ws=127.0.0.1:53213/devtools/page/4024
+		 */
+		devtoolsFrontendUrl: string;
+
+		/**
+		 * Unique identifier of the web view. Could be number or GUID.
+		 * @example 4027
+		 */
+		id: string;
+
+		/**
+		 * Title of the WebView.
+		 * @example https://bit.ly/12345V is not available
+		 */
+		title: string;
+
+		/**
+		 * Type of the WebView.
+		 * @example page
+		 */
+		type: string;
+
+		/**
+		 * URL loaded in the view.
+		 * @example https://bit.ly/12345V
+		 */
+		url: string;
+
+		/**
+		 * Debugger URL.
+		 * @example ws://127.0.0.1:53213/devtools/page/4027
+		 */
+		webSocketDebuggerUrl: string;
 	}
 
 	interface IiTunesValidator {

@@ -11,6 +11,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		private $options: ICommonOptions,
 		private $logcatHelper: Mobile.ILogcatHelper,
 		private $androidProcessService: Mobile.IAndroidProcessService,
+		private $httpClient: Server.IHttpClient,
 		$logger: ILogger) {
 		super($logger);
 	}
@@ -81,6 +82,30 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 
 	public getDebuggableApps(): IFuture<Mobile.IDeviceApplicationInformation[]> {
 		return this.$androidProcessService.getDebuggableApps(this.identifier);
+	}
+
+	public getDebuggableAppViews(appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>> {
+		return ((): IDictionary<Mobile.IDebugWebViewInfo[]> => {
+			let mappedAppIdentifierPorts = this.$androidProcessService.getMappedAbstractToTcpPorts(this.identifier, appIdentifiers).wait(),
+				applicationViews: IDictionary<Mobile.IDebugWebViewInfo[]> = {};
+
+			_.each(mappedAppIdentifierPorts, (port: number, appIdentifier: string) => {
+				applicationViews[appIdentifier] = [];
+				let localAddress = `http://127.0.0.1:${port}/json`;
+
+				try {
+					if (port) {
+						let apps = this.$httpClient.httpRequest(localAddress).wait().body;
+						applicationViews[appIdentifier] = JSON.parse(apps);
+					}
+				} catch (err) {
+					this.$logger.trace(`Error while checking ${localAddress}. Error is: ${err.message}`);
+				}
+			});
+
+			return applicationViews;
+
+		}).future<IDictionary<Mobile.IDebugWebViewInfo[]>>()();
 	}
 
 	private getStartPackageActivity(framework?: string): string {
