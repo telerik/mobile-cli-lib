@@ -482,10 +482,10 @@ interface ILiveSyncServiceBase {
 	 * Returns the `canExecute` method which defines if LiveSync operation can be executed on specified device.
 	 * @param {string} platform Platform for which the LiveSync operation should be executed.
 	 * @param {string} appIdentifier Application identifier.
-	 * @param {Function} canExecute Base canExecute function that will be added to the predefined checks.
+	 * @param {Function} [canExecute] Base canExecute function that will be added to the predefined checks.
 	 * @return {Function} Function that returns boolean.
 	 */
-	getCanExecuteAction(platform: string, appIdentifier: string, canExecute: (dev: Mobile.IDevice) => boolean): (dev: Mobile.IDevice) => boolean;
+	getCanExecuteAction(platform: string, appIdentifier: string, canExecute?: (dev: Mobile.IDevice) => boolean): (dev: Mobile.IDevice) => boolean;
 
 	/**
 	 * Gets LiveSync action that should be executed per device.
