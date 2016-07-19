@@ -551,11 +551,11 @@ Sample result will be:
 ```
 
 
-* `mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string): Promise<string>` - This function forwards the abstract port of the web view on the device to available tcp port on the host and returns the tcp port.
+* `mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string, framework: string): Promise<string>` - This function forwards the abstract port of the web view on the device to available tcp port on the host and returns the tcp port.
 
 Sample usage:
 ```JavaScript
-require("mobile-cli-lib").devicesService.mapAbstractToTcpPort("4df18f307d8a8f1b", "com.telerik.test")
+require("mobile-cli-lib").devicesService.mapAbstractToTcpPort("4df18f307d8a8f1b", "com.telerik.test", "Cordova")
 	.then(function(port) {
 		console.log(port);
 	}, function(err) {
