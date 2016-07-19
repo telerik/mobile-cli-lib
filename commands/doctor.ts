@@ -18,8 +18,8 @@ export class DoctorCommand implements ICommand {
 			let warningsPrinted = this.$doctorService.printWarnings().wait();
 			if (warningsPrinted) {
 				let client = this.$staticConfig.CLIENT_NAME_ALIAS || this.$staticConfig.CLIENT_NAME;
-				this.$logger.out(`These warnings are just used to help the ${client} maintainers with debugging if you file an issue.`.bold
-					+ EOL + `Please ignore them if everything you use ${client} for is working fine.`.bold + EOL);
+				this.$logger.out(`When you file an issue, these warnings will help the ${client} team to investigate, identify, and resolve the report.`.bold
+					+ EOL + `Please, ignore them if you are not experiencing any issues with ${client}.`.bold + EOL);
 			} else {
 				this.$logger.out("No issues were detected.".bold);
 			}
