@@ -299,7 +299,7 @@ declare module Mobile {
 		startDeviceDetectionInterval(): void;
 		stopDeviceDetectionInterval(): IFuture<void>;
 		getDeviceByIdentifier(identifier: string): Mobile.IDevice;
-		mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string): IFuture<string>;
+		mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string, framework: string): IFuture<string>;
 		detectCurrentlyAttachedDevices(): IFuture<void>;
 		startEmulator(platform?: string): IFuture<void>;
 	}
@@ -312,9 +312,10 @@ declare module Mobile {
 		 * Checks for available ports and forwards the current abstract port to one of the available ports.
 		 * @param deviceIdentifier The identifier of the device.
 		 * @param appIdentifier The identifier of the application.
+		 * @param framework {string} The framework of the application. Could be Cordova or NativeScript.
 		 * @return {string} Returns the tcp port number which is mapped to the abstract port.
 		 */
-		mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string): IFuture<string>;
+		mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string, framework: string): IFuture<string>;
 
 		/**
 		 * Gets the applications which are available for debugging on the specified device.
@@ -327,9 +328,10 @@ declare module Mobile {
 		 * Gets all mapped abstract to tcp ports for specified device id and application identifiers.
 		 * @param deviceIdentifier {string} The identifier of the device.
 		 * @param appIdentifiers {string[]} Application identifiers that will be checked.
+		 * @param framework {string} The framework of the application. Could be Cordova or NativeScript.
 		 * @return {IFuture<IDictionary<number>>} Dictionary, where the keys are app identifiers and the values are local ports.
 		 */
-		getMappedAbstractToTcpPorts(deviceIdentifier: string, appIdentifiers: string[]): IFuture<IDictionary<number>>;
+		getMappedAbstractToTcpPorts(deviceIdentifier: string, appIdentifiers: string[], framework: string): IFuture<IDictionary<number>>;
 	}
 
 	/**

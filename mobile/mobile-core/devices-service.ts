@@ -398,8 +398,8 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	@exportedPromise("devicesService")
-	public mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string): IFuture<string> {
-		return this.$androidProcessService.mapAbstractToTcpPort(deviceIdentifier, appIdentifier);
+	public mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string, framework: string): IFuture<string> {
+		return this.$androidProcessService.mapAbstractToTcpPort(deviceIdentifier, appIdentifier, framework);
 	}
 
 	@exportedPromise("devicesService")

@@ -86,7 +86,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 
 	public getDebuggableAppViews(appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>> {
 		return ((): IDictionary<Mobile.IDebugWebViewInfo[]> => {
-			let mappedAppIdentifierPorts = this.$androidProcessService.getMappedAbstractToTcpPorts(this.identifier, appIdentifiers).wait(),
+			let mappedAppIdentifierPorts = this.$androidProcessService.getMappedAbstractToTcpPorts(this.identifier, appIdentifiers, TARGET_FRAMEWORK_IDENTIFIERS.Cordova).wait(),
 				applicationViews: IDictionary<Mobile.IDebugWebViewInfo[]> = {};
 
 			_.each(mappedAppIdentifierPorts, (port: number, appIdentifier: string) => {
