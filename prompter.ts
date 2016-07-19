@@ -42,7 +42,7 @@ export class Prompter implements IPrompter {
 					}
 				} else {
 					prompt.prompt(schemas, (result: any) => {
-						if(result) {
+						if (result) {
 							future.return(result);
 						} else {
 							future.throw(new Error(`Unable to get result from prompt: ${result}`));
@@ -126,6 +126,7 @@ export class Prompter implements IPrompter {
 			// We need to create mute-stream and to pass it as output to ctrlcReader
 			// This will prevent the prompter to show the user's text twice on the console
 			this.muteStreamInstance = new MuteStream();
+
 			this.muteStreamInstance.pipe(process.stdout);
 			this.muteStreamInstance.mute();
 
@@ -134,19 +135,54 @@ export class Prompter implements IPrompter {
 				output: this.muteStreamInstance
 			});
 
-			this.ctrlcReader.on("SIGINT", () => process.exit());
+			this.ctrlcReader.on("SIGINT", process.exit);
 		}
 	}
 
 	private unmuteStdout(): void {
 		if (helpers.isInteractive()) {
 			process.stdin.setRawMode(false);
-			if(this.muteStreamInstance) {
+			if (this.muteStreamInstance) {
+				// We need to clean the event listeners from the process.stdout because the MuteStream.pipe function calls the pipe function of the Node js Stream which adds event listeners and this can cause memory leak if we display more than ~10 prompts.
+				this.cleanEventListeners(process.stdout);
 				this.muteStreamInstance.unmute();
 				this.muteStreamInstance = null;
 				this.dispose();
 			}
 		}
 	}
+
+	private cleanEventListeners(stream: NodeJS.WritableStream): void {
+		// The events names and listeners names can be found here https://github.com/nodejs/node/blob/master/lib/stream.js
+		// Which event cause memory leak can be tested with stream.listeners("event-name") and if the listeners count keeps increasing with each prompt we need to remove the listener.
+		let memoryLeakEvents: IMemoryLeakEvent[] = [{
+			eventName: "close",
+			listenerName: "cleanup"
+		}, {
+				eventName: "error",
+				listenerName: "onerror"
+			}, {
+				eventName: "drain",
+				listenerName: "ondrain"
+			}];
+
+		_.each(memoryLeakEvents, (memoryleakEvent: IMemoryLeakEvent) => this.cleanListener(stream, memoryleakEvent.eventName, memoryleakEvent.listenerName));
+	}
+
+	private cleanListener(stream: NodeJS.WritableStream, eventName: string, listenerName: string): void {
+		let eventListeners: any[] = process.stdout.listeners(eventName);
+
+		let listenerFunction: Function = _.find(eventListeners, (func: any) => func.name === listenerName);
+
+		if (listenerFunction) {
+			stream.removeListener(eventName, listenerFunction);
+		}
+	}
 }
+
+interface IMemoryLeakEvent {
+	eventName: string;
+	listenerName: string;
+}
+
 $injector.register("prompter", Prompter);
