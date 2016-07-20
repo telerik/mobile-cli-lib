@@ -30,13 +30,6 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		this.fileHashes = Object.create(null);
 	}
 
-	public getPlatform(platform?: string): IFuture<string> { // gets the platform and ensures that the devicesService is initialized
-		return (() => {
-			this.$devicesService.initialize({ platform: platform, deviceId: this.$options.device }).wait();
-			return platform || this.$devicesService.platform;
-		}).future<string>()();
-	}
-
 	public sync(data: ILiveSyncData[], filePaths?: string[]): IFuture<void> {
 		return (() => {
 			this.syncCore(data, filePaths).wait();
@@ -276,7 +269,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		}
 	}
 
-	private resolvePlatformLiveSyncService(platform: string, device: Mobile.IDevice): IPlatformLiveSyncService {
+	private resolvePlatformLiveSyncService(platform: string, device: Mobile.IDevice): IDeviceLiveSyncService {
 		return this.$injector.resolve(this.$liveSyncProvider.platformSpecificLiveSyncServices[platform.toLowerCase()], { _device: device });
 	}
 

@@ -2,7 +2,7 @@ import { AndroidLiveSyncService } from "../../../mobile/android/android-livesync
 import * as path from "path";
 import * as helpers from "../../../helpers";
 
-export class AppBuilderAndroidLiveSyncService extends AndroidLiveSyncService implements IPlatformLiveSyncService {
+export class AppBuilderAndroidLiveSyncService extends AndroidLiveSyncService implements IDeviceLiveSyncService {
 	constructor(private _device: Mobile.IAndroidDevice,
 	 	$fs: IFileSystem,
 		$mobileHelper: Mobile.IMobileHelper,

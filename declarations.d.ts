@@ -467,12 +467,6 @@ interface IXcodeSelectService {
 
 interface ILiveSyncServiceBase {
 	/**
-	 * If platform parameter is specified returns it
-	 * If platform parameter is not specified returns the platform of the connected device(s)
-	 * If devices from different platforms are connected throws an error
-	 */
-	getPlatform(platform?: string): IFuture<string>;
-	/**
 	 * If watch option is not specified executes full sync
 	 * If watch option is specified executes partial sync
 	 */
@@ -560,7 +554,7 @@ interface ILiveSyncData {
 	canExecute?(device: Mobile.IDevice): boolean;
 }
 
-interface IPlatformLiveSyncService {
+interface IDeviceLiveSyncService {
 	/**
 	 * Refreshes the application's content on a device
 	 */
@@ -1113,6 +1107,10 @@ interface IProjectFilesConfig {
 
 interface ILiveSyncProvider {
 	/**
+	 * Returns a dictionary that map platform to device specific livesync service
+	 */
+	deviceSpecificLiveSyncServices: IDictionary<any>;
+		/**
 	 * Returns a dictionary that map platform to platform specific livesync service
 	 */
 	platformSpecificLiveSyncServices: IDictionary<any>;
