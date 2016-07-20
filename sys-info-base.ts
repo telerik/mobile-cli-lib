@@ -28,6 +28,16 @@ export class SysInfoBase implements ISysInfo {
 		}).future<string>()();
 	}
 
+	private npmVerCache: string = null;
+	public getNpmVersion(): string {
+		if (!this.npmVerCache) {
+			let procOutput = this.exec("npm -v");
+			this.npmVerCache = procOutput ? procOutput.split("\n")[0] : null;
+		}
+
+		return this.npmVerCache;
+	}
+
 	private javaCompilerVerCache: string = null;
 	public getJavaCompilerVersion(): IFuture<string> {
 		return ((): string => {
@@ -152,8 +162,7 @@ export class SysInfoBase implements ISysInfo {
 				res.procArch = process.arch;
 				res.nodeVer = process.version;
 
-				procOutput = this.exec("npm -v");
-				res.npmVer = procOutput ? procOutput.split("\n")[0] : null;
+				res.npmVer = this.getNpmVersion();
 
 				res.javaVer = this.getJavaVersion().wait();
 

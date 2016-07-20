@@ -654,6 +654,9 @@ interface ISysInfo {
 
 	/** Returns Cocoapod version. **/
 	getCocoapodVersion(): IFuture<string>;
+
+	/** Returns npm version. */
+	getNpmVersion(): string;
 }
 
 interface IHostInfo {

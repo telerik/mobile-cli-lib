@@ -61,7 +61,11 @@ export abstract class ProjectBase implements Project.IProjectBase {
 		return null;
 	}
 
-	public startPackageActivity = startPackageActivityNames[TARGET_FRAMEWORK_IDENTIFIERS.Cordova.toLowerCase()];
+	public get startPackageActivity(): string {
+		let projectData = this.projectData;
+
+		return projectData && projectData.Framework ? startPackageActivityNames[projectData.Framework.toLowerCase()] : null;
+	}
 
 	public get hasBuildConfigurations(): boolean {
 		return this._hasBuildConfigurations;
