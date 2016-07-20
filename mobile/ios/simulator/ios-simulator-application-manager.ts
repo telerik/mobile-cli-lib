@@ -60,7 +60,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 			let result: Mobile.IApplicationInfo = null,
 				plistContent = this.getParsedPlistContent(applicationIdentifier).wait();
 
-			if(plistContent) {
+			if (plistContent) {
 				result = {
 					applicationIdentifier,
 					deviceIdentifier: this.identifier,
@@ -75,7 +75,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 	public isLiveSyncSupported(appIdentifier: string): IFuture<boolean> {
 		return ((): boolean => {
 			let plistContent = this.getParsedPlistContent(appIdentifier).wait();
-			if(plistContent) {
+			if (plistContent) {
 				return !!plistContent && !!plistContent.IceniumLiveSyncEnabled;
 			}
 
@@ -85,6 +85,10 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 
 	private getParsedPlistContent(appIdentifier: string): any {
 		return ((): any => {
+			if (!this.isApplicationInstalled(appIdentifier).wait()) {
+				return null;
+			}
+
 			let applicationPath = this.iosSim.getApplicationPath(this.identifier, appIdentifier),
 				pathToInfoPlist = path.join(applicationPath, "Info.plist");
 
