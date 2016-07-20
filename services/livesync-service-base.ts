@@ -250,8 +250,13 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 			let canTransferDirectory = isFullSync && (this.$devicesService.isAndroidDevice(deviceAppData.device) || this.$devicesService.isiOSSimulator(deviceAppData.device));
 			if (canTransferDirectory) {
 				let tempDir = temp.mkdirSync("tempDir");
-				shell.cp("-Rf", path.join(projectFilesPath, "*"), tempDir);
-				this.$projectFilesManager.processPlatformSpecificFiles(tempDir, deviceAppData.platform).wait();
+				_.each(localToDevicePaths, localToDevicePath => {
+					let fileDirname = path.join(tempDir, path.dirname(localToDevicePath.getRelativeToProjectBasePath()));
+					shell.mkdir("-p", fileDirname);
+					if (!this.$fs.getFsStats(localToDevicePath.getLocalPath()).wait().isDirectory()) {
+						shell.cp("-f", localToDevicePath.getLocalPath(), path.join(fileDirname, path.basename(localToDevicePath.getDevicePath())));
+					}
+				});
 				deviceAppData.device.fileSystem.transferDirectory(deviceAppData, localToDevicePaths, tempDir).wait();
 			} else {
 				this.$liveSyncProvider.transferFiles(deviceAppData, localToDevicePaths, projectFilesPath, isFullSync).wait();
