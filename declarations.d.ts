@@ -574,6 +574,8 @@ interface IPlatformLiveSyncService {
 	 */
 	beforeLiveSyncAction?(deviceAppData: Mobile.IDeviceAppData): IFuture<void>;
 	afterInstallApplicationAction?(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<boolean>;
+
+	debugService?: any;
 }
 
 interface ISysInfoData {

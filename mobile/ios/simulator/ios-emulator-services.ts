@@ -106,6 +106,10 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 			opts.push("--waitForDebugger");
 		}
 
+		if (emulatorOptions && emulatorOptions.skipInstall) {
+			opts.push("--skipInstall");
+		}
+
 		let stdioOpts = { stdio: (emulatorOptions && emulatorOptions.captureStdin) ? "pipe" : "inherit" };
 
 		return this.$childProcess.spawn(nodeCommandName, opts, stdioOpts);
