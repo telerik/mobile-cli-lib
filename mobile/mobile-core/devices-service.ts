@@ -7,9 +7,10 @@ import * as fiberBootstrap from "../../fiber-bootstrap";
 import {exportedPromise, exported} from "../../decorators";
 
 export class DevicesService implements Mobile.IDevicesService {
+	private static shouldAddExitEventListener = true;
+	private static DEVICE_LOOKING_INTERVAL = 2200;
 	private _devices: IDictionary<Mobile.IDevice> = {};
 	private platforms: string[] = [];
-	private static DEVICE_LOOKING_INTERVAL = 2200;
 	private _platform: string;
 	private _device: Mobile.IDevice;
 	private _isInitialized = false;
@@ -146,6 +147,12 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	public startDeviceDetectionInterval(): void {
+		if (DevicesService.shouldAddExitEventListener) {
+			helpers.attachToProcessExitSignals(this, this.stopDeviceDetectionInterval);
+
+			DevicesService.shouldAddExitEventListener = false;
+		}
+
 		if (this.deviceDetectionInterval) {
 			this.$logger.trace("Device detection interval is already started. New Interval will not be started.");
 		} else {
