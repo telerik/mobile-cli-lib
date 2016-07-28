@@ -28,7 +28,7 @@ export class AndroidLogFilter implements Mobile.IPlatformLogFilter {
 	}
 
 	private getConsoleLogFromLine(lineText: string): any {
-		let acceptedTags = ["chromium", "Web Console", "JS"];
+		let acceptedTags = ["chromium", "Web Console", "JS", "com.tns.Runtime", "error"];
 		let match = lineText.match(AndroidLogFilter.LINE_REGEX) || lineText.match(AndroidLogFilter.API_LEVEL_23_LINE_REGEX);
 
 		if (match && acceptedTags.indexOf(match[1].trim()) !== -1) {
