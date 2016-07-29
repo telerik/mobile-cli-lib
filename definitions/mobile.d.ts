@@ -302,6 +302,9 @@ declare module Mobile {
 		mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string, framework: string): IFuture<string>;
 		detectCurrentlyAttachedDevices(): IFuture<void>;
 		startEmulator(platform?: string): IFuture<void>;
+		isCompanionAppInstalledOnDevices(deviceIdentifiers: string[], framework: string): IFuture<IAppInstalledInfo>[];
+		getDebuggableApps(deviceIdentifiers: string[]): IFuture<Mobile.IDeviceApplicationInformation[]>[];
+		getDebuggableViews(deviceIdentifier: string, appIdentifier: string): IFuture<Mobile.IDebugWebViewInfo[]>;
 	}
 
 	/**
