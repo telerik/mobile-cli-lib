@@ -5,7 +5,7 @@ let osenv = require("osenv");
 import { LiveSyncConstants } from "../../../constants";
 import { TARGET_FRAMEWORK_IDENTIFIERS } from "../../../constants";
 
-export class IOSLiveSyncService implements IPlatformLiveSyncService {
+export class IOSLiveSyncService implements IDeviceLiveSyncService {
 	private get $project(): any {
 		return this.$injector.resolve("project");
 	}
