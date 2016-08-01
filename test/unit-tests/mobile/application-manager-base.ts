@@ -651,12 +651,11 @@ describe("ApplicationManagerBase", () => {
 	});
 
 	describe("tryStartApplication", () => {
-		it("calls startApplication, when application is installed and canStartApplication returns true", () => {
+		it("calls startApplication, when canStartApplication returns true", () => {
 			let startApplicationAppIdParam: string,
 				startApplicationFrameworkParam: string;
 
 			applicationManager.canStartApplication = () => true;
-			applicationManager.isApplicationInstalled = (appId: string) => Future.fromResult(true);
 			applicationManager.startApplication = (appId: string, framework: string) => {
 				startApplicationAppIdParam = appId;
 				startApplicationFrameworkParam = framework;
@@ -672,23 +671,9 @@ describe("ApplicationManagerBase", () => {
 			assert.deepEqual(startApplicationFrameworkParam, "framework");
 		});
 
-		it("does not call startApplication, when application is NOT installed", () => {
-			let isStartApplicationCalled = false;
-			applicationManager.canStartApplication = () => true;
-			applicationManager.isApplicationInstalled = (appId: string) => Future.fromResult(false);
-			applicationManager.startApplication = (appId: string, framework: string) => {
-				isStartApplicationCalled = true;
-				return Future.fromResult();
-			};
-
-			applicationManager.tryStartApplication("appId").wait();
-			assert.isFalse(isStartApplicationCalled, "startApplication must not be called when app is not installed");
-		});
-
-		it("does not call startApplication, when application is installed, but canStartApplication returns false", () => {
+		it("does not call startApplication, when canStartApplication returns false", () => {
 			let isStartApplicationCalled = false;
 			applicationManager.canStartApplication = () => false;
-			applicationManager.isApplicationInstalled = (appId: string) => Future.fromResult(true);
 			applicationManager.startApplication = (appId: string, framework: string) => {
 				isStartApplicationCalled = true;
 				return Future.fromResult();
@@ -725,17 +710,6 @@ describe("ApplicationManagerBase", () => {
 				assert.isTrue(logger.traceOutput.indexOf("Throw!") !== -1, "Error message must be shown in trace output.");
 				assert.isTrue(logger.traceOutput.indexOf("Unable to start application") !== -1, "'Unable to start application' must be shown in trace output.");
 			};
-
-			it("when isApplicationInstalled throws error", () => {
-				applicationManager.canStartApplication = () => true;
-				applicationManager.isApplicationInstalled = (appId: string) => {
-					return (() => {
-						throw error;
-					}).future<boolean>()();
-				};
-
-				assertDoesNotThrow();
-			});
 
 			it("when canStartApplication throws error", () => {
 				applicationManager.canStartApplication = (): boolean => {

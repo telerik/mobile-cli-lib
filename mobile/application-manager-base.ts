@@ -65,7 +65,7 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 	public tryStartApplication(appIdentifier: string, framework?: string): IFuture<void> {
 		return (() => {
 			try {
-				if (this.isApplicationInstalled(appIdentifier).wait() && this.canStartApplication()) {
+				if (this.canStartApplication()) {
 					this.startApplication(appIdentifier, framework).wait();
 				}
 			} catch (err) {
