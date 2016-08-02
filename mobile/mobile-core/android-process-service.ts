@@ -2,19 +2,17 @@ import {EOL} from "os";
 import * as shelljs from "shelljs";
 import {DeviceAndroidDebugBridge} from "../android/device-android-debug-bridge";
 import {TARGET_FRAMEWORK_IDENTIFIERS} from "../../constants";
-import {attachToProcessExitSignals} from "../../helpers";
 
 export class AndroidProcessService implements Mobile.IAndroidProcessService {
-	private _shouldAddProcessExitEventListeners: boolean;
 	private _devicesAdbs: IDictionary<Mobile.IDeviceAndroidDebugBridge>;
 	private _forwardedLocalPorts: number[];
 
 	constructor(private $errors: IErrors,
 		private $staticConfig: Config.IStaticConfig,
 		private $injector: IInjector,
-		private $net: INet) {
+		private $net: INet,
+		private $processService: IProcessService) {
 		this._devicesAdbs = {};
-		this._shouldAddProcessExitEventListeners = true;
 		this._forwardedLocalPorts = [];
 	}
 
@@ -282,20 +280,16 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 	}
 
 	private tryAttachToProcessExitSignals(): void {
-		if (this._shouldAddProcessExitEventListeners) {
-			attachToProcessExitSignals(this, () => {
-				return (() => {
-					_.each(this._forwardedLocalPorts, (port: number) => {
-						// We need to use shelljs here instead of $adb because listener functions of exit, SIGINT and SIGTERM must only perform synchronous operations.
-						// The Node.js process will exit immediately after calling the 'exit' event listeners causing any additional work still queued in the event loop to be abandoned.
-						// See the official documentation for more information and examples - https://nodejs.org/dist/latest-v6.x/docs/api/process.html#process_event_exit.
-						shelljs.exec(`adb forward --remove tcp:${port}`);
-					});
-				}).future<void>()();
-			});
-
-			this._shouldAddProcessExitEventListeners = false;
-		}
+		this.$processService.attachToProcessExitSignals(this, () => {
+			return (() => {
+				_.each(this._forwardedLocalPorts, (port: number) => {
+					// We need to use shelljs here instead of $adb because listener functions of exit, SIGINT and SIGTERM must only perform synchronous operations.
+					// The Node.js process will exit immediately after calling the 'exit' event listeners causing any additional work still queued in the event loop to be abandoned.
+					// See the official documentation for more information and examples - https://nodejs.org/dist/latest-v6.x/docs/api/process.html#process_event_exit.
+					shelljs.exec(`adb forward --remove tcp:${port}`);
+				});
+			}).future<void>()();
+		});
 	}
 }
 

@@ -4,7 +4,6 @@ import * as net from "net";
 let Table = require("cli-table");
 import Future = require("fibers/future");
 import { platform } from "os";
-import * as fiberBootstrap from "./fiber-bootstrap";
 
 function bashQuote(s: string): string {
 	if (s[0] === "'" && s[s.length - 1] === "'") {
@@ -285,16 +284,6 @@ export function connectEventually(factory: () => net.Socket, handler: (_socket: 
 	}
 
 	tryConnect();
-}
-
-export function attachToProcessExitSignals(context: any, callback: () => IFuture<any>): void {
-		let processKillSignals = ["exit", "SIGINT", "SIGTERM"];
-
-		_.each(processKillSignals, (signal: string) => process.on(signal, () => {
-			fiberBootstrap.run(() => {
-				callback.apply(context).wait();
-			});
-		}));
 }
 
 //--- begin part copied from AngularJS

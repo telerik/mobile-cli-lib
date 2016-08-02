@@ -93,6 +93,9 @@ function createTestInjector(): IInjector {
 	testInjector.register("iOSEmulatorServices", IOSEmulatorServices);
 	testInjector.register("messages", Messages);
 	testInjector.register("companionAppsService", {});
+	testInjector.register("processService", {
+		attachToProcessExitSignals: (context: any, callback: () => IFuture<any>) => { /* no implementation required */ }
+	});
 	testInjector.register("mobileHelper", {
 		platformNames: ["ios", "android"],
 		validatePlatformName: (platform: string) => platform.toLowerCase(),

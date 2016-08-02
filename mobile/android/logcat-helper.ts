@@ -1,6 +1,5 @@
 import byline = require("byline");
 import {DeviceAndroidDebugBridge} from "./device-android-debug-bridge";
-import {attachToProcessExitSignals} from "../../helpers";
 import Future = require("fibers/future");
 
 export class LogcatHelper implements Mobile.ILogcatHelper {
@@ -10,7 +9,8 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 		private $deviceLogProvider: Mobile.IDeviceLogProvider,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $logger: ILogger,
-		private $injector: IInjector) {
+		private $injector: IInjector,
+		private $processService: IProcessService) {
 		this.mapDeviceToLoggingStarted = Object.create(null);
 	}
 
@@ -44,7 +44,7 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 				this.$deviceLogProvider.logData(lineText, this.$devicePlatformsConstants.Android, deviceIdentifier);
 			});
 
-			attachToProcessExitSignals(this, () => Future.fromResult(adbLogcat.kill()));
+			this.$processService.attachToProcessExitSignals(this, () => Future.fromResult(adbLogcat.kill()));
 
 			this.mapDeviceToLoggingStarted[deviceIdentifier] = true;
 		}
