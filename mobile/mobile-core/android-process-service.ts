@@ -1,15 +1,21 @@
 import {EOL} from "os";
+import * as shelljs from "shelljs";
 import {DeviceAndroidDebugBridge} from "../android/device-android-debug-bridge";
 import {TARGET_FRAMEWORK_IDENTIFIERS} from "../../constants";
+import {attachToProcessExitSignals} from "../../helpers";
 
 export class AndroidProcessService implements Mobile.IAndroidProcessService {
+	private _shouldAddProcessExitEventListeners: boolean;
 	private _devicesAdbs: IDictionary<Mobile.IDeviceAndroidDebugBridge>;
+	private _forwardedLocalPorts: number[];
 
 	constructor(private $errors: IErrors,
 		private $staticConfig: Config.IStaticConfig,
 		private $injector: IInjector,
 		private $net: INet) {
 		this._devicesAdbs = {};
+		this._shouldAddProcessExitEventListeners = true;
+		this._forwardedLocalPorts = [];
 	}
 
 	private get androidPortInformationRegExp(): RegExp {
@@ -25,6 +31,8 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 
 	public mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string, framework: string): IFuture<string> {
 		return (() => {
+			this.tryAttachToProcessExitSignals();
+
 			let adb = this.getAdb(deviceIdentifier);
 			let processId = this.getProcessIds(adb, [appIdentifier]).wait()[appIdentifier];
 			let applicationNotStartedErrorMessage = `The application is not started on the device with identifier ${deviceIdentifier}.`;
@@ -47,6 +55,7 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 				adb.executeCommand(["forward", `tcp:${localPort}`, `localabstract:${abstractPort}`]).wait();
 			}
 
+			this._forwardedLocalPorts.push(localPort);
 			return localPort;
 		}).future<string>()();
 	}
@@ -270,6 +279,23 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 			});
 
 		return result;
+	}
+
+	private tryAttachToProcessExitSignals(): void {
+		if (this._shouldAddProcessExitEventListeners) {
+			attachToProcessExitSignals(this, () => {
+				return (() => {
+					_.each(this._forwardedLocalPorts, (port: number) => {
+						// We need to use shelljs here instead of $adb because listener functions of exit, SIGINT and SIGTERM must only perform synchronous operations.
+						// The Node.js process will exit immediately after calling the 'exit' event listeners causing any additional work still queued in the event loop to be abandoned.
+						// See the official documentation for more information and examples - https://nodejs.org/dist/latest-v6.x/docs/api/process.html#process_event_exit.
+						shelljs.exec(`adb forward --remove tcp:${port}`);
+					});
+				}).future<void>()();
+			});
+
+			this._shouldAddProcessExitEventListeners = false;
+		}
 	}
 }
 
