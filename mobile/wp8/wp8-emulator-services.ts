@@ -2,12 +2,20 @@ import * as path from "path";
 import future = require("fibers/future");
 
 class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
+	private static WP8_LAUNCHER = "XapDeployCmd.exe";
+	private static WP8_LAUNCHER_PATH = "Microsoft SDKs\\Windows Phone\\v8.0\\Tools\\XAP Deployment";
+
+	private static get programFilesPath(): string {
+		return (process.arch === "x64") ? process.env["PROGRAMFILES(X86)"] : process.env.ProgramFiles;
+	}
+
 	constructor(private $logger: ILogger,
 		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
 		private $errors: IErrors,
 		private $childProcess: IChildProcess,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
-		private $hostInfo: IHostInfo) { }
+		private $hostInfo: IHostInfo,
+		private $fs: IFileSystem) { }
 
 	public getEmulatorId(): IFuture<string> {
 		return future.fromResult("");
@@ -19,6 +27,10 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	public checkAvailability(): IFuture<void> {
 		return (() => {
+			if (!this.$fs.exists(this.getPathToEmulatorStarter()).wait()) {
+				this.$errors.failWithoutHelp("You do not have Windows Phone 8 SDK installed. Please install it in order to continue.");
+			}
+
 			if (!this.$hostInfo.isWindows) {
 				this.$errors.fail("Windows Phone Emulator is available only on Windows 8 or later.");
 			}
@@ -34,19 +46,17 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 		return future.fromResult("Not implemented.");
 	}
 
-	public runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions) : IFuture<void> {
+	public runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): IFuture<void> {
 		return (() => {
 			this.$logger.info("Starting Windows Phone Emulator");
-			let emulatorStarter = path.join(Wp8EmulatorServices.programFilesPath, Wp8EmulatorServices.WP8_LAUNCHER_PATH, Wp8EmulatorServices.WP8_LAUNCHER);
-			this.$childProcess.spawn(emulatorStarter, ["/installlaunch", app, "/targetdevice:xd"], { stdio:  "ignore", detached: true }).unref();
+			let emulatorStarter = this.getPathToEmulatorStarter();
+			this.$childProcess.spawn(emulatorStarter, ["/installlaunch", app, "/targetdevice:xd"], { stdio: "ignore", detached: true }).unref();
 		}).future<void>()();
 	}
 
-	private static get programFilesPath(): string {
-		return (process.arch === "x64") ? process.env["PROGRAMFILES(X86)"] : process.env.ProgramFiles;
+	private getPathToEmulatorStarter(): string {
+		return path.join(Wp8EmulatorServices.programFilesPath, Wp8EmulatorServices.WP8_LAUNCHER_PATH, Wp8EmulatorServices.WP8_LAUNCHER);
 	}
-
-	private static WP8_LAUNCHER = "XapDeployCmd.exe";
-	private static WP8_LAUNCHER_PATH = "Microsoft SDKs\\Windows Phone\\v8.0\\Tools\\XAP Deployment";
 }
+
 $injector.register("wp8EmulatorServices", Wp8EmulatorServices);

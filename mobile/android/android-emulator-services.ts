@@ -78,6 +78,10 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 
 	public checkAvailability(): IFuture<void> {
 		return (() => {
+			if (!this.getEmulatorImage().wait()) {
+				this.$errors.failWithoutHelp("You do not have any Android emulators installed. Please install at least one.");
+			}
+
 			let platform = this.$devicePlatformsConstants.Android;
 			if (!this.$emulatorSettingsService.canStart(platform).wait()) {
 				this.$errors.fail("The current project does not target Android and cannot be run in the Android emulator.");
@@ -399,7 +403,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 				.map(avd => this.getInfoFromAvd(avd).wait())
 				.maxBy(avd => avd.targetNum);
 
-			return (best.targetNum >= minVersion) ? best.name : null;
+			return (best && best.targetNum >= minVersion) ? best.name : null;
 		}).future<string>()();
 	}
 
@@ -417,6 +421,10 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 
 	private parseAvdFile(avdName: string, avdFileName: string, avdInfo: Mobile.IAvdInfo = null): IFuture<Mobile.IAvdInfo> {
 		return (() => {
+			if (!this.$fs.exists(avdFileName).wait()) {
+				return null;
+			}
+
 			// avd files can have different encoding, defined on the first line.
 			// find which one it is (if any) and use it to correctly read the file contents
 			let encoding = this.getAvdEncoding(avdFileName).wait();
