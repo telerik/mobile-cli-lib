@@ -1,5 +1,3 @@
-import * as fiberBootstrap from "../fiber-bootstrap";
-
 export class ProcessService implements IProcessService {
 	private static PROCESS_EXIT_SIGNALS = ["exit", "SIGINT", "SIGTERM"];
 	private _listeners: IListener[];
@@ -15,7 +13,7 @@ export class ProcessService implements IProcessService {
 		});
 	}
 
-	public attachToProcessExitSignals(context: any, callback: () => IFuture<any>): void {
+	public attachToProcessExitSignals(context: any, callback: () => void): void {
 		let callbackToString = callback.toString();
 
 		if (!_.some(this._listeners, (listener: IListener) => context === listener.context && callbackToString === listener.callback.toString())) {
@@ -24,17 +22,15 @@ export class ProcessService implements IProcessService {
 	}
 
 	private executeAllCallbacks(): void {
-		fiberBootstrap.run(() => {
-			_.each(this._listeners, (listener: IListener) => {
-				listener.callback.apply(listener.context).wait();
-			});
+		_.each(this._listeners, (listener: IListener) => {
+			listener.callback.apply(listener.context);
 		});
 	}
 }
 
 interface IListener {
 	context: any;
-	callback: () => IFuture<any>;
+	callback: () => void;
 }
 
 $injector.register("processService", ProcessService);

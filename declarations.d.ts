@@ -1168,5 +1168,5 @@ interface INet {
 
 interface IProcessService {
 	listenersCount: number;
-	attachToProcessExitSignals(context: any, callback: () => IFuture<any>): void;
+	attachToProcessExitSignals(context: any, callback: () => void): void;
 }

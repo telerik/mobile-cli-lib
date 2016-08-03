@@ -1,6 +1,5 @@
 import byline = require("byline");
 import {DeviceAndroidDebugBridge} from "./device-android-debug-bridge";
-import Future = require("fibers/future");
 
 export class LogcatHelper implements Mobile.ILogcatHelper {
 	private mapDeviceToLoggingStarted: IDictionary<boolean>;
@@ -44,7 +43,7 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 				this.$deviceLogProvider.logData(lineText, this.$devicePlatformsConstants.Android, deviceIdentifier);
 			});
 
-			this.$processService.attachToProcessExitSignals(this, () => Future.fromResult(adbLogcat.kill()));
+			this.$processService.attachToProcessExitSignals(this, adbLogcat.kill);
 
 			this.mapDeviceToLoggingStarted[deviceIdentifier] = true;
 		}

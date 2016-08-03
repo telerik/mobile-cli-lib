@@ -1,10 +1,9 @@
 import {Yok} from "../../yok";
 import {ProcessService} from "../../services/process-service";
 import {assert} from "chai";
-import Future = require("fibers/future");
 
 let processExitSignals = ["exit", "SIGINT", "SIGTERM"];
-
+let emptyFunction = () => { /* no implementation required */ };
 function createTestInjector(): IInjector {
 	let testInjector = new Yok();
 
@@ -23,8 +22,8 @@ describe("Process service", () => {
 	});
 
 	it("should not add only one listener for the exit, SIGIN and SIGTERM events.", () => {
-		$processService.attachToProcessExitSignals({}, () => Future.fromResult());
-		$processService.attachToProcessExitSignals({}, () => Future.fromResult());
+		$processService.attachToProcessExitSignals({}, emptyFunction);
+		$processService.attachToProcessExitSignals({}, emptyFunction);
 
 		_.each(processExitSignals, (signal: string) => {
 			// We need to search only for our listener because each exit signal have different listeners added to it.
@@ -35,31 +34,59 @@ describe("Process service", () => {
 
 	it("should add listener with context only once if there already is callback with the same context.", () => {
 		let context = { test: "test" };
-		let listener = Future.fromResult(42);
+		let listener = () => 42;
 
-		$processService.attachToProcessExitSignals(context, () => listener);
-		$processService.attachToProcessExitSignals(context, () => listener);
+		$processService.attachToProcessExitSignals(context, listener);
+		$processService.attachToProcessExitSignals(context, listener);
 
 		assert.deepEqual($processService.listenersCount, 1);
 	});
 
 	it("should add two different listeners for one context.", () => {
 		let context = { test: "test" };
-		let numberListener = Future.fromResult(42);
-		let booleanListener = Future.fromResult(true);
+		let numberListener = () => 42;
+		let booleanListener = () => true;
 
-		$processService.attachToProcessExitSignals(context, () => numberListener);
-		$processService.attachToProcessExitSignals(context, () => booleanListener);
+		$processService.attachToProcessExitSignals(context, numberListener);
+		$processService.attachToProcessExitSignals(context, booleanListener);
 
 		assert.deepEqual($processService.listenersCount, 2);
 	});
 
 	it("should add one listener with different context twice.", () => {
-		let listener = Future.fromResult(42);
+		let listener = () => 42;
 
-		$processService.attachToProcessExitSignals({}, () => listener);
-		$processService.attachToProcessExitSignals({}, () => listener);
+		$processService.attachToProcessExitSignals({}, listener);
+		$processService.attachToProcessExitSignals({}, listener);
 
 		assert.deepEqual($processService.listenersCount, 2);
+	});
+
+	it("should execute all attached listeners.", () => {
+		let hasCalledFirstListener = false;
+		let hasCalledSecondListener = false;
+		let hasCalledThirdListener = false;
+
+		let firstListener = () => {
+			hasCalledFirstListener = true;
+		};
+
+		let secondListener = () => {
+			hasCalledSecondListener = true;
+		};
+
+		let thirdListener = () => {
+			hasCalledThirdListener = true;
+		};
+
+		$processService.attachToProcessExitSignals({}, firstListener);
+		$processService.attachToProcessExitSignals({}, secondListener);
+		$processService.attachToProcessExitSignals({}, thirdListener);
+
+		global.process.emit("SIGINT");
+
+		assert.isTrue(hasCalledFirstListener);
+		assert.isTrue(hasCalledSecondListener);
+		assert.isTrue(hasCalledThirdListener);
 	});
 });

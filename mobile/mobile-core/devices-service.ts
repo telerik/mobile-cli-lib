@@ -147,7 +147,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	public startDeviceDetectionInterval(): void {
-		this.$processService.attachToProcessExitSignals(this, this.stopDeviceDetectionInterval);
+		this.$processService.attachToProcessExitSignals(this, this.clearDeviceDetectionInterval);
 
 		if (this.deviceDetectionInterval) {
 			this.$logger.trace("Device detection interval is already started. New Interval will not be started.");
@@ -198,13 +198,9 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	public stopDeviceDetectionInterval(): IFuture<void> {
 		return (() => {
-			if (this.deviceDetectionInterval) {
-				clearInterval(this.deviceDetectionInterval);
-				this.deviceDetectionInterval = null;
-				this.clearCurrentDeviceDetectionIntervalFuture().wait();
-			} else {
-				this.$logger.trace("Device detection interval is not started, so it cannot be stopped.");
-			}
+			this.clearDeviceDetectionInterval();
+			this.deviceDetectionInterval = null;
+			this.getDeviceDetectionIntervalFuture().wait();
 		}).future<void>()();
 	}
 
@@ -420,6 +416,14 @@ export class DevicesService implements Mobile.IDevicesService {
 		}).future<Mobile.IDebugWebViewInfo[]>()();
 	}
 
+	private clearDeviceDetectionInterval(): void {
+		if (this.deviceDetectionInterval) {
+			clearInterval(this.deviceDetectionInterval);
+		} else {
+			this.$logger.trace("Device detection interval is not started, so it cannot be stopped.");
+		}
+	}
+
 	private getDebuggableAppsCore(deviceIdentifier: string): IFuture<Mobile.IDeviceApplicationInformation[]> {
 		return ((): Mobile.IDeviceApplicationInformation[] => {
 			let device = this.getDeviceByIdentifier(deviceIdentifier);
@@ -541,7 +545,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		}).future<IAppInstalledInfo>()();
 	}
 
-	private clearCurrentDeviceDetectionIntervalFuture(): IFuture<void> {
+	private getDeviceDetectionIntervalFuture(): IFuture<void> {
 		return this.deviceDetectionIntervalFuture || Future.fromResult();
 	}
 }
