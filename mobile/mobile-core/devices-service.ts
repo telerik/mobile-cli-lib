@@ -7,9 +7,9 @@ import * as fiberBootstrap from "../../fiber-bootstrap";
 import {exportedPromise, exported} from "../../decorators";
 
 export class DevicesService implements Mobile.IDevicesService {
+	private static DEVICE_LOOKING_INTERVAL = 2200;
 	private _devices: IDictionary<Mobile.IDevice> = {};
 	private platforms: string[] = [];
-	private static DEVICE_LOOKING_INTERVAL = 2200;
 	private _platform: string;
 	private _device: Mobile.IDevice;
 	private _isInitialized = false;
@@ -34,7 +34,8 @@ export class DevicesService implements Mobile.IDevicesService {
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $injector: IInjector,
 		private $options: ICommonOptions,
-		private $androidProcessService: Mobile.IAndroidProcessService) {
+		private $androidProcessService: Mobile.IAndroidProcessService,
+		private $processService: IProcessService) {
 		this.attachToDeviceDiscoveryEvents();
 	}
 
@@ -146,6 +147,8 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	public startDeviceDetectionInterval(): void {
+		this.$processService.attachToProcessExitSignals(this, this.clearDeviceDetectionInterval);
+
 		if (this.deviceDetectionInterval) {
 			this.$logger.trace("Device detection interval is already started. New Interval will not be started.");
 		} else {
@@ -195,13 +198,9 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	public stopDeviceDetectionInterval(): IFuture<void> {
 		return (() => {
-			if (this.deviceDetectionInterval) {
-				clearInterval(this.deviceDetectionInterval);
-				this.deviceDetectionInterval = null;
-				this.clearCurrentDeviceDetectionIntervalFuture().wait();
-			} else {
-				this.$logger.trace("Device detection interval is not started, so it cannot be stopped.");
-			}
+			this.clearDeviceDetectionInterval();
+			this.deviceDetectionInterval = null;
+			this.getDeviceDetectionIntervalFuture().wait();
 		}).future<void>()();
 	}
 
@@ -417,6 +416,14 @@ export class DevicesService implements Mobile.IDevicesService {
 		}).future<Mobile.IDebugWebViewInfo[]>()();
 	}
 
+	private clearDeviceDetectionInterval(): void {
+		if (this.deviceDetectionInterval) {
+			clearInterval(this.deviceDetectionInterval);
+		} else {
+			this.$logger.trace("Device detection interval is not started, so it cannot be stopped.");
+		}
+	}
+
 	private getDebuggableAppsCore(deviceIdentifier: string): IFuture<Mobile.IDeviceApplicationInformation[]> {
 		return ((): Mobile.IDeviceApplicationInformation[] => {
 			let device = this.getDeviceByIdentifier(deviceIdentifier);
@@ -538,7 +545,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		}).future<IAppInstalledInfo>()();
 	}
 
-	private clearCurrentDeviceDetectionIntervalFuture(): IFuture<void> {
+	private getDeviceDetectionIntervalFuture(): IFuture<void> {
 		return this.deviceDetectionIntervalFuture || Future.fromResult();
 	}
 }

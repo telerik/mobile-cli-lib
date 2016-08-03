@@ -8,7 +8,8 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 		private $deviceLogProvider: Mobile.IDeviceLogProvider,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $logger: ILogger,
-		private $injector: IInjector) {
+		private $injector: IInjector,
+		private $processService: IProcessService) {
 		this.mapDeviceToLoggingStarted = Object.create(null);
 	}
 
@@ -42,11 +43,7 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 				this.$deviceLogProvider.logData(lineText, this.$devicePlatformsConstants.Android, deviceIdentifier);
 			});
 
-			process.on("exit", () => {
-				if (adbLogcat) {
-					adbLogcat.kill();
-				}
-			});
+			this.$processService.attachToProcessExitSignals(this, adbLogcat.kill);
 
 			this.mapDeviceToLoggingStarted[deviceIdentifier] = true;
 		}

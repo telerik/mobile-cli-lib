@@ -1165,3 +1165,8 @@ interface INet {
 	 */
 	getFreePort(): IFuture<number>;
 }
+
+interface IProcessService {
+	listenersCount: number;
+	attachToProcessExitSignals(context: any, callback: () => void): void;
+}
