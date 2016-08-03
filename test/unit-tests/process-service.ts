@@ -83,7 +83,8 @@ describe("Process service", () => {
 		$processService.attachToProcessExitSignals({}, secondListener);
 		$processService.attachToProcessExitSignals({}, thirdListener);
 
-		global.process.emit("SIGINT");
+		// Do not use exit or SIGINT because the tests after this one will not be executed.
+		global.process.emit("SIGTERM");
 
 		assert.isTrue(hasCalledFirstListener);
 		assert.isTrue(hasCalledSecondListener);
