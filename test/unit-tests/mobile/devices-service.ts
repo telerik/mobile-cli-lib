@@ -118,6 +118,41 @@ function createTestInjector(): IInjector {
 	return testInjector;
 }
 
+function mockIsAppInstalled(devices: { applicationManager: { isApplicationInstalled(packageName: string): IFuture<boolean> } }[], expectedResult: boolean[]): void {
+	_.each(devices, (device, index) => device.applicationManager.isApplicationInstalled = (packageName: string) => Future.fromResult(expectedResult[index]));
+}
+
+function throwErrorFuture(): IFuture<void> {
+	return (() => {
+		throw new Error("error");
+	}).future<void>()();
+}
+
+let intervalId = 1;
+let nodeJsTimer = {
+	ref: () => { /* no implementation required */ },
+	unref: () => { return intervalId++; }
+};
+
+let originalSetInterval = setInterval;
+function mockSetInterval(options: { shouldExecuteCallback: boolean, testCaseCallback?: Function }): void {
+	global.setInterval = (callback: (...args: any[]) => void, ms: number, ...args: any[]): NodeJS.Timer => {
+		if (options.shouldExecuteCallback) {
+			callback();
+		}
+
+		if (options.testCaseCallback) {
+			options.testCaseCallback();
+		}
+
+		return nodeJsTimer;
+	};
+}
+
+function resetDefaultSetInterval(): void {
+	global.setInterval = originalSetInterval;
+}
+
 describe("devicesService", () => {
 	let counter = 0,
 		iOSDevice = {
@@ -132,7 +167,10 @@ describe("devicesService", () => {
 				tryStartApplication: (packageName: string, framework: string) => Future.fromResult(),
 				reinstallApplication: (packageName: string, packageFile: string) => Future.fromResult(),
 				isApplicationInstalled: (packageName: string) => Future.fromResult(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], packageName)),
-				isLiveSyncSupported: (appIdentifier: string) => Future.fromResult(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], appIdentifier))
+				isLiveSyncSupported: (appIdentifier: string) => Future.fromResult(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], appIdentifier)),
+				checkForApplicationUpdates: (): IFuture<void> => Future.fromResult(),
+				getDebuggableApps: (): IFuture<Mobile.IDeviceApplicationInformation[]> => Future.fromResult(null),
+				getDebuggableAppViews: (appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>> => Future.fromResult(null)
 			},
 			deploy: (packageFile: string, packageName: string) => Future.fromResult()
 		},
@@ -148,7 +186,10 @@ describe("devicesService", () => {
 				tryStartApplication: (packageName: string, framework: string) => Future.fromResult(),
 				reinstallApplication: (packageName: string, packageFile: string) => Future.fromResult(),
 				isApplicationInstalled: (packageName: string) => Future.fromResult(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], packageName)),
-				isLiveSyncSupported: (appIdentifier: string) => Future.fromResult(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], appIdentifier))
+				isLiveSyncSupported: (appIdentifier: string) => Future.fromResult(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], appIdentifier)),
+				checkForApplicationUpdates: (): IFuture<void> => Future.fromResult(),
+				getDebuggableApps: (): IFuture<Mobile.IDeviceApplicationInformation[]> => Future.fromResult(null),
+				getDebuggableAppViews: (appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>> => Future.fromResult(null)
 			},
 			deploy: (packageFile: string, packageName: string) => Future.fromResult()
 		},
@@ -933,6 +974,522 @@ describe("devicesService", () => {
 			androidDeviceDiscovery.emit("deviceFound", androidDevice);
 			devicesService.initialize({ deviceId: "1", platform: "android" }).wait();
 			assert.deepEqual(devicesService.getDeviceByDeviceOption(), androidDevice);
+		});
+	});
+
+	describe("isCompanionAppInstalledOnAllDevices", () => {
+		let $companionAppsService: ICompanionAppsService;
+		let deviceIdentifiers = [iOSDevice.deviceInfo.identifier, androidDevice.deviceInfo.identifier];
+
+		beforeEach(() => {
+			$companionAppsService = testInjector.resolve("companionAppsService");
+			$companionAppsService.getCompanionAppIdentifier = (framework: string, platform: string): string => "companion-app";
+
+			devicesService.getDeviceByIdentifier = (identifier: string) => {
+				return <any>(identifier === androidDevice.deviceInfo.identifier ? androidDevice : iOSDevice);
+			};
+		});
+
+		it("should return correct result for all of the devices passed as argument.", () => {
+			let expectedResult = [true, true];
+			mockIsAppInstalled([iOSDevice, androidDevice], expectedResult);
+
+			let result = _.map(devicesService.isCompanionAppInstalledOnDevices(deviceIdentifiers, constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova),
+				(future: IFuture<IAppInstalledInfo>) => future.wait().isInstalled);
+
+			assert.deepEqual(result.length, deviceIdentifiers.length);
+		});
+
+		it("should return correct result when all of the devices have the companion app installed.", () => {
+			let expectedResult = [true, true];
+			mockIsAppInstalled([iOSDevice, androidDevice], expectedResult);
+
+			let result = _.map(devicesService.isCompanionAppInstalledOnDevices(deviceIdentifiers,
+				constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova), (future: IFuture<IAppInstalledInfo>) => future.wait().isInstalled);
+
+			assert.deepEqual(result, expectedResult);
+		});
+
+		it("should return correct result when some of the devices have the companion app installed.", () => {
+			let expectedResult = [true, false];
+			mockIsAppInstalled([iOSDevice, androidDevice], expectedResult);
+
+			let result = _.map(devicesService.isCompanionAppInstalledOnDevices(deviceIdentifiers,
+				constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova), (future: IFuture<IAppInstalledInfo>) => future.wait().isInstalled);
+
+			assert.deepEqual(result, expectedResult);
+		});
+
+		it("should return correct result when none of the devices have the companion app installed.", () => {
+			let expectedResult = [false, false];
+			mockIsAppInstalled([iOSDevice, androidDevice], expectedResult);
+
+			let result = _.map(devicesService.isCompanionAppInstalledOnDevices(deviceIdentifiers,
+				constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova), (future: IFuture<IAppInstalledInfo>) => future.wait().isInstalled);
+
+			assert.deepEqual(result, expectedResult);
+		});
+	});
+
+	describe("startDeviceDetectionInterval", () => {
+		let setIntervalsCalledCount: number;
+
+		beforeEach(() => {
+			setIntervalsCalledCount = 0;
+			mockSetInterval({ shouldExecuteCallback: true });
+		});
+
+		afterEach(() => {
+			devicesService.stopDeviceDetectionInterval().wait();
+			resetDefaultSetInterval();
+		});
+
+		it("should start device detection interval.", () => {
+			let hasStartedDeviceDetectionInterval = false;
+
+			mockSetInterval({
+				shouldExecuteCallback: false,
+				testCaseCallback: () => {
+					hasStartedDeviceDetectionInterval = true;
+				}
+			});
+
+			devicesService.startDeviceDetectionInterval();
+
+			assert.isTrue(hasStartedDeviceDetectionInterval);
+		});
+
+		it("should not start device detection interval if there is one running.", () => {
+
+			global.setInterval = (callback: (...args: any[]) => void, ms: number, ...args: any[]): NodeJS.Timer => {
+				callback();
+				return {
+					ref: () => { /* no implementation required */ },
+					unref: () => {
+						setIntervalsCalledCount++;
+						return intervalId++;
+					}
+				};
+			};
+
+			devicesService.startDeviceDetectionInterval();
+			devicesService.startDeviceDetectionInterval();
+			devicesService.startDeviceDetectionInterval();
+
+			assert.deepEqual(setIntervalsCalledCount, 1);
+		});
+
+		describe("ios devices check", () => {
+			let $iOSDeviceDiscovery: Mobile.IDeviceDiscovery;
+
+			beforeEach(() => {
+				$iOSDeviceDiscovery = testInjector.resolve("iOSDeviceDiscovery");
+			});
+
+			it("should check for ios devices.", () => {
+				let hasCheckedForIosDevices = false;
+
+				$iOSDeviceDiscovery.checkForDevices = (): IFuture<void> => {
+					return (() => {
+						hasCheckedForIosDevices = true;
+					}).future<void>()();
+				};
+
+				devicesService.startDeviceDetectionInterval();
+
+				assert.isTrue(hasCheckedForIosDevices);
+			});
+
+			it("should not throw if ios device check fails throws an exception.", () => {
+				$iOSDeviceDiscovery.checkForDevices = throwErrorFuture;
+
+				let callback = () => {
+					devicesService.startDeviceDetectionInterval.call(devicesService);
+				};
+
+				assert.doesNotThrow(callback);
+			});
+		});
+
+		describe("android devices check", () => {
+			let $androidDeviceDiscovery: Mobile.IAndroidDeviceDiscovery;
+
+			beforeEach(() => {
+				$androidDeviceDiscovery = testInjector.resolve("androidDeviceDiscovery");
+			});
+
+			it("should check for android devices.", () => {
+				let hasCheckedForAndroidDevices = false;
+
+				$androidDeviceDiscovery.startLookingForDevices = (): IFuture<void> => {
+					return (() => {
+						hasCheckedForAndroidDevices = true;
+					}).future<void>()();
+				};
+
+				devicesService.startDeviceDetectionInterval();
+
+				assert.isTrue(hasCheckedForAndroidDevices);
+			});
+
+			it("should not throw if android device check fails throws an exception.", () => {
+				$androidDeviceDiscovery.startLookingForDevices = throwErrorFuture;
+
+				let callback = () => {
+					devicesService.startDeviceDetectionInterval.call(devicesService);
+				};
+
+				assert.doesNotThrow(callback);
+			});
+		});
+
+		describe("ios simulator check", () => {
+			let $iOSSimulatorDiscovery: Mobile.IDeviceDiscovery;
+			let $hostInfo: IHostInfo;
+			let hasCheckedForIosSimulator: boolean;
+
+			beforeEach(() => {
+				$iOSSimulatorDiscovery = testInjector.resolve("iOSSimulatorDiscovery");
+				$iOSSimulatorDiscovery.checkForDevices = (): IFuture<void> => {
+					return (() => {
+						hasCheckedForIosSimulator = true;
+					}).future<void>()();
+				};
+
+				$hostInfo = testInjector.resolve("hostInfo");
+				$hostInfo.isDarwin = true;
+				hasCheckedForIosSimulator = false;
+			});
+
+			it("should check for ios simulator if the host is Darwin.", () => {
+				devicesService.startDeviceDetectionInterval();
+
+				assert.isTrue(hasCheckedForIosSimulator);
+			});
+
+			it("should not check for ios simulator if the host is not Darwin.", () => {
+				$hostInfo.isDarwin = false;
+
+				devicesService.startDeviceDetectionInterval();
+
+				assert.isFalse(hasCheckedForIosSimulator);
+			});
+
+			it("should not throw if ios simulator check fails throws an exception.", () => {
+				$iOSSimulatorDiscovery.checkForDevices = throwErrorFuture;
+
+				let callback = () => {
+					devicesService.startDeviceDetectionInterval.call(devicesService);
+				};
+
+				assert.doesNotThrow(callback);
+			});
+		});
+
+		describe("check for application updates", () => {
+			let $iOSDeviceDiscovery: Mobile.IDeviceDiscovery;
+			let $androidDeviceDiscovery: Mobile.IAndroidDeviceDiscovery;
+			let hasCheckedForAndroidAppUpdates: boolean;
+			let hasCheckedForIosAppUpdates: boolean;
+
+			beforeEach(() => {
+				hasCheckedForAndroidAppUpdates = false;
+				hasCheckedForIosAppUpdates = false;
+				$iOSDeviceDiscovery = testInjector.resolve("iOSDeviceDiscovery");
+				$androidDeviceDiscovery = testInjector.resolve("androidDeviceDiscovery");
+
+				androidDevice.applicationManager.checkForApplicationUpdates = (): IFuture<void> => {
+					return (() => {
+						hasCheckedForAndroidAppUpdates = true;
+					}).future<void>()();
+				};
+
+				iOSDevice.applicationManager.checkForApplicationUpdates = (): IFuture<void> => {
+					return (() => {
+						hasCheckedForIosAppUpdates = true;
+					}).future<void>()();
+				};
+
+				$androidDeviceDiscovery.emit("deviceFound", androidDevice);
+				$iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
+			});
+
+			it("should check for application updates for all connected devices.", () => {
+				devicesService.startDeviceDetectionInterval();
+
+				assert.isTrue(hasCheckedForAndroidAppUpdates);
+				assert.isTrue(hasCheckedForIosAppUpdates);
+			});
+
+			it("should check for application updates if the check on one device throws an exception.", () => {
+				iOSDevice.applicationManager.checkForApplicationUpdates = throwErrorFuture;
+
+				let callback = () => {
+					devicesService.startDeviceDetectionInterval.call(devicesService);
+				};
+
+				assert.doesNotThrow(callback);
+				assert.isTrue(hasCheckedForAndroidAppUpdates);
+			});
+
+			it("should not throw if all checks for application updates on all devices throw exceptions.", () => {
+				iOSDevice.applicationManager.checkForApplicationUpdates = throwErrorFuture;
+				androidDevice.applicationManager.checkForApplicationUpdates = throwErrorFuture;
+
+				let callback = () => {
+					devicesService.startDeviceDetectionInterval.call(devicesService);
+				};
+
+				assert.doesNotThrow(callback);
+			});
+		});
+	});
+
+	describe("stopDeviceDetectionInterval", () => {
+		beforeEach(() => {
+			mockSetInterval({ shouldExecuteCallback: true });
+		});
+
+		afterEach(() => {
+			devicesService.stopDeviceDetectionInterval().wait();
+			resetDefaultSetInterval();
+		});
+
+		it("should stop the device detection interval.", () => {
+			let setIntervalStartedCount = 0;
+
+			mockSetInterval({
+				shouldExecuteCallback: false,
+				testCaseCallback: () => {
+					setIntervalStartedCount++;
+				}
+			});
+
+			devicesService.startDeviceDetectionInterval();
+			devicesService.stopDeviceDetectionInterval().wait();
+			devicesService.startDeviceDetectionInterval();
+
+			assert.deepEqual(setIntervalStartedCount, 2);
+		});
+
+		it("should not stop the device detection interval if there is not interval running.", () => {
+			let clearIntervalCount = 0;
+
+			global.clearInterval = () => {
+				clearIntervalCount++;
+			};
+
+			devicesService.startDeviceDetectionInterval();
+			devicesService.stopDeviceDetectionInterval().wait();
+			devicesService.stopDeviceDetectionInterval().wait();
+
+			assert.deepEqual(clearIntervalCount, 1);
+		});
+	});
+
+	describe("detectCurrentlyAttachedDevices", () => {
+		let $androidDeviceDiscovery: Mobile.IAndroidDeviceDiscovery;
+		let $iOSDeviceDiscovery: Mobile.IDeviceDiscovery;
+		let $iOSSimulatorDiscovery: Mobile.IDeviceDiscovery;
+		let $hostInfo: IHostInfo;
+
+		beforeEach(() => {
+			$hostInfo = testInjector.resolve("hostInfo");
+			$androidDeviceDiscovery = testInjector.resolve("androidDeviceDiscovery");
+			$iOSDeviceDiscovery = testInjector.resolve("iOSDeviceDiscovery");
+			$iOSSimulatorDiscovery = testInjector.resolve("iOSSimulatorDiscovery");
+		});
+
+		it("should start looking for android devices.", () => {
+			let hasStartedLookingForAndroidDevices = false;
+
+			$androidDeviceDiscovery.startLookingForDevices = (): IFuture<void> => {
+				return (() => {
+					hasStartedLookingForAndroidDevices = true;
+				}).future<void>()();
+			};
+
+			devicesService.detectCurrentlyAttachedDevices().wait();
+
+			assert.isTrue(hasStartedLookingForAndroidDevices);
+		});
+
+		it("should start looking for ios devices.", () => {
+			let hasStartedLookingForIosDevices = false;
+
+			$iOSDeviceDiscovery.startLookingForDevices = (): IFuture<void> => {
+				return (() => {
+					hasStartedLookingForIosDevices = true;
+				}).future<void>()();
+			};
+
+			devicesService.detectCurrentlyAttachedDevices().wait();
+
+			assert.isTrue(hasStartedLookingForIosDevices);
+		});
+
+		it("should start looking for ios simulator if the host is Darwin.", () => {
+			let hasStartedLookingForIosSimulator = false;
+			$hostInfo.isDarwin = true;
+			$iOSSimulatorDiscovery.startLookingForDevices = (): IFuture<void> => {
+				return (() => {
+					hasStartedLookingForIosSimulator = true;
+				}).future<void>()();
+			};
+
+			devicesService.detectCurrentlyAttachedDevices().wait();
+
+			assert.isTrue(hasStartedLookingForIosSimulator);
+		});
+
+		it("should not start looking for ios simulator if the host is not Darwin.", () => {
+			let hasStartedLookingForIosSimulator = false;
+			$hostInfo.isDarwin = false;
+			$iOSSimulatorDiscovery.startLookingForDevices = (): IFuture<void> => {
+				return (() => {
+					hasStartedLookingForIosSimulator = true;
+				}).future<void>()();
+			};
+
+			devicesService.detectCurrentlyAttachedDevices().wait();
+
+			assert.isFalse(hasStartedLookingForIosSimulator);
+		});
+
+		it("should not throw if any of the device discovery services throws an exception.", () => {
+			$iOSDeviceDiscovery.startLookingForDevices = throwErrorFuture;
+
+			let callback = () => {
+				devicesService.detectCurrentlyAttachedDevices.call(devicesService).wait();
+			};
+
+			assert.doesNotThrow(callback);
+		});
+	});
+
+	it("should call mapAbstractToTcpPort of android process service with the same parameters.", () => {
+		let expectedDeviceIdentifier = "123456789";
+		let expectedAppIdentifier = "com.telerik.myapp";
+		let expectedFramework = constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova;
+		let actualDeviceIdentifier: string;
+		let actualAppIdentifier: string;
+		let actualFramework: string;
+		let $androidProcessService: Mobile.IAndroidProcessService = testInjector.resolve("androidProcessService");
+		$androidProcessService.mapAbstractToTcpPort = (deviceIdentifier: string, appIdentifier: string, framework: string): IFuture<string> => {
+			return ((): string => {
+				actualDeviceIdentifier = deviceIdentifier;
+				actualAppIdentifier = appIdentifier;
+				actualFramework = framework;
+				return "";
+			}).future<string>()();
+		};
+
+		devicesService.mapAbstractToTcpPort(expectedDeviceIdentifier, expectedAppIdentifier, expectedFramework).wait();
+
+		assert.deepEqual(actualDeviceIdentifier, expectedDeviceIdentifier);
+		assert.deepEqual(actualAppIdentifier, expectedAppIdentifier);
+		assert.deepEqual(actualFramework, expectedFramework);
+	});
+
+	it("should get debuggable apps correctly for multiple devices.", () => {
+		let $iOSDeviceDiscovery: Mobile.IDeviceDiscovery = testInjector.resolve("iOSDeviceDiscovery");
+		let $androidDeviceDiscovery: Mobile.IAndroidDeviceDiscovery = testInjector.resolve("androidDeviceDiscovery");
+
+		$androidDeviceDiscovery.emit("deviceFound", androidDevice);
+		$iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
+
+		let androidDebuggableApps = [{
+			appIdentifier: "com.telerik.myapp",
+			deviceIdentifier: androidDevice.deviceInfo.identifier,
+			framework: constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova
+		}, {
+				appIdentifier: "com.telerik.myapp1",
+				deviceIdentifier: androidDevice.deviceInfo.identifier,
+				framework: constants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript
+			}];
+
+		let iosDebuggableApps = [{
+			appIdentifier: "com.telerik.myapp2",
+			deviceIdentifier: iOSDevice.deviceInfo.identifier,
+			framework: constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova
+		}, {
+				appIdentifier: "com.telerik.myapp3",
+				deviceIdentifier: iOSDevice.deviceInfo.identifier,
+				framework: constants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript
+			}];
+
+		androidDevice.applicationManager.getDebuggableApps = (): IFuture<Mobile.IDeviceApplicationInformation[]> => {
+			return ((): Mobile.IDeviceApplicationInformation[] => {
+				return androidDebuggableApps;
+			}).future<Mobile.IDeviceApplicationInformation[]>()();
+		};
+
+		iOSDevice.applicationManager.getDebuggableApps = (): IFuture<Mobile.IDeviceApplicationInformation[]> => {
+			return ((): Mobile.IDeviceApplicationInformation[] => {
+				return iosDebuggableApps;
+			}).future<Mobile.IDeviceApplicationInformation[]>()();
+		};
+		let futures = devicesService.getDebuggableApps([androidDevice.deviceInfo.identifier, iOSDevice.deviceInfo.identifier]);
+		let debuggableApps = _(futures)
+			.map((future: IFuture<Mobile.IDeviceApplicationInformation[]>) => future.wait())
+			.flatten<Mobile.IDeviceApplicationInformation>()
+			.value();
+
+		assert.deepEqual(debuggableApps, _.concat(androidDebuggableApps, iosDebuggableApps));
+	});
+
+	describe("getDebuggableViews", () => {
+		let $androidDeviceDiscovery: Mobile.IAndroidDeviceDiscovery;
+		let debuggableViews: Mobile.IDebugWebViewInfo[] = [{
+			description: "descrition",
+			webSocketDebuggerUrl: "debugurl",
+			url: "url",
+			type: "type",
+			title: "title",
+			id: "id1",
+			devtoolsFrontendUrl: "frontenturl"
+		}, {
+				description: "descrition1",
+				webSocketDebuggerUrl: "debugurl1",
+				url: "url1",
+				type: "type1",
+				title: "title1",
+				id: "id2",
+				devtoolsFrontendUrl: "frontenturl1"
+			}];
+
+		beforeEach(() => {
+			$androidDeviceDiscovery = testInjector.resolve("androidDeviceDiscovery");
+
+			$androidDeviceDiscovery.emit("deviceFound", androidDevice);
+		});
+
+		it("should get the correct debuggable views.", () => {
+			androidDevice.applicationManager.getDebuggableAppViews = (appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>> => {
+				return ((): IDictionary<Mobile.IDebugWebViewInfo[]> => {
+					let result: any = {};
+					result[appIdentifiers[0]] = debuggableViews;
+					return result;
+				}).future<IDictionary<Mobile.IDebugWebViewInfo[]>>()();
+			};
+
+			let actualDebuggableViews = devicesService.getDebuggableViews(androidDevice.deviceInfo.identifier, "com.telerik.myapp").wait();
+
+			assert.deepEqual(actualDebuggableViews, debuggableViews);
+		});
+
+		it("should return undefined if debuggable views are found for otheer app but not for the specified.", () => {
+			androidDevice.applicationManager.getDebuggableAppViews = (appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>> => {
+				return ((): IDictionary<Mobile.IDebugWebViewInfo[]> => {
+					let result: any = {};
+					result["com.telerik.otherApp"] = debuggableViews;
+					return result;
+				}).future<IDictionary<Mobile.IDebugWebViewInfo[]>>()();
+			};
+
+			let actualDebuggableViews = devicesService.getDebuggableViews(androidDevice.deviceInfo.identifier, "com.telerik.myapp").wait();
+
+			assert.deepEqual(actualDebuggableViews, undefined);
 		});
 	});
 });
