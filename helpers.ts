@@ -286,6 +286,39 @@ export function connectEventually(factory: () => net.Socket, handler: (_socket: 
 	tryConnect();
 }
 
+export function connectEventuallyUntilTimeout(factory: () => net.Socket, timeout: number): IFuture<net.Socket> {
+	let future = new Future<net.Socket>();
+	let lastKnownError: Error;
+
+	setTimeout(function() {
+		if (!future.isResolved()) {
+			future.throw(lastKnownError);
+		}
+	}, timeout);
+
+	function tryConnect() {
+		let tryConnectAfterTimeout = (error: Error) => {
+			if (future.isResolved()) {
+				return;
+			}
+
+			lastKnownError = error;
+			setTimeout(tryConnect, 1000);
+		};
+
+		let socket = factory();
+		socket.on("connect", () => {
+			socket.removeListener("error", tryConnectAfterTimeout);
+			future.return(socket);
+		});
+		socket.on("error", tryConnectAfterTimeout);
+	}
+
+	tryConnect();
+
+	return future;
+}
+
 //--- begin part copied from AngularJS
 
 //The MIT License
