@@ -409,22 +409,37 @@ interface IHook {
 /**
  * Describes TypeScript compilation methods.
  */
-interface ITypeScriptCompilationService {
+interface ITypeScriptService {
 	/**
-	 * Compiles specified files only. Options are read from CLI's config file. Disregards tsconfig.json.
-	 * @param {any} compilerOptions: Specifies if noEmitOnError option is true or false. When it is true, any warning will prevent .js generation.
-	 * @param {string[]} typeScriptFiles The files that will be compiled.
+	 * Transpiles specified files or all files in the project directory. Options are read from CLI's config file, tsconfig.json and compilerOptions parameter.
+	 * @param {ITypeScriptCompilerOptions} compilerOptions: Specifies the TypeScript compiler options.
+	 * @param {string[]} typeScriptFiles @optional The files that will be compiled.
 	 * @param {string[]} definitionFiles @optional The definition files used for compilation.
+	 * @param {ITypeScriptTranspileOptions} @optional options The transpilation options.
 	 * @return {IFuture<void>}
 	 */
-	compileFiles(compilerOptions: { noEmitOnError: boolean }, typeScriptFiles: string[], definitionFiles?: string[]): IFuture<void>;
+	transpile(projectDir: string, typeScriptFiles?: string[], definitionFiles?: string[], options?: ITypeScriptTranspileOptions): IFuture<void>;
 
 	/**
 	 * Spawns tsc directly without options. Tsc will respect tsconfig.json file in case it exists and all of its options.
-	 * @param {any} compilerOptions: Specifies if noEmitOnError option is true or false. When it is true, any warning will prevent .js generation.
+	 * @param {ITypeScriptTranspileOptions} @optional options The transpilation options.
 	 * @return {IFuture<void>}
 	 */
-	compileWithDefaultOptions(compilerOptions: { noEmitOnError: boolean }): IFuture<void>;
+	transpileWithDefaultOptions(projectDir: string, options?: ITypeScriptTranspileOptions): IFuture<void>;
+
+	/**
+	 * Returns new object, containing all typeScript and all TypeScript definition files.
+	 * @param {string} projectDir The dorectory of the project which contains TypeScript files.
+	 * @return {IFuture<ITypeScriptFiles>} all typeScript and all TypeScript definition files.
+	 */
+	getTypeScriptFiles(projectDir: string): IFuture<ITypeScriptFiles>
+
+	/**
+	 * Checks if the project language is TypeScript by enumerating all files and checking if there are at least one TypeScript file (.ts), that is not definition file(.d.ts)
+	 * @param {string} projectDir The dorectory of the project.
+	 * @return {IFuture<boolean>} true when the project contains .ts files and false otherwise.
+	 */
+	isTypeScriptProject(projectDir: string): IFuture<boolean>;
 }
 
 interface IDynamicHelpService {
@@ -1171,4 +1186,52 @@ interface INet {
 interface IProcessService {
 	listenersCount: number;
 	attachToProcessExitSignals(context: any, callback: () => void): void;
+}
+
+/**
+ * Wrapper for npm.
+ */
+interface INpmService {
+	installPlugin(plugin: string, args?: string[], directoryToInstall?: string): IFuture<any>;
+}
+
+/**
+ * Defines an object, containing all TypeScript files (.ts) within project and all TypeScript definition files (.d.ts).
+ * TypeScript files are all files ending with .ts, so if there are any definition files, they will be placed in both
+ * typeScript files and definitionFiles collections.
+ */
+interface ITypeScriptFiles {
+	definitionFiles: string[],
+	typeScriptFiles: string[]
+}
+
+interface ITypeScriptCompilerOptions {
+	codePage?: number; // Specify the codepage to use when opening source files.
+	declaration?: boolean; //  Generates corresponding .d.ts file.
+	mapRoot?: string; //  Specifies the location where debugger should locate map files instead of generated locations.
+	module?: string; // Specify module code generation: 'commonjs' or 'amd'.
+	noImplicitAny?: boolean; //  Warn on expressions and declarations with an implied 'any' type.
+	outFile?: string; // Concatenate and emit output to single file.
+	outDir?: string; // Redirect output structure to the directory.
+	removeComments?: boolean; // Do not emit comments to output.
+	sourceMap?: boolean; // Generates corresponding .map file
+	sourceRoot?: string; // Specifies the location where debugger should locate TypeScript files instead of source locations.
+	target?: string;  // Specify ECMAScript target version: 'ES3' (default), or 'ES5'.
+	noEmitOnError?: boolean; // Do not emit outputs if any errors were reported.
+	[key: string]: any;
+}
+
+/**
+ * Describes the properties in tsconfig.json file.
+ */
+interface ITypeScriptConfig {
+	compilerOptions: ITypeScriptCompilerOptions;
+	files?: string[];
+	exclude?: string[];
+}
+
+interface ITypeScriptTranspileOptions {
+	compilerOptions?: ITypeScriptCompilerOptions;
+	defaultCompilerOptions?: ITypeScriptCompilerOptions;
+	pathToDefaultDefinitionFiles?: string;
 }
