@@ -27,6 +27,10 @@ declare module Project {
 		ADDITIONAL_FILES_DIRECTORY: string;
 		APPBUILDER_PROJECT_PLATFORMS_NAMES: IDictionary<string>;
 		IONIC_PROJECT_PLATFORMS_NAMES: IDictionary<string>;
+		BUILD_RESULT_DISPOSITION: string;
+		ANDROID_PLATFORM_NAME: string;
+		IOS_PLATFORM_NAME: string;
+		WP8_PLATFORM_NAME: string;
 	}
 
 	interface ICapabilities {
@@ -94,6 +98,18 @@ declare module Project {
 		 * @type {Project.IProjectInformation}
 		 */
 		projectInformation: Project.IProjectInformation;
+
+		/**
+		 * Gets the app identifier which is going to be used to build the application.
+		 * @parameter Optional parameter the platform for which the app identifier will be returned.
+		 * @return {IFuture<string>} the app identifier which will be used to build the application.
+		 */
+		getAppIdentifierForPlatform(platform?: string): IFuture<string>;
+
+		/**
+		 * Checks if the app identifier is valid and if it is not - this method will throw an exception.
+		 */
+		validateAppIdentifier(platform?: string): IFuture<void>;
 	}
 
 	/**
