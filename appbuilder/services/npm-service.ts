@@ -157,7 +157,7 @@ export class NpmService implements INpmService {
 								(file, stat) => _.endsWith(file, constants.FileExtensions.TYPESCRIPT_DEFINITION_FILE) || stat.isDirectory(), { enumerateDirectories: false });
 
 							let defs = _.map(definitionFiles, def => {
-								return this.getReferenceLine(fromWindowsRelativePathToUnix(path.relative(nodeModulesDirectory, def)));
+								return this.getReferenceLine(fromWindowsRelativePathToUnix(path.relative(projectDir, def)));
 							});
 
 							this.$logger.trace(`Adding lines for definition files: ${definitionFiles.join(", ")}`);
@@ -200,7 +200,7 @@ export class NpmService implements INpmService {
 
 	private getNpmArguments(command: string, npmArguments?: string[]): string[] {
 		let args: string[] = npmArguments || [];
-		return args.concat([ command ]);
+		return args.concat([command]);
 	}
 
 	private npmInstall(projectDir: string, dependency?: string, version?: string, npmArguments?: string[]): IFuture<void> {
