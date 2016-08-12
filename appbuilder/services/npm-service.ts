@@ -1,15 +1,17 @@
 import * as path from "path";
 import * as os from "os";
-import { fromWindowsRelativePathToUnix } from "../../helpers";
 import * as constants from "../../constants";
+import { fromWindowsRelativePathToUnix } from "../../helpers";
 import { exportedPromise } from "../../decorators";
 
 export class NpmService implements INpmService {
+	private static NPM_MODULE_NAME = "npm";
 	private static TYPES_DIRECTORY = "@types/";
 	private static TNS_CORE_MODULES_DEFINITION_FILE_NAME = `${constants.TNS_CORE_MODULES}${constants.FileExtensions.TYPESCRIPT_DEFINITION_FILE}`;
 	private static NPM_REGISTRY_URL = "https://registry.npmjs.org";
 
 	private _npmExecutableName: string;
+	private _npmBinary: string;
 
 	constructor(private $childProcess: IChildProcess,
 		private $errors: IErrors,
@@ -18,6 +20,33 @@ export class NpmService implements INpmService {
 		private $httpClient: Server.IHttpClient,
 		private $logger: ILogger,
 		private $projectConstants: Project.IConstants) { }
+
+	private get npmBinary(): string {
+		if (!this._npmBinary) {
+			try {
+				require(NpmService.NPM_MODULE_NAME);
+				let npmMainJsFile = require.resolve(NpmService.NPM_MODULE_NAME);
+				let nodeModulesDirName = "node_modules";
+				this._npmBinary = path.join(npmMainJsFile.substring(0, npmMainJsFile.lastIndexOf(nodeModulesDirName) + nodeModulesDirName.length), ".bin", this.npmExecutableName);
+			} catch (err) {
+				this._npmBinary = this.npmExecutableName;
+			}
+		}
+
+		return this._npmBinary;
+	}
+
+	private get npmExecutableName(): string {
+		if (!this._npmExecutableName) {
+			this._npmExecutableName = "npm";
+
+			if (this.$hostInfo.isWindows) {
+				this._npmExecutableName += ".cmd";
+			}
+		}
+
+		return this._npmExecutableName;
+	}
 
 	@exportedPromise("npmService")
 	public install(projectDir: string, dependencyToInstall?: INpmDependency): IFuture<INpmInstallResult> {
@@ -180,18 +209,6 @@ export class NpmService implements INpmService {
 
 	private getReferenceLine(pathToReferencedFile: string): string {
 		return `/// <reference path="${pathToReferencedFile}" />`;
-	}
-
-	private get npmExecutableName(): string {
-		if (!this._npmExecutableName) {
-			this._npmExecutableName = "npm";
-
-			if (this.$hostInfo.isWindows) {
-				this._npmExecutableName += ".cmd";
-			}
-		}
-
-		return this._npmExecutableName;
 	}
 
 	private getNpmArguments(command: string, npmArguments: string[] = []): string[] {

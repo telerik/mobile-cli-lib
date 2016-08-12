@@ -147,7 +147,12 @@ export class TypeScriptService implements ITypeScriptService {
 			let tempTscDirectory: string;
 			if (!this.hasInstalledTsc) {
 				tempTscDirectory = this.createTempDirectoryForTsc().wait();
-				this.$npmService.installPlugin(`${TypeScriptService.TYPESCRIPT_MODULE_NAME}@${TypeScriptService.DEFAULT_TSC_VERSION}`, [], tempTscDirectory).wait();
+				let pluginToInstall: INpmDependency = {
+					name: TypeScriptService.TYPESCRIPT_MODULE_NAME,
+					version: TypeScriptService.DEFAULT_TSC_VERSION,
+					installTypes: false
+				};
+				this.$npmService.install(tempTscDirectory, pluginToInstall).wait();
 				this.hasInstalledTsc = true;
 			}
 

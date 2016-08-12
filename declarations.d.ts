@@ -1189,13 +1189,6 @@ interface IProcessService {
 }
 
 /**
- * Wrapper for npm.
- */
-interface INpmService {
-	installPlugin(plugin: string, args?: string[], directoryToInstall?: string): IFuture<any>;
-}
-
-/**
  * Defines an object, containing all TypeScript files (.ts) within project and all TypeScript definition files (.d.ts).
  * TypeScript files are all files ending with .ts, so if there are any definition files, they will be placed in both
  * typeScript files and definitionFiles collections.
