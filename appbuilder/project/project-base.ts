@@ -1,11 +1,16 @@
 import {EOL} from "os";
 import Future = require("fibers/future");
-import { TARGET_FRAMEWORK_IDENTIFIERS } from "../../constants";
 import * as path from "path";
-import { startPackageActivityNames } from "../../constants";
+import { startPackageActivityNames, TARGET_FRAMEWORK_IDENTIFIERS } from "../../constants";
+
 export abstract class ProjectBase implements Project.IProjectBase {
 	private static VALID_CONFIGURATION_CHARACTERS_REGEX = "[-_A-Za-z0-9]";
 	private static CONFIGURATION_FROM_FILE_NAME_REGEX = new RegExp(`^[.](${ProjectBase.VALID_CONFIGURATION_CHARACTERS_REGEX}+?)[.]abproject$`, "i");
+	private static ANDROID_MANIFEST_NAME = "AndroidManifest.xml";
+	private static CONFIG_XML_NAME = "config.xml";
+	private static APP_IDENTIFIER_PLACEHOLDER = "$AppIdentifier$";
+
+	private _platformSpecificAppIdentifier: string;
 
 	public configurationSpecificData: IDictionary<Project.IData>;
 
@@ -80,6 +85,46 @@ export abstract class ProjectBase implements Project.IProjectBase {
 		};
 	}
 
+	public getAppIdentifierForPlatform(platform?: string): IFuture<string> {
+		return ((): string => {
+			if (!this._platformSpecificAppIdentifier) {
+				if (platform &&
+					platform.toLowerCase() === this.$projectConstants.ANDROID_PLATFORM_NAME.toLowerCase() &&
+					this.projectData.Framework === TARGET_FRAMEWORK_IDENTIFIERS.Cordova) {
+					let pathToAndroidResources = path.join(this.projectDir, this.$staticConfig.APP_RESOURCES_DIR_NAME, this.$projectConstants.ANDROID_PLATFORM_NAME);
+
+					let pathToAndroidManifest = path.join(pathToAndroidResources, ProjectBase.ANDROID_MANIFEST_NAME);
+					let appIdentifierInAndroidManifest = this.getAppIdentifierFromConfigFile(pathToAndroidManifest, /package\s*=\s*"(\S*)"/).wait();
+
+					let pathToConfigXml = path.join(pathToAndroidResources, "xml", ProjectBase.CONFIG_XML_NAME);
+
+					let appIdentifierInConfigXml = this.getAppIdentifierFromConfigFile(pathToConfigXml, /id\s*=\s*"(\S*)"/).wait();
+
+					if (appIdentifierInAndroidManifest && appIdentifierInConfigXml && appIdentifierInAndroidManifest === appIdentifierInConfigXml) {
+						if (appIdentifierInAndroidManifest === ProjectBase.APP_IDENTIFIER_PLACEHOLDER) {
+							this._platformSpecificAppIdentifier = this.projectData.AppIdentifier;
+						} else {
+							this._platformSpecificAppIdentifier = appIdentifierInAndroidManifest;
+						}
+					} else if (appIdentifierInAndroidManifest || appIdentifierInConfigXml) {
+						this.$errors.failWithoutHelp(`Your package in ${ProjectBase.ANDROID_MANIFEST_NAME} and id in ${ProjectBase.CONFIG_XML_NAME} do not match. They must be the same to be able to build your application.`);
+					}
+				} else {
+					// Since we don't have specific logic to get the app identifier for iOS and WP8 we can return the one from .abproject file.
+					this._platformSpecificAppIdentifier = this.projectData.AppIdentifier;
+				}
+			}
+
+			return this._platformSpecificAppIdentifier;
+		}).future<string>()();
+	}
+
+	public validateAppIdentifier(platform: string): IFuture<void> {
+		return (() => {
+			this.getAppIdentifierForPlatform(platform).wait();
+		}).future<void>()();
+	}
+
 	protected abstract validate(): void;
 	protected abstract saveProjectIfNeeded(): void;
 
@@ -146,5 +191,21 @@ export abstract class ProjectBase implements Project.IProjectBase {
 		}
 
 		return data;
+	}
+
+	private getAppIdentifierFromConfigFile(pathToConfigFile: string, regExp: RegExp): IFuture<string> {
+		return ((): string => {
+			if (this.$fs.exists(pathToConfigFile).wait()) {
+				let fileContent = this.$fs.readText(pathToConfigFile).wait();
+
+				let matches = fileContent.match(regExp);
+
+				if (matches && matches[1]) {
+					return matches[1];
+				}
+			}
+
+			return null;
+		}).future<string>()();
 	}
 }

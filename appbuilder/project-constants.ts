@@ -13,13 +13,17 @@ export class ProjectConstants implements Project.IConstants {
 	public IMAGE_DEFINITIONS_FILE_NAME = 'image-definitions.json';
 	public PACKAGE_JSON_NAME = "package.json";
 	public ADDITIONAL_FILE_DISPOSITION = "AdditionalFile";
+	public BUILD_RESULT_DISPOSITION = "BuildResult";
 	public ADDITIONAL_FILES_DIRECTORY = ".ab";
 	public REFERENCES_FILE_NAME = ".abreferences.d.ts";
+	public ANDROID_PLATFORM_NAME = "Android";
+	public IOS_PLATFORM_NAME = "iOS";
+	public WP8_PLATFORM_NAME = "WP8";
 
 	public APPBUILDER_PROJECT_PLATFORMS_NAMES: IDictionary<string> = {
-		android: "Android",
-		ios: "iOS",
-		wp8: "WP8"
+		android: this.ANDROID_PLATFORM_NAME,
+		ios: this.IOS_PLATFORM_NAME,
+		wp8: this.WP8_PLATFORM_NAME
 	};
 
 	public IONIC_PROJECT_PLATFORMS_NAMES: IDictionary<string> = {
