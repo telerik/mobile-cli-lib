@@ -238,7 +238,7 @@ export class NpmService implements INpmService {
 				npmArguments.push(dependencyToInstall);
 			}
 
-			this.$childProcess.spawnFromEvent(this.npmExecutableName, npmArguments, "close", { cwd: projectDir }).wait();
+			this.$childProcess.spawnFromEvent(this.npmBinary, npmArguments, "close", { cwd: projectDir }).wait();
 		}).future<void>()();
 	}
 }
