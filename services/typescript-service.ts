@@ -33,8 +33,8 @@ export class TypeScriptService implements ITypeScriptService {
 	}
 
 	@exportedPromise("typeScriptService")
-	public transpile(projectDir: string, typeScriptFiles?: string[], definitionFiles?: string[], options?: ITypeScriptTranspileOptions): IFuture<void> {
-		return (() => {
+	public transpile(projectDir: string, typeScriptFiles?: string[], definitionFiles?: string[], options?: ITypeScriptTranspileOptions): IFuture<string> {
+		return ((): string => {
 			options = options || {};
 			let compilerOptions = this.getCompilerOptions(projectDir, options).wait();
 			this.noEmitOnError = compilerOptions.noEmitOnError;
@@ -62,16 +62,16 @@ export class TypeScriptService implements ITypeScriptService {
 				this.$logger.out(`Using tsc version ${typeScriptCompilerSettings.version}`.cyan);
 
 				// Core compilation
-				this.runTranspilation(projectDir, typeScriptCompilerSettings.pathToCompiler, { typeScriptCommandsFilePath }).wait();
+				return this.runTranspilation(projectDir, typeScriptCompilerSettings.pathToCompiler, { typeScriptCommandsFilePath }).wait();
 			} else {
-				this.transpileWithDefaultOptions(projectDir, compilerOptions).wait();
+				return this.transpileWithDefaultOptions(projectDir, compilerOptions).wait();
 			}
-		}).future<void>()();
+		}).future<string>()();
 	}
 
 	// Uses tsconfig.json if it exists
-	public transpileWithDefaultOptions(projectDir: string, options?: ITypeScriptTranspileOptions): IFuture<void> {
-		return (() => {
+	public transpileWithDefaultOptions(projectDir: string, options?: ITypeScriptTranspileOptions): IFuture<string> {
+		return ((): string => {
 			options = options || {};
 			let compilerOptions = this.getCompilerOptions(projectDir, options).wait();
 			this.noEmitOnError = compilerOptions.noEmitOnError;
@@ -79,8 +79,8 @@ export class TypeScriptService implements ITypeScriptService {
 			this.$logger.out(`Using tsc version ${typeScriptCompilerSettings.version}`.cyan);
 
 			// Core compilation
-			this.runTranspilation(projectDir, typeScriptCompilerSettings.pathToCompiler, { compilerOptions }).wait();
-		}).future<void>()();
+			return this.runTranspilation(projectDir, typeScriptCompilerSettings.pathToCompiler, { compilerOptions }).wait();
+		}).future<string>()();
 	}
 
 	public getTypeScriptFiles(projectDir: string): IFuture<ITypeScriptFiles> {
@@ -165,8 +165,8 @@ export class TypeScriptService implements ITypeScriptService {
 		}).future<ITypeScriptCompilerSettings>()();
 	}
 
-	private runTranspilation(projectDir: string, typeScriptCompilerPath: string, options?: { typeScriptCommandsFilePath?: string, compilerOptions?: ITypeScriptCompilerOptions }): IFuture<void> {
-		return (() => {
+	private runTranspilation(projectDir: string, typeScriptCompilerPath: string, options?: { typeScriptCommandsFilePath?: string, compilerOptions?: ITypeScriptCompilerOptions }): IFuture<string> {
+		return ((): string => {
 			options = options || {};
 			let startTime = new Date().getTime();
 			let params = [typeScriptCompilerPath];
@@ -178,6 +178,7 @@ export class TypeScriptService implements ITypeScriptService {
 
 			let output = this.$childProcess.spawnFromEvent(process.argv[0], params, "close", { cwd: projectDir }, { throwError: false }).wait();
 			let exitcode = output.exitCode;
+			let compilerOutput = output.stderr || output.stdout;
 
 			// EmitReturnStatus enum in https://github.com/Microsoft/TypeScript/blob/8947757d096338532f1844d55788df87fb5a39ed/src/compiler/types.ts#L605
 			if (exitcode === 0 || exitcode === 2 || exitcode === 3) {
@@ -186,11 +187,12 @@ export class TypeScriptService implements ITypeScriptService {
 
 				this.$logger.out(`${os.EOL}Success: ${time.toFixed(2)}s${os.EOL}Done without errors.`.green);
 			} else {
-				let compilerOutput = output.stderr || output.stdout;
 				let compilerMessages = this.getCompilerMessages(compilerOutput);
 				this.logCompilerMessages(compilerMessages, compilerOutput);
 			}
-		}).future<void>()();
+
+			return compilerOutput;
+		}).future<string>()();
 	}
 
 	private getCompilerMessages(compilerOutput: string): ITypeScriptCompilerMessages {

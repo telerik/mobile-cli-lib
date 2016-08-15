@@ -411,21 +411,21 @@ interface IHook {
  */
 interface ITypeScriptService {
 	/**
-	 * Transpiles specified files or all files in the project directory. Options are read from CLI's config file, tsconfig.json and compilerOptions parameter.
-	 * @param {ITypeScriptCompilerOptions} compilerOptions: Specifies the TypeScript compiler options.
+	 * Transpiles specified files or all files in the project directory. The default passed options are overriden by the ones in tsconfig.json file. The options from tsconfig.json file are overriden by the passed compiler options.
+	 * @param {string} projectDir: Specifies the directory of the project.
 	 * @param {string[]} typeScriptFiles @optional The files that will be compiled.
 	 * @param {string[]} definitionFiles @optional The definition files used for compilation.
-	 * @param {ITypeScriptTranspileOptions} @optional options The transpilation options.
-	 * @return {IFuture<void>}
+	 * @param {ITypeScriptTranspileOptions} options @optional The transpilation options.
+	 * @return {IFuture<string>} The result from the TypeScript transpilation.
 	 */
-	transpile(projectDir: string, typeScriptFiles?: string[], definitionFiles?: string[], options?: ITypeScriptTranspileOptions): IFuture<void>;
+	transpile(projectDir: string, typeScriptFiles?: string[], definitionFiles?: string[], options?: ITypeScriptTranspileOptions): IFuture<string>;
 
 	/**
 	 * Spawns tsc directly without options. Tsc will respect tsconfig.json file in case it exists and all of its options.
 	 * @param {ITypeScriptTranspileOptions} @optional options The transpilation options.
-	 * @return {IFuture<void>}
+	 * @return {IFuture<string>} The result from the TypeScript transpilation.
 	 */
-	transpileWithDefaultOptions(projectDir: string, options?: ITypeScriptTranspileOptions): IFuture<void>;
+	transpileWithDefaultOptions(projectDir: string, options?: ITypeScriptTranspileOptions): IFuture<string>;
 
 	/**
 	 * Returns new object, containing all typeScript and all TypeScript definition files.
@@ -1223,8 +1223,22 @@ interface ITypeScriptConfig {
 	exclude?: string[];
 }
 
+/**
+ * Describes the options for transpiling TypeScript files.
+ */
 interface ITypeScriptTranspileOptions {
+	/**
+	 * Describes the options in tsconfig.json file.
+	 */
 	compilerOptions?: ITypeScriptCompilerOptions;
+
+	/**
+	 * The default options which will be used if there is no tsconfig.json file.
+	 */
 	defaultCompilerOptions?: ITypeScriptCompilerOptions;
+
+	/**
+	 * Path to the default .d.ts files.
+	 */
 	pathToDefaultDefinitionFiles?: string;
 }

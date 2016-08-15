@@ -961,6 +961,92 @@ require("mobile-cli-lib").npmService.uninstall("D:\\test\\project", "lodash")
 	});
 ```
 
+### Module typeScriptService
+> Stability: 1 - Could be changed due to some new requirments.
+
+This module is used to transpile TypeScript files.
+
+The following types are used:
+```TypeScript
+interface ITypeScriptCompilerOptions {
+	codePage?: number; // Specify the codepage to use when opening source files.
+	declaration?: boolean; //  Generates corresponding .d.ts file.
+	mapRoot?: string; //  Specifies the location where debugger should locate map files instead of generated locations.
+	module?: string; // Specify module code generation: 'commonjs' or 'amd'.
+	noImplicitAny?: boolean; //  Warn on expressions and declarations with an implied 'any' type.
+	outFile?: string; // Concatenate and emit output to single file.
+	outDir?: string; // Redirect output structure to the directory.
+	removeComments?: boolean; // Do not emit comments to output.
+	sourceMap?: boolean; // Generates corresponding .map file
+	sourceRoot?: string; // Specifies the location where debugger should locate TypeScript files instead of source locations.
+	target?: string;  // Specify ECMAScript target version: 'ES3' (default), or 'ES5'.
+	noEmitOnError?: boolean; // Do not emit outputs if any errors were reported.
+	[key: string]: any;
+}
+
+/**
+ * Describes the options for transpiling TypeScript files.
+ */
+interface ITypeScriptTranspileOptions {
+	/**
+	 * Describes the options in tsconfig.json file.
+	 */
+	compilerOptions?: ITypeScriptCompilerOptions;
+
+	/**
+	 * The default options which will be used if there is no tsconfig.json file.
+	 */
+	defaultCompilerOptions?: ITypeScriptCompilerOptions;
+
+	/**
+	 * Path to the default .d.ts files.
+	 */
+	pathToDefaultDefinitionFiles?: string;
+}
+```
+
+* `transpile(projectDir: string, typeScriptFiles?: string[], definitionFiles?: string[], options?: ITypeScriptTranspileOptions): Promise<string>` - Transpiles specified files or all files in the project directory.
+The default passed options are overriden by the ones in tsconfig.json file.
+The options from tsconfig.json file are overriden by the passed compiler options.
+If there are no `typeScriptFiles` all the files in the `projectDir` will be transpiled.
+The returned result is the output of the TypeScript compiler.
+
+Sample usage:
+```JavaScript
+// Transpile only 2 files.
+var projectDir = "D:\\test\\project";
+var filesToTranspile = [path.join(projectDir,"app","components", "homeView", "homeView.ts"),
+					path.join(projectDir,"app","components", "addressView", "addressView.ts")];
+
+require("mobile-cli-lib").typeScriptService.transpile(projectDir, filesToTranspile)
+	.then(function(result) {
+			console.log("TypeScript compiler result: ", result);
+	}).catch(function(err) {
+			console.log("Error while transpiling files: ", err);
+	});
+```
+
+Sample result if there are no errors will be:
+```JSON
+""
+```
+
+Sample result with errors will be:
+```JSON
+"app/components/homeView/homeView.ts(19,1): error TS2304: Cannot find name 'a'.
+app/components/homeView/homeView.ts(20,1): error TS2304: Cannot find name 'b'."
+```
+
+```JavaScript
+// Transpile all files in project.
+require("mobile-cli-lib").typeScriptService.transpile("D:\\test\\project")
+	.then(function(result) {
+			console.log("TypeScript compiler result: ", result);
+	}).catch(function(err) {
+			console.log("Error while transpiling files: ", err);
+	});
+```
+
 Technical details
 ==
 
