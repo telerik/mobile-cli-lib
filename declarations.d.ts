@@ -1181,6 +1181,54 @@ interface IProcessService {
 	attachToProcessExitSignals(context: any, callback: () => void): void;
 }
 
+interface IPrintPluginsOptions {
+	count?: number;
+	showAllPlugins?: boolean;
+}
+
+interface IPrintPluginsService {
+	printPlugins(pluginsSource: IPluginsSource, options: IPrintPluginsOptions): IFuture<void>;
+}
+
+interface IPluginsSource {
+	initialize(keywords: string[]): IFuture<void>;
+	getPlugins(page: number, count: number): IFuture<IBasicPluginInformation[]>;
+	getAllPlugins(): IFuture<IBasicPluginInformation[]>;
+	hasPlugins(): boolean;
+}
+
+interface IBasicPluginInformation {
+	/**
+	 * The plugin's name
+	 * @type {string}
+	 */
+	name: string;
+
+	/**
+	 * The plugin's description
+	 * @type {string}
+	 */
+	description?: string;
+
+	/**
+	 * The plugin's version in the form of Major.Minor.Patch
+	 * @type {string}
+	 */
+	version: string;
+
+	/**
+	 * Variables used by the plugin.
+	 * @type {any[]}
+	 */
+	variables?: any[];
+
+	/**
+	 * The plugin's author
+	 * @type {string}
+	 */
+	author?: string;
+}
+
 /**
  * Defines an object, containing all TypeScript files (.ts) within project and all TypeScript definition files (.d.ts).
  * TypeScript files are all files ending with .ts, so if there are any definition files, they will be placed in both
