@@ -39,3 +39,10 @@ export class Configurations {
 	static Release = "Release";
 }
 
+export let NODE_MODULES_DIR_NAME = "node_modules";
+export let TNS_CORE_MODULES = "tns-core-modules";
+
+export class FileExtensions {
+	static TYPESCRIPT_DEFINITION_FILE = ".d.ts";
+	static TYPESCRIPT_FILE = ".ts";
+}

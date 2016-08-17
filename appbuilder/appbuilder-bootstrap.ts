@@ -10,3 +10,4 @@ $injector.requirePublic("companionAppsService", "./appbuilder/services/livesync/
 $injector.require("nativeScriptProjectCapabilities", "./appbuilder/project/nativescript-project-capabilities");
 $injector.require("cordovaProjectCapabilities", "./appbuilder/project/cordova-project-capabilities");
 $injector.require("mobilePlatformsCapabilities", "./appbuilder/mobile-platforms-capabilities");
+$injector.requirePublic("npmService", "./appbuilder/services/npm-service");

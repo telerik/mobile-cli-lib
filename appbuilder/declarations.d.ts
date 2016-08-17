@@ -10,23 +10,24 @@ interface IDeployHelper {
 
 declare module Project {
 	interface IConstants {
-		PROJECT_FILE: string;
-		PROJECT_IGNORE_FILE: string;
+		ADDITIONAL_FILES_DIRECTORY: string;
+		ADDITIONAL_FILE_DISPOSITION: string;
+		APPBUILDER_PROJECT_PLATFORMS_NAMES: IDictionary<string>;
+		APPIDENTIFIER_PROPERTY_NAME: string;
+		CORDOVA_PLUGIN_VARIABLES_PROPERTY_NAME: string;
+		CORE_PLUGINS_PROPERTY_NAME: string;
 		DEBUG_CONFIGURATION_NAME: string;
 		DEBUG_PROJECT_FILE_NAME: string;
+		EXPERIMENTAL_TAG: string;
+		IMAGE_DEFINITIONS_FILE_NAME: string;
+		IONIC_PROJECT_PLATFORMS_NAMES: IDictionary<string>;
+		NATIVESCRIPT_APP_DIR_NAME: string;
+		PACKAGE_JSON_NAME: string;
+		PROJECT_FILE: string;
+		PROJECT_IGNORE_FILE: string;
+		REFERENCES_FILE_NAME: string;
 		RELEASE_CONFIGURATION_NAME: string;
 		RELEASE_PROJECT_FILE_NAME: string;
-		CORE_PLUGINS_PROPERTY_NAME: string;
-		CORDOVA_PLUGIN_VARIABLES_PROPERTY_NAME: string;
-		APPIDENTIFIER_PROPERTY_NAME: string;
-		EXPERIMENTAL_TAG: string;
-		NATIVESCRIPT_APP_DIR_NAME: string;
-		IMAGE_DEFINITIONS_FILE_NAME: string;
-		PACKAGE_JSON_NAME: string;
-		ADDITIONAL_FILE_DISPOSITION: string;
-		ADDITIONAL_FILES_DIRECTORY: string;
-		APPBUILDER_PROJECT_PLATFORMS_NAMES: IDictionary<string>;
-		IONIC_PROJECT_PLATFORMS_NAMES: IDictionary<string>;
 	}
 
 	interface ICapabilities {
@@ -237,4 +238,87 @@ interface ICompanionAppsService {
 	 * @return {IDictionary<IStringDictionary>} Companion appIdentifiers separated in different properties of object.
 	 */
 	getAllCompanionAppIdentifiers(): IDictionary<IStringDictionary>;
+}
+
+/**
+ * Describes information for single npm dependency that has to be installed.
+ */
+interface INpmDependency {
+	/**
+	 * Name of the dependency.
+	 */
+	name: string;
+
+	/**
+	 * @optional The version of the dependency that has to be installed.
+	 */
+	version?: string;
+
+	/**
+	 * Defines if @types/<name> should be installed as well.
+	 */
+	installTypes: boolean;
+}
+
+
+/**
+ * Describes the result of npm install <dependency> and npm install @types/<dependency> command.
+ */
+interface INpmInstallDependencyResult {
+	/**
+	 * Defines if the dependency is installed successfully.
+	 */
+	isInstalled: boolean;
+	/**
+	 * Defines if the @types/<dependency> is installed successfully.
+	 */
+	isTypesInstalled: boolean;
+}
+
+/**
+ * Describes the result of npm install command.
+ */
+interface INpmInstallResult {
+	/**
+	 * The result of installing a single dependency.
+	 */
+	result?: INpmInstallDependencyResult,
+
+	/**
+	 * The error that occurred during the operation.
+	 */
+	error?: Error;
+}
+
+/**
+ * Describes methods for working with npm.
+ */
+interface INpmService {
+	/**
+	 * Uninstalls the dependency and the @types/<dependency> devDependency.
+	 * The method will remove them from package.json and from node_modules dir.
+	 * @param {string} projectDir Directory of the project, where package.json is located.
+	 * @param {string} dependency The name of the dependency that has to be removed.
+	 * @return {IFuture<void>}
+	 */
+	uninstall(projectDir: string, dependency: string): IFuture<void>;
+
+	/**
+	 * Installs everything from package.json or specified dependency.
+	 * In case there's information which dependency to install, the method will check it and install only this dependency and possibly its @types.
+	 * @param {string} projectDir Directory of the project, where package.json is located.
+	 * @param @optional {INpmDependency} dependency Description of the dependency that has to be installed.
+	 * @return {IFuture<INpmInstallResult>} Returns object that will have error in case something fails.
+	 * In case there's no specific dependency that has to be installed and everything is installed successfully, the result will be empty object.
+	 * In case there's dependency that has to be installed, the result object will contain information for the successfull installation of the dependency and the @types reference.
+	 */
+	install(projectDir: string, dependencyToInstall?: INpmDependency): IFuture<INpmInstallResult>;
+
+	/**
+	 * Gets package.json of a specific dependency from registry.npmjs.org.
+	 * @param {string} packageName The name of the dependency.
+	 * @param {string} version The version that has to be taken from registry. "latest" will be used in case there's no version passed.
+	 * @return {any} package.json of a dependency or null in case such dependency or version does not exist.
+	 */
+	getPackageJsonFromNpmRegistry(packageName: string, version?: string): IFuture<any>;
 }

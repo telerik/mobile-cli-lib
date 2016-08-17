@@ -14,6 +14,7 @@ export class ProjectConstants implements Project.IConstants {
 	public PACKAGE_JSON_NAME = "package.json";
 	public ADDITIONAL_FILE_DISPOSITION = "AdditionalFile";
 	public ADDITIONAL_FILES_DIRECTORY = ".ab";
+	public REFERENCES_FILE_NAME = ".abreferences.d.ts";
 
 	public APPBUILDER_PROJECT_PLATFORMS_NAMES: IDictionary<string> = {
 		android: "Android",
