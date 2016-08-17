@@ -9,14 +9,10 @@ export abstract class AppBuilderLiveSyncProviderBase implements ILiveSyncProvide
 			android: (_device: Mobile.IDevice, $injector: IInjector): IDeviceLiveSyncService => {
 				return $injector.resolve(this.$androidLiveSyncServiceLocator.factory, {_device: _device});
 			},
-			ios: (_device: Mobile.IDevice, $injector: IInjector) => {
+			ios: (_device: Mobile.IDevice, $injector: IInjector): IDeviceLiveSyncService => {
 				return $injector.resolve(this.$iosLiveSyncServiceLocator.factory, {_device: _device});
 			}
 		};
-	}
-
-	public get platformSpecificLiveSyncServices(): IDictionary<any> {
-		return {};
 	}
 
 	public abstract buildForDevice(device: Mobile.IDevice): IFuture<string>;

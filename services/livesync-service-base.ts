@@ -119,15 +119,15 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 							this.$dispatcher.dispatch(() => (() => {
 								try {
 									for (let platformName in this.batch) {
-									    let batch = this.batch[platformName];
+										let batch = this.batch[platformName];
 										let livesyncData = this.livesyncData[platformName];
-										batch.syncFiles(((filesToSync:string[]) => {
+										batch.syncFiles(((filesToSync: string[]) => {
 											this.$liveSyncProvider.preparePlatformForSync(platformName).wait();
-										 	this.syncCore([livesyncData], filesToSync);
+											this.syncCore([livesyncData], filesToSync);
 										}).future<void>()).wait();
 									}
 								} catch (err) {
-								 	this.$logger.warn(`Unable to sync files. Error is:`, err.message);
+									this.$logger.warn(`Unable to sync files. Error is:`, err.message);
 								}
 							}).future<void>()());
 
@@ -153,7 +153,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 
 	public getSyncRemovedFilesAction(data: ILiveSyncData): (device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void> {
 		return (device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => {
-			let platformLiveSyncService = this.resolvePlatformLiveSyncService(data.platform, device);
+			let platformLiveSyncService = this.resolveDeviceLiveSyncService(data.platform, device);
 			return platformLiveSyncService.removeFiles(data.appIdentifier, localToDevicePaths);
 		};
 	}
@@ -170,7 +170,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 				let shouldRefreshApplication = true;
 				let deviceAppData = this.$deviceAppDataFactory.create(appIdentifier, this.$mobileHelper.normalizePlatformName(platform), device, liveSyncOptions);
 				if (deviceAppData.isLiveSyncSupported().wait()) {
-					let platformLiveSyncService = this.resolvePlatformLiveSyncService(platform, device);
+					let platformLiveSyncService = this.resolveDeviceLiveSyncService(platform, device);
 
 					if (platformLiveSyncService.beforeLiveSyncAction) {
 						platformLiveSyncService.beforeLiveSyncAction(deviceAppData).wait();
@@ -269,8 +269,8 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		}
 	}
 
-	private resolvePlatformLiveSyncService(platform: string, device: Mobile.IDevice): IDeviceLiveSyncService {
-		return this.$injector.resolve(this.$liveSyncProvider.platformSpecificLiveSyncServices[platform.toLowerCase()], { _device: device });
+	private resolveDeviceLiveSyncService(platform: string, device: Mobile.IDevice): IDeviceLiveSyncService {
+		return this.$injector.resolve(this.$liveSyncProvider.deviceSpecificLiveSyncServices[platform.toLowerCase()], { _device: device });
 	}
 
 	public getCanExecuteAction(platform: string, appIdentifier: string, canExecute: (dev: Mobile.IDevice) => boolean): (dev: Mobile.IDevice) => boolean {

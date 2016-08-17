@@ -1110,10 +1110,6 @@ interface ILiveSyncProvider {
 	 * Returns a dictionary that map platform to device specific livesync service
 	 */
 	deviceSpecificLiveSyncServices: IDictionary<any>;
-		/**
-	 * Returns a dictionary that map platform to platform specific livesync service
-	 */
-	platformSpecificLiveSyncServices: IDictionary<any>;
 	/**
 	 * Builds the application and returns the package file path
 	 */
