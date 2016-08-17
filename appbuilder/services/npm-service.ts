@@ -28,7 +28,7 @@ export class NpmService implements INpmService {
 				npmInstallResult.result = {
 					isInstalled: false,
 					isTypesInstalled: false
-				};;
+				};
 
 				try {
 					this.npmInstall(projectDir, dependencyToInstall.name, dependencyToInstall.version, ["--save", "--save-exact"]).wait();
@@ -147,24 +147,20 @@ export class NpmService implements INpmService {
 				}
 			}
 
-			if (packageJsonContent && packageJsonContent.devDependencies) {
-				_(packageJsonContent.devDependencies)
-					.keys()
-					.each(devDependency => {
-						if (this.isFromTypesRepo(devDependency)) {
-							let nodeModulesDirectory = path.join(projectDir, constants.NODE_MODULES_DIR_NAME);
-							let definitionFiles = this.$fs.enumerateFilesInDirectorySync(path.join(nodeModulesDirectory, devDependency),
-								(file, stat) => _.endsWith(file, constants.FileExtensions.TYPESCRIPT_DEFINITION_FILE) || stat.isDirectory(), { enumerateDirectories: false });
+			_(packageJsonContent.devDependencies)
+				.keys()
+				.each(devDependency => {
+					if (this.isFromTypesRepo(devDependency)) {
+						let nodeModulesDirectory = path.join(projectDir, constants.NODE_MODULES_DIR_NAME);
+						let definitionFiles = this.$fs.enumerateFilesInDirectorySync(path.join(nodeModulesDirectory, devDependency),
+							(file, stat) => _.endsWith(file, constants.FileExtensions.TYPESCRIPT_DEFINITION_FILE) || stat.isDirectory(), { enumerateDirectories: false });
 
-							let defs = _.map(definitionFiles, def => {
-								return this.getReferenceLine(fromWindowsRelativePathToUnix(path.relative(projectDir, def)));
-							});
+						let defs = _.map(definitionFiles, def => this.getReferenceLine(fromWindowsRelativePathToUnix(path.relative(projectDir, def))));
 
-							this.$logger.trace(`Adding lines for definition files: ${definitionFiles.join(", ")}`);
-							lines.push(...defs);
-						}
-					});
-			}
+						this.$logger.trace(`Adding lines for definition files: ${definitionFiles.join(", ")}`);
+						lines.push(...defs);
+					}
+				});
 
 			// TODO: Make sure the android17.d.ts and ios.d.ts are added.
 
@@ -198,9 +194,8 @@ export class NpmService implements INpmService {
 		return this._npmExecutableName;
 	}
 
-	private getNpmArguments(command: string, npmArguments?: string[]): string[] {
-		let args: string[] = npmArguments || [];
-		return args.concat([command]);
+	private getNpmArguments(command: string, npmArguments: string[] = []): string[] {
+		return npmArguments.concat([command]);
 	}
 
 	private npmInstall(projectDir: string, dependency?: string, version?: string, npmArguments?: string[]): IFuture<void> {

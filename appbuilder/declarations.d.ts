@@ -305,7 +305,7 @@ interface INpmService {
 
 	/**
 	 * Installs everything from package.json or specified dependency.
-	 * In case there's information which dependency to install, the method will check it and install only this dependency and possibly it's @types.
+	 * In case there's information which dependency to install, the method will check it and install only this dependency and possibly its @types.
 	 * @param {string} projectDir Directory of the project, where package.json is located.
 	 * @param @optional {INpmDependency} dependency Description of the dependency that has to be installed.
 	 * @return {IFuture<INpmInstallResult>} Returns object that will have error in case something fails.
