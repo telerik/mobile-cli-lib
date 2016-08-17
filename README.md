@@ -860,6 +860,107 @@ Promise.all(require("mobile-cli-lib").liveSyncService.deleteFiles(deviceInfos, p
 	});
 ```
 
+### Module npmService
+> Stability: 1 - Could be changed due to some new requirments.
+
+This module is used to install or uninstall packages from npm.
+
+The following types are used:
+```TypeScript
+/**
+ * Describes information for single npm dependency that has to be installed.
+ */
+interface INpmDependency {
+	/**
+	 * Name of the dependency.
+	 */
+	name: string;
+
+	/**
+	 * @optional The version of the dependency that has to be installed.
+	 */
+	version?: string;
+
+	/**
+	 * Defines if @types/<name> should be installed as well.
+	 */
+	installTypes: boolean;
+}
+
+/**
+ * Describes the result of npm install command.
+ */
+interface INpmInstallResult {
+	/**
+	 * The result of installing a single dependency.
+	 */
+	result?: INpmInstallDependencyResult,
+
+	/**
+	 * The error that occurred during the operation.
+	 */
+	error?: Error;
+}
+```
+
+* `install(projectDir: string, dependencyToInstall?: INpmDependency): Promise<INpmInstallResult>` - Installs everything from package.json or specified dependency.
+In case there's information which dependency to install, the method will check it and install only this dependency and possibly its @types.
+
+Sample usage:
+```JavaScript
+// Install all dependencies from package.json.
+require("mobile-cli-lib").npmService.install("D:\\test\\project")
+	.then(function(result) {
+			console.log("The npm result is: ", result);
+	}).catch(function(err) {
+			console.log("Error while installing packages from npm: ", err);
+	});
+```
+
+Sample result will be:
+```JSON
+{}
+```
+
+```JavaScript
+// Install specific dependency from npm.
+var dependency = {
+	name: "lodash",
+	version: "4.15.0",
+	installTypes: true
+};
+
+require("mobile-cli-lib").npmService.install("D:\\test\\project", dependency)
+	.then(function(result) {
+			console.log("The npm result is: ", result);
+	}).catch(function(err) {
+			console.log("Error while installing packages from npm: ", err);
+	});
+```
+
+Sample result will be:
+```JSON
+{
+	"result": {
+		"isInstalled": true,
+		"isTypesInstalled": true
+	}
+}
+```
+
+* `uninstall(projectDir: string, dependency: string): Promise` - Uninstalls the dependency and the @types/<dependency> devDependency.
+The method will remove them from package.json and from node_modules dir.
+
+Sample usage:
+```JavaScript
+require("mobile-cli-lib").npmService.uninstall("D:\\test\\project", "lodash")
+	.then(function() {
+			console.log("The dependency is uninstalled.");
+	}).catch(function(err) {
+			console.log("Error while uninstalling packages from npm: ", err);
+	});
+```
+
 Technical details
 ==
 
