@@ -283,7 +283,7 @@ interface IChildProcess {
 	exec(command: string, options?: any, execOptions?: IExecOptions): IFuture<any>;
 	execFile(command: string, args: string[]): IFuture<any>;
 	spawn(command: string, args?: string[], options?: any): any; // it returns child_process.ChildProcess you can safely cast to it
-	spawnFromEvent(command: string, args: string[], event: string, options?: any, spawnFromEventOptions?: ISpawnFromEventOptions): IFuture<any>;
+	spawnFromEvent(command: string, args: string[], event: string, options?: any, spawnFromEventOptions?: ISpawnFromEventOptions): IFuture<ISpawnResult>;
 	tryExecuteApplication(command: string, args: string[], event: string, errorMessage: string, condition?: (childProcess: any) => boolean): IFuture<any>;
 	/**
 	 * This is a special case of the child_process.spawn() functionality for spawning Node.js processes.
@@ -1191,7 +1191,7 @@ interface IPrintPluginsService {
 }
 
 interface IPluginsSource {
-	initialize(keywords: string[]): IFuture<void>;
+	initialize(projectDir: string, keywords: string[]): IFuture<void>;
 	getPlugins(page: number, count: number): IFuture<IBasicPluginInformation[]>;
 	getAllPlugins(): IFuture<IBasicPluginInformation[]>;
 	hasPlugins(): boolean;
@@ -1227,6 +1227,11 @@ interface IBasicPluginInformation {
 	 * @type {string}
 	 */
 	author?: string;
+}
+
+interface IScopedDependencyInformation {
+	name: string;
+	version?: string;
 }
 
 /**

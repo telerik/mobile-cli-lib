@@ -332,10 +332,62 @@ interface INpmService {
 	install(projectDir: string, dependencyToInstall?: INpmDependency): IFuture<INpmInstallResult>;
 
 	/**
+	 * Searches for plugins in npm.
+	 * @param {string} projectDir The project directory.
+	 * @param {string[]} keywords The keywords for the search.
+	 * @param @optional {string[]} args Additional flags for the npm search command.
+	 * @return {IFuture<IBasicPluginInformation[]>} Array of basic plugin information for the search results.
+	 */
+	search(projectDir: string, keywords: string[], args?: string[]): IFuture<IBasicPluginInformation[]>;
+
+	/**
 	 * Gets package.json of a specific dependency from registry.npmjs.org.
 	 * @param {string} packageName The name of the dependency.
 	 * @param {string} version The version that has to be taken from registry. "latest" will be used in case there's no version passed.
 	 * @return {any} package.json of a dependency or null in case such dependency or version does not exist.
 	 */
 	getPackageJsonFromNpmRegistry(packageName: string, version?: string): IFuture<any>;
+
+	/**
+	 * Checks if dependency is scoped.
+	 * @param {string} dependency The dependency to check.
+	 * @return {boolean} true if the dependency is scoped and false if it's not.
+	 */
+	isScopedDependency(dependency: string): boolean;
+
+	/**
+	 * Gets the name of the dependency and the version if it is specified.
+	 * @param {string} dependency The dependency to check.
+	 * @return {IScopedDependencyInformation} the name of the dependency and the version if it is specified.
+	*/
+	getScopedDependencyInformation(dependency: string): IScopedDependencyInformation;
+}
+
+/**
+ * Resolver for the different types of plugins sources.
+ */
+interface IPluginsSourceResolver {
+	/**
+	 * Resolves plugins source which will work with the npm binary.
+	 * @param {string} projectDir The directory of the project.
+	 * @param {string[]} keywords The keywords for the search.
+	 * @return {IFuture<IPluginsSource>} The plugins source.
+	 */
+	resolveNpmPluginsSource(projectDir: string, keywords: string[]): IFuture<IPluginsSource>;
+
+	/**
+	 * Resolves plugins source which will work with http://npmjs.org/search.
+	 * @param {string} projectDir The directory of the project.
+	 * @param {string[]} keywords The keywords for the search.
+	 * @return {IFuture<IPluginsSource>} The plugins source.
+	 */
+	resolveNpmjsPluginsSource(projectDir: string, keywords: string[]): IFuture<IPluginsSource>;
+
+	/**
+	 * Resolves plugins source which will work with the http://registry.npmjs.org.
+	 * @param {string} projectDir The directory of the project.
+	 * @param {string[]} keywords The keywords for the search.
+	 * @return {IFuture<IPluginsSource>} The plugins source.
+	 */
+	resolveNpmRegistryPluginsSource(projectDir: string, keywords: string[]): IFuture<IPluginsSource>;
 }

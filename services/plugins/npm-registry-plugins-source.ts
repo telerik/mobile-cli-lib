@@ -1,26 +1,24 @@
-import * as semver from "semver";
+import {PluginsSourceBase} from "./plugins-source-base";
 import Future = require("fibers/future");
 
-export class NpmRegistryPluginsSource implements IPluginsSource {
-	private static NPM_REGISTRY_ADDRESS = "http://registry.npmjs.org";
-
+export class NpmRegistryPluginsSource extends PluginsSourceBase implements IPluginsSource {
 	private _hasReturnedPlugin: boolean;
-	private _plugins: IBasicPluginInformation[];
 
 	constructor(private $httpClient: Server.IHttpClient,
 		private $childProcess: IChildProcess,
 		private $hostInfo: IHostInfo,
+		private $npmService: INpmService,
 		private $progressIndicator: IProgressIndicator,
 		private $logger: ILogger,
-		private $errors: IErrors) { }
+		private $errors: IErrors) {
+		super();
+	}
 
-	public initialize(keywords: string[]): IFuture<void> {
+	public initialize(projectDir: string, keywords: string[]): IFuture<void> {
 		return (() => {
-			if (this._plugins && this._plugins.length) {
-				return;
-			}
+			super.initialize(projectDir, keywords).wait();
 
-			this._plugins = [this.getPluginFromNpmRegistry(keywords).wait()];
+			this._plugins = [this.getPluginFromNpmRegistry(keywords[0]).wait()];
 		}).future<void>()();
 	}
 
@@ -37,39 +35,16 @@ export class NpmRegistryPluginsSource implements IPluginsSource {
 		return Future.fromResult(this._plugins);
 	}
 
-	public hasPlugins(): boolean {
-		return !!(this._plugins && this._plugins.length);
-	}
-
-	private prepareScopedPluginName(keywords: string[]): string {
-		let pluginName = keywords[0];
-
-		pluginName = pluginName.replace("/", "%2F");
+	private prepareScopedPluginName(plugin: string): string {
+		let pluginName = plugin.replace("/", "%2F");
 
 		return pluginName;
 	}
 
-	private getPluginFromNpmRegistry(keywords: string[]): IFuture<IBasicPluginInformation> {
+	private getPluginFromNpmRegistry(plugin: string): IFuture<IBasicPluginInformation> {
 		return ((): IBasicPluginInformation => {
-			let pluginName = this.prepareScopedPluginName(keywords);
-			let url = `${NpmRegistryPluginsSource.NPM_REGISTRY_ADDRESS}/${pluginName}`;
-
-			try {
-				let responseBody: any = JSON.parse(this.$httpClient.httpRequest(url).wait().body);
-
-				let latestVersion = _(responseBody.versions)
-					.keys()
-					.sort((firstVersion: string, secondVersion: string) => semver.gt(firstVersion, secondVersion) ? -1 : 1)
-					.first();
-
-				let plugin = responseBody.versions[latestVersion];
-				plugin.author = plugin.author.name;
-
-				return plugin;
-			} catch (err) {
-				this.$logger.trace(`Error while getting information for ${keywords} from http://registry.npmjs.org - ${err}`);
-				return null;
-			}
+			let pluginName = this.$npmService.isScopedDependency(plugin) ? this.prepareScopedPluginName(plugin) : plugin;
+			return this.$npmService.getPackageJsonFromNpmRegistry(pluginName).wait();
 		}).future<IBasicPluginInformation>()();
 	}
 }

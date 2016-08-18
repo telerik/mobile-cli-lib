@@ -126,3 +126,4 @@ $injector.require("printPluginsService", "./services/plugins/print-plugins-servi
 $injector.require("npmPluginsSource", "./services/plugins/npm-plugins-source");
 $injector.require("npmjsPluginsSource", "./services/plugins/npmjs-plugins-source");
 $injector.require("npmRegistryPluginsSource", "./services/plugins/npm-registry-plugins-source");
+$injector.require("pluginsSourceResolver", "./services/plugins/plugins-source-resolver");

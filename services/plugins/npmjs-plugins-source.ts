@@ -1,10 +1,10 @@
 import * as cheerio from "cheerio";
+import {PluginsSourceBase} from "./plugins-source-base";
 
-export class NpmjsPluginsSource implements IPluginsSource {
+export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSource {
 	private static NPMJS_ADDRESS = "http://npmjs.org";
 
 	private _hasReturnedTheInitialPlugins: boolean;
-	private _plugins: IBasicPluginInformation[];
 	private _keywords: string[];
 
 	constructor(private $httpClient: Server.IHttpClient,
@@ -12,15 +12,14 @@ export class NpmjsPluginsSource implements IPluginsSource {
 		private $hostInfo: IHostInfo,
 		private $progressIndicator: IProgressIndicator,
 		private $logger: ILogger,
-		private $errors: IErrors) { }
+		private $errors: IErrors) {
+		super();
+	}
 
-	public initialize(keywords: string[]): IFuture<void> {
+	public initialize(projectDir: string, keywords: string[]): IFuture<void> {
 		return (() => {
-			if (this._plugins && this._plugins.length) {
-				return;
-			}
+			super.initialize(projectDir, keywords).wait();
 
-			this._plugins = [];
 			this._keywords = keywords;
 
 			this._plugins = this.getPluginsFromNpmjs(keywords, 0).wait();

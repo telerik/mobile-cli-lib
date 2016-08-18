@@ -28,7 +28,7 @@ export class PrintPluginsService implements IPrintPluginsService {
 			let pluginsToDisplay: IBasicPluginInformation[] = pluginsSource.getPlugins(this._page++, count).wait();
 			let shouldDisplayMorePlugins: boolean = true;
 
-			this.$logger.out("Available NativeScript plugins:");
+			this.$logger.out("Available plugins:");
 
 			do {
 				this.displayTableWithPlugins(pluginsToDisplay);
