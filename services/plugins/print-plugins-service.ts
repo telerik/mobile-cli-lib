@@ -8,7 +8,7 @@ export class PrintPluginsService implements IPrintPluginsService {
 	constructor(private $errors: IErrors,
 		private $logger: ILogger,
 		private $prompter: IPrompter) {
-		this._page = 0;
+		this._page = 1;
 	}
 
 	public printPlugins(pluginsSource: IPluginsSource, options: IPrintPluginsOptions): IFuture<void> {
@@ -32,6 +32,10 @@ export class PrintPluginsService implements IPrintPluginsService {
 
 			do {
 				this.displayTableWithPlugins(pluginsToDisplay);
+
+				if (pluginsToDisplay.length < count) {
+					return;
+				}
 
 				shouldDisplayMorePlugins = this.$prompter.confirm("Load more plugins?").wait();
 

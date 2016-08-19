@@ -1,3 +1,5 @@
+import Future = require("fibers/future");
+
 export abstract class PluginsSourceBase implements IPluginsSource {
 	protected _projectDir: string;
 	protected _plugins: IBasicPluginInformation[];
@@ -22,5 +24,7 @@ export abstract class PluginsSourceBase implements IPluginsSource {
 
 	public abstract getPlugins(page: number, count: number): IFuture<IBasicPluginInformation[]>;
 
-	public abstract getAllPlugins(): IFuture<IBasicPluginInformation[]>;
+	public getAllPlugins(): IFuture<IBasicPluginInformation[]> {
+		return Future.fromResult(this._plugins);
+	}
 }

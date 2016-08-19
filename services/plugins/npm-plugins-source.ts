@@ -21,27 +21,14 @@ export class NpmPluginsSource extends PluginsSourceBase implements IPluginsSourc
 
 			this.$progressIndicator.showProgressIndicator(searchFuture, 2000).wait();
 
-			this._plugins = searchFuture.isResolved() ? searchFuture.get() : searchFuture.wait();
+			this._plugins = searchFuture.get();
 		}).future<void>()();
 	}
 
 	public getPlugins(page: number, count: number): IFuture<IBasicPluginInformation[]> {
-		return ((): IBasicPluginInformation[] => {
-			let result: IBasicPluginInformation[] = [];
-			let skip = page * count;
+		let skip = page * count;
 
-			result = _.slice(this._plugins, skip, skip + count);
-
-			return result;
-		}).future<IBasicPluginInformation[]>()();
-	}
-
-	public getAllPlugins(): IFuture<IBasicPluginInformation[]> {
-		return Future.fromResult(this._plugins);
-	}
-
-	public hasPlugins(): boolean {
-		return !!(this._plugins && this._plugins.length);
+		return Future.fromResult(_.slice(this._plugins, skip, skip + count));
 	}
 }
 

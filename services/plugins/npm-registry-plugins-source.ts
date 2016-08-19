@@ -2,8 +2,6 @@ import {PluginsSourceBase} from "./plugins-source-base";
 import Future = require("fibers/future");
 
 export class NpmRegistryPluginsSource extends PluginsSourceBase implements IPluginsSource {
-	private _hasReturnedPlugin: boolean;
-
 	constructor(private $httpClient: Server.IHttpClient,
 		private $childProcess: IChildProcess,
 		private $hostInfo: IHostInfo,
@@ -23,28 +21,24 @@ export class NpmRegistryPluginsSource extends PluginsSourceBase implements IPlug
 	}
 
 	public getPlugins(page: number, count: number): IFuture<IBasicPluginInformation[]> {
-		if (!this._hasReturnedPlugin) {
-			this._hasReturnedPlugin = true;
-			return Future.fromResult(this._plugins);
-		} else {
-			return Future.fromResult(null);
-		}
-	}
-
-	public getAllPlugins(): IFuture<IBasicPluginInformation[]> {
-		return Future.fromResult(this._plugins);
+		return page === 1 ? Future.fromResult(this._plugins) : Future.fromResult(null);
 	}
 
 	private prepareScopedPluginName(plugin: string): string {
-		let pluginName = plugin.replace("/", "%2F");
-
-		return pluginName;
+		return plugin.replace("/", "%2F");
 	}
 
 	private getPluginFromNpmRegistry(plugin: string): IFuture<IBasicPluginInformation> {
 		return ((): IBasicPluginInformation => {
 			let pluginName = this.$npmService.isScopedDependency(plugin) ? this.prepareScopedPluginName(plugin) : plugin;
-			return this.$npmService.getPackageJsonFromNpmRegistry(pluginName).wait();
+			let result = this.$npmService.getPackageJsonFromNpmRegistry(pluginName).wait();
+
+			if (!result) {
+				return null;
+			}
+
+			result.author = result.author.name || result.author;
+			return result;
 		}).future<IBasicPluginInformation>()();
 	}
 }

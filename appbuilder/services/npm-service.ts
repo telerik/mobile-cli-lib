@@ -9,6 +9,7 @@ export class NpmService implements INpmService {
 	private static TYPES_DIRECTORY = "@types/";
 	private static TNS_CORE_MODULES_DEFINITION_FILE_NAME = `${constants.TNS_CORE_MODULES}${constants.FileExtensions.TYPESCRIPT_DEFINITION_FILE}`;
 	private static NPM_REGISTRY_URL = "https://registry.npmjs.org";
+	private static SCOPED_DEPENDENCY_REGEXP = /^(@.+?)(?:@(.+?))?$/;
 
 	private _npmExecutableName: string;
 	private _npmBinary: string;
@@ -110,14 +111,15 @@ export class NpmService implements INpmService {
 		}).future<void>()();
 	}
 
-	public search(projectDir: string, keywords: string[], args?: string[]): IFuture<IBasicPluginInformation[]> {
+	public search(projectDir: string, keywords: string[], args: string[] = []): IFuture<IBasicPluginInformation[]> {
 		return ((): IBasicPluginInformation[] => {
 			let result: IBasicPluginInformation[] = [];
-			let spawnResult = this.executeNpmCommand(projectDir, args || [], keywords.join(" ")).wait();
+			let commandArguments = _.concat(["search"], args, keywords);
+			let spawnResult = this.executeNpmCommandCore(projectDir, commandArguments).wait();
 			if (spawnResult.stderr) {
 				// npm will write "npm WARN Building the local index for the first time, please be patient" to the stderr and if it is the only message on the stderr we should ignore it.
-				let splitError = spawnResult.stderr.split("\n");
-				if (splitError.length > 2 || splitError[0].indexOf("Building the local index for the first time") === -1) {
+				let splitError = spawnResult.stderr.trim().split("\n");
+				if (splitError.length > 1 || splitError[0].indexOf("Building the local index for the first time") === -1) {
 					this.$errors.failWithoutHelp(spawnResult.stderr);
 				}
 			}
@@ -132,11 +134,11 @@ export class NpmService implements INpmService {
 			pluginsRows.shift();
 
 			let npmNameGroup = "(\\S+)";
-			let npmDateGroup = "(\\d+\\-\\d+\\-\\d+)\\s";
+			let npmDateGroup = "(\\d+-\\d+-\\d+)\\s";
 			let npmFreeTextGroup = "([^=]+)";
 			let npmAuthorsGroup = "((?:=\\S+\\s?)+)\\s+";
 
-			// Should look like this /(\S+)\s+([^=]+)((?:=\S+\s?)+)\s+(\d+\-\d+\-\d+)\s(\S+)(\s+([^=]+))?/
+			// Should look like this /(\S+)\s+([^=]+)((?:=\S+\s?)+)\s+(\d+-\d+-\d+)\s(\S+)(\s+([^=]+))?/
 			let pluginRowRegExp = new RegExp(`${npmNameGroup}\\s+${npmFreeTextGroup}${npmAuthorsGroup}${npmDateGroup}${npmNameGroup}(\\s+${npmFreeTextGroup})?`);
 
 			_.each(pluginsRows, (pluginRow: string) => {
@@ -177,13 +179,13 @@ export class NpmService implements INpmService {
 	}
 
 	public isScopedDependency(dependency: string): boolean {
-		let matches = dependency.match(this.scopedDependencyRegExp);
+		let matches = dependency.match(NpmService.SCOPED_DEPENDENCY_REGEXP);
 
 		return !!(matches && matches[0]);
 	}
 
 	public getScopedDependencyInformation(dependency: string): IScopedDependencyInformation {
-		let matches = dependency.match(this.scopedDependencyRegExp);
+		let matches = dependency.match(NpmService.SCOPED_DEPENDENCY_REGEXP);
 
 		return {
 			name: matches[1],
@@ -307,8 +309,12 @@ export class NpmService implements INpmService {
 				npmArguments.push(dependencyToInstall);
 			}
 
-			this.$childProcess.spawnFromEvent(this.npmBinary, npmArguments, "close", { cwd: projectDir }).wait();
+			return this.executeNpmCommandCore(projectDir, npmArguments).wait();
 		}).future<ISpawnResult>()();
+	}
+
+	private executeNpmCommandCore(projectDir: string, npmArguments: string[]): IFuture<ISpawnResult> {
+		return this.$childProcess.spawnFromEvent(this.npmExecutableName, npmArguments, "close", { cwd: projectDir });
 	}
 }
 $injector.register("npmService", NpmService);

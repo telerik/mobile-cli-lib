@@ -1,11 +1,11 @@
-import * as cheerio from "cheerio";
+import * as parse5 from "parse5";
 import {PluginsSourceBase} from "./plugins-source-base";
 
 export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSource {
 	private static NPMJS_ADDRESS = "http://npmjs.org";
 
-	private _hasReturnedTheInitialPlugins: boolean;
 	private _keywords: string[];
+	private _pages: IBasicPluginInformation[][];
 
 	constructor(private $httpClient: Server.IHttpClient,
 		private $childProcess: IChildProcess,
@@ -14,6 +14,7 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 		private $logger: ILogger,
 		private $errors: IErrors) {
 		super();
+		this._pages = [];
 	}
 
 	public initialize(projectDir: string, keywords: string[]): IFuture<void> {
@@ -22,17 +23,20 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 
 			this._keywords = keywords;
 
-			this._plugins = this.getPluginsFromNpmjs(keywords, 0).wait();
+			this._plugins = this.getPluginsFromNpmjs(keywords, 1).wait();
 		}).future<void>()();
 	}
 
 	public getPlugins(page: number, count: number): IFuture<IBasicPluginInformation[]> {
 		return ((): IBasicPluginInformation[] => {
-			if (!this._hasReturnedTheInitialPlugins && page === 0) {
-				return this._plugins;
+			let loadedPlugins = this._pages[page];
+			if (loadedPlugins) {
+				return loadedPlugins;
 			}
 
 			let result = this.getPluginsFromNpmjs(this._keywords, page).wait();
+
+			this._pages[page] = result;
 
 			this._plugins = this._plugins.concat(result);
 
@@ -58,30 +62,24 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 		}).future<IBasicPluginInformation[]>()();
 	}
 
-	public hasPlugins(): boolean {
-		return !!(this._plugins && this._plugins.length);
-	}
-
-	private prepareScopedPluginName(keywords: string[]): string {
-		let pluginName = keywords[0];
-
-		pluginName = pluginName.replace("@", "%40");
-		pluginName = pluginName.replace("/", "%2F");
-
-		return pluginName;
-	}
-
 	private getPluginsFromNpmjs(keywords: string[], page: number): IFuture<IBasicPluginInformation[]> {
 		return ((): IBasicPluginInformation[] => {
-			let pluginName = this.prepareScopedPluginName(keywords);
+			let pluginName = encodeURIComponent(keywords.join(" "));
 			let url = `${NpmjsPluginsSource.NPMJS_ADDRESS}/search?q=${pluginName}&page=${page}`;
 
 			try {
 				let responseBody: string = this.$httpClient.httpRequest(url).wait().body;
-				let $ = cheerio.load(responseBody);
-				let searchResults = $(".search-results li");
 
-				return this.getBasicPluginInfo($, searchResults);
+				let document = parse5.parse(responseBody);
+				let html = _.find(document.childNodes, (node: parse5.ASTNode) => node.nodeName === "html");
+
+				let resultsContainer = this.findNodeByClass(html, "search-results");
+				if (!resultsContainer || !resultsContainer.childNodes) {
+					return null;
+				}
+
+				let resultsElements = _.filter(resultsContainer.childNodes, (node: parse5.ASTNode) => node.nodeName === "li");
+				return _.map(resultsElements, (node: parse5.ASTNode) => this.getPluginInfo(node));
 			} catch (err) {
 				this.$logger.trace(`Error while getting information for ${keywords} from http://npmjs.org - ${err}`);
 				return null;
@@ -89,24 +87,51 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 		}).future<IBasicPluginInformation[]>()();
 	}
 
-	private getBasicPluginInfo($: CheerioStatic, elementsContainer: Cheerio): IBasicPluginInformation[] {
-		let result: IBasicPluginInformation[] = [];
-		elementsContainer.each((index: number, element: CheerioElement) => {
-			let cheerioItem = $(element);
-			let name = cheerioItem.find(".name").first().text();
-			let author = cheerioItem.find(".author").first().text();
-			let version = cheerioItem.find(".version").first().text();
-			let description = cheerioItem.find(".description").first().text();
+	private getPluginInfo(node: parse5.ASTNode): IBasicPluginInformation {
+		let name = this.getTextFromElementWithClass(node, "name");
+		let version = this.getTextFromElementWithClass(node, "version");
+		let description = this.getTextFromElementWithClass(node, "description");
+		let author = this.getTextFromElementWithClass(node, "author");
 
-			result.push({
-				name,
-				version,
-				description,
-				author
-			});
-		});
+		return {
+			name,
+			version,
+			description,
+			author
+		};
+	}
 
-		return result;
+	private findNodeByClass(parent: parse5.ASTNode, className: string): parse5.ASTNode {
+		if (!parent.childNodes || parent.childNodes.length === 0) {
+			return null;
+		}
+
+		for (let i = 0; i < parent.childNodes.length; i++) {
+			let node = parent.childNodes[i];
+
+			if (_.some(node.attrs, (attr: parse5.ASTAttribute) => attr.name === "class" && attr.value === className)) {
+				return node;
+			} else {
+				let result = this.findNodeByClass(node, className);
+
+				if (result) {
+					return result;
+				}
+			}
+		}
+	}
+
+	private getTextFromElementWithClass(node: parse5.ASTNode, className: string): string {
+		let element = this.findNodeByClass(node, className);
+
+		if (element && element.childNodes) {
+			let textElement = _.find(element.childNodes, (child: parse5.ASTNode) => child.nodeName === "#text");
+			if (textElement) {
+				return textElement.value;
+			}
+		}
+
+		return null;
 	}
 }
 
