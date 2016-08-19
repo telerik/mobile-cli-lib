@@ -17,7 +17,7 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 		private $logger: ILogger,
 		private $companionAppsService: ICompanionAppsService) { }
 
-	@exportedPromise("liveSyncService", function() {
+	@exportedPromise("liveSyncService", function () {
 		this.$devicesService.startDeviceDetectionInterval();
 	})
 	public livesync(deviceDescriptors: IDeviceLiveSyncInfo[], projectDir: string, filePaths?: string[]): IFuture<IDeviceLiveSyncResult>[] {
@@ -30,7 +30,7 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 	public deleteFiles(deviceDescriptors: IDeviceLiveSyncInfo[], projectDir: string, filePaths: string[]): IFuture<IDeviceLiveSyncResult>[] {
 		this.$project.projectDir = projectDir;
 		this.$logger.trace(`Called deleteFiles for identifiers ${_.map(deviceDescriptors, d => d.deviceIdentifier)}. Project dir is ${projectDir}. Files are: ${filePaths}`);
-		return _.map(deviceDescriptors, deviceDescriptor => this.liveSyncOnDevice(deviceDescriptor, filePaths, { isForDeletedFiles: true}));
+		return _.map(deviceDescriptors, deviceDescriptor => this.liveSyncOnDevice(deviceDescriptor, filePaths, { isForDeletedFiles: true }));
 	}
 
 	private liveSyncOnDevice(deviceDescriptor: IDeviceLiveSyncInfo, filePaths: string[], liveSyncOptions?: ILiveSyncDeletionOptions): IFuture<IDeviceLiveSyncResult> {
@@ -43,7 +43,7 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 			};
 
 			let device = _.find(this.$devicesService.getDeviceInstances(), d => d.deviceInfo.identifier === deviceDescriptor.deviceIdentifier);
-			if(!device) {
+			if (!device) {
 				result.liveSyncToApp = result.liveSyncToCompanion = {
 					isResolved: false,
 					error: new Error(`Cannot find connected device with identifier ${deviceDescriptor.deviceIdentifier}. Available device identifiers are: ${this.$devicesService.getDeviceInstances()}`)
@@ -73,7 +73,7 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 				}
 			}
 
-			let appIdentifier = this.$project.projectData.AppIdentifier,
+			let appIdentifier = this.$project.getAppIdentifierForPlatform(this.$devicesService.platform).wait(),
 				canExecute = (d: Mobile.IDevice) => d.deviceInfo.identifier === device.deviceInfo.identifier,
 				livesyncData: ILiveSyncData = {
 					platform: device.deviceInfo.platform,
@@ -85,11 +85,11 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 
 			let canExecuteAction = this.$liveSyncServiceBase.getCanExecuteAction(device.deviceInfo.platform, appIdentifier, canExecute);
 
-			if(deviceDescriptor.syncToApp) {
+			if (deviceDescriptor.syncToApp) {
 				result.liveSyncToApp = this.liveSyncCore(livesyncData, device, appIdentifier, canExecuteAction, { isForCompanionApp: false, isForDeletedFiles: isForDeletedFiles }, filePaths).wait();
 			}
 
-			if(deviceDescriptor.syncToCompanion) {
+			if (deviceDescriptor.syncToCompanion) {
 				result.liveSyncToCompanion = this.liveSyncCore(livesyncData, device, appIdentifier, canExecuteAction, { isForCompanionApp: true, isForDeletedFiles: isForDeletedFiles }, filePaths).wait();
 			}
 
@@ -103,14 +103,14 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 				isResolved: false
 			};
 
-			if(liveSyncOptions.isForCompanionApp) {
+			if (liveSyncOptions.isForCompanionApp) {
 				// We should check if the companion app is installed, not the real application.
 				livesyncData.appIdentifier = appIdentifier = this.$companionAppsService.getCompanionAppIdentifier(this.$project.projectData.Framework, device.deviceInfo.platform);
 			}
 
-			if(device.applicationManager.isApplicationInstalled(appIdentifier).wait()) {
+			if (device.applicationManager.isApplicationInstalled(appIdentifier).wait()) {
 
-				let deletedFilesAction: any =  liveSyncOptions && liveSyncOptions.isForDeletedFiles ? this.$liveSyncServiceBase.getSyncRemovedFilesAction(livesyncData) : null;
+				let deletedFilesAction: any = liveSyncOptions && liveSyncOptions.isForDeletedFiles ? this.$liveSyncServiceBase.getSyncRemovedFilesAction(livesyncData) : null;
 				let action: any = this.$liveSyncServiceBase.getSyncAction(livesyncData, filePaths, deletedFilesAction, liveSyncOptions);
 				try {
 					this.$devicesService.execute(action, canExecuteAction).wait();
