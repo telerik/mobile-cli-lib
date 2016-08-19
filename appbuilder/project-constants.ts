@@ -19,6 +19,7 @@ export class ProjectConstants implements Project.IConstants {
 	public ANDROID_PLATFORM_NAME = "Android";
 	public IOS_PLATFORM_NAME = "iOS";
 	public WP8_PLATFORM_NAME = "WP8";
+	public TSCONFIG_JSON_NAME = "tsconfig.json";
 
 	public APPBUILDER_PROJECT_PLATFORMS_NAMES: IDictionary<string> = {
 		android: this.ANDROID_PLATFORM_NAME,

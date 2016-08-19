@@ -1,5 +1,6 @@
 import * as path from "path";
 import * as os from "os";
+import * as semver from "semver";
 import * as constants from "../../constants";
 import { fromWindowsRelativePathToUnix } from "../../helpers";
 import { exportedPromise } from "../../decorators";
@@ -19,16 +20,26 @@ export class NpmService implements INpmService {
 		private $hostInfo: IHostInfo,
 		private $httpClient: Server.IHttpClient,
 		private $logger: ILogger,
-		private $projectConstants: Project.IConstants) { }
+		private $projectConstants: Project.IConstants,
+		private $sysInfo: ISysInfo) { }
 
 	private get npmBinary(): string {
 		if (!this._npmBinary) {
 			try {
 				require(NpmService.NPM_MODULE_NAME);
 				let npmMainJsFile = require.resolve(NpmService.NPM_MODULE_NAME);
-				let nodeModulesDirName = "node_modules";
-				this._npmBinary = path.join(npmMainJsFile.substring(0, npmMainJsFile.lastIndexOf(nodeModulesDirName) + nodeModulesDirName.length), ".bin", this.npmExecutableName);
+				let pathToNpmBinary = path.join(npmMainJsFile.substring(0, npmMainJsFile.lastIndexOf(constants.NODE_MODULES_DIR_NAME) + constants.NODE_MODULES_DIR_NAME.length), ".bin", this.npmExecutableName);
+
+				if (!this.$fs.exists(pathToNpmBinary).wait()) {
+					throw new Error();
+				}
+
+				this._npmBinary = pathToNpmBinary;
 			} catch (err) {
+				if (!semver.valid(this.$sysInfo.getNpmVersion())) {
+					throw new Error("You do not have npm installed. Please install it in order to be able to work with npm plugins.");
+				}
+
 				this._npmBinary = this.npmExecutableName;
 			}
 		}

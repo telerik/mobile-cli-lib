@@ -1006,8 +1006,8 @@ interface ITypeScriptTranspileOptions {
 ```
 
 * `transpile(projectDir: string, typeScriptFiles?: string[], definitionFiles?: string[], options?: ITypeScriptTranspileOptions): Promise<string>` - Transpiles specified files or all files in the project directory.
-The default passed options are overriden by the ones in tsconfig.json file.
-The options from tsconfig.json file are overriden by the passed compiler options.
+If `options` are not specified the method will search for tsconfig.json file and get them from it.
+If there is no tsconfig.json file the method will use default options.
 If there are no `typeScriptFiles` all the files in the `projectDir` will be transpiled.
 The returned result is the output of the TypeScript compiler.
 

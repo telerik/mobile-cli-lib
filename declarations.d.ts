@@ -421,22 +421,15 @@ interface ITypeScriptService {
 	transpile(projectDir: string, typeScriptFiles?: string[], definitionFiles?: string[], options?: ITypeScriptTranspileOptions): IFuture<string>;
 
 	/**
-	 * Spawns tsc directly without options. Tsc will respect tsconfig.json file in case it exists and all of its options.
-	 * @param {ITypeScriptTranspileOptions} @optional options The transpilation options.
-	 * @return {IFuture<string>} The result from the TypeScript transpilation.
-	 */
-	transpileWithDefaultOptions(projectDir: string, options?: ITypeScriptTranspileOptions): IFuture<string>;
-
-	/**
-	 * Returns new object, containing all typeScript and all TypeScript definition files.
-	 * @param {string} projectDir The dorectory of the project which contains TypeScript files.
-	 * @return {IFuture<ITypeScriptFiles>} all typeScript and all TypeScript definition files.
+	 * Returns new object, containing all TypeScript and all TypeScript definition files.
+	 * @param {string} projectDir The directory of the project which contains TypeScript files.
+	 * @return {IFuture<ITypeScriptFiles>} all TypeScript and all TypeScript definition files.
 	 */
 	getTypeScriptFiles(projectDir: string): IFuture<ITypeScriptFiles>
 
 	/**
 	 * Checks if the project language is TypeScript by enumerating all files and checking if there are at least one TypeScript file (.ts), that is not definition file(.d.ts)
-	 * @param {string} projectDir The dorectory of the project.
+	 * @param {string} projectDir The directory of the project.
 	 * @return {IFuture<boolean>} true when the project contains .ts files and false otherwise.
 	 */
 	isTypeScriptProject(projectDir: string): IFuture<boolean>;
@@ -1191,7 +1184,7 @@ interface IProcessService {
 /**
  * Defines an object, containing all TypeScript files (.ts) within project and all TypeScript definition files (.d.ts).
  * TypeScript files are all files ending with .ts, so if there are any definition files, they will be placed in both
- * typeScript files and definitionFiles collections.
+ * TypeScript files and definitionFiles collections.
  */
 interface ITypeScriptFiles {
 	definitionFiles: string[],
