@@ -88,6 +88,8 @@ export abstract class ProjectBase implements Project.IProjectBase {
 	public getAppIdentifierForPlatform(platform?: string): IFuture<string> {
 		return ((): string => {
 			if (!this._platformSpecificAppIdentifier) {
+				this._platformSpecificAppIdentifier = this.projectData.AppIdentifier;
+
 				if (platform &&
 					platform.toLowerCase() === this.$projectConstants.ANDROID_PLATFORM_NAME.toLowerCase() &&
 					this.projectData.Framework === TARGET_FRAMEWORK_IDENTIFIERS.Cordova) {
@@ -100,18 +102,15 @@ export abstract class ProjectBase implements Project.IProjectBase {
 
 					let appIdentifierInConfigXml = this.getAppIdentifierFromConfigFile(pathToConfigXml, /id\s*=\s*"(\S*)"/).wait();
 
-					if (appIdentifierInAndroidManifest && appIdentifierInConfigXml && appIdentifierInAndroidManifest === appIdentifierInConfigXml) {
-						if (appIdentifierInAndroidManifest === ProjectBase.APP_IDENTIFIER_PLACEHOLDER) {
-							this._platformSpecificAppIdentifier = this.projectData.AppIdentifier;
-						} else {
-							this._platformSpecificAppIdentifier = appIdentifierInAndroidManifest;
-						}
-					} else if (appIdentifierInAndroidManifest || appIdentifierInConfigXml) {
+					let appId = appIdentifierInAndroidManifest || appIdentifierInConfigXml;
+
+					if ((appIdentifierInAndroidManifest && appIdentifierInConfigXml) &&
+						(appIdentifierInAndroidManifest === appIdentifierInConfigXml) &&
+						(appId !== ProjectBase.APP_IDENTIFIER_PLACEHOLDER)) {
+						this._platformSpecificAppIdentifier = appIdentifierInAndroidManifest;
+					} else if (appId && (appId !== ProjectBase.APP_IDENTIFIER_PLACEHOLDER)) {
 						this.$errors.failWithoutHelp(`Your package in ${ProjectBase.ANDROID_MANIFEST_NAME} and id in ${ProjectBase.CONFIG_XML_NAME} do not match. They must be the same to be able to build your application.`);
 					}
-				} else {
-					// Since we don't have specific logic to get the app identifier for iOS and WP8 we can return the one from .abproject file.
-					this._platformSpecificAppIdentifier = this.projectData.AppIdentifier;
 				}
 			}
 
