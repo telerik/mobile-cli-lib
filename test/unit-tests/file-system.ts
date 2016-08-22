@@ -6,6 +6,7 @@ import {assert} from "chai";
 import * as fileSystemFile from "../../file-system";
 import * as childProcessLib from "../../child-process";
 import {CommonLoggerStub} from "./stubs";
+import Future = require("fibers/future");
 
 let sampleZipFileTest = path.join(__dirname, "../resources/sampleZipFileTest.zip");
 let unzippedFileName = "sampleZipFileTest.txt";
@@ -36,8 +37,8 @@ function createTestInjector(): IInjector {
 }
 
 describe("FileSystem", () => {
-	describe("unzip",() => {
-		describe("overwriting files tests",() => {
+	describe("unzip", () => {
+		describe("overwriting files tests", () => {
 			let testInjector: IInjector,
 				tempDir: string,
 				fs: IFileSystem,
@@ -51,25 +52,25 @@ describe("FileSystem", () => {
 				file = path.join(tempDir, unzippedFileName);
 				fs.writeFile(file, msg).wait();
 			});
-			it("does not overwrite files when overwriteExisitingFiles is false",() => {
+			it("does not overwrite files when overwriteExisitingFiles is false", () => {
 				fs.unzip(sampleZipFileTest, tempDir, { overwriteExisitingFiles: false }, [unzippedFileName]).wait();
 				let data = fs.readFile(file).wait();
 				assert.strictEqual(msg, data.toString(), "When overwriteExistingFiles is false, we should not ovewrite files.");
 			});
 
-			it("overwrites files when overwriteExisitingFiles is true",() => {
+			it("overwrites files when overwriteExisitingFiles is true", () => {
 				fs.unzip(sampleZipFileTest, tempDir, { overwriteExisitingFiles: true }, [unzippedFileName]).wait();
 				let data = fs.readFile(file).wait();
 				assert.notEqual(msg, data.toString(), "We must overwrite files when overwriteExisitingFiles is true.");
 			});
 
-			it("overwrites files when overwriteExisitingFiles is not set",() => {
+			it("overwrites files when overwriteExisitingFiles is not set", () => {
 				fs.unzip(sampleZipFileTest, tempDir, {}, [unzippedFileName]).wait();
 				let data = fs.readFile(file).wait();
 				assert.notEqual(msg, data.toString(), "We must overwrite files when overwriteExisitingFiles is not set.");
 			});
 
-			it("overwrites files when options is not set",() => {
+			it("overwrites files when options is not set", () => {
 				fs.unzip(sampleZipFileTest, tempDir, undefined, [unzippedFileName]).wait();
 				let data = fs.readFile(file).wait();
 				assert.notEqual(msg, data.toString(), "We must overwrite files when options is not defined.");
@@ -78,34 +79,34 @@ describe("FileSystem", () => {
 
 		// NOTE: This tests will never fail on Windows/Mac as file system is case insensitive
 		describe("case sensitive tests", () => {
-			it("is case sensitive when options is not defined",() => {
+			it("is case sensitive when options is not defined", () => {
 				let testInjector = createTestInjector();
 				let tempDir = temp.mkdirSync("projectToUnzip");
 				let fs: IFileSystem = testInjector.resolve("fs");
-				if(isOsCaseSensitive(testInjector)) {
+				if (isOsCaseSensitive(testInjector)) {
 					assert.throws(() => fs.unzip(sampleZipFileTestIncorrectName, tempDir, undefined, [unzippedFileName]).wait());
 				}
 			});
 
-			it("is case sensitive when caseSensitive option is not defined",() => {
+			it("is case sensitive when caseSensitive option is not defined", () => {
 				let testInjector = createTestInjector();
 				let tempDir = temp.mkdirSync("projectToUnzip");
 				let fs: IFileSystem = testInjector.resolve("fs");
-				if(isOsCaseSensitive(testInjector)) {
+				if (isOsCaseSensitive(testInjector)) {
 					assert.throws(() => fs.unzip(sampleZipFileTestIncorrectName, tempDir, {}, [unzippedFileName]).wait());
 				}
 			});
 
-			it("is case sensitive when caseSensitive option is true",() => {
+			it("is case sensitive when caseSensitive option is true", () => {
 				let testInjector = createTestInjector();
 				let tempDir = temp.mkdirSync("projectToUnzip");
 				let fs: IFileSystem = testInjector.resolve("fs");
-				if(isOsCaseSensitive(testInjector)) {
+				if (isOsCaseSensitive(testInjector)) {
 					assert.throws(() => fs.unzip(sampleZipFileTestIncorrectName, tempDir, { caseSensitive: true }, [unzippedFileName]).wait());
 				}
 			});
 
-			it("is case insensitive when caseSensitive option is false",() => {
+			it("is case insensitive when caseSensitive option is false", () => {
 				let testInjector = createTestInjector();
 				let tempDir = temp.mkdirSync("projectToUnzip");
 				let fs: IFileSystem = testInjector.resolve("fs");
@@ -183,6 +184,46 @@ describe("FileSystem", () => {
 			assert.isTrue(fs.exists(testFileName).wait(), "Original file should exist.");
 			assert.deepEqual(fs.getFsStats(testFileName).wait().size, originalSize, "Original file and copied file must have the same size.");
 			assert.deepEqual(fs.readText(testFileName).wait(), fileContent, "File content should not be changed.");
+		});
+	});
+
+	describe("removeEmptyParents", () => {
+		let testInjector: IInjector;
+		let fs: IFileSystem;
+		let notEmptyRootDirectory = path.join("not-empty");
+		let removedDirectories: string[];
+
+		beforeEach(() => {
+			testInjector = createTestInjector();
+
+			fs = testInjector.resolve("fs");
+			removedDirectories = [];
+			fs.deleteDirectory = (directory: string) => {
+				return (() => {
+					removedDirectories.push(path.basename(directory));
+				}).future<void>()();
+			};
+		});
+
+		it("should remove all empty parents.", () => {
+			let emptyDirectories = ["first", "second", "third"];
+
+			let directory = notEmptyRootDirectory;
+
+			_.each(emptyDirectories, (dir: string) => {
+				directory = path.join(directory, dir);
+			});
+
+			// We need to add the fourth directory because this directory does not actually exist and the method will start deleting its parents.
+			directory = path.join(directory, "fourth");
+
+			let originalIsEmptyDir = fs.isEmptyDir;
+			fs.isEmptyDir = (dirName: string) => Future.fromResult(dirName !== notEmptyRootDirectory);
+
+			fs.deleteEmptyParents(directory).wait();
+			fs.isEmptyDir = originalIsEmptyDir;
+
+			assert.deepEqual(emptyDirectories, _.reverse(removedDirectories));
 		});
 	});
 });
