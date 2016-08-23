@@ -29,7 +29,7 @@ export class TypeScriptService implements ITypeScriptService {
 	private typeScriptFiles: string[];
 	private definitionFiles: string[];
 	private noEmitOnError: boolean;
-	private tscDirectory: string;
+	private typeScriptModuleFilePath: string;
 
 	constructor(private $childProcess: IChildProcess,
 		private $fs: IFileSystem,
@@ -43,7 +43,7 @@ export class TypeScriptService implements ITypeScriptService {
 		return ((): string => {
 			options = options || {};
 			let compilerOptions = this.getCompilerOptions(projectDir, options).wait();
-			let typeScriptCompilerSettings = this.getTypeScriptCompilerSettings().wait();
+			let typeScriptCompilerSettings = this.getTypeScriptCompilerSettings({ useLocalTypeScriptCompiler: options.useLocalTypeScriptCompiler }).wait();
 			this.noEmitOnError = compilerOptions.noEmitOnError;
 			this.typeScriptFiles = typeScriptFiles || [];
 			this.definitionFiles = definitionFiles || [];
@@ -149,22 +149,29 @@ export class TypeScriptService implements ITypeScriptService {
 		return defaultOptions[key];
 	}
 
-	private getTypeScriptCompilerSettings(): IFuture<ITypeScriptCompilerSettings> {
+	private getTypeScriptCompilerSettings(options: { useLocalTypeScriptCompiler: boolean }): IFuture<ITypeScriptCompilerSettings> {
 		return ((): ITypeScriptCompilerSettings => {
-			if (!this.tscDirectory) {
-				this.tscDirectory = this.createTempDirectoryForTsc().wait();
-				let pluginToInstall: INpmDependency = {
-					name: TypeScriptService.TYPESCRIPT_MODULE_NAME,
-					version: TypeScriptService.DEFAULT_TSC_VERSION,
-					installTypes: false
-				};
-				this.$npmService.install(this.tscDirectory, pluginToInstall).wait();
+			let typeScriptInNodeModulesDir = path.join(NODE_MODULES_DIR_NAME, TypeScriptService.TYPESCRIPT_MODULE_NAME);
+			if (!this.typeScriptModuleFilePath) {
+				if (options.useLocalTypeScriptCompiler) {
+					let typeScriptJsFilePath = require.resolve(TypeScriptService.TYPESCRIPT_MODULE_NAME);
+
+					this.typeScriptModuleFilePath = typeScriptJsFilePath.substring(0, typeScriptJsFilePath.indexOf(typeScriptInNodeModulesDir) + typeScriptInNodeModulesDir.length);
+				} else {
+					let typeScriptModuleInstallationDir = this.createTempDirectoryForTsc().wait();
+					let pluginToInstall: INpmDependency = {
+						name: TypeScriptService.TYPESCRIPT_MODULE_NAME,
+						version: TypeScriptService.DEFAULT_TSC_VERSION,
+						installTypes: false
+					};
+
+					this.$npmService.install(typeScriptModuleInstallationDir, pluginToInstall).wait();
+					this.typeScriptModuleFilePath = path.join(typeScriptModuleInstallationDir, typeScriptInNodeModulesDir);
+				}
 			}
 
-			// Get the path to tsc
-			let typeScriptModuleFilePath = path.join(this.tscDirectory, NODE_MODULES_DIR_NAME, TypeScriptService.TYPESCRIPT_MODULE_NAME);
-			let typeScriptCompilerPath = path.join(typeScriptModuleFilePath, "lib", "tsc");
-			let typeScriptCompilerVersion = this.$fs.readJson(path.join(typeScriptModuleFilePath, this.$projectConstants.PACKAGE_JSON_NAME)).wait().version;
+			let typeScriptCompilerPath = path.join(this.typeScriptModuleFilePath, "lib", "tsc");
+			let typeScriptCompilerVersion = this.$fs.readJson(path.join(this.typeScriptModuleFilePath, this.$projectConstants.PACKAGE_JSON_NAME)).wait().version;
 
 			return { pathToCompiler: typeScriptCompilerPath, version: typeScriptCompilerVersion };
 		}).future<ITypeScriptCompilerSettings>()();
@@ -310,7 +317,7 @@ export class TypeScriptService implements ITypeScriptService {
 	private createTempDirectoryForTsc(): IFuture<string> {
 		return ((): string => {
 			let tempDir = temp.mkdirSync(`typescript-compiler-${TypeScriptService.DEFAULT_TSC_VERSION}`);
-			this.$fs.writeJson(path.join(tempDir, "package.json"), { name: "tsc-container", version: "1.0.0" }).wait();
+			this.$fs.writeJson(path.join(tempDir, this.$projectConstants.PACKAGE_JSON_NAME), { name: "tsc-container", version: "1.0.0" }).wait();
 			return tempDir;
 		}).future<string>()();
 	}

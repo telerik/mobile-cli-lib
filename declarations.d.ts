@@ -1234,4 +1234,9 @@ interface ITypeScriptTranspileOptions {
 	 * Path to the default .d.ts files.
 	 */
 	pathToDefaultDefinitionFiles?: string;
+
+	/**
+	 * Use the typescript compiler which is installed localy for the project.
+	 */
+	useLocalTypeScriptCompiler?: boolean;
 }

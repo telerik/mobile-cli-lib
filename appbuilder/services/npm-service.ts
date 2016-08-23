@@ -1,6 +1,5 @@
 import * as path from "path";
 import * as os from "os";
-import * as semver from "semver";
 import * as constants from "../../constants";
 import { fromWindowsRelativePathToUnix } from "../../helpers";
 import { exportedPromise } from "../../decorators";
@@ -20,8 +19,7 @@ export class NpmService implements INpmService {
 		private $hostInfo: IHostInfo,
 		private $httpClient: Server.IHttpClient,
 		private $logger: ILogger,
-		private $projectConstants: Project.IConstants,
-		private $sysInfo: ISysInfo) { }
+		private $projectConstants: Project.IConstants) { }
 
 	private get npmBinary(): string {
 		if (!this._npmBinary) {
@@ -36,10 +34,6 @@ export class NpmService implements INpmService {
 
 				this._npmBinary = pathToNpmBinary;
 			} catch (err) {
-				if (!semver.valid(this.$sysInfo.getNpmVersion())) {
-					throw new Error("You do not have npm installed. Please install it in order to be able to work with npm plugins.");
-				}
-
 				this._npmBinary = this.npmExecutableName;
 			}
 		}
