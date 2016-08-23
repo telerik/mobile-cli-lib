@@ -202,6 +202,12 @@ interface IFileSystem {
 	 * @param (string[]) files files and direcories to delete
 	 */
 	rm(options: string, ...files: string[]): void;
+
+	/**
+	 * Deletes all empty parent directories.
+	 * @param {string} directory The directory from which this method will start looking for empty parents.
+	 */
+	deleteEmptyParents(directory: string): IFuture<void>;
 }
 
 // duplicated from fs.Stats, because I cannot import it here
