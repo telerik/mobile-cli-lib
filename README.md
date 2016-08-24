@@ -969,18 +969,66 @@ This module is used to transpile TypeScript files.
 The following types are used:
 ```TypeScript
 interface ITypeScriptCompilerOptions {
-	codePage?: number; // Specify the codepage to use when opening source files.
-	declaration?: boolean; //  Generates corresponding .d.ts file.
-	mapRoot?: string; //  Specifies the location where debugger should locate map files instead of generated locations.
-	module?: string; // Specify module code generation: 'commonjs' or 'amd'.
-	noImplicitAny?: boolean; //  Warn on expressions and declarations with an implied 'any' type.
-	outFile?: string; // Concatenate and emit output to single file.
-	outDir?: string; // Redirect output structure to the directory.
-	removeComments?: boolean; // Do not emit comments to output.
-	sourceMap?: boolean; // Generates corresponding .map file
-	sourceRoot?: string; // Specifies the location where debugger should locate TypeScript files instead of source locations.
-	target?: string;  // Specify ECMAScript target version: 'ES3' (default), or 'ES5'.
-	noEmitOnError?: boolean; // Do not emit outputs if any errors were reported.
+	/**
+	 * Specify the codepage to use when opening source files.
+	 */
+	codePage?: number;
+
+	/**
+	 * Generates corresponding .d.ts file.
+	 */
+	declaration?: boolean;
+
+	/**
+	 * Specifies the location where debugger should locate map files instead of generated locations.
+	 */
+	mapRoot?: string;
+
+	/**
+	 * Specify module code generation: 'commonjs' or 'amd'.
+	 */
+	module?: string;
+
+	/**
+	 * Warn on expressions and declarations with an implied 'any' type.
+	 */
+	noImplicitAny?: boolean;
+
+	/**
+	 * Concatenate and emit output to single file.
+	 */
+	outFile?: string;
+
+	/**
+	 * Redirect output structure to the directory.
+	 */
+	outDir?: string;
+
+	/**
+	 * Do not emit comments to output.
+	 */
+	removeComments?: boolean;
+
+	/**
+	 * Generates corresponding .map file.
+	 */
+	sourceMap?: boolean;
+
+	/**
+	 * Specifies the location where debugger should locate TypeScript files instead of source locations.
+	 */
+	sourceRoot?: string;
+
+	/**
+	 * Specify ECMAScript target version: 'ES3' (default), or 'ES5'.
+	 */
+	target?: string;
+
+	/**
+	 * Do not emit outputs if any errors were reported.
+	 */
+	noEmitOnError?: boolean;
+
 	[key: string]: any;
 }
 

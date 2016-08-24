@@ -47,7 +47,7 @@ export class TypeScriptService implements ITypeScriptService {
 			this.noEmitOnError = compilerOptions.noEmitOnError;
 			this.typeScriptFiles = typeScriptFiles || [];
 			this.definitionFiles = definitionFiles || [];
-			let runTranspilationOptions: IRunTranspilationOptions;
+			let runTranspilationOptions: IRunTranspilationOptions = { compilerOptions };
 
 			if (this.typeScriptFiles.length > 0) {
 				// Create typeScript command file
@@ -68,8 +68,6 @@ export class TypeScriptService implements ITypeScriptService {
 				});
 
 				runTranspilationOptions = { typeScriptCommandsFilePath };
-			} else {
-				runTranspilationOptions = { compilerOptions };
 			}
 
 			this.$logger.out(`Using tsc version ${typeScriptCompilerSettings.version}`.cyan);
@@ -78,7 +76,7 @@ export class TypeScriptService implements ITypeScriptService {
 		}).future<string>()();
 	}
 
-	public getTypeScriptFiles(projectDir: string): IFuture<ITypeScriptFiles> {
+	public getTypeScriptFilesData(projectDir: string): IFuture<ITypeScriptFiles> {
 		return ((): ITypeScriptFiles => {
 			// Skip root's node_modules
 			let rootNodeModules = path.join(projectDir, NODE_MODULES_DIR_NAME);
@@ -92,13 +90,9 @@ export class TypeScriptService implements ITypeScriptService {
 
 	public isTypeScriptProject(projectDir: string): IFuture<boolean> {
 		return ((): boolean => {
-			let typeScriptFiles = this.getTypeScriptFiles(projectDir).wait();
+			let typeScriptFilesData = this.getTypeScriptFilesData(projectDir).wait();
 
-			if (typeScriptFiles.typeScriptFiles.length) {
-				return true;
-			}
-
-			return false;
+			return !!typeScriptFilesData.typeScriptFiles.length;
 		}).future<boolean>()();
 	}
 

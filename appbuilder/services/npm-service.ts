@@ -29,11 +29,12 @@ export class NpmService implements INpmService {
 				let pathToNpmBinary = path.join(npmMainJsFile.substring(0, npmMainJsFile.lastIndexOf(constants.NODE_MODULES_DIR_NAME) + constants.NODE_MODULES_DIR_NAME.length), ".bin", this.npmExecutableName);
 
 				if (!this.$fs.exists(pathToNpmBinary).wait()) {
-					throw new Error();
+					throw new Error(`The npm binary is not in ${pathToNpmBinary} as expected.`);
 				}
 
 				this._npmBinary = pathToNpmBinary;
 			} catch (err) {
+				this.$logger.trace(`Error while trying to get the npm binary: ${err}`);
 				this._npmBinary = this.npmExecutableName;
 			}
 		}

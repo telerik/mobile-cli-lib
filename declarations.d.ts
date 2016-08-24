@@ -425,7 +425,7 @@ interface ITypeScriptService {
 	 * @param {string} projectDir The directory of the project which contains TypeScript files.
 	 * @return {IFuture<ITypeScriptFiles>} all TypeScript and all TypeScript definition files.
 	 */
-	getTypeScriptFiles(projectDir: string): IFuture<ITypeScriptFiles>
+	getTypeScriptFilesData(projectDir: string): IFuture<ITypeScriptFiles>
 
 	/**
 	 * Checks if the project language is TypeScript by enumerating all files and checking if there are at least one TypeScript file (.ts), that is not definition file(.d.ts)
@@ -1192,18 +1192,66 @@ interface ITypeScriptFiles {
 }
 
 interface ITypeScriptCompilerOptions {
-	codePage?: number; // Specify the codepage to use when opening source files.
-	declaration?: boolean; //  Generates corresponding .d.ts file.
-	mapRoot?: string; //  Specifies the location where debugger should locate map files instead of generated locations.
-	module?: string; // Specify module code generation: 'commonjs' or 'amd'.
-	noImplicitAny?: boolean; //  Warn on expressions and declarations with an implied 'any' type.
-	outFile?: string; // Concatenate and emit output to single file.
-	outDir?: string; // Redirect output structure to the directory.
-	removeComments?: boolean; // Do not emit comments to output.
-	sourceMap?: boolean; // Generates corresponding .map file
-	sourceRoot?: string; // Specifies the location where debugger should locate TypeScript files instead of source locations.
-	target?: string;  // Specify ECMAScript target version: 'ES3' (default), or 'ES5'.
-	noEmitOnError?: boolean; // Do not emit outputs if any errors were reported.
+	/**
+	 * Specify the codepage to use when opening source files.
+	 */
+	codePage?: number;
+
+	/**
+	 * Generates corresponding .d.ts file.
+	 */
+	declaration?: boolean;
+
+	/**
+	 * Specifies the location where debugger should locate map files instead of generated locations.
+	 */
+	mapRoot?: string;
+
+	/**
+	 * Specify module code generation: 'commonjs' or 'amd'.
+	 */
+	module?: string;
+
+	/**
+	 * Warn on expressions and declarations with an implied 'any' type.
+	 */
+	noImplicitAny?: boolean;
+
+	/**
+	 * Concatenate and emit output to single file.
+	 */
+	outFile?: string;
+
+	/**
+	 * Redirect output structure to the directory.
+	 */
+	outDir?: string;
+
+	/**
+	 * Do not emit comments to output.
+	 */
+	removeComments?: boolean;
+
+	/**
+	 * Generates corresponding .map file.
+	 */
+	sourceMap?: boolean;
+
+	/**
+	 * Specifies the location where debugger should locate TypeScript files instead of source locations.
+	 */
+	sourceRoot?: string;
+
+	/**
+	 * Specify ECMAScript target version: 'ES3' (default), or 'ES5'.
+	 */
+	target?: string;
+
+	/**
+	 * Do not emit outputs if any errors were reported.
+	 */
+	noEmitOnError?: boolean;
+
 	[key: string]: any;
 }
 
