@@ -6,7 +6,6 @@ export class NpmRegistryPluginsSource extends PluginsSourceBase implements IPlug
 		private $childProcess: IChildProcess,
 		private $hostInfo: IHostInfo,
 		private $npmService: INpmService,
-		private $progressIndicator: IProgressIndicator,
 		private $logger: ILogger,
 		private $errors: IErrors) {
 		super();
@@ -16,7 +15,8 @@ export class NpmRegistryPluginsSource extends PluginsSourceBase implements IPlug
 		return (() => {
 			super.initialize(projectDir, keywords).wait();
 
-			this._plugins = [this.getPluginFromNpmRegistry(keywords[0]).wait()];
+			let plugin = this.getPluginFromNpmRegistry(keywords[0]).wait();
+			this._plugins = plugin ? [plugin] : null;
 		}).future<void>()();
 	}
 
@@ -42,5 +42,3 @@ export class NpmRegistryPluginsSource extends PluginsSourceBase implements IPlug
 		}).future<IBasicPluginInformation>()();
 	}
 }
-
-$injector.register("npmRegistryPluginsSource", NpmRegistryPluginsSource);

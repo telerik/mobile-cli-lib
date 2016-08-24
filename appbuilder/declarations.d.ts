@@ -364,30 +364,25 @@ interface INpmService {
 }
 
 /**
- * Resolver for the different types of plugins sources.
+ * Describes methods for searching for npm plugins.
  */
-interface IPluginsSourceResolver {
+interface INpmPluginsService {
 	/**
-	 * Resolves plugins source which will work with the npm binary.
+	 * Searches for plugins in http://npmjs.org, if this search fails will try to find plugin in http://registry.npmjs.org.
+	 * If this search does not find anything this method will use the npm binary.
 	 * @param {string} projectDir The directory of the project.
 	 * @param {string[]} keywords The keywords for the search.
-	 * @return {IFuture<IPluginsSource>} The plugins source.
+	 * @param @optional {(keywords: string[]) => string[]} modifySearchQuery Function which will be used to modify the search query when using the npm binary.
+	 * @return {IFuture<IPluginsSource>} The plugins source which can be used to get the result.
 	 */
-	resolveNpmPluginsSource(projectDir: string, keywords: string[]): IFuture<IPluginsSource>;
+	search(projectDir: string, keywords: string[], modifySearchQuery?: (keywords: string[]) => string[]): IFuture<IPluginsSource>;
 
 	/**
-	 * Resolves plugins source which will work with http://npmjs.org/search.
+	 * Searches for plugin in http://registry.npmjs.org plugins and if plugin is not found will continue the search in http://npmjs.org and the npm binary.
 	 * @param {string} projectDir The directory of the project.
 	 * @param {string[]} keywords The keywords for the search.
-	 * @return {IFuture<IPluginsSource>} The plugins source.
+	 * @param @optional {(keywords: string[]) => string[]} modifySearchQuery Function which will be used to modify the search query when using the npm binary.
+	 * @return {IFuture<IPluginsSource>} The plugins source which can be used to get the result.
 	 */
-	resolveNpmjsPluginsSource(projectDir: string, keywords: string[]): IFuture<IPluginsSource>;
-
-	/**
-	 * Resolves plugins source which will work with the http://registry.npmjs.org.
-	 * @param {string} projectDir The directory of the project.
-	 * @param {string[]} keywords The keywords for the search.
-	 * @return {IFuture<IPluginsSource>} The plugins source.
-	 */
-	resolveNpmRegistryPluginsSource(projectDir: string, keywords: string[]): IFuture<IPluginsSource>;
+	optimizedSearch(projectDir: string, keywords: string[], modifySearchQuery?: (keywords: string[]) => string[]): IFuture<IPluginsSource>;
 }

@@ -5,7 +5,6 @@ export class NpmPluginsSource extends PluginsSourceBase implements IPluginsSourc
 	constructor(private $childProcess: IChildProcess,
 		private $hostInfo: IHostInfo,
 		private $npmService: INpmService,
-		private $progressIndicator: IProgressIndicator,
 		private $logger: ILogger,
 		private $errors: IErrors) {
 		super();
@@ -15,13 +14,7 @@ export class NpmPluginsSource extends PluginsSourceBase implements IPluginsSourc
 		return (() => {
 			super.initialize(projectDir, keywords).wait();
 
-			let searchFuture = this.$npmService.search(this._projectDir, keywords);
-
-			this.$logger.printInfoMessageOnSameLine("Searching for plugins in npm, please wait.");
-
-			this.$progressIndicator.showProgressIndicator(searchFuture, 2000).wait();
-
-			this._plugins = searchFuture.get();
+			this._plugins = this.$npmService.search(this._projectDir, keywords).wait();
 		}).future<void>()();
 	}
 
@@ -31,5 +24,3 @@ export class NpmPluginsSource extends PluginsSourceBase implements IPluginsSourc
 		return Future.fromResult(_.slice(this._plugins, skip, skip + count));
 	}
 }
-
-$injector.register("npmPluginsSource", NpmPluginsSource);

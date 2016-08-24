@@ -123,7 +123,4 @@ $injector.require("xcodeSelectService", "./services/xcode-select-service");
 $injector.require("net", "./services/net-service");
 
 $injector.require("printPluginsService", "./services/plugins/print-plugins-service");
-$injector.require("npmPluginsSource", "./services/plugins/npm-plugins-source");
-$injector.require("npmjsPluginsSource", "./services/plugins/npmjs-plugins-source");
-$injector.require("npmRegistryPluginsSource", "./services/plugins/npm-registry-plugins-source");
-$injector.require("pluginsSourceResolver", "./services/plugins/plugins-source-resolver");
+$injector.require("npmPluginsService", "./services/plugins/npm-plugins-service");

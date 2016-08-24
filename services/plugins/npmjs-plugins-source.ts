@@ -10,7 +10,6 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 	constructor(private $httpClient: Server.IHttpClient,
 		private $childProcess: IChildProcess,
 		private $hostInfo: IHostInfo,
-		private $progressIndicator: IProgressIndicator,
 		private $logger: ILogger,
 		private $errors: IErrors) {
 		super();
@@ -134,5 +133,3 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 		return null;
 	}
 }
-
-$injector.register("npmjsPluginsSource", NpmjsPluginsSource);
