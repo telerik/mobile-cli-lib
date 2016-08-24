@@ -38,7 +38,7 @@ declare module Config {
 		PROXY_PORT?: number;
 		ON_PREM?: boolean;
 		CI_LOGGER?: boolean;
-		TYPESCRIPT_COMPILER_OPTIONS?: any;
+		TYPESCRIPT_COMPILER_OPTIONS?: ITypeScriptCompilerOptions;
 		DISABLE_HOOKS: boolean;
 	}
 }

@@ -32,6 +32,7 @@ declare module Project {
 		ANDROID_PLATFORM_NAME: string;
 		IOS_PLATFORM_NAME: string;
 		WP8_PLATFORM_NAME: string;
+		TSCONFIG_JSON_NAME: string;
 	}
 
 	interface ICapabilities {
