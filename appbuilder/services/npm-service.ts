@@ -107,6 +107,8 @@ export class NpmService implements INpmService {
 			if (packageJsonContent && packageJsonContent.devDependencies && packageJsonContent.devDependencies[`${NpmService.TYPES_DIRECTORY}${dependency}`]) {
 				this.npmUninstall(projectDir, `${NpmService.TYPES_DIRECTORY}${dependency}`, ["--save-dev"]).wait();
 			}
+
+			this.generateReferencesFile(projectDir).wait();
 		}).future<void>()();
 	}
 
