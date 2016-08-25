@@ -183,19 +183,16 @@ export class TypeScriptService implements ITypeScriptService {
 			}
 
 			let output = this.$childProcess.spawnFromEvent(process.argv[0], params, "close", { cwd: projectDir }, { throwError: false }).wait();
-			let exitcode = output.exitCode;
 			let compilerOutput = output.stderr || output.stdout;
 
 			// EmitReturnStatus enum in https://github.com/Microsoft/TypeScript/blob/8947757d096338532f1844d55788df87fb5a39ed/src/compiler/types.ts#L605
-			if (exitcode === 0 || exitcode === 2 || exitcode === 3) {
-				let endTime = new Date().getTime();
-				let time = (endTime - startTime) / 1000;
+			let compilerMessages = this.getCompilerMessages(compilerOutput);
+			// This call will fail in case noEmitOnError on error is true and there are errors.
+			this.logCompilerMessages(compilerMessages, compilerOutput);
 
-				this.$logger.out(`${os.EOL}Success: ${time.toFixed(2)}s${os.EOL}Done without errors.`.green);
-			} else {
-				let compilerMessages = this.getCompilerMessages(compilerOutput);
-				this.logCompilerMessages(compilerMessages, compilerOutput);
-			}
+			let endTime = new Date().getTime();
+			let time = (endTime - startTime) / 1000;
+			this.$logger.out(`${os.EOL}Success: ${time.toFixed(2)}s${os.EOL}.`.green);
 
 			return compilerOutput;
 		}).future<string>()();
@@ -215,10 +212,8 @@ export class TypeScriptService implements ITypeScriptService {
 			let isPreventEmitError = !!this.noEmitOnError;
 			if (errorMsg.search(/error TS1\d+:/) >= 0) {
 				level1ErrorCount += 1;
-				isPreventEmitError = true;
 			} else if (errorMsg.search(/error TS5\d+:/) >= 0) {
 				level5ErrorCount += 1;
-				isPreventEmitError = true;
 			} else if (errorMsg.search(/error TS\d+:/) >= 0) {
 				nonEmitPreventingWarningCount += 1;
 			}
