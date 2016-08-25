@@ -9,6 +9,7 @@ export class NpmService implements INpmService {
 	private static TYPES_DIRECTORY = "@types/";
 	private static TNS_CORE_MODULES_DEFINITION_FILE_NAME = `${constants.TNS_CORE_MODULES}${constants.FileExtensions.TYPESCRIPT_DEFINITION_FILE}`;
 	private static NPM_REGISTRY_URL = "https://registry.npmjs.org";
+	private static SCOPED_DEPENDENCY_REGEXP = /^(@.+?)(?:@(.+?))?$/;
 
 	private _npmExecutableName: string;
 	private _npmBinary: string;
@@ -112,6 +113,55 @@ export class NpmService implements INpmService {
 		}).future<void>()();
 	}
 
+	public search(projectDir: string, keywords: string[], args: string[] = []): IFuture<IBasicPluginInformation[]> {
+		return ((): IBasicPluginInformation[] => {
+			let result: IBasicPluginInformation[] = [];
+			let commandArguments = _.concat(["search"], args, keywords);
+			let spawnResult = this.executeNpmCommandCore(projectDir, commandArguments).wait();
+			if (spawnResult.stderr) {
+				// npm will write "npm WARN Building the local index for the first time, please be patient" to the stderr and if it is the only message on the stderr we should ignore it.
+				let splitError = spawnResult.stderr.trim().split("\n");
+				if (splitError.length > 1 || splitError[0].indexOf("Building the local index for the first time") === -1) {
+					this.$errors.failWithoutHelp(spawnResult.stderr);
+				}
+			}
+
+			// Need to split the result only by \n because the npm result contains only \n and on Windows it will not split correctly when using EOL.
+			// Sample output:
+			// NAME                    DESCRIPTION             AUTHOR        DATE       VERSION  KEYWORDS
+			// cordova-plugin-console  Cordova Console Plugin  =csantanapr…  2016-04-20 1.0.3    cordova console ecosystem:cordova cordova-ios
+			let pluginsRows: string[] = spawnResult.stdout.split("\n");
+
+			// Remove the table headers row.
+			pluginsRows.shift();
+
+			let npmNameGroup = "(\\S+)";
+			let npmDateGroup = "(\\d+-\\d+-\\d+)\\s";
+			let npmFreeTextGroup = "([^=]+)";
+			let npmAuthorsGroup = "((?:=\\S+\\s?)+)\\s+";
+
+			// Should look like this /(\S+)\s+([^=]+)((?:=\S+\s?)+)\s+(\d+-\d+-\d+)\s(\S+)(\s+([^=]+))?/
+			let pluginRowRegExp = new RegExp(`${npmNameGroup}\\s+${npmFreeTextGroup}${npmAuthorsGroup}${npmDateGroup}${npmNameGroup}(\\s+${npmFreeTextGroup})?`);
+
+			_.each(pluginsRows, (pluginRow: string) => {
+				let matches = pluginRowRegExp.exec(pluginRow.trim());
+
+				if (!matches || !matches[0]) {
+					return;
+				}
+
+				result.push({
+					name: matches[1],
+					description: matches[2],
+					author: matches[3],
+					version: matches[5]
+				});
+			});
+
+			return result;
+		}).future<IBasicPluginInformation[]>()();
+	}
+
 	public getPackageJsonFromNpmRegistry(packageName: string, version?: string): IFuture<any> {
 		return (() => {
 			let packageJsonContent: any;
@@ -128,6 +178,21 @@ export class NpmService implements INpmService {
 
 			return packageJsonContent;
 		}).future<any>()();
+	}
+
+	public isScopedDependency(dependency: string): boolean {
+		let matches = dependency.match(NpmService.SCOPED_DEPENDENCY_REGEXP);
+
+		return !!(matches && matches[0]);
+	}
+
+	public getScopedDependencyInformation(dependency: string): IScopedDependencyInformation {
+		let matches = dependency.match(NpmService.SCOPED_DEPENDENCY_REGEXP);
+
+		return {
+			name: matches[1],
+			version: matches[2]
+		};
 	}
 
 	private hasTypesForDependency(packageName: string): IFuture<boolean> {
@@ -165,7 +230,7 @@ export class NpmService implements INpmService {
 		return path.join(projectDir, this.$projectConstants.REFERENCES_FILE_NAME);
 	}
 
-	private installTypingsForDependency(projectDir: string, dependency: string): IFuture<void> {
+	private installTypingsForDependency(projectDir: string, dependency: string): IFuture<ISpawnResult> {
 		return this.npmInstall(projectDir, `${NpmService.TYPES_DIRECTORY}${dependency}`, null, ["--save-dev", "--save-exact"]);
 	}
 
@@ -223,20 +288,20 @@ export class NpmService implements INpmService {
 		return npmArguments.concat([command]);
 	}
 
-	private npmInstall(projectDir: string, dependency?: string, version?: string, npmArguments?: string[]): IFuture<void> {
+	private npmInstall(projectDir: string, dependency?: string, version?: string, npmArguments?: string[]): IFuture<ISpawnResult> {
 		return this.executeNpmCommand(projectDir, this.getNpmArguments("install", npmArguments), dependency, version);
 	}
 
-	private npmUninstall(projectDir: string, dependency?: string, npmArguments?: string[]): IFuture<void> {
+	private npmUninstall(projectDir: string, dependency?: string, npmArguments?: string[]): IFuture<ISpawnResult> {
 		return this.executeNpmCommand(projectDir, this.getNpmArguments("uninstall", npmArguments), dependency, null);
 	}
 
-	private npmPrune(projectDir: string, dependency?: string, version?: string): IFuture<void> {
+	private npmPrune(projectDir: string, dependency?: string, version?: string): IFuture<ISpawnResult> {
 		return this.executeNpmCommand(projectDir, this.getNpmArguments("prune"), dependency, version);
 	}
 
-	private executeNpmCommand(projectDir: string, npmArguments: string[], dependency: string, version?: string): IFuture<void> {
-		return (() => {
+	private executeNpmCommand(projectDir: string, npmArguments: string[], dependency: string, version?: string): IFuture<ISpawnResult> {
+		return ((): ISpawnResult => {
 			if (dependency) {
 				let dependencyToInstall = dependency;
 				if (version) {
@@ -246,8 +311,12 @@ export class NpmService implements INpmService {
 				npmArguments.push(dependencyToInstall);
 			}
 
-			this.$childProcess.spawnFromEvent(this.npmBinary, npmArguments, "close", { cwd: projectDir }).wait();
-		}).future<void>()();
+			return this.executeNpmCommandCore(projectDir, npmArguments).wait();
+		}).future<ISpawnResult>()();
+	}
+
+	private executeNpmCommandCore(projectDir: string, npmArguments: string[]): IFuture<ISpawnResult> {
+		return this.$childProcess.spawnFromEvent(this.npmExecutableName, npmArguments, "close", { cwd: projectDir });
 	}
 }
 $injector.register("npmService", NpmService);

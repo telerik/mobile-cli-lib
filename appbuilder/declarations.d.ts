@@ -332,10 +332,57 @@ interface INpmService {
 	install(projectDir: string, dependencyToInstall?: INpmDependency): IFuture<INpmInstallResult>;
 
 	/**
+	 * Searches for plugins in npm.
+	 * @param {string} projectDir The project directory.
+	 * @param {string[]} keywords The keywords for the search.
+	 * @param @optional {string[]} args Additional flags for the npm search command.
+	 * @return {IFuture<IBasicPluginInformation[]>} Array of basic plugin information for the search results.
+	 */
+	search(projectDir: string, keywords: string[], args?: string[]): IFuture<IBasicPluginInformation[]>;
+
+	/**
 	 * Gets package.json of a specific dependency from registry.npmjs.org.
 	 * @param {string} packageName The name of the dependency.
 	 * @param {string} version The version that has to be taken from registry. "latest" will be used in case there's no version passed.
 	 * @return {any} package.json of a dependency or null in case such dependency or version does not exist.
 	 */
 	getPackageJsonFromNpmRegistry(packageName: string, version?: string): IFuture<any>;
+
+	/**
+	 * Checks if dependency is scoped.
+	 * @param {string} dependency The dependency to check.
+	 * @return {boolean} true if the dependency is scoped and false if it's not.
+	 */
+	isScopedDependency(dependency: string): boolean;
+
+	/**
+	 * Gets the name of the dependency and the version if it is specified.
+	 * @param {string} dependency The dependency to check.
+	 * @return {IScopedDependencyInformation} the name of the dependency and the version if it is specified.
+	*/
+	getScopedDependencyInformation(dependency: string): IScopedDependencyInformation;
+}
+
+/**
+ * Describes methods for searching for npm plugins.
+ */
+interface INpmPluginsService {
+	/**
+	 * Searches for plugins in http://npmjs.org, if this search fails will try to find plugin in http://registry.npmjs.org.
+	 * If this search does not find anything this method will use the npm binary.
+	 * @param {string} projectDir The directory of the project.
+	 * @param {string[]} keywords The keywords for the search.
+	 * @param @optional {(keywords: string[]) => string[]} modifySearchQuery Function which will be used to modify the search query when using the npm binary.
+	 * @return {IFuture<IPluginsSource>} The plugins source which can be used to get the result.
+	 */
+	search(projectDir: string, keywords: string[], modifySearchQuery?: (keywords: string[]) => string[]): IFuture<IPluginsSource>;
+
+	/**
+	 * Searches for plugin in http://registry.npmjs.org plugins and if plugin is not found will continue the search in http://npmjs.org and the npm binary.
+	 * @param {string} projectDir The directory of the project.
+	 * @param {string[]} keywords The keywords for the search.
+	 * @param @optional {(keywords: string[]) => string[]} modifySearchQuery Function which will be used to modify the search query when using the npm binary.
+	 * @return {IFuture<IPluginsSource>} The plugins source which can be used to get the result.
+	 */
+	optimizedSearch(projectDir: string, keywords: string[], modifySearchQuery?: (keywords: string[]) => string[]): IFuture<IPluginsSource>;
 }

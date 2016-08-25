@@ -19,7 +19,7 @@ export class OptionsBase {
 		version: { type: OptionType.Boolean },
 		help: { type: OptionType.Boolean, alias: "h" },
 		profileDir: { type: OptionType.String },
-		analyticsClient: {type: OptionType.String },
+		analyticsClient: { type: OptionType.String },
 		path: { type: OptionType.String, alias: "p" },
 		// This will parse all non-hyphenated values as strings.
 		_: { type: OptionType.String }
@@ -46,6 +46,7 @@ export class OptionsBase {
 
 	private get commonOptions(): IDictionary<IDashedOption> {
 		return {
+			all: { type: OptionType.Boolean },
 			json: { type: OptionType.Boolean },
 			watch: { type: OptionType.Boolean },
 			avd: { type: OptionType.String },
@@ -57,7 +58,7 @@ export class OptionsBase {
 			appid: { type: OptionType.String },
 			geny: { type: OptionType.String },
 			debugBrk: { type: OptionType.Boolean },
-			debugPort: {type: OptionType.Number },
+			debugPort: { type: OptionType.Number },
 			getPort: { type: OptionType.Boolean },
 			start: { type: OptionType.Boolean },
 			stop: { type: OptionType.Boolean },
@@ -71,7 +72,7 @@ export class OptionsBase {
 			template: { type: OptionType.String },
 			release: { type: OptionType.Boolean, alias: "r" },
 			var: { type: OptionType.Object },
-			default: {type: OptionType.Boolean },
+			default: { type: OptionType.Boolean },
 			count: { type: OptionType.Number },
 			hooks: { type: OptionType.Boolean, default: true }
 		};
@@ -176,10 +177,10 @@ export class OptionsBase {
 		_.each(this.optionNames, optionName => {
 			Object.defineProperty(OptionsBase.prototype, optionName, {
 				configurable: true,
-				get: function() {
+				get: function () {
 					return this.getOptionValue(optionName);
 				},
-				set: function(value: any) {
+				set: function (value: any) {
 					this.argv[optionName] = value;
 				}
 			});

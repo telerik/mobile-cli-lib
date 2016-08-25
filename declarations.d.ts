@@ -283,7 +283,7 @@ interface IChildProcess {
 	exec(command: string, options?: any, execOptions?: IExecOptions): IFuture<any>;
 	execFile(command: string, args: string[]): IFuture<any>;
 	spawn(command: string, args?: string[], options?: any): any; // it returns child_process.ChildProcess you can safely cast to it
-	spawnFromEvent(command: string, args: string[], event: string, options?: any, spawnFromEventOptions?: ISpawnFromEventOptions): IFuture<any>;
+	spawnFromEvent(command: string, args: string[], event: string, options?: any, spawnFromEventOptions?: ISpawnFromEventOptions): IFuture<ISpawnResult>;
 	tryExecuteApplication(command: string, args: string[], event: string, errorMessage: string, condition?: (childProcess: any) => boolean): IFuture<any>;
 	/**
 	 * This is a special case of the child_process.spawn() functionality for spawning Node.js processes.
@@ -1179,6 +1179,59 @@ interface INet {
 interface IProcessService {
 	listenersCount: number;
 	attachToProcessExitSignals(context: any, callback: () => void): void;
+}
+
+interface IPrintPluginsOptions {
+	count?: number;
+	showAllPlugins?: boolean;
+}
+
+interface IPrintPluginsService {
+	printPlugins(pluginsSource: IPluginsSource, options: IPrintPluginsOptions): IFuture<void>;
+}
+
+interface IPluginsSource {
+	initialize(projectDir: string, keywords: string[]): IFuture<void>;
+	getPlugins(page: number, count: number): IFuture<IBasicPluginInformation[]>;
+	getAllPlugins(): IFuture<IBasicPluginInformation[]>;
+	hasPlugins(): boolean;
+}
+
+interface IBasicPluginInformation {
+	/**
+	 * The plugin's name
+	 * @type {string}
+	 */
+	name: string;
+
+	/**
+	 * The plugin's description
+	 * @type {string}
+	 */
+	description?: string;
+
+	/**
+	 * The plugin's version in the form of Major.Minor.Patch
+	 * @type {string}
+	 */
+	version: string;
+
+	/**
+	 * Variables used by the plugin.
+	 * @type {any[]}
+	 */
+	variables?: any[];
+
+	/**
+	 * The plugin's author
+	 * @type {string}
+	 */
+	author?: string;
+}
+
+interface IScopedDependencyInformation {
+	name: string;
+	version?: string;
 }
 
 /**
