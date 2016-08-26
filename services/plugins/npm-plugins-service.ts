@@ -25,7 +25,7 @@ export class NpmPluginsService implements INpmPluginsService {
 
 	private searchCore(pluginsSourceConstructor: Function, projectDir: string, keywords: string[]): IFuture<IPluginsSource> {
 		return (() => {
-			let npmPluginsSource = this.preparePluginsSource(NpmRegistryPluginsSource, projectDir, keywords).wait();
+			let npmPluginsSource = this.preparePluginsSource(pluginsSourceConstructor, projectDir, keywords).wait();
 
 			return npmPluginsSource.hasPlugins() ? npmPluginsSource : null;
 		}).future<IPluginsSource>()();
