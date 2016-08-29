@@ -1,10 +1,14 @@
 import Future = require("fibers/future");
 
 export abstract class PluginsSourceBase implements IPluginsSource {
-	protected _projectDir: string;
-	protected _plugins: IBasicPluginInformation[];
+	protected progressIndicatorMessage: string;
+	protected projectDir: string;
+	protected plugins: IBasicPluginInformation[];
 
 	private _isInitialized: boolean;
+
+	constructor(protected $progressIndicator: IProgressIndicator,
+		protected $logger: ILogger) { }
 
 	public initialize(projectDir: string, keywords: string[]): IFuture<void> {
 		return (() => {
@@ -12,19 +16,24 @@ export abstract class PluginsSourceBase implements IPluginsSource {
 				return;
 			}
 
-			this._plugins = [];
-			this._projectDir = projectDir;
+			this.plugins = [];
+			this.projectDir = projectDir;
 			this._isInitialized = true;
+
+			this.$logger.printInfoMessageOnSameLine(this.progressIndicatorMessage);
+			this.$progressIndicator.showProgressIndicator(this.initializeCore(projectDir, keywords), 2000).wait();
 		}).future<void>()();
 	}
 
 	public hasPlugins(): boolean {
-		return !!(this._plugins && this._plugins.length);
+		return !!(this.plugins && this.plugins.length);
+	}
+
+	public getAllPlugins(): IFuture<IBasicPluginInformation[]> {
+		return Future.fromResult(this.plugins);
 	}
 
 	public abstract getPlugins(page: number, count: number): IFuture<IBasicPluginInformation[]>;
 
-	public getAllPlugins(): IFuture<IBasicPluginInformation[]> {
-		return Future.fromResult(this._plugins);
-	}
+	protected abstract initializeCore(projectDir: string, keywords: string[]): IFuture<void>;
 }

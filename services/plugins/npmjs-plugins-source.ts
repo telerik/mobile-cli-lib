@@ -7,23 +7,18 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 	private _keywords: string[];
 	private _pages: IBasicPluginInformation[][];
 
-	constructor(private $httpClient: Server.IHttpClient,
+	constructor($progressIndicator: IProgressIndicator,
+		$logger: ILogger,
+		private $httpClient: Server.IHttpClient,
 		private $childProcess: IChildProcess,
 		private $hostInfo: IHostInfo,
-		private $logger: ILogger,
 		private $errors: IErrors) {
-		super();
+		super($progressIndicator, $logger);
 		this._pages = [];
 	}
 
-	public initialize(projectDir: string, keywords: string[]): IFuture<void> {
-		return (() => {
-			super.initialize(projectDir, keywords).wait();
-
-			this._keywords = keywords;
-
-			this._plugins = this.getPluginsFromNpmjs(keywords, 1).wait();
-		}).future<void>()();
+	public get progressIndicatorMessage(): string {
+		return "Searching for plugins in http://npmjs.org.";
 	}
 
 	public getPlugins(page: number, count: number): IFuture<IBasicPluginInformation[]> {
@@ -37,13 +32,32 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 
 			this._pages[page] = result;
 
-			this._plugins = this._plugins.concat(result);
+			this.plugins = this.plugins.concat(result);
 
 			return result;
 		}).future<IBasicPluginInformation[]>()();
 	}
 
 	public getAllPlugins(): IFuture<IBasicPluginInformation[]> {
+		return ((): IBasicPluginInformation[] => {
+			let getAllPluginsFuture = this.getAllPluginsCore();
+
+			this.$logger.printInfoMessageOnSameLine("Getting all results, please wait.");
+			this.$progressIndicator.showProgressIndicator(getAllPluginsFuture, 2000).wait();
+
+			return getAllPluginsFuture.get();
+		}).future<IBasicPluginInformation[]>()();
+	}
+
+	protected initializeCore(projectDir: string, keywords: string[]): IFuture<void> {
+		return (() => {
+			this._keywords = keywords;
+
+			this.plugins = this.getPluginsFromNpmjs(keywords, 1).wait();
+		}).future<void>()();
+	}
+
+	private getAllPluginsCore(): IFuture<IBasicPluginInformation[]> {
 		return ((): IBasicPluginInformation[] => {
 			let result: IBasicPluginInformation[] = [];
 

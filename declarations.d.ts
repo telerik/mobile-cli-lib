@@ -1229,7 +1229,7 @@ interface IBasicPluginInformation {
 	author?: string;
 }
 
-interface IScopedDependencyInformation {
+interface IDependencyInformation {
 	name: string;
 	version?: string;
 }
