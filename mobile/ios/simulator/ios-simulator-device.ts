@@ -5,6 +5,7 @@ import * as constants from "../../../constants";
 export class IOSSimulator implements Mobile.IiOSSimulator {
 	private _applicationManager: Mobile.IDeviceApplicationManager;
 	private _fileSystem: Mobile.IDeviceFileSystem;
+	private _deviceLogStreamChildProcess: any;
 
 	constructor(private simulator: Mobile.IiSimDevice,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
@@ -53,5 +54,12 @@ export class IOSSimulator implements Mobile.IiOSSimulator {
 
 	public openDeviceLogStream(): void {
 		this.$iOSSimulatorLogProvider.startLogProcess(this.simulator.id);
+	}
+
+	public closeDeviceLogStream(): void {
+		if (this._deviceLogStreamChildProcess) {
+			this._deviceLogStreamChildProcess.kill();
+			this._deviceLogStreamChildProcess = null;
+		}
 	}
 }

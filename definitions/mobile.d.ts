@@ -91,6 +91,7 @@ declare module Mobile {
 		fileSystem: Mobile.IDeviceFileSystem;
 		isEmulator: boolean;
 		openDeviceLogStream(): void;
+		closeDeviceLogStream(): void;
 		getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo>;
 	}
 
@@ -137,6 +138,7 @@ declare module Mobile {
 
 	interface ILogcatHelper {
 		start(deviceIdentifier: string): void;
+		stop(deviceIdentifier: string): void;
 	}
 
 	/**

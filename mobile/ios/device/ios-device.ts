@@ -16,11 +16,12 @@ export class IOSDevice implements Mobile.IiOSDevice {
 	private static INCOMPATIBLE_IMAGE_SIGNATURE_ERROR_CODE = 3892314163;
 	private static INTERFACE_USB = 1;
 
-	private mountImageCallbackPtr: NodeBuffer = null;
-
 	public applicationManager: Mobile.IDeviceApplicationManager;
 	public fileSystem: Mobile.IDeviceFileSystem;
 	public deviceInfo: Mobile.IDeviceInfo;
+
+	private mountImageCallbackPtr: NodeBuffer = null;
+	private iOSSystemLog: any;
 
 	private _socket: net.Socket;
 
@@ -37,34 +38,34 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		private $iOSDeviceProductNameMapper: Mobile.IiOSDeviceProductNameMapper,
 		private $processService: IProcessService,
 		private $xcodeSelectService: IXcodeSelectService) {
-			this.mountImageCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSDevice.mountImageCallback);
+		this.mountImageCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSDevice.mountImageCallback);
 
-			this.applicationManager = this.$injector.resolve(applicationManagerPath.IOSApplicationManager, { device: this, devicePointer: this.devicePointer });
-			this.fileSystem = this.$injector.resolve(fileSystemPath.IOSDeviceFileSystem, { device: this,  devicePointer: this.devicePointer });
-			this.deviceInfo = <any>{
-				identifier: this.$coreFoundation.convertCFStringToCString(this.$mobileDevice.deviceCopyDeviceIdentifier(this.devicePointer)),
-				vendor: "Apple",
-				platform: this.$devicePlatformsConstants.iOS,
-				status: constants.CONNECTED_STATUS,
-				errorHelp: null,
-				type: "Device"
-			};
+		this.applicationManager = this.$injector.resolve(applicationManagerPath.IOSApplicationManager, { device: this, devicePointer: this.devicePointer });
+		this.fileSystem = this.$injector.resolve(fileSystemPath.IOSDeviceFileSystem, { device: this, devicePointer: this.devicePointer });
+		this.deviceInfo = <any>{
+			identifier: this.$coreFoundation.convertCFStringToCString(this.$mobileDevice.deviceCopyDeviceIdentifier(this.devicePointer)),
+			vendor: "Apple",
+			platform: this.$devicePlatformsConstants.iOS,
+			status: constants.CONNECTED_STATUS,
+			errorHelp: null,
+			type: "Device"
+		};
 
-			let productType = this.getValue("ProductType");
-			let deviceName = this.getValue("DeviceName") || productType;
-			let displayName = this.$iOSDeviceProductNameMapper.resolveProductName(deviceName) || deviceName;
-			this.deviceInfo.displayName = displayName;
-			this.deviceInfo.model = this.$iOSDeviceProductNameMapper.resolveProductName(productType);
-			this.deviceInfo.version = this.getValue("ProductVersion");
-			this.deviceInfo.color = this.getValue("DeviceColor");
-			this.deviceInfo.isTablet = productType && productType.toLowerCase().indexOf("ipad") !== -1;
-			this.deviceInfo.activeArchitecture = this.getActiveArchitecture(productType);
+		let productType = this.getValue("ProductType");
+		let deviceName = this.getValue("DeviceName") || productType;
+		let displayName = this.$iOSDeviceProductNameMapper.resolveProductName(deviceName) || deviceName;
+		this.deviceInfo.displayName = displayName;
+		this.deviceInfo.model = this.$iOSDeviceProductNameMapper.resolveProductName(productType);
+		this.deviceInfo.version = this.getValue("ProductVersion");
+		this.deviceInfo.color = this.getValue("DeviceColor");
+		this.deviceInfo.isTablet = productType && productType.toLowerCase().indexOf("ipad") !== -1;
+		this.deviceInfo.activeArchitecture = this.getActiveArchitecture(productType);
 
-			// In case any of the operations had failed, the device status should be Unreachable.
-			if (this.deviceInfo.errorHelp) {
-				this.deviceInfo.status = constants.UNREACHABLE_STATUS;
-			}
+		// In case any of the operations had failed, the device status should be Unreachable.
+		if (this.deviceInfo.errorHelp) {
+			this.deviceInfo.status = constants.UNREACHABLE_STATUS;
 		}
+	}
 
 	private getActiveArchitecture(productType: string): string {
 		let activeArchitecture = "";
@@ -108,7 +109,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		try {
 			this.connect();
 			this.startSession();
-			let cfValue =  this.$coreFoundation.createCFString(value);
+			let cfValue = this.$coreFoundation.createCFString(value);
 			return this.$coreFoundation.convertCFStringToCString(this.$mobileDevice.deviceCopyValue(this.devicePointer, null, cfValue));
 		} catch (err) {
 			this.deviceInfo.errorHelp = this.deviceInfo.errorHelp || err.message.replace(/ Result code is: \d+$/, "");
@@ -139,13 +140,13 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		return result;
 	}
 
-	private validatePairing() : number{
+	private validatePairing(): number {
 		let result = this.$mobileDevice.deviceValidatePairing(this.devicePointer);
 		this.validateResult(result, "Unable to validate pairing");
 		return result;
 	}
 
-	private connect() : number {
+	private connect(): number {
 		let result = this.$mobileDevice.deviceConnect(this.devicePointer);
 		this.validateResult(result, "Unable to connect to device");
 
@@ -158,7 +159,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 
 	private disconnect() {
 		let result = this.$mobileDevice.deviceDisconnect(this.devicePointer);
-		if(result > 0) {
+		if (result > 0) {
 			this.$logger.warn(`Unable to disconnect. Result is: ${result}`);
 		}
 	}
@@ -170,7 +171,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 
 	private stopSession() {
 		let result = this.$mobileDevice.deviceStopSession(this.devicePointer);
-		if(result > 0) {
+		if (result > 0) {
 			this.$logger.warn(`Unable to stop session. Result is: ${result}`);
 		}
 	}
@@ -221,18 +222,18 @@ export class IOSDevice implements Mobile.IiOSDevice {
 					path: path.join(developerDiskImagePath, sp)
 				};
 
-				if(supportPathData.majorVersion === productMajorVersion) {
-					if(!supportPath) {
+				if (supportPathData.majorVersion === productMajorVersion) {
+					if (!supportPath) {
 						supportPath = supportPathData;
 					} else {
 						// is this better than the last match?
-						if(supportPathData.minorVersion === productMinorVersion) {
-							if(supportPathData.build === buildVersion) {
+						if (supportPathData.minorVersion === productMinorVersion) {
+							if (supportPathData.build === buildVersion) {
 								// perfect match
 								supportPath = supportPathData;
 							} else {
 								// we're still better than existing match
-								if(supportPath.build !== supportPathData.build || supportPath.build === null) {
+								if (supportPath.build !== supportPathData.build || supportPath.build === null) {
 									supportPath = supportPathData;
 								}
 							}
@@ -241,7 +242,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 				}
 			});
 
-			if(!supportPath) {
+			if (!supportPath) {
 				this.$errors.fail("Unable to find device support path. Verify that you have installed sdk compatible with your device version.");
 			}
 
@@ -253,8 +254,8 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		return (() => {
 			let imagePath = this.$options.ddi;
 
-			if(this.$hostInfo.isWindows) {
-				if(!imagePath) {
+			if (this.$hostInfo.isWindows) {
+				if (!imagePath) {
 					this.$errors.fail("On windows operating system you must specify the path to developer disk image using --ddi option");
 				}
 
@@ -270,12 +271,12 @@ export class IOSDevice implements Mobile.IiOSDevice {
 					ImageSignature: imageSignature
 				}).wait();
 
-				if(result.Status === "ReceiveBytesAck") {
+				if (result.Status === "ReceiveBytesAck") {
 					let fileData = this.$fs.readFile(imagePath).wait();
 					plistService.sendAll(fileData);
 				} else {
 					let afcService = this.startService(iOSProxyServices.MobileServices.APPLE_FILE_CONNECTION);
-					let afcClient = this.$injector.resolve(iOSProxyServices.AfcClient, {service: afcService});
+					let afcClient = this.$injector.resolve(iOSProxyServices.AfcClient, { service: afcService });
 					afcClient.transfer(imagePath, "PublicStaging/staging.dimage").wait();
 				}
 
@@ -287,10 +288,10 @@ export class IOSDevice implements Mobile.IiOSDevice {
 						ImagePath: "/let/mobile/Media/PublicStaging/staging.dimage"
 					}).wait();
 
-					if(result.Error) {
+					if (result.Error) {
 						this.$errors.fail("Unable to mount image. %s", result.Error);
 					}
-					if(result.Status) {
+					if (result.Status) {
 						this.$logger.info("Mount image: %s", result.Status);
 					}
 				} finally {
@@ -313,7 +314,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 					let result = this.$mobileDevice.deviceMountImage(this.devicePointer, cfImagePath, cfOptions, this.mountImageCallbackPtr);
 
 					if (result !== 0 && result !== IOSDevice.IMAGE_ALREADY_MOUNTED_ERROR_CODE) { // 3892314230 - already mounted
-						if(result === IOSDevice.INCOMPATIBLE_IMAGE_SIGNATURE_ERROR_CODE) { // 3892314163
+						if (result === IOSDevice.INCOMPATIBLE_IMAGE_SIGNATURE_ERROR_CODE) { // 3892314163
 							this.$logger.warn("Unable to mount image %s on device %s.", imagePath, this.deviceInfo.identifier);
 						} else {
 							this.$errors.fail("Unable to mount image on device.");
@@ -342,16 +343,23 @@ export class IOSDevice implements Mobile.IiOSDevice {
 	}
 
 	public openDeviceLogStream() {
-		if(this.deviceInfo.status !== constants.UNREACHABLE_STATUS) {
-			let iOSSystemLog = this.$injector.resolve(iOSProxyServices.IOSSyslog, {device: this});
-			iOSSystemLog.read();
+		if (this.deviceInfo.status !== constants.UNREACHABLE_STATUS) {
+			this.iOSSystemLog = this.$injector.resolve(iOSProxyServices.IOSSyslog, { device: this });
+			this.iOSSystemLog.read();
+		}
+	}
+
+	public closeDeviceLogStream() {
+		if (this.iOSSystemLog) {
+			this.iOSSystemLog.close();
+			this.iOSSystemLog = null;
 		}
 	}
 
 	// This function works only on OSX
 	public connectToPort(port: number): net.Socket {
 		let interfaceType = this.getInterfaceType();
-		if(interfaceType === IOSDevice.INTERFACE_USB) {
+		if (interfaceType === IOSDevice.INTERFACE_USB) {
 			let connectionId = this.$mobileDevice.deviceGetConnectionId(this.devicePointer);
 			let socketRef = ref.alloc(CoreTypes.intType);
 
@@ -387,7 +395,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 	 * Converts a little endian 16 bit int number to 16 bit int big endian number.
 	 */
 	private htons(port: number): number {
-		let result =  (port & 0xff00) >> 8 | (port & 0x00ff) << 8;
+		let result = (port & 0xff00) >> 8 | (port & 0x00ff) << 8;
 		return result;
 	}
 }

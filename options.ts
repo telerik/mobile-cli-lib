@@ -76,6 +76,7 @@ export class OptionsBase {
 			var: { type: OptionType.Object },
 			default: { type: OptionType.Boolean },
 			count: { type: OptionType.Number },
+			duration: { type: OptionType.Number },
 			hooks: { type: OptionType.Boolean, default: true }
 		};
 	}

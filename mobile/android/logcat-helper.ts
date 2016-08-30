@@ -3,6 +3,7 @@ import {DeviceAndroidDebugBridge} from "./device-android-debug-bridge";
 
 export class LogcatHelper implements Mobile.ILogcatHelper {
 	private mapDeviceToLoggingStarted: IDictionary<boolean>;
+	private adbLogCats: IDictionary<any>;
 
 	constructor(private $childProcess: IChildProcess,
 		private $deviceLogProvider: Mobile.IDeviceLogProvider,
@@ -11,6 +12,7 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 		private $injector: IInjector,
 		private $processService: IProcessService) {
 		this.mapDeviceToLoggingStarted = Object.create(null);
+		this.adbLogCats = {};
 	}
 
 	public start(deviceIdentifier: string): void {
@@ -21,6 +23,7 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 			adb.executeCommand(["logcat", "-c"]).wait();
 
 			let adbLogcat = adb.executeCommand(["logcat"], { returnChildProcess: true }).wait();
+			this.adbLogCats[deviceIdentifier] = adbLogcat;
 			let lineStream = byline(adbLogcat.stdout);
 
 			adbLogcat.stderr.on("data", (data: NodeBuffer) => {
@@ -46,6 +49,14 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 			this.$processService.attachToProcessExitSignals(this, adbLogcat.kill);
 
 			this.mapDeviceToLoggingStarted[deviceIdentifier] = true;
+		}
+	}
+
+	public stop(deviceIdentifier: string): void {
+		let adbLogcat = this.adbLogCats[deviceIdentifier];
+		if (adbLogcat) {
+			adbLogcat.kill();
+			delete this.adbLogCats[deviceIdentifier];
 		}
 	}
 }

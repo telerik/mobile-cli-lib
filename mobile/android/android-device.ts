@@ -66,11 +66,11 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		let details: IAndroidDeviceDetails;
 		try {
 			details = this.getDeviceDetails(["getprop"]).wait();
-		} catch(err) {
+		} catch (err) {
 			this.$logger.trace(`Error while calling getprop: ${err.message}`);
 		}
 
-		if(!details || !details.name) {
+		if (!details || !details.name) {
 			// In older CLI versions we are calling cat /system/build.prop to get details.
 			// Keep this logic for compatibility and possibly for devices for which getprop is not working
 			details = this.getDeviceDetails(["cat", "/system/build.prop"]).wait();
@@ -118,9 +118,13 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 	}
 
 	public openDeviceLogStream(): void {
-		if(this.deviceInfo.status === constants.CONNECTED_STATUS) {
+		if (this.deviceInfo.status === constants.CONNECTED_STATUS) {
 			this.$logcatHelper.start(this.identifier);
 		}
+	}
+
+	public closeDeviceLogStream(): void {
+		this.$logcatHelper.stop(this.identifier);
 	}
 
 	private getDeviceDetails(shellCommandArgs: string[]): IFuture<IAndroidDeviceDetails> {
@@ -145,7 +149,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 
 	private getIsTablet(details: any): boolean {
 		//version 3.x.x (also known as Honeycomb) is a tablet only version
-		return details && ( _.startsWith(details.release, "3.") || _.includes((details.characteristics || '').toLowerCase(), "tablet") );
+		return details && (_.startsWith(details.release, "3.") || _.includes((details.characteristics || '').toLowerCase(), "tablet"));
 	}
 
 	private getType(): IFuture<string> {

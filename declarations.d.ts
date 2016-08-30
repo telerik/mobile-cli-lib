@@ -757,6 +757,7 @@ interface ICommonOptions {
 	default: Boolean;
 	release: boolean;
 	count: number;
+	duration: number;
 	hooks: boolean;
 	debug: boolean;
 }
@@ -1354,6 +1355,16 @@ interface ITypeScriptTranspileOptions {
 	 * Use the typescript compiler which is installed localy for the project.
 	 */
 	useLocalTypeScriptCompiler?: boolean;
+}
+
+/**
+ * Describes methods for working with the device log.
+ */
+interface IDeviceLogService {
+	/**
+	 * Starts printing the log of the device until the process is killed or until the specified duration expires.
+	 */
+	printDeviceLog(deviceId: string, duration?: number): IFuture<void>;
 }
 
 /**
