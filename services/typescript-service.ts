@@ -3,6 +3,7 @@ import * as os from "os";
 import temp = require("temp");
 import {exportedPromise} from "../decorators";
 import {NODE_MODULES_DIR_NAME, FileExtensions} from "../constants";
+import {quoteString} from "../helpers";
 temp.track();
 
 interface ITypeScriptCompilerMessages {
@@ -59,6 +60,10 @@ export class TypeScriptService implements ITypeScriptService {
 					typeScriptDefinitionsFiles = this.getDefaultTypeScriptDefinitionsFiles(options.pathToDefaultDefinitionFiles).wait();
 				}
 
+				// We need to add quotation marks in case some file path contains spaces in it.
+				this.typeScriptFiles = this.quoteFileNames(this.typeScriptFiles);
+				typeScriptDefinitionsFiles = this.quoteFileNames(typeScriptDefinitionsFiles);
+
 				this.$fs.writeFile(typeScriptCommandsFilePath, this.typeScriptFiles.concat(typeScriptDefinitionsFiles).concat(typeScriptCompilerOptions).join(" ")).wait();
 
 				// Log some messages
@@ -84,7 +89,7 @@ export class TypeScriptService implements ITypeScriptService {
 				(fileName: string, fstat: IFsStats) => fileName !== rootNodeModules);
 			let typeScriptFiles = _.filter(projectFiles, file => path.extname(file) === FileExtensions.TYPESCRIPT_FILE);
 			let definitionFiles = _.filter(typeScriptFiles, file => _.endsWith(file, FileExtensions.TYPESCRIPT_DEFINITION_FILE));
-			return { definitionFiles: definitionFiles, typeScriptFiles: typeScriptFiles };
+			return { definitionFiles: definitionFiles, typeScriptFiles: _.difference(typeScriptFiles, definitionFiles) };
 		}).future<ITypeScriptFiles>()();
 	}
 
@@ -309,6 +314,10 @@ export class TypeScriptService implements ITypeScriptService {
 			this.$fs.writeJson(path.join(tempDir, this.$projectConstants.PACKAGE_JSON_NAME), { name: "tsc-container", version: "1.0.0" }).wait();
 			return tempDir;
 		}).future<string>()();
+	}
+
+	private quoteFileNames(files: string[]): string[] {
+		return _.map(files, (fileName: string) => quoteString(fileName));
 	}
 }
 
