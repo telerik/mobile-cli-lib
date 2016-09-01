@@ -103,12 +103,13 @@ export abstract class ProjectBase implements Project.IProjectBase {
 					let appIdentifierInConfigXml = this.getAppIdentifierFromConfigFile(pathToConfigXml, /id\s*=\s*"(\S*)"/).wait();
 
 					let appId = appIdentifierInAndroidManifest || appIdentifierInConfigXml;
+					let changedId = !appIdentifierInAndroidManifest || appIdentifierInAndroidManifest === ProjectBase.APP_IDENTIFIER_PLACEHOLDER ? appIdentifierInConfigXml : appIdentifierInAndroidManifest;
 
 					if ((appIdentifierInAndroidManifest && appIdentifierInConfigXml) &&
 						(appIdentifierInAndroidManifest === appIdentifierInConfigXml) &&
 						(appId !== ProjectBase.APP_IDENTIFIER_PLACEHOLDER)) {
 						this._platformSpecificAppIdentifier = appIdentifierInAndroidManifest;
-					} else if (appId && (appId !== ProjectBase.APP_IDENTIFIER_PLACEHOLDER)) {
+					} else if (changedId && changedId !== ProjectBase.APP_IDENTIFIER_PLACEHOLDER && changedId !== this.projectData.AppIdentifier) {
 						this.$errors.failWithoutHelp(`Your package in ${ProjectBase.ANDROID_MANIFEST_NAME} and id in ${ProjectBase.CONFIG_XML_NAME} do not match. They must be the same to be able to build your application.`);
 					}
 				}
