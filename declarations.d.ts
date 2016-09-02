@@ -1132,12 +1132,18 @@ interface ILiveSyncProvider {
 	 * Prepares the platform for sync
 	 */
 	preparePlatformForSync(platform: string): IFuture<void>;
+
 	/**
 	 * Checks if the specified file can be fast synced.
 	 */
 	canExecuteFastSync(filePath: string, platform?: string): boolean;
 
 	transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string, isFullSync: boolean): IFuture<void>;
+
+	/**
+	 * Returns a dictionary that map platform to platform specific livesync service.
+	 */
+	platformSpecificLiveSyncServices?: IDictionary<any>
 }
 
 /**
