@@ -1,7 +1,7 @@
 import {EOL} from "os";
 import Future = require("fibers/future");
 import * as path from "path";
-import { startPackageActivityNames, TARGET_FRAMEWORK_IDENTIFIERS } from "../../constants";
+import { TARGET_FRAMEWORK_IDENTIFIERS } from "../../constants";
 
 export abstract class ProjectBase implements Project.IProjectBase {
 	private static VALID_CONFIGURATION_CHARACTERS_REGEX = "[-_A-Za-z0-9]";
@@ -64,12 +64,6 @@ export abstract class ProjectBase implements Project.IProjectBase {
 		}
 
 		return null;
-	}
-
-	public get startPackageActivity(): string {
-		let projectData = this.projectData;
-
-		return projectData && projectData.Framework ? startPackageActivityNames[projectData.Framework.toLowerCase()] : null;
 	}
 
 	public get hasBuildConfigurations(): boolean {
