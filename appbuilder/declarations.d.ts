@@ -94,7 +94,6 @@ declare module Project {
 		 */
 		hasBuildConfigurations: boolean;
 		capabilities: ICapabilities;
-		startPackageActivity: string;
 		/**
 		 * Information about the current project.
 		 * @type {Project.IProjectInformation}

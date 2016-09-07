@@ -174,7 +174,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 				childProcessOptions: { stdio: "ignore", detached: true },
 				returnChildProcess: true
 			};
-			childProcess = adb.executeShellCommand(["am", "start", "-S", appId + "/" + this.$staticConfig.START_PACKAGE_ACTIVITY_NAME], androidDebugBridgeCommandOptions).wait();
+			childProcess = adb.executeShellCommand(["monkey", "-p", appId, "-c", "android.intent.category.LAUNCHER", "1"], androidDebugBridgeCommandOptions).wait();
 			this.$fs.futureFromEvent(childProcess, "close").wait();
 
 			if (!this.$options.justlaunch) {
