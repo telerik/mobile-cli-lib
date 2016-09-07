@@ -2,7 +2,7 @@ import {EOL} from "os";
 import Future = require("fibers/future");
 import { TARGET_FRAMEWORK_IDENTIFIERS } from "../../constants";
 import * as path from "path";
-import { startPackageActivityNames } from "../../constants";
+
 export abstract class ProjectBase implements Project.IProjectBase {
 	private static VALID_CONFIGURATION_CHARACTERS_REGEX = "[-_A-Za-z0-9]";
 	private static CONFIGURATION_FROM_FILE_NAME_REGEX = new RegExp(`^[.](${ProjectBase.VALID_CONFIGURATION_CHARACTERS_REGEX}+?)[.]abproject$`, "i");
@@ -59,12 +59,6 @@ export abstract class ProjectBase implements Project.IProjectBase {
 		}
 
 		return null;
-	}
-
-	public get startPackageActivity(): string {
-		let projectData = this.projectData;
-
-		return projectData && projectData.Framework ? startPackageActivityNames[projectData.Framework.toLowerCase()] : null;
 	}
 
 	public get hasBuildConfigurations(): boolean {

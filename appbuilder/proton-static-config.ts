@@ -1,7 +1,7 @@
-import { AppBuilderStaticConfigBase } from "./appbuilder-static-config-base";
+import { StaticConfigBase } from "../static-config-base";
 import * as path from "path";
 
-export class ProtonStaticConfig extends AppBuilderStaticConfigBase {
+export class ProtonStaticConfig extends StaticConfigBase {
 	constructor($injector: IInjector) {
 		super($injector);
 	}

@@ -1,6 +1,6 @@
 import {EOL} from "os";
 import {ApplicationManagerBase} from "../application-manager-base";
-import { LiveSyncConstants, startPackageActivityNames, TARGET_FRAMEWORK_IDENTIFIERS } from "../../constants";
+import { LiveSyncConstants, TARGET_FRAMEWORK_IDENTIFIERS } from "../../constants";
 import Future = require("fibers/future");
 
 export class AndroidApplicationManager extends ApplicationManagerBase {
@@ -41,18 +41,10 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 
 	public startApplication(appIdentifier: string, framework?: string): IFuture<void> {
 		return (() => {
-			let startActivityName = this.getStartPackageActivity(framework);
-			let defaultActivityNames = [startPackageActivityNames[TARGET_FRAMEWORK_IDENTIFIERS.Cordova.toLowerCase()],
-				startPackageActivityNames[TARGET_FRAMEWORK_IDENTIFIERS.NativeScript.toLowerCase()]];
-
-			let startActivityNames = startActivityName ? [startActivityName] : defaultActivityNames;
-
-			_.each(startActivityNames, (activityName: string) => {
-				this.adb.executeShellCommand(["am", "start",
-					"-a", "android.intent.action.MAIN",
-					"-n", `${appIdentifier}/${activityName}`,
-					"-c", "android.intent.category.LAUNCHER"]).wait();
-			});
+			this.adb.executeShellCommand(["monkey",
+				"-p", appIdentifier,
+				"-c", "android.intent.category.LAUNCHER",
+				"1"]).wait();
 
 			if (!this.$options.justlaunch) {
 				this.$logcatHelper.start(this.identifier);
@@ -106,10 +98,5 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 			return applicationViews;
 
 		}).future<IDictionary<Mobile.IDebugWebViewInfo[]>>()();
-	}
-
-	private getStartPackageActivity(framework?: string): string {
-		framework = framework || "";
-		return startPackageActivityNames[framework.toLowerCase()] || this.$staticConfig.START_PACKAGE_ACTIVITY_NAME;
 	}
 }

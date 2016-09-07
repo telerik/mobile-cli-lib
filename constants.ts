@@ -24,11 +24,6 @@ export class LiveSyncConstants {
 	static IOS_PROJECT_PATH = "/Library/Application Support/LiveSync";
 }
 
-export let startPackageActivityNames: IStringDictionary = {
-	"nativescript": "com.tns.NativeScriptActivity",
-	"cordova": ".TelerikCallbackActivity"
-};
-
 export let TARGET_FRAMEWORK_IDENTIFIERS = {
 	Cordova: "Cordova",
 	NativeScript: "NativeScript"
