@@ -10,6 +10,7 @@ export class NpmService implements INpmService {
 	private static TNS_CORE_MODULES_DEFINITION_FILE_NAME = `${constants.TNS_CORE_MODULES}${constants.FileExtensions.TYPESCRIPT_DEFINITION_FILE}`;
 	private static NPM_REGISTRY_URL = "https://registry.npmjs.org";
 	private static SCOPED_DEPENDENCY_REGEXP = /^(@.+?)(?:@(.+?))?$/;
+	private static DEPENDENCY_REGEXP = /^(.+?)(?:@(.+?))?$/;
 
 	private _npmExecutableName: string;
 	private _npmBinary: string;
@@ -129,7 +130,7 @@ export class NpmService implements INpmService {
 			// Need to split the result only by \n because the npm result contains only \n and on Windows it will not split correctly when using EOL.
 			// Sample output:
 			// NAME                    DESCRIPTION             AUTHOR        DATE       VERSION  KEYWORDS
-			// cordova-plugin-console  Cordova Console Plugin  =csantanapr…  2016-04-20 1.0.3    cordova console ecosystem:cordova cordova-ios
+			// cordova-plugin-console  Cordova Console Plugin  =csantanaprâ€¦  2016-04-20 1.0.3    cordova console ecosystem:cordova cordova-ios
 			let pluginsRows: string[] = spawnResult.stdout.split("\n");
 
 			// Remove the table headers row.
@@ -186,8 +187,9 @@ export class NpmService implements INpmService {
 		return !!(matches && matches[0]);
 	}
 
-	public getScopedDependencyInformation(dependency: string): IScopedDependencyInformation {
-		let matches = dependency.match(NpmService.SCOPED_DEPENDENCY_REGEXP);
+	public getDependencyInformation(dependency: string): IDependencyInformation {
+		let regExp = this.isScopedDependency(dependency) ? NpmService.SCOPED_DEPENDENCY_REGEXP : NpmService.DEPENDENCY_REGEXP;
+		let matches = dependency.match(regExp);
 
 		return {
 			name: matches[1],

@@ -2,13 +2,11 @@ import { createTable, isInteractive } from "../../helpers";
 
 export class PrintPluginsService implements IPrintPluginsService {
 	private static COUNT_OF_PLUGINS_TO_DISPLAY: number = 10;
-	private static PROGRESS_INDICATOR_TIMEOUT = 2000;
 
 	private _page: number;
 
 	constructor(private $errors: IErrors,
 		private $logger: ILogger,
-		private $progressIndicator: IProgressIndicator,
 		private $prompter: IPrompter) {
 		this._page = 1;
 	}
@@ -22,19 +20,13 @@ export class PrintPluginsService implements IPrintPluginsService {
 
 			let count: number = options.count || PrintPluginsService.COUNT_OF_PLUGINS_TO_DISPLAY;
 
-			this.$logger.printInfoMessageOnSameLine("Searching for plugins in npm, please wait.");
 			if (!isInteractive() || options.showAllPlugins) {
-				let getAllPluginsFuture = pluginsSource.getAllPlugins();
-				this.$progressIndicator.showProgressIndicator(getAllPluginsFuture, PrintPluginsService.PROGRESS_INDICATOR_TIMEOUT).wait();
-				this.displayTableWithPlugins(getAllPluginsFuture.get());
+				let allPlugins = pluginsSource.getAllPlugins().wait();
+				this.displayTableWithPlugins(allPlugins);
 				return;
 			}
 
-			let pluginsSearchFuture = pluginsSource.getPlugins(this._page++, count);
-
-			this.$progressIndicator.showProgressIndicator(pluginsSearchFuture, PrintPluginsService.PROGRESS_INDICATOR_TIMEOUT).wait();
-
-			let pluginsToDisplay: IBasicPluginInformation[] = pluginsSearchFuture.get();
+			let pluginsToDisplay: IBasicPluginInformation[] = pluginsSource.getPlugins(this._page++, count).wait();
 			let shouldDisplayMorePlugins = true;
 
 			this.$logger.out("Available plugins:");

@@ -355,11 +355,11 @@ interface INpmService {
 	isScopedDependency(dependency: string): boolean;
 
 	/**
-	 * Gets the name of the dependency and the version if it is specified.
+	 * Gets the name of dependency and the version if it is specified.
 	 * @param {string} dependency The dependency to check.
 	 * @return {IScopedDependencyInformation} the name of the dependency and the version if it is specified.
 	*/
-	getScopedDependencyInformation(dependency: string): IScopedDependencyInformation;
+	getDependencyInformation(dependency: string): IDependencyInformation;
 }
 
 /**
