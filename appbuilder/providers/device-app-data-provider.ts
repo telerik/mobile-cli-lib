@@ -86,7 +86,7 @@ export class AndroidNativeScriptCompanionAppIdentifier extends AppBuilderCompani
 		$deployHelper: IDeployHelper,
 		$devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $companionAppsService: ICompanionAppsService) {
-		super($companionAppsService.getCompanionAppIdentifier(TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform), device, platform, $deployHelper, $devicePlatformsConstants);
+		super($companionAppsService.getCompanionAppIdentifier(TARGET_FRAMEWORK_IDENTIFIERS.NativeScript, platform), device, platform, $deployHelper, $devicePlatformsConstants);
 	}
 
 	public get deviceProjectRootPath(): string {
@@ -186,7 +186,7 @@ export class IOSNativeScriptCompanionAppIdentifier extends AppBuilderCompanionDe
 		$deployHelper: IDeployHelper,
 		$devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $companionAppsService: ICompanionAppsService) {
-		super($companionAppsService.getCompanionAppIdentifier(TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform), device, platform, $deployHelper, $devicePlatformsConstants);
+		super($companionAppsService.getCompanionAppIdentifier(TARGET_FRAMEWORK_IDENTIFIERS.NativeScript, platform), device, platform, $deployHelper, $devicePlatformsConstants);
 	}
 
 	public get deviceProjectRootPath(): string {
