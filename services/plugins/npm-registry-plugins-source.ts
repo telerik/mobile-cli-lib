@@ -43,7 +43,7 @@ export class NpmRegistryPluginsSource extends PluginsSourceBase implements IPlug
 				return null;
 			}
 
-			result.author = result.author.name || result.author;
+			result.author = (result.author && result.author.name) || result.author;
 			return result;
 		}).future<IBasicPluginInformation>()();
 	}
