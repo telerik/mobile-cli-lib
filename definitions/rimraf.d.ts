@@ -1,5 +1,9 @@
 declare module "rimraf" {
-	function rmdir(path: string, callback: (error: Error) => void): void;
-	function sync(path: string): void;
-	export = rmdir;
+	function rimraf(path: string, callback: (error: Error) => void): void;
+	namespace rimraf {
+		export function sync(path: string): void;
+		export var EMFILE_MAX: number;
+		export var BUSYTRIES_MAX: number;
+	}
+	export = rimraf;
 }
