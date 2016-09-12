@@ -62,7 +62,7 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 			let result: IBasicPluginInformation[] = [];
 
 			let currentPluginsFound: IBasicPluginInformation[] = [];
-			let page = 0;
+			let page = 1;
 
 			do {
 				currentPluginsFound = this.getPluginsFromNpmjs(this._keywords, page++).wait();
