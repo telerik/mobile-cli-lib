@@ -4,7 +4,7 @@ import temp = require("temp");
 import {exportedPromise} from "../decorators";
 import {NODE_MODULES_DIR_NAME, FileExtensions} from "../constants";
 import {quoteString} from "../helpers";
-temp.track();
+//temp.track();
 
 interface ITypeScriptCompilerMessages {
 	level1ErrorCount: number;

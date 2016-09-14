@@ -16,7 +16,7 @@ function isOsCaseSensitive(testInjector: IInjector): boolean {
 	let hostInfo = testInjector.resolve("hostInfo");
 	return hostInfo.isLinux;
 };
-temp.track();
+//temp.track();
 
 function createTestInjector(): IInjector {
 	let testInjector = new Yok();

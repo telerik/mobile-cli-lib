@@ -9,7 +9,10 @@ export class ProcessService implements IProcessService {
 	constructor() {
 		this._listeners = [];
 		_.each(ProcessService.PROCESS_EXIT_SIGNALS, (signal: string) => {
-			process.on(signal, () => this.executeAllCallbacks.apply(this));
+			process.on(signal, () => {
+				console.log("!!!!!!!!!!!!! executeAllCallbacks   " + signal);
+				this.executeAllCallbacks.apply(this);
+			});
 		});
 	}
 
@@ -22,6 +25,9 @@ export class ProcessService implements IProcessService {
 	}
 
 	private executeAllCallbacks(): void {
+
+		
+
 		_.each(this._listeners, (listener: IListener) => {
 			listener.callback.apply(listener.context);
 		});

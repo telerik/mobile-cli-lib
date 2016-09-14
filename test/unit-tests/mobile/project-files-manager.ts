@@ -14,7 +14,7 @@ import {Yok} from "../../../yok";
 import { ProjectFilesProviderBase } from "../../../services/project-files-provider-base";
 
 import temp = require("temp");
-temp.track();
+//temp.track();
 
 let testedApplicationIdentifier = "com.telerik.myApp";
 let iOSDeviceProjectRootPath = "/Library/Application Support/LiveSync/app";

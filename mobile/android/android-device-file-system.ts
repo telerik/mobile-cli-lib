@@ -128,7 +128,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	}
 
 	private getTempDir(): string {
-		temp.track();
+		//temp.track();
 		return temp.mkdirSync("application-");
 	}
 

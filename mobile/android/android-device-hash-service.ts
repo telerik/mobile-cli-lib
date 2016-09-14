@@ -103,7 +103,7 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 
 	private get tempDir(): string {
 		if (!this._tempDir) {
-			temp.track();
+			//temp.track();
 			this._tempDir = temp.mkdirSync(`android-device-hash-service-${this.appIdentifier}`);
 		}
 

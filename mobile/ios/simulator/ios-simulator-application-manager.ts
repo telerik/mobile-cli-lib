@@ -22,7 +22,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 	public installApplication(packageFilePath: string): IFuture<void> {
 		return (() => {
 			if (this.$fs.exists(packageFilePath).wait() && path.extname(packageFilePath) === ".zip") {
-				temp.track();
+				//temp.track();
 				let dir = temp.mkdirSync("simulatorPackage");
 				this.$fs.unzip(packageFilePath, dir).wait();
 				let app = _.find(this.$fs.readDirectory(dir).wait(), directory => path.extname(directory) === ".app");

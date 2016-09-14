@@ -5,7 +5,7 @@ import {SysInfoBase} from "../../sys-info-base";
 import * as temp from "temp";
 import {writeFileSync} from "fs";
 import * as path from "path";
-temp.track();
+//temp.track();
 
 let toolsPackageJsonDir = temp.mkdirSync("dirWithPackageJson");
 let toolsPackageJson = path.join(toolsPackageJsonDir, "package.json");

@@ -290,11 +290,14 @@ export function connectEventuallyUntilTimeout(factory: () => net.Socket, timeout
 	let future = new Future<net.Socket>();
 	let lastKnownError: Error;
 
-	setTimeout(function() {
+	let timer = setTimeout(function() {
 		if (!future.isResolved()) {
 			future.throw(lastKnownError);
 		}
 	}, timeout);
+	process.on("SIGINT", () => {
+		clearTimeout(timer);
+	});
 
 	function tryConnect() {
 		let tryConnectAfterTimeout = (error: Error) => {
