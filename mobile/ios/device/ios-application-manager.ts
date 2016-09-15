@@ -22,6 +22,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		private $hostInfo: IHostInfo,
 		private $staticConfig: Config.IStaticConfig,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
+		private $processService: IProcessService,
 		private $options: ICommonOptions) {
 		super($logger);
 		this.uninstallApplicationCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSApplicationManager.uninstallCallback);
@@ -263,11 +264,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	}
 
 	private runApplicationCore(appIdentifier: any) {
-		if (this._gdbServer) {
-			this._gdbServer.destroy();
-			this._gdbServer = null;
-		}
-
+		this.destroyGdbServer();
 		let application = this.getApplicationById(appIdentifier);
 		let gdbServer = this.createGdbServer();
 		return gdbServer.run([`${application.Path}`]);
@@ -278,8 +275,16 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 			let service = this.device.startService(iOSProxyServices.MobileServices.DEBUG_SERVER);
 			let socket = this.$hostInfo.isWindows ? service : new net.Socket({ fd: service });
 			this._gdbServer = this.$injector.resolve(GDBServer, { socket: socket });
+			this.$processService.attachToProcessExitSignals(this, this.destroyGdbServer);
 		}
 		return this._gdbServer;
+	}
+
+	private destroyGdbServer() {
+		if (this._gdbServer) {
+			this._gdbServer.destroy();
+			this._gdbServer = null;
+		}
 	}
 
 	private getApplicationById(appIdentifier: string): Mobile.IDeviceApplication {
