@@ -9,6 +9,9 @@ import * as shelljs from "shelljs";
 
 @injector.register("fs")
 export class FileSystem implements IFileSystem {
+	private static DEFAULT_INDENTATION_CHARACTER = "\t";
+	private static JSON_OBJECT_REGEXP = new RegExp(`{\\r*\\n*(\\W*)"`, "m");
+
 	constructor(private $injector: IInjector) { }
 
 	//TODO: try 'archiver' module for zipping
@@ -269,7 +272,11 @@ export class FileSystem implements IFileSystem {
 		return future;
 	}
 
-	public writeJson(filename: string, data: any, space: string = "\t", encoding?: string): IFuture<void> {
+	public writeJson(filename: string, data: any, space?: string, encoding?: string): IFuture<void> {
+		if (!space) {
+			space = this.getIndentationCharacter(filename).wait();
+		}
+
 		return this.writeFile(filename, JSON.stringify(data, null, space), encoding);
 	}
 
@@ -522,5 +529,24 @@ export class FileSystem implements IFileSystem {
 				parent = path.dirname(parent);
 			}
 		}).future<void>()();
+	}
+
+	private getIndentationCharacter(filePath: string): IFuture<string> {
+		return ((): string => {
+			if (!this.exists(filePath).wait()) {
+				return FileSystem.DEFAULT_INDENTATION_CHARACTER;
+			}
+
+			let fileContent = this.readText(filePath).wait().trim();
+			let matches = fileContent.match(FileSystem.JSON_OBJECT_REGEXP);
+
+			if (!matches || !matches[1]) {
+				return FileSystem.DEFAULT_INDENTATION_CHARACTER;
+			}
+
+			let indentation = matches[1];
+
+			return indentation[0] === " " ? indentation : FileSystem.DEFAULT_INDENTATION_CHARACTER;
+		}).future<string>()();
 	}
 }

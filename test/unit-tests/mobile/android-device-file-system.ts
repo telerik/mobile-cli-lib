@@ -146,6 +146,7 @@ describe("Android device file system tests", () => {
 				isDirectory: () => false,
 				isFile: () => true
 			});
+			fs.readText = () => Future.fromResult("");
 
 			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
 			androidDeviceFileSystem.transferFile = (localPath: string, devicePath: string) => {
@@ -173,6 +174,7 @@ describe("Android device file system tests", () => {
 				isDirectory: () => false,
 				isFile: () => true
 			});
+			fs.readText = () => Future.fromResult("");
 
 			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
 			let transferedFilesOnDevice: string[] = [];
@@ -206,6 +208,7 @@ describe("Android device file system tests", () => {
 				isDirectory: () => false,
 				isFile: () => true
 			});
+			fs.readText = () => Future.fromResult("");
 
 			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
 			androidDeviceFileSystem.transferFile = (localPath: string, devicePath: string) => {
@@ -233,6 +236,7 @@ describe("Android device file system tests", () => {
 				isDirectory: () => false,
 				isFile: () => true
 			});
+			fs.readText = () => Future.fromResult("");
 
 			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
 			androidDeviceFileSystem.transferFile = (localPath: string, devicePath: string) => {
