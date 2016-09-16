@@ -18,6 +18,57 @@ function isOsCaseSensitive(testInjector: IInjector): boolean {
 };
 temp.track();
 
+function createWriteJsonTestCases(): { exists: boolean, text: string, testCondition: string, expectedIndentation: string }[] {
+	return [
+		{
+			exists: true,
+			text: `{\n\t"a" : 5 }`,
+			testCondition: "when the indentation is tab",
+			expectedIndentation: "\t"
+		}, {
+			exists: true,
+			text: `{\n "a" : 5 }`,
+			testCondition: "when the indentation is space",
+			expectedIndentation: " "
+		}, {
+			exists: true,
+			text: `{\n  "a" : 5 }`,
+			testCondition: "when the indentation is two spaces",
+			expectedIndentation: "  "
+		}, {
+			exists: false,
+			text: `{\n "a" : 5 }`,
+			testCondition: "when the file does not exist",
+			expectedIndentation: "\t"
+		}, {
+			exists: true,
+			text: `"just-string"`,
+			testCondition: "when the the content is string",
+			expectedIndentation: "\t"
+		}, {
+			exists: true,
+			text: `{ "a" : 5 }`,
+			testCondition: "when the content does not have new line after the {",
+			expectedIndentation: " "
+		}, {
+			exists: true,
+			text: `{"a" : 5 }`,
+			testCondition: "when the content is not correctly formatted",
+			expectedIndentation: "\t"
+		}, {
+			exists: true,
+			text: `{\r\n "a" : 5 }`,
+			testCondition: "when the new line is in Windows format",
+			expectedIndentation: " "
+		}, {
+			exists: true,
+			text: `{\r\n\t"a" : 5 }`,
+			testCondition: "when the new line is in Windows format",
+			expectedIndentation: "\t"
+		}
+	];
+}
+
 function createTestInjector(): IInjector {
 	let testInjector = new Yok();
 
@@ -224,6 +275,39 @@ describe("FileSystem", () => {
 			fs.isEmptyDir = originalIsEmptyDir;
 
 			assert.deepEqual(emptyDirectories, _.reverse(removedDirectories));
+		});
+	});
+
+	describe("writeJson", () => {
+		let testCases = createWriteJsonTestCases(),
+			testInjector: IInjector,
+			fs: IFileSystem;
+
+		beforeEach(() => {
+			testInjector = createTestInjector();
+
+			fs = testInjector.resolve("fs");
+		});
+
+		_.each(testCases, (testCase) => {
+			it(`should use the correct indentation ${testCase.testCondition}.`, () => {
+				fs.readText = () => Future.fromResult(testCase.text);
+				fs.exists = () => Future.fromResult(testCase.exists);
+				fs.writeFile = () => Future.fromResult();
+
+				let actualIndentation: string;
+				let originalJsonStringify = JSON.stringify;
+
+				(<any>JSON).stringify = (value: any, replacer: any[], space: string | number) => {
+					actualIndentation = <string>space;
+				};
+
+				fs.writeJson("", testCase.text).wait();
+
+				JSON.stringify = originalJsonStringify;
+
+				assert.deepEqual(actualIndentation, testCase.expectedIndentation);
+			});
 		});
 	});
 });
