@@ -142,6 +142,16 @@ declare module Mobile {
 	interface IDeviceLogProvider {
 		logData(line: string, platform: string, deviceIdentifier: string): void;
 		setLogLevel(level: string, deviceIdentifier?: string): void;
+		setApplictionPidForDevice(deviceIdentifier: string, pid: string): void;
+	}
+
+	interface IDeviceLogOptions {
+		applicationPid: string;
+		logLevel: string;
+	}
+
+	interface IiOSSimulatorLogProvider {
+		startLogProcess(deviceIdentifier: string): void;
 	}
 
 	/**
@@ -158,10 +168,11 @@ declare module Mobile {
 		 * Filters data for specified platform.
 		 * @param {string} platform The platform for which is the device log.
 		 * @param {string} data The input data for filtering.
+		 * @param {string} pid @optional The application PID for this device.
 		 * @param {string} logLevel @optional The logging level based on which input data will be filtered.
 		 * @return {string} The filtered result based on the input or null when the input data shouldn't be shown.
 		 */
-		filterData(platform: string, data: string, logLevel?: string): string;
+		filterData(platform: string, data: string, pid?: string, logLevel?: string): string;
 	}
 
 	/**
@@ -174,7 +185,7 @@ declare module Mobile {
 		 * @param {string} logLevel Selected logging level.
 		 * @return {string} The filtered result based on the input or null when the input data shouldn't be shown.
 		 */
-		filterData(data: string, logLevel: string): string;
+		filterData(data: string, logLevel: string, pid: string): string;
 	}
 
 	interface ILoggingLevels {

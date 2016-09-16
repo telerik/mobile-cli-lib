@@ -3,22 +3,22 @@ export class LogFilter implements Mobile.ILogFilter {
 
 	constructor(private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $injector: IInjector,
-		private $loggingLevels: Mobile.ILoggingLevels) {}
+		private $loggingLevels: Mobile.ILoggingLevels) { }
 
 	public get loggingLevel(): string {
 		return this._loggingLevel;
 	}
 
 	public set loggingLevel(logLevel: string) {
-		if(this.verifyLogLevel(logLevel)) {
+		if (this.verifyLogLevel(logLevel)) {
 			this._loggingLevel = logLevel;
 		}
 	}
 
-	public filterData(platform: string, data: string, logLevel?: string): string {
+	public filterData(platform: string, data: string, pid?: string, logLevel?: string): string {
 		let deviceLogFilter = this.getDeviceLogFilterInstance(platform);
-		if(deviceLogFilter) {
-			return deviceLogFilter.filterData(data, logLevel || this.loggingLevel);
+		if (deviceLogFilter) {
+			return deviceLogFilter.filterData(data, logLevel || this.loggingLevel, pid);
 		}
 
 		// In case the platform is not valid, just return the data without filtering.
@@ -26,13 +26,14 @@ export class LogFilter implements Mobile.ILogFilter {
 	}
 
 	private getDeviceLogFilterInstance(platform: string): Mobile.IPlatformLogFilter {
-		if(platform) {
-			if(platform.toLowerCase() === this.$devicePlatformsConstants.iOS.toLowerCase()) {
+		if (platform) {
+			if (platform.toLowerCase() === this.$devicePlatformsConstants.iOS.toLowerCase()) {
 				return this.$injector.resolve("iOSLogFilter");
-			} else if(platform.toLowerCase() ===  this.$devicePlatformsConstants.Android.toLowerCase()) {
+			} else if (platform.toLowerCase() === this.$devicePlatformsConstants.Android.toLowerCase()) {
 				return this.$injector.resolve("androidLogFilter");
 			}
 		}
+
 		return null;
 	}
 

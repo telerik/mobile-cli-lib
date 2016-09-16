@@ -31,6 +31,9 @@ function createTestInjector(): IInjector {
 	});
 
 	injector.register("iOSSimulatorDiscovery", IOSSimulatorDiscovery);
+
+	injector.register("iOSSimulatorLogProvider", {});
+
 	return injector;
 }
 

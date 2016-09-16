@@ -11,16 +11,18 @@ function createTestInjector(): IInjector {
 	testInjector.register("loggingLevels", LoggingLevels);
 	testInjector.register("logFilter", LogFilter);
 	testInjector.register("iOSLogFilter", {
-		filterData: (data: string, logLevel: string) => {
+		filterData: (data: string, logLevel: string, pid?: string) => {
 			return `ios: ${data} ${logLevel}`;
 		}
 	});
 
 	testInjector.register("androidLogFilter", {
-		filterData: (data: string, logLevel: string) => {
+		filterData: (data: string, logLevel: string, pid?: string) => {
 			return `android: ${data} ${logLevel}`;
 		}
 	});
+
+	testInjector.register("iOSSimulatorLogProvider", {});
 
 	return testInjector;
 }
@@ -129,17 +131,17 @@ describe("logFilter", () => {
 			beforeEach(() => logLevel = fullLogLevel);
 
 			it("returns same data when platform is not correct", () => {
-				let actualData = logFilter.filterData("invalidPlatform", testData, logLevel);
+				let actualData = logFilter.filterData("invalidPlatform", testData, null, logLevel);
 				assert.deepEqual(actualData, testData, logLevel);
 			});
 
 			it("returns correct data when platform is android", () => {
-				let actualData = logFilter.filterData("android", testData, logLevel);
+				let actualData = logFilter.filterData("android", testData, null, logLevel);
 				assert.deepEqual(actualData, androidFullTestData);
 			});
 
 			it("returns correct data when platform is ios", () => {
-				let actualData = logFilter.filterData("ios", testData, logLevel);
+				let actualData = logFilter.filterData("ios", testData, null, logLevel);
 				assert.deepEqual(actualData, iosFullTestData);
 			});
 		});
