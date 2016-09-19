@@ -1027,12 +1027,14 @@ export class PlistService implements Mobile.IiOSDeviceSocket {
 	constructor(private service: number,
 		private format: number,
 		private $injector: IInjector,
+		private $processService: IProcessService,
 		private $hostInfo: IHostInfo) {
 		if(this.$hostInfo.isWindows) {
 			this.socket = this.$injector.resolve(WinSocket, {service: this.service, format: this.format });
 		} else if(this.$hostInfo.isDarwin) {
 			this.socket = this.$injector.resolve(PosixSocket, {service: this.service, format: this.format });
 		}
+		this.$processService.attachToProcessExitSignals(this, this.close);
 	}
 
 	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData> {

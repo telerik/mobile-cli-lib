@@ -22,6 +22,8 @@ export class IOSDevice implements Mobile.IiOSDevice {
 	public fileSystem: Mobile.IDeviceFileSystem;
 	public deviceInfo: Mobile.IDeviceInfo;
 
+	private _socket: net.Socket;
+
 	constructor(private devicePointer: NodeBuffer,
 		private $coreFoundation: Mobile.ICoreFoundation,
 		private $errors: IErrors,
@@ -33,6 +35,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		private $hostInfo: IHostInfo,
 		private $options: ICommonOptions,
 		private $iOSDeviceProductNameMapper: Mobile.IiOSDeviceProductNameMapper,
+		private $processService: IProcessService,
 		private $xcodeSelectService: IXcodeSelectService) {
 			this.mountImageCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSDevice.mountImageCallback);
 
@@ -364,10 +367,20 @@ export class IOSDevice implements Mobile.IiOSDevice {
 				process.nextTick(() => socket.emit("connect"));
 			}
 
+			this._socket = socket;
+			this.$processService.attachToProcessExitSignals(this, this.destroySocket);
+
 			return socket;
 		}
 
 		return null;
+	}
+
+	private destroySocket() {
+		if (this._socket) {
+			this._socket.destroy();
+			this._socket = null;
+		}
 	}
 
 	/**
