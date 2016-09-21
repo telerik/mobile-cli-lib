@@ -17,6 +17,7 @@ export class NpmService implements INpmService {
 	private _npmBinary: string;
 	private _proxySettings: IProxySettings;
 	private _hasCheckedNpmProxy = false;
+	private _npmRegistryUrl: string;
 
 	constructor(private $childProcess: IChildProcess,
 		private $errors: IErrors,
@@ -209,11 +210,14 @@ export class NpmService implements INpmService {
 	private buildNpmRegistryUrl(packageName: string, version: string): IFuture<string> {
 		return (() => {
 			let registryUrl = this.getNpmRegistryUrl().wait();
-			return `${registryUrl}/${packageName.replace("/", "%2F")}?version=${encodeURIComponent(version)}`;
+			if (!_.endsWith(registryUrl, "/")) {
+				registryUrl += "/";
+			}
+
+			return `${registryUrl}${packageName.replace("/", "%2F")}?version=${encodeURIComponent(version)}`;
 		}).future<string>()();
 	}
 
-	private _npmRegistryUrl: string;
 	private getNpmRegistryUrl(): IFuture<string> {
 		return ((): string => {
 			if (!this._npmRegistryUrl) {
