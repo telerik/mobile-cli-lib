@@ -3,17 +3,21 @@ import * as os from "os";
 import * as constants from "../../constants";
 import { fromWindowsRelativePathToUnix } from "../../helpers";
 import { exportedPromise } from "../../decorators";
+import * as url from "url";
 
 export class NpmService implements INpmService {
 	private static NPM_MODULE_NAME = "npm";
 	private static TYPES_DIRECTORY = "@types/";
 	private static TNS_CORE_MODULES_DEFINITION_FILE_NAME = `${constants.TNS_CORE_MODULES}${constants.FileExtensions.TYPESCRIPT_DEFINITION_FILE}`;
-	private static NPM_REGISTRY_URL = "https://registry.npmjs.org";
+	private static NPM_REGISTRY_URL = "http://registry.npmjs.org";
 	private static SCOPED_DEPENDENCY_REGEXP = /^(@.+?)(?:@(.+?))?$/;
 	private static DEPENDENCY_REGEXP = /^(.+?)(?:@(.+?))?$/;
 
 	private _npmExecutableName: string;
 	private _npmBinary: string;
+	private _proxySettings: IProxySettings;
+	private _hasCheckedNpmProxy = false;
+	private _npmRegistryUrl: string;
 
 	constructor(private $childProcess: IChildProcess,
 		private $errors: IErrors,
@@ -168,9 +172,9 @@ export class NpmService implements INpmService {
 			let packageJsonContent: any;
 			version = version || "latest";
 			try {
-				let url = this.buildNpmRegistryUrl(packageName, version);
+				let url = this.buildNpmRegistryUrl(packageName, version).wait();
 				// This call will return error with message '{}' in case there's no such package.
-				let result = this.$httpClient.httpRequest(url).wait().body;
+				let result = this.$httpClient.httpRequest(url, this.getNpmProxySettings().wait()).wait().body;
 				packageJsonContent = JSON.parse(result);
 			} catch (err) {
 				this.$logger.trace("Error caught while checking the NPM Registry for plugin with id: %s", packageName);
@@ -203,8 +207,35 @@ export class NpmService implements INpmService {
 		}).future<boolean>()();
 	}
 
-	private buildNpmRegistryUrl(packageName: string, version: string): string {
-		return `${NpmService.NPM_REGISTRY_URL}/${packageName.replace("/", "%2F")}?version=${encodeURIComponent(version)}`;
+	private buildNpmRegistryUrl(packageName: string, version: string): IFuture<string> {
+		return (() => {
+			let registryUrl = this.getNpmRegistryUrl().wait();
+			if (!_.endsWith(registryUrl, "/")) {
+				registryUrl += "/";
+			}
+
+			return `${registryUrl}${packageName.replace("/", "%2F")}?version=${encodeURIComponent(version)}`;
+		}).future<string>()();
+	}
+
+	private getNpmRegistryUrl(): IFuture<string> {
+		return ((): string => {
+			if (!this._npmRegistryUrl) {
+				let currentNpmRegistry: string;
+
+				try {
+					currentNpmRegistry = (this.$childProcess.exec("npm config get registry").wait() || "").toString().trim();
+				} catch (err) {
+					this.$logger.trace(`Unable to get registry from npm config. Error is ${err.message}.`);
+				}
+
+				this._npmRegistryUrl = currentNpmRegistry || NpmService.NPM_REGISTRY_URL;
+
+				this.$logger.trace(`Npm registry is: ${this._npmRegistryUrl}.`);
+			}
+
+			return this._npmRegistryUrl;
+		}).future<string>()();
 	}
 
 	private getPackageJsonContent(projectDir: string): IFuture<any> {
@@ -319,6 +350,32 @@ export class NpmService implements INpmService {
 
 	private executeNpmCommandCore(projectDir: string, npmArguments: string[]): IFuture<ISpawnResult> {
 		return this.$childProcess.spawnFromEvent(this.npmExecutableName, npmArguments, "close", { cwd: projectDir });
+	}
+
+	private getNpmProxySettings(): IFuture<IProxySettings> {
+		return ((): IProxySettings => {
+			if (!this._hasCheckedNpmProxy) {
+				try {
+					let npmProxy = (this.$childProcess.exec("npm config get proxy").wait() || "").toString().trim();
+
+					if (npmProxy) {
+						let uri = url.parse(npmProxy);
+						this._proxySettings = {
+							hostname: uri.hostname,
+							port: uri.port
+						};
+					}
+				} catch (err) {
+					this.$logger.trace(`Unable to get npm proxy configuration. Error is: ${err.message}.`);
+				}
+
+				this.$logger.trace("Npm proxy is: hostname: " + this._proxySettings.hostname + " port: " + this._proxySettings.port);
+
+				this._hasCheckedNpmProxy = true;
+			}
+
+			return this._proxySettings;
+		}).future<IProxySettings>()();
 	}
 }
 $injector.register("npmService", NpmService);
