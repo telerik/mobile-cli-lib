@@ -171,7 +171,7 @@ export class NpmService implements INpmService {
 			let packageJsonContent: any;
 			version = version || "latest";
 			try {
-				let url = this.buildNpmRegistryUrl(packageName, version);
+				let url = this.buildNpmRegistryUrl(packageName, version).wait();
 				// This call will return error with message '{}' in case there's no such package.
 				let result = this.$httpClient.httpRequest(url, this.getNpmProxySettings().wait()).wait().body;
 				packageJsonContent = JSON.parse(result);
@@ -206,8 +206,32 @@ export class NpmService implements INpmService {
 		}).future<boolean>()();
 	}
 
-	private buildNpmRegistryUrl(packageName: string, version: string): string {
-		return `${NpmService.NPM_REGISTRY_URL}/${packageName.replace("/", "%2F")}?version=${encodeURIComponent(version)}`;
+	private buildNpmRegistryUrl(packageName: string, version: string): IFuture<string> {
+		return (() => {
+			let registryUrl = this.getNpmRegistryUrl().wait();
+			return `${registryUrl}/${packageName.replace("/", "%2F")}?version=${encodeURIComponent(version)}`;
+		}).future<string>()();
+	}
+
+	private _npmRegistryUrl: string;
+	private getNpmRegistryUrl(): IFuture<string> {
+		return ((): string => {
+			if (!this._npmRegistryUrl) {
+				let currentNpmRegistry: string;
+
+				try {
+					currentNpmRegistry = (this.$childProcess.exec("npm config get registry").wait() || "").toString().trim();
+				} catch (err) {
+					this.$logger.trace(`Unable to get registry from npm config. Error is ${err.message}.`);
+				}
+
+				this._npmRegistryUrl = currentNpmRegistry || NpmService.NPM_REGISTRY_URL;
+
+				this.$logger.trace(`Npm registry is: ${this._npmRegistryUrl}.`);
+			}
+
+			return this._npmRegistryUrl;
+		}).future<string>()();
 	}
 
 	private getPackageJsonContent(projectDir: string): IFuture<any> {
@@ -328,7 +352,7 @@ export class NpmService implements INpmService {
 		return ((): IProxySettings => {
 			if (!this._hasCheckedNpmProxy) {
 				try {
-					let npmProxy = (this.$childProcess.exec("npm config get proxy").wait() || "").toString();
+					let npmProxy = (this.$childProcess.exec("npm config get proxy").wait() || "").toString().trim();
 
 					if (npmProxy) {
 						let uri = url.parse(npmProxy);
