@@ -113,7 +113,7 @@ declare module Server {
 
 	interface IHttpClient {
 		httpRequest(url: string): IFuture<IResponse>;
-		httpRequest(options: any): IFuture<IResponse>;
+		httpRequest(options: any, proxySettings?: IProxySettings): IFuture<IResponse>;
 	}
 
 	interface IRequestResponseData {
@@ -1346,4 +1346,19 @@ interface ITypeScriptTranspileOptions {
 	 * Use the typescript compiler which is installed localy for the project.
 	 */
 	useLocalTypeScriptCompiler?: boolean;
+}
+
+/**
+ * Proxy settings required for http request.
+ */
+interface IProxySettings {
+	/**
+	 * Hostname of the machine used for proxy.
+	 */
+	hostname: string;
+
+	/**
+	 * Port of the machine used for proxy that allows connections.
+	 */
+	port: string;
 }

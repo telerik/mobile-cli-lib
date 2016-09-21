@@ -13,7 +13,7 @@ export class HttpClient implements Server.IHttpClient {
 		private $staticConfig: Config.IStaticConfig,
 		private $config: Config.IConfig) {}
 
-	httpRequest(options: any): IFuture<Server.IResponse> {
+	httpRequest(options: any, proxySettings?: IProxySettings): IFuture<Server.IResponse> {
 		return (() => {
 			if (_.isString(options)) {
 				options = {
@@ -48,11 +48,11 @@ export class HttpClient implements Server.IHttpClient {
 			options.headers = options.headers || {};
 			let headers = options.headers;
 
-			if(this.$config.USE_PROXY) {
+			if(proxySettings || this.$config.USE_PROXY) {
 				options.path = requestProto + "://" + options.host + options.path;
 				headers.Host = options.host;
-				options.host = this.$config.PROXY_HOSTNAME;
-				options.port = this.$config.PROXY_PORT;
+				options.host = proxySettings.hostname || this.$config.PROXY_HOSTNAME;
+				options.port = proxySettings.port || this.$config.PROXY_PORT;
 				this.$logger.trace("Using proxy with host: %s, port: %d, path is: %s", options.host, options.port, options.path);
 			}
 
