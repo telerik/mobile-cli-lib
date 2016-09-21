@@ -433,6 +433,13 @@ interface ITypeScriptService {
 	 * @return {IFuture<boolean>} true when the project contains .ts files and false otherwise.
 	 */
 	isTypeScriptProject(projectDir: string): IFuture<boolean>;
+
+	/**
+	 * Checks if the file is TypeScript file.
+	 * @param {string} file The file name.
+	 * @return {boolean} true when the file is TypeScript file.
+	 */
+	isTypeScriptFile(file: string): boolean;
 }
 
 interface IDynamicHelpService {

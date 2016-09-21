@@ -3,7 +3,6 @@ import * as os from "os";
 import temp = require("temp");
 import {exportedPromise} from "../decorators";
 import {NODE_MODULES_DIR_NAME, FileExtensions} from "../constants";
-import {quoteString} from "../helpers";
 temp.track();
 
 interface ITypeScriptCompilerMessages {
@@ -19,7 +18,7 @@ interface ITypeScriptCompilerSettings {
 }
 
 interface IRunTranspilationOptions {
-	typeScriptCommandsFilePath?: string;
+	filesToTranspile?: string[];
 	compilerOptions?: ITypeScriptCompilerOptions;
 }
 
@@ -51,20 +50,14 @@ export class TypeScriptService implements ITypeScriptService {
 			let runTranspilationOptions: IRunTranspilationOptions = { compilerOptions };
 
 			if (this.typeScriptFiles.length > 0) {
-				// Create typeScript command file
-				let typeScriptCommandsFilePath = path.join(temp.mkdirSync("typeScript-compilation"), "tscommand.txt");
-				let typeScriptCompilerOptions = this.getTypeScriptCompilerOptionsAsArguments(compilerOptions);
-				let typeScriptDefinitionsFiles: string[];
-
+				let typeScriptDefinitionsFiles: string[] = [];
 				if (!this.hasTsConfigFile(projectDir).wait()) {
 					typeScriptDefinitionsFiles = this.getDefaultTypeScriptDefinitionsFiles(options.pathToDefaultDefinitionFiles).wait();
 				}
 
-				// We need to add quotation marks in case some file path contains spaces in it.
-				this.typeScriptFiles = this.quoteFileNames(this.typeScriptFiles);
-				typeScriptDefinitionsFiles = this.quoteFileNames(typeScriptDefinitionsFiles);
+				typeScriptDefinitionsFiles = typeScriptDefinitionsFiles.concat(this.getTypeScriptFilesData(projectDir).wait().definitionFiles);
 
-				this.$fs.writeFile(typeScriptCommandsFilePath, this.typeScriptFiles.concat(typeScriptDefinitionsFiles).concat(typeScriptCompilerOptions).join(" ")).wait();
+				let filesToTranspile = this.typeScriptFiles.concat(typeScriptDefinitionsFiles);
 
 				// Log some messages
 				this.$logger.out("Compiling...".yellow);
@@ -72,7 +65,7 @@ export class TypeScriptService implements ITypeScriptService {
 					this.$logger.out(`### Compile ${file}`.cyan);
 				});
 
-				runTranspilationOptions = { typeScriptCommandsFilePath };
+				runTranspilationOptions.filesToTranspile = filesToTranspile;
 			}
 
 			this.$logger.out(`Using tsc version ${typeScriptCompilerSettings.version}`.cyan);
@@ -87,7 +80,7 @@ export class TypeScriptService implements ITypeScriptService {
 			let rootNodeModules = path.join(projectDir, NODE_MODULES_DIR_NAME);
 			let projectFiles = this.$fs.enumerateFilesInDirectorySync(projectDir,
 				(fileName: string, fstat: IFsStats) => fileName !== rootNodeModules);
-			let typeScriptFiles = _.filter(projectFiles, file => path.extname(file) === FileExtensions.TYPESCRIPT_FILE);
+			let typeScriptFiles = _.filter(projectFiles, this.isTypeScriptFile);
 			let definitionFiles = _.filter(typeScriptFiles, file => _.endsWith(file, FileExtensions.TYPESCRIPT_DEFINITION_FILE));
 			return { definitionFiles: definitionFiles, typeScriptFiles: _.difference(typeScriptFiles, definitionFiles) };
 		}).future<ITypeScriptFiles>()();
@@ -99,6 +92,10 @@ export class TypeScriptService implements ITypeScriptService {
 
 			return !!typeScriptFilesData.typeScriptFiles.length;
 		}).future<boolean>()();
+	}
+
+	public isTypeScriptFile(file: string): boolean {
+		return path.extname(file) === FileExtensions.TYPESCRIPT_FILE;
 	}
 
 	private hasTsConfigFile(projectDir: string): IFuture<boolean> {
@@ -126,7 +123,7 @@ export class TypeScriptService implements ITypeScriptService {
 
 			let result: ITypeScriptCompilerOptions = {};
 			_.each(compilerOptionsKeys, (key: string) => {
-				result[key] = this.getCompilerOptionByKey(key, compilerOptions, tsConfigFile, defaultOptions);
+				result[key] = this.getCompilerOptionByKey(key, compilerOptions, tsConfigFile.compilerOptions, defaultOptions);
 			});
 
 			result.noEmitOnError = result.noEmitOnError || false;
@@ -180,12 +177,11 @@ export class TypeScriptService implements ITypeScriptService {
 		return ((): string => {
 			options = options || {};
 			let startTime = new Date().getTime();
-			let params = [typeScriptCompilerPath];
-			if (options.typeScriptCommandsFilePath) {
-				params.push("@" + options.typeScriptCommandsFilePath);
-			} else if (options.compilerOptions) {
-				params = _.concat(params, this.getTypeScriptCompilerOptionsAsArguments(options.compilerOptions));
-			}
+			let params = _([])
+				.concat(typeScriptCompilerPath)
+				.concat(options.filesToTranspile || [])
+				.concat(this.getTypeScriptCompilerOptionsAsArguments(options.compilerOptions) || [])
+				.value();
 
 			let output = this.$childProcess.spawnFromEvent(process.argv[0], params, "close", { cwd: projectDir }, { throwError: false }).wait();
 			let compilerOutput = output.stderr || output.stdout;
@@ -314,10 +310,6 @@ export class TypeScriptService implements ITypeScriptService {
 			this.$fs.writeJson(path.join(tempDir, this.$projectConstants.PACKAGE_JSON_NAME), { name: "tsc-container", version: "1.0.0" }).wait();
 			return tempDir;
 		}).future<string>()();
-	}
-
-	private quoteFileNames(files: string[]): string[] {
-		return _.map(files, (fileName: string) => quoteString(fileName));
 	}
 }
 

@@ -60,7 +60,6 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 				fiberBootstrap.run(() => {
 					that.$dispatcher.dispatch(() => (() => {
 						try {
-
 							if (filePath.indexOf(constants.APP_RESOURCES_FOLDER_NAME) !== -1) {
 								that.$logger.warn(`Skipping livesync for changed file ${filePath}. This change requires a full build to update your application. `.yellow.bold);
 								return;
