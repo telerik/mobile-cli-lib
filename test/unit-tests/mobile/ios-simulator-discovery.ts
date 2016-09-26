@@ -4,14 +4,11 @@ import Future = require("fibers/future");
 import { assert } from "chai";
 import { DevicePlatformsConstants } from "../../../mobile/device-platforms-constants";
 
-let currentlyRunningSimulator: any,
-	isCurrentlyRunning: boolean;
+let currentlyRunningSimulator: any;
 
 function createTestInjector(): IInjector {
 	let injector = new Yok();
-	injector.register("childProcess", {
-		exec: (command: string) => Future.fromResult(isCurrentlyRunning ? 'launchd_sim' : '')
-	});
+	injector.register("childProcess", { /* No implementation required. */ });
 	injector.register("injector", injector);
 	injector.register("iOSSimResolver", {
 		iOSSim: {
@@ -23,12 +20,6 @@ function createTestInjector(): IInjector {
 	});
 
 	injector.register("devicePlatformsConstants", DevicePlatformsConstants);
-
-	injector.register("iOSSimResolver", {
-		iOSSim: {
-			getRunningSimulator: () => currentlyRunningSimulator
-		}
-	});
 
 	injector.register("iOSSimulatorDiscovery", IOSSimulatorDiscovery);
 	return injector;
@@ -42,7 +33,6 @@ describe("ios-simulator-discovery", () => {
 
 	let detectNewSimulatorAttached = (runningSimulator: any): Mobile.IiOSSimulator => {
 		let future = new Future<any>();
-		isCurrentlyRunning = true;
 		currentlyRunningSimulator = _.cloneDeep(runningSimulator);
 		iOSSimulatorDiscovery.once("deviceFound", (device: Mobile.IDevice) => {
 			future.return(device);
@@ -52,7 +42,7 @@ describe("ios-simulator-discovery", () => {
 	};
 
 	let detectSimulatorDetached = (): Mobile.IiOSSimulator => {
-		isCurrentlyRunning = false;
+		currentlyRunningSimulator = null;
 		let lostDeviceFuture = new Future<Mobile.IDevice>();
 		iOSSimulatorDiscovery.once("deviceLost", (device: Mobile.IDevice) => {
 			lostDeviceFuture.return(device);
@@ -62,7 +52,6 @@ describe("ios-simulator-discovery", () => {
 	};
 
 	let detectSimulatorChanged = (newId: string): any => {
-		isCurrentlyRunning = true;
 		currentlyRunningSimulator.id = newId;
 		let lostDeviceFuture = new Future<Mobile.IDevice>(),
 			foundDeviceFuture = new Future<Mobile.IDevice>();
@@ -83,11 +72,11 @@ describe("ios-simulator-discovery", () => {
 	};
 
 	beforeEach(() => {
-		isCurrentlyRunning = false;
 		currentlyRunningSimulator = null;
 		testInjector = createTestInjector();
 		iOSSimulatorDiscovery = testInjector.resolve("iOSSimulatorDiscovery");
-		expectedDeviceInfo = { identifier: "id",
+		expectedDeviceInfo = {
+			identifier: "id",
 			displayName: 'name',
 			model: 'c',
 			version: '9.2.1',
@@ -156,7 +145,6 @@ describe("ios-simulator-discovery", () => {
 				throw new Error("Cannot find iOS Devices.");
 			}).future<any>()();
 		};
-		isCurrentlyRunning = true;
 		iOSSimulatorDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
 			throw new Error("Device found should not be raised when getting running iOS Simulator fails.");
 		});
@@ -165,7 +153,6 @@ describe("ios-simulator-discovery", () => {
 
 	it("does not detect iOS Simulator when not running on OS X", () => {
 		testInjector.resolve("hostInfo").isDarwin = false;
-		isCurrentlyRunning = true;
 		iOSSimulatorDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
 			throw new Error("Device found should not be raised when OS is not OS X.");
 		});
@@ -174,7 +161,6 @@ describe("ios-simulator-discovery", () => {
 
 	it("checkForDevices return future", () => {
 		testInjector.resolve("hostInfo").isDarwin = false;
-		isCurrentlyRunning = true;
 		iOSSimulatorDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
 			throw new Error("Device found should not be raised when OS is not OS X.");
 		});
