@@ -51,8 +51,8 @@ export class HttpClient implements Server.IHttpClient {
 			if(proxySettings || this.$config.USE_PROXY) {
 				options.path = requestProto + "://" + options.host + options.path;
 				headers.Host = options.host;
-				options.host = proxySettings.hostname || this.$config.PROXY_HOSTNAME;
-				options.port = proxySettings.port || this.$config.PROXY_PORT;
+				options.host = (proxySettings && proxySettings.hostname) || this.$config.PROXY_HOSTNAME;
+				options.port = (proxySettings && proxySettings.port) || this.$config.PROXY_PORT;
 				this.$logger.trace("Using proxy with host: %s, port: %d, path is: %s", options.host, options.port, options.path);
 			}
 

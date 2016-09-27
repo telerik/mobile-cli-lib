@@ -358,7 +358,8 @@ export class NpmService implements INpmService {
 				try {
 					let npmProxy = (this.$childProcess.exec("npm config get proxy").wait() || "").toString().trim();
 
-					if (npmProxy) {
+					// npm will return null as string in case there's no proxy set.
+					if (npmProxy && npmProxy !== "null") {
 						let uri = url.parse(npmProxy);
 						this._proxySettings = {
 							hostname: uri.hostname,
@@ -369,7 +370,7 @@ export class NpmService implements INpmService {
 					this.$logger.trace(`Unable to get npm proxy configuration. Error is: ${err.message}.`);
 				}
 
-				this.$logger.trace("Npm proxy is: hostname: " + this._proxySettings.hostname + " port: " + this._proxySettings.port);
+				this.$logger.trace("Npm proxy is: ", this._proxySettings);
 
 				this._hasCheckedNpmProxy = true;
 			}
