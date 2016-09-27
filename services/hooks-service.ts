@@ -1,5 +1,6 @@
 import * as path from "path";
 import * as util from "util";
+import {annotate} from "../helpers";
 import Future = require("fibers/future");
 
 class Hook implements IHook {
@@ -33,7 +34,7 @@ export class HooksService implements IHooksService {
 			path.join(relativeToLibPath, "common", HooksService.HOOKS_DIRECTORY_NAME)
 		];
 
-		if(this.$projectHelper.projectDir) {
+		if (this.$projectHelper.projectDir) {
 			this.hooksDirectories.push(path.join(this.$projectHelper.projectDir, HooksService.HOOKS_DIRECTORY_NAME));
 		}
 
@@ -54,7 +55,7 @@ export class HooksService implements IHooksService {
 	public executeAfterHooks(commandName: string, hookArguments?: IDictionary<any>): IFuture<void> {
 		let afterHookName = `after-${HooksService.formatHookName(commandName)}`;
 		let traceMessage = `AfterHookName for command ${commandName} is ${afterHookName}`;
-		return this.executeHooks(afterHookName, traceMessage ,hookArguments);
+		return this.executeHooks(afterHookName, traceMessage, hookArguments);
 	}
 
 	private executeHooks(hookName: string, traceMessage: string, hookArguments?: IDictionary<any>): IFuture<void> {
@@ -73,7 +74,7 @@ export class HooksService implements IHooksService {
 				_.each(this.hooksDirectories, hooksDirectory => {
 					this.executeHooksInDirectory(hooksDirectory, hookName, hookArguments).wait();
 				});
-			} catch(err) {
+			} catch (err) {
 				this.$logger.trace("Failed during hook execution.");
 				this.$errors.failWithoutHelp(err.message);
 			}
@@ -98,6 +99,16 @@ export class HooksService implements IHooksService {
 				if (inProc) {
 					this.$logger.trace("Executing %s hook at location %s in-process", hookName, hook.fullPath);
 					let hookEntryPoint = require(hook.fullPath);
+
+					this.$logger.trace(`Validating ${hookName} arguments.`);
+
+					let invalidArguments = this.validateHookArguments(hookEntryPoint);
+
+					if (invalidArguments.length) {
+						this.$logger.warn(`${hookName} will NOT be executed because it has invalid arguments - ${invalidArguments.join(", ").grey}.`);
+						return;
+					}
+
 					let maybePromise = this.$injector.resolve(hookEntryPoint, hookArguments);
 					if (maybePromise) {
 						this.$logger.trace('Hook promises to signal completion');
@@ -139,9 +150,9 @@ export class HooksService implements IHooksService {
 
 	private getHooksInDirectory(directoryPath: string): IFuture<IHook[]> {
 		return (() => {
-			if(!this.cachedHooks[directoryPath]) {
+			if (!this.cachedHooks[directoryPath]) {
 				let hooks: IHook[] = [];
-				if(directoryPath && this.$fs.exists(directoryPath).wait() && this.$fs.getFsStats(directoryPath).wait().isDirectory()) {
+				if (directoryPath && this.$fs.exists(directoryPath).wait() && this.$fs.getFsStats(directoryPath).wait().isDirectory()) {
 					let directoryContent = this.$fs.readDirectory(directoryPath).wait();
 					let files = _.filter(directoryContent, (entry: string) => {
 						let fullPath = path.join(directoryPath, entry);
@@ -166,7 +177,7 @@ export class HooksService implements IHooksService {
 	private prepareEnvironment(hookFullPath: string): any {
 		let clientName = this.$staticConfig.CLIENT_NAME.toUpperCase();
 
-		let environment: IStringDictionary = { };
+		let environment: IStringDictionary = {};
 		environment[util.format("%s-COMMANDLINE", clientName)] = process.argv.join(' ');
 		environment[util.format("%s-HOOK_FULL_PATH", clientName)] = hookFullPath;
 		environment[util.format("%s-VERSION", clientName)] = this.$staticConfig.version;
@@ -174,7 +185,7 @@ export class HooksService implements IHooksService {
 		return {
 			cwd: this.$projectHelper.projectDir,
 			stdio: 'inherit',
-			env:  _.extend({}, process.env, environment)
+			env: _.extend({}, process.env, environment)
 		};
 	}
 
@@ -183,7 +194,7 @@ export class HooksService implements IHooksService {
 			let interpreter: string = null;
 			let shMatch: string[] = [];
 			let fileContent = this.$fs.readText(hook.fullPath).wait();
-			if(fileContent) {
+			if (fileContent) {
 				let sheBangMatch = fileContent.split('\n')[0].match(/^#!(?:\/usr\/bin\/env )?([^\r\n]+)/m);
 				if (sheBangMatch) {
 					interpreter = sheBangMatch[1];
@@ -229,6 +240,24 @@ export class HooksService implements IHooksService {
 		} catch (err) {
 			return false;
 		}
+	}
+
+	private validateHookArguments(hookConstructor: Function): string[] {
+		let invalidArguments: string[] = [];
+
+		// We need to annotate the hook in order to have the arguments of the constructor.
+		annotate(hookConstructor);
+
+		_.each(hookConstructor.$inject.args, (argument: string) => {
+			try {
+				this.$injector.resolve(argument);
+			} catch (err) {
+				this.$logger.trace(`Cannot resolve ${argument}, reason: ${err}`);
+				invalidArguments.push(argument);
+			}
+		});
+
+		return invalidArguments;
 	}
 }
 $injector.register("hooksService", HooksService);
