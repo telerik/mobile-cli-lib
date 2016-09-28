@@ -11,7 +11,7 @@ export class HttpClient implements Server.IHttpClient {
 
 	constructor(private $logger: ILogger,
 		private $staticConfig: Config.IStaticConfig,
-		private $config: Config.IConfig) {}
+		private $config: Config.IConfig) { }
 
 	httpRequest(options: any, proxySettings?: IProxySettings): IFuture<Server.IResponse> {
 		return (() => {
@@ -48,7 +48,7 @@ export class HttpClient implements Server.IHttpClient {
 			options.headers = options.headers || {};
 			let headers = options.headers;
 
-			if(proxySettings || this.$config.USE_PROXY) {
+			if (proxySettings || this.$config.USE_PROXY) {
 				options.path = requestProto + "://" + options.host + options.path;
 				headers.Host = options.host;
 				options.host = (proxySettings && proxySettings.hostname) || this.$config.PROXY_HOSTNAME;
@@ -82,7 +82,16 @@ export class HttpClient implements Server.IHttpClient {
 				headers["Accept-Encoding"] = "gzip,deflate";
 			}
 
-			let result = new Future<Server.IResponse>();
+			let result = new Future<Server.IResponse>(),
+				timerId: number;
+
+			if (options.timeout) {
+				timerId = setTimeout(() => {
+					this.setResponseResult(result, timerId, { err: new Error(`Request to ${unmodifiedOptions.url} timed out.`) });
+				}, options.timeout);
+
+				delete options.timeout;
+			}
 
 			this.$logger.trace("httpRequest: %s", util.inspect(options));
 
@@ -107,12 +116,7 @@ export class HttpClient implements Server.IHttpClient {
 				if (pipeTo) {
 					pipeTo.on("finish", () => {
 						this.$logger.trace("httpRequest: Piping done. code = %d", response.statusCode.toString());
-						if(!result.isResolved()) {
-							result.return({
-								response: response,
-								headers: response.headers
-							});
-						}
+						this.setResponseResult(result, timerId, { response });
 					});
 
 					pipeTo = this.trackDownloadProgress(pipeTo);
@@ -128,28 +132,20 @@ export class HttpClient implements Server.IHttpClient {
 						let responseBody = data.join("");
 
 						if (successful || isRedirect) {
-							if(!result.isResolved()) {
-								result.return({
-									body: responseBody,
-									response: response,
-									headers: response.headers
-								});
-							}
+							this.setResponseResult(result, timerId, { body: responseBody, response });
 						} else {
 							let errorMessage = this.getErrorMessage(response, responseBody);
-							let theError: any = new Error(errorMessage);
-							theError.response = response;
-							theError.body = responseBody;
-							result.throw(theError);
+							let err: any = new Error(errorMessage);
+							err.response = response;
+							err.body = responseBody;
+							this.setResponseResult(result, timerId, { err });
 						}
 					});
 				}
 			});
 
-			request.on("error", (error: Error) => {
-				if(!result.isResolved()) {
-					result.throw(error);
-				}
+			request.on("error", (err: Error) => {
+				this.setResponseResult(result, timerId, { err });
 			});
 
 			this.$logger.trace("httpRequest: Sending:\n%s", this.$logger.prepare(body));
@@ -161,7 +157,7 @@ export class HttpClient implements Server.IHttpClient {
 			}
 
 			let response = result.wait();
-			if(helpers.isResponseRedirect(response.response)) {
+			if (helpers.isResponseRedirect(response.response)) {
 				if (response.response.statusCode === 303) {
 					unmodifiedOptions.method = "GET";
 				}
@@ -173,6 +169,24 @@ export class HttpClient implements Server.IHttpClient {
 
 			return response;
 		}).future<Server.IResponse>()();
+	}
+
+	private setResponseResult(result: IFuture<Server.IResponse>, timerId: number, resultData: { response?: Server.IRequestResponseData, body?: string, err?: Error }): void {
+		if (timerId) {
+			clearTimeout(timerId);
+			timerId = null;
+		}
+
+		if (!result.isResolved()) {
+			if (resultData.err) {
+				return result.throw(resultData.err);
+			}
+
+			let finalResult: any = resultData;
+			finalResult.headers = resultData.response.headers;
+
+			result.return(finalResult);
+		}
 	}
 
 	private trackDownloadProgress(pipeTo: NodeJS.WritableStream): NodeJS.ReadableStream {
