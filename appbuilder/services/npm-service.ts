@@ -169,12 +169,15 @@ export class NpmService implements INpmService {
 
 	public getPackageJsonFromNpmRegistry(packageName: string, version?: string): IFuture<any> {
 		return (() => {
+			const timeout = 6000;
 			let packageJsonContent: any;
 			version = version || "latest";
 			try {
-				let url = this.buildNpmRegistryUrl(packageName, version).wait();
+				let url = this.buildNpmRegistryUrl(packageName, version).wait(),
+					proxySettings = this.getNpmProxySettings().wait();
+
 				// This call will return error with message '{}' in case there's no such package.
-				let result = this.$httpClient.httpRequest(url, this.getNpmProxySettings().wait()).wait().body;
+				let result = this.$httpClient.httpRequest({ url, timeout }, proxySettings).wait().body;
 				packageJsonContent = JSON.parse(result);
 			} catch (err) {
 				this.$logger.trace("Error caught while checking the NPM Registry for plugin with id: %s", packageName);
