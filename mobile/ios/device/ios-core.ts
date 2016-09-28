@@ -90,9 +90,9 @@ class IOSCore implements Mobile.IiOSCore {
 	public static kCFStringEncodingUTF8 = 0x08000100;
 
 	private get CoreFoundationDir(): string {
-		if(this.$hostInfo.isWindows) {
+		if (this.$hostInfo.isWindows) {
 			return path.join(this.CommonProgramFilesPath, "Apple", "Apple Application Support");
-		} else if(this.$hostInfo.isDarwin) {
+		} else if (this.$hostInfo.isDarwin) {
 			return "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation";
 		}
 
@@ -100,9 +100,9 @@ class IOSCore implements Mobile.IiOSCore {
 	}
 
 	private get MobileDeviceDir(): string {
-		if(this.$hostInfo.isWindows) {
+		if (this.$hostInfo.isWindows) {
 			return path.join(this.CommonProgramFilesPath, "Apple", "Mobile Device Support");
-		} else if(this.$hostInfo.isDarwin) {
+		} else if (this.$hostInfo.isDarwin) {
 			return "/System/Library/PrivateFrameworks/MobileDevice.framework/MobileDevice";
 		}
 
@@ -120,14 +120,14 @@ class IOSCore implements Mobile.IiOSCore {
 	}
 
 	private adjustDllSearchPath(): void {
-		if(this.$hostInfo.isWindows) {
+		if (this.$hostInfo.isWindows) {
 			process.env.PATH = this.CoreFoundationDir + ";" + process.env.PATH;
 			process.env.PATH += ";" + this.MobileDeviceDir;
 		}
 	}
 
-	public getCoreFoundationLibrary(): {[key: string]: any} {
-		let coreFoundationDll = this.$hostInfo.isWindows ?  path.join(this.CoreFoundationDir, "CoreFoundation.dll") : this.CoreFoundationDir;
+	public getCoreFoundationLibrary(): { [key: string]: any } {
+		let coreFoundationDll = this.$hostInfo.isWindows ? path.join(this.CoreFoundationDir, "CoreFoundation.dll") : this.CoreFoundationDir;
 		let lib = ffi.DynamicLibrary(coreFoundationDll);
 
 		return {
@@ -139,13 +139,13 @@ class IOSCore implements Mobile.IiOSCore {
 			"CFNumberGetValue": ffi.ForeignFunction(lib.get("CFNumberGetValue"), CoreTypes.boolType, [CoreTypes.voidPtr, "uint", CoreTypes.voidPtr]),
 			"CFStringGetCStringPtr": ffi.ForeignFunction(lib.get("CFStringGetCStringPtr"), CoreTypes.charPtr, [CoreTypes.cfStringRef, "uint"]),
 			"CFStringGetCString": ffi.ForeignFunction(lib.get("CFStringGetCString"), CoreTypes.boolType, [CoreTypes.cfStringRef, CoreTypes.charPtr, "uint", "uint"]),
-			"CFStringGetLength":  ffi.ForeignFunction(lib.get("CFStringGetLength"), "ulong", [CoreTypes.cfStringRef]),
+			"CFStringGetLength": ffi.ForeignFunction(lib.get("CFStringGetLength"), "ulong", [CoreTypes.cfStringRef]),
 			"CFDictionaryGetCount": ffi.ForeignFunction(lib.get("CFDictionaryGetCount"), CoreTypes.intType, [CoreTypes.cfDictionaryRef]),
 			"CFDictionaryGetKeysAndValues": ffi.ForeignFunction(lib.get("CFDictionaryGetKeysAndValues"), "void", [CoreTypes.cfDictionaryRef, CoreTypes.ptrToVoidPtr, CoreTypes.ptrToVoidPtr]),
 			"CFDictionaryCreate": ffi.ForeignFunction(lib.get("CFDictionaryCreate"), CoreTypes.cfDictionaryRef, [CoreTypes.voidPtr, CoreTypes.ptrToVoidPtr, CoreTypes.ptrToVoidPtr, "int", ref.refType(this.cfDictionaryKeyCallBacks), ref.refType(this.cfDictionaryValueCallBacks)]),
 			"kCFTypeDictionaryKeyCallBacks": lib.get("kCFTypeDictionaryKeyCallBacks"),
 			"kCFTypeDictionaryValueCallBacks": lib.get("kCFTypeDictionaryValueCallBacks"),
-			"CFRunLoopRunInMode": ffi.ForeignFunction(lib.get("CFRunLoopRunInMode"),CoreTypes.intType, [CoreTypes.cfStringRef, CoreTypes.cfTimeInterval, CoreTypes.boolType]),
+			"CFRunLoopRunInMode": ffi.ForeignFunction(lib.get("CFRunLoopRunInMode"), CoreTypes.intType, [CoreTypes.cfStringRef, CoreTypes.cfTimeInterval, CoreTypes.boolType]),
 			"kCFRunLoopDefaultMode": this.getForeignPointer(lib, "kCFRunLoopDefaultMode", ref.types.void),
 			"kCFRunLoopCommonModes": this.getForeignPointer(lib, "kCFRunLoopCommonModes", ref.types.void),
 			"CFRunLoopTimerCreate": ffi.ForeignFunction(lib.get("CFRunLoopTimerCreate"), CoreTypes.voidPtr, [CoreTypes.voidPtr, CoreTypes.doubleType, CoreTypes.doubleType, CoreTypes.uintType, CoreTypes.uintType, CoreTypes.cf_run_loop_timer_callback, CoreTypes.voidPtr]),
@@ -170,7 +170,7 @@ class IOSCore implements Mobile.IiOSCore {
 		};
 	}
 
-	public getMobileDeviceLibrary(): {[key: string]: any} {
+	public getMobileDeviceLibrary(): { [key: string]: any } {
 
 		let mobileDeviceDll = this.$hostInfo.isWindows ? path.join(this.MobileDeviceDir, "MobileDevice.dll") : this.MobileDeviceDir;
 		let lib = ffi.DynamicLibrary(mobileDeviceDll);
@@ -193,12 +193,12 @@ class IOSCore implements Mobile.IiOSCore {
 			"AFCConnectionOpen": ffi.ForeignFunction(lib.get("AFCConnectionOpen"), "uint", ["int", "uint", ref.refType(CoreTypes.afcConnectionRef)]),
 			"AFCConnectionClose": ffi.ForeignFunction(lib.get("AFCConnectionClose"), "uint", [CoreTypes.afcConnectionRef]),
 			"AFCDirectoryCreate": ffi.ForeignFunction(lib.get("AFCDirectoryCreate"), "uint", [CoreTypes.afcConnectionRef, "string"]),
-			"AFCFileInfoOpen":  ffi.ForeignFunction(lib.get("AFCFileInfoOpen"), "uint", [CoreTypes.afcConnectionRef, "string", CoreTypes.cfDictionaryRef]),
+			"AFCFileInfoOpen": ffi.ForeignFunction(lib.get("AFCFileInfoOpen"), "uint", [CoreTypes.afcConnectionRef, "string", CoreTypes.cfDictionaryRef]),
 			"AFCFileRefOpen": (this.$hostInfo.isDarwin || process.arch === "x64") ? ffi.ForeignFunction(lib.get("AFCFileRefOpen"), "uint", [CoreTypes.afcConnectionRef, "string", "uint", ref.refType(CoreTypes.afcFileRef)]) : ffi.ForeignFunction(lib.get("AFCFileRefOpen"), "uint", [CoreTypes.afcConnectionRef, "string", "uint", "uint", ref.refType(CoreTypes.afcFileRef)]),
 			"AFCFileRefClose": ffi.ForeignFunction(lib.get("AFCFileRefClose"), "uint", [CoreTypes.afcConnectionRef, CoreTypes.afcFileRef]),
 			"AFCFileRefWrite": ffi.ForeignFunction(lib.get("AFCFileRefWrite"), "uint", [CoreTypes.afcConnectionRef, CoreTypes.afcFileRef, CoreTypes.voidPtr, "uint"]),
 			"AFCFileRefRead": ffi.ForeignFunction(lib.get("AFCFileRefRead"), "uint", [CoreTypes.afcConnectionRef, CoreTypes.afcFileRef, CoreTypes.voidPtr, CoreTypes.uintPtr]),
-			"AFCRemovePath": ffi.ForeignFunction(lib.get("AFCRemovePath"), "uint", [CoreTypes.afcConnectionRef,  "string"]),
+			"AFCRemovePath": ffi.ForeignFunction(lib.get("AFCRemovePath"), "uint", [CoreTypes.afcConnectionRef, "string"]),
 			"AFCDirectoryOpen": ffi.ForeignFunction(lib.get("AFCDirectoryOpen"), CoreTypes.afcError, [CoreTypes.afcConnectionRef, "string", ref.refType(CoreTypes.afcDirectoryRef)]),
 			"AFCDirectoryRead": ffi.ForeignFunction(lib.get("AFCDirectoryRead"), CoreTypes.afcError, [CoreTypes.afcConnectionRef, CoreTypes.afcDirectoryRef, ref.refType(CoreTypes.charPtr)]),
 			"AFCDirectoryClose": ffi.ForeignFunction(lib.get("AFCDirectoryClose"), CoreTypes.afcError, [CoreTypes.afcConnectionRef, CoreTypes.afcDirectoryRef]),
@@ -213,7 +213,7 @@ class IOSCore implements Mobile.IiOSCore {
 		};
 	}
 
-	public static getWinSocketLibrary(): {[key: string]: any} {
+	public static getWinSocketLibrary(): { [key: string]: any } {
 		let winSocketDll = path.join(process.env.SystemRoot, "System32", "ws2_32.dll");
 
 		return ffi.Library(winSocketDll, {
@@ -227,11 +227,11 @@ class IOSCore implements Mobile.IiOSCore {
 }
 $injector.register("iOSCore", IOSCore);
 
-export class CoreFoundation implements  Mobile.ICoreFoundation {
+export class CoreFoundation implements Mobile.ICoreFoundation {
 	private coreFoundationLibrary: any;
 
 	constructor($iOSCore: Mobile.IiOSCore,
-		private $errors: IErrors){
+		private $errors: IErrors) {
 		this.coreFoundationLibrary = $iOSCore.getCoreFoundationLibrary();
 	}
 
@@ -276,7 +276,7 @@ export class CoreFoundation implements  Mobile.ICoreFoundation {
 	}
 
 	public runLoopRemoveTimer(r1: NodeBuffer, timer: NodeBuffer, mode: NodeBuffer): void {
-		this.coreFoundationLibrary.CFRunLoopRemoveTimer(r1,  timer, mode);
+		this.coreFoundationLibrary.CFRunLoopRemoveTimer(r1, timer, mode);
 	}
 
 	public runLoopStop(r1: any): void {
@@ -300,7 +300,7 @@ export class CoreFoundation implements  Mobile.ICoreFoundation {
 	}
 
 	public createCFString(str: string): NodeBuffer {
-		return this.stringCreateWithCString(null, str, IOSCore.kCFStringEncodingUTF8 );
+		return this.stringCreateWithCString(null, str, IOSCore.kCFStringEncodingUTF8);
 	}
 
 	public dictionaryCreate(allocator: NodeBuffer, keys: NodeBuffer, values: NodeBuffer, count: number, dictionaryKeyCallbacks: NodeBuffer, dictionaryValueCallbacks: NodeBuffer): NodeBuffer {
@@ -331,7 +331,7 @@ export class CoreFoundation implements  Mobile.ICoreFoundation {
 		return this.coreFoundationLibrary.CFGetTypeID(buffer);
 	}
 
-	public propertyListCreateData(allocator: NodeBuffer, propertyListRef: NodeBuffer , propertyListFormat: number, optionFlags: number, error: NodeBuffer): NodeBuffer {
+	public propertyListCreateData(allocator: NodeBuffer, propertyListRef: NodeBuffer, propertyListFormat: number, optionFlags: number, error: NodeBuffer): NodeBuffer {
 		return this.coreFoundationLibrary.CFPropertyListCreateData(allocator, propertyListRef, propertyListFormat, optionFlags, error);
 	}
 
@@ -343,7 +343,7 @@ export class CoreFoundation implements  Mobile.ICoreFoundation {
 		return this.coreFoundationLibrary.CFStringGetTypeID();
 	}
 
-	public dataGetTypeID():  number {
+	public dataGetTypeID(): number {
 		return this.coreFoundationLibrary.CFDataGetTypeID();
 	}
 
@@ -387,7 +387,7 @@ export class CoreFoundation implements  Mobile.ICoreFoundation {
 				let cfstrLength = this.stringGetLength(cfstr);
 				let length = cfstrLength + 1;
 				let stringBuffer = new Buffer(length);
-				let status = this.stringGetCString(cfstr, stringBuffer, length, IOSCore.kCFStringEncodingUTF8 );
+				let status = this.stringGetCString(cfstr, stringBuffer, length, IOSCore.kCFStringEncodingUTF8);
 				if (status) {
 					result = stringBuffer.toString("utf8", 0, cfstrLength);
 				}
@@ -409,13 +409,13 @@ export class CoreFoundation implements  Mobile.ICoreFoundation {
 
 		let offset = 0;
 
-		for(let i=0; i< len; i++) {
+		for (let i = 0; i < len; i++) {
 			let cfKey = this.createCFString(keys[i]);
 			let cfValue: any;
 
-			if(typeof values[i] === "string") {
+			if (typeof values[i] === "string") {
 				cfValue = this.createCFString(values[i]);
-			} else if(values[i] instanceof Buffer) {
+			} else if (values[i] instanceof Buffer) {
 				cfValue = this.dataCreate(null, values[i], values[i].length);
 			} else {
 				cfValue = this.cfTypeFrom(values[i]);
@@ -432,13 +432,13 @@ export class CoreFoundation implements  Mobile.ICoreFoundation {
 	public cfTypeTo(dataRef: NodeBuffer): any {
 		let typeId = this.getTypeID(dataRef);
 
-		if(typeId === this.stringGetTypeID()) {
+		if (typeId === this.stringGetTypeID()) {
 			return this.convertCFStringToCString(dataRef);
-		} else if(typeId === this.dataGetTypeID()) {
+		} else if (typeId === this.dataGetTypeID()) {
 			let len = this.dataGetLength(dataRef);
 			let retval = ref.reinterpret(this.dataGetBytePtr(dataRef), len);
 			return retval;
-		} else if(typeId === this.dictionaryGetTypeID()) {
+		} else if (typeId === this.dictionaryGetTypeID()) {
 			let count = this.dictionaryGetCount(dataRef);
 
 			let keys = new Buffer(count * CoreTypes.pointerSize);
@@ -448,7 +448,7 @@ export class CoreFoundation implements  Mobile.ICoreFoundation {
 			let jsDictionary = Object.create(null);
 			let offset = 0;
 
-			for(let i=0; i<count; i++) {
+			for (let i = 0; i < count; i++) {
 				let keyPointer = ref.readPointer(keys, offset, CoreTypes.pointerSize);
 				let valuePointer = ref.readPointer(values, offset, CoreTypes.pointerSize);
 				offset += CoreTypes.pointerSize;
@@ -464,7 +464,7 @@ export class CoreFoundation implements  Mobile.ICoreFoundation {
 		}
 	}
 
-	public dictToPlistEncoding(dict: {[key: string]: {}}, format: number): NodeBuffer {
+	public dictToPlistEncoding(dict: { [key: string]: {} }, format: number): NodeBuffer {
 
 		let cfDict = this.cfTypeFrom(dict);
 		let cfData = this.propertyListCreateData(null, cfDict, format, 0, null);
@@ -476,9 +476,9 @@ export class CoreFoundation implements  Mobile.ICoreFoundation {
 		let retval: NodeBuffer = null;
 
 		let cfData = this.dataCreate(null, str, str.length);
-		if(cfData) {
+		if (cfData) {
 			let cfDict = this.propertyListCreateWithData(null, cfData, CoreTypes.kCFPropertyListImmutable, null, null);
-			if(cfDict) {
+			if (cfDict) {
 				retval = this.cfTypeTo(cfDict);
 			}
 		}
@@ -558,7 +558,7 @@ export class MobileDevice implements Mobile.IMobileDevice {
 	}
 
 	public deviceMountImage(devicePointer: NodeBuffer, imagePath: NodeBuffer, options: NodeBuffer, mountCallBack: NodeBuffer): number {
-		if(this.$hostInfo.isDarwin) {
+		if (this.$hostInfo.isDarwin) {
 			return this.mobileDeviceLibrary.AMDeviceMountImage(devicePointer, imagePath, options, mountCallBack, null);
 		}
 
@@ -593,10 +593,10 @@ export class MobileDevice implements Mobile.IMobileDevice {
 		return this.mobileDeviceLibrary.AFCFileInfoOpen(afcConnection, path, afcDirectory);
 	}
 
-	public afcFileRefOpen(afcConnection: NodeBuffer, path: string,  mode: number, afcFileRef: NodeBuffer): number {
-		if(this.$hostInfo.isWindows && process.arch === "ia32") {
+	public afcFileRefOpen(afcConnection: NodeBuffer, path: string, mode: number, afcFileRef: NodeBuffer): number {
+		if (this.$hostInfo.isWindows && process.arch === "ia32") {
 			return this.mobileDeviceLibrary.AFCFileRefOpen(afcConnection, path, mode, 0, afcFileRef);
-		} else if(this.$hostInfo.isDarwin || process.arch === "x64") {
+		} else if (this.$hostInfo.isDarwin || process.arch === "x64") {
 			return this.mobileDeviceLibrary.AFCFileRefOpen(afcConnection, path, mode, afcFileRef);
 		}
 	}
@@ -621,7 +621,7 @@ export class MobileDevice implements Mobile.IMobileDevice {
 		return this.mobileDeviceLibrary.AFCDirectoryOpen(afcConnection, path, afcDirectory);
 	}
 
-	public afcDirectoryRead(afcConnection: NodeBuffer, afcDirectory: NodeBuffer,  name: NodeBuffer): number {
+	public afcDirectoryRead(afcConnection: NodeBuffer, afcDirectory: NodeBuffer, name: NodeBuffer): number {
 		return this.mobileDeviceLibrary.AFCDirectoryRead(afcConnection, afcDirectory, name);
 	}
 
@@ -640,7 +640,7 @@ export class MobileDevice implements Mobile.IMobileDevice {
 	public uSBMuxConnectByPort(connectionId: number, port: number, socketRef: NodeBuffer): number {
 		return this.mobileDeviceLibrary.USBMuxConnectByPort(connectionId, port, socketRef);
 	}
- }
+}
 $injector.register("mobileDevice", MobileDevice);
 
 export class WinSocket implements Mobile.IiOSDeviceSocket {
@@ -682,11 +682,11 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 	}
 
 	public readSystemLog(printData: any): void {
-		let serviceArg: number|string = this.service || '';
-		let formatArg: number|string = this.format || '';
+		let serviceArg: number | string = this.service || '';
+		let formatArg: number | string = this.format || '';
 		let sysLog = this.$childProcess.fork(path.join(__dirname, "ios-sys-log.js"),
 												[this.$staticConfig.PATH_TO_BOOTSTRAP, serviceArg.toString(), formatArg.toString()],
-												{silent: true});
+												{ silent: true });
 		sysLog.on('message', (data: any) => {
 			printData(data);
 		});
@@ -694,12 +694,12 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 
 	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData | Mobile.IiOSSocketResponseData[]> {
 		return (() => {
-			if(this.format === CoreTypes.kCFPropertyListXMLFormat_v1_0) {
+			if (this.format === CoreTypes.kCFPropertyListXMLFormat_v1_0) {
 				let message = this.receiveMessageCore();
 				return plist.parse(message.toString());
 			}
 
-			if(this.format === CoreTypes.kCFPropertyListBinaryFormat_v1_0) {
+			if (this.format === CoreTypes.kCFPropertyListBinaryFormat_v1_0) {
 				return this.receiveBinaryMessage();
 			}
 
@@ -710,11 +710,11 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 	public sendMessage(data: any): void {
 		let message: NodeBuffer = null;
 
-		if(typeof(data) === "string") {
+		if (typeof (data) === "string") {
 			message = new Buffer(data);
 		} else {
-			let payload:NodeBuffer = new Buffer(plistlib.toString(this.createPlist(data)));
-			let packed:any = bufferpack.pack(">i", [payload.length]);
+			let payload: NodeBuffer = new Buffer(plistlib.toString(this.createPlist(data)));
+			let packed: any = bufferpack.pack(">i", [payload.length]);
 			message = Buffer.concat([packed, payload]);
 		}
 
@@ -724,9 +724,9 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 	}
 
 	public sendAll(data: NodeBuffer): void {
-		while(data.length !== 0) {
+		while (data.length !== 0) {
 			let result = this.sendCore(data);
-			if(result < 0) {
+			if (result < 0) {
 				this.$errors.fail("Error sending data: %s", result);
 			}
 			data = data.slice(result);
@@ -754,18 +754,18 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 
 	private receiveBinaryMessage(): Mobile.IiOSSocketResponseData[] {
 		let result: Mobile.IiOSSocketResponseData[] = [];
-		while(true) {
+		while (true) {
 			let partialReply = this.receiveMessageCore();
-			if(!partialReply.length) {
+			if (!partialReply.length) {
 				break;
 			}
 
 			let currentResult = bplistParser.parseBuffer(partialReply)[0];
-			if(currentResult.Status === "Complete" || !currentResult.Status) {
+			if (currentResult.Status === "Complete" || !currentResult.Status) {
 				break;
 			}
 
-			if(currentResult.Error) {
+			if (currentResult.Error) {
 				throw new Error(currentResult.Error);
 			}
 
@@ -803,8 +803,8 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 		return writtenBytes;
 	}
 
-	private createPlist(data: IDictionary<any>) : {} {
-		let plistData: {type:string; value:any} = {
+	private createPlist(data: IDictionary<any>): {} {
+		let plistData: { type: string; value: any } = {
 			type: "dict", value: this.getDataFromObject(data)
 		};
 
@@ -817,7 +817,7 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 		let keys = _.keys(data);
 		let values = _.values(data);
 		let plistData: any = {};
-		for(let i = 0; i < keys.length; i++) {
+		for (let i = 0; i < keys.length; i++) {
 			plistData[keys[i]] = this.parseValue(values[i]);
 		}
 
@@ -828,17 +828,17 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 		let type = "",
 			value: any;
 
-		if(data instanceof Buffer) {
+		if (data instanceof Buffer) {
 			type = "data";
 			value = data.toString("base64");
 		} else if (data instanceof Array) {
 			type = "array";
 			let objs = _.map(data, v => this.parseValue(v));
 			value = objs;
-		} else if(data instanceof Object) {
+		} else if (data instanceof Object) {
 			type = "dict";
 			value = this.getDataFromObject(data);
-		} else if(typeof(data) === "number" ) {
+		} else if (typeof (data) === "number") {
 			type = "integer";
 			value = data;
 		} else {
@@ -851,18 +851,18 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 }
 
 enum ReadState {
-    Length,
-    Plist
+	Length,
+	Plist
 }
 
 class PosixSocket implements Mobile.IiOSDeviceSocket {
-    private socket: net.Socket = null;
+	private socket: net.Socket = null;
 
-    private buffer: Buffer = new Buffer(0);
+	private buffer: Buffer = new Buffer(0);
 
-    // Initial reading state: We expect to read a 4 bytes length first
-    private state: ReadState = ReadState.Length;
-    private length: number = 4;
+	// Initial reading state: We expect to read a 4 bytes length first
+	private state: ReadState = ReadState.Length;
+	private length: number = 4;
 
 	constructor(service: number,
 		private format: number,
@@ -873,7 +873,7 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 		this.socket = new net.Socket({ fd: service });
 	}
 
-	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData|Mobile.IiOSSocketResponseData[]> {
+	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData | Mobile.IiOSSocketResponseData[]> {
 		let result = new Future<Mobile.IiOSSocketResponseData>();
 		let messages: Mobile.IiOSSocketResponseData[] = [];
 
@@ -966,7 +966,7 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 				}
 			})
 			.on("error", (error: Error) => {
-				if(!result.isResolved()) {
+				if (!result.isResolved()) {
 					result.throw(error);
 				}
 			});
@@ -977,8 +977,8 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 	public readSystemLog(action: (_data: string) => void) {
 		this.socket
 			.on("data", (data: NodeBuffer) => {
-				let output = ref.readCString(data, 0);
-				action(output);
+				// We need to use .toString() here instead of ref.readCString() because readCString reads the content of the buffer until the first \0 and sometimes the buffer may contain more than one \0.
+				action(data.toString());
 			})
 			.on("end", () => {
 				this.close();
@@ -990,7 +990,7 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 	}
 
 	public sendMessage(message: any, format?: number): void {
-		if(typeof(message) === "string") {
+		if (typeof (message) === "string") {
 			this.socket.write(message);
 		} else {
 			let data = this.$coreFoundation.dictToPlistEncoding(message, format);
@@ -1019,20 +1019,20 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 		this.socket.destroy();
 		this.$errors.verifyHeap("socket close");
 	}
- }
+}
 
 export class PlistService implements Mobile.IiOSDeviceSocket {
-	private socket: Mobile.IiOSDeviceSocket  = null;
+	private socket: Mobile.IiOSDeviceSocket = null;
 
 	constructor(private service: number,
 		private format: number,
 		private $injector: IInjector,
 		private $processService: IProcessService,
 		private $hostInfo: IHostInfo) {
-		if(this.$hostInfo.isWindows) {
-			this.socket = this.$injector.resolve(WinSocket, {service: this.service, format: this.format });
-		} else if(this.$hostInfo.isDarwin) {
-			this.socket = this.$injector.resolve(PosixSocket, {service: this.service, format: this.format });
+		if (this.$hostInfo.isWindows) {
+			this.socket = this.$injector.resolve(WinSocket, { service: this.service, format: this.format });
+		} else if (this.$hostInfo.isDarwin) {
+			this.socket = this.$injector.resolve(PosixSocket, { service: this.service, format: this.format });
 		}
 		this.$processService.attachToProcessExitSignals(this, this.close);
 	}
@@ -1045,7 +1045,7 @@ export class PlistService implements Mobile.IiOSDeviceSocket {
 		this.socket.readSystemLog(action);
 	}
 
-	public sendMessage(message: any) : void {
+	public sendMessage(message: any): void {
 		this.socket.sendMessage(message, this.format);
 	}
 
@@ -1082,16 +1082,16 @@ function getCharacterCodePoint(ch: string) {
 class GDBStandardOutputAdapter extends stream.Transform {
 	private utf8StringDecoder = new string_decoder.StringDecoder("utf8");
 
-	constructor(opts?:stream.TransformOptions) {
+	constructor(opts?: stream.TransformOptions) {
 		super(opts);
 	}
 
-	public _transform(packet:any, encoding:string, done:Function):void {
+	public _transform(packet: any, encoding: string, done: Function): void {
 		try {
 			let result = "";
 
 			for (let i = 0; i < packet.length; i++) {
-				if(packet[i] === getCharacterCodePoint("$")) {
+				if (packet[i] === getCharacterCodePoint("$")) {
 					let start = ++i;
 
 					while (packet[i] !== getCharacterCodePoint("#")) {
@@ -1103,7 +1103,7 @@ class GDBStandardOutputAdapter extends stream.Transform {
 					i++;
 					i++;
 
-					if(!(packet[start] === getCharacterCodePoint("O") && packet[start + 1] !== getCharacterCodePoint("K"))) {
+					if (!(packet[start] === getCharacterCodePoint("O") && packet[start + 1] !== getCharacterCodePoint("K"))) {
 						continue;
 					}
 					start++;
@@ -1122,22 +1122,22 @@ class GDBStandardOutputAdapter extends stream.Transform {
 }
 
 class GDBSignalWatcher extends stream.Writable {
-	constructor(opts?:stream.WritableOptions) {
+	constructor(opts?: stream.WritableOptions) {
 		super(opts);
 	}
 
-	public _write(packet:any, encoding:string, callback:Function) {
+	public _write(packet: any, encoding: string, callback: Function) {
 		try {
 			for (let i = 0; i < packet.length - 2; i++) {
-				if(packet[i] === getCharacterCodePoint("$") && (packet[i + 1] === getCharacterCodePoint("T") || packet[i + 1] === getCharacterCodePoint("S"))) {
+				if (packet[i] === getCharacterCodePoint("$") && (packet[i + 1] === getCharacterCodePoint("T") || packet[i + 1] === getCharacterCodePoint("S"))) {
 					// SIGKILL
-					if(packet[i + 2] === getCharacterCodePoint("9")) {
+					if (packet[i + 2] === getCharacterCodePoint("9")) {
 						process.exit(1);
 					}
 				}
 			}
 			callback(null);
-		} catch(e) {
+		} catch (e) {
 			callback(e);
 		}
 	}
@@ -1153,8 +1153,8 @@ export class GDBServer implements Mobile.IGDBServer {
 		private $options: ICommonOptions,
 		private $logger: ILogger,
 		private $errors: IErrors) {
-		if(this.$hostInfo.isWindows) {
-			let winSocket = this.$injector.resolve(WinSocket, {service: this.socket, format: 0});
+		if (this.$hostInfo.isWindows) {
+			let winSocket = this.$injector.resolve(WinSocket, { service: this.socket, format: 0 });
 			this.socket = {
 				write: (message: string): void => {
 					winSocket.sendMessage(message);
@@ -1186,7 +1186,7 @@ export class GDBServer implements Mobile.IGDBServer {
 
 			this.awaitResponse("qLaunchSuccess").wait();
 
-			if(this.$hostInfo.isWindows) {
+			if (this.$hostInfo.isWindows) {
 				this.send("vCont;c");
 			} else {
 				if (this.$options.justlaunch) {
@@ -1284,7 +1284,7 @@ export class GDBServer implements Mobile.IGDBServer {
 				isDataReceived = true;
 				this.socket.removeListener("data", dataCallback);
 				clearInterval(timer);
-				if(!future.isResolved()) {
+				if (!future.isResolved()) {
 					future.return(data.toString());
 				}
 			}
@@ -1298,7 +1298,7 @@ export class GDBServer implements Mobile.IGDBServer {
 
 	private encodeData(packet: string): string {
 		let sum = 0;
-		for(let i = 0; i < packet.length; i++) {
+		for (let i = 0; i < packet.length; i++) {
 			sum += getCharacterCodePoint(packet[i]);
 		}
 		sum = sum & 255;
