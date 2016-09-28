@@ -5,8 +5,7 @@ import {IOSSimulator} from "./../ios/simulator/ios-simulator-device";
 export class IOSSimulatorDiscovery extends DeviceDiscovery {
 	private cachedSimulator: Mobile.IiSimDevice;
 
-	constructor(private $childProcess: IChildProcess,
-		private $injector: IInjector,
+	constructor(private $injector: IInjector,
 		private $iOSSimResolver: Mobile.IiOSSimResolver,
 		private $hostInfo: IHostInfo) {
 		super();
@@ -18,9 +17,9 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 
 	public checkForDevices(future?: IFuture<void>): IFuture<void> {
 		if (this.$hostInfo.isDarwin) {
-			if (this.isSimulatorRunning().wait()) {
-				let currentSimulator = this.$iOSSimResolver.iOSSim.getRunningSimulator();
+			let currentSimulator = this.$iOSSimResolver.iOSSim.getRunningSimulator();
 
+			if (currentSimulator) {
 				if (!this.cachedSimulator) {
 					this.createAndAddDevice(currentSimulator);
 				} else if (this.cachedSimulator.id !== currentSimulator.id) {
@@ -41,20 +40,10 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 		return future || Future.fromResult();
 	}
 
-	private isSimulatorRunning(): IFuture<boolean> {
-		return (() => {
-			try {
-				let output = this.$childProcess.exec("ps cax | grep launchd_sim").wait();
-				return output.indexOf('launchd_sim') !== -1;
-			} catch(e) {
-				return false;
-			}
-		}).future<boolean>()();
-	}
-
 	private createAndAddDevice(simulator: Mobile.IiSimDevice): void {
 		this.cachedSimulator = _.cloneDeep(simulator);
-		this.addDevice(this.$injector.resolve(IOSSimulator, {simulator: this.cachedSimulator}));
+		this.addDevice(this.$injector.resolve(IOSSimulator, { simulator: this.cachedSimulator }));
 	}
 }
+
 $injector.register("iOSSimulatorDiscovery", IOSSimulatorDiscovery);
