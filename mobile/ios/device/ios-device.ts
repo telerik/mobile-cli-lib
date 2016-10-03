@@ -123,7 +123,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 
 	private validateResult(result: number, error: string) {
 		if (result !== 0) {
-			this.$errors.fail(util.format("%s. Result code is: %s", error, result));
+			this.$errors.fail({ formatStr: `${error}. Result code is: ${result}`, errorCode: result });
 		} else {
 			this.deviceInfo.status = constants.CONNECTED_STATUS;
 		}
