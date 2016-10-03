@@ -13,6 +13,9 @@ export class MobileServices {
 	public static SYSLOG: string = "com.apple.syslog_relay";
 	public static MOBILE_IMAGE_MOUNTER: string = "com.apple.mobile.mobile_image_mounter";
 	public static DEBUG_SERVER: string = "com.apple.debugserver";
+
+	// kAMDNoWifiSyncSupportError https://github.com/samdmarshall/SDMMobileDevice/blob/master/Framework/MobileDevice/Error/SDMMD_Error.h
+	public static NO_WIFI_SYNC_ERROR_CODE = 3892314239;
 }
 
 export class AfcBase {
@@ -274,8 +277,7 @@ export class InstallationProxyClient {
 			let devicePath = path.join("PublicStaging", path.basename(packageFile));
 
 			afcClient.transferPackage(packageFile, devicePath).wait();
-			let installationService = this.device.startService(MobileServices.INSTALLATION_PROXY);
-			this.plistService = this.getPlistService(installationService);
+			this.plistService = this.getPlistService();
 
 			this.plistService.sendMessage({
 				Command: "Install",
@@ -287,8 +289,7 @@ export class InstallationProxyClient {
 
 	public sendMessage(message: any): IFuture<any> {
 		return (() => {
-			let service = this.device.startService(MobileServices.INSTALLATION_PROXY);
-			this.plistService = this.getPlistService(service);
+			this.plistService = this.getPlistService();
 			this.plistService.sendMessage(message);
 
 			let response = this.plistService.receiveMessage().wait();
@@ -306,8 +307,26 @@ export class InstallationProxyClient {
 		}
 	}
 
-	private getPlistService(service: number): Mobile.IiOSDeviceSocket {
+	private getPlistService(): Mobile.IiOSDeviceSocket {
+		let service = this.getInstallationService();
 		return this.$injector.resolve(iOSCore.PlistService, { service: service,  format: iOSCore.CoreTypes.kCFPropertyListBinaryFormat_v1_0 });
+	}
+
+	private getInstallationService(): number {
+		let service: number;
+		try {
+			service = this.device.startService(MobileServices.INSTALLATION_PROXY);
+		} catch (err) {
+			if (err.code === MobileServices.NO_WIFI_SYNC_ERROR_CODE) {
+				this.$logger.trace(`Unable to start ${MobileServices.INSTALLATION_PROXY}. Looks like the problem is with WIFI sync: ${err.message}`);
+				this.$logger.printMarkdown("Unable to start installation service. Looks like `Sync over Wi-Fi` option in iTunes is enabled. " +
+					"Try disabling it, reconnect the device and execute your command again.");
+			}
+
+			this.$errors.failWithoutHelp(err);
+		}
+
+		return service;
 	}
 }
 $injector.register("installationProxyClient", InstallationProxyClient);
