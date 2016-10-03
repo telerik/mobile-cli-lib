@@ -2,7 +2,6 @@ import {ApplicationManagerBase} from "../../application-manager-base";
 import Future = require("fibers/future");
 import * as path from "path";
 import * as temp from "temp";
-import { ChildProcess } from "child_process";
 
 export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 	constructor(private iosSim: any,
@@ -10,7 +9,8 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		private $options: ICommonOptions,
 		private $fs: IFileSystem,
 		private $bplistParser: IBinaryPlistParser,
-		private $processService: IProcessService,
+		private $iOSSimulatorLogProvider: Mobile.IiOSSimulatorLogProvider,
+		private $deviceLogProvider: Mobile.IDeviceLogProvider,
 		$logger: ILogger) {
 		super($logger);
 	}
@@ -42,9 +42,11 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 	public startApplication(appIdentifier: string): IFuture<void> {
 		return (() => {
 			let launchResult = this.iosSim.startApplication(this.identifier, appIdentifier).wait();
+
 			if (!this.$options.justlaunch) {
-				let childProcess: ChildProcess = this.iosSim.printDeviceLog(this.identifier, launchResult);
-				this.$processService.attachToProcessExitSignals(this, childProcess.kill);
+				let pid = launchResult.split(":")[1].trim();
+				this.$deviceLogProvider.setApplictionPidForDevice(this.identifier, pid);
+				this.$iOSSimulatorLogProvider.startLogProcess(this.identifier);
 			}
 
 		}).future<void>()();

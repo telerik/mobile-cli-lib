@@ -139,9 +139,58 @@ declare module Mobile {
 		start(deviceIdentifier: string): void;
 	}
 
+	/**
+	 * Describes methods for providing device logs to a specific consumer.
+	 */
 	interface IDeviceLogProvider {
+		/**
+		 * Logs data in the specific way for the consumer.
+		 * @param {string} line String from the device logs.
+		 * @param {string} platform The platform of the device (for example iOS or Android).
+		 * @param {string} deviceIdentifier The unique identifier of the device.
+		 * @returns {void}
+		 */
 		logData(line: string, platform: string, deviceIdentifier: string): void;
+
+		/**
+		 * Sets the level of logging that will be used.
+		 * @param {string} level The level of logs - could be INFO or FULL.
+		 * @param {string} deviceIdentifier @optional The unique identifier of the device. When it is passed, only it's logging level is changed.
+		 */
 		setLogLevel(level: string, deviceIdentifier?: string): void;
+
+		/**
+		 * Sets the PID of the application on the specified device.
+		 * @param {string} deviceIdentifier The unique identifier of the device.
+		 * @param {string} pid The Process ID of the currently running application for which we need the logs.
+		 */
+		setApplictionPidForDevice(deviceIdentifier: string, pid: string): void;
+	}
+
+	/**
+	 * Describes different options for filtering device logs.
+	 */
+	interface IDeviceLogOptions {
+		/**
+		 * Process id of the application on the device.
+		 */
+		applicationPid: string;
+
+		/**
+		 * Selected log level for the current device. It can be INFO or FULL.
+		 */
+		logLevel: string;
+	}
+
+	/**
+	 * Describes required methods for getting iOS Simulator's logs.
+	 */
+	interface IiOSSimulatorLogProvider {
+		/**
+		 * Starts the process for getting simulator logs and sends collected data to deviceLogProvider, which should decide how to show it to the user.
+		 * @param {string} deviceIdentifier The unique identifier of the device.
+		 */
+		startLogProcess(deviceIdentifier: string): void;
 	}
 
 	/**
@@ -158,10 +207,11 @@ declare module Mobile {
 		 * Filters data for specified platform.
 		 * @param {string} platform The platform for which is the device log.
 		 * @param {string} data The input data for filtering.
+		 * @param {string} pid @optional The application PID for this device.
 		 * @param {string} logLevel @optional The logging level based on which input data will be filtered.
 		 * @return {string} The filtered result based on the input or null when the input data shouldn't be shown.
 		 */
-		filterData(platform: string, data: string, logLevel?: string): string;
+		filterData(platform: string, data: string, pid?: string, logLevel?: string): string;
 	}
 
 	/**
@@ -172,9 +222,10 @@ declare module Mobile {
 		 * Filters passed string data based on the passed logging level.
 		 * @param {string} data The string data that will be checked based on the logging level.
 		 * @param {string} logLevel Selected logging level.
+		 * @param {string} pid The Process ID of the currently running application for which we need the logs.
 		 * @return {string} The filtered result based on the input or null when the input data shouldn't be shown.
 		 */
-		filterData(data: string, logLevel: string): string;
+		filterData(data: string, logLevel: string, pid: string): string;
 	}
 
 	interface ILoggingLevels {

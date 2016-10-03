@@ -9,7 +9,8 @@ export class IOSSimulator implements Mobile.IiOSSimulator {
 	constructor(private simulator: Mobile.IiSimDevice,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $injector: IInjector,
-		private $iOSSimResolver: Mobile.IiOSSimResolver) { }
+		private $iOSSimResolver: Mobile.IiOSSimResolver,
+		private $iOSSimulatorLogProvider: Mobile.IiOSSimulatorLogProvider) { }
 
 	public get deviceInfo(): Mobile.IDeviceInfo {
 		return {
@@ -51,6 +52,6 @@ export class IOSSimulator implements Mobile.IiOSSimulator {
 	}
 
 	public openDeviceLogStream(): void {
-		return this.$iOSSimResolver.iOSSim.printDeviceLog(this.deviceInfo.identifier);
+		this.$iOSSimulatorLogProvider.startLogProcess(this.simulator.id);
 	}
 }
