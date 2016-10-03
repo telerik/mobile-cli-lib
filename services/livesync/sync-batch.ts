@@ -4,8 +4,6 @@ import * as fiberBootstrap from "../../fiber-bootstrap";
 export const SYNC_WAIT_THRESHOLD = 250; //milliseconds
 
 export class SyncBatch {
-	private _isTypeScriptProject: boolean;
-	private hasCheckedProjectType: boolean;
 	private timer: NodeJS.Timer = null;
 	private syncQueue: string[] = [];
 	private syncInProgress: boolean = false;
