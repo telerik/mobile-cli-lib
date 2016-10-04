@@ -66,7 +66,7 @@ export function getRelativeToRootPath(rootPath: string, filePath: string): strin
 	return relativeToRootPath;
 }
 
-function getVersionArray(version: string|IVersionData): number[] {
+function getVersionArray(version: string | IVersionData): number[] {
 	let result: number[] = [],
 		parseLambda = (x: string) => parseInt(x, 10),
 		filterLambda = (x: number) => !isNaN(x);
@@ -81,7 +81,7 @@ function getVersionArray(version: string|IVersionData): number[] {
 	return result;
 }
 
-export function versionCompare(version1: string|IVersionData, version2: string|IVersionData): number {
+export function versionCompare(version1: string | IVersionData, version2: string | IVersionData): number {
 	let v1array = getVersionArray(version1),
 		v2array = getVersionArray(version2);
 
@@ -197,7 +197,7 @@ export function appendZeroesToVersion(version: string, requiredVersionLength: nu
 export function decorateMethod(before: (method1: any, self1: any, args1: any[]) => void, after: (method2: any, self2: any, result2: any, args2: any[]) => any) {
 	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<Function>) => {
 		let sink = descriptor.value;
-		descriptor.value = function(...args: any[]): any {
+		descriptor.value = function (...args: any[]): any {
 			if (before) {
 				before(sink, this, args);
 			}
@@ -223,25 +223,28 @@ export function hook(commandName: string) {
 		return hooksService;
 	}
 
-	function prepareArguments(method: any, args: any[]): { [key: string]: any } {
+	function prepareArguments(method: any, args: any[], hooksService: IHooksService): { [key: string]: any } {
 		annotate(method);
 		let argHash: any = {};
 		for (let i = 0; i < method.$inject.args.length; ++i) {
 			argHash[method.$inject.args[i]] = args[i];
 		}
 		argHash.$arguments = args;
-		return {
-			hookArgs: argHash
-		};
+		let result: any = {};
+		result[hooksService.hookArgsName] = argHash;
+
+		return result;
 	}
 
 	return decorateMethod(
 		(method: any, self: any, args: any[]) => {
-			getHooksService(self).executeBeforeHooks(commandName, prepareArguments(method, args)).wait();
+			let hooksService = getHooksService(self);
+			hooksService.executeBeforeHooks(commandName, prepareArguments(method, args, hooksService)).wait();
 		},
 		(method: any, self: any, resultPromise: any, args: any[]) => {
 			let result = resultPromise.wait();
-			getHooksService(self).executeAfterHooks(commandName, prepareArguments(method, args)).wait();
+			let hooksService = getHooksService(self);
+			hooksService.executeAfterHooks(commandName, prepareArguments(method, args, hooksService)).wait();
 			return Future.fromResult(result);
 		});
 }
@@ -290,7 +293,7 @@ export function connectEventuallyUntilTimeout(factory: () => net.Socket, timeout
 	let future = new Future<net.Socket>();
 	let lastKnownError: Error;
 
-	setTimeout(function() {
+	setTimeout(function () {
 		if (!future.isResolved()) {
 			future.throw(lastKnownError);
 		}
