@@ -25,6 +25,10 @@ export class HooksService implements IHooksService {
 		private $projectHelper: IProjectHelper,
 		private $options: ICommonOptions) { }
 
+	public get hookArgsName(): string {
+		return "hookArgs";
+	}
+
 	private initialize(): void {
 		this.cachedHooks = {};
 
@@ -250,7 +254,9 @@ export class HooksService implements IHooksService {
 
 		_.each(hookConstructor.$inject.args, (argument: string) => {
 			try {
-				this.$injector.resolve(argument);
+				if (argument !== this.hookArgsName) {
+					this.$injector.resolve(argument);
+				}
 			} catch (err) {
 				this.$logger.trace(`Cannot resolve ${argument}, reason: ${err}`);
 				invalidArguments.push(argument);
