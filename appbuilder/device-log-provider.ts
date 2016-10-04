@@ -7,7 +7,7 @@ export class DeviceLogProvider extends DeviceLogProviderBase {
 	}
 
 	public logData(line: string, platform: string, deviceIdentifier: string): void {
-		let logLevel = this.setLogLevelForDevice(deviceIdentifier);
+		let logLevel = this.setDefaultLogLevelForDevice(deviceIdentifier);
 
 		let applicationPid = this.getApplicationPidForDevice(deviceIdentifier),
 			data = this.$logFilter.filterData(platform, line, applicationPid, logLevel);
@@ -19,12 +19,11 @@ export class DeviceLogProvider extends DeviceLogProviderBase {
 
 	public setLogLevel(logLevel: string, deviceIdentifier?: string): void {
 		if (deviceIdentifier) {
-			this.devicesLogOptions[deviceIdentifier] = this.devicesLogOptions[deviceIdentifier] || <Mobile.IDeviceLogOptions> { };
-			this.devicesLogOptions[deviceIdentifier].logLevel = logLevel.toUpperCase();
+			this.setDeviceLogOptionsProperty(deviceIdentifier, (deviceLogOptions: Mobile.IDeviceLogOptions) => deviceLogOptions.logLevel, logLevel.toUpperCase());
 		} else {
 			this.$logFilter.loggingLevel = logLevel.toUpperCase();
 
-			_.each(this.devicesLogOptions, (deviceLogLevel: string, deviceId: string) => {
+			_.keys(this.devicesLogOptions).forEach(deviceId => {
 				this.devicesLogOptions[deviceId] = this.devicesLogOptions[deviceId] || <Mobile.IDeviceLogOptions> { };
 				this.devicesLogOptions[deviceId].logLevel = this.$logFilter.loggingLevel;
 			});

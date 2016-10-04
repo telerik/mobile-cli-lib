@@ -170,7 +170,7 @@ declare module Mobile {
 	/**
 	 * Describes different options for filtering device logs.
 	 */
-	interface IDeviceLogOptions {
+	interface IDeviceLogOptions extends IStringDictionary {
 		/**
 		 * Process id of the application on the device.
 		 */

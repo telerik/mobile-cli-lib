@@ -5,6 +5,17 @@ let Table = require("cli-table");
 import Future = require("fibers/future");
 import { platform } from "os";
 
+export function getPropertyName(func: Function): string {
+	if (func) {
+		let match = func.toString().match(/(?:return\s+?.*\.(.+);)|(?:=>\s*?.*\.(.+)\b)/);
+		if(match) {
+			return (match[1] || match[2]).trim();
+		}
+	}
+
+	return null;
+}
+
 function bashQuote(s: string): string {
 	if (s[0] === "'" && s[s.length - 1] === "'") {
 		return s;
