@@ -194,6 +194,53 @@ export class AfcClient extends AfcBase implements Mobile.IAfcClient {
 		this.$logger.trace("Removing device file '%s', result: %s", devicePath, removeResult.toString());
 	}
 
+	public transferFiles(files: { from: string, to: string }[]): IFuture<void> {
+		return (() => {
+
+			// Figure out directories to create
+			let dirTable: IDictionary<boolean> = { ".": true, "..": true, "/": true, "\\": true, "": true };
+			let dirArr: string[] = [];
+			files.forEach(file => {
+				let dir = path.dirname(file.to);
+				while(!dirTable[dir]) {
+					dirTable[dir] = true;
+					dirArr.push(dir);
+					dir = path.dirname(dir);
+				}
+			});
+			dirArr = dirArr.sort();
+			// Create the directory structure
+			dirArr.forEach(dir => this.mkdir(dir));
+
+			// Copy all the files
+			files.forEach(file => {
+				let {from, to} = file;
+				to = helpers.fromWindowsRelativePathToUnix(to);
+				let future = new Future<void>();
+				let reader = this.$fs.createReadStream(from);
+
+				// "w" should create or overwrite the file
+				let writer = this.open(to, "w");
+
+				reader.on("data", (data: NodeBuffer) => { writer.write(data, data.length); });
+				reader.on("error", (error: Error) => {
+					this.$logger.warn(`Error rransferring ${from} -> ${to}: ${error}`);
+					if (!future.isResolved()) {
+						future.throw(error);
+					}
+				});
+				reader.on("end", () => writer.close());
+				reader.on("close", () => {
+					if (!future.isResolved()) {
+						this.$logger.trace(`transfer-> localFilePath: ${from}, devicePath: ${to}`);
+						future.return();
+					}
+				});
+				future.wait();
+			});
+		}).future<void>()();
+	}
+
 	public transfer(localFilePath: string, devicePath: string): IFuture<void> {
 		return(() => {
 			let future = new Future<void>();

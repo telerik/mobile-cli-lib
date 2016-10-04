@@ -81,12 +81,13 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		return (() => {
 			let houseArrestClient: Mobile.IHouseArrestClient = this.$injector.resolve(iOSProxyServices.HouseArrestClient, { device: this.device });
 			let afcClientForAppContainer = houseArrestClient.getAfcClientForAppContainer(deviceAppData.appIdentifier);
-			_.each(localToDevicePaths, (localToDevicePathData) => {
-				let stats = this.$fs.getFsStats(localToDevicePathData.getLocalPath()).wait();
-				if(stats.isFile()) {
-					afcClientForAppContainer.transfer(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()).wait();
-				}
-			});
+
+			let files = localToDevicePaths
+				.map(d => ({from: d.getLocalPath(), to: d.getDevicePath() }))
+				.filter(p => this.$fs.getFsStats(p.from).wait().isFile());
+
+			afcClientForAppContainer.transferFiles(files).wait();
+
 			houseArrestClient.closeSocket();
 		}).future<void>()();
 	}
