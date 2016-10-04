@@ -3,6 +3,7 @@ import * as os from "os";
 import temp = require("temp");
 import {exportedPromise} from "../decorators";
 import {NODE_MODULES_DIR_NAME, FileExtensions} from "../constants";
+import { ChildProcess } from "child_process";
 temp.track();
 
 interface ITypeScriptCompilerMessages {
@@ -30,12 +31,15 @@ export class TypeScriptService implements ITypeScriptService {
 	private definitionFiles: string[];
 	private noEmitOnError: boolean;
 	private typeScriptModuleFilePath: string;
+	private _watchProcess: ChildProcess;
 
 	constructor(private $childProcess: IChildProcess,
 		private $fs: IFileSystem,
 		private $logger: ILogger,
 		private $npmService: INpmService,
+		private $options: ICommonOptions,
 		private $projectConstants: Project.IConstants,
+		private $processService: IProcessService,
 		private $errors: IErrors) { }
 
 	@exportedPromise("typeScriptService")
@@ -195,8 +199,18 @@ export class TypeScriptService implements ITypeScriptService {
 			let time = (endTime - startTime) / 1000;
 			this.$logger.out(`${os.EOL}Success: ${time.toFixed(2)}s${os.EOL}.`.green);
 
+			this.startWatchProcess(params, projectDir);
+
 			return compilerOutput;
 		}).future<string>()();
+	}
+
+	private startWatchProcess(params: string[], projectDir: string): void {
+		if (!this._watchProcess && this.$options.watch) {
+			params.push("--watch");
+			this._watchProcess = this.$childProcess.spawn(process.argv[0], params, { cwd: projectDir });
+			this.$processService.attachToProcessExitSignals(null, this._watchProcess.kill);
+		}
 	}
 
 	private getCompilerMessages(compilerOutput: string): ITypeScriptCompilerMessages {
