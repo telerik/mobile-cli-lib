@@ -1,31 +1,31 @@
-import { EventEmitter } from "events";
+import { DeviceLogProviderBase } from "../mobile/device-log-provider-base";
 
-export class DeviceLogProvider extends EventEmitter implements Mobile.IDeviceLogProvider {
-	private devicesLogLevel: IStringDictionary = {};
-
-	constructor(private $logFilter: Mobile.ILogFilter) {
-		super();
+export class DeviceLogProvider extends DeviceLogProviderBase {
+	constructor(protected $logFilter: Mobile.ILogFilter,
+		$logger: ILogger) {
+		super($logFilter, $logger);
 	}
 
-	public logData(line: string, platform: string, deviceIdentifier?: string): void {
-		let logLevel = this.$logFilter.loggingLevel;
-		if(deviceIdentifier) {
-			logLevel = this.devicesLogLevel[deviceIdentifier] = this.devicesLogLevel[deviceIdentifier] || this.$logFilter.loggingLevel;
-		}
+	public logData(line: string, platform: string, deviceIdentifier: string): void {
+		let logLevel = this.setDefaultLogLevelForDevice(deviceIdentifier);
 
-		let data = this.$logFilter.filterData(platform, line, logLevel);
-		if(data) {
+		let applicationPid = this.getApplicationPidForDevice(deviceIdentifier),
+			data = this.$logFilter.filterData(platform, line, applicationPid, logLevel);
+
+		if (data) {
 			this.emit('data', deviceIdentifier, data);
 		}
 	}
 
 	public setLogLevel(logLevel: string, deviceIdentifier?: string): void {
-		if(deviceIdentifier) {
-			this.devicesLogLevel[deviceIdentifier] = logLevel.toUpperCase();
+		if (deviceIdentifier) {
+			this.setDeviceLogOptionsProperty(deviceIdentifier, (deviceLogOptions: Mobile.IDeviceLogOptions) => deviceLogOptions.logLevel, logLevel.toUpperCase());
 		} else {
 			this.$logFilter.loggingLevel = logLevel.toUpperCase();
-			_.each(this.devicesLogLevel, (deviceLogLevel: string, deviceId: string) => {
-				this.devicesLogLevel[deviceId] = this.$logFilter.loggingLevel;
+
+			_.keys(this.devicesLogOptions).forEach(deviceId => {
+				this.devicesLogOptions[deviceId] = this.devicesLogOptions[deviceId] || <Mobile.IDeviceLogOptions> { };
+				this.devicesLogOptions[deviceId].logLevel = this.$logFilter.loggingLevel;
 			});
 		}
 	}
