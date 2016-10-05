@@ -53,7 +53,7 @@ export class IOSSimulator implements Mobile.IiOSSimulator {
 	}
 
 	public openDeviceLogStream(): void {
-		this.$iOSSimulatorLogProvider.startLogProcess(this.simulator.id);
+		this._deviceLogStreamChildProcess = this.$iOSSimulatorLogProvider.startLogProcess(this.simulator.id);
 	}
 
 	public closeDeviceLogStream(): void {

@@ -1,31 +1,31 @@
 import { ChildProcess } from "child_process";
 
 export class IOSSimulatorLogProvider implements Mobile.IiOSSimulatorLogProvider {
-	private isStarted: boolean;
+	private deviceLogChildProcess: ChildProcess;
 
 	constructor(private $iOSSimResolver: Mobile.IiOSSimResolver,
 		private $deviceLogProvider: Mobile.IDeviceLogProvider,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $processService: IProcessService) { }
 
-	public startLogProcess(deviceIdentifier: string): void {
-		if (!this.isStarted) {
-			let deviceLogChildProcess: ChildProcess = this.$iOSSimResolver.iOSSim.getDeviceLogProcess(deviceIdentifier);
+	public startLogProcess(deviceIdentifier: string): ChildProcess {
+		if (!this.deviceLogChildProcess) {
+			this.deviceLogChildProcess = this.$iOSSimResolver.iOSSim.getDeviceLogProcess(deviceIdentifier);
 
 			let action = (data: NodeBuffer | string) => this.$deviceLogProvider.logData(data.toString(), this.$devicePlatformsConstants.iOS, deviceIdentifier);
 
-			if (deviceLogChildProcess.stdout) {
-				deviceLogChildProcess.stdout.on("data", action);
+			if (this.deviceLogChildProcess.stdout) {
+				this.deviceLogChildProcess.stdout.on("data", action);
 			}
 
-			if (deviceLogChildProcess.stderr) {
-				deviceLogChildProcess.stderr.on("data", action);
+			if (this.deviceLogChildProcess.stderr) {
+				this.deviceLogChildProcess.stderr.on("data", action);
 			}
 
-			this.$processService.attachToProcessExitSignals(this, deviceLogChildProcess.kill);
-
-			this.isStarted = true;
+			this.$processService.attachToProcessExitSignals(this, this.deviceLogChildProcess.kill);
 		}
+
+		return this.deviceLogChildProcess;
 	}
 }
 $injector.register("iOSSimulatorLogProvider", IOSSimulatorLogProvider);

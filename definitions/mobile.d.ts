@@ -191,8 +191,9 @@ declare module Mobile {
 		/**
 		 * Starts the process for getting simulator logs and sends collected data to deviceLogProvider, which should decide how to show it to the user.
 		 * @param {string} deviceIdentifier The unique identifier of the device.
+		 * @return {any} The child process which is used to get the simulator logs.
 		 */
-		startLogProcess(deviceIdentifier: string): void;
+		startLogProcess(deviceIdentifier: string): any;
 	}
 
 	/**
