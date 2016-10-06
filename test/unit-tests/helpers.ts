@@ -182,7 +182,19 @@ describe("helpers", () => {
 				expectedResult: false
 			},
 			{
-				input: "",
+				input: '\n',
+				expectedResult: false
+			},
+			{
+				input: '\r\n',
+				expectedResult: false
+			},
+			{
+				input: '\t',
+				expectedResult: false
+			},
+			{
+				input: '\t\t\t\t\t\t\n\t\t\t\t\r\n\r\n\n\n   \t\t\t\r\n',
 				expectedResult: false
 			},
 			{
@@ -205,6 +217,11 @@ describe("helpers", () => {
 
 		it("returns expected result", () => {
 			_.each(toBooleanTestData, testData => assertTestData(testData, helpers.toBoolean));
+		});
+
+		it("returns false when Object.create(null) is passed", () => {
+			let actualResult = helpers.toBoolean(Object.create(null));
+			assert.deepEqual(actualResult, false);
 		});
 	});
 
@@ -249,6 +266,22 @@ describe("helpers", () => {
 			{
 				input: false,
 				expectedResult: false
+			},
+			{
+				input: '\n',
+				expectedResult: true
+			},
+			{
+				input: '\r\n',
+				expectedResult: true
+			},
+			{
+				input: '\t',
+				expectedResult: true
+			},
+			{
+				input: '\t\t\t\t\t\t\r\n\t\t\t\t\t\n\t\t\t     \t\t\t\t\t\n\r\n   ',
+				expectedResult: true
 			}
 		];
 

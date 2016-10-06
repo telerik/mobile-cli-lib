@@ -1,4 +1,3 @@
-import * as util from "util";
 import * as helpers from "./helpers";
 import * as yargs from "yargs";
 
@@ -11,9 +10,12 @@ export class OptionType {
 }
 
 export class OptionsBase {
+	private static DASHED_OPTION_REGEX = /(.+?)([A-Z])(.*)/;
+	private static NONDASHED_OPTION_REGEX = /(.+?)[-]([a-zA-Z])(.*)/;
+
 	private optionsWhiteList = ["ui", "recursive", "reporter", "require", "timeout", "_", "$0"]; // These options shouldn't be validated
 	public argv: IYargArgv;
-	private GLOBAL_OPTIONS: IDictionary<IDashedOption> = {
+	private globalOptions: IDictionary<IDashedOption> = {
 		log: { type: OptionType.String },
 		verbose: { type: OptionType.Boolean, alias: "v" },
 		version: { type: OptionType.Boolean },
@@ -30,7 +32,7 @@ export class OptionsBase {
 		private $errors: IErrors,
 		private $staticConfig: Config.IStaticConfig) {
 
-		_.extend(this.options, this.commonOptions, this.GLOBAL_OPTIONS);
+		_.extend(this.options, this.commonOptions, this.globalOptions);
 		this.setArgv();
 	}
 
@@ -89,7 +91,7 @@ export class OptionsBase {
 
 	public validateOptions(commandSpecificDashedOptions?: IDictionary<IDashedOption>): void {
 		if (commandSpecificDashedOptions) {
-			this.options = this.GLOBAL_OPTIONS;
+			this.options = this.globalOptions;
 			_.extend(this.options, commandSpecificDashedOptions);
 			this.setArgv();
 		}
@@ -106,14 +108,16 @@ export class OptionsBase {
 				return;
 			}
 
-			let optionName = this.getNonDashedOptionName(originalOptionName);
+			let optionName = this.getCorrectOptionName(originalOptionName);
 
 			if (!_.includes(this.optionsWhiteList, optionName)) {
 				if (!this.isOptionSupported(optionName)) {
 					this.$errors.failWithoutHelp(`The option '${originalOptionName}' is not supported. To see command's options, use '$ ${this.$staticConfig.CLIENT_NAME.toLowerCase()} help ${process.argv[2]}'. To see all commands use '$ ${this.$staticConfig.CLIENT_NAME.toLowerCase()} help'.`);
 				}
-				let optionType = this.getOptionType(optionName);
-				let optionValue = parsed[optionName];
+
+				let optionType = this.getOptionType(optionName),
+					optionValue = parsed[optionName];
+
 				if (_.isArray(optionValue) && optionType !== OptionType.Array) {
 					this.$errors.fail("You have set the %s option multiple times. Check the correct command syntax below and try again.", originalOptionName);
 				} else if (optionType === OptionType.String && helpers.isNullOrWhitespace(optionValue)) {
@@ -155,11 +159,11 @@ export class OptionsBase {
 	// IMPORTANT: In your code, it is better to use the value without dashes (profileDir in the example).
 	// This way your code will work in case "$ <cli name> emulate android --profile-dir" or "$ <cli name> emulate android --profileDir" is used by user.
 	private getNonDashedOptionName(optionName: string): string {
-		let matchUpperCaseLetters = optionName.match(/(.+?)([-])([a-zA-Z])(.*)/);
+		let matchUpperCaseLetters = optionName.match(OptionsBase.NONDASHED_OPTION_REGEX);
 		if (matchUpperCaseLetters) {
 			// get here if option with upperCase letter is specified, for example profileDir
 			// check if in knownOptions we have its kebabCase presentation
-			let secondaryOptionName = util.format("%s%s%s", matchUpperCaseLetters[1], matchUpperCaseLetters[3].toUpperCase(), matchUpperCaseLetters[4] || '');
+			let secondaryOptionName = matchUpperCaseLetters[1] + matchUpperCaseLetters[2].toUpperCase() + matchUpperCaseLetters[3] || '';
 			return this.getNonDashedOptionName(secondaryOptionName);
 		}
 
@@ -167,9 +171,9 @@ export class OptionsBase {
 	}
 
 	private getDashedOptionName(optionName: string): string {
-		let matchUpperCaseLetters = optionName.match(/(.+?)([A-Z])(.*)/);
+		let matchUpperCaseLetters = optionName.match(OptionsBase.DASHED_OPTION_REGEX);
 		if (matchUpperCaseLetters) {
-			let secondaryOptionName = util.format("%s-%s%s", matchUpperCaseLetters[1], matchUpperCaseLetters[2].toLowerCase(), matchUpperCaseLetters[3] || '');
+			let secondaryOptionName = `${matchUpperCaseLetters[1]}-${matchUpperCaseLetters[2].toLowerCase()}${matchUpperCaseLetters[3] || ''}`;
 			return this.getDashedOptionName(secondaryOptionName);
 		}
 
@@ -187,16 +191,16 @@ export class OptionsBase {
 	}
 
 	private adjustDashedOptions(): void {
-			_.each(this.optionNames, optionName => {
-				Object.defineProperty(OptionsBase.prototype, optionName, {
-					configurable: true,
-					get: function () {
-						return this.getOptionValue(optionName);
-					},
-					set: function (value: any) {
-						this.argv[optionName] = value;
-					}
-				});
+		_.each(this.optionNames, optionName => {
+			Object.defineProperty(OptionsBase.prototype, optionName, {
+				configurable: true,
+				get: function () {
+					return this.getOptionValue(optionName);
+				},
+				set: function (value: any) {
+					this.argv[optionName] = value;
+				}
 			});
+		});
 	}
 }

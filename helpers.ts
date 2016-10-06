@@ -113,8 +113,8 @@ export function isInteractive(): boolean {
 	return process.stdout.isTTY && process.stdin.isTTY;
 }
 
-export function toBoolean(str: any) {
-	return !!(str && str.toString().toLowerCase() === "true");
+export function toBoolean(str: any): boolean {
+	return !!(str && str.toString && str.toString().toLowerCase() === "true");
 }
 
 export function block(operation: () => void): void {
@@ -186,7 +186,8 @@ export function trimSymbol(str: string, symbol: string) {
 	return str;
 }
 
-export function getFuturesResults<T>(futures: IFuture<T | T[]>[], predicate: (element: T|T[]) => boolean): T[] {
+// TODO: Use generic for predicatе predicate: (element: T|T[]) when TypeScript support this.
+export function getFuturesResults<T>(futures: IFuture<T | T[]>[], predicate: (element: any) => boolean): T[] {
 	Future.wait(futures);
 	return _(futures)
 		.map(f => f.get())
