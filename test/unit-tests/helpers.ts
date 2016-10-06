@@ -3,10 +3,16 @@ import {assert} from "chai";
 
 interface ITestData {
 	input: any;
-	expectedResult: string;
+	expectedResult: any;
 }
 
 describe("helpers", () => {
+
+	let assertTestData = (testData: ITestData, method: Function) => {
+		let actualResult = method(testData.input);
+		assert.deepEqual(actualResult, testData.expectedResult, `For input ${testData.input}, the expected result is: ${testData.expectedResult}, but actual result is: ${actualResult}.`);
+	};
+
 	describe("getPropertyName", () => {
 		let ES5Functions: ITestData[] = [
 			{
@@ -134,19 +140,125 @@ describe("helpers", () => {
 			}
 		];
 
-		let assertTestData = (testData: ITestData) => {
-			// getPropertyName accepts function as argument.
-			// The tests will use strings in order to skip transpilation of lambdas to functions.
-			let actualResult = helpers.getPropertyName(testData.input);
-			assert.deepEqual(actualResult, testData.expectedResult, `For input ${testData.input}, the expected result is: ${testData.expectedResult}, but actual result is: ${actualResult}.`);
-		};
-
+		// getPropertyName accepts function as argument.
+		// The tests will use strings in order to skip transpilation of lambdas to functions.
 		it("returns correct property name for ES5 functions", () => {
-			_.each(ES5Functions, assertTestData);
+			_.each(ES5Functions, testData => assertTestData(testData, helpers.getPropertyName));
 		});
 
 		it("returns correct property name for ES6 functions", () => {
-			_.each(ES6Functions, assertTestData);
+			_.each(ES6Functions, testData => assertTestData(testData, helpers.getPropertyName));
+		});
+	});
+
+	describe("toBoolean", () => {
+		let toBooleanTestData: ITestData[] = [
+			{
+				input: true,
+				expectedResult: true
+			},
+			{
+				input: false,
+				expectedResult: false
+			},
+			{
+				input: "true",
+				expectedResult: true
+			},
+			{
+				input: "false",
+				expectedResult: false
+			},
+			{
+				input: "",
+				expectedResult: false
+			},
+			{
+				input: null,
+				expectedResult: false
+			},
+			{
+				input: undefined,
+				expectedResult: false
+			},
+			{
+				input: "",
+				expectedResult: false
+			},
+			{
+				input: "some random text",
+				expectedResult: false
+			},
+			{
+				input: { "true": true },
+				expectedResult: false
+			},
+			{
+				input: {},
+				expectedResult: false
+			},
+			{
+				input: { "a": { "b": 1 } },
+				expectedResult: false
+			}
+		];
+
+		it("returns expected result", () => {
+			_.each(toBooleanTestData, testData => assertTestData(testData, helpers.toBoolean));
+		});
+	});
+
+	describe("isNullOrWhitespace", () => {
+		let isNullOrWhitespaceTestData: ITestData[] = [
+			{
+				input: "",
+				expectedResult: true
+			},
+			{
+				input: "     ",
+				expectedResult: true
+			},
+			{
+				input: null,
+				expectedResult: true
+			},
+			{
+				input: undefined,
+				expectedResult: true
+			},
+			{
+				input: [],
+				expectedResult: false
+			},
+			{
+				input: ["test1", "test2"],
+				expectedResult: false
+			},
+			{
+				input: {},
+				expectedResult: false
+			},
+			{
+				input: { a: 1, b: 2 },
+				expectedResult: false
+			},
+			{
+				input: true,
+				expectedResult: false
+			},
+			{
+				input: false,
+				expectedResult: false
+			}
+		];
+
+		it("returns expected result", () => {
+			_.each(isNullOrWhitespaceTestData, t => assertTestData(t, helpers.isNullOrWhitespace));
+		});
+
+		it("returns false when Object.create(null) is passed", () => {
+			let actualResult = helpers.isNullOrWhitespace(Object.create(null));
+			assert.deepEqual(actualResult, false);
 		});
 	});
 });

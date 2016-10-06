@@ -114,7 +114,7 @@ export function isInteractive(): boolean {
 }
 
 export function toBoolean(str: any) {
-	return str && str.toString().toLowerCase() === "true";
+	return !!(str && str.toString().toLowerCase() === "true");
 }
 
 export function block(operation: () => void): void {
@@ -135,12 +135,12 @@ export function fromWindowsRelativePathToUnix(windowsRelativePath: string): stri
 	return windowsRelativePath.replace(/\\/g, "/");
 }
 
-export function isNullOrWhitespace(input: string): boolean {
-	if (!input) {
+export function isNullOrWhitespace(input: any): boolean {
+	if (!input && input !== false) {
 		return true;
 	}
 
-	return input.replace(/\s/gi, "").length < 1;
+	return _.isString(input) && input.replace(/\s/gi, "").length < 1;
 }
 
 export function getCurrentEpochTime(): number {
@@ -186,8 +186,7 @@ export function trimSymbol(str: string, symbol: string) {
 	return str;
 }
 
-// TODO: Use generic for predicatе predicate: (element: T|T[]) when TypeScript support this.
-export function getFuturesResults<T>(futures: IFuture<T | T[]>[], predicate: (element: any) => boolean): T[] {
+export function getFuturesResults<T>(futures: IFuture<T | T[]>[], predicate: (element: T|T[]) => boolean): T[] {
 	Future.wait(futures);
 	return _(futures)
 		.map(f => f.get())
