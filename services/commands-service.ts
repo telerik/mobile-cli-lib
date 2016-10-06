@@ -85,6 +85,15 @@ export class CommandsService implements ICommandsService {
 	private tryExecuteCommandAction(commandName: string, commandArguments: string[]): IFuture<boolean> {
 		let command = this.$injector.resolveCommand(commandName);
 		this.$options.validateOptions(command ? command.dashedOptions : null);
+let options = $injector.resolve("options");
+console.log("------------------------------");
+console.log(options.testApp2);
+console.log("------------------------------");
+
+console.log(options["test-app2"]);
+console.log("------------------------------");
+console.log(require("yargs").argv);
+console.log("#################");
 
 		if (!this.areDynamicSubcommandsRegistered) {
 			this.$commandsServiceProvider.registerDynamicSubCommands();

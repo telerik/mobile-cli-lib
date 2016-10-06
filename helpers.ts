@@ -114,7 +114,7 @@ export function isInteractive(): boolean {
 }
 
 export function toBoolean(str: any) {
-	return str && str.toString().toLowerCase() === "true";
+	return !!(str && str.toString().toLowerCase() === "true");
 }
 
 export function block(operation: () => void): void {
@@ -140,7 +140,9 @@ export function isNullOrWhitespace(input: string): boolean {
 		return true;
 	}
 
-	return input.replace(/\s/gi, "").length < 1;
+	// TODO: add tests when input is boolean, object, etc.
+	// TODO: add tests when input = Object.create(null);
+	return input.toString && input.toString().replace(/\s/gi, "").length < 1;
 }
 
 export function getCurrentEpochTime(): number {
@@ -186,8 +188,7 @@ export function trimSymbol(str: string, symbol: string) {
 	return str;
 }
 
-// TODO: Use generic for predicatе predicate: (element: T|T[]) when TypeScript support this.
-export function getFuturesResults<T>(futures: IFuture<T | T[]>[], predicate: (element: any) => boolean): T[] {
+export function getFuturesResults<T>(futures: IFuture<T | T[]>[], predicate: (element: T|T[]) => boolean): T[] {
 	Future.wait(futures);
 	return _(futures)
 		.map(f => f.get())

@@ -10,10 +10,10 @@ let knownOpts = {
 	"help": { type: OptionType.Boolean } ,
 	"verbose": { type: OptionType.Boolean, alias: "v" },
 	"profileDir": { type: OptionType.String },
-	"someDashedValue": { type: OptionType.String },
-	"aBCDEFG": { type: OptionType.String },
+	"some-dashed-value": { type: OptionType.String },
+	"a-b-c-d-e-f-g": { type: OptionType.String },
 	"arr": { type: OptionType.Array },
-	"specialDashedV": { type: OptionType.Boolean }
+	"special-dashed-v": { type: OptionType.Boolean }
 };
 
 function createTestInjector(): IInjector {

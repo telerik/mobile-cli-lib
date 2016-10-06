@@ -3,7 +3,7 @@ import {assert} from "chai";
 
 interface ITestData {
 	input: any;
-	expectedResult: string;
+	expectedResult: any;
 }
 
 describe("helpers", () => {
@@ -147,6 +147,66 @@ describe("helpers", () => {
 
 		it("returns correct property name for ES6 functions", () => {
 			_.each(ES6Functions, assertTestData);
+		});
+	});
+
+	describe("toBoolean", () => {
+		let toBooleanTestData: ITestData[] = [
+			{
+				input: true,
+				expectedResult: true
+			},
+			{
+				input: false,
+				expectedResult: false
+			},
+			{
+				input: "true",
+				expectedResult: true
+			},
+			{
+				input: "false",
+				expectedResult: false
+			},
+			{
+				input: "",
+				expectedResult: false
+			},
+			{
+				input: null,
+				expectedResult: false
+			},
+			{
+				input: undefined,
+				expectedResult: false
+			},
+			{
+				input: "",
+				expectedResult: false
+			},
+			{
+				input: "some random text",
+				expectedResult: false
+			},
+			{
+				input: { "true": true },
+				expectedResult: false
+			},
+			{
+				input: {},
+				expectedResult: false
+			},
+			{
+				input: { "a": { "b": 1 } },
+				expectedResult: false
+			}
+		];
+
+		it("returns expected result", () => {
+			_.each(toBooleanTestData, testData => {
+				let actualResult = helpers.toBoolean(testData.input);
+				assert.deepEqual(actualResult, testData.expectedResult, `For input ${testData.input}, the expected result is: ${testData.expectedResult}, but actual result is: ${actualResult}.`);
+			});
 		});
 	});
 });
