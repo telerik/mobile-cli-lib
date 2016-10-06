@@ -13,12 +13,12 @@ export class OptionType {
 export class OptionsBase {
 	private optionsWhiteList = ["ui", "recursive", "reporter", "require", "timeout", "_", "$0"]; // These options shouldn't be validated
 	public argv: IYargArgv;
-	private static GLOBAL_OPTIONS: IDictionary<IDashedOption> = {
+	private GLOBAL_OPTIONS: IDictionary<IDashedOption> = {
 		log: { type: OptionType.String },
 		verbose: { type: OptionType.Boolean, alias: "v" },
 		version: { type: OptionType.Boolean },
 		help: { type: OptionType.Boolean, alias: "h" },
-		profileDir: { type: OptionType.String },
+		profileDir: { type: OptionType.String, default: this.defaultProfileDir },
 		analyticsClient: { type: OptionType.String },
 		path: { type: OptionType.String, alias: "p" },
 		// This will parse all non-hyphenated values as strings.
@@ -30,7 +30,7 @@ export class OptionsBase {
 		private $errors: IErrors,
 		private $staticConfig: Config.IStaticConfig) {
 
-		_.extend(this.options, this.commonOptions, OptionsBase.GLOBAL_OPTIONS);
+		_.extend(this.options, this.commonOptions, this.GLOBAL_OPTIONS);
 		this.setArgv();
 	}
 
@@ -89,7 +89,7 @@ export class OptionsBase {
 
 	public validateOptions(commandSpecificDashedOptions?: IDictionary<IDashedOption>): void {
 		if (commandSpecificDashedOptions) {
-			this.options = OptionsBase.GLOBAL_OPTIONS;
+			this.options = this.GLOBAL_OPTIONS;
 			_.extend(this.options, commandSpecificDashedOptions);
 			this.setArgv();
 		}
@@ -106,7 +106,7 @@ export class OptionsBase {
 				return;
 			}
 
-			let optionName = this.getCorrectOptionName(originalOptionName);
+			let optionName = this.getNonDashedOptionName(originalOptionName);
 
 			if (!_.includes(this.optionsWhiteList, optionName)) {
 				if (!this.isOptionSupported(optionName)) {
@@ -126,7 +126,7 @@ export class OptionsBase {
 	}
 
 	private getCorrectOptionName(optionName: string): string {
-		let secondaryOptionName = this.getSecondaryOptionName(optionName);
+		let secondaryOptionName = this.getNonDashedOptionName(optionName);
 		return _.includes(this.optionNames, secondaryOptionName) ? secondaryOptionName : optionName;
 	}
 
@@ -154,36 +154,49 @@ export class OptionsBase {
 	// ex, "$ <cli name> emulate android --profile-dir" will add profile-dir to yargs.argv as profile-dir and profileDir
 	// IMPORTANT: In your code, it is better to use the value without dashes (profileDir in the example).
 	// This way your code will work in case "$ <cli name> emulate android --profile-dir" or "$ <cli name> emulate android --profileDir" is used by user.
-	private getSecondaryOptionName(optionName: string): string {
+	private getNonDashedOptionName(optionName: string): string {
 		let matchUpperCaseLetters = optionName.match(/(.+?)([-])([a-zA-Z])(.*)/);
 		if (matchUpperCaseLetters) {
 			// get here if option with upperCase letter is specified, for example profileDir
 			// check if in knownOptions we have its kebabCase presentation
 			let secondaryOptionName = util.format("%s%s%s", matchUpperCaseLetters[1], matchUpperCaseLetters[3].toUpperCase(), matchUpperCaseLetters[4] || '');
-			return this.getSecondaryOptionName(secondaryOptionName);
+			return this.getNonDashedOptionName(secondaryOptionName);
+		}
+
+		return optionName;
+	}
+
+	private getDashedOptionName(optionName: string): string {
+		let matchUpperCaseLetters = optionName.match(/(.+?)([A-Z])(.*)/);
+		if (matchUpperCaseLetters) {
+			let secondaryOptionName = util.format("%s-%s%s", matchUpperCaseLetters[1], matchUpperCaseLetters[2].toLowerCase(), matchUpperCaseLetters[3] || '');
+			return this.getDashedOptionName(secondaryOptionName);
 		}
 
 		return optionName;
 	}
 
 	private setArgv(): void {
-		this.argv = yargs(process.argv.slice(2)).options(this.options).argv;
+		let opts:  IDictionary<IDashedOption> = <IDictionary<IDashedOption>> {};
+		_.each(this.options, (value: IDashedOption, key: string) => {
+			opts[this.getDashedOptionName(key)] = value;
+		});
+
+		this.argv = yargs(process.argv.slice(2)).options(opts).argv;
 		this.adjustDashedOptions();
 	}
 
 	private adjustDashedOptions(): void {
-		this.argv["profileDir"] = this.argv["profileDir"] || this.defaultProfileDir;
-
-		_.each(this.optionNames, optionName => {
-			Object.defineProperty(OptionsBase.prototype, optionName, {
-				configurable: true,
-				get: function () {
-					return this.getOptionValue(optionName);
-				},
-				set: function (value: any) {
-					this.argv[optionName] = value;
-				}
+			_.each(this.optionNames, optionName => {
+				Object.defineProperty(OptionsBase.prototype, optionName, {
+					configurable: true,
+					get: function () {
+						return this.getOptionValue(optionName);
+					},
+					set: function (value: any) {
+						this.argv[optionName] = value;
+					}
+				});
 			});
-		});
 	}
 }
