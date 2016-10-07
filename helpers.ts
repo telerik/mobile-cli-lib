@@ -113,8 +113,8 @@ export function isInteractive(): boolean {
 	return process.stdout.isTTY && process.stdin.isTTY;
 }
 
-export function toBoolean(str: any) {
-	return str && str.toString().toLowerCase() === "true";
+export function toBoolean(str: any): boolean {
+	return !!(str && str.toString && str.toString().toLowerCase() === "true");
 }
 
 export function block(operation: () => void): void {
@@ -135,12 +135,12 @@ export function fromWindowsRelativePathToUnix(windowsRelativePath: string): stri
 	return windowsRelativePath.replace(/\\/g, "/");
 }
 
-export function isNullOrWhitespace(input: string): boolean {
-	if (!input) {
+export function isNullOrWhitespace(input: any): boolean {
+	if (!input && input !== false) {
 		return true;
 	}
 
-	return input.replace(/\s/gi, "").length < 1;
+	return _.isString(input) && input.replace(/\s/gi, "").length < 1;
 }
 
 export function getCurrentEpochTime(): number {

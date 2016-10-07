@@ -64,8 +64,26 @@ describe("common options", () => {
 			process.argv.push('--path1');
 			// If you do not pass value to an option, it's automatically set as true.
 			let options = createOptions(testInjector);
-			options.validateOptions();
 			process.argv.pop();
+			options.validateOptions();
+			assert.isTrue(isExecutionStopped);
+		});
+
+		it("breaks execution when valid dashed option passed without dashes does not have value", () => {
+			process.argv.push('--someDashedValue');
+			// If you do not pass value to a string option, it's automatically set to "".
+			let options = createOptions(testInjector);
+			process.argv.pop();
+			options.validateOptions();
+			assert.isTrue(isExecutionStopped);
+		});
+
+		it("breaks execution when valid dashed option does not have value", () => {
+			process.argv.push('--some-dashed-value');
+			// If you do not pass value to an option, it's automatically set as true.
+			let options = createOptions(testInjector);
+			process.argv.pop();
+			options.validateOptions();
 			assert.isTrue(isExecutionStopped);
 		});
 

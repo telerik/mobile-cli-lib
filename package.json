@@ -68,7 +68,7 @@
     "validator": "3.2.1",
     "winreg": "0.0.12",
     "xmlhttprequest": "https://github.com/telerik/node-XMLHttpRequest/tarball/master",
-    "yargs": "4.7.1",
+    "yargs": "6.0.0",
     "zipstream": "https://github.com/Icenium/node-zipstream/tarball/master"
   },
   "analyze": true,
