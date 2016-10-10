@@ -17,8 +17,8 @@ import temp = require("temp");
 temp.track();
 
 let testedApplicationIdentifier = "com.telerik.myApp";
-let iOSDeviceProjectRootPath = "/Library/Application Support/LiveSync/app";
-let iOSDeviceSyncZipPath = "/Library/Application Support/LiveSync/sync.zip";
+let iOSDeviceProjectRootPath = "/Documents/AppBuilder/LiveSync/app";
+let iOSDeviceSyncZipPath = "/Documents/AppBuilder/LiveSync/sync.zip";
 let androidDeviceProjectRootPath = "/data/local/tmp/sync";
 
 class IOSAppIdentifierMock implements Mobile.IDeviceAppData {

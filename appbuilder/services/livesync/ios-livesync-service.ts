@@ -51,7 +51,7 @@ export class IOSLiveSyncService implements IDeviceLiveSyncService {
 				let cfBundleExecutable = `${this.$project.projectData.Framework}${this.$project.projectData.FrameworkVersion.split(".").join("")}`;
 				this.device.applicationManager.restartApplication(deviceAppData.appIdentifier, cfBundleExecutable).wait();
 			} else {
-				this.device.fileSystem.deleteFile("/Library/Preferences/ServerInfo.plist", deviceAppData.appIdentifier);
+				this.device.fileSystem.deleteFile("/Documents/AppBuilder/ServerInfo.plist", deviceAppData.appIdentifier);
 				let notificationProxyClient = this.$injector.resolve(iOSProxyServices.NotificationProxyClient, {device: this.device});
 				let notification = this.$project.projectData.Framework === TARGET_FRAMEWORK_IDENTIFIERS.NativeScript ? "com.telerik.app.refreshApp" : "com.telerik.app.refreshWebView";
 				notificationProxyClient.postNotification(notification);
