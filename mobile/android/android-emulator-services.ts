@@ -37,7 +37,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		private $fs: IFileSystem,
 		private $staticConfig: Config.IStaticConfig,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
-		private $logcatHelper: Mobile.ILogcatHelper,
+		private $deviceLogService: IDeviceLogService,
 		private $options: ICommonOptions,
 		private $utils: IUtils,
 		private $injector: IInjector) {
@@ -177,8 +177,8 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 			childProcess = adb.executeShellCommand(["monkey", "-p", appId, "-c", "android.intent.category.LAUNCHER", "1"], androidDebugBridgeCommandOptions).wait();
 			this.$fs.futureFromEvent(childProcess, "close").wait();
 
-			if (!this.$options.justlaunch) {
-				this.$logcatHelper.start(emulatorId);
+			if (!this.$options.justlaunch || this.$options.duration) {
+				this.$deviceLogService.printDeviceLog(emulatorId, this.$options.duration);
 			}
 		}).future<void>()();
 	}

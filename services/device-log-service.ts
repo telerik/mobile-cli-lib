@@ -1,24 +1,29 @@
 import Future = require("fibers/future");
-import * as fiberBootstrap from "../fiber-bootstrap";
+import {executeActionForSpecificDuration} from "../helpers";
 
 export class DeviceLogService implements IDeviceLogService {
 	constructor(private $deviceLogProvider: Mobile.IDeviceLogProvider,
-		private $loggingLevels: Mobile.ILoggingLevels,
 		private $devicesService: Mobile.IDevicesService) { }
 
-	public printDeviceLog(deviceId: string, duration?: number): IFuture<void> {
+	public printDeviceLog(deviceId: string, duration?: number, loggingLevel?: string): IFuture<void> {
 		return (() => {
 			this.$devicesService.initialize({ deviceId, skipInferPlatform: true }).wait();
-			this.$deviceLogProvider.setLogLevel(this.$loggingLevels.full);
+
+			if (loggingLevel) {
+				this.$deviceLogProvider.setLogLevel(loggingLevel);
+			}
 
 			if (duration) {
-				this.printDeviceLogCore().wait();
-				setTimeout(() => {
-					fiberBootstrap.run(() => {
+				let printDeviceLog: IMethodDescription = { method: this.printDeviceLogCore, context: this };
+				let stopPrintingDeviceLog: IMethodDescription = {
+					method: () => {
 						let action = (device: Mobile.IDevice) => Future.fromResult(device.closeDeviceLogStream());
-						this.$devicesService.execute(action).wait();
-					});
-				}, duration);
+						return this.$devicesService.execute(action);
+					},
+					context: this
+				};
+
+				executeActionForSpecificDuration(printDeviceLog, stopPrintingDeviceLog, duration * 1000).wait();
 			} else {
 				this.printDeviceLogCore().wait();
 			}

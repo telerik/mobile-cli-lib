@@ -9,7 +9,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		private identifier: string,
 		private $staticConfig: Config.IStaticConfig,
 		private $options: ICommonOptions,
-		private $logcatHelper: Mobile.ILogcatHelper,
+		private $deviceLogService: IDeviceLogService,
 		private $androidProcessService: Mobile.IAndroidProcessService,
 		private $httpClient: Server.IHttpClient,
 		$logger: ILogger) {
@@ -46,8 +46,8 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 				"-c", "android.intent.category.LAUNCHER",
 				"1"]).wait();
 
-			if (!this.$options.justlaunch) {
-				this.$logcatHelper.start(this.identifier);
+			if (!this.$options.justlaunch || this.$options.duration) {
+				this.$deviceLogService.printDeviceLog(this.identifier, this.$options.duration).wait();
 			}
 		}).future<void>()();
 	}

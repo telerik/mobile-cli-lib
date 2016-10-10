@@ -4,11 +4,12 @@ import * as net from "net";
 let Table = require("cli-table");
 import Future = require("fibers/future");
 import { platform } from "os";
+import fiberBootstrap = require("./fiber-bootstrap");
 
 export function getPropertyName(func: Function): string {
 	if (func) {
 		let match = func.toString().match(/(?:return\s+?.*\.(.+);)|(?:=>\s*?.*\.(.+)\b)/);
-		if(match) {
+		if (match) {
 			return (match[1] || match[2]).trim();
 		}
 	}
@@ -331,6 +332,18 @@ export function connectEventuallyUntilTimeout(factory: () => net.Socket, timeout
 	tryConnect();
 
 	return future;
+}
+
+export function executeActionForSpecificDuration(action: IMethodDescription, stopAction: IMethodDescription, duration: number): IFuture<void> {
+	return (() => {
+		action.method.apply(action.context, action.args).wait();
+
+		setTimeout(() => {
+			fiberBootstrap.run(() => {
+				stopAction.method.apply(stopAction.context, stopAction.args).wait();
+			});
+		}, duration);
+	}).future<void>()();
 }
 
 //--- begin part copied from AngularJS

@@ -9,7 +9,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		private $options: ICommonOptions,
 		private $fs: IFileSystem,
 		private $bplistParser: IBinaryPlistParser,
-		private $iOSSimulatorLogProvider: Mobile.IiOSSimulatorLogProvider,
+		private $deviceLogService: IDeviceLogService,
 		private $deviceLogProvider: Mobile.IDeviceLogProvider,
 		$logger: ILogger) {
 		super($logger);
@@ -43,10 +43,10 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		return (() => {
 			let launchResult = this.iosSim.startApplication(this.identifier, appIdentifier).wait();
 
-			if (!this.$options.justlaunch) {
+			if (!this.$options.justlaunch || this.$options.duration) {
 				let pid = launchResult.split(":")[1].trim();
 				this.$deviceLogProvider.setApplictionPidForDevice(this.identifier, pid);
-				this.$iOSSimulatorLogProvider.startLogProcess(this.identifier);
+				this.$deviceLogService.printDeviceLog(this.identifier, this.$options.duration).wait();
 			}
 
 		}).future<void>()();

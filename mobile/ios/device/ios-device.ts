@@ -21,7 +21,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 	public deviceInfo: Mobile.IDeviceInfo;
 
 	private mountImageCallbackPtr: NodeBuffer = null;
-	private iOSSystemLog: any;
+	private iOSSystemLog: iOSProxyServices.IOSSyslog;
 
 	private _socket: net.Socket;
 

@@ -5,6 +5,7 @@ export class OpenDeviceLogStreamCommand implements ICommand {
 		private $errors: IErrors,
 		private $commandsService: ICommandsService,
 		private $options: ICommonOptions,
+		private $loggingLevels: Mobile.ILoggingLevels,
 		private $deviceLogService: IDeviceLogService) { }
 
 	allowedParameters: ICommandParameter[] = [];
@@ -19,7 +20,7 @@ export class OpenDeviceLogStreamCommand implements ICommand {
 				this.$errors.fail(OpenDeviceLogStreamCommand.NOT_SPECIFIED_DEVICE_ERROR_MESSAGE);
 			}
 
-			this.$deviceLogService.printDeviceLog(deviceId, this.$options.duration).wait();
+			this.$deviceLogService.printDeviceLog(deviceId, this.$options.duration, this.$loggingLevels.full).wait();
 		}).future<void>()();
 	}
 }

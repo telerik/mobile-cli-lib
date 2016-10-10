@@ -29,7 +29,7 @@ declare function clearImmediate(immediateId: any): void;
 
 declare var require: {
     (id: string): any;
-    resolve(id:string): string;
+    resolve(id: string): string;
     cache: any;
     extensions: any;
     main: any;
@@ -60,7 +60,7 @@ declare var SlowBuffer: {
 
 
 // Buffer class
-interface Buffer extends NodeBuffer {}
+interface Buffer extends NodeBuffer { }
 declare var Buffer: {
     new (str: string, encoding?: string): Buffer;
     new (size: number): Buffer;
@@ -108,10 +108,10 @@ declare module NodeJS {
         unshift(chunk: Buffer): void;
         wrap(oldStream: ReadableStream): ReadableStream;
 
-		// HACK: process.stdin is incorrectly declared as a ReadableStream, instead of as a "tty".ReadStream,
-		// hence the need to add these declarations here.
-		isTTY: boolean;
-		setRawMode(value: boolean):void;
+        // HACK: process.stdin is incorrectly declared as a ReadableStream, instead of as a "tty".ReadStream,
+        // hence the need to add these declarations here.
+        isTTY: boolean;
+        setRawMode(value: boolean): void;
     }
 
     export interface WritableStream extends EventEmitter {
@@ -124,14 +124,14 @@ declare module NodeJS {
         end(str: string, cb?: Function): void;
         end(str: string, encoding?: string, cb?: Function): void;
 
-		// HACK: process.stdout is incorrectly declared as a WritableStream, instead of as a "tty".WriteStream,
-		// hence the need to add these declarations here.
-		rows: number;
-		columns: number;
-		isTTY: boolean;
+        // HACK: process.stdout is incorrectly declared as a WritableStream, instead of as a "tty".WriteStream,
+        // hence the need to add these declarations here.
+        rows: number;
+        columns: number;
+        isTTY: boolean;
     }
 
-    export interface ReadWriteStream extends ReadableStream, WritableStream {}
+    export interface ReadWriteStream extends ReadableStream, WritableStream { }
 
     export interface Process extends EventEmitter {
         stdout: WritableStream;
@@ -195,15 +195,15 @@ declare module NodeJS {
         nextTick(callback: Function): void;
         umask(mask?: number): number;
         uptime(): number;
-        hrtime(time?:number[]): number[];
+        hrtime(time?: number[]): number[];
 
         // Worker
         send?(message: any, sendHandle?: any): void;
     }
 
     export interface Timer {
-        ref() : void;
-        unref() : void;
+        ref(): void;
+        unref(): void;
     }
 }
 
@@ -277,7 +277,7 @@ declare module "events" {
         setMaxListeners(n: number): void;
         listeners(event: string): Function[];
         emit(event: string, ...args: any[]): boolean;
-   }
+    }
 }
 
 declare module "http" {
@@ -366,7 +366,7 @@ declare module "http" {
         [errorCode: number]: string;
         [errorCode: string]: string;
     };
-    export function createServer(requestListener?: (request: ServerRequest, response: ServerResponse) =>void ): Server;
+    export function createServer(requestListener?: (request: ServerRequest, response: ServerResponse) => void): Server;
     export function createClient(port?: number, host?: string): any;
     export function request(options: any, callback?: Function): ClientRequest;
     export function get(options: any, callback?: Function): ClientRequest;
@@ -374,7 +374,7 @@ declare module "http" {
 }
 
 declare module "cluster" {
-    import child  = require("child_process");
+    import child = require("child_process");
     import events = require("events");
 
     export interface ClusterSettings {
@@ -433,13 +433,13 @@ declare module "zlib" {
     export function createInflateRaw(options?: ZlibOptions): InflateRaw;
     export function createUnzip(options?: ZlibOptions): Unzip;
 
-    export function deflate(buf: Buffer, callback: (error: Error, result: any) =>void ): void;
-    export function deflateRaw(buf: Buffer, callback: (error: Error, result: any) =>void ): void;
-    export function gzip(buf: Buffer, callback: (error: Error, result: any) =>void ): void;
-    export function gunzip(buf: Buffer, callback: (error: Error, result: any) =>void ): void;
-    export function inflate(buf: Buffer, callback: (error: Error, result: any) =>void ): void;
-    export function inflateRaw(buf: Buffer, callback: (error: Error, result: any) =>void ): void;
-    export function unzip(buf: Buffer, callback: (error: Error, result: any) =>void ): void;
+    export function deflate(buf: Buffer, callback: (error: Error, result: any) => void): void;
+    export function deflateRaw(buf: Buffer, callback: (error: Error, result: any) => void): void;
+    export function gzip(buf: Buffer, callback: (error: Error, result: any) => void): void;
+    export function gunzip(buf: Buffer, callback: (error: Error, result: any) => void): void;
+    export function inflate(buf: Buffer, callback: (error: Error, result: any) => void): void;
+    export function inflateRaw(buf: Buffer, callback: (error: Error, result: any) => void): void;
+    export function unzip(buf: Buffer, callback: (error: Error, result: any) => void): void;
 
     // Constants
     export var Z_NO_FLUSH: number;
@@ -539,8 +539,8 @@ declare module "https" {
     };
     export interface Server extends tls.Server { }
     export function createServer(options: ServerOptions, requestListener?: Function): Server;
-    export function request(options: RequestOptions, callback?: (res: events.EventEmitter) =>void ): http.ClientRequest;
-    export function get(options: RequestOptions, callback?: (res: events.EventEmitter) =>void ): http.ClientRequest;
+    export function request(options: RequestOptions, callback?: (res: events.EventEmitter) => void): http.ClientRequest;
+    export function get(options: RequestOptions, callback?: (res: events.EventEmitter) => void): http.ClientRequest;
     export var globalAgent: Agent;
 }
 
@@ -615,7 +615,7 @@ declare module "child_process" {
     import stream = require("stream");
 
     export interface ChildProcess extends events.EventEmitter {
-        stdin:  stream.Writable;
+        stdin: stream.Writable;
         stdout: stream.Readable;
         stderr: stream.Readable;
         pid: number;
@@ -640,8 +640,8 @@ declare module "child_process" {
         timeout?: number;
         maxBuffer?: number;
         killSignal?: string;
-    }, callback: (error: Error, stdout: Buffer, stderr: Buffer) =>void ): ChildProcess;
-    export function exec(command: string, callback: (error: Error, stdout: Buffer, stderr: Buffer) =>void ): ChildProcess;
+    }, callback: (error: Error, stdout: Buffer, stderr: Buffer) => void): ChildProcess;
+    export function exec(command: string, callback: (error: Error, stdout: Buffer, stderr: Buffer) => void): ChildProcess;
     export function execFile(file: string, args: string[], options?: {
         cwd?: string;
         stdio?: any;
@@ -651,7 +651,7 @@ declare module "child_process" {
         timeout?: number;
         maxBuffer?: string;
         killSignal?: string;
-    }, callback?: (error: Error, stdout: Buffer, stderr: Buffer) =>void ): ChildProcess;
+    }, callback?: (error: Error, stdout: Buffer, stderr: Buffer) => void): ChildProcess;
     export function fork(modulePath: string, args?: string[], options?: {
         cwd?: string;
         env?: any;
@@ -688,24 +688,24 @@ declare module "url" {
         path?: string;
     }
 
-    export function parse(urlStr: string, parseQueryString?: boolean , slashesDenoteHost?: boolean ): Url;
+    export function parse(urlStr: string, parseQueryString?: boolean, slashesDenoteHost?: boolean): Url;
     export function format(url: UrlOptions): string;
     export function resolve(from: string, to: string): string;
 }
 
 declare module "dns" {
-    export function lookup(domain: string, family: number, callback: (err: Error, address: string, family: number) =>void ): string;
-    export function lookup(domain: string, callback: (err: Error, address: string, family: number) =>void ): string;
-    export function resolve(domain: string, rrtype: string, callback: (err: Error, addresses: string[]) =>void ): string[];
-    export function resolve(domain: string, callback: (err: Error, addresses: string[]) =>void ): string[];
-    export function resolve4(domain: string, callback: (err: Error, addresses: string[]) =>void ): string[];
-    export function resolve6(domain: string, callback: (err: Error, addresses: string[]) =>void ): string[];
-    export function resolveMx(domain: string, callback: (err: Error, addresses: string[]) =>void ): string[];
-    export function resolveTxt(domain: string, callback: (err: Error, addresses: string[]) =>void ): string[];
-    export function resolveSrv(domain: string, callback: (err: Error, addresses: string[]) =>void ): string[];
-    export function resolveNs(domain: string, callback: (err: Error, addresses: string[]) =>void ): string[];
-    export function resolveCname(domain: string, callback: (err: Error, addresses: string[]) =>void ): string[];
-    export function reverse(ip: string, callback: (err: Error, domains: string[]) =>void ): string[];
+    export function lookup(domain: string, family: number, callback: (err: Error, address: string, family: number) => void): string;
+    export function lookup(domain: string, callback: (err: Error, address: string, family: number) => void): string;
+    export function resolve(domain: string, rrtype: string, callback: (err: Error, addresses: string[]) => void): string[];
+    export function resolve(domain: string, callback: (err: Error, addresses: string[]) => void): string[];
+    export function resolve4(domain: string, callback: (err: Error, addresses: string[]) => void): string[];
+    export function resolve6(domain: string, callback: (err: Error, addresses: string[]) => void): string[];
+    export function resolveMx(domain: string, callback: (err: Error, addresses: string[]) => void): string[];
+    export function resolveTxt(domain: string, callback: (err: Error, addresses: string[]) => void): string[];
+    export function resolveSrv(domain: string, callback: (err: Error, addresses: string[]) => void): string[];
+    export function resolveNs(domain: string, callback: (err: Error, addresses: string[]) => void): string[];
+    export function resolveCname(domain: string, callback: (err: Error, addresses: string[]) => void): string[];
+    export function reverse(ip: string, callback: (err: Error, domains: string[]) => void): string[];
 }
 
 declare module "net" {
@@ -724,7 +724,7 @@ declare module "net" {
         bufferSize: number;
         setEncoding(encoding?: string): void;
         write(data: any, encoding?: string, callback?: Function): void;
-        destroy(): void;
+        destroy(err?: Error): void;
         pause(): void;
         resume(): void;
         setTimeout(timeout: number, callback?: Function): void;
@@ -757,8 +757,8 @@ declare module "net" {
         maxConnections: number;
         connections: number;
     }
-    export function createServer(connectionListener?: (socket: Socket) =>void ): Server;
-    export function createServer(options?: { allowHalfOpen?: boolean; }, connectionListener?: (socket: Socket) =>void ): Server;
+    export function createServer(connectionListener?: (socket: Socket) => void): Server;
+    export function createServer(options?: { allowHalfOpen?: boolean; }, connectionListener?: (socket: Socket) => void): Server;
     export function connect(options: { allowHalfOpen?: boolean; }, connectionListener?: Function): Socket;
     export function connect(port: number, host?: string, connectionListener?: Function): Socket;
     export function connect(path: string, connectionListener?: Function): Socket;
@@ -831,8 +831,8 @@ declare module "fs" {
         close(): void;
     }
 
-    export interface ReadStream extends stream.Readable {}
-    export interface WriteStream extends stream.Writable {}
+    export interface ReadStream extends stream.Readable { }
+    export interface WriteStream extends stream.Writable { }
 
     export function rename(oldPath: string, newPath: string, callback?: (err?: NodeJS.ErrnoException) => void): void;
     export function renameSync(oldPath: string, newPath: string): void;
@@ -873,8 +873,8 @@ declare module "fs" {
     export function readlink(path: string, callback?: (err: NodeJS.ErrnoException, linkString: string) => any): void;
     export function readlinkSync(path: string): string;
     export function realpath(path: string, callback?: (err: NodeJS.ErrnoException, resolvedPath: string) => any): void;
-    export function realpath(path: string, cache: {[path: string]: string}, callback: (err: NodeJS.ErrnoException, resolvedPath: string) =>any): void;
-    export function realpathSync(path: string, cache?: {[path: string]: string}): string;
+    export function realpath(path: string, cache: { [path: string]: string }, callback: (err: NodeJS.ErrnoException, resolvedPath: string) => any): void;
+    export function realpathSync(path: string, cache?: { [path: string]: string }): string;
     export function unlink(path: string, callback?: (err?: NodeJS.ErrnoException) => void): void;
     export function unlinkSync(path: string): void;
     export function rmdir(path: string, callback?: (err?: NodeJS.ErrnoException) => void): void;
@@ -903,14 +903,14 @@ declare module "fs" {
     export function futimesSync(fd: number, atime: Date, mtime: Date): void;
     export function fsync(fd: number, callback?: (err?: NodeJS.ErrnoException) => void): void;
     export function fsyncSync(fd: number): void;
-    export function write(fd: number, buffer: Buffer|string, offset: number, length: number, position: number, callback?: (err: NodeJS.ErrnoException, written: number, buffer: Buffer) => void): void;
+    export function write(fd: number, buffer: Buffer | string, offset: number, length: number, position: number, callback?: (err: NodeJS.ErrnoException, written: number, buffer: Buffer) => void): void;
     export function writeSync(fd: number, buffer: Buffer, offset: number, length: number, position: number): number;
     export function read(fd: number, buffer: Buffer, offset: number, length: number, position: number, callback?: (err: NodeJS.ErrnoException, bytesRead: number, buffer: Buffer) => void): void;
     export function readSync(fd: number, buffer: Buffer, offset: number, length: number, position: number): number;
     export function readFile(filename: string, encoding: string, callback: (err: NodeJS.ErrnoException, data: string) => void): void;
     export function readFile(filename: string, options: { encoding: string; flag?: string; }, callback: (err: NodeJS.ErrnoException, data: string) => void): void;
     export function readFile(filename: string, options: { flag?: string; }, callback: (err: NodeJS.ErrnoException, data: Buffer) => void): void;
-    export function readFile(filename: string, callback: (err: NodeJS.ErrnoException, data: Buffer) => void ): void;
+    export function readFile(filename: string, callback: (err: NodeJS.ErrnoException, data: Buffer) => void): void;
     export function readFileSync(filename: string, encoding: string): string;
     export function readFileSync(filename: string, options: { encoding: string; flag?: string; }): string;
     export function readFileSync(filename: string, options?: { flag?: string; }): Buffer;
@@ -1050,10 +1050,10 @@ declare module "tls" {
         cleartext: any;
     }
 
-    export function createServer(options: TlsOptions, secureConnectionListener?: (cleartextStream: ClearTextStream) =>void ): Server;
-    export function connect(options: TlsOptions, secureConnectionListener?: () =>void ): ClearTextStream;
-    export function connect(port: number, host?: string, options?: ConnectionOptions, secureConnectListener?: () =>void ): ClearTextStream;
-    export function connect(port: number, options?: ConnectionOptions, secureConnectListener?: () =>void ): ClearTextStream;
+    export function createServer(options: TlsOptions, secureConnectionListener?: (cleartextStream: ClearTextStream) => void): Server;
+    export function connect(options: TlsOptions, secureConnectionListener?: () => void): ClearTextStream;
+    export function connect(port: number, host?: string, options?: ConnectionOptions, secureConnectListener?: () => void): ClearTextStream;
+    export function connect(port: number, options?: ConnectionOptions, secureConnectListener?: () => void): ClearTextStream;
     export function createSecurePair(credentials?: crypto.Credentials, isServer?: boolean, requestCert?: boolean, rejectUnauthorized?: boolean): SecurePair;
 }
 
@@ -1122,11 +1122,11 @@ declare module "crypto" {
     }
     export function getDiffieHellman(group_name: string): DiffieHellman;
     export function pbkdf2(password: string, salt: string, iterations: number, keylen: number, callback: (err: Error, derivedKey: Buffer) => any): void;
-    export function pbkdf2Sync(password: string, salt: string, iterations: number, keylen: number) : Buffer;
+    export function pbkdf2Sync(password: string, salt: string, iterations: number, keylen: number): Buffer;
     export function randomBytes(size: number): Buffer;
-    export function randomBytes(size: number, callback: (err: Error, buf: Buffer) =>void ): void;
+    export function randomBytes(size: number, callback: (err: Error, buf: Buffer) => void): void;
     export function pseudoRandomBytes(size: number): Buffer;
-    export function pseudoRandomBytes(size: number, callback: (err: Error, buf: Buffer) =>void ): void;
+    export function pseudoRandomBytes(size: number, callback: (err: Error, buf: Buffer) => void): void;
 }
 
 declare module "stream" {
@@ -1157,10 +1157,10 @@ declare module "stream" {
         wrap(oldStream: NodeJS.ReadableStream): NodeJS.ReadableStream;
         push(chunk: any, encoding?: string): boolean;
 
-		// HACK: process.stdin is incorrectly declared as a ReadableStream, instead of as a "tty".ReadStream,
-		// hence the need to add these declarations here.
-		isTTY: boolean;
-		setRawMode(value: boolean):void;
+        // HACK: process.stdin is incorrectly declared as a ReadableStream, instead of as a "tty".ReadStream,
+        // hence the need to add these declarations here.
+        isTTY: boolean;
+        setRawMode(value: boolean): void;
     }
 
     export interface WritableOptions {
@@ -1181,11 +1181,11 @@ declare module "stream" {
         end(str: string, cb?: Function): void;
         end(str: string, encoding?: string, cb?: Function): void;
 
-		// HACK: process.stdout is incorrectly declared as a WritableStream, instead of as a "tty".WriteStream,
-		// hence the need to add these declarations here.
-		rows: number;
-		columns: number;
-		isTTY: boolean;
+        // HACK: process.stdout is incorrectly declared as a WritableStream, instead of as a "tty".WriteStream,
+        // hence the need to add these declarations here.
+        rows: number;
+        columns: number;
+        isTTY: boolean;
     }
 
     export interface DuplexOptions extends ReadableOptions, WritableOptions {
@@ -1206,15 +1206,15 @@ declare module "stream" {
         end(str: string, cb?: Function): void;
         end(str: string, encoding?: string, cb?: Function): void;
 
-		// HACK: process.stdout is incorrectly declared as a WritableStream, instead of as a "tty".WriteStream,
-		// hence the need to add these declarations here.
-		rows: number;
-		columns: number;
-		setRawMode(value: boolean):void;
-		isTTY: boolean;
+        // HACK: process.stdout is incorrectly declared as a WritableStream, instead of as a "tty".WriteStream,
+        // hence the need to add these declarations here.
+        rows: number;
+        columns: number;
+        setRawMode(value: boolean): void;
+        isTTY: boolean;
     }
 
-    export interface TransformOptions extends ReadableOptions, WritableOptions {}
+    export interface TransformOptions extends ReadableOptions, WritableOptions { }
 
     // Note: Transform lacks the _read and _write methods of Readable/Writable.
     export class Transform extends events.EventEmitter implements NodeJS.ReadWriteStream {
@@ -1242,15 +1242,15 @@ declare module "stream" {
         end(str: string, cb?: Function): void;
         end(str: string, encoding?: string, cb?: Function): void;
 
-		// HACK: process.stdout is incorrectly declared as a WritableStream, instead of as a "tty".WriteStream,
-		// hence the need to add these declarations here.
-		rows: number;
-		columns: number;
-		setRawMode(value: boolean):void;
-		isTTY: boolean;
+        // HACK: process.stdout is incorrectly declared as a WritableStream, instead of as a "tty".WriteStream,
+        // hence the need to add these declarations here.
+        rows: number;
+        columns: number;
+        setRawMode(value: boolean): void;
+        isTTY: boolean;
     }
 
-    export class PassThrough extends Transform {}
+    export class PassThrough extends Transform { }
 }
 
 declare module "util" {
@@ -1293,7 +1293,7 @@ declare module "util" {
 }
 
 declare module "assert" {
-    function internal (value: any, message?: string): void;
+    function internal(value: any, message?: string): void;
     module internal {
         export class AssertionError implements Error {
             name: string;
@@ -1303,11 +1303,13 @@ declare module "assert" {
             operator: string;
             generatedMessage: boolean;
 
-            constructor(options?: {message?: string; actual?: any; expected?: any;
-                                  operator?: string; stackStartFunction?: Function});
+            constructor(options?: {
+                message?: string; actual?: any; expected?: any;
+                operator?: string; stackStartFunction?: Function
+            });
 
-			// HACK
-			stack: string;
+            // HACK
+            stack: string;
         }
 
         export function fail(actual?: any, expected?: any, message?: string, operator?: string): void;
@@ -1345,12 +1347,12 @@ declare module "tty" {
     export interface ReadStream extends net.Socket {
         isRaw: boolean;
         setRawMode(mode: boolean): void;
-		isTTY: boolean;
+        isTTY: boolean;
     }
     export interface WriteStream extends net.Socket {
         columns: number;
         rows: number;
-		isTTY: boolean;
+        isTTY: boolean;
     }
 }
 

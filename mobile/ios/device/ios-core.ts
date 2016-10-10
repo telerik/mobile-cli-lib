@@ -1197,24 +1197,31 @@ export class GDBServer implements Mobile.IGDBServer {
 
 	public run(argv: string[]): IFuture<void> {
 		return (() => {
+			let continueArgument = "vCont;c";
+			let disconnectArgument = "D";
 			this.init(argv).wait();
 
 			this.awaitResponse("qLaunchSuccess").wait();
 
 			if (this.$hostInfo.isWindows) {
-				this.send("vCont;c");
+				this.send(continueArgument);
 			} else {
 				if (this.$options.justlaunch) {
 					if (this.$options.watch) {
-						this.sendCore(this.encodeData("vCont;c"));
+						this.sendCore(this.encodeData(continueArgument));
 					} else {
 						// Disconnecting the debugger closes the socket and allows the process to quit
-						this.sendCore(this.encodeData("D"));
+						this.sendCore(this.encodeData(disconnectArgument));
 					}
 				} else {
 					this.socket.pipe(this.$injector.resolve(GDBStandardOutputAdapter, { deviceIdentifier: this.deviceIdentifier }));
 					this.socket.pipe(new GDBSignalWatcher());
-					this.sendCore(this.encodeData("vCont;c"));
+
+					if (this.$options.duration) {
+						this.sendCore(this.encodeData(disconnectArgument));
+					} else {
+						this.sendCore(this.encodeData(continueArgument));
+					}
 				}
 			}
 		}).future<void>()();

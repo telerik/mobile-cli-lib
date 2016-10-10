@@ -1363,8 +1363,11 @@ interface ITypeScriptTranspileOptions {
 interface IDeviceLogService {
 	/**
 	 * Starts printing the log of the device until the process is killed or until the specified duration expires.
+	 * @param {string} deviceId The identifier of the device whose log will be displayed.
+	 * @param @optional {string} duration The duration for which the log will be printed.
+	 * @param @optional {string} loggingLevel The log level.
 	 */
-	printDeviceLog(deviceId: string, duration?: number): IFuture<void>;
+	printDeviceLog(deviceId: string, duration?: number, loggingLevel?: string): IFuture<void>;
 }
 
 /**
@@ -1380,4 +1383,13 @@ interface IProxySettings {
 	 * Port of the machine used for proxy that allows connections.
 	 */
 	port: string;
+}
+
+/**
+ * Describes method with its context and arguments.
+ */
+interface IMethodDescription {
+	method: () => IFuture<void>;
+	context: any;
+	args?: any[];
 }
