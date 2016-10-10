@@ -475,7 +475,7 @@ declare module Mobile {
 	}
 
 	interface IHouseArrestClient {
-		getAfcClientForAppContainer(applicationIdentifier: string): Mobile.IAfcClient;
+		getAfcClientForAppDocuments(applicationIdentifier: string): Mobile.IAfcClient;
 		closeSocket(): void;
 	}
 

@@ -21,7 +21,7 @@ export class LiveSyncConstants {
 	static ANDROID_FILES_PATH = `files/${LiveSyncConstants.GUID}`;
 	static DEVICE_TMP_DIR_FORMAT_V3 = `/mnt/sdcard/Android/data/%s/${LiveSyncConstants.ANDROID_FILES_PATH}`;
 	static CHECK_LIVESYNC_INTENT_NAME = "com.telerik.IsLiveSyncSupported";
-	static IOS_PROJECT_PATH = "/Library/Application Support/LiveSync";
+	static IOS_PROJECT_PATH = "/Documents/AppBuilder/LiveSync";
 }
 
 export let TARGET_FRAMEWORK_IDENTIFIERS = {
