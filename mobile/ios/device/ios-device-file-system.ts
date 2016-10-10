@@ -72,19 +72,19 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 
 	public deleteFile(deviceFilePath: string, appIdentifier: string): void {
 		let houseArrestClient: Mobile.IHouseArrestClient = this.$injector.resolve(iOSProxyServices.HouseArrestClient, {device: this.device});
-		let afcClientForContainer = houseArrestClient.getAfcClientForAppContainer(appIdentifier);
-		afcClientForContainer.deleteFile(deviceFilePath);
+		let afcClientForAppDocuments = houseArrestClient.getAfcClientForAppDocuments(appIdentifier);
+		afcClientForAppDocuments.deleteFile(deviceFilePath);
 		houseArrestClient.closeSocket();
 	}
 
 	public transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void> {
 		return (() => {
 			let houseArrestClient: Mobile.IHouseArrestClient = this.$injector.resolve(iOSProxyServices.HouseArrestClient, { device: this.device });
-			let afcClientForAppContainer = houseArrestClient.getAfcClientForAppContainer(deviceAppData.appIdentifier);
+			let afcClientForAppDocuments = houseArrestClient.getAfcClientForAppDocuments(deviceAppData.appIdentifier);
 			_.each(localToDevicePaths, (localToDevicePathData) => {
 				let stats = this.$fs.getFsStats(localToDevicePathData.getLocalPath()).wait();
 				if(stats.isFile()) {
-					afcClientForAppContainer.transfer(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()).wait();
+					afcClientForAppDocuments.transfer(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()).wait();
 				}
 			});
 			houseArrestClient.closeSocket();

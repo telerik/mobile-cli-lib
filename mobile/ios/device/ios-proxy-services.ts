@@ -475,8 +475,8 @@ export class HouseArrestClient implements Mobile.IHouseArrestClient {
 		return this.$injector.resolve(AfcClient, {service: service});
 	}
 
-	public getAfcClientForAppContainer(applicationIdentifier: string): Mobile.IAfcClient {
-		return this.getAfcClientCore("VendContainer", applicationIdentifier);
+	public getAfcClientForAppDocuments(applicationIdentifier: string): Mobile.IAfcClient {
+		return this.getAfcClientCore("VendDocuments", applicationIdentifier);
 	}
 
 	public closeSocket() {
