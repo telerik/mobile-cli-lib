@@ -453,6 +453,13 @@ export class FileSystem implements IFileSystem {
 			filterCallback?: (_file: string, _stat: IFsStats) => boolean,
 			opts?: { enumerateDirectories?: boolean, includeEmptyDirectories?: boolean }, foundFiles?: string[]): string[] {
 		foundFiles = foundFiles || [];
+
+		if(!this.exists(directoryPath).wait()) {
+			let $logger = this.$injector.resolve("logger");
+			$logger.warn('Could not find folder: ' + directoryPath);
+			return foundFiles;
+		}
+
 		let contents = this.readDirectory(directoryPath).wait();
 		for (let i = 0; i < contents.length; ++i) {
 			let file = path.join(directoryPath, contents[i]);
