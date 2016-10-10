@@ -1114,6 +1114,23 @@ class GDBStandardOutputAdapter extends stream.Transform {
 				}
 			}
 
+			if (result.indexOf("NativeScript loaded bundle") >= 0) {
+				result = "";
+			}
+
+			// CONSOLE LOG messages comme in the following form:
+ 			// <date> <domain> <app>[pid] CONSOLE LOG file:///location:row:column: <actual message goes here>
+ 			// This code removes the first part and leaves only the message as specified by the call to console.log function.
+ 			// This removes the unnecessary information and makes the log consistent with Android.
+			if (result.indexOf("CONSOLE LOG") >= 0) {
+				let i = 4;
+				let index = 0;
+				while(i) { index = result.indexOf(":", index+1); i--; }
+				if (index > 0) {
+					result = "JS" + result.substring(index, result.length);
+				}
+			}
+
 			done(null, result);
 		} catch (e) {
 			done(e);

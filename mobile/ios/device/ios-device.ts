@@ -101,7 +101,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		let logger: ILogger = $injector.resolve("logger");
 
 		let jsDictionary = coreFoundation.cfTypeTo(dictionary);
-		logger.info("[Mounting] %s", jsDictionary["Status"]);
+		logger.debug("[Mounting] %s", jsDictionary["Status"]);
 	}
 
 	private getValue(value: string): string {
@@ -300,7 +300,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 				let func = () => {
 					let developerDiskImageDirectoryPath = this.findDeveloperDiskImageDirectoryPath().wait();
 					imagePath = path.join(developerDiskImageDirectoryPath, "DeveloperDiskImage.dmg");
-					this.$logger.info("Mounting %s", imagePath);
+					this.$logger.debug("Mounting %s", imagePath);
 
 					let signature = this.$fs.readFile(util.format("%s.signature", imagePath)).wait();
 					let cfImagePath = this.$coreFoundation.createCFString(imagePath);
