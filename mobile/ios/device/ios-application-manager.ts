@@ -212,7 +212,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 
 	public stopApplication(appIdentifier: string): IFuture<void> {
 		let application = this.getApplicationById(appIdentifier);
-		let gdbServer = this.createGdbServer();
+		let gdbServer = this.createGdbServer(this.device.deviceInfo.identifier);
 		return gdbServer.kill([`${application.Path}`]);
 	}
 
@@ -266,15 +266,15 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	private runApplicationCore(appIdentifier: any) {
 		this.destroyGdbServer();
 		let application = this.getApplicationById(appIdentifier);
-		let gdbServer = this.createGdbServer();
+		let gdbServer = this.createGdbServer(this.device.deviceInfo.identifier);
 		return gdbServer.run([`${application.Path}`]);
 	}
 
-	private createGdbServer(): Mobile.IGDBServer {
+	private createGdbServer(deviceIdentifier: string): Mobile.IGDBServer {
 		if (!this._gdbServer) {
 			let service = this.device.startService(iOSProxyServices.MobileServices.DEBUG_SERVER);
 			let socket = this.$hostInfo.isWindows ? service : new net.Socket({ fd: service });
-			this._gdbServer = this.$injector.resolve(GDBServer, { socket: socket });
+			this._gdbServer = this.$injector.resolve(GDBServer, { socket: socket, deviceIdentifier: deviceIdentifier });
 			this.$processService.attachToProcessExitSignals(this, this.destroyGdbServer);
 		}
 		return this._gdbServer;
