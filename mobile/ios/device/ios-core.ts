@@ -1082,8 +1082,10 @@ function getCharacterCodePoint(ch: string) {
 class GDBStandardOutputAdapter extends stream.Transform {
 	private utf8StringDecoder = new string_decoder.StringDecoder("utf8");
 
-	constructor(opts?: stream.TransformOptions) {
-		super(opts);
+	constructor(private deviceIdentifier: string,
+				private $deviceLogProvider: Mobile.IDeviceLogProvider,
+				private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
+		super();
 	}
 
 	public _transform(packet: any, encoding: string, done: Function): void {
@@ -1112,6 +1114,10 @@ class GDBStandardOutputAdapter extends stream.Transform {
 					let hex = new Buffer(hexString, "hex");
 					result += this.utf8StringDecoder.write(hex);
 				}
+			}
+
+			if (this.$deviceLogProvider) {
+				this.$deviceLogProvider.logData(result, this.$devicePlatformsConstants.iOS, this.deviceIdentifier);
 			}
 
 			done(null, result);
@@ -1148,6 +1154,7 @@ export class GDBServer implements Mobile.IGDBServer {
 	private isInitilized = false;
 
 	constructor(private socket: any, // socket is fd on Windows and net.Socket on mac
+		private deviceIdentifier: string,
 		private $injector: IInjector,
 		private $hostInfo: IHostInfo,
 		private $options: ICommonOptions,
@@ -1197,7 +1204,7 @@ export class GDBServer implements Mobile.IGDBServer {
 						this.sendCore(this.encodeData("D"));
 					}
 				} else {
-					this.socket.pipe(new GDBStandardOutputAdapter()).pipe(process.stdout);
+					this.socket.pipe(this.$injector.resolve(GDBStandardOutputAdapter, { deviceIdentifier: this.deviceIdentifier }));
 					this.socket.pipe(new GDBSignalWatcher());
 					this.sendCore(this.encodeData("vCont;c"));
 				}

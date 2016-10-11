@@ -11,3 +11,4 @@ $injector.require("nativeScriptProjectCapabilities", "./appbuilder/project/nativ
 $injector.require("cordovaProjectCapabilities", "./appbuilder/project/cordova-project-capabilities");
 $injector.require("mobilePlatformsCapabilities", "./appbuilder/mobile-platforms-capabilities");
 $injector.requirePublic("npmService", "./appbuilder/services/npm-service");
+$injector.require("iOSLogFilter", "./appbuilder/mobile/ios/ios-log-filter");
