@@ -8,13 +8,16 @@ export class ProcessService implements IProcessService {
 
 	constructor() {
 		this._listeners = [];
-		_.each(ProcessService.PROCESS_EXIT_SIGNALS, (signal: string) => {
-			process.on(signal, () => this.executeAllCallbacks.apply(this));
-		});
 	}
 
 	public attachToProcessExitSignals(context: any, callback: () => void): void {
 		let callbackToString = callback.toString();
+
+		if (this._listeners.length === 0) {
+			_.each(ProcessService.PROCESS_EXIT_SIGNALS, (signal: string) => {
+				process.on(signal, () => this.executeAllCallbacks.apply(this));
+			});
+		}
 
 		if (!_.some(this._listeners, (listener: IListener) => context === listener.context && callbackToString === listener.callback.toString())) {
 			this._listeners.push({ context, callback });
