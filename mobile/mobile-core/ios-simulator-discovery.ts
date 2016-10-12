@@ -6,6 +6,7 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 	private cachedSimulator: Mobile.IiSimDevice;
 
 	constructor(private $injector: IInjector,
+		private $childProcess: IChildProcess,
 		private $iOSSimResolver: Mobile.IiOSSimResolver,
 		private $hostInfo: IHostInfo) {
 		super();
@@ -17,7 +18,10 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 
 	public checkForDevices(future?: IFuture<void>): IFuture<void> {
 		if (this.$hostInfo.isDarwin) {
-			let currentSimulator = this.$iOSSimResolver.iOSSim.getRunningSimulator();
+			let currentSimulator:any = null;
+			if (this.isSimulatorRunning().wait()) {
+				currentSimulator = this.$iOSSimResolver.iOSSim.getRunningSimulator();
+			}
 
 			if (currentSimulator) {
 				if (!this.cachedSimulator) {
@@ -38,6 +42,17 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 		}
 
 		return future || Future.fromResult();
+	}
+
+	private isSimulatorRunning(): IFuture<boolean> {
+		return (() => {
+			try {
+				let output = this.$childProcess.exec("ps cax | grep launchd_sim").wait();
+				return output.indexOf('launchd_sim') !== -1;
+			} catch(e) {
+				return false;
+			}
+		}).future<boolean>()();
 	}
 
 	private createAndAddDevice(simulator: Mobile.IiSimDevice): void {
