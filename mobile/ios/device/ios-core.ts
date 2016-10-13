@@ -1136,8 +1136,9 @@ class GDBSignalWatcher extends stream.Writable {
 		try {
 			for (let i = 0; i < packet.length - 2; i++) {
 				if (packet[i] === getCharacterCodePoint("$") && (packet[i + 1] === getCharacterCodePoint("T") || packet[i + 1] === getCharacterCodePoint("S"))) {
-					// SIGKILL
-					if (packet[i + 2] === getCharacterCodePoint("9")) {
+					// SIGKILL || SIGABRT
+					if (packet[i + 2] === getCharacterCodePoint("9") ||
+					    packet[i + 2] === getCharacterCodePoint("6")) {
 						process.exit(1);
 					}
 				}
