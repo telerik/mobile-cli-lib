@@ -3,6 +3,7 @@ import * as prompt from "inquirer";
 import * as helpers from "./helpers";
 import * as readline from "readline";
 let MuteStream = require("mute-stream");
+let emailValidatorModule = require('email-validator');
 
 export class Prompter implements IPrompter {
 	private ctrlcReader: readline.ReadLine;
@@ -89,6 +90,35 @@ export class Prompter implements IPrompter {
 			let result = this.get([schema]).wait();
 			return result.inputString;
 		}).future<string>()();
+	}
+
+	public getEmail(prompt: string, options?: IPrompterOptions): IFuture<any> {
+		let future = new Future<string>();
+
+		if (!helpers.isInteractive()) {
+			if (!options || !options.defaultAction) {
+				future.throw(new Error("Console is not interactive and no default action specified."));
+			} else {
+				future.resolve(options.defaultAction);
+			}
+			return future;
+		}
+
+		let rl = readline.createInterface({input: process.stdin, output: process.stdout});
+		let recursiveAsyncReadLine = () => {
+			rl.question(prompt, (answer: string) => {
+				if (answer === "" || emailValidatorModule.validate(answer)) {
+					future.return(answer);
+					rl.close();
+					return;
+				}
+				console.log("Please provide a valid e-mail or simply leave it blank.");
+				recursiveAsyncReadLine();
+			});
+		};
+		recursiveAsyncReadLine();
+
+		return future;
 	}
 
 	public promptForChoice(promptMessage: string, choices: any[]): IFuture<string> {
