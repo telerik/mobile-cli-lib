@@ -4,6 +4,7 @@ import * as iOSCore from "./ios-core";
 import * as helpers from "../../../helpers";
 import * as plistlib from "plistlib";
 import Future = require("fibers/future");
+import * as fiberBootstrap from "../../../fiber-bootstrap";
 
 export class MobileServices {
 	public static APPLE_FILE_CONNECTION: string = "com.apple.afc";
@@ -497,7 +498,9 @@ export class IOSSyslog {
 
 	public read(): void {
 		let printData = (data: string) => {
-			this.$deviceLogProvider.logData(data, this.$devicePlatformsConstants.iOS, this.device.deviceInfo.identifier);
+			fiberBootstrap.run(() =>
+				this.$deviceLogProvider.logData(data, this.$devicePlatformsConstants.iOS, this.device.deviceInfo.identifier)
+			);
 		};
 		this.plistService.readSystemLog(printData);
 	}

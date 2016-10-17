@@ -14,6 +14,7 @@ import * as string_decoder from "string_decoder";
 import * as stream from "stream";
 import * as assert from "assert";
 import {EOL} from "os";
+import * as fiberBootstrap from "../../../fiber-bootstrap";
 
 export class CoreTypes {
 	public static pointerSize = ref.types.size_t.size;
@@ -1117,7 +1118,9 @@ class GDBStandardOutputAdapter extends stream.Transform {
 			}
 
 			if (this.$deviceLogProvider) {
-				this.$deviceLogProvider.logData(result, this.$devicePlatformsConstants.iOS, this.deviceIdentifier);
+				fiberBootstrap.run(() =>
+					this.$deviceLogProvider.logData(result, this.$devicePlatformsConstants.iOS, this.deviceIdentifier)
+				);
 			}
 
 			done(null, result);
