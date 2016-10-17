@@ -1,4 +1,4 @@
-import * as Promise from "bluebird";
+// import * as Promise from "Promise";
 import * as fiberBootstrap from "./fiber-bootstrap";
 import * as assert from "assert";
 import {isFuture} from "./helpers";
@@ -47,6 +47,18 @@ export function exportedPromise(moduleName: string, postAction?: () => void): an
 }
 
 function getPromise(originalValue: any, config?: { postActionMethod: () => void, shouldExecutePostAction?: boolean }): Promise<any> {
+	let postAction = (data: any) => {
+		if (config && config.postActionMethod && config.shouldExecutePostAction) {
+			config.postActionMethod();
+		}
+
+		if (data instanceof Error) {
+			throw data;
+		}
+
+		return data;
+	};
+
 	return new Promise((onFulfilled: Function, onRejected: Function) => {
 		if (isFuture(originalValue)) {
 			fiberBootstrap.run(function () {
@@ -60,11 +72,7 @@ function getPromise(originalValue: any, config?: { postActionMethod: () => void,
 		} else {
 			onFulfilled(originalValue);
 		}
-	}).lastly(() => {
-		if (config && config.postActionMethod && config.shouldExecutePostAction) {
-			config.postActionMethod();
-		}
-	});
+	}).then(postAction, postAction);
 }
 
 export function exported(moduleName: string): any {

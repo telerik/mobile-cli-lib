@@ -7,7 +7,8 @@ declare module "colors" {
 }
 
 interface String {
-	bold: String;
+	// In ES6 there's a method called `bold` in String interface.
+	// bold: String;
 	italic: String;
 	underline: String;
 	inverse: String;

@@ -357,7 +357,8 @@ export function connectEventuallyUntilTimeout(factory: () => net.Socket, timeout
 //	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //THE SOFTWARE.
 
-let FN_NAME_AND_ARGS = /^function\s*([^\(]*)\(\s*([^\)]*)\)/m;
+let FN_NAME = /class\s+([A-Z].+?)(?:\s+.*?)?\{/;
+let FN_ARGS = /constructor\s*([^\(]*)\(\s*([^\)]*)\)/m;
 let FN_ARG_SPLIT = /,/;
 let FN_ARG = /^\s*(_?)(\S+?)\1\s*$/;
 let STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
@@ -371,9 +372,12 @@ export function annotate(fn: any) {
 		if (!($inject = fn.$inject) || $inject.name !== fn.name) {
 			$inject = { args: [], name: "" };
 			fnText = fn.toString().replace(STRIP_COMMENTS, '');
-			argDecl = fnText.match(FN_NAME_AND_ARGS);
-			$inject.name = argDecl[1];
-			if (fn.length) {
+			argDecl = fnText.match(FN_ARGS);
+
+			let nameMatch = fnText.match(FN_NAME);
+			$inject.name = nameMatch && nameMatch[1];
+
+			if (argDecl && fn.length) {
 				argDecl[2].split(FN_ARG_SPLIT).forEach((arg) => {
 					arg.replace(FN_ARG, (all, underscore, name) => $inject.args.push(name));
 				});

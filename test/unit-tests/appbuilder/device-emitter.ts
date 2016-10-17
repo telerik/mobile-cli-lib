@@ -12,6 +12,12 @@ class AndroidDeviceDiscoveryMock extends EventEmitter {
 	}
 }
 
+// Injector dependencies must be classes.
+// EventEmitter is function, so our annotate method will fail.
+class CustomEventEmitter extends EventEmitter {
+	constructor() { super(); }
+}
+
 let companionAppIdentifiers = {
 	"cordova": {
 		"android": "cordova-android",
@@ -28,12 +34,12 @@ let companionAppIdentifiers = {
 function createTestInjector(): IInjector {
 	let testInjector = new Yok();
 	testInjector.register("androidDeviceDiscovery", AndroidDeviceDiscoveryMock);
-	testInjector.register("iOSDeviceDiscovery", EventEmitter);
-	testInjector.register("iOSSimulatorDiscovery", EventEmitter);
+	testInjector.register("iOSDeviceDiscovery", CustomEventEmitter);
+	testInjector.register("iOSSimulatorDiscovery", CustomEventEmitter);
 	testInjector.register("devicesService", {
 		initialize: (opts: { skipInferPlatform: boolean }) => Future.fromResult()
 	});
-	testInjector.register("deviceLogProvider", EventEmitter);
+	testInjector.register("deviceLogProvider", CustomEventEmitter);
 	testInjector.register("companionAppsService", {
 		getAllCompanionAppIdentifiers: () => companionAppIdentifiers
 	});

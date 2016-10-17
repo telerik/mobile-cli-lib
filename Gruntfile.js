@@ -36,16 +36,7 @@ module.exports = function(grunt) {
 		pkg: grunt.file.readJSON("package.json"),
 
 		ts: {
-			options: {
-				target: 'es5',
-				module: 'commonjs',
-				sourceMap: true,
-				declaration: false,
-				removeComments: false,
-				noImplicitAny: true,
-				experimentalDecorators: true,
-				emitDecoratorMetadata: true
-			},
+			options: grunt.file.readJSON("tsconfig.json").compilerOptions,
 
 			devlib: {
 				src: ["**/*.ts", "!node_modules/**/*.ts"],

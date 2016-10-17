@@ -53,12 +53,15 @@ describe("yok", () => {
 		let obj = {};
 		injector.register("foo", obj);
 
-		function Test(foo:any) {
-			this.foo = foo;
+		class Test {
+			private foo: any;
+
+			constructor(foo: any) {
+				this.foo = foo;
+			}
 		}
 
 		let result = injector.resolve(Test);
-
 		assert.strictEqual(obj, result.foo);
 	});
 
@@ -67,8 +70,12 @@ describe("yok", () => {
 		let obj = {};
 		injector.register("foo", obj);
 
-		function Test(foo:any) {
-			this.foo = foo;
+		class Test {
+			private foo: any;
+
+			constructor(foo: any) {
+				this.foo = foo;
+			}
 		}
 
 		injector.register("test", Test);
@@ -83,8 +90,11 @@ describe("yok", () => {
 		let obj = {};
 		injector.register("foo", obj);
 
-		function Test($foo:any) {
-			this.foo = $foo;
+		class Test {
+			private foo: any;
+			constructor($foo: any) {
+				this.foo = $foo;
+			}
 		}
 
 		let result = injector.resolve(Test);
@@ -107,8 +117,11 @@ describe("yok", () => {
 	it("resolves a parameterless constructor", () => {
 		let injector = new Yok();
 
-		function Test() {
-			this.foo = "foo";
+		class Test {
+			private foo: any;
+			constructor() {
+				this.foo = "foo";
+			}
 		}
 
 		let result = injector.resolve(Test);
@@ -125,7 +138,9 @@ describe("yok", () => {
 	it("throws when it can't resolve a registered command", () => {
 		let injector = new Yok();
 
-		function Command(whatever:any) { /* intentionally left blank */ }
+		class Command {
+			constructor(whatever:any) { /* intentionally left blank */ }
+		}
 
 		injector.registerCommand("command", Command);
 
@@ -135,10 +150,12 @@ describe("yok", () => {
 	it("disposes", () => {
 		let injector = new Yok();
 
-		function Thing() { /* intentionally left blank */ }
+		class Thing {
+			public disposed = false;
 
-		Thing.prototype.dispose = function() {
-			this.disposed = true;
+			public dispose() {
+				this.disposed = true;
+			}
 		};
 
 		injector.register("thing", Thing);
