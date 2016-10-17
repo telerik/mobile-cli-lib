@@ -1,5 +1,6 @@
 import byline = require("byline");
 import {DeviceAndroidDebugBridge} from "./device-android-debug-bridge";
+import * as fiberBootstrap from "../../fiber-bootstrap";
 
 export class LogcatHelper implements Mobile.ILogcatHelper {
 	private mapDeviceToLoggingStarted: IDictionary<boolean>;
@@ -40,7 +41,9 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 
 			lineStream.on('data', (line: NodeBuffer) => {
 				let lineText = line.toString();
-				this.$deviceLogProvider.logData(lineText, this.$devicePlatformsConstants.Android, deviceIdentifier);
+				fiberBootstrap.run(() =>
+					this.$deviceLogProvider.logData(lineText, this.$devicePlatformsConstants.Android, deviceIdentifier)
+				);
 			});
 
 			this.$processService.attachToProcessExitSignals(this, adbLogcat.kill);
