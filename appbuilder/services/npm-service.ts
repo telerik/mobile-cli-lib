@@ -118,8 +118,9 @@ export class NpmService implements INpmService {
 		}).future<void>()();
 	}
 
-	public search(projectDir: string, keywords: string[], args: string[] = []): IFuture<IBasicPluginInformation[]> {
+	public search(projectDir: string, keywords: string[], args?: string[]): IFuture<IBasicPluginInformation[]> {
 		return ((): IBasicPluginInformation[] => {
+			args = args === undefined ? [] : args;
 			let result: IBasicPluginInformation[] = [];
 			let commandArguments = _.concat(["search"], args, keywords);
 			let spawnResult = this.executeNpmCommandCore(projectDir, commandArguments).wait();
@@ -320,7 +321,8 @@ export class NpmService implements INpmService {
 		return `/// <reference path="${pathToReferencedFile}" />`;
 	}
 
-	private getNpmArguments(command: string, npmArguments: string[] = []): string[] {
+	private getNpmArguments(command: string, npmArguments?: string[]): string[] {
+		npmArguments = npmArguments === undefined ? [] : npmArguments;
 		return npmArguments.concat([command]);
 	}
 

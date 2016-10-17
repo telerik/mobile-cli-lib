@@ -42,7 +42,7 @@ export class MessagesService implements IMessagesService {
 		_.each(this.messageJsonFilesContents, jsonFileContents => {
 			let messageValue = this.getMessageFromJsonRecursive(keys, jsonFileContents, 0);
 			if (messageValue) {
-				result = this.getFormatedMessage(messageValue, ...args);
+				result = this.getFormatedMessage.apply(this, [messageValue, ...args]);
 				return false;
 			}
 		});

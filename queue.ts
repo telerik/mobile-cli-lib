@@ -3,7 +3,8 @@ import Future = require("fibers/future");
 export class Queue<T> implements IQueue<T> {
 	private future: IFuture<void>;
 
-	public constructor(private items: T[] = []) {
+	public constructor(private items?: T[]) {
+		items = items === undefined ? [] : items;
 	}
 
 	public enqueue(item: T): void {

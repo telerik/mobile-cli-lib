@@ -40,8 +40,10 @@ export function quoteString(s: string): string {
 	return (platform() === "win32") ? cmdQuote(s) : bashQuote(s);
 }
 
-export function createGUID(useBraces: boolean = true) {
+export function createGUID(useBraces?: boolean) {
 	let output: string;
+
+	useBraces = useBraces === undefined ? true : useBraces;
 
 	if (useBraces) {
 		output = "{" + uuid.v4() + "}";
@@ -64,7 +66,8 @@ export function isResponseRedirect(response: Server.IRequestResponseData) {
 	return _.includes([301, 302, 303, 307, 308], response.statusCode);
 }
 
-export function formatListOfNames(names: string[], conjunction = "or"): string {
+export function formatListOfNames(names: string[], conjunction?: string): string {
+	conjunction = conjunction === undefined ? "or" : conjunction;
 	if (names.length <= 1) {
 		return names[0];
 	} else {

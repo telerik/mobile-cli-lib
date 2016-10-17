@@ -82,7 +82,9 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 				.filter((element: string) => !helpers.isNullOrWhitespace(element))
 				.map((element: string) => {
 					// http://developer.android.com/tools/help/adb.html#devicestatus
-					let [identifier, status] = element.split('\t');
+					let data = element.split('\t'),
+						identifier = data[0],
+						status = data[1];
 					return {
 						identifier: identifier,
 						status: status

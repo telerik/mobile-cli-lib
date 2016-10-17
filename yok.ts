@@ -290,8 +290,8 @@ export class Yok implements IInjector {
 		return commandName.indexOf("*") > 0 && commandName.indexOf("|") > 0;
 	}
 
-	public register(name: string, resolver: any, shared: boolean = true): void {
-
+	public register(name: string, resolver: any, shared?: boolean): void {
+		shared = shared === undefined ? true : shared;
 		trace("registered '%s'", name);
 
 		let dependency: any = this.modules[name] || {};
