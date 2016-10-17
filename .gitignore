@@ -34,3 +34,5 @@ node_modules
 coverage/**/*
 xunit.xml
 test-reports.xml
+!test-scripts/**
+!scripts/**

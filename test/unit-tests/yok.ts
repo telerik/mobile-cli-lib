@@ -15,137 +15,292 @@ class MyClass {
 }
 
 describe("yok", () => {
-	it("resolves pre-constructed singleton", () => {
-		let injector = new Yok();
-		let obj = {};
-		injector.register("foo", obj);
+	describe("functions", () => {
+		it("resolves pre-constructed singleton", () => {
+			let injector = new Yok();
+			let obj = {};
+			injector.register("foo", obj);
 
-		let resolved = injector.resolve("foo");
+			let resolved = injector.resolve("foo");
 
-		assert.strictEqual(obj, resolved);
-	});
-
-	it("resolves given constructor", () => {
-		let injector = new Yok();
-		let obj:any;
-		injector.register("foo", () => {
-			obj = {foo:"foo"};
-			return obj;
+			assert.strictEqual(obj, resolved);
 		});
 
-		let resolved = injector.resolve("foo");
+		it("resolves given constructor", () => {
+			let injector = new Yok();
+			let obj:any;
+			injector.register("foo", () => {
+				obj = {foo:"foo"};
+				return obj;
+			});
 
-		assert.strictEqual(resolved, obj);
+			let resolved = injector.resolve("foo");
+
+			assert.strictEqual(resolved, obj);
+		});
+
+		it("resolves constructed singleton", () => {
+			let injector = new Yok();
+			injector.register("foo", {foo:"foo"});
+
+			let r1 = injector.resolve("foo");
+			let r2 = injector.resolve("foo");
+
+			assert.strictEqual(r1, r2);
+		});
+
+		it("injects directly into passed constructor", () => {
+			let injector = new Yok();
+			let obj = {};
+			injector.register("foo", obj);
+
+			function Test(foo:any) {
+				this.foo = foo;
+			}
+
+			let result = injector.resolve(Test);
+
+			assert.strictEqual(obj, result.foo);
+		});
+
+		it("inject dependency into registered constructor", () => {
+			let injector = new Yok();
+			let obj = {};
+			injector.register("foo", obj);
+
+			function Test(foo:any) {
+				this.foo = foo;
+			}
+
+			injector.register("test", Test);
+
+			let result = injector.resolve("test");
+
+			assert.strictEqual(obj, result.foo);
+		});
+
+		it("inject dependency with $ prefix", () => {
+			let injector = new Yok();
+			let obj = {};
+			injector.register("foo", obj);
+
+			function Test($foo:any) {
+				this.foo = $foo;
+			}
+
+			let result = injector.resolve(Test);
+
+			assert.strictEqual(obj, result.foo);
+		});
+
+		it("inject into TS constructor", () => {
+			let injector = new Yok();
+
+			injector.register("x", "foo");
+			injector.register("y", 123);
+
+			let result = <MyClass> injector.resolve(MyClass);
+
+			assert.strictEqual(result.y, 123);
+			result.checkX();
+		});
+
+		it("resolves a parameterless constructor", () => {
+			let injector = new Yok();
+
+			function Test() {
+				this.foo = "foo";
+			}
+
+			let result = injector.resolve(Test);
+
+			assert.equal(result.foo, "foo");
+		});
+
+		it("returns null when it can't resolve a command", () => {
+			let injector = new Yok();
+			let command = injector.resolveCommand("command");
+			assert.isNull(command);
+		});
+
+		it("throws when it can't resolve a registered command", () => {
+			let injector = new Yok();
+
+			function Command(whatever:any) { /* intentionally left blank */ }
+
+			injector.registerCommand("command", Command);
+
+			assert.throws(() => injector.resolveCommand("command"));
+		});
+
+		it("disposes", () => {
+			let injector = new Yok();
+
+			function Thing() { /* intentionally left blank */ }
+
+			Thing.prototype.dispose = function() {
+				this.disposed = true;
+			};
+
+			injector.register("thing", Thing);
+			let thing = injector.resolve("thing");
+			injector.dispose();
+
+			assert.isTrue(thing.disposed);
+		});
+
 	});
 
-	it("resolves constructed singleton", () => {
-		let injector = new Yok();
-		injector.register("foo", {foo:"foo"});
+	describe("classes", () => {
+		it("resolves pre-constructed singleton", () => {
+			let injector = new Yok();
+			let obj = {};
+			injector.register("foo", obj);
 
-		let r1 = injector.resolve("foo");
-		let r2 = injector.resolve("foo");
+			let resolved = injector.resolve("foo");
 
-		assert.strictEqual(r1, r2);
-	});
+			assert.strictEqual(obj, resolved);
+		});
 
-	it("injects directly into passed constructor", () => {
-		let injector = new Yok();
-		let obj = {};
-		injector.register("foo", obj);
+		it("resolves given constructor", () => {
+			let injector = new Yok();
+			let obj:any;
+			injector.register("foo", () => {
+				obj = {foo:"foo"};
+				return obj;
+			});
 
-		function Test(foo:any) {
-			this.foo = foo;
-		}
+			let resolved = injector.resolve("foo");
 
-		let result = injector.resolve(Test);
+			assert.strictEqual(resolved, obj);
+		});
 
-		assert.strictEqual(obj, result.foo);
-	});
+		it("resolves constructed singleton", () => {
+			let injector = new Yok();
+			injector.register("foo", {foo:"foo"});
 
-	it("inject dependency into registered constructor", () => {
-		let injector = new Yok();
-		let obj = {};
-		injector.register("foo", obj);
+			let r1 = injector.resolve("foo");
+			let r2 = injector.resolve("foo");
 
-		function Test(foo:any) {
-			this.foo = foo;
-		}
+			assert.strictEqual(r1, r2);
+		});
 
-		injector.register("test", Test);
+		it("injects directly into passed constructor", () => {
+			let injector = new Yok();
+			let obj = {};
+			injector.register("foo", obj);
 
-		let result = injector.resolve("test");
+			class Test {
+				private foo: any;
 
-		assert.strictEqual(obj, result.foo);
-	});
+				constructor(foo: any) {
+					this.foo = foo;
+				}
+			}
 
-	it("inject dependency with $ prefix", () => {
-		let injector = new Yok();
-		let obj = {};
-		injector.register("foo", obj);
+			let result = injector.resolve(Test);
+			assert.strictEqual(obj, result.foo);
+		});
 
-		function Test($foo:any) {
-			this.foo = $foo;
-		}
+		it("inject dependency into registered constructor", () => {
+			let injector = new Yok();
+			let obj = {};
+			injector.register("foo", obj);
 
-		let result = injector.resolve(Test);
+			class Test {
+				private foo: any;
 
-		assert.strictEqual(obj, result.foo);
-	});
+				constructor(foo: any) {
+					this.foo = foo;
+				}
+			}
 
-	it("inject into TS constructor", () => {
-		let injector = new Yok();
+			injector.register("test", Test);
 
-		injector.register("x", "foo");
-		injector.register("y", 123);
+			let result = injector.resolve("test");
 
-		let result = <MyClass> injector.resolve(MyClass);
+			assert.strictEqual(obj, result.foo);
+		});
 
-		assert.strictEqual(result.y, 123);
-		result.checkX();
-	});
+		it("inject dependency with $ prefix", () => {
+			let injector = new Yok();
+			let obj = {};
+			injector.register("foo", obj);
 
-	it("resolves a parameterless constructor", () => {
-		let injector = new Yok();
+			class Test {
+				private foo: any;
+				constructor($foo: any) {
+					this.foo = $foo;
+				}
+			}
 
-		function Test() {
-			this.foo = "foo";
-		}
+			let result = injector.resolve(Test);
 
-		let result = injector.resolve(Test);
+			assert.strictEqual(obj, result.foo);
+		});
 
-		assert.equal(result.foo, "foo");
-	});
+		it("inject into TS constructor", () => {
+			let injector = new Yok();
 
-	it("returns null when it can't resolve a command", () => {
-		let injector = new Yok();
-		let command = injector.resolveCommand("command");
-		assert.isNull(command);
-	});
+			injector.register("x", "foo");
+			injector.register("y", 123);
 
-	it("throws when it can't resolve a registered command", () => {
-		let injector = new Yok();
+			let result = <MyClass> injector.resolve(MyClass);
 
-		function Command(whatever:any) { /* intentionally left blank */ }
+			assert.strictEqual(result.y, 123);
+			result.checkX();
+		});
 
-		injector.registerCommand("command", Command);
+		it("resolves a parameterless constructor", () => {
+			let injector = new Yok();
 
-		assert.throws(() => injector.resolveCommand("command"));
-	});
+			class Test {
+				private foo: any;
+				constructor() {
+					this.foo = "foo";
+				}
+			}
 
-	it("disposes", () => {
-		let injector = new Yok();
+			let result = injector.resolve(Test);
 
-		function Thing() { /* intentionally left blank */ }
+			assert.equal(result.foo, "foo");
+		});
 
-		Thing.prototype.dispose = function() {
-			this.disposed = true;
-		};
+		it("returns null when it can't resolve a command", () => {
+			let injector = new Yok();
+			let command = injector.resolveCommand("command");
+			assert.isNull(command);
+		});
 
-		injector.register("thing", Thing);
-		let thing = injector.resolve("thing");
-		injector.dispose();
+		it("throws when it can't resolve a registered command", () => {
+			let injector = new Yok();
 
-		assert.isTrue(thing.disposed);
+			class Command {
+				constructor(whatever:any) { /* intentionally left blank */ }
+			}
+
+			injector.registerCommand("command", Command);
+
+			assert.throws(() => injector.resolveCommand("command"));
+		});
+
+		it("disposes", () => {
+			let injector = new Yok();
+
+			class Thing {
+				public disposed = false;
+
+				public dispose() {
+					this.disposed = true;
+				}
+			};
+
+			injector.register("thing", Thing);
+			let thing = injector.resolve("thing");
+			injector.dispose();
+
+			assert.isTrue(thing.disposed);
+		});
 	});
 
 	it("throws error when module is required more than once", () => {

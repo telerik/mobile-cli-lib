@@ -18,14 +18,16 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		return Future.fromResult();
 	}
 
-	public checkAvailability(dependsOnProject: boolean = true): IFuture<void> {
+	public checkAvailability(dependsOnProject?: boolean): IFuture<void> {
 		return (() => {
-			if(!this.$hostInfo.isDarwin) {
+			dependsOnProject = dependsOnProject === undefined ? true : dependsOnProject;
+
+			if (!this.$hostInfo.isDarwin) {
 				this.$errors.failWithoutHelp("iOS Simulator is available only on Mac OS X.");
 			}
 
 			let platform = this.$devicePlatformsConstants.iOS;
-			if(dependsOnProject && !this.$emulatorSettingsService.canStart(platform).wait()) {
+			if (dependsOnProject && !this.$emulatorSettingsService.canStart(platform).wait()) {
 				this.$errors.failWithoutHelp("The current project does not target iOS and cannot be run in the iOS Simulator.");
 			}
 		}).future<void>()();
@@ -45,7 +47,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		let iosSimPath = this.$iOSSimResolver.iOSSimPath;
 		let nodeCommandName = process.argv[0];
 
-		let opts = [ "notify-post", notification ];
+		let opts = ["notify-post", notification];
 
 		if (this.$options.device) {
 			opts.push("--device", this.$options.device);
@@ -59,7 +61,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		let iosSimPath = this.$iOSSimResolver.iOSSimPath;
 		let nodeCommandName = process.argv[0];
 
-		if(this.$options.availableDevices) {
+		if (this.$options.availableDevices) {
 			this.$childProcess.spawnFromEvent(nodeCommandName, [iosSimPath, "device-types"], "close", { stdio: "inherit" }).wait();
 			return;
 		}
@@ -73,18 +75,18 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 			opts = opts.concat("--timeout", this.$options.timeout);
 		}
 
-		if(this.$options.sdk) {
+		if (this.$options.sdk) {
 			opts = opts.concat("--sdkVersion", this.$options.sdk);
 		}
 
-		if(!this.$options.justlaunch) {
+		if (!this.$options.justlaunch) {
 			opts.push("--logging");
 		} else {
-			if(emulatorOptions) {
-				if(emulatorOptions.stderrFilePath) {
+			if (emulatorOptions) {
+				if (emulatorOptions.stderrFilePath) {
 					opts = opts.concat("--stderr", emulatorOptions.stderrFilePath);
 				}
-				if(emulatorOptions.stdoutFilePath) {
+				if (emulatorOptions.stdoutFilePath) {
 					opts = opts.concat("--stdout", emulatorOptions.stdoutFilePath);
 				}
 			}
@@ -92,17 +94,17 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 			opts.push("--exit");
 		}
 
-		if(this.$options.device) {
+		if (this.$options.device) {
 			opts = opts.concat("--device", this.$options.device);
 		} else if (emulatorOptions && emulatorOptions.deviceType) {
 			opts = opts.concat("--device", emulatorOptions.deviceType);
 		}
 
-		if(emulatorOptions && emulatorOptions.args) {
+		if (emulatorOptions && emulatorOptions.args) {
 			opts.push(`--args=${emulatorOptions.args}`);
 		}
 
-		if(emulatorOptions && emulatorOptions.waitForDebugger) {
+		if (emulatorOptions && emulatorOptions.waitForDebugger) {
 			opts.push("--waitForDebugger");
 		}
 

@@ -20,8 +20,9 @@ export class DeviceAndroidDebugBridge extends AndroidDebugBridge implements Mobi
 		return super.executeCommand(args, options);
 	}
 
-	public sendBroadcastToDevice(action: string, extras: IStringDictionary = {}): IFuture<number> {
+	public sendBroadcastToDevice(action: string, extras?: IStringDictionary): IFuture<number> {
 		return (() => {
+			extras = extras || {};
 			let broadcastCommand = ["am", "broadcast", "-a", `${action}`];
 			_.each(extras, (value, key) => broadcastCommand.push("-e", key, value));
 

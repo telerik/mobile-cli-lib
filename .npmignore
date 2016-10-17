@@ -6,4 +6,7 @@ test-reports.xml
 *.tgz
 .vscode
 .npmignore
-
+test/**/*
+test-scripts/**/*
+lib/common/test/**/*
+lib/common/test-scripts/**/*

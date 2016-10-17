@@ -513,7 +513,7 @@ describe("ApplicationManagerBase", () => {
 
 				while (currentlyInstalledApps.length) {
 					let currentlyRemovedApps = currentlyInstalledApps.splice(0, 2);
-					removedApps.push(...currentlyRemovedApps);
+					removedApps = removedApps.concat(currentlyRemovedApps);
 					testInstalledAppsResults();
 				}
 			});
@@ -571,11 +571,11 @@ describe("ApplicationManagerBase", () => {
 
 				for (let index = 10; index < 13; index++) {
 					let currentlyRemovedApps = currentlyInstalledApps.splice(0, 2);
-					removedApps.push(...currentlyRemovedApps);
+					removedApps = removedApps.concat(currentlyRemovedApps);
 
 					let currentlyAddedApps = [`app${index}`];
-					currentlyInstalledApps.push(...currentlyAddedApps);
-					installedApps.push(...currentlyAddedApps);
+					currentlyInstalledApps = currentlyInstalledApps.concat(currentlyAddedApps);
+					installedApps = installedApps.concat(currentlyAddedApps);
 
 					testInstalledAppsResults();
 				}
