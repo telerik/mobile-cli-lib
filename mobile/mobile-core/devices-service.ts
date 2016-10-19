@@ -322,6 +322,9 @@ export class DevicesService implements Mobile.IDevicesService {
 			return Future.fromResult();
 		}
 		return (() => {
+
+			this.$logger.info("Searching for devices...");
+
 			data = data || {};
 			this._data = data;
 			let platform = data.platform;
