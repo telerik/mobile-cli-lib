@@ -137,20 +137,20 @@ interface IFileSystem {
 	deleteDirectory(directory: string): IFuture<void>;
 	getFileSize(path: string): IFuture<number>;
 	futureFromEvent(eventEmitter: NodeJS.EventEmitter, event: string): IFuture<any>;
-	createDirectory(path: string): IFuture<void>;
+	createDirectory(path: string): Promise<void>;
 	readDirectory(path: string): IFuture<string[]>;
-	readFile(filename: string): IFuture<NodeBuffer>;
-	readText(filename: string, encoding?: string): IFuture<string>;
-	readJson(filename: string, encoding?: string): IFuture<any>;
+	readFile(filename: string): Promise<NodeBuffer>;
+	readText(filename: string, encoding?: string): Promise<string>;
+	readJson(filename: string, encoding?: string): Promise<any>;
 	readStdin(): IFuture<string>;
-	writeFile(filename: string, data: any, encoding?: string): IFuture<void>;
+	writeFile(filename: string, data: any, encoding?: string): Promise<void>;
 	appendFile(filename: string, data: any, encoding?: string): IFuture<void>;
 	writeJson(filename: string, data: any, space?: string, encoding?: string): IFuture<void>;
 	copyFile(sourceFileName: string, destinationFileName: string): IFuture<void>;
 	getUniqueFileName(baseName: string): IFuture<string>;
 	isEmptyDir(directoryPath: string): IFuture<boolean>;
 	isRelativePath(path: string): boolean /* feels so lonely here, I don't have a Future */;
-	ensureDirectoryExists(directoryPath: string): IFuture<void>;
+	ensureDirectoryExists(directoryPath: string): Promise<void>;
 	rename(oldPath: string, newPath: string): IFuture<void>;
 	/**
 	 * Renames specified file to the specified name only in case it exists.
@@ -242,7 +242,7 @@ interface IErrors {
 	fail(formatStr: string, ...args: any[]): void;
 	fail(opts: { formatStr?: string; errorCode?: number; suppressCommandHelp?: boolean }, ...args: any[]): void;
 	failWithoutHelp(message: string, ...args: any[]): void;
-	beginCommand(action: () => IFuture<boolean>, printCommandHelp: () => IFuture<boolean>): IFuture<boolean>;
+	beginCommand(action: () => Promise<boolean>, printCommandHelp: () => Promise<boolean>): Promise<boolean>;
 	verifyHeap(message: string): void;
 	printCallStack: boolean;
 }
@@ -265,8 +265,8 @@ interface IFutureDispatcher {
 }
 
 interface ICommandDispatcher {
-	dispatchCommand(): IFuture<void>;
-	completeCommand(): IFuture<boolean>;
+	dispatchCommand(): Promise<void>;
+	completeCommand(): Promise<boolean>;
 }
 
 interface ICancellationService extends IDisposable {
@@ -444,14 +444,14 @@ interface ITypeScriptService {
 }
 
 interface IDynamicHelpService {
-	isProjectType(...args: string[]): IFuture<boolean>;
+	isProjectType(...args: string[]): Promise<boolean>;
 	isPlatform(...args: string[]): boolean;
-	getLocalVariables(options: { isHtml: boolean }): IFuture<IDictionary<any>>;
+	getLocalVariables(options: { isHtml: boolean }): Promise<IDictionary<any>>;
 }
 
 interface IDynamicHelpProvider {
-	isProjectType(args: string[]): IFuture<boolean>;
-	getLocalVariables(options: { isHtml: boolean }): IFuture<IDictionary<any>>;
+	isProjectType(args: string[]): Promise<boolean>;
+	getLocalVariables(options: { isHtml: boolean }): Promise<IDictionary<any>>;
 }
 
 interface IMicroTemplateService {
@@ -459,9 +459,9 @@ interface IMicroTemplateService {
 }
 
 interface IHtmlHelpService {
-	generateHtmlPages(): IFuture<void>;
-	getCommandLineHelpForCommand(commandName: string): IFuture<string>;
-	openHelpForCommandInBrowser(commandName: string): IFuture<void>;
+	generateHtmlPages(): Promise<void>;
+	getCommandLineHelpForCommand(commandName: string): Promise<string>;
+	openHelpForCommandInBrowser(commandName: string): Promise<void>;
 }
 
 /**

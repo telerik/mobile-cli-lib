@@ -10,8 +10,8 @@ export class MicroTemplateService implements IMicroTemplateService {
 		this.dynamicCallRegex = new RegExp(util.format("(%s)", this.$injector.dynamicCallRegex.source), "g");
 	}
 
-	public parseContent(data: string, options: { isHtml: boolean }): string {
-		let localVariables = this.$dynamicHelpService.getLocalVariables(options).wait();
+	public async parseContent(data: string, options: { isHtml: boolean }): Promise<string> {
+		let localVariables = await this.$dynamicHelpService.getLocalVariables(options);
 		let compiledTemplate = _.template(data.replace(this.dynamicCallRegex, "this.$injector.dynamicCall(\"$1\").wait()"));
 		// When debugging parsing, uncomment the line below:
 		// console.log(compiledTemplate.source);

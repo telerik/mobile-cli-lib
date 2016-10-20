@@ -178,43 +178,46 @@ export class FileSystem implements IFileSystem {
 		return future;
 	}
 
-	public createDirectory(path: string): IFuture<void> {
-		let future = new Future<void>();
-		(<any>require("mkdirp"))(path, (err: Error) => {
+	public async createDirectory(path: string): Promise<void> {
+		return new Promise<void>((resolve: any, reject: any) => {
+			(<any>require("mkdirp"))(path, (err: Error) => {
+				if (err) {
+					reject(err);
+				} else {
+					resolve();
+				}
+			});
+		});
+
+	}
+
+	public async readDirectory(path: string): Promise<string[]> {
+		return new Promise((resolve: any, reject: any) => {
+			fs.readdir(path, (err: Error, files: string[]) => {
 			if (err) {
-				future.throw(err);
+				reject(err);
 			} else {
-				future.return();
+				resolve(files);
 			}
 		});
+		})
+
 		return future;
 	}
 
-	public readDirectory(path: string): IFuture<string[]> {
-		let future = new Future<string[]>();
-		fs.readdir(path, (err: Error, files: string[]) => {
-			if (err) {
-				future.throw(err);
-			} else {
-				future.return(files);
-			}
+	public async readFile(filename: string): Promise<NodeBuffer> {
+		return new Promise<NodeBuffer>((resolve: any, reject: any) => {
+			fs.readFile(filename, (err: Error, data: NodeBuffer) => {
+				if (err) {
+					reject(err);
+				} else {
+					resolve(data);
+				}
+			});
 		});
-		return future;
 	}
 
-	public readFile(filename: string): IFuture<NodeBuffer> {
-		let future = new Future<NodeBuffer>();
-		fs.readFile(filename, (err: Error, data: NodeBuffer) => {
-			if (err) {
-				future.throw(err);
-			} else {
-				future.return(data);
-			}
-		});
-		return future;
-	}
-
-	public readText(filename: string, options?: any): IFuture<string> {
+	public readText(filename: string, options?: any): Promise<string> {
 		options = options || { encoding: "utf8" };
 		if (_.isString(options)) {
 			options = { encoding: options };
@@ -223,41 +226,39 @@ export class FileSystem implements IFileSystem {
 			options.encoding = "utf8";
 		}
 
-		let future = new Future<string>();
-		fs.readFile(filename, options, (err: Error, data: string) => {
-			if (err) {
-				future.throw(err);
-			} else {
-				future.return(data);
-			}
+		return new Promise<string>((resolve: any, reject: any) => {
+			fs.readFile(filename, options, (err: Error, data: NodeBuffer) => {
+				if (err) {
+					reject(err);
+				} else {
+					resolve(data);
+				}
+			});
 		});
-		return future;
 	}
 
-	public readJson(filename: string, encoding?: string): IFuture<any> {
-		return (() => {
-			let data = this.readText(filename, encoding).wait();
+	public async readJson(filename: string, encoding?: string): Promise<any> {
+
+			let data = await this.readText(filename, encoding)
 			if (data) {
 				// Replace BOM from the header of the file if it exists
 				return JSON.parse(data.replace(/^\uFEFF/, ""));
 			}
 			return null;
-		}).future()();
 	}
 
-	public writeFile(filename: string, data: any, encoding?: string): IFuture<void> {
-		return (() => {
+	public async writeFile(filename: string, data: any, encoding?: string): Promise<void> {
 			this.createDirectory(path.dirname(filename)).wait();
-			let future = new Future<void>();
-			fs.writeFile(filename, data, { encoding: encoding }, (err: Error) => {
-				if (err) {
-					future.throw(err);
-				} else {
-					future.return();
-				}
+			return new Promise<void>((resolve: any, reject: any) => {
+				fs.writeFile(filename, data, { encoding: encoding }, (err: Error) => {
+					if (err) {
+					reject(err);
+					} else {
+						resolve();
+					}
+				});
 			});
-			future.wait();
-		}).future<void>()();
+
 	}
 
 	public appendFile(filename: string, data: any, encoding?: string): IFuture<void> {
@@ -383,12 +384,10 @@ export class FileSystem implements IFileSystem {
 		return normal !== absolute;
 	}
 
-	public ensureDirectoryExists(directoryPath: string): IFuture<void> {
-		return (() => {
-			if (!this.exists(directoryPath).wait()) {
-				this.createDirectory(directoryPath).wait();
+	public async ensureDirectoryExists(directoryPath: string): Promise<void> {
+			if (!fs.existsSync(directoryPath)) {
+				return this.createDirectory(directoryPath);
 			}
-		}).future<void>()();
 	}
 
 	public rename(oldPath: string, newPath: string): IFuture<void> {
@@ -456,21 +455,21 @@ export class FileSystem implements IFileSystem {
 	}
 
 	// filterCallback: function(path: String, stat: fs.Stats): Boolean
-	public enumerateFilesInDirectorySync(directoryPath: string,
+	public async enumerateFilesInDirectorySync(directoryPath: string,
 		filterCallback?: (_file: string, _stat: IFsStats) => boolean,
-		opts?: { enumerateDirectories?: boolean, includeEmptyDirectories?: boolean }, foundFiles?: string[]): string[] {
+		opts?: { enumerateDirectories?: boolean, includeEmptyDirectories?: boolean }, foundFiles?: string[]): Promise<string[]> {
 		foundFiles = foundFiles || [];
 
-		if(!this.exists(directoryPath).wait()) {
+		if(!fs.existsSync(directoryPath)) {
 			let $logger = this.$injector.resolve("logger");
 			$logger.warn('Could not find folder: ' + directoryPath);
 			return foundFiles;
 		}
 
-		let contents = this.readDirectory(directoryPath).wait();
+		let contents = await this.readDirectory(directoryPath);
 		for (let i = 0; i < contents.length; ++i) {
 			let file = path.join(directoryPath, contents[i]);
-			let stat = this.getFsStats(file).wait();
+			let stat = fs.statSync(file);
 			if (filterCallback && !filterCallback(file, stat)) {
 				continue;
 			}
@@ -479,7 +478,7 @@ export class FileSystem implements IFileSystem {
 				if (opts && opts.enumerateDirectories) {
 					foundFiles.push(file);
 				}
-				if (opts && opts.includeEmptyDirectories && this.readDirectory(file).wait().length === 0) {
+				if (opts && opts.includeEmptyDirectories && await this.readDirectory(file).length === 0) {
 					foundFiles.push(file);
 				}
 

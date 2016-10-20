@@ -10,39 +10,37 @@ export class CommandDispatcher implements ICommandDispatcher {
 		private $options: ICommonOptions,
 		private $fs: IFileSystem) { }
 
-	public dispatchCommand(): IFuture<void> {
-		return(() => {
-			if (this.$options.version) {
-				return this.printVersion();
-			}
+	public async dispatchCommand(): Promise<void> {
+		if (this.$options.version) {
+			return this.printVersion();
+		}
 
-			if (this.$logger.getLevel() === "TRACE") {
-				// CommandDispatcher is called from external CLI's only, so pass the path to their package.json
-				let sysInfo = this.$sysInfo.getSysInfo(path.join(__dirname, "..", "..", "package.json")).wait();
-				this.$logger.trace("System information:");
-				this.$logger.trace(sysInfo);
-			}
+		if (this.$logger.getLevel() === "TRACE") {
+			// CommandDispatcher is called from external CLI's only, so pass the path to their package.json
+			let sysInfo = this.$sysInfo.getSysInfo(path.join(__dirname, "..", "..", "package.json")).wait();
+			this.$logger.trace("System information:");
+			this.$logger.trace(sysInfo);
+		}
 
-			let commandName = this.getCommandName();
-			let commandArguments = this.$options.argv._.slice(1);
-			let lastArgument: string = _.last(commandArguments);
+		let commandName = this.getCommandName();
+		let commandArguments = this.$options.argv._.slice(1);
+		let lastArgument: string = _.last(commandArguments);
 
-			if(this.$options.help) {
-				commandArguments.unshift(commandName);
-				commandName = "help";
-			} else if(lastArgument === "/?" || lastArgument === "?") {
-				commandArguments.pop();
-				commandArguments.unshift(commandName);
-				commandName = "help";
-			}
+		if(this.$options.help) {
+			commandArguments.unshift(commandName);
+			commandName = "help";
+		} else if(lastArgument === "/?" || lastArgument === "?") {
+			commandArguments.pop();
+			commandArguments.unshift(commandName);
+			commandName = "help";
+		}
 
-			this.$cancellation.begin("cli").wait();
+		// this.$cancellation.begin("cli").wait();
 
-			this.$commandsService.tryExecuteCommand(commandName, commandArguments).wait();
-		}).future<void>()();
+		await this.$commandsService.tryExecuteCommand(commandName, commandArguments);
 	}
 
-	public completeCommand(): IFuture<boolean> {
+	public completeCommand(): Promise<boolean> {
 		return this.$commandsService.completeCommand();
 	}
 

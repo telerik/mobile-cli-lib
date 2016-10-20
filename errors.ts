@@ -107,7 +107,7 @@ export class Errors implements IErrors {
 	constructor(private $injector: IInjector) {
 	}
 
-	public printCallStack: boolean = false;
+	public printCallStack: boolean = true;
 
 	fail(optsOrFormatStr: any, ...args: any[]): void {
 		let opts = optsOrFormatStr;
@@ -135,10 +135,9 @@ export class Errors implements IErrors {
 		this.fail({ formatStr: util.format.apply(null, args), suppressCommandHelp: true });
 	}
 
-	public beginCommand(action: () => IFuture<boolean>, printCommandHelp: () => IFuture<boolean>): IFuture<boolean> {
-		return (() => {
+	public async beginCommand(action: () => Promise<boolean>, printCommandHelp: () => Promise<boolean>): Promise<boolean> {
 			try {
-				return action().wait();
+				return await action();
 			} catch(ex) {
 				let loggerLevel: string = $injector.resolve("logger").getLevel().toUpperCase();
 				let printCallStack = this.printCallStack || loggerLevel === "TRACE" || loggerLevel === "DEBUG";
@@ -147,13 +146,12 @@ export class Errors implements IErrors {
 					: "\x1B[31;1m" + ex.message + "\x1B[0m");
 
 				if (!ex.suppressCommandHelp) {
-					printCommandHelp().wait();
+					await printCommandHelp();
 				}
 
 				tryTrackException(ex, this.$injector);
 				process.exit(_.isNumber(ex.errorCode) ? ex.errorCode : ErrorCodes.UNKNOWN);
 			}
-		}).future<boolean>()();
 	}
 
 	// If you want to activate this function, start Node with flags --nouse_idle_notification and --expose_gc

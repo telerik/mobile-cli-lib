@@ -75,7 +75,7 @@ export class MessagesService implements IMessagesService {
 					throw new Error("Message json file " + path + " does not exist.");
 				}
 
-				this._messageJsonFilesContentsCache.push(this.$fs.readJson(path).wait());
+				// this._messageJsonFilesContentsCache.push();
 			});
 		});
 	}

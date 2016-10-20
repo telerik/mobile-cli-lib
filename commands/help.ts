@@ -9,31 +9,29 @@ export class HelpCommand implements ICommand {
 		private $options: ICommonOptions) { }
 
 	public enableHooks = false;
-	public canExecute(args: string[]): IFuture<boolean> {
-		return Future.fromResult(true);
+	public async canExecute(args: string[]): Promise<boolean> {
+		return true;
 	}
 
 	public allowedParameters: ICommandParameter[] = [];
 
-	public execute(args: string[]): IFuture<void> {
-		return (() => {
-			let topic = (args[0] || "").toLowerCase();
-			let hierarchicalCommand = this.$injector.buildHierarchicalCommand(args[0], _.tail(args));
-			if (hierarchicalCommand) {
-				topic = hierarchicalCommand.commandName;
+	public async execute(args: string[]): Promise<void> {
+		let topic = (args[0] || "").toLowerCase();
+		let hierarchicalCommand = this.$injector.buildHierarchicalCommand(args[0], _.tail(args));
+		if (hierarchicalCommand) {
+			topic = hierarchicalCommand.commandName;
+		}
+
+		if (this.$options.help) {
+			let help = await this.$htmlHelpService.getCommandLineHelpForCommand(topic);
+			if (this.$staticConfig.FULL_CLIENT_NAME) {
+				this.$logger.info(this.$staticConfig.FULL_CLIENT_NAME.green.bold + EOL);
 			}
 
-			if (this.$options.help) {
-				let help = this.$htmlHelpService.getCommandLineHelpForCommand(topic).wait();
-				if (this.$staticConfig.FULL_CLIENT_NAME) {
-					this.$logger.info(this.$staticConfig.FULL_CLIENT_NAME.green.bold + EOL);
-				}
-
-				this.$logger.printMarkdown(help);
-			} else {
-				this.$htmlHelpService.openHelpForCommandInBrowser(topic).wait();
-			}
-		}).future<void>()();
+			this.$logger.printMarkdown(help);
+		} else {
+			await this.$htmlHelpService.openHelpForCommandInBrowser(topic);
+		}
 	}
 }
 

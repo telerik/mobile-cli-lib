@@ -39,24 +39,21 @@ export class HtmlHelpService implements IHtmlHelpService {
 		this.pathToManPages = this.$staticConfig.MAN_PAGES_DIR;
 	}
 
-	public generateHtmlPages(): IFuture<void> {
-		return (() => {
-			let mdFiles = this.$fs.enumerateFilesInDirectorySync(this.pathToManPages);
-			let basicHtmlPage = this.$fs.readFile(this.pathToBasicPage).wait().toString();
+	public async generateHtmlPages(): Promise<void> {
+			let mdFiles = await this.$fs.enumerateFilesInDirectorySync(this.pathToManPages);
+			let basicHtmlPage = await this.$fs.readFile(this.pathToBasicPage).toString();
 			let futures = _.map(mdFiles, markdownFile => this.createHtmlPage(basicHtmlPage, markdownFile));
-			Future.wait(futures);
+			Promise.all(futures);
 			this.$logger.trace("Finished generating HTML files.");
-		}).future<void>()();
 	}
 
-	private createHtmlPage(basicHtmlPage: string, pathToMdFile: string): IFuture<void> {
-		return (() => {
+	private async createHtmlPage(basicHtmlPage: string, pathToMdFile: string): Promise<void> {
 			let mdFileName = path.basename(pathToMdFile);
 			let htmlFileName = mdFileName.replace(HtmlHelpService.MARKDOWN_FILE_EXTENSION, HtmlHelpService.HTML_FILE_EXTENSION);
 			this.$logger.trace("Generating '%s' help topic.", htmlFileName);
 
-			let helpText = this.$fs.readText(pathToMdFile).wait();
-			let outputText = this.$microTemplateService.parseContent(helpText, { isHtml: true });
+			let helpText = await this.$fs.readText(pathToMdFile);
+			let outputText = await this.$microTemplateService.parseContent(helpText, { isHtml: true });
 			let htmlText = marked(outputText);
 
 			let filePath = pathToMdFile
@@ -71,26 +68,24 @@ export class HtmlHelpService implements IHtmlHelpService {
 				.replace(HtmlHelpService.RELATIVE_PATH_TO_IMAGES_REGEX, path.relative(path.dirname(filePath), this.pathToImages))
 				.replace(HtmlHelpService.RELATIVE_PATH_TO_INDEX_REGEX, path.relative(path.dirname(filePath), this.pathToIndexHtml));
 
-			this.$fs.writeFile(filePath, outputHtml).wait();
+			await this.$fs.writeFile(filePath, outputHtml);
 			this.$logger.trace("Finished writing file '%s'.", filePath);
-		}).future<void>()();
 	}
 
-	public openHelpForCommandInBrowser(commandName: string): IFuture<void> {
-		return ((): void => {
+	public async  openHelpForCommandInBrowser(commandName: string): Promise<void> {
+
 			let htmlPage = this.convertCommandNameToFileName(commandName) + HtmlHelpService.HTML_FILE_EXTENSION;
 			this.$logger.trace("Opening help for command '%s'. FileName is '%s'.", commandName, htmlPage);
 
-			this.$fs.ensureDirectoryExists(this.pathToHtmlPages).wait();
-			if(!this.tryOpeningSelectedPage(htmlPage)) {
+			await this.$fs.ensureDirectoryExists(this.pathToHtmlPages);
+			if(! (await this.tryOpeningSelectedPage(htmlPage))) {
 				// HTML pages may have been skipped on post-install, lets generate them.
 				this.$logger.trace("Required HTML file '%s' is missing. Let's try generating HTML files and see if we'll find it.", htmlPage);
-				this.generateHtmlPages().wait();
-				if(!this.tryOpeningSelectedPage(htmlPage)) {
+				await this.generateHtmlPages();
+				if(!(await this.tryOpeningSelectedPage(htmlPage))) {
 					this.$errors.failWithoutHelp("Unable to find help for '%s'", commandName);
 				}
 			}
-		}).future<void>()();
 	}
 
 	private convertCommandNameToFileName(commandName: string): string {
@@ -112,8 +107,8 @@ export class HtmlHelpService implements IHtmlHelpService {
 		return commandName.replace(/\|/g, "-") || "index";
 	}
 
-	private tryOpeningSelectedPage(htmlPage: string): boolean {
-		let fileList = this.$fs.enumerateFilesInDirectorySync(this.pathToHtmlPages);
+	private async tryOpeningSelectedPage(htmlPage: string): Promise<boolean> {
+		let fileList = await this.$fs.enumerateFilesInDirectorySync(this.pathToHtmlPages);
 		this.$logger.trace("File list: " + fileList);
 		let pageToOpen = _.find(fileList, file => path.basename(file) === htmlPage);
 
@@ -127,29 +122,28 @@ export class HtmlHelpService implements IHtmlHelpService {
 		return false;
 	}
 
-	private readMdFileForCommand(commandName: string): IFuture<string> {
-		return ((): string => {
+	private async readMdFileForCommand(commandName: string): Promise<string> {
+
 			let mdFileName = this.convertCommandNameToFileName(commandName) + HtmlHelpService.MARKDOWN_FILE_EXTENSION;
 			this.$logger.trace("Reading help for command '%s'. FileName is '%s'.", commandName, mdFileName);
 
-			let markdownFile = _.find(this.$fs.enumerateFilesInDirectorySync(this.pathToManPages), file => path.basename(file) === mdFileName);
+			let markdownFile = _.find( await this.$fs.enumerateFilesInDirectorySync(this.pathToManPages), file => path.basename(file) === mdFileName);
 			if(markdownFile) {
-				return this.$fs.readText(markdownFile).wait();
+				return this.$fs.readText(markdownFile);
 			}
 
 			this.$errors.failWithoutHelp("Unknown command '%s'. Try '$ %s help' for a full list of supported commands.", mdFileName.replace(".md", ""), this.$staticConfig.CLIENT_NAME.toLowerCase());
-		}).future<string>()();
+
 	}
 
-	public getCommandLineHelpForCommand(commandName: string): IFuture<string> {
-		return ((): string => {
-			let helpText = this.readMdFileForCommand(commandName).wait();
-			let outputText = this.$microTemplateService.parseContent(helpText, { isHtml: false })
-				.replace(/&nbsp;/g, " ")
-				.replace(HtmlHelpService.MARKDOWN_LINK_REGEX, "$1");
+	public async getCommandLineHelpForCommand(commandName: string): Promise<string> {
 
-			return outputText;
-		}).future<string>()();
+		let helpText = await this.readMdFileForCommand(commandName);
+		let outputText = (await this.$microTemplateService.parseContent(helpText, { isHtml: false }))
+			.replace(/&nbsp;/g, " ")
+			.replace(HtmlHelpService.MARKDOWN_LINK_REGEX, "$1");
+
+		return outputText;
 	}
 }
 $injector.register("htmlHelpService", HtmlHelpService);
