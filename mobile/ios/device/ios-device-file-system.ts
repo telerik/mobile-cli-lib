@@ -72,19 +72,20 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 
 	public deleteFile(deviceFilePath: string, appIdentifier: string): void {
 		let houseArrestClient: Mobile.IHouseArrestClient = this.$injector.resolve(iOSProxyServices.HouseArrestClient, {device: this.device});
-		let afcClientForAppDocuments = houseArrestClient.getAfcClientForAppDocuments(appIdentifier);
-		afcClientForAppDocuments.deleteFile(deviceFilePath);
+		let afcClient = this.getAfcClient(houseArrestClient, deviceFilePath, appIdentifier);
+		afcClient.deleteFile(deviceFilePath);
 		houseArrestClient.closeSocket();
 	}
 
 	public transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void> {
 		return (() => {
 			let houseArrestClient: Mobile.IHouseArrestClient = this.$injector.resolve(iOSProxyServices.HouseArrestClient, { device: this.device });
-			let afcClientForAppDocuments = houseArrestClient.getAfcClientForAppDocuments(deviceAppData.appIdentifier);
+
+			let afcClient = this.getAfcClient(houseArrestClient, deviceAppData.deviceProjectRootPath, deviceAppData.appIdentifier);
 			_.each(localToDevicePaths, (localToDevicePathData) => {
 				let stats = this.$fs.getFsStats(localToDevicePathData.getLocalPath()).wait();
 				if(stats.isFile()) {
-					afcClientForAppDocuments.transfer(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()).wait();
+					afcClient.transfer(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()).wait();
 				}
 			});
 			houseArrestClient.closeSocket();
@@ -93,6 +94,14 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 
 	public transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): IFuture<void> {
 		return this.transferFiles(deviceAppData, localToDevicePaths);
+	}
+
+	private getAfcClient(houseArrestClient: Mobile.IHouseArrestClient, rootPath: string, appIdentifier: string): Mobile.IAfcClient {
+		if (rootPath.indexOf("/Documents/") === 0) {
+			return houseArrestClient.getAfcClientForAppDocuments(appIdentifier);
+		}
+
+		return houseArrestClient.getAfcClientForAppContainer(appIdentifier);
 	}
 
 	private resolveAfc(): Mobile.IAfcClient {
