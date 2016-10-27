@@ -18,12 +18,12 @@ export function verifyNodeVersion(supportedVersionsRange: string, cliName: strin
 		process.exit(1);
 	}
 
-	if (semver.satisfies(nodeVer, "~0.10.0")) {
-		console.warn(`${EOL}Support for Node.js 0.10.x is deprecated and will be removed in the ${cliName} ${deprecationVersion} release. Please, upgrade to the latest Node.js LTS version.${EOL}`.yellow.bold);
+	if (semver.satisfies(nodeVer, "~0.12.0")) {
+		console.warn(`${EOL}Support for Node.js 0.12.x is deprecated and will be removed in the ${cliName} ${deprecationVersion} release. Please, upgrade to the latest Node.js LTS version.${EOL}`.yellow.bold);
 	} else {
 		let checkSatisfied = semver.satisfies(nodeVer, supportedVersionsRange);
 		if (!checkSatisfied) {
-			console.log(`${EOL}Support for node.js ${nodeVer} is not verified. This CLI might not install or run properly.${EOL}`.yellow.bold);
+			console.log(`${EOL}Support for Node.js ${nodeVer} is not verified. This CLI might not install or run properly.${EOL}`.yellow.bold);
 		}
 	}
 }
