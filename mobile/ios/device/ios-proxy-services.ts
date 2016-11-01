@@ -460,6 +460,10 @@ export class HouseArrestClient implements Mobile.IHouseArrestClient {
 		return this.getAfcClientCore("VendContainer", applicationIdentifier);
 	}
 
+	public getAfcClientForAppDocuments(applicationIdentifier: string): Mobile.IAfcClient {
+		return this.getAfcClientCore("VendDocuments", applicationIdentifier);
+	}
+
 	public closeSocket() {
 		this.plistService.close();
 	}
