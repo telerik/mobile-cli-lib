@@ -353,6 +353,18 @@ export class FileSystem implements IFileSystem {
 		return future;
 	}
 
+	public getLsStats(path: string): IFuture<fs.Stats> {
+		let future = new Future<fs.Stats>();
+		fs.lstat(path, (err: Error, data: fs.Stats) => {
+			if (err) {
+				future.throw(err);
+			} else {
+				future.return(data);
+			}
+		});
+		return future;
+	}
+
 	public getUniqueFileName(baseName: string): IFuture<string> {
 		return ((): string => {
 			if (!this.exists(baseName).wait()) {
