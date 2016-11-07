@@ -1137,11 +1137,18 @@ class GDBSignalWatcher extends stream.Writable {
 
 	public _write(packet: any, encoding: string, callback: Function) {
 		try {
-			for (let i = 0; i < packet.length - 2; i++) {
-				if (packet[i] === getCharacterCodePoint("$") && (packet[i + 1] === getCharacterCodePoint("T") || packet[i + 1] === getCharacterCodePoint("S"))) {
-					// SIGKILL || SIGABRT
-					if (packet[i + 2] === getCharacterCodePoint("9") ||
-					    packet[i + 2] === getCharacterCodePoint("6")) {
+			const dollarCodePoint = getCharacterCodePoint("$");
+			const TCodePoint = getCharacterCodePoint("T");
+			const SCodePoint = getCharacterCodePoint("S");
+			// The reply packages take the following form (the space in the reply templates is included for clarity)
+			// ‘S AA’  or ‘T AA n1:r1;n2:r2;...’ meaning that the program received signal number AA (a two-digit hexadecimal number)
+			for (let i = 0; i < packet.length - 3; i++) {
+				if (packet[i] === dollarCodePoint && (packet[i + 1] === TCodePoint || packet[i + 1] === SCodePoint)) {
+					let signalHex = packet.toString("ascii", i + 2, i + 4);
+					let signalDecimal = parseInt(signalHex, 16);
+
+					// SIGTRAP || SIGABRT || SIGKILL || SIGSEGV || EXC_BAD_ACCESS
+					if (signalDecimal === 5 || signalDecimal === 6 || signalDecimal === 9 || signalDecimal === 11 || signalDecimal === 145) {
 						process.exit(1);
 					}
 				}
