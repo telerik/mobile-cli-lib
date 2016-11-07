@@ -705,7 +705,7 @@ interface Error {
 	 * Error's stack trace
 	 * @type {string}
 	 */
-	stack: string;
+	stack?: string;
 	/**
 	 * Error's code - could be a string ('ENOENT'), as well as a number (127)
 	 * @type {string|number}
@@ -1370,4 +1370,21 @@ interface IProxySettings {
 	 * Port of the machine used for proxy that allows connections.
 	 */
 	port: string;
+}
+
+/**
+ * Describes operating system-related utility methods
+ */
+interface IOsInfo {
+	/**
+	 * Returns a string identifying the operating system name.
+	 * @return {string} A string identifying the operating system name.
+	 */
+	type(): string;
+
+	/**
+	 * Returns a string identifying the operating system release.
+	 * @return {string} A string identifying the operating system release.
+	 */
+	release(): string;
 }

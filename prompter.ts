@@ -8,13 +8,6 @@ export class Prompter implements IPrompter {
 	private ctrlcReader: readline.ReadLine;
 	private muteStreamInstance: any = null;
 
-	constructor() {
-		prompt.message = "";
-		prompt.delimiter = ":";
-		prompt.colors = false;
-		prompt.isDefaultValueEditable = true;
-	}
-
 	public dispose() {
 		if (this.ctrlcReader) {
 			this.ctrlcReader.close();
@@ -159,12 +152,12 @@ export class Prompter implements IPrompter {
 			eventName: "close",
 			listenerName: "cleanup"
 		}, {
-				eventName: "error",
-				listenerName: "onerror"
-			}, {
-				eventName: "drain",
-				listenerName: "ondrain"
-			}];
+			eventName: "error",
+			listenerName: "onerror"
+		}, {
+			eventName: "drain",
+			listenerName: "ondrain"
+		}];
 
 		_.each(memoryLeakEvents, (memoryleakEvent: IMemoryLeakEvent) => this.cleanListener(stream, memoryleakEvent.eventName, memoryleakEvent.listenerName));
 	}

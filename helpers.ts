@@ -385,4 +385,3 @@ export function annotate(fn: any) {
 }
 
 //--- end part copied from AngularJS
-

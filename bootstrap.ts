@@ -10,6 +10,7 @@ $injector.require("errors", "./errors");
 $injector.requirePublic("fs", "./file-system");
 $injector.require("sysInfoBase", "./sys-info-base");
 $injector.require("hostInfo", "./host-info");
+$injector.require("osInfo", "./os-info");
 
 $injector.require("dispatcher", "./dispatchers");
 $injector.require("commandDispatcher", "./dispatchers");
