@@ -124,3 +124,5 @@ $injector.require("net", "./services/net-service");
 
 $injector.require("printPluginsService", "./services/plugins/print-plugins-service");
 $injector.require("npmPluginsService", "./services/plugins/npm-plugins-service");
+
+$injector.require("deviceLogService", "./services/device-log-service");

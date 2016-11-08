@@ -57,7 +57,6 @@ export class IOSLiveSyncService implements IDeviceLiveSyncService {
 				notificationProxyClient.postNotification(notification);
 				notificationProxyClient.closeSocket();
 			}
-
 		}).future<void>()();
 	}
 

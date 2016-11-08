@@ -758,6 +758,7 @@ interface ICommonOptions {
 	default: Boolean;
 	release: boolean;
 	count: number;
+	duration: number;
 	hooks: boolean;
 	debug: boolean;
 }
@@ -1358,6 +1359,19 @@ interface ITypeScriptTranspileOptions {
 }
 
 /**
+ * Describes methods for working with the device log.
+ */
+interface IDeviceLogService {
+	/**
+	 * Starts printing the log of the device until the process is killed or until the specified duration expires.
+	 * @param {string} deviceId The identifier of the device whose log will be displayed.
+	 * @param @optional {string} duration The duration for which the log will be printed.
+	 * @param @optional {string} loggingLevel The log level.
+	 */
+	printDeviceLog(deviceId: string, duration?: number, loggingLevel?: string): IFuture<void>;
+}
+
+/**
  * Proxy settings required for http request.
  */
 interface IProxySettings {
@@ -1370,4 +1384,13 @@ interface IProxySettings {
 	 * Port of the machine used for proxy that allows connections.
 	 */
 	port: string;
+}
+
+/**
+ * Describes method with its context and arguments.
+ */
+interface IMethodDescription {
+	method: () => IFuture<void>;
+	context: any;
+	args?: any[];
 }

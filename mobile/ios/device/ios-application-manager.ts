@@ -21,6 +21,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		private $mobileDevice: Mobile.IMobileDevice,
 		private $hostInfo: IHostInfo,
 		private $staticConfig: Config.IStaticConfig,
+		private $deviceLogService: IDeviceLogService,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $processService: IProcessService,
 		private $options: ICommonOptions) {
@@ -74,8 +75,8 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 						"ApplicationType": "User",
 						"ReturnAttributes": [
 							"CFBundleIdentifier",
-								"IceniumLiveSyncEnabled",
-								"configuration"
+							"IceniumLiveSyncEnabled",
+							"configuration"
 						]
 					}
 				}).wait();
@@ -158,7 +159,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 						isLiveSyncSupported: app.IceniumLiveSyncEnabled,
 						configuration: app.configuration,
 						deviceIdentifier: this.device.deviceInfo.identifier
-					 }));
+					}));
 					this.applicationsLiveSyncInfos = this.applicationsLiveSyncInfos.concat(currentList);
 				});
 
@@ -264,10 +265,17 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	}
 
 	private runApplicationCore(appIdentifier: any) {
-		this.destroyGdbServer();
-		let application = this.getApplicationById(appIdentifier);
-		let gdbServer = this.createGdbServer(this.device.deviceInfo.identifier);
-		return gdbServer.run([`${application.Path}`]);
+		return ((): any => {
+			let deviceIdentifier = this.device.deviceInfo.identifier;
+			this.destroyGdbServer();
+			let application = this.getApplicationById(appIdentifier);
+			let gdbServer = this.createGdbServer(deviceIdentifier);
+			gdbServer.run([`${application.Path}`]).wait();
+
+			if (!this.$options.justlaunch && this.$options.duration) {
+				this.$deviceLogService.printDeviceLog(deviceIdentifier, this.$options.duration).wait();
+			}
+		}).future<any>()();
 	}
 
 	private createGdbServer(deviceIdentifier: string): Mobile.IGDBServer {
