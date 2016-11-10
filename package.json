@@ -1,7 +1,7 @@
 {
   "name": "mobile-cli-lib",
   "preferGlobal": false,
-  "version": "0.20.0",
+  "version": "0.21.0",
   "author": "Telerik <support@telerik.com>",
   "description": "common lib used by different CLI",
   "bin": {
@@ -33,13 +33,13 @@
     "colors": "0.6.2",
     "cookie": "0.1.0",
     "esprima": "2.7.0",
-    "ffi": "https://github.com/icenium/node-ffi/tarball/v2.0.0.2",
-    "fibers": "https://github.com/Icenium/node-fibers/tarball/v1.0.13.0",
+    "ffi": "https://github.com/icenium/node-ffi/tarball/v2.0.0.4",
+    "fibers": "https://github.com/Icenium/node-fibers/tarball/v1.0.15.0",
     "filesize": "2.0.3",
     "gaze": "1.0.0",
     "iconv-lite": "0.4.3",
     "inquirer": "0.8.2",
-    "ios-sim-portable": "~1.5.0",
+    "ios-sim-portable": "~1.6.0",
     "lodash": "4.13.1",
     "log4js": "0.6.9",
     "marked": "0.3.3",
@@ -58,8 +58,8 @@
     "progress-stream": "0.5.0",
     "properties-parser": "0.2.3",
     "pullstream": "https://github.com/icenium/node-pullstream/tarball/master",
-    "ref": "https://github.com/icenium/ref/tarball/v1.3.2.0",
-    "ref-struct": "https://github.com/telerik/ref-struct/tarball/v1.0.2.2",
+    "ref": "https://github.com/icenium/ref/tarball/v1.3.2.2",
+    "ref-struct": "https://github.com/telerik/ref-struct/tarball/v1.0.2.4",
     "rimraf": "2.2.6",
     "semver": "4.3.4",
     "shelljs": "0.7.0",
@@ -91,6 +91,6 @@
   "bundledDependencies": [],
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=0.12.7 <0.13.0 || >=4.2.1 <5.0.0 || >=5.1.0 <7.0.0"
+    "node": ">=4.2.1 <5.0.0 || >=5.1.0 <8.0.0"
   }
 }
