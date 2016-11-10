@@ -1,5 +1,4 @@
 import * as helpers from "../helpers";
-import * as os from "os";
 import Future = require("fibers/future");
 // HACK
 global.XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
@@ -19,7 +18,8 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 		private $prompter: IPrompter,
 		private $userSettingsService: UserSettings.IUserSettingsService,
 		private $analyticsSettingsService: IAnalyticsSettingsService,
-		private $progressIndicator: IProgressIndicator) { }
+		private $progressIndicator: IProgressIndicator,
+		private $osInfo: IOsInfo) { }
 
 	protected get acceptTrackFeatureSetting(): string {
 		return `Accept${this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME}`;
@@ -240,11 +240,11 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 
 	private getUserAgentString(): string {
 		let userAgentString: string;
-		let osType = os.type();
+		let osType = this.$osInfo.type();
 		if (osType === "Windows_NT") {
-			userAgentString = "(Windows NT " + os.release() + ")";
+			userAgentString = "(Windows NT " + this.$osInfo.release() + ")";
 		} else if (osType === "Darwin") {
-			userAgentString = "(Mac OS X " + os.release() + ")";
+			userAgentString = "(Mac OS X " + this.$osInfo.release() + ")";
 		} else {
 			userAgentString = "(" + osType + ")";
 		}

@@ -5,6 +5,7 @@ import Future = require("fibers/future");
 import * as os from "os";
 import helpersLib = require("../../helpers");
 import { HostInfo } from "../../host-info";
+import { OsInfo } from "../../os-info";
 let assert = require("chai").assert;
 
 let trackedFeatureNamesAndValues = "";
@@ -124,6 +125,7 @@ function createTestInjector(testScenario: ITestScenario): IInjector {
 		ANALYTICS_API_KEY: "AnalyticsAPIKey"
 	});
 	testInjector.register("hostInfo", HostInfo);
+	testInjector.register("osInfo", OsInfo);
 	testInjector.register("userSettingsService", new UserSettingsServiceStub(testScenario.featureTracking, testScenario.exceptionsTracking, testInjector));
 	testInjector.register("progressIndicator", {
 		showProgressIndicator: (future: IFuture<any>, timeout: number, options?: { surpressTrailingNewLine?: boolean }) => {
@@ -511,37 +513,41 @@ describe("analytics-service", () => {
 	describe("uses correct settings on different os-es", () => {
 		let name = "unitTests";
 		let testInjector: IInjector;
-		let osType = os.type;
-		let osRelease = os.release;
+		let osInfo: IOsInfo;
+		let osType: () => string;
+		let osRelease: () => string;
 		let release = "1.0";
 
 		beforeEach(() => {
 			testInjector = createTestInjector(baseTestScenario);
 			service = testInjector.resolve("analyticsService");
+			osInfo = testInjector.resolve("osInfo");
+			osType = osInfo.type;
+			osRelease = osInfo.release;
 		});
 
-		after(() => {
-			os.type = osType;
-			os.release = osRelease;
+		afterEach(() => {
+			osInfo.type = osType;
+			osInfo.release = osRelease;
 		});
 
 		it("sets correct userAgent on Windows", () => {
-			os.type = () => { return "Windows_NT"; };
-			os.release = () => { return release; };
+			osInfo.type = () => { return "Windows_NT"; };
+			osInfo.release = () => { return release; };
 			service.track(name, featureName).wait();
 			assert.equal(lastUsedEqatecSettings.userAgent, `(Windows NT ${release})`);
 		});
 
 		it("sets correct userAgent on MacOS", () => {
-			os.type = () => { return "Darwin"; };
-			os.release = () => { return release; };
+			osInfo.type = () => { return "Darwin"; };
+			osInfo.release = () => { return release; };
 			service.track(name, featureName).wait();
 			assert.equal(lastUsedEqatecSettings.userAgent, `(Mac OS X ${release})`);
 		});
 
 		it("sets correct userAgent on other OSs", () => {
-			os.type = () => { return "Linux"; };
-			os.release = () => { return release; };
+			osInfo.type = () => { return "Linux"; };
+			osInfo.release = () => { return release; };
 			service.track(name, featureName).wait();
 			assert.equal(lastUsedEqatecSettings.userAgent, `(Linux)`);
 		});
