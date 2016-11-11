@@ -1,7 +1,8 @@
-import {EOL} from "os";
-import {ApplicationManagerBase} from "../application-manager-base";
+import { EOL } from "os";
+import { ApplicationManagerBase } from "../application-manager-base";
 import { LiveSyncConstants, TARGET_FRAMEWORK_IDENTIFIERS } from "../../constants";
 import Future = require("fibers/future");
+import { hook } from "../../helpers";
 
 export class AndroidApplicationManager extends ApplicationManagerBase {
 
@@ -12,8 +13,9 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		private $logcatHelper: Mobile.ILogcatHelper,
 		private $androidProcessService: Mobile.IAndroidProcessService,
 		private $httpClient: Server.IHttpClient,
-		$logger: ILogger) {
-		super($logger);
+		$logger: ILogger,
+		$hooksService: IHooksService) {
+		super($logger, $hooksService);
 	}
 
 	public getInstalledApplications(): IFuture<string[]> {
@@ -30,6 +32,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		}).future<string[]>()();
 	}
 
+	@hook('install')
 	public installApplication(packageFilePath: string): IFuture<void> {
 		return this.adb.executeCommand(["install", "-r", `${packageFilePath}`]);
 	}

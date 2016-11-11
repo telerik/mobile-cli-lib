@@ -1,6 +1,6 @@
-import {Yok} from "../../../yok";
-import {assert} from "chai";
-import { CommonLoggerStub } from "../stubs";
+import { Yok } from "../../../yok";
+import { assert } from "chai";
+import { CommonLoggerStub, HooksServiceStub } from "../stubs";
 import { ApplicationManagerBase } from "../../../mobile/application-manager-base";
 import Future = require("fibers/future");
 
@@ -9,8 +9,8 @@ let currentlyAvailableAppsForDebugging: Mobile.IDeviceApplicationInformation[],
 	currentlyAvailableAppWebViewsForDebugging: IDictionary<Mobile.IDebugWebViewInfo[]>;
 
 class ApplicationManager extends ApplicationManagerBase {
-	constructor($logger: ILogger) {
-		super($logger);
+	constructor($logger: ILogger, $hooksService: IHooksService) {
+		super($logger, $hooksService);
 	}
 
 	public isLiveSyncSupported(appIdentifier: string): IFuture<boolean> {
@@ -57,6 +57,7 @@ class ApplicationManager extends ApplicationManagerBase {
 function createTestInjector(): IInjector {
 	let testInjector = new Yok();
 	testInjector.register("logger", CommonLoggerStub);
+	testInjector.register("hooksService", HooksServiceStub);
 	testInjector.register("applicationManager", ApplicationManager);
 	return testInjector;
 }

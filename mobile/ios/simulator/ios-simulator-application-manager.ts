@@ -2,6 +2,7 @@ import {ApplicationManagerBase} from "../../application-manager-base";
 import Future = require("fibers/future");
 import * as path from "path";
 import * as temp from "temp";
+import { hook } from "../../../helpers";
 
 export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 	constructor(private iosSim: any,
@@ -11,14 +12,16 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		private $bplistParser: IBinaryPlistParser,
 		private $iOSSimulatorLogProvider: Mobile.IiOSSimulatorLogProvider,
 		private $deviceLogProvider: Mobile.IDeviceLogProvider,
-		$logger: ILogger) {
-		super($logger);
+		$logger: ILogger,
+		$hooksService: IHooksService) {
+		super($logger, $hooksService);
 	}
 
 	public getInstalledApplications(): IFuture<string[]> {
 		return Future.fromResult(this.iosSim.getInstalledApplications(this.identifier));
 	}
 
+	@hook('install')
 	public installApplication(packageFilePath: string): IFuture<void> {
 		return (() => {
 			if (this.$fs.exists(packageFilePath).wait() && path.extname(packageFilePath) === ".zip") {

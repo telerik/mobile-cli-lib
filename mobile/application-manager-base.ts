@@ -1,12 +1,13 @@
 import { EventEmitter } from "events";
-import {TARGET_FRAMEWORK_IDENTIFIERS} from "../constants";
+import { TARGET_FRAMEWORK_IDENTIFIERS } from "../constants";
 
 export abstract class ApplicationManagerBase extends EventEmitter implements Mobile.IDeviceApplicationManager {
 	private lastInstalledAppIdentifiers: string[];
 	private lastAvailableDebuggableApps: Mobile.IDeviceApplicationInformation[];
 	private lastAvailableDebuggableAppViews: IDictionary<Mobile.IDebugWebViewInfo[]> = {};
 
-	constructor(protected $logger: ILogger) {
+	constructor(protected $logger: ILogger,
+		protected $hooksService: IHooksService) {
 		super();
 	}
 
