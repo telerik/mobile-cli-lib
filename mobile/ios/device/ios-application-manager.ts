@@ -2,8 +2,9 @@ import * as net from "net";
 import * as ref from "ref";
 import * as os from "os";
 import * as iOSProxyServices from "./ios-proxy-services";
-import {ApplicationManagerBase} from "../../application-manager-base";
-import {CoreTypes, GDBServer} from "./ios-core";
+import { hook } from "../../../helpers";
+import { ApplicationManagerBase } from "../../application-manager-base";
+import { CoreTypes, GDBServer } from "./ios-core";
 import Future = require("fibers/future");
 
 export class IOSApplicationManager extends ApplicationManagerBase {
@@ -12,6 +13,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	private applicationsLiveSyncInfos: Mobile.ILiveSyncApplicationInfo[];
 
 	constructor(protected $logger: ILogger,
+		protected $hooksService: IHooksService,
 		private device: Mobile.IiOSDevice,
 		private devicePointer: NodeBuffer,
 		private $childProcess: IChildProcess,
@@ -24,7 +26,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $processService: IProcessService,
 		private $options: ICommonOptions) {
-		super($logger);
+		super($logger, $hooksService);
 		this.uninstallApplicationCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSApplicationManager.uninstallCallback);
 	}
 
@@ -43,6 +45,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		}).future<string[]>()();
 	}
 
+	@hook('install')
 	public installApplication(packageFilePath: string): IFuture<void> {
 		return (() => {
 			let installationProxy = this.getInstallationProxy();
@@ -74,8 +77,8 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 						"ApplicationType": "User",
 						"ReturnAttributes": [
 							"CFBundleIdentifier",
-								"IceniumLiveSyncEnabled",
-								"configuration"
+							"IceniumLiveSyncEnabled",
+							"configuration"
 						]
 					}
 				}).wait();
@@ -158,7 +161,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 						isLiveSyncSupported: app.IceniumLiveSyncEnabled,
 						configuration: app.configuration,
 						deviceIdentifier: this.device.deviceInfo.identifier
-					 }));
+					}));
 					this.applicationsLiveSyncInfos = this.applicationsLiveSyncInfos.concat(currentList);
 				});
 

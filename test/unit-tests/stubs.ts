@@ -1,6 +1,7 @@
 /* tslint:disable:no-empty */
 
 import * as util from "util";
+import Future = require("fibers/future");
 
 export class CommonLoggerStub implements ILogger {
 	setLevel(level: string): void { }
@@ -63,4 +64,15 @@ export class ErrorsStub implements IErrors {
 	}
 
 	verifyHeap(message: string): void { }
+}
+
+export class HooksServiceStub implements IHooksService {
+	executeBeforeHooks(commandName: string): IFuture<void> {
+		return Future.fromResult();
+	}
+	executeAfterHooks(commandName: string): IFuture<void> {
+		return Future.fromResult();
+	}
+
+	hookArgsName = "hookArgs";
 }
