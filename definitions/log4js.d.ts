@@ -26,4 +26,22 @@ declare module "log4js" {
 
 	function configure(conf: IConfiguration): void;
 	function getLogger(categoryName?: string): ILogger;
+
+	export class Level {
+		isEqualTo(level: any): boolean;
+		isLessThanOrEqualTo(level: any): boolean;
+		isGreaterThanOrEqualTo(level: any): boolean;
+	}
+
+	export namespace levels {
+		var ALL: Level;
+		var TRACE: Level;
+		var DEBUG: Level;
+		var INFO: Level;
+		var WARN: Level;
+		var ERROR: Level;
+		var FATAL: Level;
+		var MARK: Level;
+		var OFF: Level;
+	}
 }
