@@ -150,14 +150,14 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		}).future<void>()();
 	}
 
-	public getSyncRemovedFilesAction(data: ILiveSyncData): (device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void> {
-		return (device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => {
+	public getSyncRemovedFilesAction(data: ILiveSyncData): (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void> {
+		return (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => {
 			let platformLiveSyncService = this.resolveDeviceLiveSyncService(data.platform, device);
-			return platformLiveSyncService.removeFiles(data.appIdentifier, localToDevicePaths);
+			return platformLiveSyncService.removeFiles(deviceAppData.appIdentifier, localToDevicePaths);
 		};
 	}
 
-	public getSyncAction(data: ILiveSyncData, filesToSync: string[], deviceFilesAction: (device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>, liveSyncOptions: ILiveSyncOptions): (device: Mobile.IDevice) => IFuture<void> {
+	public getSyncAction(data: ILiveSyncData, filesToSync: string[], deviceFilesAction: (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>, liveSyncOptions: ILiveSyncOptions): (device: Mobile.IDevice) => IFuture<void> {
 		let appIdentifier = data.appIdentifier;
 		let platform = data.platform;
 		let projectFilesPath = data.projectFilesPath;
@@ -204,7 +204,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 						// Transfer or remove files on device
 						let localToDevicePaths = this.$projectFilesManager.createLocalToDevicePaths(deviceAppData, projectFilesPath, filesToSync, data.excludedProjectDirsAndFiles, liveSyncOptions);
 						if (deviceFilesAction) {
-							deviceFilesAction(device, localToDevicePaths).wait();
+							deviceFilesAction(deviceAppData, device, localToDevicePaths).wait();
 						} else {
 							this.transferFiles(deviceAppData, localToDevicePaths, projectFilesPath, !filesToSync).wait();
 						}
@@ -222,7 +222,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		return action;
 	}
 
-	private syncCore(data: ILiveSyncData[], filesToSync: string[], deviceFilesAction?: (device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>): IFuture<void> {
+	private syncCore(data: ILiveSyncData[], filesToSync: string[], deviceFilesAction?: (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>): IFuture<void> {
 		return (() => {
 			for (let dataItem of data) {
 				let appIdentifier = dataItem.appIdentifier;

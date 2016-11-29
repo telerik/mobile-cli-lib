@@ -512,14 +512,14 @@ interface ILiveSyncServiceBase {
 	 * @param {ILiveSyncOptions} liveSyncOptions Additional options for LiveSyncing
 	 * @return {Function} Function that returns IFuture<void>.
 	 */
-	getSyncAction(data: ILiveSyncData, filesToSync: string[], deviceFilesAction: (device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>, liveSyncOptions: ILiveSyncOptions): (device: Mobile.IDevice) => IFuture<void>;
+	getSyncAction(data: ILiveSyncData, filesToSync: string[], deviceFilesAction: (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>, liveSyncOptions: ILiveSyncOptions): (device: Mobile.IDevice) => IFuture<void>;
 
 	/**
 	 * Gets LiveSync action that should be executed per device when files should be deleted.
 	 * @param {ILiveSyncData} data LiveSync data describing the LiveSync operation.
 	 * @return {Function} Function that returns IFuture<void>.
 	 */
-	getSyncRemovedFilesAction(data: ILiveSyncData): (device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>;
+	getSyncRemovedFilesAction(data: ILiveSyncData): (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>;
 }
 
 /**
