@@ -15,7 +15,8 @@ export class ProjectConstants implements Project.IConstants {
 	public ADDITIONAL_FILE_DISPOSITION = "AdditionalFile";
 	public BUILD_RESULT_DISPOSITION = "BuildResult";
 	public ADDITIONAL_FILES_DIRECTORY = ".ab";
-	public REFERENCES_FILE_NAME = ".abreferences.d.ts";
+	public REFERENCES_FILE_NAME = "abreferences.d.ts";
+	public OLD_REFERENCES_FILE_NAME = ".abreferences.d.ts";
 	public ANDROID_PLATFORM_NAME = "Android";
 	public IOS_PLATFORM_NAME = "iOS";
 	public WP8_PLATFORM_NAME = "WP8";
