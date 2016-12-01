@@ -305,9 +305,22 @@ export class NpmService implements INpmService {
 			if (lines.length) {
 				this.$logger.trace("Updating reference file with new entries...");
 				this.$fs.writeFile(pathToReferenceFile, lines.join(os.EOL), "utf8").wait();
+
+				// Our old name for the file which contains the definitions imports was .abreferences.d.ts.
+				// TypeScript 2.0 does not respect hidden definition files and we had to rename the file.
+				this.removeOldAbReferencesFile(projectDir).wait();
 			} else {
 				this.$logger.trace(`Could not find any .d.ts files for ${this.$projectConstants.REFERENCES_FILE_NAME} file. Deleting the old file.`);
 				this.$fs.deleteFile(pathToReferenceFile).wait();
+			}
+		}).future<void>()();
+	}
+
+	private removeOldAbReferencesFile(projectDir: string): IFuture<void> {
+		return (() => {
+			const pathToOldReferencesFile = path.join(projectDir, this.$projectConstants.OLD_REFERENCES_FILE_NAME);
+			if (this.$fs.exists(pathToOldReferencesFile).wait()) {
+				this.$fs.deleteFile(pathToOldReferencesFile).wait();
 			}
 		}).future<void>()();
 	}
