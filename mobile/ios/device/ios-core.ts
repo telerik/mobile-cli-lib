@@ -13,7 +13,7 @@ import * as bplistParser from "bplist-parser";
 import * as string_decoder from "string_decoder";
 import * as stream from "stream";
 import * as assert from "assert";
-import { EOL } from "os";
+import {EOL} from "os";
 import * as fiberBootstrap from "../../../fiber-bootstrap";
 
 export class CoreTypes {
@@ -675,13 +675,7 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 	public readSystemLogBlocking(): void {
 		let data = this.read(WinSocket.BYTES_TO_READ);
 		while (data) {
-			// On iOS 10 devices the device logs contain \n after each line.
-			// When we use readCString for buffers which contain many \0
-			// The method will return the content of the buffer only before the first \0 character.
-			// We need to replace the \0 with "" in order read the whole content.
-			const messageWithoutNullCharacters = data.toString().replace("\0", "");
-			const bufferWithoutNullCharacters = new Buffer(messageWithoutNullCharacters);
-			const output = ref.readCString(bufferWithoutNullCharacters, 0);
+			let output = ref.readCString(data, 0);
 			process.send(output);
 			data = this.read(WinSocket.BYTES_TO_READ);
 		}
@@ -1090,8 +1084,8 @@ class GDBStandardOutputAdapter extends stream.Transform {
 	private utf8StringDecoder = new string_decoder.StringDecoder("utf8");
 
 	constructor(private deviceIdentifier: string,
-		private $deviceLogProvider: Mobile.IDeviceLogProvider,
-		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
+				private $deviceLogProvider: Mobile.IDeviceLogProvider,
+				private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
 		super();
 	}
 
