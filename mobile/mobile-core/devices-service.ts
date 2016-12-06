@@ -123,12 +123,12 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	private onDeviceFound(device: Mobile.IDevice): void {
-		this.$logger.trace("Found device with identifier '%s'", device.deviceInfo.identifier);
+		this.$logger.trace(`Found device with identifier '${device.deviceInfo.identifier}'`);
 		this._devices[device.deviceInfo.identifier] = device;
 	}
 
 	private onDeviceLost(device: Mobile.IDevice): void {
-		this.$logger.trace("Lost device with identifier '%s'", device.deviceInfo.identifier);
+		this.$logger.trace(`Lost device with identifier '${device.deviceInfo.identifier}'`);
 		delete this._devices[device.deviceInfo.identifier];
 	}
 

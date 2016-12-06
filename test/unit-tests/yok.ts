@@ -2,7 +2,6 @@ import {assert} from "chai";
 import {Yok} from "../../yok";
 import * as path from "path";
 import * as fs from "fs";
-import * as shelljs from "shelljs";
 import * as classesWithInitMethod from "./mocks/mockClassesWithInitializeMethod";
 
 class MyClass {
@@ -600,15 +599,6 @@ describe("yok", () => {
 		});
 	});
 
-	function deleteDirectory(directory: string): boolean {
-		try {
-			shelljs.rm("-rf", directory);
-		} catch(e) {
-			return false;
-		}
-		return shelljs.error() === null;
-	}
-
 	it("adds whole class to public api when requirePublicClass is used", () => {
 		let injector = new Yok();
 		let dataObject =  {
@@ -627,9 +617,6 @@ describe("yok", () => {
 		// Get the real instance here, so we can delete the file before asserts.
 		// This way we'll keep the directory clean, even if assert fails.
 		let resultFooObject = injector.publicApi.foo;
-		if (!deleteDirectory(filepath)) {
-			console.log(`Unable to delete file used for tests: ${filepath}.`);
-		}
 		assert.isTrue(_.includes(Object.getOwnPropertyNames(injector.publicApi), "foo"));
 		assert.deepEqual(resultFooObject, dataObject);
 	});
