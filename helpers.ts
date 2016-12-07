@@ -1,4 +1,4 @@
-import * as uuid from "node-uuid";
+import * as uuid from "uuid";
 import * as Fiber from "fibers";
 import * as net from "net";
 let Table = require("cli-table");
