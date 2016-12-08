@@ -175,9 +175,9 @@ describe("Project Files Manager Tests", () => {
 		projectFilesManager.processPlatformSpecificFiles(directoryPath, "android").wait();
 
 		let fs = testInjector.resolve("fs");
-		assert.isFalse(fs.exists(path.join(directoryPath, "test.ios.x")).wait());
-		assert.isTrue(fs.exists(path.join(directoryPath, "test.x")).wait());
-		assert.isFalse(fs.exists(path.join(directoryPath, "test.android.x")).wait());
+		assert.isFalse(fs.exists(path.join(directoryPath, "test.ios.x")));
+		assert.isTrue(fs.exists(path.join(directoryPath, "test.x")));
+		assert.isFalse(fs.exists(path.join(directoryPath, "test.android.x")));
 	});
 
 	it("filters ios specific files", () => {
@@ -187,10 +187,10 @@ describe("Project Files Manager Tests", () => {
 		projectFilesManager.processPlatformSpecificFiles(directoryPath, "ios").wait();
 
 		let fs = testInjector.resolve("fs");
-		assert.isFalse(fs.exists(path.join(directoryPath, "index1.android.html")).wait());
-		assert.isFalse(fs.exists(path.join(directoryPath, "index1.html")).wait());
-		assert.isTrue(fs.exists(path.join(directoryPath, "index.html")).wait());
-		assert.isTrue(fs.exists(path.join(directoryPath, "a.test")).wait());
+		assert.isFalse(fs.exists(path.join(directoryPath, "index1.android.html")));
+		assert.isFalse(fs.exists(path.join(directoryPath, "index1.html")));
+		assert.isTrue(fs.exists(path.join(directoryPath, "index.html")));
+		assert.isTrue(fs.exists(path.join(directoryPath, "a.test")));
 	});
 
 	it("doesn't filter non platform specific files", () => {
@@ -200,8 +200,8 @@ describe("Project Files Manager Tests", () => {
 		projectFilesManager.processPlatformSpecificFiles(directoryPath, "ios").wait();
 
 		let fs = testInjector.resolve("fs");
-		assert.isTrue(fs.exists(path.join(directoryPath, "index1.js")).wait());
-		assert.isTrue(fs.exists(path.join(directoryPath, "index2.js")).wait());
-		assert.isTrue(fs.exists(path.join(directoryPath, "index3.js")).wait());
+		assert.isTrue(fs.exists(path.join(directoryPath, "index1.js")));
+		assert.isTrue(fs.exists(path.join(directoryPath, "index2.js")));
+		assert.isTrue(fs.exists(path.join(directoryPath, "index3.js")));
 	});
 });

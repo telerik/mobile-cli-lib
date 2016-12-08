@@ -156,7 +156,7 @@ export class HooksService implements IHooksService {
 		return (() => {
 			if (!this.cachedHooks[directoryPath]) {
 				let hooks: IHook[] = [];
-				if (directoryPath && this.$fs.exists(directoryPath).wait() && this.$fs.getFsStats(directoryPath).wait().isDirectory()) {
+				if (directoryPath && this.$fs.exists(directoryPath) && this.$fs.getFsStats(directoryPath).wait().isDirectory()) {
 					let directoryContent = this.$fs.readDirectory(directoryPath).wait();
 					let files = _.filter(directoryContent, (entry: string) => {
 						let fullPath = path.join(directoryPath, entry);

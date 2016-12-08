@@ -73,7 +73,7 @@ export class MessagesService implements IMessagesService {
 		fiberBootstrap.run(() => {
 			this._messageJsonFilesContentsCache = [];
 			_.each(this.pathsToMessageJsonFiles, path => {
-				if (!this.$fs.exists(path).wait()) {
+				if (!this.$fs.exists(path)) {
 					throw new Error("Message json file " + path + " does not exist.");
 				}
 

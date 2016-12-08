@@ -87,7 +87,13 @@ declare module Project {
 
 	interface IProjectBase {
 		projectDir: string;
-		getProjectDir(): IFuture<string>;
+
+		/**
+		 * Determines path to project dir.
+		 * @returns {string} Path to project directory.
+		 */
+		getProjectDir(): string;
+
 		projectData: IData;
 		/**
 		 * Describes whether the project has separate debug/release build configurations.

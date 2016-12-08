@@ -48,7 +48,7 @@ export class UserSettingsServiceBase implements IUserSettingsService {
 	public loadUserSettingsFile(): IFuture<void> {
 		return (() => {
 			if(!this.userSettingsData) {
-				if(!this.$fs.exists(this.userSettingsFilePath).wait()) {
+				if(!this.$fs.exists(this.userSettingsFilePath)) {
 					this.$fs.writeFile(this.userSettingsFilePath, null).wait();
 				}
 

@@ -181,8 +181,8 @@ describe("FileSystem", () => {
 
 			let result = fs.renameIfExists(testFileName, newFileName).wait();
 			assert.isTrue(result, "On successfull rename, result must be true.");
-			assert.isTrue(fs.exists(newFileName).wait(), "Renamed file should exists.");
-			assert.isFalse(fs.exists(testFileName).wait(), "Original file should not exist.");
+			assert.isTrue(fs.exists(newFileName), "Renamed file should exists.");
+			assert.isFalse(fs.exists(testFileName), "Original file should not exist.");
 		});
 
 		it("returns false when file does not exist", () => {
@@ -191,7 +191,7 @@ describe("FileSystem", () => {
 			let newName = "tempDir2";
 			let result = fs.renameIfExists("tempDir", newName).wait();
 			assert.isFalse(result, "When file does not exist, result must be false.");
-			assert.isFalse(fs.exists(newName).wait(), "New file should not exist.");
+			assert.isFalse(fs.exists(newName), "New file should not exist.");
 		});
 	});
 
@@ -215,24 +215,24 @@ describe("FileSystem", () => {
 
 		it("correctly copies file to the same directory", () => {
 			fs.copyFile(testFileName, newFileName).wait();
-			assert.isTrue(fs.exists(newFileName).wait(), "Renamed file should exists.");
-			assert.isTrue(fs.exists(testFileName).wait(), "Original file should exist.");
+			assert.isTrue(fs.exists(newFileName), "Renamed file should exists.");
+			assert.isTrue(fs.exists(testFileName), "Original file should exist.");
 			assert.deepEqual(fs.getFsStats(testFileName).wait().size, fs.getFsStats(testFileName).wait().size, "Original file and copied file must have the same size.");
 		});
 
 		it("copies file to non-existent directory", () => {
 			let newFileNameInSubDir = path.join(tempDir, "subDir", "newfilename");
-			assert.isFalse(fs.exists(newFileNameInSubDir).wait());
+			assert.isFalse(fs.exists(newFileNameInSubDir));
 			fs.copyFile(testFileName, newFileNameInSubDir).wait();
-			assert.isTrue(fs.exists(newFileNameInSubDir).wait(), "Renamed file should exists.");
-			assert.isTrue(fs.exists(testFileName).wait(), "Original file should exist.");
+			assert.isTrue(fs.exists(newFileNameInSubDir), "Renamed file should exists.");
+			assert.isTrue(fs.exists(testFileName), "Original file should exist.");
 			assert.deepEqual(fs.getFsStats(testFileName).wait().size, fs.getFsStats(testFileName).wait().size, "Original file and copied file must have the same size.");
 		});
 
 		it("produces correct file when source and target file are the same", () => {
 			let originalSize = fs.getFsStats(testFileName).wait().size;
 			fs.copyFile(testFileName, testFileName).wait();
-			assert.isTrue(fs.exists(testFileName).wait(), "Original file should exist.");
+			assert.isTrue(fs.exists(testFileName), "Original file should exist.");
 			assert.deepEqual(fs.getFsStats(testFileName).wait().size, originalSize, "Original file and copied file must have the same size.");
 			assert.deepEqual(fs.readText(testFileName).wait(), fileContent, "File content should not be changed.");
 		});
@@ -292,7 +292,7 @@ describe("FileSystem", () => {
 		_.each(testCases, (testCase) => {
 			it(`should use the correct indentation ${testCase.testCondition}.`, () => {
 				fs.readText = () => Future.fromResult(testCase.text);
-				fs.exists = () => Future.fromResult(testCase.exists);
+				fs.exists = () => testCase.exists;
 				fs.writeFile = () => Future.fromResult();
 
 				let actualIndentation: string;

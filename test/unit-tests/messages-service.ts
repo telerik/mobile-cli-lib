@@ -9,7 +9,7 @@ import Future = require("fibers/future");
 function createTestInjector(jsonContents: any, options?: {useRealFsExists: boolean}): IInjector {
 	let testInjector = new Yok();
 	testInjector.register("fs", {
-		exists: (path: string): IFuture<boolean> => Future.fromResult(options && options.useRealFsExists ? existsSync(path) : true),
+		exists: (path: string): boolean => options && options.useRealFsExists ? existsSync(path) : true,
 		readJson: (filename: string, encoding?: string): IFuture<any> => Future.fromResult(jsonContents)
 	});
 	testInjector.register("messagesService", MessagesService);
@@ -105,7 +105,7 @@ describe("messages-service", () => {
 				injector = createTestInjector({});
 
 			injector.register("fs", {
-				exists: (path: string): IFuture<boolean> => Future.fromResult(true),
+				exists: (path: string): boolean => true,
 				readJson: (filename: string, encoding?: string): IFuture<any> => Future.fromResult(filename === pathToDefaultMessageJson ? commonJsonContents : clientJsonContents)
 			});
 			service = injector.resolve("$messagesService");

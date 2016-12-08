@@ -55,7 +55,7 @@ export class TypeScriptService implements ITypeScriptService {
 
 			if (this.typeScriptFiles.length > 0) {
 				let typeScriptDefinitionsFiles: string[] = [];
-				if (!this.hasTsConfigFile(projectDir).wait()) {
+				if (!this.hasTsConfigFile(projectDir)) {
 					typeScriptDefinitionsFiles = this.getDefaultTypeScriptDefinitionsFiles(options.pathToDefaultDefinitionFiles).wait();
 				}
 
@@ -102,7 +102,7 @@ export class TypeScriptService implements ITypeScriptService {
 		return path.extname(file) === FileExtensions.TYPESCRIPT_FILE;
 	}
 
-	private hasTsConfigFile(projectDir: string): IFuture<boolean> {
+	private hasTsConfigFile(projectDir: string): boolean {
 		return this.$fs.exists(this.getPathToTsConfigFile(projectDir));
 	}
 
@@ -115,7 +115,7 @@ export class TypeScriptService implements ITypeScriptService {
 			let tsConfigFile: ITypeScriptConfig;
 			let pathToConfigJsonFile = this.getPathToTsConfigFile(projectDir);
 
-			if (this.hasTsConfigFile(projectDir).wait()) {
+			if (this.hasTsConfigFile(projectDir)) {
 				tsConfigFile = this.$fs.readJson(pathToConfigJsonFile).wait();
 			}
 
@@ -304,7 +304,7 @@ export class TypeScriptService implements ITypeScriptService {
 
 	private getDefaultTypeScriptDefinitionsFiles(defaultTypeScriptDefinitionsFilesPath: string): IFuture<string[]> {
 		return (() => {
-			if (!this.$fs.exists(defaultTypeScriptDefinitionsFilesPath).wait()) {
+			if (!this.$fs.exists(defaultTypeScriptDefinitionsFilesPath)) {
 				return [];
 			}
 

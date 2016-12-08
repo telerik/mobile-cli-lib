@@ -24,7 +24,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 	@hook('install')
 	public installApplication(packageFilePath: string): IFuture<void> {
 		return (() => {
-			if (this.$fs.exists(packageFilePath).wait() && path.extname(packageFilePath) === ".zip") {
+			if (this.$fs.exists(packageFilePath) && path.extname(packageFilePath) === ".zip") {
 				temp.track();
 				let dir = temp.mkdirSync("simulatorPackage");
 				this.$fs.unzip(packageFilePath, dir).wait();
@@ -100,7 +100,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 			let applicationPath = this.iosSim.getApplicationPath(this.identifier, appIdentifier),
 				pathToInfoPlist = path.join(applicationPath, "Info.plist");
 
-			return this.$fs.exists(pathToInfoPlist).wait() ? this.$bplistParser.parseFile(pathToInfoPlist).wait()[0] : null;
+			return this.$fs.exists(pathToInfoPlist) ? this.$bplistParser.parseFile(pathToInfoPlist).wait()[0] : null;
 		}).future<any>()();
 	}
 

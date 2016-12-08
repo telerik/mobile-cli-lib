@@ -27,7 +27,7 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 
 	public checkAvailability(): IFuture<void> {
 		return (() => {
-			if (!this.$fs.exists(this.getPathToEmulatorStarter()).wait()) {
+			if (!this.$fs.exists(this.getPathToEmulatorStarter())) {
 				this.$errors.failWithoutHelp("You do not have Windows Phone 8 SDK installed. Please install it in order to continue.");
 			}
 

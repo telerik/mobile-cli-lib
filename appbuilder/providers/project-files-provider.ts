@@ -8,7 +8,7 @@ export class ProjectFilesProvider extends ProjectFilesProviderBase {
 	private get projectDir(): string {
 		if (!this._projectDir) {
 			let project = this.$injector.resolve("project");
-			this._projectDir = project.getProjectDir().wait();
+			this._projectDir = project.getProjectDir();
 		}
 
 		return this._projectDir;

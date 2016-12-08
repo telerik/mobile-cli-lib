@@ -219,7 +219,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 
 			try {
 				let doUpdate = true;
-				if (this.$fs.exists(filePath).wait()) {
+				if (this.$fs.exists(filePath)) {
 					let contents = this.$fs.readText(filePath).wait();
 					let regExp = new RegExp(util.format("%s\\s+completion\\s+--\\s+", this.$staticConfig.CLIENT_NAME.toLowerCase()));
 					let matchCondition = contents.match(regExp);

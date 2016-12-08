@@ -20,7 +20,7 @@ export class ProjectHelper implements IProjectHelper {
 			this.$logger.trace("Looking for project in '%s'", projectDir);
 			let projectFilePath = path.join(projectDir, this.$staticConfig.PROJECT_FILE_NAME);
 
-			if (this.$fs.exists(projectFilePath).wait() && this.isProjectFileCorrect(projectFilePath)) {
+			if (this.$fs.exists(projectFilePath) && this.isProjectFileCorrect(projectFilePath)) {
 				this.$logger.debug("Project directory is '%s'.", projectDir);
 				this.cachedProjectDir = projectDir;
 				break;

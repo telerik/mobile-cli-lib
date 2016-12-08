@@ -411,7 +411,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		return (() => {
 			let iniFile = path.join(this.avdDir, avdName + ".ini");
 			let avdInfo: Mobile.IAvdInfo = this.parseAvdFile(avdName, iniFile).wait();
-			if (avdInfo.path && this.$fs.exists(avdInfo.path).wait()) {
+			if (avdInfo.path && this.$fs.exists(avdInfo.path)) {
 				iniFile = path.join(avdInfo.path, "config.ini");
 				avdInfo = this.parseAvdFile(avdName, iniFile, avdInfo).wait();
 			}
@@ -421,7 +421,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 
 	private parseAvdFile(avdName: string, avdFileName: string, avdInfo?: Mobile.IAvdInfo): IFuture<Mobile.IAvdInfo> {
 		return (() => {
-			if (!this.$fs.exists(avdFileName).wait()) {
+			if (!this.$fs.exists(avdFileName)) {
 				return null;
 			}
 
@@ -500,7 +500,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	private getAvds(): IFuture<string[]> {
 		return (() => {
 			let result: string[] = [];
-			if (this.$fs.exists(this.avdDir).wait()) {
+			if (this.$fs.exists(this.avdDir)) {
 				let entries = this.$fs.readDirectory(this.avdDir).wait();
 				result = _.filter(entries, (e: string) => e.match(AndroidEmulatorServices.INI_FILES_MASK) !== null)
 					.map((e) => e.match(AndroidEmulatorServices.INI_FILES_MASK)[1]);

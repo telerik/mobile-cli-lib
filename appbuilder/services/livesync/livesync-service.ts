@@ -52,7 +52,7 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 				return result;
 			}
 
-			if (!this.$fs.exists(this.$project.projectDir).wait()) {
+			if (!this.$fs.exists(this.$project.projectDir)) {
 				result.liveSyncToApp = result.liveSyncToCompanion = {
 					isResolved: false,
 					error: new Error(`Cannot execute LiveSync operation as the project dir ${this.$project.projectDir} does not exist on the file system.`)
@@ -62,7 +62,7 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 			}
 
 			if (!isForDeletedFiles && filePaths && filePaths.length) {
-				let missingFiles = filePaths.filter(filePath => !this.$fs.exists(filePath).wait());
+				let missingFiles = filePaths.filter(filePath => !this.$fs.exists(filePath));
 				if (missingFiles && missingFiles.length) {
 					result.liveSyncToApp = result.liveSyncToCompanion = {
 						isResolved: false,

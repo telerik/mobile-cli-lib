@@ -98,10 +98,8 @@ export class FileSystem implements IFileSystem {
 		return result;
 	}
 
-	public exists(path: string): IFuture<boolean> {
-		let future = new Future<boolean>();
-		fs.exists(path, (exists: boolean) => future.return(exists));
-		return future;
+	public exists(path: string): boolean {
+		return fs.existsSync(path);
 	}
 
 	public tryExecuteFileOperation(path: string, operation: () => IFuture<any>, enoentErrorMessage?: string): IFuture<void> {
@@ -365,21 +363,19 @@ export class FileSystem implements IFileSystem {
 		return future;
 	}
 
-	public getUniqueFileName(baseName: string): IFuture<string> {
-		return ((): string => {
-			if (!this.exists(baseName).wait()) {
-				return baseName;
-			}
-			let extension = path.extname(baseName);
-			let prefix = path.basename(baseName, extension);
+	public getUniqueFileName(baseName: string): string {
+		if (!this.exists(baseName)) {
+			return baseName;
+		}
+		let extension = path.extname(baseName);
+		let prefix = path.basename(baseName, extension);
 
-			for (let i = 2; ; ++i) {
-				let numberedName = prefix + i + extension;
-				if (!this.exists(numberedName).wait()) {
-					return numberedName;
-				}
+		for (let i = 2; ; ++i) {
+			let numberedName = prefix + i + extension;
+			if (!this.exists(numberedName)) {
+				return numberedName;
 			}
-		}).future<string>()();
+		}
 	}
 
 	public isEmptyDir(directoryPath: string): IFuture<boolean> {
@@ -397,7 +393,7 @@ export class FileSystem implements IFileSystem {
 
 	public ensureDirectoryExists(directoryPath: string): IFuture<void> {
 		return (() => {
-			if (!this.exists(directoryPath).wait()) {
+			if (!this.exists(directoryPath)) {
 				this.createDirectory(directoryPath).wait();
 			}
 		}).future<void>()();
@@ -473,7 +469,7 @@ export class FileSystem implements IFileSystem {
 		opts?: { enumerateDirectories?: boolean, includeEmptyDirectories?: boolean }, foundFiles?: string[]): string[] {
 		foundFiles = foundFiles || [];
 
-		if(!this.exists(directoryPath).wait()) {
+		if(!this.exists(directoryPath)) {
 			let $logger = this.$injector.resolve("logger");
 			$logger.warn('Could not find folder: ' + directoryPath);
 			return foundFiles;
@@ -541,7 +537,7 @@ export class FileSystem implements IFileSystem {
 
 	public deleteEmptyParents(directory: string): IFuture<void> {
 		return (() => {
-			let parent = this.exists(directory).wait() ? directory : path.dirname(directory);
+			let parent = this.exists(directory) ? directory : path.dirname(directory);
 
 			while (this.isEmptyDir(parent).wait()) {
 				this.deleteDirectory(parent).wait();
@@ -552,7 +548,7 @@ export class FileSystem implements IFileSystem {
 
 	private getIndentationCharacter(filePath: string): IFuture<string> {
 		return ((): string => {
-			if (!this.exists(filePath).wait()) {
+			if (!this.exists(filePath)) {
 				return FileSystem.DEFAULT_INDENTATION_CHARACTER;
 			}
 

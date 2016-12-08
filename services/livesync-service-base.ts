@@ -65,7 +65,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 								return;
 							}
 
-							let fileHash = that.$fs.exists(filePath).wait() && that.$fs.getFsStats(filePath).wait().isFile() ? that.$fs.getFileShasum(filePath).wait() : "";
+							let fileHash = that.$fs.exists(filePath) && that.$fs.getFsStats(filePath).wait().isFile() ? that.$fs.getFileShasum(filePath).wait() : "";
 							if (fileHash === that.fileHashes[filePath]) {
 								that.$logger.trace(`Skipping livesync for ${filePath} file with ${fileHash} hash.`);
 								return;

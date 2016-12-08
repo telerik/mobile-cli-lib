@@ -131,7 +131,14 @@ interface IDisposable {
 interface IFileSystem {
 	zipFiles(zipFile: string, files: string[], zipPathCallback: (path: string) => string): IFuture<void>;
 	unzip(zipFile: string, destinationDir: string, options?: { overwriteExisitingFiles?: boolean; caseSensitive?: boolean }, fileFilters?: string[]): IFuture<void>;
-	exists(path: string): IFuture<boolean>;
+
+	/**
+	 * Test whether or not the given path exists by checking with the file system.
+	 * @param {string} path Path to be checked.
+	 * @returns {boolean} True if path exists, false otherwise.
+	 */
+	exists(path: string): boolean;
+
 	tryExecuteFileOperation(path: string, operation: () => IFuture<any>, enoentErrorMessage?: string): IFuture<void>;
 	deleteFile(path: string): IFuture<void>;
 	deleteDirectory(directory: string): IFuture<void>;
@@ -147,7 +154,14 @@ interface IFileSystem {
 	appendFile(filename: string, data: any, encoding?: string): IFuture<void>;
 	writeJson(filename: string, data: any, space?: string, encoding?: string): IFuture<void>;
 	copyFile(sourceFileName: string, destinationFileName: string): IFuture<void>;
-	getUniqueFileName(baseName: string): IFuture<string>;
+
+	/**
+	 * Returns unique file name based on the passed name by checkin if it exists and adding numbers to the passed name until a non-existent file is found.
+	 * @param {string} baseName The name based on which the unique name will be generated.
+	 * @returns {string} Unique filename. In case baseName does not exist, it will be returned.
+	 */
+	getUniqueFileName(baseName: string): string;
+
 	isEmptyDir(directoryPath: string): IFuture<boolean>;
 	isRelativePath(path: string): boolean /* feels so lonely here, I don't have a Future */;
 	ensureDirectoryExists(directoryPath: string): IFuture<void>;
@@ -445,14 +459,37 @@ interface ITypeScriptService {
 }
 
 interface IDynamicHelpService {
-	isProjectType(...args: string[]): IFuture<boolean>;
+	/**
+	 * Checks if current project's framework is one of the specified as arguments.
+	 * @param args {string[]} Frameworks to be checked.
+	 * @returns {boolean} True in case the current project's framework is one of the passed as args, false otherwise.
+	 */
+	isProjectType(...args: string[]): boolean;
+
 	isPlatform(...args: string[]): boolean;
-	getLocalVariables(options: { isHtml: boolean }): IFuture<IDictionary<any>>;
+
+	/**
+	 * Gives an object containing all required variables that can be used in help content and their values.
+	 * @param {any} Object with one boolean property - `isHtml` - it defines if the help content is generated for html or for console help.
+	 * @returs {IDictionary<any>} Key-value pairs of variables and their values.
+	 */
+	getLocalVariables(options: { isHtml: boolean }): IDictionary<any>;
 }
 
 interface IDynamicHelpProvider {
-	isProjectType(args: string[]): IFuture<boolean>;
-	getLocalVariables(options: { isHtml: boolean }): IFuture<IDictionary<any>>;
+	/**
+	 * Checks if current project's framework is one of the specified as arguments.
+	 * @param args {string[]} Frameworks to be checked.
+	 * @returns {boolean} True in case the current project's framework is one of the passed as args, false otherwise.
+	 */
+	isProjectType(args: string[]): boolean;
+
+	/**
+	 * Gives an object containing all required variables that can be used in help content and their values.
+	 * @param {any} Object with one boolean property - `isHtml` - it defines if the help content is generated for html or for console help.
+	 * @returs {IDictionary<any>} Key-value pairs of variables and their values.
+	 */
+	getLocalVariables(options: { isHtml: boolean }): IDictionary<any>;
 }
 
 interface IMicroTemplateService {
@@ -669,7 +706,7 @@ interface ISysInfo {
 	getXCodeProjGemLocation(): IFuture<string>;
 
 	/** Returns if ITunes is installed or not. **/
-	getITunesInstalled(): IFuture<boolean>;
+	getITunesInstalled(): boolean;
 
 	/** Returns Cocoapod version. **/
 	getCocoapodVersion(): IFuture<string>;
@@ -1070,7 +1107,7 @@ interface IProjectFilesManager {
 	/**
 	 * Enumerates all files and directories from the specified project files path.
 	 */
-	getProjectFiles(projectFilesPath: string, excludedProjectDirsAndFiles?: string[], filter?: (filePath: string, stat: IFsStats) => IFuture<boolean>, opts?: any): string[];
+	getProjectFiles(projectFilesPath: string, excludedProjectDirsAndFiles?: string[], filter?: (filePath: string, stat: IFsStats) => boolean, opts?: any): string[];
 	/**
 	 * Checks if the file is excluded
 	 */

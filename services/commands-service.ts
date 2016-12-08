@@ -321,7 +321,7 @@ export class CommandsService implements ICommandsService {
 
 	private getCommandHelp(): IFuture<any> {
 		return (() => {
-			if (!this.cachedCommandHelp && this.$fs.exists(this.$resources.resolvePath(this.$staticConfig.COMMAND_HELP_FILE_NAME)).wait()) {
+			if (!this.cachedCommandHelp && this.$fs.exists(this.$resources.resolvePath(this.$staticConfig.COMMAND_HELP_FILE_NAME))) {
 				this.cachedCommandHelp = this.$resources.readJson(this.$staticConfig.COMMAND_HELP_FILE_NAME).wait();
 			}
 

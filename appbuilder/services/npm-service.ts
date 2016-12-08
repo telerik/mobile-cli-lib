@@ -34,7 +34,7 @@ export class NpmService implements INpmService {
 				let npmMainJsFile = require.resolve(NpmService.NPM_MODULE_NAME);
 				let pathToNpmBinary = path.join(npmMainJsFile.substring(0, npmMainJsFile.lastIndexOf(constants.NODE_MODULES_DIR_NAME) + constants.NODE_MODULES_DIR_NAME.length), ".bin", this.npmExecutableName);
 
-				if (!this.$fs.exists(pathToNpmBinary).wait()) {
+				if (!this.$fs.exists(pathToNpmBinary)) {
 					throw new Error(`The npm binary is not in ${pathToNpmBinary} as expected.`);
 				}
 
@@ -281,7 +281,7 @@ export class NpmService implements INpmService {
 			if (packageJsonContent && packageJsonContent.dependencies && packageJsonContent.dependencies[constants.TNS_CORE_MODULES]) {
 				let relativePathToTnsCoreModulesDts = `./${constants.NODE_MODULES_DIR_NAME}/${constants.TNS_CORE_MODULES}/${NpmService.TNS_CORE_MODULES_DEFINITION_FILE_NAME}`;
 
-				if (this.$fs.exists(path.join(projectDir, relativePathToTnsCoreModulesDts)).wait()) {
+				if (this.$fs.exists(path.join(projectDir, relativePathToTnsCoreModulesDts))) {
 					lines.push(this.getReferenceLine(relativePathToTnsCoreModulesDts));
 				}
 			}
@@ -320,7 +320,7 @@ export class NpmService implements INpmService {
 	private removeOldAbReferencesFile(projectDir: string): IFuture<void> {
 		return (() => {
 			const pathToOldReferencesFile = path.join(projectDir, this.$projectConstants.OLD_REFERENCES_FILE_NAME);
-			if (this.$fs.exists(pathToOldReferencesFile).wait()) {
+			if (this.$fs.exists(pathToOldReferencesFile)) {
 				this.$fs.deleteFile(pathToOldReferencesFile).wait();
 			}
 		}).future<void>()();

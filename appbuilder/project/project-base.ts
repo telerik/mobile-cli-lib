@@ -1,5 +1,4 @@
 import {EOL} from "os";
-import Future = require("fibers/future");
 import * as path from "path";
 import { TARGET_FRAMEWORK_IDENTIFIERS } from "../../constants";
 
@@ -48,8 +47,8 @@ export abstract class ProjectBase implements Project.IProjectBase {
 	}
 
 	public projectDir: string;
-	public getProjectDir(): IFuture<string> {
-		return Future.fromResult(this.projectDir);
+	public getProjectDir(): string {
+		return this.projectDir;
 	}
 
 	public get capabilities(): Project.ICapabilities {
@@ -112,7 +111,7 @@ export abstract class ProjectBase implements Project.IProjectBase {
 
 	protected readProjectData(): IFuture<void> {
 		return (() => {
-			let projectDir = this.getProjectDir().wait();
+			let projectDir = this.getProjectDir();
 			this.setShouldSaveProject(false);
 			if (projectDir) {
 				let projectFilePath = path.join(projectDir, this.$projectConstants.PROJECT_FILE);
@@ -120,12 +119,12 @@ export abstract class ProjectBase implements Project.IProjectBase {
 					this.projectData = this.getProjectData(projectFilePath);
 					this.validate();
 					let debugProjectFile = path.join(projectDir, this.$projectConstants.DEBUG_PROJECT_FILE_NAME);
-					if (this.$options.debug && !this.$fs.exists(debugProjectFile).wait()) {
+					if (this.$options.debug && !this.$fs.exists(debugProjectFile)) {
 						this.$fs.writeJson(debugProjectFile, {}).wait();
 					}
 
 					let releaseProjectFile = path.join(projectDir, this.$projectConstants.RELEASE_PROJECT_FILE_NAME);
-					if (this.$options.release && !this.$fs.exists(releaseProjectFile).wait()) {
+					if (this.$options.release && !this.$fs.exists(releaseProjectFile)) {
 						this.$fs.writeJson(releaseProjectFile, {}).wait();
 					}
 
@@ -177,7 +176,7 @@ export abstract class ProjectBase implements Project.IProjectBase {
 
 	private getAppIdentifierFromConfigFile(pathToConfigFile: string, regExp: RegExp): IFuture<string> {
 		return ((): string => {
-			if (this.$fs.exists(pathToConfigFile).wait()) {
+			if (this.$fs.exists(pathToConfigFile)) {
 				let fileContent = this.$fs.readText(pathToConfigFile).wait();
 
 				let matches = fileContent.match(regExp);

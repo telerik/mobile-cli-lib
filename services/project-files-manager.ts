@@ -9,10 +9,10 @@ export class ProjectFilesManager implements IProjectFilesManager {
 		private $mobileHelper: Mobile.IMobileHelper,
 		private $projectFilesProvider: IProjectFilesProvider) { }
 
-	public getProjectFiles(projectFilesPath: string, excludedProjectDirsAndFiles?: string[], filter?: (filePath: string, stat: IFsStats) => IFuture<boolean>, opts?: any): string[] {
+	public getProjectFiles(projectFilesPath: string, excludedProjectDirsAndFiles?: string[], filter?: (filePath: string, stat: IFsStats) => boolean, opts?: any): string[] {
 		let projectFiles = this.$fs.enumerateFilesInDirectorySync(projectFilesPath, (filePath, stat) => {
 			let isFileExcluded = this.isFileExcluded(path.relative(projectFilesPath, filePath));
-			let isFileFiltered = filter ? filter(filePath, stat).wait() : false;
+			let isFileFiltered = filter ? filter(filePath, stat) : false;
 			return !isFileExcluded && !isFileFiltered;
 		}, opts);
 

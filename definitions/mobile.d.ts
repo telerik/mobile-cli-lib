@@ -435,7 +435,7 @@ declare module Mobile {
 	}
 
 	interface IiTunesValidator {
-		getError(): IFuture<string>;
+		getError(): string;
 	}
 
 	interface IiOSCore {

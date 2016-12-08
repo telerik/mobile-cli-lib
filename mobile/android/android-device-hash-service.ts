@@ -33,7 +33,7 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 		return (() => {
 			let hashFileLocalPath = this.downloadHashFileFromDevice().wait();
 
-			if (this.$fs.exists(hashFileLocalPath).wait()) {
+			if (this.$fs.exists(hashFileLocalPath)) {
 				return this.$fs.readJson(hashFileLocalPath).wait();
 			}
 
@@ -112,7 +112,7 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 
 	private downloadHashFileFromDevice(): IFuture<string> {
 		return (() => {
-			if (!this.$fs.exists(this.hashFileLocalPath).wait()) {
+			if (!this.$fs.exists(this.hashFileLocalPath)) {
 				this.adb.executeCommand(["pull", this.hashFileDevicePath, this.tempDir]).wait();
 			}
 			return this.hashFileLocalPath;
