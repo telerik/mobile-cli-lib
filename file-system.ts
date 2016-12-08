@@ -535,7 +535,7 @@ export class FileSystem implements IFileSystem {
 		return future;
 	}
 
-	public rm(options: string = undefined, ...files: string[]): void {
+	public rm(options?: string, ...files: string[]): void {
 		shelljs.rm(options, files);
 	}
 

@@ -9,22 +9,22 @@ export class CommonLoggerStub implements ILogger {
 	fatal(...args: string[]): void {}
 	error(...args: string[]): void {}
 	warn(...args: string[]): void {
-		this.out(...args);
+		this.out.apply(this, args);
 	}
 	warnWithLabel(...args: string[]): void {}
 	info(...args: string[]): void {
-		this.out(...args);
+		this.out.apply(this, args);
 	}
 	debug(...args: string[]): void {}
 	trace(...args: string[]): void {
-		this.traceOutput += util.format(...args) + "\n";
+		this.traceOutput += util.format.apply(null, args) + "\n";
 	}
 
 	public output = "";
 	public traceOutput = "";
 
 	out(...args: string[]): void {
-		this.output += util.format(...args) + "\n";
+		this.output += util.format.apply(null, args) + "\n";
 	}
 
 	write(...args: string[]): void { }
@@ -48,7 +48,7 @@ export class ErrorsStub implements IErrors {
 	fail(opts:{formatStr?: string; errorCode?: number; suppressCommandHelp?: boolean}, ...args: any[]): void;
 
 	fail(...args: any[]) {
-		throw new Error(require("util").format.apply(null,args));
+		throw new Error(util.format.apply(null, args));
 	}
 
 	failWithoutHelp(message: string, ...args: any[]): void {

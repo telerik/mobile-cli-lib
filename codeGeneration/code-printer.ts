@@ -7,7 +7,8 @@ export class CodePrinter {
 	private static START_BLOCK_CHAR = "{";
 	private static END_BLOCK_CHAR = "}";
 
-	public composeBlock(block: CodeGeneration.IBlock, indentSize: number = 0): string {
+	public composeBlock(block: CodeGeneration.IBlock, indentSize?: number): string {
+		indentSize = indentSize === undefined ? 0 : indentSize;
 		let content = this.getIndentation(indentSize);
 
 		if(block.opener) {

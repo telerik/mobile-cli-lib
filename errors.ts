@@ -110,6 +110,8 @@ export class Errors implements IErrors {
 	public printCallStack: boolean = false;
 
 	fail(optsOrFormatStr: any, ...args: any[]): void {
+		const argsArray = args || [];
+
 		let opts = optsOrFormatStr;
 		if (_.isString(opts)) {
 			opts = { formatStr: opts };
@@ -117,9 +119,10 @@ export class Errors implements IErrors {
 
 		let exception: any = new (<any>Exception)();
 		exception.name = opts.name || "Exception";
-		exception.message = util.format(opts.formatStr, ...args);
+		exception.message = util.format.apply(null, [opts.formatStr].concat(argsArray));
 		try {
-			exception.message = this.$injector.resolve("messagesService").getMessage(opts.formatStr, ...args);
+			const $messagesService = this.$injector.resolve("messagesService");
+			exception.message = $messagesService.getMessage.apply($messagesService, [opts.formatStr].concat(argsArray));
 		} catch (err) {
 			// Ignore
 		}

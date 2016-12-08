@@ -419,7 +419,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		}).future<Mobile.IAvdInfo>()();
 	}
 
-	private parseAvdFile(avdName: string, avdFileName: string, avdInfo: Mobile.IAvdInfo = null): IFuture<Mobile.IAvdInfo> {
+	private parseAvdFile(avdName: string, avdFileName: string, avdInfo?: Mobile.IAvdInfo): IFuture<Mobile.IAvdInfo> {
 		return (() => {
 			if (!this.$fs.exists(avdFileName).wait()) {
 				return null;

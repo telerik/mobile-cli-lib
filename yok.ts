@@ -290,8 +290,8 @@ export class Yok implements IInjector {
 		return commandName.indexOf("*") > 0 && commandName.indexOf("|") > 0;
 	}
 
-	public register(name: string, resolver: any, shared: boolean = true): void {
-
+	public register(name: string, resolver: any, shared?: boolean): void {
+		shared = shared === undefined ? true : shared;
 		trace("registered '%s'", name);
 
 		let dependency: any = this.modules[name] || {};
@@ -364,12 +364,7 @@ export class Yok implements IInjector {
 
 		let name = ctor.$inject.name;
 		if (name && name[0] === name[0].toUpperCase()) {
-			let EmptyCtor = function () { /* intentionally left blank */ };
-			EmptyCtor.prototype = ctor.prototype;
-			let obj = new (<any>EmptyCtor)();
-
-			ctor.apply(obj, resolvedArgs);
-			return obj;
+			return new (<any>ctor)(...resolvedArgs);
 		} else {
 			return ctor.apply(null, resolvedArgs);
 		}

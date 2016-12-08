@@ -65,7 +65,7 @@ export class Logger implements ILogger {
 	}
 
 	warnWithLabel(...args: string[]): void {
-		let message = util.format(...args);
+		let message = util.format.apply(null, args);
 		this.warn(`${Logger.LABEL} ${message}`);
 	}
 

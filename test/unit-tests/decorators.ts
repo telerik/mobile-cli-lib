@@ -2,7 +2,6 @@ import * as decoratorsLib from "../../decorators";
 import { Yok } from "../../yok";
 import {assert} from "chai";
 import Future = require("fibers/future");
-import * as Promise from "bluebird";
 
 describe("decorators", () => {
 	let moduleName = "moduleName", // This is the name of the injected dependency that will be resolved, for example fs, devicesService, etc.
@@ -129,7 +128,7 @@ describe("decorators", () => {
 			generatePublicApiFromExportedPromiseDecorator();
 
 			let promises: Promise<string>[] = $injector.publicApi.__modules__[moduleName][propertyName]();
-			Promise.all(promises)
+			Promise.all<string>(promises)
 				.then((promiseResults: string[]) => {
 					_.each(promiseResults, (val: string, index: number) => {
 						assert.deepEqual(val, expectedResults[index]);
