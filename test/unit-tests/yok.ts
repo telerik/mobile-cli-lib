@@ -63,6 +63,43 @@ describe("yok", () => {
 			assert.strictEqual(obj, result.foo);
 		});
 
+		it("injects directly into passed constructor, ES6 lambda", () => {
+			let injector = new Yok();
+			let obj = {};
+			let resultFoo: any = null;
+
+			injector.register("foo", obj);
+
+			let Test = (foo:any) => {
+				resultFoo = foo;
+			};
+
+			injector.resolve(Test);
+
+			assert.strictEqual(obj, resultFoo);
+		});
+
+		it("injects directly into passed constructor, ES6 lambda, constructor args", () => {
+			const injector = new Yok();
+			const obj = {};
+			const expectedBar = {};
+
+			let resultFoo: any = null,
+				resultBar: any = null;
+
+			injector.register("foo", obj);
+
+			let Test = (foo:any, bar: any) => {
+				resultFoo = foo;
+				resultBar = bar;
+			};
+
+			injector.resolve(Test, { bar: expectedBar });
+
+			assert.strictEqual(obj, resultFoo);
+			assert.strictEqual(expectedBar, resultBar);
+		});
+
 		it("inject dependency into registered constructor", () => {
 			let injector = new Yok();
 			let obj = {};
@@ -77,6 +114,47 @@ describe("yok", () => {
 			let result = injector.resolve("test");
 
 			assert.strictEqual(obj, result.foo);
+		});
+
+		it("inject dependency into registered constructor, ES6 lambda", () => {
+			let injector = new Yok();
+			let obj = {};
+			let resultFoo: any = null;
+
+			injector.register("foo", obj);
+
+			let Test = (foo:any) => {
+				resultFoo = foo;
+			};
+
+			injector.register("test", Test);
+
+			injector.resolve("test");
+
+			assert.strictEqual(obj, resultFoo);
+		});
+
+		it("inject dependency into registered constructor, ES6 lambda, constructor args", () => {
+			const injector = new Yok();
+			const obj = {};
+			const expectedBar = {};
+
+			let resultFoo: any = null,
+				resultBar: any = null;
+
+			injector.register("foo", obj);
+
+			let Test = (foo: any, bar: any) => {
+				resultFoo = foo;
+				resultBar = bar;
+			};
+
+			injector.register("test", Test);
+
+			injector.resolve("test", { bar: expectedBar });
+
+			assert.strictEqual(obj, resultFoo);
+			assert.strictEqual(expectedBar, resultBar);
 		});
 
 		it("inject dependency with $ prefix", () => {
@@ -202,6 +280,29 @@ describe("yok", () => {
 			assert.strictEqual(obj, result.foo);
 		});
 
+		it("injects directly into passed constructor, constructor args", () => {
+			const injector = new Yok();
+			const obj = {};
+			const expectedBar = {};
+
+			injector.register("foo", obj);
+
+			class Test {
+				private foo: any;
+				private bar: any;
+
+				constructor(foo: any, bar: any) {
+					this.foo = foo;
+					this.bar = bar;
+				}
+			};
+
+			let result = injector.resolve(Test, { bar: expectedBar });
+
+			assert.strictEqual(obj, result.foo);
+			assert.strictEqual(expectedBar, result.bar);
+		});
+
 		it("inject dependency into registered constructor", () => {
 			let injector = new Yok();
 			let obj = {};
@@ -220,6 +321,31 @@ describe("yok", () => {
 			let result = injector.resolve("test");
 
 			assert.strictEqual(obj, result.foo);
+		});
+
+		it("inject dependency into registered constructor, constructor args", () => {
+			const injector = new Yok();
+			const obj = {};
+			const expectedBar = {};
+
+			injector.register("foo", obj);
+
+			class Test {
+				private foo: any;
+				private bar: any;
+
+				constructor(foo: any, bar: any) {
+					this.foo = foo;
+					this.bar = bar;
+				}
+			};
+
+			injector.register("test", Test);
+
+			let result = injector.resolve("test", { bar: expectedBar });
+
+			assert.strictEqual(obj, result.foo);
+			assert.strictEqual(expectedBar, result.bar);
 		});
 
 		it("inject dependency with $ prefix", () => {
