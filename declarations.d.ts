@@ -155,7 +155,13 @@ interface IFileSystem {
 	 */
 	deleteDirectory(directory: string): void;
 
-	getFileSize(path: string): IFuture<number>;
+	/**
+	 * Returns the size of specified file.
+	 * @param {string} path Path to file.
+	 * @returns {number} File size in bytes.
+	 */
+	getFileSize(path: string): number;
+
 	futureFromEvent(eventEmitter: NodeJS.EventEmitter, event: string): IFuture<any>;
 	createDirectory(path: string): IFuture<void>;
 	readDirectory(path: string): IFuture<string[]>;

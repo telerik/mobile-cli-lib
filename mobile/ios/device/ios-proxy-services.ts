@@ -206,7 +206,7 @@ export class AfcClient extends AfcBase implements Mobile.IAfcClient {
 				this.deleteFile(devicePath);
 
 				let target = this.open(devicePath, "w");
-				let localFilePathSize = this.$fs.getFileSize(localFilePath).wait(),
+				let localFilePathSize = this.$fs.getFileSize(localFilePath),
 					futureThrow = (err: Error) => {
 						if (!future.isResolved()) {
 							future.throw(err);

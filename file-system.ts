@@ -135,11 +135,9 @@ export class FileSystem implements IFileSystem {
 		}
 	}
 
-	public getFileSize(path: string): IFuture<number> {
-		return ((): number => {
-			let stat = this.getFsStats(path);
-			return stat.size;
-		}).future<number>()();
+	public getFileSize(path: string): number {
+		let stat = this.getFsStats(path);
+		return stat.size;
 	}
 
 	public futureFromEvent(eventEmitter: any, event: string): IFuture<any> {
