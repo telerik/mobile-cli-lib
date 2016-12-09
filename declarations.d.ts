@@ -140,7 +140,13 @@ interface IFileSystem {
 	exists(path: string): boolean;
 
 	tryExecuteFileOperation(path: string, operation: () => IFuture<any>, enoentErrorMessage?: string): IFuture<void>;
-	deleteFile(path: string): IFuture<void>;
+
+	/**
+	 * Deletes a file.
+	 * @param {string} path Path to be deleted.
+	 * @returns {void} undefined
+	 */
+	deleteFile(path: string): void;
 	deleteDirectory(directory: string): IFuture<void>;
 	getFileSize(path: string): IFuture<number>;
 	futureFromEvent(eventEmitter: NodeJS.EventEmitter, event: string): IFuture<any>;

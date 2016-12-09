@@ -116,16 +116,14 @@ export class FileSystem implements IFileSystem {
 		}).future<void>()();
 	}
 
-	public deleteFile(path: string): IFuture<void> {
-		let future = new Future<void>();
-		fs.unlink(path, (err: any) => {
+	public deleteFile(path: string): void {
+		try {
+			fs.unlinkSync(path);
+		} catch (err) {
 			if (err && err.code !== "ENOENT") {  // ignore "file doesn't exist" error
-				future.throw(err);
-			} else {
-				future.return();
+				throw(err);
 			}
-		});
-		return future;
+		}
 	}
 
 	public deleteDirectory(directory: string): IFuture<void> {

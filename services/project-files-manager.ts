@@ -61,7 +61,7 @@ export class ProjectFilesManager implements IProjectFilesManager {
 			_.each(files, filePath => {
 				let projectFileInfo = this.$projectFilesProvider.getProjectFileInfo(filePath, platform);
 				if (!projectFileInfo.shouldIncludeFile) {
-					this.$fs.deleteFile(filePath).wait();
+					this.$fs.deleteFile(filePath);
 				} else if (projectFileInfo.onDeviceFileName) {
 					let onDeviceFilePath = path.join(path.dirname(filePath), projectFileInfo.onDeviceFileName);
 
