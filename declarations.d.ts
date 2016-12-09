@@ -190,7 +190,14 @@ interface IFileSystem {
 
 	isEmptyDir(directoryPath: string): IFuture<boolean>;
 	isRelativePath(path: string): boolean /* feels so lonely here, I don't have a Future */;
-	ensureDirectoryExists(directoryPath: string): IFuture<void>;
+
+	/**
+	 * Checks if directory exists and if not - creates it.
+	 * @param {string} directoryPath Directory path.
+	 * @returns {void}
+	 */
+	ensureDirectoryExists(directoryPath: string): void;
+
 	rename(oldPath: string, newPath: string): IFuture<void>;
 	/**
 	 * Renames specified file to the specified name only in case it exists.

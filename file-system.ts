@@ -368,13 +368,10 @@ export class FileSystem implements IFileSystem {
 		return normal !== absolute;
 	}
 
-	// TODO: Remove IFuture, reason: createDirectory
-	public ensureDirectoryExists(directoryPath: string): IFuture<void> {
-		return (() => {
-			if (!this.exists(directoryPath)) {
-				this.createDirectory(directoryPath);
-			}
-		}).future<void>()();
+	public ensureDirectoryExists(directoryPath: string): void {
+		if (!this.exists(directoryPath)) {
+			this.createDirectory(directoryPath);
+		}
 	}
 
 	public rename(oldPath: string, newPath: string): IFuture<void> {

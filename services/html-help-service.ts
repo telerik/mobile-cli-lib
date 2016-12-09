@@ -81,7 +81,7 @@ export class HtmlHelpService implements IHtmlHelpService {
 			let htmlPage = this.convertCommandNameToFileName(commandName) + HtmlHelpService.HTML_FILE_EXTENSION;
 			this.$logger.trace("Opening help for command '%s'. FileName is '%s'.", commandName, htmlPage);
 
-			this.$fs.ensureDirectoryExists(this.pathToHtmlPages).wait();
+			this.$fs.ensureDirectoryExists(this.pathToHtmlPages);
 			if(!this.tryOpeningSelectedPage(htmlPage)) {
 				// HTML pages may have been skipped on post-install, lets generate them.
 				this.$logger.trace("Required HTML file '%s' is missing. Let's try generating HTML files and see if we'll find it.", htmlPage);
