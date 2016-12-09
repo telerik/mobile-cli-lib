@@ -250,9 +250,7 @@ describe("FileSystem", () => {
 			fs = testInjector.resolve("fs");
 			removedDirectories = [];
 			fs.deleteDirectory = (directory: string) => {
-				return (() => {
-					removedDirectories.push(path.basename(directory));
-				}).future<void>()();
+				removedDirectories.push(path.basename(directory));
 			};
 		});
 

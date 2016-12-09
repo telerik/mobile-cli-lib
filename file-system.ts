@@ -126,18 +126,14 @@ export class FileSystem implements IFileSystem {
 		}
 	}
 
-	public deleteDirectory(directory: string): IFuture<void> {
-		let future = new Future<void>();
-
+	public deleteDirectory(directory: string): void {
 		shelljs.rm("-rf", directory);
 
-		let err = shelljs.error();
+		const err = shelljs.error();
+
 		if (err !== null) {
-			future.throw(new Error(err));
-		} else {
-			future.return();
+			throw new Error(err);
 		}
-		return future;
 	}
 
 	@decorators.exportedPromise("fs")
@@ -538,7 +534,7 @@ export class FileSystem implements IFileSystem {
 			let parent = this.exists(directory) ? directory : path.dirname(directory);
 
 			while (this.isEmptyDir(parent).wait()) {
-				this.deleteDirectory(parent).wait();
+				this.deleteDirectory(parent);
 				parent = path.dirname(parent);
 			}
 		}).future<void>()();

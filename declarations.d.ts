@@ -147,7 +147,14 @@ interface IFileSystem {
 	 * @returns {void} undefined
 	 */
 	deleteFile(path: string): void;
-	deleteDirectory(directory: string): IFuture<void>;
+
+	/**
+	 * Deletes whole directory. Implementation uses shelljs.
+	 * @param {string} directory Path to directory that has to be deleted.
+	 * @returns {void}
+	 */
+	deleteDirectory(directory: string): void;
+
 	getFileSize(path: string): IFuture<number>;
 	futureFromEvent(eventEmitter: NodeJS.EventEmitter, event: string): IFuture<any>;
 	createDirectory(path: string): IFuture<void>;
