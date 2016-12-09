@@ -11,7 +11,7 @@ export class DeviceLogProvider extends DeviceLogProviderBase {
 
 		let data = this.$logFilter.filterData(platform, lineText, applicationPid);
 		if (data) {
-			this.$logger.out(data);
+			this.$logger.write(data);
 		}
 	}
 

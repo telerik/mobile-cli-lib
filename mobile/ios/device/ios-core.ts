@@ -1083,18 +1083,16 @@ function getCharacterCodePoint(ch: string) {
 class GDBStandardOutputAdapter extends stream.Transform {
 	private utf8StringDecoder = new string_decoder.StringDecoder("utf8");
 
-	constructor(private deviceIdentifier: string,
-				private $deviceLogProvider: Mobile.IDeviceLogProvider,
-				private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
-		super();
+	constructor(opts?:stream.TransformOptions) {
+		super(opts);
 	}
 
-	public _transform(packet: any, encoding: string, done: Function): void {
+	public _transform(packet:any, encoding:string, done:Function):void {
 		try {
 			let result = "";
 
 			for (let i = 0; i < packet.length; i++) {
-				if (packet[i] === getCharacterCodePoint("$")) {
+				if(packet[i] === getCharacterCodePoint("$")) {
 					let start = ++i;
 
 					while (packet[i] !== getCharacterCodePoint("#")) {
@@ -1106,7 +1104,7 @@ class GDBStandardOutputAdapter extends stream.Transform {
 					i++;
 					i++;
 
-					if (!(packet[start] === getCharacterCodePoint("O") && packet[start + 1] !== getCharacterCodePoint("K"))) {
+					if(!(packet[start] === getCharacterCodePoint("O") && packet[start + 1] !== getCharacterCodePoint("K"))) {
 						continue;
 					}
 					start++;
@@ -1116,13 +1114,6 @@ class GDBStandardOutputAdapter extends stream.Transform {
 					result += this.utf8StringDecoder.write(hex);
 				}
 			}
-
-			if (this.$deviceLogProvider) {
-				fiberBootstrap.run(() =>
-					this.$deviceLogProvider.logData(result, this.$devicePlatformsConstants.iOS, this.deviceIdentifier)
-				);
-			}
-
 			done(null, result);
 		} catch (e) {
 			done(e);
@@ -1159,11 +1150,26 @@ class GDBSignalWatcher extends stream.Writable {
 		}
 	}
 }
+class GDBEchoStream extends stream.Writable {
+	constructor(private deviceIdentifier: string,
+				private $deviceLogProvider: Mobile.IDeviceLogProvider,
+				private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
+		super();
+	}
+
+	_write(chunk:any, enc:string, done:Function) {
+		if (this.$deviceLogProvider) {
+			fiberBootstrap.run(() => {
+				this.$deviceLogProvider.logData(chunk.toString(), this.$devicePlatformsConstants.iOS, this.deviceIdentifier);
+			});
+		}
+		done();
+	}
+}
 
 export class GDBServer implements Mobile.IGDBServer {
 	private okResponse = "$OK#";
 	private isInitilized = false;
-
 	constructor(private socket: any, // socket is fd on Windows and net.Socket on mac
 		private deviceIdentifier: string,
 		private $injector: IInjector,
@@ -1192,7 +1198,6 @@ export class GDBServer implements Mobile.IGDBServer {
 				this.awaitResponse("QSetDisableASLR:1").wait();
 				let encodedArguments = _.map(argv, (arg, index) => util.format("%d,%d,%s", arg.length * 2, index, this.toHex(arg))).join(",");
 				this.awaitResponse("A" + encodedArguments).wait();
-
 				this.isInitilized = true;
 			}
 		}).future<void>()();
@@ -1215,7 +1220,7 @@ export class GDBServer implements Mobile.IGDBServer {
 						this.sendCore(this.encodeData("D"));
 					}
 				} else {
-					this.socket.pipe(this.$injector.resolve(GDBStandardOutputAdapter, { deviceIdentifier: this.deviceIdentifier }));
+					this.socket.pipe(new GDBStandardOutputAdapter()).pipe(this.$injector.resolve(GDBEchoStream, { deviceIdentifier: this.deviceIdentifier }));
 					this.socket.pipe(new GDBSignalWatcher());
 					this.sendCore(this.encodeData("vCont;c"));
 				}
