@@ -39,7 +39,7 @@ export class IOSSimulatorFileSystem implements Mobile.IDeviceFileSystem {
 	public transferFile(localFilePath: string, deviceFilePath: string): IFuture<void> {
 		return (() => {
 			this.$logger.trace(`Transferring from ${localFilePath} to ${deviceFilePath}`);
-			if (this.$fs.getFsStats(localFilePath).wait().isDirectory()) {
+			if (this.$fs.getFsStats(localFilePath).isDirectory()) {
 				shelljs.mkdir(deviceFilePath);
 			} else {
 				shelljs.cp("-f", localFilePath, deviceFilePath);

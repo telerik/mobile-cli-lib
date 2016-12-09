@@ -34,13 +34,13 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	public transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void> {
 		return (() => {
 			_(localToDevicePaths)
-				.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).wait().isFile())
+				.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).isFile())
 				.each(localToDevicePathData =>
 					this.adb.executeCommand(["push", localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()]).wait()
 				);
 
 			_(localToDevicePaths)
-				.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).wait().isDirectory())
+				.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).isDirectory())
 				.each(localToDevicePathData =>
 					this.adb.executeShellCommand(["chmod", "0777", localToDevicePathData.getDevicePath()]).wait()
 				);
@@ -60,7 +60,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 
 			localToDevicePaths.forEach(localToDevicePathData => {
 				let localPath = localToDevicePathData.getLocalPath();
-				let stats = this.$fs.getFsStats(localPath).wait();
+				let stats = this.$fs.getFsStats(localPath);
 				if (stats.isFile()) {
 					let fileShasum = this.$fs.getFileShasum(localPath).wait();
 					currentShasums[localPath] = fileShasum;
@@ -106,7 +106,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	public transferFile(localPath: string, devicePath: string): IFuture<void> {
 		return (() => {
 			this.$logger.trace(`Transfering ${localPath} to ${devicePath}`);
-			let stats = this.$fs.getFsStats(localPath).wait();
+			let stats = this.$fs.getFsStats(localPath);
 			if (stats.isDirectory()) {
 				this.adb.executeShellCommand(["mkdir", path.dirname(devicePath)]).wait();
 			} else {

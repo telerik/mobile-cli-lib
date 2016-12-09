@@ -2,7 +2,6 @@ import * as fs from "fs";
 import Future = require("fibers/future");
 import * as path from "path";
 import * as minimatch from "minimatch";
-import * as decorators from "./decorators";
 import * as injector from "./yok";
 import * as crypto from "crypto";
 import * as shelljs from "shelljs";
@@ -136,10 +135,9 @@ export class FileSystem implements IFileSystem {
 		}
 	}
 
-	@decorators.exportedPromise("fs")
 	public getFileSize(path: string): IFuture<number> {
 		return ((): number => {
-			let stat = this.getFsStats(path).wait();
+			let stat = this.getFsStats(path);
 			return stat.size;
 		}).future<number>()();
 	}
@@ -333,16 +331,8 @@ export class FileSystem implements IFileSystem {
 		return future;
 	}
 
-	public getFsStats(path: string): IFuture<fs.Stats> {
-		let future = new Future<fs.Stats>();
-		fs.stat(path, (err: Error, data: fs.Stats) => {
-			if (err) {
-				future.throw(err);
-			} else {
-				future.return(data);
-			}
-		});
-		return future;
+	public getFsStats(path: string): fs.Stats {
+		return fs.statSync(path);
 	}
 
 	public getLsStats(path: string): IFuture<fs.Stats> {
@@ -472,7 +462,7 @@ export class FileSystem implements IFileSystem {
 		let contents = this.readDirectory(directoryPath).wait();
 		for (let i = 0; i < contents.length; ++i) {
 			let file = path.join(directoryPath, contents[i]);
-			let stat = this.getFsStats(file).wait();
+			let stat = this.getFsStats(file);
 			if (filterCallback && !filterCallback(file, stat)) {
 				continue;
 			}

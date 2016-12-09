@@ -187,7 +187,15 @@ interface IFileSystem {
 	 * @return {boolean} True in case of successful rename. False in case the file does not exist.
 	 */
 	renameIfExists(oldPath: string, newPath: string): IFuture<boolean>
-	getFsStats(path: string): IFuture<IFsStats>;
+
+	/**
+	 * Returns information about the specified file.
+	 * In case the passed path is symlink, the returned information is about the original file.
+	 * @param {string} path Path to file for which the information will be taken.
+	 * @returns {IFsStats} Inforamation about the specified file.
+	 */
+	getFsStats(path: string): IFsStats;
+
 	getLsStats(path: string): IFuture<IFsStats>;
 	symlink(sourcePath: string, destinationPath: string, type: "file"): IFuture<void>;
 	symlink(sourcePath: string, destinationPath: string, type: "dir"): IFuture<void>;

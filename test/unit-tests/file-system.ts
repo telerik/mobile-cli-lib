@@ -217,7 +217,7 @@ describe("FileSystem", () => {
 			fs.copyFile(testFileName, newFileName).wait();
 			assert.isTrue(fs.exists(newFileName), "Renamed file should exists.");
 			assert.isTrue(fs.exists(testFileName), "Original file should exist.");
-			assert.deepEqual(fs.getFsStats(testFileName).wait().size, fs.getFsStats(testFileName).wait().size, "Original file and copied file must have the same size.");
+			assert.deepEqual(fs.getFsStats(testFileName).size, fs.getFsStats(testFileName).size, "Original file and copied file must have the same size.");
 		});
 
 		it("copies file to non-existent directory", () => {
@@ -226,14 +226,14 @@ describe("FileSystem", () => {
 			fs.copyFile(testFileName, newFileNameInSubDir).wait();
 			assert.isTrue(fs.exists(newFileNameInSubDir), "Renamed file should exists.");
 			assert.isTrue(fs.exists(testFileName), "Original file should exist.");
-			assert.deepEqual(fs.getFsStats(testFileName).wait().size, fs.getFsStats(testFileName).wait().size, "Original file and copied file must have the same size.");
+			assert.deepEqual(fs.getFsStats(testFileName).size, fs.getFsStats(testFileName).size, "Original file and copied file must have the same size.");
 		});
 
 		it("produces correct file when source and target file are the same", () => {
-			let originalSize = fs.getFsStats(testFileName).wait().size;
+			let originalSize = fs.getFsStats(testFileName).size;
 			fs.copyFile(testFileName, testFileName).wait();
 			assert.isTrue(fs.exists(testFileName), "Original file should exist.");
-			assert.deepEqual(fs.getFsStats(testFileName).wait().size, originalSize, "Original file and copied file must have the same size.");
+			assert.deepEqual(fs.getFsStats(testFileName).size, originalSize, "Original file and copied file must have the same size.");
 			assert.deepEqual(fs.readText(testFileName).wait(), fileContent, "File content should not be changed.");
 		});
 	});

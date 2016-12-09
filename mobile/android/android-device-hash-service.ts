@@ -47,7 +47,7 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 			if (_.isArray(data)) {
 				(<Mobile.ILocalToDevicePathData[]>data).forEach(localToDevicePathData => {
 					let localPath = localToDevicePathData.getLocalPath();
-					let stats = this.$fs.getFsStats(localPath).wait();
+					let stats = this.$fs.getFsStats(localPath);
 					if (stats.isFile()) {
 						let fileShasum = this.$fs.getFileShasum(localPath).wait();
 						shasums[localPath] = fileShasum;
@@ -68,7 +68,7 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 			if (oldShasums) {
 				_.each(localToDevicePaths, ldp => {
 					let localPath = ldp.getLocalPath();
-					if (this.$fs.getFsStats(localPath).wait().isFile()) {
+					if (this.$fs.getFsStats(localPath).isFile()) {
 						oldShasums[localPath] = this.$fs.getFileShasum(localPath).wait();
 					}
 				});

@@ -259,7 +259,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 				}
 
 				let imageSignature = this.$fs.readFile(util.format("%s.signature", imagePath)).wait();
-				let imageSize = this.$fs.getFsStats(imagePath).wait().size;
+				let imageSize = this.$fs.getFsStats(imagePath).size;
 
 				let imageMounterService = this.startService(iOSProxyServices.MobileServices.MOBILE_IMAGE_MOUNTER);
 				let plistService: Mobile.IiOSDeviceSocket = this.$injector.resolve(PlistService, { service: imageMounterService, format: CoreTypes.kCFPropertyListXMLFormat_v1_0 });

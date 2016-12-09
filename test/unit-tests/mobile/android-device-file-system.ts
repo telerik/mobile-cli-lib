@@ -61,8 +61,8 @@ class MobilePlatformsCapabilitiesMock implements Mobile.IPlatformsCapabilities {
 	}
 }
 
-function mockFsStats(options: { isDirectory: boolean, isFile: boolean }): (filePath: string) => IFuture<{ isDirectory: () => boolean, isFile: () => boolean }> {
-	return (filePath: string) => Future.fromResult({
+function mockFsStats(options: { isDirectory: boolean, isFile: boolean }): (filePath: string) => { isDirectory: () => boolean, isFile: () => boolean } {
+	return (filePath: string) => ({
 		isDirectory: (): boolean => options.isDirectory,
 		isFile: (): boolean => options.isFile
 	});

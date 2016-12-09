@@ -65,7 +65,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 								return;
 							}
 
-							let fileHash = that.$fs.exists(filePath) && that.$fs.getFsStats(filePath).wait().isFile() ? that.$fs.getFileShasum(filePath).wait() : "";
+							let fileHash = that.$fs.exists(filePath) && that.$fs.getFsStats(filePath).isFile() ? that.$fs.getFileShasum(filePath).wait() : "";
 							if (fileHash === that.fileHashes[filePath]) {
 								that.$logger.trace(`Skipping livesync for ${filePath} file with ${fileHash} hash.`);
 								return;
@@ -245,7 +245,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 				_.each(localToDevicePaths, localToDevicePath => {
 					let fileDirname = path.join(tempDir, path.dirname(localToDevicePath.getRelativeToProjectBasePath()));
 					shell.mkdir("-p", fileDirname);
-					if (!this.$fs.getFsStats(localToDevicePath.getLocalPath()).wait().isDirectory()) {
+					if (!this.$fs.getFsStats(localToDevicePath.getLocalPath()).isDirectory()) {
 						shell.cp("-f", localToDevicePath.getLocalPath(), path.join(fileDirname, path.basename(localToDevicePath.getDevicePath())));
 					}
 				});
