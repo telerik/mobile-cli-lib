@@ -163,7 +163,14 @@ interface IFileSystem {
 	getFileSize(path: string): number;
 
 	futureFromEvent(eventEmitter: NodeJS.EventEmitter, event: string): IFuture<any>;
-	createDirectory(path: string): IFuture<void>;
+
+	/**
+	 * Create a new directory and any necessary subdirectories at specified location.
+	 * @param {string} path Directory to be created.
+	 * @returns {void}
+	 */
+	createDirectory(path: string): void;
+
 	readDirectory(path: string): IFuture<string[]>;
 	readFile(filename: string): IFuture<NodeBuffer>;
 	readText(filename: string, encoding?: string): IFuture<string>;

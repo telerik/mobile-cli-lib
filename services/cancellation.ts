@@ -9,7 +9,7 @@ class CancellationService implements ICancellationService {
 
 	constructor(private $fs: IFileSystem,
 			private $logger: ILogger) {
-		this.$fs.createDirectory(CancellationService.killSwitchDir).wait();
+		this.$fs.createDirectory(CancellationService.killSwitchDir);
 		this.$fs.chmod(CancellationService.killSwitchDir, "0777").wait();
 	}
 

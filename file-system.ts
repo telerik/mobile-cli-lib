@@ -6,6 +6,9 @@ import * as injector from "./yok";
 import * as crypto from "crypto";
 import * as shelljs from "shelljs";
 
+// TODO: Add .d.ts for mkdirp module (or use it from @types repo).
+const mkdirp = require("mkdirp");
+
 @injector.register("fs")
 export class FileSystem implements IFileSystem {
 	private static DEFAULT_INDENTATION_CHARACTER = "\t";
@@ -60,7 +63,7 @@ export class FileSystem implements IFileSystem {
 			let isCaseSensitive = !(options && options.caseSensitive === false);
 			let $hostInfo = this.$injector.resolve("$hostInfo");
 
-			this.createDirectory(destinationDir).wait();
+			this.createDirectory(destinationDir);
 
 			let proc: string;
 			if ($hostInfo.isWindows) {
@@ -166,16 +169,8 @@ export class FileSystem implements IFileSystem {
 		return future;
 	}
 
-	public createDirectory(path: string): IFuture<void> {
-		let future = new Future<void>();
-		(<any>require("mkdirp"))(path, (err: Error) => {
-			if (err) {
-				future.throw(err);
-			} else {
-				future.return();
-			}
-		});
-		return future;
+	public createDirectory(path: string): void {
+		mkdirp.sync(path);
 	}
 
 	public readDirectory(path: string): IFuture<string[]> {
@@ -235,7 +230,7 @@ export class FileSystem implements IFileSystem {
 
 	public writeFile(filename: string, data: any, encoding?: string): IFuture<void> {
 		return (() => {
-			this.createDirectory(path.dirname(filename)).wait();
+			this.createDirectory(path.dirname(filename));
 			let future = new Future<void>();
 			fs.writeFile(filename, data, { encoding: encoding }, (err: Error) => {
 				if (err) {
@@ -275,7 +270,7 @@ export class FileSystem implements IFileSystem {
 
 		let res = new Future<void>();
 
-		this.createDirectory(path.dirname(destinationFileName)).wait();
+		this.createDirectory(path.dirname(destinationFileName));
 		let source = this.createReadStream(sourceFileName);
 		let target = this.createWriteStream(destinationFileName);
 
@@ -373,10 +368,11 @@ export class FileSystem implements IFileSystem {
 		return normal !== absolute;
 	}
 
+	// TODO: Remove IFuture, reason: createDirectory
 	public ensureDirectoryExists(directoryPath: string): IFuture<void> {
 		return (() => {
 			if (!this.exists(directoryPath)) {
-				this.createDirectory(directoryPath).wait();
+				this.createDirectory(directoryPath);
 			}
 		}).future<void>()();
 	}
