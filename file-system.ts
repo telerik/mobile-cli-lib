@@ -390,16 +390,8 @@ export class FileSystem implements IFileSystem {
 		}
 	}
 
-	public symlink(sourcePath: string, destinationPath: string, type?: string): IFuture<void> {
-		let future = new Future<void>();
-		fs.symlink(sourcePath, destinationPath, type, (err: Error) => {
-			if (err) {
-				future.throw(err);
-			} else {
-				future.return();
-			}
-		});
-		return future;
+	public symlink(sourcePath: string, destinationPath: string, type?: string): void {
+		fs.symlinkSync(sourcePath, destinationPath, type);
 	}
 
 	public closeStream(stream: any): IFuture<void> {

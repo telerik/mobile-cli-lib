@@ -224,10 +224,26 @@ interface IFileSystem {
 	getFsStats(path: string): IFsStats;
 
 	getLsStats(path: string): IFuture<IFsStats>;
-	symlink(sourcePath: string, destinationPath: string, type: "file"): IFuture<void>;
-	symlink(sourcePath: string, destinationPath: string, type: "dir"): IFuture<void>;
-	symlink(sourcePath: string, destinationPath: string, type: "junction"): IFuture<void>;
-	symlink(sourcePath: string, destinationPath: string, type?: string): IFuture<void>;
+
+	symlink(sourcePath: string, destinationPath: string, type: "file"): void;
+	symlink(sourcePath: string, destinationPath: string, type: "dir"): void;
+	symlink(sourcePath: string, destinationPath: string, type: "junction"): void;
+
+	/**
+	 * Creates a symbolic link.
+	 * Symbolic links are interpreted at run time as if the contents of the
+	 * link had been substituted into the path being followed to find a file
+	 * or directory.
+	 * @param {string} sourcePath The original path of the file/dir.
+	 * @param {string} destinationPath The destination where symlink will be created.
+	 * @param {string} @optional type "file", "dir" or "junction". Default is 'file'.
+	 * Type option is only available on Windows (ignored on other platforms).
+	 * Note that Windows junction points require the destination path to be absolute.
+	 * When using 'junction', the target argument will automatically be normalized to absolute path.
+	 * @returns {void}
+	 */
+	symlink(sourcePath: string, destinationPath: string, type?: string): void;
+
 	closeStream(stream: any): IFuture<void>;
 
 	createReadStream(path: string, options?: {
