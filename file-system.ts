@@ -177,26 +177,22 @@ export class FileSystem implements IFileSystem {
 		return fs.readdirSync(path);
 	}
 
-	public readFile(filename: string): IFuture<NodeBuffer> {
-		let future = new Future<NodeBuffer>();
-		fs.readFile(filename, (err: Error, data: NodeBuffer) => {
-			if (err) {
-				future.throw(err);
-			} else {
-				future.return(data);
-			}
-		});
-		return future;
+	public readFile(filename: string, options?: IReadFileOptions): string|NodeBuffer {
+		return fs.readFileSync(filename, options);
 	}
 
-	public readText(filename: string, options?: any): IFuture<string> {
+	public readText(filename: string, options?: IReadFileOptions | string): IFuture<string> {
 		options = options || { encoding: "utf8" };
+
 		if (_.isString(options)) {
 			options = { encoding: options };
 		}
+
 		if (!options.encoding) {
 			options.encoding = "utf8";
 		}
+
+		//return this.readFile(filename, options);
 
 		let future = new Future<string>();
 		fs.readFile(filename, options, (err: Error, data: string) => {

@@ -258,7 +258,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 					this.$errors.fail("On windows operating system you must specify the path to developer disk image using --ddi option");
 				}
 
-				let imageSignature = this.$fs.readFile(util.format("%s.signature", imagePath)).wait();
+				let imageSignature = this.$fs.readFile(util.format("%s.signature", imagePath));
 				let imageSize = this.$fs.getFsStats(imagePath).size;
 
 				let imageMounterService = this.startService(iOSProxyServices.MobileServices.MOBILE_IMAGE_MOUNTER);
@@ -271,7 +271,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 				}).wait();
 
 				if(result.Status === "ReceiveBytesAck") {
-					let fileData = this.$fs.readFile(imagePath).wait();
+					let fileData = <NodeBuffer>this.$fs.readFile(imagePath);
 					plistService.sendAll(fileData);
 				} else {
 					let afcService = this.startService(iOSProxyServices.MobileServices.APPLE_FILE_CONNECTION);
@@ -302,7 +302,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 					imagePath = path.join(developerDiskImageDirectoryPath, "DeveloperDiskImage.dmg");
 					this.$logger.info("Mounting %s", imagePath);
 
-					let signature = this.$fs.readFile(util.format("%s.signature", imagePath)).wait();
+					let signature = this.$fs.readFile(util.format("%s.signature", imagePath));
 					let cfImagePath = this.$coreFoundation.createCFString(imagePath);
 
 					let cfOptions = this.$coreFoundation.cfTypeFrom({

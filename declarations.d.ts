@@ -128,6 +128,21 @@ interface IDisposable {
 	dispose(): void;
 }
 
+/**
+ * Describes options that can be passed to fs.readFile method.
+ */
+interface IReadFileOptions {
+	/**
+	 * Defines the encoding. Defaults to null.
+	 */
+	encoding: string;
+
+	/**
+	 * Defines file flags. Defaults to "r".
+	 */
+	flag?: string;
+}
+
 interface IFileSystem {
 	zipFiles(zipFile: string, files: string[], zipPathCallback: (path: string) => string): IFuture<void>;
 	unzip(zipFile: string, destinationDir: string, options?: { overwriteExisitingFiles?: boolean; caseSensitive?: boolean }, fileFilters?: string[]): IFuture<void>;
@@ -178,8 +193,14 @@ interface IFileSystem {
 	 */
 	readDirectory(path: string): string[];
 
-	readFile(filename: string): IFuture<NodeBuffer>;
-	readText(filename: string, encoding?: string): IFuture<string>;
+	/**
+	 * Reads the entire contents of a file.
+	 * @param {string} filename Path to the file that has to be read.
+	 * @param {string} @optional options Options used for reading the file - encoding and flags.
+	 * @returns {string|NodeBuffer} Content of the file as buffer. In case encoding is specified, the content is returned as string.
+	 */
+	readFile(filename: string, options?: IReadFileOptions): string|NodeBuffer;
+	readText(filename: string, encoding?: IReadFileOptions | string): IFuture<string>;
 	readJson(filename: string, encoding?: string): IFuture<any>;
 	readStdin(): IFuture<string>;
 	writeFile(filename: string, data: any, encoding?: string): IFuture<void>;

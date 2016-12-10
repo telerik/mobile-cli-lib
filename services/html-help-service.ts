@@ -42,7 +42,7 @@ export class HtmlHelpService implements IHtmlHelpService {
 	public generateHtmlPages(): IFuture<void> {
 		return (() => {
 			let mdFiles = this.$fs.enumerateFilesInDirectorySync(this.pathToManPages);
-			let basicHtmlPage = this.$fs.readFile(this.pathToBasicPage).wait().toString();
+			let basicHtmlPage = this.$fs.readText(this.pathToBasicPage).wait();
 			let futures = _.map(mdFiles, markdownFile => this.createHtmlPage(basicHtmlPage, markdownFile));
 			Future.wait(futures);
 			this.$logger.trace("Finished generating HTML files.");

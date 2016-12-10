@@ -105,25 +105,25 @@ describe("FileSystem", () => {
 			});
 			it("does not overwrite files when overwriteExisitingFiles is false", () => {
 				fs.unzip(sampleZipFileTest, tempDir, { overwriteExisitingFiles: false }, [unzippedFileName]).wait();
-				let data = fs.readFile(file).wait();
+				let data = fs.readFile(file);
 				assert.strictEqual(msg, data.toString(), "When overwriteExistingFiles is false, we should not ovewrite files.");
 			});
 
 			it("overwrites files when overwriteExisitingFiles is true", () => {
 				fs.unzip(sampleZipFileTest, tempDir, { overwriteExisitingFiles: true }, [unzippedFileName]).wait();
-				let data = fs.readFile(file).wait();
+				let data = fs.readFile(file);
 				assert.notEqual(msg, data.toString(), "We must overwrite files when overwriteExisitingFiles is true.");
 			});
 
 			it("overwrites files when overwriteExisitingFiles is not set", () => {
 				fs.unzip(sampleZipFileTest, tempDir, {}, [unzippedFileName]).wait();
-				let data = fs.readFile(file).wait();
+				let data = fs.readFile(file);
 				assert.notEqual(msg, data.toString(), "We must overwrite files when overwriteExisitingFiles is not set.");
 			});
 
 			it("overwrites files when options is not set", () => {
 				fs.unzip(sampleZipFileTest, tempDir, undefined, [unzippedFileName]).wait();
-				let data = fs.readFile(file).wait();
+				let data = fs.readFile(file);
 				assert.notEqual(msg, data.toString(), "We must overwrite files when options is not defined.");
 			});
 		});
@@ -164,7 +164,7 @@ describe("FileSystem", () => {
 				let file = path.join(tempDir, unzippedFileName);
 				fs.unzip(sampleZipFileTestIncorrectName, tempDir, { caseSensitive: false }, [unzippedFileName]).wait();
 				// This will throw error in case file is not extracted
-				fs.readFile(file).wait();
+				fs.readFile(file);
 			});
 		});
 	});
