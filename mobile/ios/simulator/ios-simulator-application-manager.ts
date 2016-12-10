@@ -21,7 +21,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		return Future.fromResult(this.iosSim.getInstalledApplications(this.identifier));
 	}
 
-	// TODO: Remove IFuture, reason: readDirectory
+	// TODO: Remove IFuture, reason: readDirectory - cannot until android and iOS implementatios have async calls.
 	@hook('install')
 	public installApplication(packageFilePath: string): IFuture<void> {
 		return (() => {

@@ -635,7 +635,12 @@ declare module Mobile {
 	}
 
 	interface IEmulatorSettingsService {
-		canStart(platform: string): IFuture<boolean>;
+		/**
+		 * Gives information if current project can be started in emulator.
+		 * @param {string} platform The mobile platform of the emulator (android, ios, wp8).
+		 * @returns {boolean} true in case the project can be started in emulator. In case not, the method will throw error.
+		 */
+		canStart(platform: string): boolean;
 		minVersion: number;
 	}
 

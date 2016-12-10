@@ -347,12 +347,9 @@ export class FileSystem implements IFileSystem {
 		}
 	}
 
-	// TODO: Remove IFuture, reason: readDirectory
-	public isEmptyDir(directoryPath: string): IFuture<boolean> {
-		return (() => {
-			let directoryContent = this.readDirectory(directoryPath);
-			return directoryContent.length === 0;
-		}).future<boolean>()();
+	public isEmptyDir(directoryPath: string): boolean {
+		let directoryContent = this.readDirectory(directoryPath);
+		return directoryContent.length === 0;
 	}
 
 	public isRelativePath(p: string): boolean {
@@ -472,15 +469,13 @@ export class FileSystem implements IFileSystem {
 		shelljs.rm(options, files);
 	}
 
-	public deleteEmptyParents(directory: string): IFuture<void> {
-		return (() => {
-			let parent = this.exists(directory) ? directory : path.dirname(directory);
+	public deleteEmptyParents(directory: string): void {
+		let parent = this.exists(directory) ? directory : path.dirname(directory);
 
-			while (this.isEmptyDir(parent).wait()) {
-				this.deleteDirectory(parent);
-				parent = path.dirname(parent);
-			}
-		}).future<void>()();
+		while (this.isEmptyDir(parent)) {
+			this.deleteDirectory(parent);
+			parent = path.dirname(parent);
+		}
 	}
 
 	private getIndentationCharacter(filePath: string): IFuture<string> {

@@ -18,6 +18,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		return Future.fromResult();
 	}
 
+	// TODO: Remove IFuture, reason: readDirectory - cannot until android and iOS implementations have async calls.
 	public checkAvailability(dependsOnProject?: boolean): IFuture<void> {
 		return (() => {
 			dependsOnProject = dependsOnProject === undefined ? true : dependsOnProject;
@@ -27,7 +28,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 			}
 
 			let platform = this.$devicePlatformsConstants.iOS;
-			if (dependsOnProject && !this.$emulatorSettingsService.canStart(platform).wait()) {
+			if (dependsOnProject && !this.$emulatorSettingsService.canStart(platform)) {
 				this.$errors.failWithoutHelp("The current project does not target iOS and cannot be run in the iOS Simulator.");
 			}
 		}).future<void>()();

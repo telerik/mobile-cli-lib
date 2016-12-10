@@ -194,7 +194,13 @@ interface IFileSystem {
 	 */
 	getUniqueFileName(baseName: string): string;
 
-	isEmptyDir(directoryPath: string): IFuture<boolean>;
+	/**
+	 * Checks if specified directory is empty.
+	 * @param {string} directoryPath The directory that will be checked.
+	 * @returns {boolean} True in case the directory is empty. False otherwise.
+	 */
+	isEmptyDir(directoryPath: string): boolean;
+
 	isRelativePath(path: string): boolean /* feels so lonely here, I don't have a Future */;
 
 	/**
@@ -289,8 +295,9 @@ interface IFileSystem {
 	/**
 	 * Deletes all empty parent directories.
 	 * @param {string} directory The directory from which this method will start looking for empty parents.
+	 * @returns {void}
 	 */
-	deleteEmptyParents(directory: string): IFuture<void>;
+	deleteEmptyParents(directory: string): void;
 }
 
 // duplicated from fs.Stats, because I cannot import it here

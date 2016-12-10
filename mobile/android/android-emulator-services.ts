@@ -83,7 +83,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 			}
 
 			let platform = this.$devicePlatformsConstants.Android;
-			if (!this.$emulatorSettingsService.canStart(platform).wait()) {
+			if (!this.$emulatorSettingsService.canStart(platform)) {
 				this.$errors.fail("The current project does not target Android and cannot be run in the Android emulator.");
 			}
 		}).future<void>()();

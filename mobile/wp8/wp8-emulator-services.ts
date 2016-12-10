@@ -36,7 +36,7 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 			}
 
 			let platform = this.$devicePlatformsConstants.WP8;
-			if (!this.$emulatorSettingsService.canStart(platform).wait()) {
+			if (!this.$emulatorSettingsService.canStart(platform)) {
 				this.$errors.fail("The current project does not target Windows Phone 8 and cannot be run in the Windows Phone emulator.");
 			}
 		}).future<void>()();

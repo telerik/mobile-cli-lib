@@ -267,9 +267,9 @@ describe("FileSystem", () => {
 			directory = path.join(directory, "fourth");
 
 			let originalIsEmptyDir = fs.isEmptyDir;
-			fs.isEmptyDir = (dirName: string) => Future.fromResult(dirName !== notEmptyRootDirectory);
+			fs.isEmptyDir = (dirName: string) => dirName !== notEmptyRootDirectory;
 
-			fs.deleteEmptyParents(directory).wait();
+			fs.deleteEmptyParents(directory);
 			fs.isEmptyDir = originalIsEmptyDir;
 
 			assert.deepEqual(emptyDirectories, _.reverse(removedDirectories));
