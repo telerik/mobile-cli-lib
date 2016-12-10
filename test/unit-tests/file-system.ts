@@ -179,7 +179,7 @@ describe("FileSystem", () => {
 			let fs: IFileSystem = testInjector.resolve("fs");
 			fs.writeFile(testFileName, "data").wait();
 
-			let result = fs.renameIfExists(testFileName, newFileName).wait();
+			let result = fs.renameIfExists(testFileName, newFileName);
 			assert.isTrue(result, "On successfull rename, result must be true.");
 			assert.isTrue(fs.exists(newFileName), "Renamed file should exists.");
 			assert.isFalse(fs.exists(testFileName), "Original file should not exist.");
@@ -189,7 +189,7 @@ describe("FileSystem", () => {
 			let testInjector = createTestInjector();
 			let fs: IFileSystem = testInjector.resolve("fs");
 			let newName = "tempDir2";
-			let result = fs.renameIfExists("tempDir", newName).wait();
+			let result = fs.renameIfExists("tempDir", newName);
 			assert.isFalse(result, "When file does not exist, result must be false.");
 			assert.isFalse(fs.exists(newName), "New file should not exist.");
 		});

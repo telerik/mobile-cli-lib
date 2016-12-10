@@ -198,7 +198,14 @@ interface IFileSystem {
 	 */
 	ensureDirectoryExists(directoryPath: string): void;
 
-	rename(oldPath: string, newPath: string): IFuture<void>;
+	/**
+	 * Renames file/directory. This method throws error in case the original file name does not exist.
+	 * @param {string} oldPath The original filename.
+	 * @param {string} newPath New filename.
+	 * @returns {string} void.
+	 */
+	rename(oldPath: string, newPath: string): void;
+
 	/**
 	 * Renames specified file to the specified name only in case it exists.
 	 * Used to skip ENOENT errors when rename is called directly.
@@ -206,7 +213,7 @@ interface IFileSystem {
 	 * @param {string} newPath The path where the file will be moved.
 	 * @return {boolean} True in case of successful rename. False in case the file does not exist.
 	 */
-	renameIfExists(oldPath: string, newPath: string): IFuture<boolean>
+	renameIfExists(oldPath: string, newPath: string): boolean
 
 	/**
 	 * Returns information about the specified file.
