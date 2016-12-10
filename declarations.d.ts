@@ -244,8 +244,6 @@ interface IFileSystem {
 	 */
 	symlink(sourcePath: string, destinationPath: string, type?: string): void;
 
-	closeStream(stream: any): IFuture<void>;
-
 	createReadStream(path: string, options?: {
 		flags?: string;
 		encoding?: string;

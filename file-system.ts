@@ -394,18 +394,6 @@ export class FileSystem implements IFileSystem {
 		fs.symlinkSync(sourcePath, destinationPath, type);
 	}
 
-	public closeStream(stream: any): IFuture<void> {
-		let future = new Future<void>();
-		stream.close((err: Error, data: any) => {
-			if (err) {
-				future.throw(err);
-			} else {
-				future.return();
-			}
-		});
-		return future;
-	}
-
 	public setCurrentUserAsOwner(path: string, owner: string): IFuture<void> {
 		return (() => {
 			let $childProcess = this.$injector.resolve("childProcess");
