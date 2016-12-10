@@ -171,7 +171,13 @@ interface IFileSystem {
 	 */
 	createDirectory(path: string): void;
 
-	readDirectory(path: string): IFuture<string[]>;
+	/**
+	 * Reads contents of directory and returns an array of filenames excluding '.' and '..'.
+	 * @param {string} path Path to directory to be checked.
+	 * @retruns {string[]} Array of filenames excluding '.' and '..'
+	 */
+	readDirectory(path: string): string[];
+
 	readFile(filename: string): IFuture<NodeBuffer>;
 	readText(filename: string, encoding?: string): IFuture<string>;
 	readJson(filename: string, encoding?: string): IFuture<any>;

@@ -399,7 +399,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		return (() => {
 			let minVersion = this.$emulatorSettingsService.minVersion;
 
-			let best = _(this.getAvds().wait())
+			let best = _(this.getAvds())
 				.map(avd => this.getInfoFromAvd(avd).wait())
 				.maxBy(avd => avd.targetNum);
 
@@ -497,16 +497,14 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		return path.join(this.androidHomeDir, AndroidEmulatorServices.AVD_DIR_NAME);
 	}
 
-	private getAvds(): IFuture<string[]> {
-		return (() => {
-			let result: string[] = [];
-			if (this.$fs.exists(this.avdDir)) {
-				let entries = this.$fs.readDirectory(this.avdDir).wait();
-				result = _.filter(entries, (e: string) => e.match(AndroidEmulatorServices.INI_FILES_MASK) !== null)
-					.map((e) => e.match(AndroidEmulatorServices.INI_FILES_MASK)[1]);
-			}
-			return result;
-		}).future<string[]>()();
+	private getAvds(): string[] {
+		let result: string[] = [];
+		if (this.$fs.exists(this.avdDir)) {
+			let entries = this.$fs.readDirectory(this.avdDir);
+			result = _.filter(entries, (e: string) => e.match(AndroidEmulatorServices.INI_FILES_MASK) !== null)
+				.map((e) => e.match(AndroidEmulatorServices.INI_FILES_MASK)[1]);
+		}
+		return result;
 	}
 
 	private waitForEmulatorBootToComplete(emulatorId: string): IFuture<void> {

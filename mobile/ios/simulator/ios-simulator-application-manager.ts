@@ -21,6 +21,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		return Future.fromResult(this.iosSim.getInstalledApplications(this.identifier));
 	}
 
+	// TODO: Remove IFuture, reason: readDirectory
 	@hook('install')
 	public installApplication(packageFilePath: string): IFuture<void> {
 		return (() => {
@@ -28,7 +29,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 				temp.track();
 				let dir = temp.mkdirSync("simulatorPackage");
 				this.$fs.unzip(packageFilePath, dir).wait();
-				let app = _.find(this.$fs.readDirectory(dir).wait(), directory => path.extname(directory) === ".app");
+				let app = _.find(this.$fs.readDirectory(dir), directory => path.extname(directory) === ".app");
 				if (app) {
 					packageFilePath = path.join(dir, app);
 				}

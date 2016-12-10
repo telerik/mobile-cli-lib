@@ -94,7 +94,7 @@ export class FileSystem implements IFileSystem {
 	private findFileCaseInsensitive(file: string): string {
 		let dir = path.dirname(file);
 		let basename = path.basename(file);
-		let entries = this.readDirectory(dir).wait();
+		let entries = this.readDirectory(dir);
 		let match = minimatch.match(entries, basename, { nocase: true, nonegate: true, nonull: true })[0];
 		let result = path.join(dir, match);
 		return result;
@@ -173,16 +173,8 @@ export class FileSystem implements IFileSystem {
 		mkdirp.sync(path);
 	}
 
-	public readDirectory(path: string): IFuture<string[]> {
-		let future = new Future<string[]>();
-		fs.readdir(path, (err: Error, files: string[]) => {
-			if (err) {
-				future.throw(err);
-			} else {
-				future.return(files);
-			}
-		});
-		return future;
+	public readDirectory(path: string): string[] {
+		return fs.readdirSync(path);
 	}
 
 	public readFile(filename: string): IFuture<NodeBuffer> {
@@ -355,9 +347,10 @@ export class FileSystem implements IFileSystem {
 		}
 	}
 
+	// TODO: Remove IFuture, reason: readDirectory
 	public isEmptyDir(directoryPath: string): IFuture<boolean> {
 		return (() => {
-			let directoryContent = this.readDirectory(directoryPath).wait();
+			let directoryContent = this.readDirectory(directoryPath);
 			return directoryContent.length === 0;
 		}).future<boolean>()();
 	}
@@ -419,7 +412,7 @@ export class FileSystem implements IFileSystem {
 			return foundFiles;
 		}
 
-		let contents = this.readDirectory(directoryPath).wait();
+		let contents = this.readDirectory(directoryPath);
 		for (let i = 0; i < contents.length; ++i) {
 			let file = path.join(directoryPath, contents[i]);
 			let stat = this.getFsStats(file);
@@ -431,7 +424,7 @@ export class FileSystem implements IFileSystem {
 				if (opts && opts.enumerateDirectories) {
 					foundFiles.push(file);
 				}
-				if (opts && opts.includeEmptyDirectories && this.readDirectory(file).wait().length === 0) {
+				if (opts && opts.includeEmptyDirectories && this.readDirectory(file).length === 0) {
 					foundFiles.push(file);
 				}
 

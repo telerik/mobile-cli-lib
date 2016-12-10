@@ -145,37 +145,34 @@ export class HooksService implements IHooksService {
 
 	private getHooksByName(directoryPath: string, hookName: string): IFuture<IHook[]> {
 		return (() => {
-			let allBaseHooks = this.getHooksInDirectory(directoryPath).wait();
+			let allBaseHooks = this.getHooksInDirectory(directoryPath);
 			let baseHooks = _.filter(allBaseHooks, hook => hook.name.toLowerCase() === hookName.toLowerCase());
-			let moreHooks = this.getHooksInDirectory(path.join(directoryPath, hookName)).wait();
+			let moreHooks = this.getHooksInDirectory(path.join(directoryPath, hookName));
 			return baseHooks.concat(moreHooks);
 		}).future<IHook[]>()();
 	}
 
-	private getHooksInDirectory(directoryPath: string): IFuture<IHook[]> {
-		return (() => {
-			if (!this.cachedHooks[directoryPath]) {
-				let hooks: IHook[] = [];
-				if (directoryPath && this.$fs.exists(directoryPath) && this.$fs.getFsStats(directoryPath).isDirectory()) {
-					let directoryContent = this.$fs.readDirectory(directoryPath).wait();
-					let files = _.filter(directoryContent, (entry: string) => {
-						let fullPath = path.join(directoryPath, entry);
-						let isFile = this.$fs.getFsStats(fullPath).isFile();
-						return isFile;
-					});
+	private getHooksInDirectory(directoryPath: string): IHook[] {
+		if (!this.cachedHooks[directoryPath]) {
+			let hooks: IHook[] = [];
+			if (directoryPath && this.$fs.exists(directoryPath) && this.$fs.getFsStats(directoryPath).isDirectory()) {
+				let directoryContent = this.$fs.readDirectory(directoryPath);
+				let files = _.filter(directoryContent, (entry: string) => {
+					let fullPath = path.join(directoryPath, entry);
+					let isFile = this.$fs.getFsStats(fullPath).isFile();
+					return isFile;
+				});
 
-					hooks = _.map(files, file => {
-						let fullPath = path.join(directoryPath, file);
-						return new Hook(this.getBaseFilename(file), fullPath);
-					});
-				}
-
-				this.cachedHooks[directoryPath] = hooks;
+				hooks = _.map(files, file => {
+					let fullPath = path.join(directoryPath, file);
+					return new Hook(this.getBaseFilename(file), fullPath);
+				});
 			}
 
-			return this.cachedHooks[directoryPath];
+			this.cachedHooks[directoryPath] = hooks;
+		}
 
-		}).future<IHook[]>()();
+		return this.cachedHooks[directoryPath];
 	}
 
 	private prepareEnvironment(hookFullPath: string): any {

@@ -38,7 +38,7 @@ export class ProjectFilesManager implements IProjectFilesManager {
 
 	public processPlatformSpecificFiles(directoryPath: string, platform: string, excludedDirs?: string[]): IFuture<void> {
 		return (() => {
-			let contents = this.$fs.readDirectory(directoryPath).wait();
+			let contents = this.$fs.readDirectory(directoryPath);
 			let files: string[] = [];
 
 			_.each(contents, fileName => {

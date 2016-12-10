@@ -204,7 +204,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 			let productMinorVersion = productVersionParts[1];
 
 			let developerDiskImagePath = path.join(developerDirectory, "Platforms", "iPhoneOS.platform", "DeviceSupport");
-			let supportPaths = this.$fs.readDirectory(developerDiskImagePath).wait();
+			let supportPaths = this.$fs.readDirectory(developerDiskImagePath);
 
 			let supportPath: any = null;
 

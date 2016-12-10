@@ -56,7 +56,7 @@ export class TypeScriptService implements ITypeScriptService {
 			if (this.typeScriptFiles.length > 0) {
 				let typeScriptDefinitionsFiles: string[] = [];
 				if (!this.hasTsConfigFile(projectDir)) {
-					typeScriptDefinitionsFiles = this.getDefaultTypeScriptDefinitionsFiles(options.pathToDefaultDefinitionFiles).wait();
+					typeScriptDefinitionsFiles = this.getDefaultTypeScriptDefinitionsFiles(options.pathToDefaultDefinitionFiles);
 				}
 
 				typeScriptDefinitionsFiles = typeScriptDefinitionsFiles.concat(this.getTypeScriptFilesData(projectDir).wait().definitionFiles);
@@ -302,20 +302,18 @@ export class TypeScriptService implements ITypeScriptService {
 			.value();
 	}
 
-	private getDefaultTypeScriptDefinitionsFiles(defaultTypeScriptDefinitionsFilesPath: string): IFuture<string[]> {
-		return (() => {
-			if (!this.$fs.exists(defaultTypeScriptDefinitionsFilesPath)) {
-				return [];
-			}
+	private getDefaultTypeScriptDefinitionsFiles(defaultTypeScriptDefinitionsFilesPath: string): string[] {
+		if (!this.$fs.exists(defaultTypeScriptDefinitionsFilesPath)) {
+			return [];
+		}
 
-			let defaultDefinitionsFiles = this.$fs.readDirectory(defaultTypeScriptDefinitionsFilesPath).wait();
+		let defaultDefinitionsFiles = this.$fs.readDirectory(defaultTypeScriptDefinitionsFilesPath);
 
-			// Exclude definition files from default path, which are already part of the project (check only the name of the file)
-			let remainingDefaultDefinitionFiles = _.filter(defaultDefinitionsFiles, defFile => !_.some(this.definitionFiles, f => path.basename(f) === defFile));
-			return _.map(remainingDefaultDefinitionFiles, (definitionFilePath: string) => {
-				return path.join(defaultTypeScriptDefinitionsFilesPath, definitionFilePath);
-			}).concat(this.definitionFiles);
-		}).future<string[]>()();
+		// Exclude definition files from default path, which are already part of the project (check only the name of the file)
+		let remainingDefaultDefinitionFiles = _.filter(defaultDefinitionsFiles, defFile => !_.some(this.definitionFiles, f => path.basename(f) === defFile));
+		return _.map(remainingDefaultDefinitionFiles, (definitionFilePath: string) => {
+			return path.join(defaultTypeScriptDefinitionsFilesPath, definitionFilePath);
+		}).concat(this.definitionFiles);
 	}
 
 	private createTempDirectoryForTsc(): IFuture<string> {
