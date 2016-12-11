@@ -108,7 +108,7 @@ function createFiles(testInjector: IInjector, filesToCreate: string[]): IFuture<
 		let fs = testInjector.resolve("fs");
 		let directoryPath = temp.mkdirSync("Project Files Manager Tests");
 
-		_.each(filesToCreate, file => fs.writeFile(path.join(directoryPath, file), "").wait());
+		_.each(filesToCreate, file => fs.writeFile(path.join(directoryPath, file), ""));
 
 		return directoryPath;
 	}).future<string>()();

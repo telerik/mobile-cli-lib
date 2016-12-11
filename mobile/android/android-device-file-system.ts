@@ -119,7 +119,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		return (() => {
 			let hostTmpDir = this.getTempDir();
 			let commandsFileHostPath = path.join(hostTmpDir, "temp.commands.file");
-			this.$fs.writeFile(commandsFileHostPath, fileContent).wait();
+			this.$fs.writeFile(commandsFileHostPath, fileContent);
 
 			// copy it to the device
 			this.transferFile(commandsFileHostPath, deviceFilePath).wait();

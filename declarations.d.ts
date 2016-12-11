@@ -218,7 +218,16 @@ interface IFileSystem {
 	readJson(filename: string, encoding?: string): any;
 
 	readStdin(): IFuture<string>;
-	writeFile(filename: string, data: any, encoding?: string): IFuture<void>;
+
+	/**
+	 * Writes data to a file, replacing the file if it already exists. data can be a string or a buffer.
+	 * @param {string} filename Path to file to be created.
+	 * @param {string | NodeBuffer} Data to be written to file.
+	 * @param {string} encoding @optional File encoding, defaults to utf8.
+	 * @returns {void}
+	 */
+	writeFile(filename: string, data: string | NodeBuffer, encoding?: string): void;
+
 	appendFile(filename: string, data: any, encoding?: string): IFuture<void>;
 	writeJson(filename: string, data: any, space?: string, encoding?: string): IFuture<void>;
 	copyFile(sourceFileName: string, destinationFileName: string): IFuture<void>;

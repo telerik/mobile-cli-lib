@@ -53,6 +53,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 		return tabTabRegex;
 	}
 
+	// TODO: Remove IFuture, reason: writeFile
 	public removeObsoleteAutoCompletion(): IFuture<void> {
 		return (() => {
 			// In previous releases we were writing directly in .bash_profile, .bashrc, .zshrc and .profile - remove this old code
@@ -69,7 +70,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 
 					if(newText !== text) {
 						this.$logger.trace("Remove obsolete AutoCompletion from file %s.", file);
-						this.$fs.writeFile(file, newText).wait();
+						this.$fs.writeFile(file, newText);
 					}
 				} catch(error) {
 					if(error.code !== "ENOENT") {
@@ -106,7 +107,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 
 	public disableAutoCompletion(): IFuture<void> {
 		return (() => {
-			_.each(this.shellProfiles, shellFile => this.removeAutoCompletionFromShellScript(shellFile).wait());
+			_.each(this.shellProfiles, shellFile => this.removeAutoCompletionFromShellScript(shellFile));
 			this.removeObsoleteAutoCompletion().wait();
 
 			if(this.scriptsOk && this.scriptsUpdated) {
@@ -184,25 +185,23 @@ export class AutoCompletionService implements IAutoCompletionService {
 		}).future<void>()();
 	}
 
-	private removeAutoCompletionFromShellScript(fileName: string): IFuture<void> {
-		return (() => {
-			try {
-				if(this.isNewAutoCompletionEnabledInFile(fileName)) {
-					this.$logger.trace("AutoCompletion is enabled in %s file. Trying to disable it.", fileName);
-					let data = this.$fs.readText(fileName);
-					data = data.replace(this.completionShellScriptContent, "");
-					this.$fs.writeFile(fileName, data).wait();
-					this.scriptsUpdated = true;
-				}
-			} catch(err) {
-				// If file does not exist, autocompletion was not working for it, so ignore this error.
-				if(err.code !== "ENOENT") {
-					this.$logger.out("Failed to update %s. Auto-completion may still work or work incorrectly. ", fileName);
-					this.$logger.out(err);
-					this.scriptsOk = false;
-				}
+	private removeAutoCompletionFromShellScript(fileName: string): void {
+		try {
+			if(this.isNewAutoCompletionEnabledInFile(fileName)) {
+				this.$logger.trace("AutoCompletion is enabled in %s file. Trying to disable it.", fileName);
+				let data = this.$fs.readText(fileName);
+				data = data.replace(this.completionShellScriptContent, "");
+				this.$fs.writeFile(fileName, data);
+				this.scriptsUpdated = true;
 			}
-		}).future<void>()();
+		} catch(err) {
+			// If file does not exist, autocompletion was not working for it, so ignore this error.
+			if(err.code !== "ENOENT") {
+				this.$logger.out("Failed to update %s. Auto-completion may still work or work incorrectly. ", fileName);
+				this.$logger.out(err);
+				this.scriptsOk = false;
+			}
+		}
 	}
 
 	private updateCLIShellScript(): IFuture<void> {

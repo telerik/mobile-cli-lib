@@ -49,6 +49,7 @@ export class HtmlHelpService implements IHtmlHelpService {
 		}).future<void>()();
 	}
 
+	// This method should return IFuture in order to generate all html pages simultaneously.
 	private createHtmlPage(basicHtmlPage: string, pathToMdFile: string): IFuture<void> {
 		return (() => {
 			let mdFileName = path.basename(pathToMdFile);
@@ -71,7 +72,7 @@ export class HtmlHelpService implements IHtmlHelpService {
 				.replace(HtmlHelpService.RELATIVE_PATH_TO_IMAGES_REGEX, path.relative(path.dirname(filePath), this.pathToImages))
 				.replace(HtmlHelpService.RELATIVE_PATH_TO_INDEX_REGEX, path.relative(path.dirname(filePath), this.pathToIndexHtml));
 
-			this.$fs.writeFile(filePath, outputHtml).wait();
+			this.$fs.writeFile(filePath, outputHtml);
 			this.$logger.trace("Finished writing file '%s'.", filePath);
 		}).future<void>()();
 	}

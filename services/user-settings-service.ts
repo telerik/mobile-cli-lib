@@ -45,11 +45,12 @@ export class UserSettingsServiceBase implements IUserSettingsService {
 		}).future<void>()();
 	}
 
+	// TODO: Remove IFuture, reason: writeFile
 	public loadUserSettingsFile(): IFuture<void> {
 		return (() => {
 			if(!this.userSettingsData) {
 				if(!this.$fs.exists(this.userSettingsFilePath)) {
-					this.$fs.writeFile(this.userSettingsFilePath, null).wait();
+					this.$fs.writeFile(this.userSettingsFilePath, null);
 				}
 
 				this.userSettingsData = this.$fs.readJson(this.userSettingsFilePath);

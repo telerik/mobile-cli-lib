@@ -36,6 +36,7 @@ export class ProjectFilesManager implements IProjectFilesManager {
 		return localToDevicePaths;
 	}
 
+	// TODO: Remove IFuture, reason: writeFile
 	public processPlatformSpecificFiles(directoryPath: string, platform: string, excludedDirs?: string[]): IFuture<void> {
 		return (() => {
 			let contents = this.$fs.readDirectory(directoryPath);
@@ -45,43 +46,41 @@ export class ProjectFilesManager implements IProjectFilesManager {
 				let filePath = path.join(directoryPath, fileName);
 				let fsStat = this.$fs.getFsStats(filePath);
 				if (fsStat.isDirectory() && !_.includes(excludedDirs, fileName)) {
-					this.processPlatformSpecificFilesCore(platform, this.$fs.enumerateFilesInDirectorySync(filePath)).wait();
+					this.processPlatformSpecificFilesCore(platform, this.$fs.enumerateFilesInDirectorySync(filePath));
 				} else if (fsStat.isFile()) {
 					files.push(filePath);
 				}
 			});
-			this.processPlatformSpecificFilesCore(platform, files).wait();
+			this.processPlatformSpecificFilesCore(platform, files);
 
 		}).future<void>()();
 	}
 
-	private processPlatformSpecificFilesCore(platform: string, files: string[]): IFuture<void> {
+	private processPlatformSpecificFilesCore(platform: string, files: string[]): void {
 		// Renames the files that have `platform` as substring and removes the files from other platform
-		return (() => {
-			_.each(files, filePath => {
-				let projectFileInfo = this.$projectFilesProvider.getProjectFileInfo(filePath, platform);
-				if (!projectFileInfo.shouldIncludeFile) {
-					this.$fs.deleteFile(filePath);
-				} else if (projectFileInfo.onDeviceFileName) {
-					let onDeviceFilePath = path.join(path.dirname(filePath), projectFileInfo.onDeviceFileName);
+		_.each(files, filePath => {
+			let projectFileInfo = this.$projectFilesProvider.getProjectFileInfo(filePath, platform);
+			if (!projectFileInfo.shouldIncludeFile) {
+				this.$fs.deleteFile(filePath);
+			} else if (projectFileInfo.onDeviceFileName) {
+				let onDeviceFilePath = path.join(path.dirname(filePath), projectFileInfo.onDeviceFileName);
 
-					// Fix .js.map entries
-					let extension = path.extname(projectFileInfo.onDeviceFileName);
-					if (onDeviceFilePath !== filePath) {
-						if (extension === ".js" || extension === ".map") {
-							let oldName = extension === ".map" ? this.getFileName(filePath, extension) : path.basename(filePath);
-							let newName = extension === ".map" ? this.getFileName(projectFileInfo.onDeviceFileName, extension) : path.basename(projectFileInfo.onDeviceFileName);
+				// Fix .js.map entries
+				let extension = path.extname(projectFileInfo.onDeviceFileName);
+				if (onDeviceFilePath !== filePath) {
+					if (extension === ".js" || extension === ".map") {
+						let oldName = extension === ".map" ? this.getFileName(filePath, extension) : path.basename(filePath);
+						let newName = extension === ".map" ? this.getFileName(projectFileInfo.onDeviceFileName, extension) : path.basename(projectFileInfo.onDeviceFileName);
 
-							let fileContent = this.$fs.readText(filePath);
-							fileContent = fileContent.replace(new RegExp(oldName, 'g'), newName);
-							this.$fs.writeFile(filePath, fileContent).wait();
-						}
-						// Rename the file
-						this.$fs.rename(filePath, onDeviceFilePath);
+						let fileContent = this.$fs.readText(filePath);
+						fileContent = fileContent.replace(new RegExp(oldName, 'g'), newName);
+						this.$fs.writeFile(filePath, fileContent);
 					}
+					// Rename the file
+					this.$fs.rename(filePath, onDeviceFilePath);
 				}
-			});
-		}).future<void>()();
+			}
+		});
 	}
 
 	private getFileName(filePath: string, extension: string): string {

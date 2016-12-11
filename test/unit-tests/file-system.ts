@@ -6,7 +6,6 @@ import {assert} from "chai";
 import * as fileSystemFile from "../../file-system";
 import * as childProcessLib from "../../child-process";
 import {CommonLoggerStub} from "./stubs";
-import Future = require("fibers/future");
 
 let sampleZipFileTest = path.join(__dirname, "../resources/sampleZipFileTest.zip");
 let unzippedFileName = "sampleZipFileTest.txt";
@@ -101,7 +100,7 @@ describe("FileSystem", () => {
 				tempDir = temp.mkdirSync("projectToUnzip");
 				fs = testInjector.resolve("fs");
 				file = path.join(tempDir, unzippedFileName);
-				fs.writeFile(file, msg).wait();
+				fs.writeFile(file, msg);
 			});
 			it("does not overwrite files when overwriteExisitingFiles is false", () => {
 				fs.unzip(sampleZipFileTest, tempDir, { overwriteExisitingFiles: false }, [unzippedFileName]).wait();
@@ -177,7 +176,7 @@ describe("FileSystem", () => {
 			let newFileName = path.join(tempDir, "newfilename");
 
 			let fs: IFileSystem = testInjector.resolve("fs");
-			fs.writeFile(testFileName, "data").wait();
+			fs.writeFile(testFileName, "data");
 
 			let result = fs.renameIfExists(testFileName, newFileName);
 			assert.isTrue(result, "On successfull rename, result must be true.");
@@ -210,7 +209,7 @@ describe("FileSystem", () => {
 			newFileName = path.join(tempDir, "newfilename");
 
 			fs = testInjector.resolve("fs");
-			fs.writeFile(testFileName, fileContent).wait();
+			fs.writeFile(testFileName, fileContent);
 		});
 
 		it("correctly copies file to the same directory", () => {
@@ -291,7 +290,7 @@ describe("FileSystem", () => {
 			it(`should use the correct indentation ${testCase.testCondition}.`, () => {
 				fs.readText = () => testCase.text;
 				fs.exists = () => testCase.exists;
-				fs.writeFile = () => Future.fromResult();
+				fs.writeFile = () => null;
 
 				let actualIndentation: string;
 				let originalJsonStringify = JSON.stringify;

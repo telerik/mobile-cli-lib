@@ -27,8 +27,8 @@ export class GenerateMessages implements ICommand {
 				implementationFilePath = path.join(outerMessagesDirectory, GenerateMessages.MESSAGES_IMPLEMENTATION_FILE_NAME);
 			}
 
-			this.$fs.writeFile(interfaceFilePath, result.interfaceFile).wait();
-			this.$fs.writeFile(implementationFilePath, result.implementationFile).wait();
+			this.$fs.writeFile(interfaceFilePath, result.interfaceFile);
+			this.$fs.writeFile(implementationFilePath, result.implementationFile);
 		}).future<void>()();
 	}
 }

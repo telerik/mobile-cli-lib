@@ -204,19 +204,9 @@ export class FileSystem implements IFileSystem {
 		return null;
 	}
 
-	public writeFile(filename: string, data: any, encoding?: string): IFuture<void> {
-		return (() => {
-			this.createDirectory(path.dirname(filename));
-			let future = new Future<void>();
-			fs.writeFile(filename, data, { encoding: encoding }, (err: Error) => {
-				if (err) {
-					future.throw(err);
-				} else {
-					future.return();
-				}
-			});
-			future.wait();
-		}).future<void>()();
+	public writeFile(filename: string, data: string | NodeBuffer, encoding?: string): void {
+		this.createDirectory(path.dirname(filename));
+		fs.writeFileSync(filename, data, { encoding: encoding });
 	}
 
 	public appendFile(filename: string, data: any, encoding?: string): IFuture<void> {
@@ -236,7 +226,7 @@ export class FileSystem implements IFileSystem {
 			space = this.getIndentationCharacter(filename);
 		}
 
-		return this.writeFile(filename, JSON.stringify(data, null, space), encoding);
+		return Future.fromResult(this.writeFile(filename, JSON.stringify(data, null, space), encoding));
 	}
 
 	public copyFile(sourceFileName: string, destinationFileName: string): IFuture<void> {
