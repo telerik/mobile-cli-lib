@@ -28,7 +28,7 @@ export class MessageContractGenerator implements IServiceContractGenerator {
 			let messagesInterface = new Block("interface IMessages");
 
 			_.each(this.$messagesService.pathsToMessageJsonFiles, jsonFilePath => {
-				let jsonContents = this.$fs.readJson(jsonFilePath).wait(),
+				let jsonContents = this.$fs.readJson(jsonFilePath),
 					implementationBlock: CodeGeneration.IBlock = new Block(),
 					interfaceBlock: CodeGeneration.IBlock = new Block();
 
@@ -48,7 +48,6 @@ export class MessageContractGenerator implements IServiceContractGenerator {
 				interfaceFile: codePrinter.composeBlock(interfacesFile),
 				implementationFile: codePrinter.composeBlock(implementationsFile)
 			};
-
 		}).future<IServiceContractClientCode>()();
 	}
 

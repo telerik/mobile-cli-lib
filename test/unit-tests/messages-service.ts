@@ -4,13 +4,12 @@ import {join} from "path";
 import {MessagesService} from "../../services/messages-service";
 import {existsSync} from "fs";
 import {assert} from "chai";
-import Future = require("fibers/future");
 
 function createTestInjector(jsonContents: any, options?: {useRealFsExists: boolean}): IInjector {
 	let testInjector = new Yok();
 	testInjector.register("fs", {
 		exists: (path: string): boolean => options && options.useRealFsExists ? existsSync(path) : true,
-		readJson: (filename: string, encoding?: string): IFuture<any> => Future.fromResult(jsonContents)
+		readJson: (filename: string, encoding?: string): any => jsonContents
 	});
 	testInjector.register("messagesService", MessagesService);
 
@@ -106,7 +105,7 @@ describe("messages-service", () => {
 
 			injector.register("fs", {
 				exists: (path: string): boolean => true,
-				readJson: (filename: string, encoding?: string): IFuture<any> => Future.fromResult(filename === pathToDefaultMessageJson ? commonJsonContents : clientJsonContents)
+				readJson: (filename: string, encoding?: string): any => filename === pathToDefaultMessageJson ? commonJsonContents : clientJsonContents
 			});
 			service = injector.resolve("$messagesService");
 			service.pathsToMessageJsonFiles = ["clientJsonFile.json"];

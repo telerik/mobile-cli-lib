@@ -104,7 +104,7 @@ export class NpmService implements INpmService {
 	@exportedPromise("npmService")
 	public uninstall(projectDir: string, dependency: string): IFuture<void> {
 		return (() => {
-			let packageJsonContent = this.getPackageJsonContent(projectDir).wait();
+			let packageJsonContent = this.getPackageJsonContent(projectDir);
 
 			if (packageJsonContent && packageJsonContent.dependencies && packageJsonContent.dependencies[dependency]) {
 				this.npmUninstall(projectDir, dependency, ["--save"]).wait();
@@ -242,21 +242,18 @@ export class NpmService implements INpmService {
 		}).future<string>()();
 	}
 
-	private getPackageJsonContent(projectDir: string): IFuture<any> {
-		return (() => {
-			let pathToPackageJson = this.getPathToPackageJson(projectDir);
+	private getPackageJsonContent(projectDir: string): any {
+		let pathToPackageJson = this.getPathToPackageJson(projectDir);
 
-			try {
-				return this.$fs.readJson(pathToPackageJson).wait();
-			} catch (err) {
-				if (err.code === "ENOENT") {
-					this.$errors.failWithoutHelp(`Unable to find ${this.$projectConstants.PACKAGE_JSON_NAME} in ${projectDir}.`);
-				}
-
-				throw err;
+		try {
+			return this.$fs.readJson(pathToPackageJson);
+		} catch (err) {
+			if (err.code === "ENOENT") {
+				this.$errors.failWithoutHelp(`Unable to find ${this.$projectConstants.PACKAGE_JSON_NAME} in ${projectDir}.`);
 			}
 
-		}).future<any>()();
+			throw err;
+		}
 	}
 
 	private getPathToPackageJson(projectDir: string): string {
@@ -273,7 +270,7 @@ export class NpmService implements INpmService {
 
 	private generateReferencesFile(projectDir: string): IFuture<void> {
 		return (() => {
-			let packageJsonContent = this.getPackageJsonContent(projectDir).wait();
+			let packageJsonContent = this.getPackageJsonContent(projectDir);
 
 			let pathToReferenceFile = this.getPathToReferencesFile(projectDir),
 				lines: string[] = [];

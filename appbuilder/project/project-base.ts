@@ -132,7 +132,7 @@ export abstract class ProjectBase implements Project.IProjectBase {
 						let configMatch = path.basename(configProjectFile).match(ProjectBase.CONFIGURATION_FROM_FILE_NAME_REGEX);
 						if (configMatch && configMatch.length > 1) {
 							let configurationName = configMatch[1];
-							let configProjectContent = this.$fs.readJson(configProjectFile).wait(),
+							let configProjectContent = this.$fs.readJson(configProjectFile),
 								configurationLowerCase = configurationName.toLowerCase();
 							this.configurationSpecificData[configurationLowerCase] = <any>_.merge(_.cloneDeep(this._projectData), configProjectContent);
 							this._hasBuildConfigurations = true;
@@ -155,7 +155,7 @@ export abstract class ProjectBase implements Project.IProjectBase {
 	}
 
 	private getProjectData(projectFilePath: string): Project.IData {
-		let data = this.$fs.readJson(projectFilePath).wait();
+		let data = this.$fs.readJson(projectFilePath);
 		if (data.projectVersion && data.projectVersion.toString() !== "1") {
 			this.$errors.fail("FUTURE_PROJECT_VER");
 		}

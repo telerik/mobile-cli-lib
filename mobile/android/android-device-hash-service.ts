@@ -34,7 +34,7 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 			let hashFileLocalPath = this.downloadHashFileFromDevice().wait();
 
 			if (this.$fs.exists(hashFileLocalPath)) {
-				return this.$fs.readJson(hashFileLocalPath).wait();
+				return this.$fs.readJson(hashFileLocalPath);
 			}
 
 			return null;

@@ -52,7 +52,7 @@ export class UserSettingsServiceBase implements IUserSettingsService {
 					this.$fs.writeFile(this.userSettingsFilePath, null).wait();
 				}
 
-				this.userSettingsData = this.$fs.readJson(this.userSettingsFilePath).wait();
+				this.userSettingsData = this.$fs.readJson(this.userSettingsFilePath);
 			}
 		}).future<void>()();
 	}

@@ -59,7 +59,7 @@ export class CommandDispatcher implements ICommandDispatcher {
 	private printVersion(): void {
 		let version = this.$staticConfig.version;
 
-		let json = this.$fs.readJson(this.$staticConfig.pathToPackageJson).wait();
+		let json = this.$fs.readJson(this.$staticConfig.pathToPackageJson);
 		if(json && json.buildVersion) {
 			version = `${version}-${json.buildVersion}`;
 		}

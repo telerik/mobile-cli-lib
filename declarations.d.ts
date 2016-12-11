@@ -208,7 +208,15 @@ interface IFileSystem {
 	 * @returns {string} Content of the file as string.
 	 */
 	readText(filename: string, encoding?: IReadFileOptions | string): string;
-	readJson(filename: string, encoding?: string): IFuture<any>;
+
+	/**
+	 * Reads the entire content of a file and parses it to JSON object.
+	 * @param {string} filename Path to the file that has to be read.
+	 * @param {string} @optional encoding File encoding, defaults to utf8.
+	 * @returns {string} Content of the file as JSON object.
+	 */
+	readJson(filename: string, encoding?: string): any;
+
 	readStdin(): IFuture<string>;
 	writeFile(filename: string, data: any, encoding?: string): IFuture<void>;
 	appendFile(filename: string, data: any, encoding?: string): IFuture<void>;
@@ -1034,9 +1042,10 @@ interface IResourceLoader {
 	/**
 	 * Reads the contents of a resource file in JSON format.
 	 * @param  {string}       path Relative path to resource
-	 * @return {IFuture<any>}      Object based on the JSON contents of the resource file.
+	 * @return {any}      Object based on the JSON contents of the resource file.
 	 */
-	readJson(path: string): IFuture<any>;
+	readJson(path: string): any;
+
 	/**
 	 * Returns the path to App_Resources folder, which contains all resources for a given application.
 	 * @param  {string} framework The application's framework name

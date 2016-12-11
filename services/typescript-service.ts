@@ -46,7 +46,7 @@ export class TypeScriptService implements ITypeScriptService {
 	public transpile(projectDir: string, typeScriptFiles?: string[], definitionFiles?: string[], options?: ITypeScriptTranspileOptions): IFuture<string> {
 		return ((): string => {
 			options = options || {};
-			let compilerOptions = this.getCompilerOptions(projectDir, options).wait();
+			let compilerOptions = this.getCompilerOptions(projectDir, options);
 			let typeScriptCompilerSettings = this.getTypeScriptCompilerSettings({ useLocalTypeScriptCompiler: options.useLocalTypeScriptCompiler }).wait();
 			this.noEmitOnError = compilerOptions.noEmitOnError;
 			this.typeScriptFiles = typeScriptFiles || [];
@@ -110,30 +110,28 @@ export class TypeScriptService implements ITypeScriptService {
 		return path.join(projectDir, this.$projectConstants.TSCONFIG_JSON_NAME);
 	}
 
-	private getCompilerOptions(projectDir: string, options: ITypeScriptTranspileOptions): IFuture<ITypeScriptCompilerOptions> {
-		return ((): ITypeScriptCompilerOptions => {
-			let tsConfigFile: ITypeScriptConfig;
-			let pathToConfigJsonFile = this.getPathToTsConfigFile(projectDir);
+	private getCompilerOptions(projectDir: string, options: ITypeScriptTranspileOptions): ITypeScriptCompilerOptions {
+		let tsConfigFile: ITypeScriptConfig;
+		let pathToConfigJsonFile = this.getPathToTsConfigFile(projectDir);
 
-			if (this.hasTsConfigFile(projectDir)) {
-				tsConfigFile = this.$fs.readJson(pathToConfigJsonFile).wait();
-			}
+		if (this.hasTsConfigFile(projectDir)) {
+			tsConfigFile = this.$fs.readJson(pathToConfigJsonFile);
+		}
 
-			tsConfigFile = tsConfigFile || { compilerOptions: {} };
-			let compilerOptions = options.compilerOptions || {};
-			let defaultOptions = options.defaultCompilerOptions || {};
+		tsConfigFile = tsConfigFile || { compilerOptions: {} };
+		let compilerOptions = options.compilerOptions || {};
+		let defaultOptions = options.defaultCompilerOptions || {};
 
-			let compilerOptionsKeys = _.union(_.keys(compilerOptions), _.keys(tsConfigFile.compilerOptions), _.keys(defaultOptions));
+		let compilerOptionsKeys = _.union(_.keys(compilerOptions), _.keys(tsConfigFile.compilerOptions), _.keys(defaultOptions));
 
-			let result: ITypeScriptCompilerOptions = {};
-			_.each(compilerOptionsKeys, (key: string) => {
-				result[key] = this.getCompilerOptionByKey(key, compilerOptions, tsConfigFile.compilerOptions, defaultOptions);
-			});
+		let result: ITypeScriptCompilerOptions = {};
+		_.each(compilerOptionsKeys, (key: string) => {
+			result[key] = this.getCompilerOptionByKey(key, compilerOptions, tsConfigFile.compilerOptions, defaultOptions);
+		});
 
-			result.noEmitOnError = result.noEmitOnError || false;
+		result.noEmitOnError = result.noEmitOnError || false;
 
-			return result;
-		}).future<ITypeScriptCompilerOptions>()();
+		return result;
 	}
 
 	private getCompilerOptionByKey(key: string, compilerOptions: ITypeScriptCompilerOptions, tsConfigFileOptions: ITypeScriptCompilerOptions, defaultOptions: ITypeScriptCompilerOptions): any {
@@ -171,7 +169,7 @@ export class TypeScriptService implements ITypeScriptService {
 			}
 
 			let typeScriptCompilerPath = path.join(this.typeScriptModuleFilePath, "lib", "tsc");
-			let typeScriptCompilerVersion = this.$fs.readJson(path.join(this.typeScriptModuleFilePath, this.$projectConstants.PACKAGE_JSON_NAME)).wait().version;
+			let typeScriptCompilerVersion = this.$fs.readJson(path.join(this.typeScriptModuleFilePath, this.$projectConstants.PACKAGE_JSON_NAME)).version;
 
 			return { pathToCompiler: typeScriptCompilerPath, version: typeScriptCompilerVersion };
 		}).future<ITypeScriptCompilerSettings>()();

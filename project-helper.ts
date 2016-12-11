@@ -58,7 +58,7 @@ export class ProjectHelper implements IProjectHelper {
 	private isProjectFileCorrect(projectFilePath: string): boolean {
 		if(this.$staticConfig.CLIENT_NAME_KEY_IN_PROJECT_FILE) {
 			try {
-				let fileContent = this.$fs.readJson(projectFilePath).wait();
+				let fileContent = this.$fs.readJson(projectFilePath);
 				let clientSpecificData = fileContent[this.$staticConfig.CLIENT_NAME_KEY_IN_PROJECT_FILE];
 				return !!clientSpecificData;
 			} catch(err) {

@@ -195,15 +195,13 @@ export class FileSystem implements IFileSystem {
 		return <string>this.readFile(filename, options);
 	}
 
-	public readJson(filename: string, encoding?: string): IFuture<any> {
-		return (() => {
-			let data = this.readText(filename, encoding);
-			if (data) {
-				// Replace BOM from the header of the file if it exists
-				return JSON.parse(data.replace(/^\uFEFF/, ""));
-			}
-			return null;
-		}).future()();
+	public readJson(filename: string, encoding?: string): any {
+		let data = this.readText(filename, encoding);
+		if (data) {
+			// Replace BOM from the header of the file if it exists
+			return JSON.parse(data.replace(/^\uFEFF/, ""));
+		}
+		return null;
 	}
 
 	public writeFile(filename: string, data: any, encoding?: string): IFuture<void> {

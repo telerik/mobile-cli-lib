@@ -1,6 +1,5 @@
 import * as util from "util";
 import * as path from "path";
-import * as fiberBootstrap from "../fiber-bootstrap";
 
 export class MessagesService implements IMessagesService {
 	private _pathsToMessageJsonFiles: string[] = null;
@@ -70,15 +69,13 @@ export class MessagesService implements IMessagesService {
 	}
 
 	private refreshMessageJsonContentsCache(): void {
-		fiberBootstrap.run(() => {
-			this._messageJsonFilesContentsCache = [];
-			_.each(this.pathsToMessageJsonFiles, path => {
-				if (!this.$fs.exists(path)) {
-					throw new Error("Message json file " + path + " does not exist.");
-				}
+		this._messageJsonFilesContentsCache = [];
+		_.each(this.pathsToMessageJsonFiles, path => {
+			if (!this.$fs.exists(path)) {
+				throw new Error("Message json file " + path + " does not exist.");
+			}
 
-				this._messageJsonFilesContentsCache.push(this.$fs.readJson(path).wait());
-			});
+			this._messageJsonFilesContentsCache.push(this.$fs.readJson(path));
 		});
 	}
 

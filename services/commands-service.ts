@@ -36,7 +36,6 @@ export class CommandsService implements ICommandsService {
 	public executeCommandUnchecked(commandName: string, commandArguments: string[]): IFuture<boolean> {
 		return (() => {
 			let command = this.$injector.resolveCommand(commandName);
-
 			if (command) {
 				if (!this.$staticConfig.disableAnalytics && !command.disableAnalytics) {
 					let analyticsService = this.$injector.resolve("analyticsService"); // This should be resolved here due to cyclic dependency
@@ -59,7 +58,7 @@ export class CommandsService implements ICommandsService {
 					command.execute(commandArguments).wait();
 				}
 
-				let commandHelp = this.getCommandHelp().wait();
+				let commandHelp = this.getCommandHelp();
 				if (!command.disableCommandHelpSuggestion && commandHelp && commandHelp[commandName]) {
 					let suggestionText: string = commandHelp[commandName];
 					this.$logger.printMarkdown(~suggestionText.indexOf('%s') ? require('util').format(suggestionText, commandArguments) : suggestionText);
@@ -319,14 +318,12 @@ export class CommandsService implements ICommandsService {
 		}).future<boolean>()();
 	}
 
-	private getCommandHelp(): IFuture<any> {
-		return (() => {
-			if (!this.cachedCommandHelp && this.$fs.exists(this.$resources.resolvePath(this.$staticConfig.COMMAND_HELP_FILE_NAME))) {
-				this.cachedCommandHelp = this.$resources.readJson(this.$staticConfig.COMMAND_HELP_FILE_NAME).wait();
-			}
+	private getCommandHelp(): any {
+		if (!this.cachedCommandHelp && this.$fs.exists(this.$resources.resolvePath(this.$staticConfig.COMMAND_HELP_FILE_NAME))) {
+			this.cachedCommandHelp = this.$resources.readJson(this.$staticConfig.COMMAND_HELP_FILE_NAME);
+		}
 
-			return this.cachedCommandHelp;
-		}).future<any>()();
+		return this.cachedCommandHelp;
 	}
 
 	private beautifyCommandName(commandName: string): string {
