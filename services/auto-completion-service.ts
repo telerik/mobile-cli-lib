@@ -91,20 +91,17 @@ export class AutoCompletionService implements IAutoCompletionService {
 		return this._completionShellScriptContent;
 	}
 
-	// TODO: Remove IFuture, reason: readText
-	public isAutoCompletionEnabled(): IFuture<boolean> {
-		return ((): boolean => {
-			let result = true;
-			_.each(this.shellProfiles, filePath => {
-				result = this.isNewAutoCompletionEnabledInFile(filePath) || this.isObsoleteAutoCompletionEnabledInFile(filePath);
-				if(!result) {
-					// break each
-					return false;
-				}
-			});
+	public isAutoCompletionEnabled(): boolean {
+		let result = true;
+		_.each(this.shellProfiles, filePath => {
+			result = this.isNewAutoCompletionEnabledInFile(filePath) || this.isObsoleteAutoCompletionEnabledInFile(filePath);
+			if(!result) {
+				// break each
+				return false;
+			}
+		});
 
-			return result;
-		}).future<boolean>()();
+		return result;
 	}
 
 	public disableAutoCompletion(): IFuture<void> {
@@ -130,20 +127,17 @@ export class AutoCompletionService implements IAutoCompletionService {
 		}).future<void>()();
 	}
 
-	// TODO: Remove IFuture, reason: readText
-	public isObsoleteAutoCompletionEnabled(): IFuture<boolean> {
-		return (() => {
-			let result = true;
-			_.each(this.shellProfiles, shellProfile => {
-				result = this.isObsoleteAutoCompletionEnabledInFile(shellProfile);
-				if(!result) {
-					// break each
-					return false;
-				}
-			});
+	public isObsoleteAutoCompletionEnabled(): boolean {
+		let result = true;
+		_.each(this.shellProfiles, shellProfile => {
+			result = this.isObsoleteAutoCompletionEnabledInFile(shellProfile);
+			if(!result) {
+				// break each
+				return false;
+			}
+		});
 
-			return result;
-		}).future<boolean>()();
+		return result;
 	}
 
 	private isNewAutoCompletionEnabledInFile(fileName: string): boolean {

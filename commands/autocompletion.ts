@@ -12,8 +12,8 @@ export class AutoCompleteCommand implements ICommand {
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
 			if (helpers.isInteractive()) {
-				if(this.$autoCompletionService.isAutoCompletionEnabled().wait()) {
-					if(this.$autoCompletionService.isObsoleteAutoCompletionEnabled().wait()) {
+				if(this.$autoCompletionService.isAutoCompletionEnabled()) {
+					if(this.$autoCompletionService.isObsoleteAutoCompletionEnabled()) {
 						// obsolete autocompletion is enabled, update it to the new one:
 						this.$autoCompletionService.enableAutoCompletion().wait();
 					} else {
@@ -47,7 +47,7 @@ export class DisableAutoCompleteCommand implements ICommand {
 
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
-			if(this.$autoCompletionService.isAutoCompletionEnabled().wait()) {
+			if(this.$autoCompletionService.isAutoCompletionEnabled()) {
 				this.$autoCompletionService.disableAutoCompletion().wait();
 			} else {
 				this.$logger.info("Autocompletion is already disabled.");
@@ -66,7 +66,7 @@ export class EnableAutoCompleteCommand implements ICommand {
 
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
-			if(this.$autoCompletionService.isAutoCompletionEnabled().wait()) {
+			if(this.$autoCompletionService.isAutoCompletionEnabled()) {
 				this.$logger.info("Autocompletion is already enabled.");
 			} else {
 				this.$autoCompletionService.enableAutoCompletion().wait();
@@ -85,7 +85,7 @@ export class AutoCompleteStatusCommand implements ICommand {
 
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
-			if(this.$autoCompletionService.isAutoCompletionEnabled().wait()) {
+			if(this.$autoCompletionService.isAutoCompletionEnabled()) {
 				this.$logger.info("Autocompletion is enabled.");
 			} else {
 				this.$logger.info("Autocompletion is disabled.");

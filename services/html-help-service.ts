@@ -139,16 +139,13 @@ export class HtmlHelpService implements IHtmlHelpService {
 		this.$errors.failWithoutHelp("Unknown command '%s'. Try '$ %s help' for a full list of supported commands.", mdFileName.replace(".md", ""), this.$staticConfig.CLIENT_NAME.toLowerCase());
 	}
 
-	// TODO: Remove IFuture, reason: readText
-	public getCommandLineHelpForCommand(commandName: string): IFuture<string> {
-		return ((): string => {
-			let helpText = this.readMdFileForCommand(commandName);
-			let outputText = this.$microTemplateService.parseContent(helpText, { isHtml: false })
-				.replace(/&nbsp;/g, " ")
-				.replace(HtmlHelpService.MARKDOWN_LINK_REGEX, "$1");
+	public getCommandLineHelpForCommand(commandName: string): string {
+		let helpText = this.readMdFileForCommand(commandName);
+		let outputText = this.$microTemplateService.parseContent(helpText, { isHtml: false })
+			.replace(/&nbsp;/g, " ")
+			.replace(HtmlHelpService.MARKDOWN_LINK_REGEX, "$1");
 
-			return outputText;
-		}).future<string>()();
+		return outputText;
 	}
 }
 $injector.register("htmlHelpService", HtmlHelpService);

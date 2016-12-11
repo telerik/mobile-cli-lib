@@ -76,18 +76,15 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		}).future<void>()();
 	}
 
-	// TODO: Remove IFuture, reason: readText
-	public checkAvailability(): IFuture<void> {
-		return (() => {
-			if (!this.getEmulatorImage()) {
-				this.$errors.failWithoutHelp("You do not have any Android emulators installed. Please install at least one.");
-			}
+	public checkAvailability(): void {
+		if (!this.getEmulatorImage()) {
+			this.$errors.failWithoutHelp("You do not have any Android emulators installed. Please install at least one.");
+		}
 
-			let platform = this.$devicePlatformsConstants.Android;
-			if (!this.$emulatorSettingsService.canStart(platform)) {
-				this.$errors.fail("The current project does not target Android and cannot be run in the Android emulator.");
-			}
-		}).future<void>()();
+		let platform = this.$devicePlatformsConstants.Android;
+		if (!this.$emulatorSettingsService.canStart(platform)) {
+			this.$errors.fail("The current project does not target Android and cannot be run in the Android emulator.");
+		}
 	}
 
 	public startEmulator(): IFuture<string> {

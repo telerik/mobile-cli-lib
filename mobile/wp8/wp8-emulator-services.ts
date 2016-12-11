@@ -25,21 +25,19 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 		return future.fromResult();
 	}
 
-	public checkAvailability(): IFuture<void> {
-		return (() => {
-			if (!this.$fs.exists(this.getPathToEmulatorStarter())) {
-				this.$errors.failWithoutHelp("You do not have Windows Phone 8 SDK installed. Please install it in order to continue.");
-			}
+	public checkAvailability(): void {
+		if (!this.$fs.exists(this.getPathToEmulatorStarter())) {
+			this.$errors.failWithoutHelp("You do not have Windows Phone 8 SDK installed. Please install it in order to continue.");
+		}
 
-			if (!this.$hostInfo.isWindows) {
-				this.$errors.fail("Windows Phone Emulator is available only on Windows 8 or later.");
-			}
+		if (!this.$hostInfo.isWindows) {
+			this.$errors.fail("Windows Phone Emulator is available only on Windows 8 or later.");
+		}
 
-			let platform = this.$devicePlatformsConstants.WP8;
-			if (!this.$emulatorSettingsService.canStart(platform)) {
-				this.$errors.fail("The current project does not target Windows Phone 8 and cannot be run in the Windows Phone emulator.");
-			}
-		}).future<void>()();
+		let platform = this.$devicePlatformsConstants.WP8;
+		if (!this.$emulatorSettingsService.canStart(platform)) {
+			this.$errors.fail("The current project does not target Windows Phone 8 and cannot be run in the Windows Phone emulator.");
+		}
 	}
 
 	public startEmulator(): IFuture<string> {

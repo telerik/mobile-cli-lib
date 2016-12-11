@@ -510,8 +510,18 @@ interface IHostCapability {
 interface IAutoCompletionService {
 	enableAutoCompletion(): IFuture<void>;
 	disableAutoCompletion(): IFuture<void>;
-	isAutoCompletionEnabled(): IFuture<boolean>;
-	isObsoleteAutoCompletionEnabled(): IFuture<boolean>;
+
+	/**
+	 * Checks if autocompletion is enabled.
+	 * @returns {boolean} true in case autocompletion is enabled in any file. false otherwise.
+	 */
+	isAutoCompletionEnabled(): boolean;
+
+	/**
+	 * Checks if obsolete autocompletion code exists in any profile file.
+	 * @returns {boolean} true in case there's some old code in any profile file. false otherwise.
+	 */
+	isObsoleteAutoCompletionEnabled(): boolean;
 }
 
 interface IHooksService {
@@ -601,7 +611,14 @@ interface IMicroTemplateService {
 
 interface IHtmlHelpService {
 	generateHtmlPages(): IFuture<void>;
-	getCommandLineHelpForCommand(commandName: string): IFuture<string>;
+
+	/**
+	 * Gets the help content for a specific command that should be shown on the terminal.
+	 * @param {string} commandName Name of the command for which to read the help.
+	 * @returns {string} Help content of the command parsed with all terminal rules applied (stripped content that should be shown only for html help).
+	 */
+	getCommandLineHelpForCommand(commandName: string): string;
+
 	openHelpForCommandInBrowser(commandName: string): IFuture<void>;
 }
 

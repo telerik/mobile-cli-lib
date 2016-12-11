@@ -607,7 +607,14 @@ declare module Mobile {
 
 	interface IEmulatorPlatformServices {
 		checkDependencies(): IFuture<void>;
-		checkAvailability(dependsOnProject?: boolean): IFuture<void>;
+
+		/**
+		 * Checks if the current system can start emulator of the specified mobile platform and throws error in case it cannot.
+		 * @param {boolean} dependsOnProject Defines if the starting of emulator depends on the project configuration.
+		 * @returns void
+		 */
+		checkAvailability(dependsOnProject?: boolean): void;
+
 		startEmulator(): IFuture<string>;
 		runApplicationOnEmulator(app: string, emulatorOptions?: IEmulatorOptions): IFuture<any>;
 		getEmulatorId(): IFuture<string>;
