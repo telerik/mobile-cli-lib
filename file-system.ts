@@ -181,7 +181,7 @@ export class FileSystem implements IFileSystem {
 		return fs.readFileSync(filename, options);
 	}
 
-	public readText(filename: string, options?: IReadFileOptions | string): IFuture<string> {
+	public readText(filename: string, options?: IReadFileOptions | string): string {
 		options = options || { encoding: "utf8" };
 
 		if (_.isString(options)) {
@@ -192,22 +192,12 @@ export class FileSystem implements IFileSystem {
 			options.encoding = "utf8";
 		}
 
-		//return this.readFile(filename, options);
-
-		let future = new Future<string>();
-		fs.readFile(filename, options, (err: Error, data: string) => {
-			if (err) {
-				future.throw(err);
-			} else {
-				future.return(data);
-			}
-		});
-		return future;
+		return <string>this.readFile(filename, options);
 	}
 
 	public readJson(filename: string, encoding?: string): IFuture<any> {
 		return (() => {
-			let data = this.readText(filename, encoding).wait();
+			let data = this.readText(filename, encoding);
 			if (data) {
 				// Replace BOM from the header of the file if it exists
 				return JSON.parse(data.replace(/^\uFEFF/, ""));
@@ -245,7 +235,7 @@ export class FileSystem implements IFileSystem {
 
 	public writeJson(filename: string, data: any, space?: string, encoding?: string): IFuture<void> {
 		if (!space) {
-			space = this.getIndentationCharacter(filename).wait();
+			space = this.getIndentationCharacter(filename);
 		}
 
 		return this.writeFile(filename, JSON.stringify(data, null, space), encoding);
@@ -474,22 +464,20 @@ export class FileSystem implements IFileSystem {
 		}
 	}
 
-	private getIndentationCharacter(filePath: string): IFuture<string> {
-		return ((): string => {
-			if (!this.exists(filePath)) {
-				return FileSystem.DEFAULT_INDENTATION_CHARACTER;
-			}
+	private getIndentationCharacter(filePath: string): string {
+		if (!this.exists(filePath)) {
+			return FileSystem.DEFAULT_INDENTATION_CHARACTER;
+		}
 
-			let fileContent = this.readText(filePath).wait().trim();
-			let matches = fileContent.match(FileSystem.JSON_OBJECT_REGEXP);
+		let fileContent = this.readText(filePath).trim();
+		let matches = fileContent.match(FileSystem.JSON_OBJECT_REGEXP);
 
-			if (!matches || !matches[1]) {
-				return FileSystem.DEFAULT_INDENTATION_CHARACTER;
-			}
+		if (!matches || !matches[1]) {
+			return FileSystem.DEFAULT_INDENTATION_CHARACTER;
+		}
 
-			let indentation = matches[1];
+		let indentation = matches[1];
 
-			return indentation[0] === " " ? indentation : FileSystem.DEFAULT_INDENTATION_CHARACTER;
-		}).future<string>()();
+		return indentation[0] === " " ? indentation : FileSystem.DEFAULT_INDENTATION_CHARACTER;
 	}
 }

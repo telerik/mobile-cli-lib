@@ -57,7 +57,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 
 	public getEmulatorId(): IFuture<string> {
 		return (() => {
-			let image = this.getEmulatorImage().wait();
+			let image = this.getEmulatorImage();
 			if (!image) {
 				this.$errors.fail("Could not find an emulator image to run your project.");
 			}
@@ -76,9 +76,10 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		}).future<void>()();
 	}
 
+	// TODO: Remove IFuture, reason: readText
 	public checkAvailability(): IFuture<void> {
 		return (() => {
-			if (!this.getEmulatorImage().wait()) {
+			if (!this.getEmulatorImage()) {
 				this.$errors.failWithoutHelp("You do not have any Android emulators installed. Please install at least one.");
 			}
 
@@ -97,7 +98,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 
 			let emulatorId: string = null;
 
-			let image = this.getEmulatorImage().wait();
+			let image = this.getEmulatorImage();
 			if (image) {
 				// start the emulator, if needed
 				emulatorId = this.startEmulatorInstance(image).wait();
@@ -149,11 +150,9 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		}).future<void>()();
 	}
 
-	private getEmulatorImage(): IFuture<string> {
-		return (() => {
-			let image = this.$options.avd || this.$options.geny || this.getBestFit().wait();
-			return image;
-		}).future<string>()();
+	private getEmulatorImage(): string {
+		let image = this.$options.avd || this.$options.geny || this.getBestFit();
+		return image;
 	}
 
 	private runApplicationOnEmulatorCore(app: string, appId: string, emulatorId: string): IFuture<void> {
@@ -395,61 +394,55 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		}).future<string[]>()();
 	}
 
-	private getBestFit(): IFuture<string> {
-		return (() => {
-			let minVersion = this.$emulatorSettingsService.minVersion;
+	private getBestFit(): string {
+		let minVersion = this.$emulatorSettingsService.minVersion;
 
-			let best = _(this.getAvds())
-				.map(avd => this.getInfoFromAvd(avd).wait())
-				.maxBy(avd => avd.targetNum);
+		let best = _(this.getAvds())
+			.map(avd => this.getInfoFromAvd(avd))
+			.maxBy(avd => avd.targetNum);
 
-			return (best && best.targetNum >= minVersion) ? best.name : null;
-		}).future<string>()();
+		return (best && best.targetNum >= minVersion) ? best.name : null;
 	}
 
-	private getInfoFromAvd(avdName: string): IFuture<Mobile.IAvdInfo> {
-		return (() => {
-			let iniFile = path.join(this.avdDir, avdName + ".ini");
-			let avdInfo: Mobile.IAvdInfo = this.parseAvdFile(avdName, iniFile).wait();
-			if (avdInfo.path && this.$fs.exists(avdInfo.path)) {
-				iniFile = path.join(avdInfo.path, "config.ini");
-				avdInfo = this.parseAvdFile(avdName, iniFile, avdInfo).wait();
-			}
-			return avdInfo;
-		}).future<Mobile.IAvdInfo>()();
+	private getInfoFromAvd(avdName: string): Mobile.IAvdInfo {
+		let iniFile = path.join(this.avdDir, avdName + ".ini");
+		let avdInfo: Mobile.IAvdInfo = this.parseAvdFile(avdName, iniFile);
+		if (avdInfo.path && this.$fs.exists(avdInfo.path)) {
+			iniFile = path.join(avdInfo.path, "config.ini");
+			avdInfo = this.parseAvdFile(avdName, iniFile, avdInfo);
+		}
+		return avdInfo;
 	}
 
-	private parseAvdFile(avdName: string, avdFileName: string, avdInfo?: Mobile.IAvdInfo): IFuture<Mobile.IAvdInfo> {
-		return (() => {
-			if (!this.$fs.exists(avdFileName)) {
-				return null;
+	private parseAvdFile(avdName: string, avdFileName: string, avdInfo?: Mobile.IAvdInfo): Mobile.IAvdInfo {
+		if (!this.$fs.exists(avdFileName)) {
+			return null;
+		}
+
+		// avd files can have different encoding, defined on the first line.
+		// find which one it is (if any) and use it to correctly read the file contents
+		let encoding = this.getAvdEncoding(avdFileName);
+		let contents = this.$fs.readText(avdFileName, encoding).split("\n");
+
+		avdInfo = _.reduce(contents, (result: Mobile.IAvdInfo, line: string) => {
+			let parsedLine = line.split("=");
+			let key = parsedLine[0];
+			switch (key) {
+				case "target":
+					result.target = parsedLine[1];
+					result.targetNum = this.readTargetNum(result.target);
+					break;
+				case "path": result.path = parsedLine[1]; break;
+				case "hw.device.name": result.device = parsedLine[1]; break;
+				case "abi.type": result.abi = parsedLine[1]; break;
+				case "skin.name": result.skin = parsedLine[1]; break;
+				case "sdcard.size": result.sdcard = parsedLine[1]; break;
 			}
-
-			// avd files can have different encoding, defined on the first line.
-			// find which one it is (if any) and use it to correctly read the file contents
-			let encoding = this.getAvdEncoding(avdFileName).wait();
-			let contents = this.$fs.readText(avdFileName, encoding).wait().split("\n");
-
-			avdInfo = _.reduce(contents, (result: Mobile.IAvdInfo, line: string) => {
-				let parsedLine = line.split("=");
-				let key = parsedLine[0];
-				switch (key) {
-					case "target":
-						result.target = parsedLine[1];
-						result.targetNum = this.readTargetNum(result.target);
-						break;
-					case "path": result.path = parsedLine[1]; break;
-					case "hw.device.name": result.device = parsedLine[1]; break;
-					case "abi.type": result.abi = parsedLine[1]; break;
-					case "skin.name": result.skin = parsedLine[1]; break;
-					case "sdcard.size": result.sdcard = parsedLine[1]; break;
-				}
-				return result;
-			},
-				avdInfo || <Mobile.IAvdInfo>Object.create(null));
-			avdInfo.name = avdName;
-			return avdInfo;
-		}).future<Mobile.IAvdInfo>()();
+			return result;
+		},
+			avdInfo || <Mobile.IAvdInfo>Object.create(null));
+		avdInfo.name = avdName;
+		return avdInfo;
 	}
 
 	// Android L is not written as a number in the .ini files, and we need to convert it
@@ -470,23 +463,21 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		return platformNumber;
 	}
 
-	private getAvdEncoding(avdName: string): IFuture<any> {
-		return (() => {
-			// avd files can have different encoding, defined on the first line.
-			// find which one it is (if any) and use it to correctly read the file contents
-			let encoding = "utf8";
-			let contents = this.$fs.readText(avdName, "ascii").wait();
+	private getAvdEncoding(avdName: string): any {
+		// avd files can have different encoding, defined on the first line.
+		// find which one it is (if any) and use it to correctly read the file contents
+		let encoding = "utf8";
+		let contents = this.$fs.readText(avdName, "ascii");
+		if (contents.length > 0) {
+			contents = contents.split("\n", 1)[0];
 			if (contents.length > 0) {
-				contents = contents.split("\n", 1)[0];
-				if (contents.length > 0) {
-					let matches = contents.match(AndroidEmulatorServices.ENCODING_MASK);
-					if (matches) {
-						encoding = matches[1];
-					}
+				let matches = contents.match(AndroidEmulatorServices.ENCODING_MASK);
+				if (matches) {
+					encoding = matches[1];
 				}
 			}
-			return encoding;
-		}).future<any>()();
+		}
+		return encoding;
 	}
 
 	private get androidHomeDir(): string {

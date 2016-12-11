@@ -234,7 +234,7 @@ describe("FileSystem", () => {
 			fs.copyFile(testFileName, testFileName).wait();
 			assert.isTrue(fs.exists(testFileName), "Original file should exist.");
 			assert.deepEqual(fs.getFsStats(testFileName).size, originalSize, "Original file and copied file must have the same size.");
-			assert.deepEqual(fs.readText(testFileName).wait(), fileContent, "File content should not be changed.");
+			assert.deepEqual(fs.readText(testFileName), fileContent, "File content should not be changed.");
 		});
 	});
 
@@ -289,7 +289,7 @@ describe("FileSystem", () => {
 
 		_.each(testCases, (testCase) => {
 			it(`should use the correct indentation ${testCase.testCondition}.`, () => {
-				fs.readText = () => Future.fromResult(testCase.text);
+				fs.readText = () => testCase.text;
 				fs.exists = () => testCase.exists;
 				fs.writeFile = () => Future.fromResult();
 

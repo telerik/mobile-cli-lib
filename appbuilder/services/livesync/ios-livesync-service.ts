@@ -24,7 +24,7 @@ export class IOSLiveSyncService implements IDeviceLiveSyncService {
 		return (() => {
 			if (this.device.isEmulator) {
 				let simulatorLogFilePath = path.join(osenv.home(), `/Library/Developer/CoreSimulator/Devices/${this.device.deviceInfo.identifier}/data/Library/Logs/system.log`);
-				let simulatorLogFileContent = this.$fs.readText(simulatorLogFilePath).wait() || "";
+				let simulatorLogFileContent = this.$fs.readText(simulatorLogFilePath) || "";
 
 				let simulatorCachePath = path.join(osenv.home(), `/Library/Developer/CoreSimulator/Devices/${this.device.deviceInfo.identifier}/data/Containers/Data/Application/`);
 				let regex = new RegExp(`^(?:.*?)${deviceAppData.appIdentifier}(?:.*?)${simulatorCachePath}(.*?)$`, "gm");

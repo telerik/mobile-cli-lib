@@ -12,7 +12,7 @@ export class ResourceLoader implements IResourceLoader {
 		return this.$fs.createReadStream(this.resolvePath(resourcePath));
 	}
 
-	readText(resourcePath: string): IFuture<string> {
+	readText(resourcePath: string): string {
 		return this.$fs.readText(this.resolvePath(resourcePath));
 	}
 

@@ -146,7 +146,7 @@ describe("Android device file system tests", () => {
 			fs.exists = (filePath: string) => true;
 			fs.readJson = (filePath: string) => (() => ({ "~/TestApp/app/test.js": "0", "~/TestApp/app/myfile.js": "2" })).future<string>()();
 			fs.getFsStats = mockFsStats({ isDirectory: false, isFile: true });
-			fs.readText = () => Future.fromResult("");
+			fs.readText = () => "";
 
 			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
 			androidDeviceFileSystem.transferFile = (localPath: string, devicePath: string) => {
@@ -171,7 +171,7 @@ describe("Android device file system tests", () => {
 			fs.exists = (filePath: string) => true;
 			fs.readJson = (filePath: string) => (() => ({ "~/TestApp/app/test.js": "0", "~/TestApp/app/myfile.js": "4", "~/TestApp/app/notchangedFile.js": "3" })).future<string>()();
 			fs.getFsStats = mockFsStats({ isDirectory: false, isFile: true });
-			fs.readText = () => Future.fromResult("");
+			fs.readText = () => "";
 
 			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
 			let transferedFilesOnDevice: string[] = [];
@@ -202,7 +202,7 @@ describe("Android device file system tests", () => {
 			fs.exists = (filePath: string) => true;
 			fs.readJson = (filePath: string) => (() => ({ "~/TestApp/app/test.js": "0", "~/TestApp/app/myfile.js": "2" })).future<string>()();
 			fs.getFsStats = mockFsStats({ isDirectory: false, isFile: true });
-			fs.readText = () => Future.fromResult("");
+			fs.readText = () => "";
 
 			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
 			androidDeviceFileSystem.transferFile = (localPath: string, devicePath: string) => {
@@ -227,7 +227,7 @@ describe("Android device file system tests", () => {
 			fs.exists = (filePath: string) => true;
 			fs.readJson = (filePath: string) => (() => ({ "~/TestApp/app/test.js": "0", "~/TestApp/app/myfile.js": "2" })).future<string>()();
 			fs.getFsStats = mockFsStats({ isDirectory: false, isFile: true });
-			fs.readText = () => Future.fromResult("");
+			fs.readText = () => "";
 
 			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
 			androidDeviceFileSystem.transferFile = (localPath: string, devicePath: string) => {

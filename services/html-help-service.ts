@@ -42,7 +42,7 @@ export class HtmlHelpService implements IHtmlHelpService {
 	public generateHtmlPages(): IFuture<void> {
 		return (() => {
 			let mdFiles = this.$fs.enumerateFilesInDirectorySync(this.pathToManPages);
-			let basicHtmlPage = this.$fs.readText(this.pathToBasicPage).wait();
+			let basicHtmlPage = this.$fs.readText(this.pathToBasicPage);
 			let futures = _.map(mdFiles, markdownFile => this.createHtmlPage(basicHtmlPage, markdownFile));
 			Future.wait(futures);
 			this.$logger.trace("Finished generating HTML files.");
@@ -55,7 +55,7 @@ export class HtmlHelpService implements IHtmlHelpService {
 			let htmlFileName = mdFileName.replace(HtmlHelpService.MARKDOWN_FILE_EXTENSION, HtmlHelpService.HTML_FILE_EXTENSION);
 			this.$logger.trace("Generating '%s' help topic.", htmlFileName);
 
-			let helpText = this.$fs.readText(pathToMdFile).wait();
+			let helpText = this.$fs.readText(pathToMdFile);
 			let outputText = this.$microTemplateService.parseContent(helpText, { isHtml: true });
 			let htmlText = marked(outputText);
 
@@ -127,23 +127,22 @@ export class HtmlHelpService implements IHtmlHelpService {
 		return false;
 	}
 
-	private readMdFileForCommand(commandName: string): IFuture<string> {
-		return ((): string => {
-			let mdFileName = this.convertCommandNameToFileName(commandName) + HtmlHelpService.MARKDOWN_FILE_EXTENSION;
-			this.$logger.trace("Reading help for command '%s'. FileName is '%s'.", commandName, mdFileName);
+	private readMdFileForCommand(commandName: string): string {
+		let mdFileName = this.convertCommandNameToFileName(commandName) + HtmlHelpService.MARKDOWN_FILE_EXTENSION;
+		this.$logger.trace("Reading help for command '%s'. FileName is '%s'.", commandName, mdFileName);
 
-			let markdownFile = _.find(this.$fs.enumerateFilesInDirectorySync(this.pathToManPages), file => path.basename(file) === mdFileName);
-			if(markdownFile) {
-				return this.$fs.readText(markdownFile).wait();
-			}
+		let markdownFile = _.find(this.$fs.enumerateFilesInDirectorySync(this.pathToManPages), file => path.basename(file) === mdFileName);
+		if(markdownFile) {
+			return this.$fs.readText(markdownFile);
+		}
 
-			this.$errors.failWithoutHelp("Unknown command '%s'. Try '$ %s help' for a full list of supported commands.", mdFileName.replace(".md", ""), this.$staticConfig.CLIENT_NAME.toLowerCase());
-		}).future<string>()();
+		this.$errors.failWithoutHelp("Unknown command '%s'. Try '$ %s help' for a full list of supported commands.", mdFileName.replace(".md", ""), this.$staticConfig.CLIENT_NAME.toLowerCase());
 	}
 
+	// TODO: Remove IFuture, reason: readText
 	public getCommandLineHelpForCommand(commandName: string): IFuture<string> {
 		return ((): string => {
-			let helpText = this.readMdFileForCommand(commandName).wait();
+			let helpText = this.readMdFileForCommand(commandName);
 			let outputText = this.$microTemplateService.parseContent(helpText, { isHtml: false })
 				.replace(/&nbsp;/g, " ")
 				.replace(HtmlHelpService.MARKDOWN_LINK_REGEX, "$1");

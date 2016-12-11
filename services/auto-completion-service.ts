@@ -61,7 +61,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 			shellProfilesToBeCleared.push(this.getHomePath(".profile"));
 			shellProfilesToBeCleared.forEach(file => {
 				try {
-					let text = this.$fs.readText(file).wait();
+					let text = this.$fs.readText(file);
 					let newText = text.replace(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME), "");
 					if(this.$staticConfig.CLIENT_NAME_ALIAS) {
 						newText = newText.replace(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME_ALIAS), "");
@@ -91,11 +91,12 @@ export class AutoCompletionService implements IAutoCompletionService {
 		return this._completionShellScriptContent;
 	}
 
+	// TODO: Remove IFuture, reason: readText
 	public isAutoCompletionEnabled(): IFuture<boolean> {
 		return ((): boolean => {
 			let result = true;
 			_.each(this.shellProfiles, filePath => {
-				result = this.isNewAutoCompletionEnabledInFile(filePath).wait() || this.isObsoleteAutoCompletionEnabledInFile(filePath).wait();
+				result = this.isNewAutoCompletionEnabledInFile(filePath) || this.isObsoleteAutoCompletionEnabledInFile(filePath);
 				if(!result) {
 					// break each
 					return false;
@@ -129,11 +130,12 @@ export class AutoCompletionService implements IAutoCompletionService {
 		}).future<void>()();
 	}
 
+	// TODO: Remove IFuture, reason: readText
 	public isObsoleteAutoCompletionEnabled(): IFuture<boolean> {
 		return (() => {
 			let result = true;
 			_.each(this.shellProfiles, shellProfile => {
-				result = this.isObsoleteAutoCompletionEnabledInFile(shellProfile).wait();
+				result = this.isObsoleteAutoCompletionEnabledInFile(shellProfile);
 				if(!result) {
 					// break each
 					return false;
@@ -144,36 +146,32 @@ export class AutoCompletionService implements IAutoCompletionService {
 		}).future<boolean>()();
 	}
 
-	private isNewAutoCompletionEnabledInFile(fileName: string): IFuture<boolean> {
-		return ((): boolean => {
-			try {
-				let data = this.$fs.readText(fileName).wait();
-				if(data && data.indexOf(this.completionShellScriptContent) !== -1) {
-					return true;
-				}
-			} catch(err) {
-				this.$logger.trace("Error while checking is autocompletion enabled in file %s. Error is: '%s'", fileName, err.toString());
+	private isNewAutoCompletionEnabledInFile(fileName: string): boolean {
+		try {
+			let data = this.$fs.readText(fileName);
+			if(data && data.indexOf(this.completionShellScriptContent) !== -1) {
+				return true;
 			}
+		} catch(err) {
+			this.$logger.trace("Error while checking is autocompletion enabled in file %s. Error is: '%s'", fileName, err.toString());
+		}
 
-			return false;
-		}).future<boolean>()();
+		return false;
 	}
 
-	private isObsoleteAutoCompletionEnabledInFile(fileName: string): IFuture<boolean> {
-		return (() => {
-			try {
-				let text = this.$fs.readText(fileName).wait();
-				return text.match(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME)) || text.match(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME));
-			} catch(err) {
-				this.$logger.trace("Error while checking is obsolete autocompletion enabled in file %s. Error is: '%s'", fileName, err.toString());
-			}
-		}).future<boolean>()();
+	private isObsoleteAutoCompletionEnabledInFile(fileName: string): boolean {
+		try {
+			let text = this.$fs.readText(fileName);
+			return !!(text.match(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME)) || text.match(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME)));
+		} catch(err) {
+			this.$logger.trace("Error while checking is obsolete autocompletion enabled in file %s. Error is: '%s'", fileName, err.toString());
+		}
 	}
 
 	private addAutoCompletionToShellScript(fileName: string): IFuture<void> {
 		return (() => {
 			try {
-				if(!this.isNewAutoCompletionEnabledInFile(fileName).wait() || this.isObsoleteAutoCompletionEnabledInFile(fileName).wait()) {
+				if(!this.isNewAutoCompletionEnabledInFile(fileName) || this.isObsoleteAutoCompletionEnabledInFile(fileName)) {
 					this.$logger.trace("AutoCompletion is not enabled in %s file. Trying to enable it.", fileName);
 					this.$fs.appendFile(fileName, this.completionShellScriptContent).wait();
 					this.scriptsUpdated = true;
@@ -195,9 +193,9 @@ export class AutoCompletionService implements IAutoCompletionService {
 	private removeAutoCompletionFromShellScript(fileName: string): IFuture<void> {
 		return (() => {
 			try {
-				if(this.isNewAutoCompletionEnabledInFile(fileName).wait()) {
+				if(this.isNewAutoCompletionEnabledInFile(fileName)) {
 					this.$logger.trace("AutoCompletion is enabled in %s file. Trying to disable it.", fileName);
-					let data = this.$fs.readText(fileName).wait();
+					let data = this.$fs.readText(fileName);
 					data = data.replace(this.completionShellScriptContent, "");
 					this.$fs.writeFile(fileName, data).wait();
 					this.scriptsUpdated = true;
@@ -220,7 +218,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 			try {
 				let doUpdate = true;
 				if (this.$fs.exists(filePath)) {
-					let contents = this.$fs.readText(filePath).wait();
+					let contents = this.$fs.readText(filePath);
 					let regExp = new RegExp(util.format("%s\\s+completion\\s+--\\s+", this.$staticConfig.CLIENT_NAME.toLowerCase()));
 					let matchCondition = contents.match(regExp);
 					if(this.$staticConfig.CLIENT_NAME_ALIAS) {

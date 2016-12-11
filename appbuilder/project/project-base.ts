@@ -88,7 +88,7 @@ export abstract class ProjectBase implements Project.IProjectBase {
 					let pathToAndroidResources = path.join(this.projectDir, this.$staticConfig.APP_RESOURCES_DIR_NAME, this.$projectConstants.ANDROID_PLATFORM_NAME);
 
 					let pathToAndroidManifest = path.join(pathToAndroidResources, ProjectBase.ANDROID_MANIFEST_NAME);
-					let appIdentifierInAndroidManifest = this.getAppIdentifierFromConfigFile(pathToAndroidManifest, /package\s*=\s*"(\S*)"/).wait();
+					let appIdentifierInAndroidManifest = this.getAppIdentifierFromConfigFile(pathToAndroidManifest, /package\s*=\s*"(\S*)"/);
 
 					if (appIdentifierInAndroidManifest && appIdentifierInAndroidManifest !== ProjectBase.APP_IDENTIFIER_PLACEHOLDER) {
 						this._platformSpecificAppIdentifier = appIdentifierInAndroidManifest;
@@ -174,19 +174,17 @@ export abstract class ProjectBase implements Project.IProjectBase {
 		return data;
 	}
 
-	private getAppIdentifierFromConfigFile(pathToConfigFile: string, regExp: RegExp): IFuture<string> {
-		return ((): string => {
-			if (this.$fs.exists(pathToConfigFile)) {
-				let fileContent = this.$fs.readText(pathToConfigFile).wait();
+	private getAppIdentifierFromConfigFile(pathToConfigFile: string, regExp: RegExp): string {
+		if (this.$fs.exists(pathToConfigFile)) {
+			let fileContent = this.$fs.readText(pathToConfigFile);
 
-				let matches = fileContent.match(regExp);
+			let matches = fileContent.match(regExp);
 
-				if (matches && matches[1]) {
-					return matches[1];
-				}
+			if (matches && matches[1]) {
+				return matches[1];
 			}
+		}
 
-			return null;
-		}).future<string>()();
+		return null;
 	}
 }

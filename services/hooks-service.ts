@@ -87,16 +87,16 @@ export class HooksService implements IHooksService {
 
 	private executeHooksInDirectory(directoryPath: string, hookName: string, hookArguments?: IDictionary<any>): IFuture<void> {
 		return (() => {
-			let hooks = this.getHooksByName(directoryPath, hookName).wait();
+			let hooks = this.getHooksByName(directoryPath, hookName);
 			hooks.forEach(hook => {
 				this.$logger.info("Executing %s hook from %s", hookName, hook.fullPath);
-				let command = this.getSheBangInterpreter(hook).wait();
+				let command = this.getSheBangInterpreter(hook);
 				let inProc = false;
 				if (!command) {
 					command = hook.fullPath;
 					if (path.extname(hook.fullPath).toLowerCase() === ".js") {
 						command = process.argv[0];
-						inProc = this.shouldExecuteInProcess(this.$fs.readText(hook.fullPath).wait());
+						inProc = this.shouldExecuteInProcess(this.$fs.readText(hook.fullPath));
 					}
 				}
 
@@ -143,13 +143,11 @@ export class HooksService implements IHooksService {
 		}).future<void>()();
 	}
 
-	private getHooksByName(directoryPath: string, hookName: string): IFuture<IHook[]> {
-		return (() => {
-			let allBaseHooks = this.getHooksInDirectory(directoryPath);
-			let baseHooks = _.filter(allBaseHooks, hook => hook.name.toLowerCase() === hookName.toLowerCase());
-			let moreHooks = this.getHooksInDirectory(path.join(directoryPath, hookName));
-			return baseHooks.concat(moreHooks);
-		}).future<IHook[]>()();
+	private getHooksByName(directoryPath: string, hookName: string): IHook[] {
+		let allBaseHooks = this.getHooksInDirectory(directoryPath);
+		let baseHooks = _.filter(allBaseHooks, hook => hook.name.toLowerCase() === hookName.toLowerCase());
+		let moreHooks = this.getHooksInDirectory(path.join(directoryPath, hookName));
+		return baseHooks.concat(moreHooks);
 	}
 
 	private getHooksInDirectory(directoryPath: string): IHook[] {
@@ -190,27 +188,25 @@ export class HooksService implements IHooksService {
 		};
 	}
 
-	private getSheBangInterpreter(hook: IHook): IFuture<string> {
-		return (() => {
-			let interpreter: string = null;
-			let shMatch: string[] = [];
-			let fileContent = this.$fs.readText(hook.fullPath).wait();
-			if (fileContent) {
-				let sheBangMatch = fileContent.split('\n')[0].match(/^#!(?:\/usr\/bin\/env )?([^\r\n]+)/m);
-				if (sheBangMatch) {
-					interpreter = sheBangMatch[1];
-				}
-				if (interpreter) {
-					// Likewise, make /usr/bin/bash work like "bash".
-					shMatch = interpreter.match(/bin\/((?:ba)?sh)$/);
-				}
-				if (shMatch) {
-					interpreter = shMatch[1];
-				}
+	private getSheBangInterpreter(hook: IHook): string {
+		let interpreter: string = null;
+		let shMatch: string[] = [];
+		let fileContent = this.$fs.readText(hook.fullPath);
+		if (fileContent) {
+			let sheBangMatch = fileContent.split('\n')[0].match(/^#!(?:\/usr\/bin\/env )?([^\r\n]+)/m);
+			if (sheBangMatch) {
+				interpreter = sheBangMatch[1];
 			}
+			if (interpreter) {
+				// Likewise, make /usr/bin/bash work like "bash".
+				shMatch = interpreter.match(/bin\/((?:ba)?sh)$/);
+			}
+			if (shMatch) {
+				interpreter = shMatch[1];
+			}
+		}
 
-			return interpreter;
-		}).future<string>()();
+		return interpreter;
 	}
 
 	private getBaseFilename(fileName: string): string {

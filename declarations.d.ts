@@ -200,7 +200,14 @@ interface IFileSystem {
 	 * @returns {string|NodeBuffer} Content of the file as buffer. In case encoding is specified, the content is returned as string.
 	 */
 	readFile(filename: string, options?: IReadFileOptions): string|NodeBuffer;
-	readText(filename: string, encoding?: IReadFileOptions | string): IFuture<string>;
+
+	/**
+	 * Reads the entire contents of a file and returns the result as string.
+	 * @param {string} filename Path to the file that has to be read.
+	 * @param {string} @optional options Options used for reading the file - encoding and flags. If options are not passed, utf8 is used.
+	 * @returns {string} Content of the file as string.
+	 */
+	readText(filename: string, encoding?: IReadFileOptions | string): string;
 	readJson(filename: string, encoding?: string): IFuture<any>;
 	readStdin(): IFuture<string>;
 	writeFile(filename: string, data: any, encoding?: string): IFuture<void>;
@@ -1005,7 +1012,7 @@ interface IResourceLoader {
 	 */
 	openFile(path: string): NodeJS.ReadableStream;
 
-	readText(path: string): IFuture<string>;
+	readText(path: string): string;
 
 	/**
 	 * Reads the contents of a resource file in JSON format.

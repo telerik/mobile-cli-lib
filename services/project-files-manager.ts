@@ -72,7 +72,7 @@ export class ProjectFilesManager implements IProjectFilesManager {
 							let oldName = extension === ".map" ? this.getFileName(filePath, extension) : path.basename(filePath);
 							let newName = extension === ".map" ? this.getFileName(projectFileInfo.onDeviceFileName, extension) : path.basename(projectFileInfo.onDeviceFileName);
 
-							let fileContent = this.$fs.readText(filePath).wait();
+							let fileContent = this.$fs.readText(filePath);
 							fileContent = fileContent.replace(new RegExp(oldName, 'g'), newName);
 							this.$fs.writeFile(filePath, fileContent).wait();
 						}
