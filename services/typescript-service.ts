@@ -156,7 +156,7 @@ export class TypeScriptService implements ITypeScriptService {
 
 					this.typeScriptModuleFilePath = typeScriptJsFilePath.substring(0, typeScriptJsFilePath.indexOf(typeScriptInNodeModulesDir) + typeScriptInNodeModulesDir.length);
 				} else {
-					let typeScriptModuleInstallationDir = this.createTempDirectoryForTsc().wait();
+					let typeScriptModuleInstallationDir = this.createTempDirectoryForTsc();
 					let pluginToInstall: INpmDependency = {
 						name: TypeScriptService.TYPESCRIPT_MODULE_NAME,
 						version: TypeScriptService.DEFAULT_TSC_VERSION,
@@ -314,12 +314,10 @@ export class TypeScriptService implements ITypeScriptService {
 		}).concat(this.definitionFiles);
 	}
 
-	private createTempDirectoryForTsc(): IFuture<string> {
-		return ((): string => {
-			let tempDir = temp.mkdirSync(`typescript-compiler-${TypeScriptService.DEFAULT_TSC_VERSION}`);
-			this.$fs.writeJson(path.join(tempDir, this.$projectConstants.PACKAGE_JSON_NAME), { name: "tsc-container", version: "1.0.0" }).wait();
-			return tempDir;
-		}).future<string>()();
+	private createTempDirectoryForTsc(): string {
+		let tempDir = temp.mkdirSync(`typescript-compiler-${TypeScriptService.DEFAULT_TSC_VERSION}`);
+		this.$fs.writeJson(path.join(tempDir, this.$projectConstants.PACKAGE_JSON_NAME), { name: "tsc-container", version: "1.0.0" });
+		return tempDir;
 	}
 }
 

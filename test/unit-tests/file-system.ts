@@ -299,7 +299,7 @@ describe("FileSystem", () => {
 					actualIndentation = <string>space;
 				};
 
-				fs.writeJson("", testCase.text).wait();
+				fs.writeJson("", testCase.text);
 
 				JSON.stringify = originalJsonStringify;
 

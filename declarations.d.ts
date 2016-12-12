@@ -222,7 +222,7 @@ interface IFileSystem {
 	/**
 	 * Writes data to a file, replacing the file if it already exists. data can be a string or a buffer.
 	 * @param {string} filename Path to file to be created.
-	 * @param {string | NodeBuffer} Data to be written to file.
+	 * @param {string | NodeBuffer} data Data to be written to file.
 	 * @param {string} encoding @optional File encoding, defaults to utf8.
 	 * @returns {void}
 	 */
@@ -231,13 +231,22 @@ interface IFileSystem {
 	/**
 	 * Appends data to a file, creating the file if it does not yet exist. Data can be a string or a buffer.
 	 * @param {string} filename Path to file to be created.
-	 * @param {string | NodeBuffer} Data to be appended to file.
+	 * @param {string | NodeBuffer} data Data to be appended to file.
 	 * @param {string} encoding @optional File encoding, defaults to utf8.
 	 * @returns {void}
 	 */
 	appendFile(filename: string, data: string | NodeBuffer, encoding?: string): void;
 
-	writeJson(filename: string, data: any, space?: string, encoding?: string): IFuture<void>;
+	/**
+	 * Writes JSON data to file.
+	 * @param {string} filename Path to file to be created.
+	 * @param {any} data JSON data to be written to file.
+	 * @param {string} space Identation that will be used for the file.
+	 * @param {string} encoding @optional File encoding, defaults to utf8.
+	 * @returns {void}
+	 */
+	writeJson(filename: string, data: any, space?: string, encoding?: string): void;
+
 	copyFile(sourceFileName: string, destinationFileName: string): IFuture<void>;
 
 	/**

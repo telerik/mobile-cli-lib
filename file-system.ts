@@ -123,7 +123,7 @@ export class FileSystem implements IFileSystem {
 			fs.unlinkSync(path);
 		} catch (err) {
 			if (err && err.code !== "ENOENT") {  // ignore "file doesn't exist" error
-				throw(err);
+				throw (err);
 			}
 		}
 	}
@@ -177,7 +177,7 @@ export class FileSystem implements IFileSystem {
 		return fs.readdirSync(path);
 	}
 
-	public readFile(filename: string, options?: IReadFileOptions): string|NodeBuffer {
+	public readFile(filename: string, options?: IReadFileOptions): string | NodeBuffer {
 		return fs.readFileSync(filename, options);
 	}
 
@@ -213,12 +213,12 @@ export class FileSystem implements IFileSystem {
 		fs.appendFileSync(filename, data, { encoding: encoding });
 	}
 
-	public writeJson(filename: string, data: any, space?: string, encoding?: string): IFuture<void> {
+	public writeJson(filename: string, data: any, space?: string, encoding?: string): void {
 		if (!space) {
 			space = this.getIndentationCharacter(filename);
 		}
 
-		return Future.fromResult(this.writeFile(filename, JSON.stringify(data, null, space), encoding));
+		return this.writeFile(filename, JSON.stringify(data, null, space), encoding);
 	}
 
 	public copyFile(sourceFileName: string, destinationFileName: string): IFuture<void> {
@@ -369,7 +369,7 @@ export class FileSystem implements IFileSystem {
 		opts?: { enumerateDirectories?: boolean, includeEmptyDirectories?: boolean }, foundFiles?: string[]): string[] {
 		foundFiles = foundFiles || [];
 
-		if(!this.exists(directoryPath)) {
+		if (!this.exists(directoryPath)) {
 			let $logger = this.$injector.resolve("logger");
 			$logger.warn('Could not find folder: ' + directoryPath);
 			return foundFiles;

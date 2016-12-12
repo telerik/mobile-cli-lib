@@ -57,7 +57,7 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 				shasums = <IStringDictionary>data;
 			}
 
-			this.$fs.writeJson(this.hashFileLocalPath, shasums).wait();
+			this.$fs.writeJson(this.hashFileLocalPath, shasums);
 			this.adb.executeCommand(["push", this.hashFileLocalPath, this.hashFileDevicePath]).wait();
 		}).future<void>()();
 	}

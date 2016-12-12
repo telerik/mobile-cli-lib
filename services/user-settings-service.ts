@@ -41,7 +41,7 @@ export class UserSettingsServiceBase implements IUserSettingsService {
 					this.userSettingsData[propertyName] = data[propertyName];
 				});
 
-			this.$fs.writeJson(this.userSettingsFilePath, this.userSettingsData).wait();
+			this.$fs.writeJson(this.userSettingsFilePath, this.userSettingsData);
 		}).future<void>()();
 	}
 
