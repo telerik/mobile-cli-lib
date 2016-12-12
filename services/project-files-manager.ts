@@ -36,24 +36,21 @@ export class ProjectFilesManager implements IProjectFilesManager {
 		return localToDevicePaths;
 	}
 
-	// TODO: Remove IFuture, reason: writeFile
-	public processPlatformSpecificFiles(directoryPath: string, platform: string, excludedDirs?: string[]): IFuture<void> {
-		return (() => {
-			let contents = this.$fs.readDirectory(directoryPath);
-			let files: string[] = [];
+	public processPlatformSpecificFiles(directoryPath: string, platform: string, excludedDirs?: string[]): void {
+		let contents = this.$fs.readDirectory(directoryPath);
+		let files: string[] = [];
 
-			_.each(contents, fileName => {
-				let filePath = path.join(directoryPath, fileName);
-				let fsStat = this.$fs.getFsStats(filePath);
-				if (fsStat.isDirectory() && !_.includes(excludedDirs, fileName)) {
-					this.processPlatformSpecificFilesCore(platform, this.$fs.enumerateFilesInDirectorySync(filePath));
-				} else if (fsStat.isFile()) {
-					files.push(filePath);
-				}
-			});
-			this.processPlatformSpecificFilesCore(platform, files);
+		_.each(contents, fileName => {
+			let filePath = path.join(directoryPath, fileName);
+			let fsStat = this.$fs.getFsStats(filePath);
+			if (fsStat.isDirectory() && !_.includes(excludedDirs, fileName)) {
+				this.processPlatformSpecificFilesCore(platform, this.$fs.enumerateFilesInDirectorySync(filePath));
+			} else if (fsStat.isFile()) {
+				files.push(filePath);
+			}
+		});
 
-		}).future<void>()();
+		this.processPlatformSpecificFilesCore(platform, files);
 	}
 
 	private processPlatformSpecificFilesCore(platform: string, files: string[]): void {

@@ -53,32 +53,29 @@ export class AutoCompletionService implements IAutoCompletionService {
 		return tabTabRegex;
 	}
 
-	// TODO: Remove IFuture, reason: writeFile
-	public removeObsoleteAutoCompletion(): IFuture<void> {
-		return (() => {
-			// In previous releases we were writing directly in .bash_profile, .bashrc, .zshrc and .profile - remove this old code
-			let shellProfilesToBeCleared = this.shellProfiles;
-			// Add .profile only here as we do not want new autocompletion in this file, but we have to remove our old code from it.
-			shellProfilesToBeCleared.push(this.getHomePath(".profile"));
-			shellProfilesToBeCleared.forEach(file => {
-				try {
-					let text = this.$fs.readText(file);
-					let newText = text.replace(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME), "");
-					if(this.$staticConfig.CLIENT_NAME_ALIAS) {
-						newText = newText.replace(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME_ALIAS), "");
-					}
-
-					if(newText !== text) {
-						this.$logger.trace("Remove obsolete AutoCompletion from file %s.", file);
-						this.$fs.writeFile(file, newText);
-					}
-				} catch(error) {
-					if(error.code !== "ENOENT") {
-						this.$logger.trace("Error while trying to disable autocompletion for '%s' file. Error is:\n%s", error.toString());
-					}
+	private removeObsoleteAutoCompletion(): void {
+		// In previous releases we were writing directly in .bash_profile, .bashrc, .zshrc and .profile - remove this old code
+		let shellProfilesToBeCleared = this.shellProfiles;
+		// Add .profile only here as we do not want new autocompletion in this file, but we have to remove our old code from it.
+		shellProfilesToBeCleared.push(this.getHomePath(".profile"));
+		shellProfilesToBeCleared.forEach(file => {
+			try {
+				let text = this.$fs.readText(file);
+				let newText = text.replace(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME), "");
+				if(this.$staticConfig.CLIENT_NAME_ALIAS) {
+					newText = newText.replace(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME_ALIAS), "");
 				}
-			});
-		}).future<void>()();
+
+				if(newText !== text) {
+					this.$logger.trace("Remove obsolete AutoCompletion from file %s.", file);
+					this.$fs.writeFile(file, newText);
+				}
+			} catch(error) {
+				if(error.code !== "ENOENT") {
+					this.$logger.trace("Error while trying to disable autocompletion for '%s' file. Error is:\n%s", error.toString());
+				}
+			}
+		});
 	}
 
 	private get completionShellScriptContent() {
@@ -105,22 +102,20 @@ export class AutoCompletionService implements IAutoCompletionService {
 		return result;
 	}
 
-	public disableAutoCompletion(): IFuture<void> {
-		return (() => {
-			_.each(this.shellProfiles, shellFile => this.removeAutoCompletionFromShellScript(shellFile));
-			this.removeObsoleteAutoCompletion().wait();
+	public disableAutoCompletion(): void {
+		_.each(this.shellProfiles, shellFile => this.removeAutoCompletionFromShellScript(shellFile));
+		this.removeObsoleteAutoCompletion();
 
-			if(this.scriptsOk && this.scriptsUpdated) {
-				this.$logger.out("Restart your shell to disable command auto-completion.");
-			}
-		}).future<void>()();
+		if(this.scriptsOk && this.scriptsUpdated) {
+			this.$logger.out("Restart your shell to disable command auto-completion.");
+		}
 	}
 
 	public enableAutoCompletion(): IFuture<void> {
 		return (() => {
 			this.updateCLIShellScript().wait();
 			_.each(this.shellProfiles, shellFile => this.addAutoCompletionToShellScript(shellFile).wait());
-			this.removeObsoleteAutoCompletion().wait();
+			this.removeObsoleteAutoCompletion();
 
 			if(this.scriptsOk && this.scriptsUpdated) {
 				this.$logger.out("Restart your shell to enable command auto-completion.");

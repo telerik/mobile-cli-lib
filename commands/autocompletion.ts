@@ -28,7 +28,7 @@ export class AutoCompleteCommand implements ICommand {
 						this.$autoCompletionService.enableAutoCompletion().wait();
 					} else {
 						// make sure we've removed all autocompletion code from all shell profiles
-						this.$autoCompletionService.disableAutoCompletion().wait();
+						this.$autoCompletionService.disableAutoCompletion();
 					}
 				}
 			}
@@ -48,7 +48,7 @@ export class DisableAutoCompleteCommand implements ICommand {
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
 			if(this.$autoCompletionService.isAutoCompletionEnabled()) {
-				this.$autoCompletionService.disableAutoCompletion().wait();
+				this.$autoCompletionService.disableAutoCompletion();
 			} else {
 				this.$logger.info("Autocompletion is already disabled.");
 			}

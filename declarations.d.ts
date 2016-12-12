@@ -526,7 +526,12 @@ interface IHostCapability {
 
 interface IAutoCompletionService {
 	enableAutoCompletion(): IFuture<void>;
-	disableAutoCompletion(): IFuture<void>;
+
+	/**
+	 * Disables auto completion by removing the entries from all profiles.
+	 * @returns {void}
+	 */
+	disableAutoCompletion(): void;
 
 	/**
 	 * Checks if autocompletion is enabled.
@@ -1255,10 +1260,15 @@ interface IProjectFilesManager {
 	 * If projectFiles parameter is not specified enumerates the files from the specified projectFilesPath
 	 */
 	createLocalToDevicePaths(deviceAppData: Mobile.IDeviceAppData, projectFilesPath: string, files: string[], excludedProjectDirsAndFiles: string[], projectFilesConfig?: IProjectFilesConfig): Mobile.ILocalToDevicePathData[];
+
 	/**
-	 * Handle platform specific files
+	 * Handle platform specific files.
+	 * @param {string} directoryPath Directory from which to start looking for platform specific files. All subdirectories will be included.
+	 * @param {string} platform Mobile platform - only platform specific files for this platform will be included.
+	 * @param {string[]} excludedDirs Directories which should be skipped.
+	 * @returns {void}
 	 */
-	processPlatformSpecificFiles(directoryPath: string, platform: string, excludedDirs?: string[]): IFuture<void>;
+	processPlatformSpecificFiles(directoryPath: string, platform: string, excludedDirs?: string[]): void;
 }
 
 interface IProjectFilesProvider {

@@ -45,7 +45,7 @@ export class UserSettingsServiceBase implements IUserSettingsService {
 		}).future<void>()();
 	}
 
-	// TODO: Remove IFuture, reason: writeFile
+	// TODO: Remove IFuture, reason: writeFile - blocked as other implementation of the interface has async operation.
 	public loadUserSettingsFile(): IFuture<void> {
 		return (() => {
 			if(!this.userSettingsData) {

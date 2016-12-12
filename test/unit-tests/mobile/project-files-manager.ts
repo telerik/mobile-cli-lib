@@ -172,7 +172,7 @@ describe("Project Files Manager Tests", () => {
 		let files = ["test.ios.x", "test.android.x"];
 		let directoryPath = createFiles(testInjector, files).wait();
 
-		projectFilesManager.processPlatformSpecificFiles(directoryPath, "android").wait();
+		projectFilesManager.processPlatformSpecificFiles(directoryPath, "android");
 
 		let fs = testInjector.resolve("fs");
 		assert.isFalse(fs.exists(path.join(directoryPath, "test.ios.x")));
@@ -184,7 +184,7 @@ describe("Project Files Manager Tests", () => {
 		let files = ["index.ios.html", "index1.android.html", "a.test"];
 		let directoryPath = createFiles(testInjector, files).wait();
 
-		projectFilesManager.processPlatformSpecificFiles(directoryPath, "ios").wait();
+		projectFilesManager.processPlatformSpecificFiles(directoryPath, "ios");
 
 		let fs = testInjector.resolve("fs");
 		assert.isFalse(fs.exists(path.join(directoryPath, "index1.android.html")));
@@ -197,7 +197,7 @@ describe("Project Files Manager Tests", () => {
 		let files = ["index1.js", "index2.js", "index3.js"];
 		let directoryPath = createFiles(testInjector, files).wait();
 
-		projectFilesManager.processPlatformSpecificFiles(directoryPath, "ios").wait();
+		projectFilesManager.processPlatformSpecificFiles(directoryPath, "ios");
 
 		let fs = testInjector.resolve("fs");
 		assert.isTrue(fs.exists(path.join(directoryPath, "index1.js")));
