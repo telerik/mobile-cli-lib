@@ -228,7 +228,15 @@ interface IFileSystem {
 	 */
 	writeFile(filename: string, data: string | NodeBuffer, encoding?: string): void;
 
-	appendFile(filename: string, data: any, encoding?: string): IFuture<void>;
+	/**
+	 * Appends data to a file, creating the file if it does not yet exist. Data can be a string or a buffer.
+	 * @param {string} filename Path to file to be created.
+	 * @param {string | NodeBuffer} Data to be appended to file.
+	 * @param {string} encoding @optional File encoding, defaults to utf8.
+	 * @returns {void}
+	 */
+	appendFile(filename: string, data: string | NodeBuffer, encoding?: string): void;
+
 	writeJson(filename: string, data: any, space?: string, encoding?: string): IFuture<void>;
 	copyFile(sourceFileName: string, destinationFileName: string): IFuture<void>;
 
@@ -525,6 +533,11 @@ interface IHostCapability {
 }
 
 interface IAutoCompletionService {
+
+	/**
+	 * Enables command line autocompletion by creating a `.<cliname>rc` file and sourcing it in all profiles (.bash_profile, .bashrc, etc.).
+	 * @returns {IFuture<void>}
+	 */
 	enableAutoCompletion(): IFuture<void>;
 
 	/**

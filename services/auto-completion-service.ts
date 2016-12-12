@@ -111,10 +111,11 @@ export class AutoCompletionService implements IAutoCompletionService {
 		}
 	}
 
+	// TODO: Remove IFuture, reason: appendFile
 	public enableAutoCompletion(): IFuture<void> {
 		return (() => {
 			this.updateCLIShellScript().wait();
-			_.each(this.shellProfiles, shellFile => this.addAutoCompletionToShellScript(shellFile).wait());
+			_.each(this.shellProfiles, shellFile => this.addAutoCompletionToShellScript(shellFile));
 			this.removeObsoleteAutoCompletion();
 
 			if(this.scriptsOk && this.scriptsUpdated) {
@@ -158,26 +159,24 @@ export class AutoCompletionService implements IAutoCompletionService {
 		}
 	}
 
-	private addAutoCompletionToShellScript(fileName: string): IFuture<void> {
-		return (() => {
-			try {
-				if(!this.isNewAutoCompletionEnabledInFile(fileName) || this.isObsoleteAutoCompletionEnabledInFile(fileName)) {
-					this.$logger.trace("AutoCompletion is not enabled in %s file. Trying to enable it.", fileName);
-					this.$fs.appendFile(fileName, this.completionShellScriptContent).wait();
-					this.scriptsUpdated = true;
-				}
-			} catch(err) {
-				this.$logger.out("Unable to update %s. Command-line completion might not work.", fileName);
-				// When npm is installed with sudo, in some cases the installation cannot write to shell profiles
-				// Advise the user how to enable autocompletion after the installation is completed.
-				if((err.code === "EPERM" || err.code === "EACCES") && !this.$hostInfo.isWindows && process.env.SUDO_USER) {
-					this.$logger.out("To enable command-line completion, run '$ %s autocomplete enable'.", this.$staticConfig.CLIENT_NAME);
-				}
-
-				this.$logger.trace(err);
-				this.scriptsOk = false;
+	private addAutoCompletionToShellScript(fileName: string): void {
+		try {
+			if(!this.isNewAutoCompletionEnabledInFile(fileName) || this.isObsoleteAutoCompletionEnabledInFile(fileName)) {
+				this.$logger.trace("AutoCompletion is not enabled in %s file. Trying to enable it.", fileName);
+				this.$fs.appendFile(fileName, this.completionShellScriptContent);
+				this.scriptsUpdated = true;
 			}
-		}).future<void>()();
+		} catch(err) {
+			this.$logger.out("Unable to update %s. Command-line completion might not work.", fileName);
+			// When npm is installed with sudo, in some cases the installation cannot write to shell profiles
+			// Advise the user how to enable autocompletion after the installation is completed.
+			if((err.code === "EPERM" || err.code === "EACCES") && !this.$hostInfo.isWindows && process.env.SUDO_USER) {
+				this.$logger.out("To enable command-line completion, run '$ %s autocomplete enable'.", this.$staticConfig.CLIENT_NAME);
+			}
+
+			this.$logger.trace(err);
+			this.scriptsOk = false;
+		}
 	}
 
 	private removeAutoCompletionFromShellScript(fileName: string): void {
