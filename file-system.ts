@@ -207,35 +207,20 @@ export class FileSystem implements IFileSystem {
 		return this.writeFile(filename, JSON.stringify(data, null, space), encoding);
 	}
 
-	public copyFile(sourceFileName: string, destinationFileName: string): IFuture<void> {
+	public copyFile(sourceFileName: string, destinationFileName: string): void {
 		if (path.resolve(sourceFileName) === path.resolve(destinationFileName)) {
-			return Future.fromResult();
+			return;
 		}
 
-		let res = new Future<void>();
-
 		this.createDirectory(path.dirname(destinationFileName));
-		let source = this.createReadStream(sourceFileName);
-		let target = this.createWriteStream(destinationFileName);
 
-		source.on("error", (e: Error) => {
-			if (!res.isResolved()) {
-				res.throw(e);
-			}
-		});
-		target.on("finish", () => {
-			if (!res.isResolved()) {
-				res.return();
-			}
-		})
-			.on("error", (e: Error) => {
-				if (!res.isResolved()) {
-					res.throw(e);
-				}
-			});
+		shelljs.cp("-f", sourceFileName, destinationFileName);
 
-		source.pipe(target);
-		return res;
+		const err = shelljs.error();
+
+		if (err) {
+			throw new Error(err);
+		}
 	}
 
 	public createReadStream(path: string, options?: {

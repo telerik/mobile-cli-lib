@@ -245,7 +245,13 @@ interface IFileSystem {
 	 */
 	writeJson(filename: string, data: any, space?: string, encoding?: string): void;
 
-	copyFile(sourceFileName: string, destinationFileName: string): IFuture<void>;
+	/**
+	 * Copies a file.
+	 * @param {string} sourceFileName The original file that has to be copied.
+	 * @param {string} destinationFileName The filepath where the file should be copied.
+	 * @returns {void}
+	 */
+	copyFile(sourceFileName: string, destinationFileName: string): void;
 
 	/**
 	 * Returns unique file name based on the passed name by checkin if it exists and adding numbers to the passed name until a non-existent file is found.

@@ -111,7 +111,6 @@ export class AutoCompletionService implements IAutoCompletionService {
 		}
 	}
 
-	// TODO: Remove IFuture, reason: appendFile
 	public enableAutoCompletion(): IFuture<void> {
 		return (() => {
 			this.updateCLIShellScript().wait();
