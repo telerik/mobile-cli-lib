@@ -241,16 +241,8 @@ export class FileSystem implements IFileSystem {
 		return fs.createWriteStream(path, options);
 	}
 
-	public chmod(path: string, mode: any): IFuture<void> {
-		let future = new Future<void>();
-		fs.chmod(path, mode, (err: Error) => {
-			if (err) {
-				future.throw(err);
-			} else {
-				future.return();
-			}
-		});
-		return future;
+	public chmod(path: string, mode: any): void {
+		fs.chmodSync(path, mode);
 	}
 
 	public getFsStats(path: string): fs.Stats {

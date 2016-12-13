@@ -338,8 +338,13 @@ interface IFileSystem {
 		string?: string;
 	}): any;
 
-	chmod(path: string, mode: number): IFuture<any>;
-	chmod(path: string, mode: string): IFuture<any>;
+	/**
+	 * Changes file mode of the specified file. In case it is a symlink, the original file's mode is modified.
+	 * @param {string} path Filepath to be modified.
+	 * @param {number | string} mode File mode.
+	 * @returns {void}
+	 */
+	chmod(path: string, mode: number | string): void;
 
 	setCurrentUserAsOwner(path: string, owner: string): IFuture<void>;
 	enumerateFilesInDirectorySync(directoryPath: string, filterCallback?: (file: string, stat: IFsStats) => boolean, opts?: { enumerateDirectories?: boolean, includeEmptyDirectories?: boolean }): string[];

@@ -220,7 +220,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 					let clientExecutableFileName = (this.$staticConfig.CLIENT_NAME_ALIAS || this.$staticConfig.CLIENT_NAME).toLowerCase();
 					let pathToExecutableFile = path.join(__dirname, `../../../bin/${clientExecutableFileName}.js`);
 					this.$childProcess.exec(`"${process.argv[0]}" "${pathToExecutableFile}" completion >> "${filePath}"`).wait();
-					this.$fs.chmod(filePath, "0644").wait();
+					this.$fs.chmod(filePath, "0644");
 				}
 			} catch(err) {
 				this.$logger.out("Failed to update %s. Auto-completion may not work. ", filePath);
