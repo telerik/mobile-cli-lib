@@ -154,8 +154,6 @@ interface IFileSystem {
 	 */
 	exists(path: string): boolean;
 
-	tryExecuteFileOperation(path: string, operation: () => IFuture<any>, enoentErrorMessage?: string): IFuture<void>;
-
 	/**
 	 * Deletes a file.
 	 * @param {string} path Path to be deleted.

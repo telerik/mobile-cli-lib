@@ -104,20 +104,6 @@ export class FileSystem implements IFileSystem {
 		return fs.existsSync(path);
 	}
 
-	public tryExecuteFileOperation(path: string, operation: () => IFuture<any>, enoentErrorMessage?: string): IFuture<void> {
-		return (() => {
-			try {
-				operation().wait();
-			} catch (e) {
-				this.$injector.resolve("$logger").trace("tryExecuteFileOperation failed with error %s.", e);
-				if (enoentErrorMessage) {
-					let message = (e.code === "ENOENT") ? enoentErrorMessage : e.message;
-					this.$injector.resolve("$errors").failWithoutHelp(message);
-				}
-			}
-		}).future<void>()();
-	}
-
 	public deleteFile(path: string): void {
 		try {
 			fs.unlinkSync(path);
