@@ -301,7 +301,13 @@ interface IFileSystem {
 	 */
 	getFsStats(path: string): IFsStats;
 
-	getLsStats(path: string): IFuture<IFsStats>;
+	/**
+	 * Returns information about the specified file.
+	 * In case the passed path is symlink, the returned information is about the symlink itself.
+	 * @param {string} path Path to file for which the information will be taken.
+	 * @returns {IFsStats} Inforamation about the specified file.
+	 */
+	getLsStats(path: string): IFsStats;
 
 	symlink(sourcePath: string, destinationPath: string, type: "file"): void;
 	symlink(sourcePath: string, destinationPath: string, type: "dir"): void;
