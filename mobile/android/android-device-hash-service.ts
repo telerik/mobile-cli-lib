@@ -33,8 +33,8 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 		return (() => {
 			let hashFileLocalPath = this.downloadHashFileFromDevice().wait();
 
-			if (this.$fs.exists(hashFileLocalPath).wait()) {
-				return this.$fs.readJson(hashFileLocalPath).wait();
+			if (this.$fs.exists(hashFileLocalPath)) {
+				return this.$fs.readJson(hashFileLocalPath);
 			}
 
 			return null;
@@ -47,7 +47,7 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 			if (_.isArray(data)) {
 				(<Mobile.ILocalToDevicePathData[]>data).forEach(localToDevicePathData => {
 					let localPath = localToDevicePathData.getLocalPath();
-					let stats = this.$fs.getFsStats(localPath).wait();
+					let stats = this.$fs.getFsStats(localPath);
 					if (stats.isFile()) {
 						let fileShasum = this.$fs.getFileShasum(localPath).wait();
 						shasums[localPath] = fileShasum;
@@ -57,7 +57,7 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 				shasums = <IStringDictionary>data;
 			}
 
-			this.$fs.writeJson(this.hashFileLocalPath, shasums).wait();
+			this.$fs.writeJson(this.hashFileLocalPath, shasums);
 			this.adb.executeCommand(["push", this.hashFileLocalPath, this.hashFileDevicePath]).wait();
 		}).future<void>()();
 	}
@@ -68,7 +68,7 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 			if (oldShasums) {
 				_.each(localToDevicePaths, ldp => {
 					let localPath = ldp.getLocalPath();
-					if (this.$fs.getFsStats(localPath).wait().isFile()) {
+					if (this.$fs.getFsStats(localPath).isFile()) {
 						oldShasums[localPath] = this.$fs.getFileShasum(localPath).wait();
 					}
 				});
@@ -112,7 +112,7 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 
 	private downloadHashFileFromDevice(): IFuture<string> {
 		return (() => {
-			if (!this.$fs.exists(this.hashFileLocalPath).wait()) {
+			if (!this.$fs.exists(this.hashFileLocalPath)) {
 				this.adb.executeCommand(["pull", this.hashFileDevicePath, this.tempDir]).wait();
 			}
 			return this.hashFileLocalPath;

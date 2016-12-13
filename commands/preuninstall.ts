@@ -12,7 +12,7 @@ export class PreUninstallCommand implements ICommand {
 
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
-			this.$fs.deleteFile(path.join(this.$options.profileDir, "KillSwitches", "cli")).wait();
+			this.$fs.deleteFile(path.join(this.$options.profileDir, "KillSwitches", "cli"));
 		}).future<void>()();
 	}
 }

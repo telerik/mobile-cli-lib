@@ -18,19 +18,17 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		return Future.fromResult();
 	}
 
-	public checkAvailability(dependsOnProject?: boolean): IFuture<void> {
-		return (() => {
-			dependsOnProject = dependsOnProject === undefined ? true : dependsOnProject;
+	public checkAvailability(dependsOnProject?: boolean): void {
+		dependsOnProject = dependsOnProject === undefined ? true : dependsOnProject;
 
-			if (!this.$hostInfo.isDarwin) {
-				this.$errors.failWithoutHelp("iOS Simulator is available only on Mac OS X.");
-			}
+		if (!this.$hostInfo.isDarwin) {
+			this.$errors.failWithoutHelp("iOS Simulator is available only on Mac OS X.");
+		}
 
-			let platform = this.$devicePlatformsConstants.iOS;
-			if (dependsOnProject && !this.$emulatorSettingsService.canStart(platform).wait()) {
-				this.$errors.failWithoutHelp("The current project does not target iOS and cannot be run in the iOS Simulator.");
-			}
-		}).future<void>()();
+		let platform = this.$devicePlatformsConstants.iOS;
+		if (dependsOnProject && !this.$emulatorSettingsService.canStart(platform)) {
+			this.$errors.failWithoutHelp("The current project does not target iOS and cannot be run in the iOS Simulator.");
+		}
 	}
 
 	public startEmulator(): IFuture<string> {

@@ -83,7 +83,7 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 
 			let afcClient = this.getAfcClient(houseArrestClient, deviceAppData.deviceProjectRootPath, deviceAppData.appIdentifier);
 			_.each(localToDevicePaths, (localToDevicePathData) => {
-				let stats = this.$fs.getFsStats(localToDevicePathData.getLocalPath()).wait();
+				let stats = this.$fs.getFsStats(localToDevicePathData.getLocalPath());
 				if(stats.isFile()) {
 					afcClient.transfer(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()).wait();
 				}

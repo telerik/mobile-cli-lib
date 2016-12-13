@@ -14,18 +14,16 @@ export class IOSDeviceDiscovery extends DeviceDiscovery {
 	private _coreFoundation: Mobile.ICoreFoundation;
 
 	private _iTunesErrorMessage: string;
-	private validateiTunes(): IFuture<boolean> {
-		return (() => {
-			if (!this._iTunesErrorMessage) {
-				this._iTunesErrorMessage = this.$iTunesValidator.getError().wait();
+	private validateiTunes(): boolean {
+		if (!this._iTunesErrorMessage) {
+			this._iTunesErrorMessage = this.$iTunesValidator.getError();
 
-				if(this._iTunesErrorMessage) {
-					this.$logger.warn(this._iTunesErrorMessage);
-				}
+			if(this._iTunesErrorMessage) {
+				this.$logger.warn(this._iTunesErrorMessage);
 			}
+		}
 
-			return !this._iTunesErrorMessage;
-		}).future<boolean>()();
+		return !this._iTunesErrorMessage;
 	}
 
 	private get $coreFoundation(): Mobile.ICoreFoundation {
@@ -59,7 +57,7 @@ export class IOSDeviceDiscovery extends DeviceDiscovery {
 
 	public startLookingForDevices(): IFuture<void> {
 		return (() => {
-			if (this.validateiTunes().wait()) {
+			if (this.validateiTunes()) {
 				this.subscribeForNotifications();
 				this.checkForDevices().wait();
 			}
@@ -68,7 +66,7 @@ export class IOSDeviceDiscovery extends DeviceDiscovery {
 
 	public checkForDevices(): IFuture<void> {
 		return (() => {
-			if (this.validateiTunes().wait()) {
+			if (this.validateiTunes()) {
 				let defaultTimeoutInSeconds = 1;
 				let parsedTimeout =  this.$utils.getParsedTimeout(defaultTimeoutInSeconds);
 				let timeout = parsedTimeout > defaultTimeoutInSeconds ? parsedTimeout/1000 : defaultTimeoutInSeconds;

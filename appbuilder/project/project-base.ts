@@ -1,5 +1,4 @@
 import {EOL} from "os";
-import Future = require("fibers/future");
 import * as path from "path";
 import { TARGET_FRAMEWORK_IDENTIFIERS } from "../../constants";
 
@@ -39,7 +38,7 @@ export abstract class ProjectBase implements Project.IProjectBase {
 	}
 
 	public get projectData(): Project.IData {
-		this.readProjectData().wait();
+		this.readProjectData();
 		return this._projectData;
 	}
 
@@ -48,8 +47,8 @@ export abstract class ProjectBase implements Project.IProjectBase {
 	}
 
 	public projectDir: string;
-	public getProjectDir(): IFuture<string> {
-		return Future.fromResult(this.projectDir);
+	public getProjectDir(): string {
+		return this.projectDir;
 	}
 
 	public get capabilities(): Project.ICapabilities {
@@ -89,7 +88,7 @@ export abstract class ProjectBase implements Project.IProjectBase {
 					let pathToAndroidResources = path.join(this.projectDir, this.$staticConfig.APP_RESOURCES_DIR_NAME, this.$projectConstants.ANDROID_PLATFORM_NAME);
 
 					let pathToAndroidManifest = path.join(pathToAndroidResources, ProjectBase.ANDROID_MANIFEST_NAME);
-					let appIdentifierInAndroidManifest = this.getAppIdentifierFromConfigFile(pathToAndroidManifest, /package\s*=\s*"(\S*)"/).wait();
+					let appIdentifierInAndroidManifest = this.getAppIdentifierFromConfigFile(pathToAndroidManifest, /package\s*=\s*"(\S*)"/);
 
 					if (appIdentifierInAndroidManifest && appIdentifierInAndroidManifest !== ProjectBase.APP_IDENTIFIER_PLACEHOLDER) {
 						this._platformSpecificAppIdentifier = appIdentifierInAndroidManifest;
@@ -110,53 +109,51 @@ export abstract class ProjectBase implements Project.IProjectBase {
 	protected abstract validate(): void;
 	protected abstract saveProjectIfNeeded(): void;
 
-	protected readProjectData(): IFuture<void> {
-		return (() => {
-			let projectDir = this.getProjectDir().wait();
-			this.setShouldSaveProject(false);
-			if (projectDir) {
-				let projectFilePath = path.join(projectDir, this.$projectConstants.PROJECT_FILE);
-				try {
-					this.projectData = this.getProjectData(projectFilePath);
-					this.validate();
-					let debugProjectFile = path.join(projectDir, this.$projectConstants.DEBUG_PROJECT_FILE_NAME);
-					if (this.$options.debug && !this.$fs.exists(debugProjectFile).wait()) {
-						this.$fs.writeJson(debugProjectFile, {}).wait();
-					}
-
-					let releaseProjectFile = path.join(projectDir, this.$projectConstants.RELEASE_PROJECT_FILE_NAME);
-					if (this.$options.release && !this.$fs.exists(releaseProjectFile).wait()) {
-						this.$fs.writeJson(releaseProjectFile, {}).wait();
-					}
-
-					_.each(this.$fs.enumerateFilesInDirectorySync(projectDir), (configProjectFile: string) => {
-						let configMatch = path.basename(configProjectFile).match(ProjectBase.CONFIGURATION_FROM_FILE_NAME_REGEX);
-						if (configMatch && configMatch.length > 1) {
-							let configurationName = configMatch[1];
-							let configProjectContent = this.$fs.readJson(configProjectFile).wait(),
-								configurationLowerCase = configurationName.toLowerCase();
-							this.configurationSpecificData[configurationLowerCase] = <any>_.merge(_.cloneDeep(this._projectData), configProjectContent);
-							this._hasBuildConfigurations = true;
-						}
-					});
-				} catch (err) {
-					if (err.message === "FUTURE_PROJECT_VER") {
-						this.$errors.failWithoutHelp("This project is created by a newer version of AppBuilder. Upgrade AppBuilder CLI to work with it.");
-					}
-
-					this.$errors.failWithoutHelp("The project file %s is corrupted." + EOL +
-						"Consider restoring an earlier version from your source control or backup." + EOL +
-						"To create a new one with the default settings, delete this file and run $ appbuilder init hybrid." + EOL +
-						"Additional technical information: %s", projectFilePath, err.toString());
+	protected readProjectData(): void {
+		let projectDir = this.getProjectDir();
+		this.setShouldSaveProject(false);
+		if (projectDir) {
+			let projectFilePath = path.join(projectDir, this.$projectConstants.PROJECT_FILE);
+			try {
+				this.projectData = this.getProjectData(projectFilePath);
+				this.validate();
+				let debugProjectFile = path.join(projectDir, this.$projectConstants.DEBUG_PROJECT_FILE_NAME);
+				if (this.$options.debug && !this.$fs.exists(debugProjectFile)) {
+					this.$fs.writeJson(debugProjectFile, {});
 				}
 
-				this.saveProjectIfNeeded();
+				let releaseProjectFile = path.join(projectDir, this.$projectConstants.RELEASE_PROJECT_FILE_NAME);
+				if (this.$options.release && !this.$fs.exists(releaseProjectFile)) {
+					this.$fs.writeJson(releaseProjectFile, {});
+				}
+
+				_.each(this.$fs.enumerateFilesInDirectorySync(projectDir), (configProjectFile: string) => {
+					let configMatch = path.basename(configProjectFile).match(ProjectBase.CONFIGURATION_FROM_FILE_NAME_REGEX);
+					if (configMatch && configMatch.length > 1) {
+						let configurationName = configMatch[1];
+						let configProjectContent = this.$fs.readJson(configProjectFile),
+							configurationLowerCase = configurationName.toLowerCase();
+						this.configurationSpecificData[configurationLowerCase] = <any>_.merge(_.cloneDeep(this._projectData), configProjectContent);
+						this._hasBuildConfigurations = true;
+					}
+				});
+			} catch (err) {
+				if (err.message === "FUTURE_PROJECT_VER") {
+					this.$errors.failWithoutHelp("This project is created by a newer version of AppBuilder. Upgrade AppBuilder CLI to work with it.");
+				}
+
+				this.$errors.failWithoutHelp("The project file %s is corrupted." + EOL +
+					"Consider restoring an earlier version from your source control or backup." + EOL +
+					"To create a new one with the default settings, delete this file and run $ appbuilder init hybrid." + EOL +
+					"Additional technical information: %s", projectFilePath, err.toString());
 			}
-		}).future<void>()();
+
+			this.saveProjectIfNeeded();
+		}
 	}
 
 	private getProjectData(projectFilePath: string): Project.IData {
-		let data = this.$fs.readJson(projectFilePath).wait();
+		let data = this.$fs.readJson(projectFilePath);
 		if (data.projectVersion && data.projectVersion.toString() !== "1") {
 			this.$errors.fail("FUTURE_PROJECT_VER");
 		}
@@ -175,19 +172,17 @@ export abstract class ProjectBase implements Project.IProjectBase {
 		return data;
 	}
 
-	private getAppIdentifierFromConfigFile(pathToConfigFile: string, regExp: RegExp): IFuture<string> {
-		return ((): string => {
-			if (this.$fs.exists(pathToConfigFile).wait()) {
-				let fileContent = this.$fs.readText(pathToConfigFile).wait();
+	private getAppIdentifierFromConfigFile(pathToConfigFile: string, regExp: RegExp): string {
+		if (this.$fs.exists(pathToConfigFile)) {
+			let fileContent = this.$fs.readText(pathToConfigFile);
 
-				let matches = fileContent.match(regExp);
+			let matches = fileContent.match(regExp);
 
-				if (matches && matches[1]) {
-					return matches[1];
-				}
+			if (matches && matches[1]) {
+				return matches[1];
 			}
+		}
 
-			return null;
-		}).future<string>()();
+		return null;
 	}
 }

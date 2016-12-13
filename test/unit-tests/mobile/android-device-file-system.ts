@@ -61,8 +61,8 @@ class MobilePlatformsCapabilitiesMock implements Mobile.IPlatformsCapabilities {
 	}
 }
 
-function mockFsStats(options: { isDirectory: boolean, isFile: boolean }): (filePath: string) => IFuture<{ isDirectory: () => boolean, isFile: () => boolean }> {
-	return (filePath: string) => Future.fromResult({
+function mockFsStats(options: { isDirectory: boolean, isFile: boolean }): (filePath: string) => { isDirectory: () => boolean, isFile: () => boolean } {
+	return (filePath: string) => ({
 		isDirectory: (): boolean => options.isDirectory,
 		isFile: (): boolean => options.isFile
 	});
@@ -107,8 +107,7 @@ describe("Android device file system tests", () => {
 
 			let fs = injector.resolve("fs");
 			fs.getFileShasum = (filePath: string) => (() => fileToShasumDictionary[filePath]).future<string>()();
-			fs.exists = (filePath: string) => Future.fromResult(false);
-			fs.exists = (filePath: string) => Future.fromResult(false);
+			fs.exists = (filePath: string) => false;
 			fs.getFsStats = mockFsStats({ isDirectory: false, isFile: true });
 
 			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
@@ -144,10 +143,10 @@ describe("Android device file system tests", () => {
 
 			let fs = injector.resolve("fs");
 			fs.getFileShasum = (filePath: string) => (() => fileToShasumDictionary[filePath]).future<string>()();
-			fs.exists = (filePath: string) => Future.fromResult(true);
-			fs.readJson = (filePath: string) => (() => ({ "~/TestApp/app/test.js": "0", "~/TestApp/app/myfile.js": "2" })).future<string>()();
+			fs.exists = (filePath: string) => true;
+			fs.readJson = (filePath: string) => ({ "~/TestApp/app/test.js": "0", "~/TestApp/app/myfile.js": "2" });
 			fs.getFsStats = mockFsStats({ isDirectory: false, isFile: true });
-			fs.readText = () => Future.fromResult("");
+			fs.readText = () => "";
 
 			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
 			androidDeviceFileSystem.transferFile = (localPath: string, devicePath: string) => {
@@ -169,10 +168,10 @@ describe("Android device file system tests", () => {
 
 			let fs = injector.resolve("fs");
 			fs.getFileShasum = (filePath: string) => (() => fileToShasumDictionary[filePath]).future<string>()();
-			fs.exists = (filePath: string) => Future.fromResult(true);
-			fs.readJson = (filePath: string) => (() => ({ "~/TestApp/app/test.js": "0", "~/TestApp/app/myfile.js": "4", "~/TestApp/app/notchangedFile.js": "3" })).future<string>()();
+			fs.exists = (filePath: string) => true;
+			fs.readJson = (filePath: string) => ({ "~/TestApp/app/test.js": "0", "~/TestApp/app/myfile.js": "4", "~/TestApp/app/notchangedFile.js": "3" });
 			fs.getFsStats = mockFsStats({ isDirectory: false, isFile: true });
-			fs.readText = () => Future.fromResult("");
+			fs.readText = () => "";
 
 			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
 			let transferedFilesOnDevice: string[] = [];
@@ -200,10 +199,10 @@ describe("Android device file system tests", () => {
 
 			let fs = injector.resolve("fs");
 			fs.getFileShasum = (filePath: string) => (() => fileToShasumDictionary[filePath]).future<string>()();
-			fs.exists = (filePath: string) => Future.fromResult(true);
-			fs.readJson = (filePath: string) => (() => ({ "~/TestApp/app/test.js": "0", "~/TestApp/app/myfile.js": "2" })).future<string>()();
+			fs.exists = (filePath: string) => true;
+			fs.readJson = (filePath: string) => ({ "~/TestApp/app/test.js": "0", "~/TestApp/app/myfile.js": "2" });
 			fs.getFsStats = mockFsStats({ isDirectory: false, isFile: true });
-			fs.readText = () => Future.fromResult("");
+			fs.readText = () => "";
 
 			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
 			androidDeviceFileSystem.transferFile = (localPath: string, devicePath: string) => {
@@ -225,10 +224,10 @@ describe("Android device file system tests", () => {
 
 			let fs = injector.resolve("fs");
 			fs.getFileShasum = (filePath: string) => (() => fileToShasumDictionary[filePath]).future<string>()();
-			fs.exists = (filePath: string) => Future.fromResult(true);
-			fs.readJson = (filePath: string) => (() => ({ "~/TestApp/app/test.js": "0", "~/TestApp/app/myfile.js": "2" })).future<string>()();
+			fs.exists = (filePath: string) => true;
+			fs.readJson = (filePath: string) => ({ "~/TestApp/app/test.js": "0", "~/TestApp/app/myfile.js": "2" });
 			fs.getFsStats = mockFsStats({ isDirectory: false, isFile: true });
-			fs.readText = () => Future.fromResult("");
+			fs.readText = () => "";
 
 			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
 			androidDeviceFileSystem.transferFile = (localPath: string, devicePath: string) => {

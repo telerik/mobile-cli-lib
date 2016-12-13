@@ -24,7 +24,7 @@ export class HelpCommand implements ICommand {
 			}
 
 			if (this.$options.help) {
-				let help = this.$htmlHelpService.getCommandLineHelpForCommand(topic).wait();
+				let help = this.$htmlHelpService.getCommandLineHelpForCommand(topic);
 				if (this.$staticConfig.FULL_CLIENT_NAME) {
 					this.$logger.info(this.$staticConfig.FULL_CLIENT_NAME.green.bold + EOL);
 				}

@@ -108,7 +108,7 @@ function createFiles(testInjector: IInjector, filesToCreate: string[]): IFuture<
 		let fs = testInjector.resolve("fs");
 		let directoryPath = temp.mkdirSync("Project Files Manager Tests");
 
-		_.each(filesToCreate, file => fs.writeFile(path.join(directoryPath, file), "").wait());
+		_.each(filesToCreate, file => fs.writeFile(path.join(directoryPath, file), ""));
 
 		return directoryPath;
 	}).future<string>()();
@@ -172,36 +172,36 @@ describe("Project Files Manager Tests", () => {
 		let files = ["test.ios.x", "test.android.x"];
 		let directoryPath = createFiles(testInjector, files).wait();
 
-		projectFilesManager.processPlatformSpecificFiles(directoryPath, "android").wait();
+		projectFilesManager.processPlatformSpecificFiles(directoryPath, "android");
 
 		let fs = testInjector.resolve("fs");
-		assert.isFalse(fs.exists(path.join(directoryPath, "test.ios.x")).wait());
-		assert.isTrue(fs.exists(path.join(directoryPath, "test.x")).wait());
-		assert.isFalse(fs.exists(path.join(directoryPath, "test.android.x")).wait());
+		assert.isFalse(fs.exists(path.join(directoryPath, "test.ios.x")));
+		assert.isTrue(fs.exists(path.join(directoryPath, "test.x")));
+		assert.isFalse(fs.exists(path.join(directoryPath, "test.android.x")));
 	});
 
 	it("filters ios specific files", () => {
 		let files = ["index.ios.html", "index1.android.html", "a.test"];
 		let directoryPath = createFiles(testInjector, files).wait();
 
-		projectFilesManager.processPlatformSpecificFiles(directoryPath, "ios").wait();
+		projectFilesManager.processPlatformSpecificFiles(directoryPath, "ios");
 
 		let fs = testInjector.resolve("fs");
-		assert.isFalse(fs.exists(path.join(directoryPath, "index1.android.html")).wait());
-		assert.isFalse(fs.exists(path.join(directoryPath, "index1.html")).wait());
-		assert.isTrue(fs.exists(path.join(directoryPath, "index.html")).wait());
-		assert.isTrue(fs.exists(path.join(directoryPath, "a.test")).wait());
+		assert.isFalse(fs.exists(path.join(directoryPath, "index1.android.html")));
+		assert.isFalse(fs.exists(path.join(directoryPath, "index1.html")));
+		assert.isTrue(fs.exists(path.join(directoryPath, "index.html")));
+		assert.isTrue(fs.exists(path.join(directoryPath, "a.test")));
 	});
 
 	it("doesn't filter non platform specific files", () => {
 		let files = ["index1.js", "index2.js", "index3.js"];
 		let directoryPath = createFiles(testInjector, files).wait();
 
-		projectFilesManager.processPlatformSpecificFiles(directoryPath, "ios").wait();
+		projectFilesManager.processPlatformSpecificFiles(directoryPath, "ios");
 
 		let fs = testInjector.resolve("fs");
-		assert.isTrue(fs.exists(path.join(directoryPath, "index1.js")).wait());
-		assert.isTrue(fs.exists(path.join(directoryPath, "index2.js")).wait());
-		assert.isTrue(fs.exists(path.join(directoryPath, "index3.js")).wait());
+		assert.isTrue(fs.exists(path.join(directoryPath, "index1.js")));
+		assert.isTrue(fs.exists(path.join(directoryPath, "index2.js")));
+		assert.isTrue(fs.exists(path.join(directoryPath, "index3.js")));
 	});
 });

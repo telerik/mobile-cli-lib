@@ -41,18 +41,19 @@ export class UserSettingsServiceBase implements IUserSettingsService {
 					this.userSettingsData[propertyName] = data[propertyName];
 				});
 
-			this.$fs.writeJson(this.userSettingsFilePath, this.userSettingsData).wait();
+			this.$fs.writeJson(this.userSettingsFilePath, this.userSettingsData);
 		}).future<void>()();
 	}
 
+	// TODO: Remove IFuture, reason: writeFile - blocked as other implementation of the interface has async operation.
 	public loadUserSettingsFile(): IFuture<void> {
 		return (() => {
 			if(!this.userSettingsData) {
-				if(!this.$fs.exists(this.userSettingsFilePath).wait()) {
-					this.$fs.writeFile(this.userSettingsFilePath, null).wait();
+				if(!this.$fs.exists(this.userSettingsFilePath)) {
+					this.$fs.writeFile(this.userSettingsFilePath, null);
 				}
 
-				this.userSettingsData = this.$fs.readJson(this.userSettingsFilePath).wait();
+				this.userSettingsData = this.$fs.readJson(this.userSettingsFilePath);
 			}
 		}).future<void>()();
 	}

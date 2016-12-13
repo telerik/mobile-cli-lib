@@ -34,7 +34,7 @@ export class NpmService implements INpmService {
 				let npmMainJsFile = require.resolve(NpmService.NPM_MODULE_NAME);
 				let pathToNpmBinary = path.join(npmMainJsFile.substring(0, npmMainJsFile.lastIndexOf(constants.NODE_MODULES_DIR_NAME) + constants.NODE_MODULES_DIR_NAME.length), ".bin", this.npmExecutableName);
 
-				if (!this.$fs.exists(pathToNpmBinary).wait()) {
+				if (!this.$fs.exists(pathToNpmBinary)) {
 					throw new Error(`The npm binary is not in ${pathToNpmBinary} as expected.`);
 				}
 
@@ -95,7 +95,7 @@ export class NpmService implements INpmService {
 				}
 			}
 
-			this.generateReferencesFile(projectDir).wait();
+			this.generateReferencesFile(projectDir);
 
 			return npmInstallResult;
 		}).future<INpmInstallResult>()();
@@ -104,7 +104,7 @@ export class NpmService implements INpmService {
 	@exportedPromise("npmService")
 	public uninstall(projectDir: string, dependency: string): IFuture<void> {
 		return (() => {
-			let packageJsonContent = this.getPackageJsonContent(projectDir).wait();
+			let packageJsonContent = this.getPackageJsonContent(projectDir);
 
 			if (packageJsonContent && packageJsonContent.dependencies && packageJsonContent.dependencies[dependency]) {
 				this.npmUninstall(projectDir, dependency, ["--save"]).wait();
@@ -114,7 +114,7 @@ export class NpmService implements INpmService {
 				this.npmUninstall(projectDir, `${NpmService.TYPES_DIRECTORY}${dependency}`, ["--save-dev"]).wait();
 			}
 
-			this.generateReferencesFile(projectDir).wait();
+			this.generateReferencesFile(projectDir);
 		}).future<void>()();
 	}
 
@@ -242,21 +242,18 @@ export class NpmService implements INpmService {
 		}).future<string>()();
 	}
 
-	private getPackageJsonContent(projectDir: string): IFuture<any> {
-		return (() => {
-			let pathToPackageJson = this.getPathToPackageJson(projectDir);
+	private getPackageJsonContent(projectDir: string): any {
+		let pathToPackageJson = this.getPathToPackageJson(projectDir);
 
-			try {
-				return this.$fs.readJson(pathToPackageJson).wait();
-			} catch (err) {
-				if (err.code === "ENOENT") {
-					this.$errors.failWithoutHelp(`Unable to find ${this.$projectConstants.PACKAGE_JSON_NAME} in ${projectDir}.`);
-				}
-
-				throw err;
+		try {
+			return this.$fs.readJson(pathToPackageJson);
+		} catch (err) {
+			if (err.code === "ENOENT") {
+				this.$errors.failWithoutHelp(`Unable to find ${this.$projectConstants.PACKAGE_JSON_NAME} in ${projectDir}.`);
 			}
 
-		}).future<any>()();
+			throw err;
+		}
 	}
 
 	private getPathToPackageJson(projectDir: string): string {
@@ -271,59 +268,56 @@ export class NpmService implements INpmService {
 		return this.npmInstall(projectDir, `${NpmService.TYPES_DIRECTORY}${dependency}`, null, ["--save-dev", "--save-exact"]);
 	}
 
-	private generateReferencesFile(projectDir: string): IFuture<void> {
-		return (() => {
-			let packageJsonContent = this.getPackageJsonContent(projectDir).wait();
+	private generateReferencesFile(projectDir: string): void {
+		let packageJsonContent = this.getPackageJsonContent(projectDir);
 
-			let pathToReferenceFile = this.getPathToReferencesFile(projectDir),
-				lines: string[] = [];
+		let pathToReferenceFile = this.getPathToReferencesFile(projectDir),
+			lines: string[] = [];
 
-			if (packageJsonContent && packageJsonContent.dependencies && packageJsonContent.dependencies[constants.TNS_CORE_MODULES]) {
-				let relativePathToTnsCoreModulesDts = `./${constants.NODE_MODULES_DIR_NAME}/${constants.TNS_CORE_MODULES}/${NpmService.TNS_CORE_MODULES_DEFINITION_FILE_NAME}`;
+		if (packageJsonContent && packageJsonContent.dependencies && packageJsonContent.dependencies[constants.TNS_CORE_MODULES]) {
+			let relativePathToTnsCoreModulesDts = `./${constants.NODE_MODULES_DIR_NAME}/${constants.TNS_CORE_MODULES}/${NpmService.TNS_CORE_MODULES_DEFINITION_FILE_NAME}`;
 
-				if (this.$fs.exists(path.join(projectDir, relativePathToTnsCoreModulesDts)).wait()) {
-					lines.push(this.getReferenceLine(relativePathToTnsCoreModulesDts));
+			if (this.$fs.exists(path.join(projectDir, relativePathToTnsCoreModulesDts))) {
+				lines.push(this.getReferenceLine(relativePathToTnsCoreModulesDts));
+			}
+		}
+
+		_(packageJsonContent.devDependencies)
+			.keys()
+			.each(devDependency => {
+				if (this.isFromTypesRepo(devDependency)) {
+					let nodeModulesDirectory = path.join(projectDir, constants.NODE_MODULES_DIR_NAME);
+					let definitionFiles = this.$fs.enumerateFilesInDirectorySync(path.join(nodeModulesDirectory, devDependency),
+						(file, stat) => _.endsWith(file, constants.FileExtensions.TYPESCRIPT_DEFINITION_FILE) || stat.isDirectory(), { enumerateDirectories: false });
+
+					let defs = _.map(definitionFiles, def => this.getReferenceLine(fromWindowsRelativePathToUnix(path.relative(projectDir, def))));
+
+					this.$logger.trace(`Adding lines for definition files: ${definitionFiles.join(", ")}`);
+					lines = lines.concat(defs);
 				}
-			}
+			});
 
-			_(packageJsonContent.devDependencies)
-				.keys()
-				.each(devDependency => {
-					if (this.isFromTypesRepo(devDependency)) {
-						let nodeModulesDirectory = path.join(projectDir, constants.NODE_MODULES_DIR_NAME);
-						let definitionFiles = this.$fs.enumerateFilesInDirectorySync(path.join(nodeModulesDirectory, devDependency),
-							(file, stat) => _.endsWith(file, constants.FileExtensions.TYPESCRIPT_DEFINITION_FILE) || stat.isDirectory(), { enumerateDirectories: false });
+		// TODO: Make sure the android17.d.ts and ios.d.ts are added.
 
-						let defs = _.map(definitionFiles, def => this.getReferenceLine(fromWindowsRelativePathToUnix(path.relative(projectDir, def))));
+		if (lines.length) {
+			this.$logger.trace("Updating reference file with new entries...");
+			this.$fs.writeFile(pathToReferenceFile, lines.join(os.EOL), "utf8");
 
-						this.$logger.trace(`Adding lines for definition files: ${definitionFiles.join(", ")}`);
-						lines = lines.concat(defs);
-					}
-				});
-
-			// TODO: Make sure the android17.d.ts and ios.d.ts are added.
-
-			if (lines.length) {
-				this.$logger.trace("Updating reference file with new entries...");
-				this.$fs.writeFile(pathToReferenceFile, lines.join(os.EOL), "utf8").wait();
-
-				// Our old name for the file which contains the definitions imports was .abreferences.d.ts.
-				// TypeScript 2.0 does not respect hidden definition files and we had to rename the file.
-				this.removeOldAbReferencesFile(projectDir).wait();
-			} else {
-				this.$logger.trace(`Could not find any .d.ts files for ${this.$projectConstants.REFERENCES_FILE_NAME} file. Deleting the old file.`);
-				this.$fs.deleteFile(pathToReferenceFile).wait();
-			}
-		}).future<void>()();
+			// Our old name for the file which contains the definitions imports was .abreferences.d.ts.
+			// TypeScript 2.0 does not respect hidden definition files and we had to rename the file.
+			this.removeOldAbReferencesFile(projectDir);
+		} else {
+			this.$logger.trace(`Could not find any .d.ts files for ${this.$projectConstants.REFERENCES_FILE_NAME} file. Deleting the old file.`);
+			this.$fs.deleteFile(pathToReferenceFile);
+		}
 	}
 
-	private removeOldAbReferencesFile(projectDir: string): IFuture<void> {
-		return (() => {
-			const pathToOldReferencesFile = path.join(projectDir, this.$projectConstants.OLD_REFERENCES_FILE_NAME);
-			if (this.$fs.exists(pathToOldReferencesFile).wait()) {
-				this.$fs.deleteFile(pathToOldReferencesFile).wait();
-			}
-		}).future<void>()();
+	private removeOldAbReferencesFile(projectDir: string): void {
+		const pathToOldReferencesFile = path.join(projectDir, this.$projectConstants.OLD_REFERENCES_FILE_NAME);
+
+		if (this.$fs.exists(pathToOldReferencesFile)) {
+			this.$fs.deleteFile(pathToOldReferencesFile);
+		}
 	}
 
 	private isFromTypesRepo(dependency: string): boolean {

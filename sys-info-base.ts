@@ -101,17 +101,16 @@ export class SysInfoBase implements ISysInfo {
 	}
 
 	private itunesInstalledCache: boolean = null;
-	public getITunesInstalled(): IFuture<boolean> {
-		return ((): boolean => {
-			if (!this.itunesInstalledCache) {
-				try {
-					this.itunesInstalledCache = this.$iTunesValidator.getError().wait() === null;
-				} catch (e) {
-					this.itunesInstalledCache = null;
-				}
+
+	public getITunesInstalled(): boolean {
+		if (!this.itunesInstalledCache) {
+			try {
+				this.itunesInstalledCache = this.$iTunesValidator.getError() === null;
+			} catch (e) {
+				this.itunesInstalledCache = null;
 			}
-			return this.itunesInstalledCache;
-		}).future<boolean>()();
+		}
+		return this.itunesInstalledCache;
 	}
 
 	private cocoapodVersionCache: string = null;
@@ -169,7 +168,7 @@ export class SysInfoBase implements ISysInfo {
 				res.nodeGypVer = this.getNodeGypVersion().wait();
 				res.xcodeVer = this.getXCodeVersion().wait();
 				res.xcodeprojGemLocation = this.getXCodeProjGemLocation().wait();
-				res.itunesInstalled = this.getITunesInstalled().wait();
+				res.itunesInstalled = this.getITunesInstalled();
 
 				res.cocoapodVer = this.getCocoapodVersion().wait();
 				let pathToAdb = androidToolsInfo ? androidToolsInfo.pathToAdb : "adb";

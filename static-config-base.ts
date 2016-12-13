@@ -89,13 +89,13 @@ export class StaticConfigBase implements Config.IStaticConfig {
 			let defaultAdbDirPath = path.join(__dirname, `resources/platform-tools/android/${process.platform}`);
 			let commonLibVersion = require(path.join(__dirname, "package.json")).version;
 			let tmpDir = path.join(os.tmpdir(), `telerik-common-lib-${commonLibVersion}`);
-			$fs.createDirectory(tmpDir).wait();
+			$fs.createDirectory(tmpDir);
 
 			// copy the adb and associated files
 			let targetAdb = path.join(tmpDir, "adb");
 
 			// In case directory is missing or it's empty, copy the new adb
-			if(!$fs.exists(tmpDir).wait() || !$fs.readDirectory(tmpDir).wait().length) {
+			if(!$fs.exists(tmpDir) || !$fs.readDirectory(tmpDir).length) {
 				shelljs.cp(path.join(defaultAdbDirPath, "*"), tmpDir); // deliberately ignore copy errors
 				// adb loses its executable bit when packed inside electron asar file. Manually fix the issue
 				if(!$hostInfo.isWindows) {

@@ -204,7 +204,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 			let productMinorVersion = productVersionParts[1];
 
 			let developerDiskImagePath = path.join(developerDirectory, "Platforms", "iPhoneOS.platform", "DeviceSupport");
-			let supportPaths = this.$fs.readDirectory(developerDiskImagePath).wait();
+			let supportPaths = this.$fs.readDirectory(developerDiskImagePath);
 
 			let supportPath: any = null;
 
@@ -258,8 +258,8 @@ export class IOSDevice implements Mobile.IiOSDevice {
 					this.$errors.fail("On windows operating system you must specify the path to developer disk image using --ddi option");
 				}
 
-				let imageSignature = this.$fs.readFile(util.format("%s.signature", imagePath)).wait();
-				let imageSize = this.$fs.getFsStats(imagePath).wait().size;
+				let imageSignature = this.$fs.readFile(util.format("%s.signature", imagePath));
+				let imageSize = this.$fs.getFsStats(imagePath).size;
 
 				let imageMounterService = this.startService(iOSProxyServices.MobileServices.MOBILE_IMAGE_MOUNTER);
 				let plistService: Mobile.IiOSDeviceSocket = this.$injector.resolve(PlistService, { service: imageMounterService, format: CoreTypes.kCFPropertyListXMLFormat_v1_0 });
@@ -271,7 +271,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 				}).wait();
 
 				if(result.Status === "ReceiveBytesAck") {
-					let fileData = this.$fs.readFile(imagePath).wait();
+					let fileData = <NodeBuffer>this.$fs.readFile(imagePath);
 					plistService.sendAll(fileData);
 				} else {
 					let afcService = this.startService(iOSProxyServices.MobileServices.APPLE_FILE_CONNECTION);
@@ -302,7 +302,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 					imagePath = path.join(developerDiskImageDirectoryPath, "DeveloperDiskImage.dmg");
 					this.$logger.info("Mounting %s", imagePath);
 
-					let signature = this.$fs.readFile(util.format("%s.signature", imagePath)).wait();
+					let signature = this.$fs.readFile(util.format("%s.signature", imagePath));
 					let cfImagePath = this.$coreFoundation.createCFString(imagePath);
 
 					let cfOptions = this.$coreFoundation.cfTypeFrom({

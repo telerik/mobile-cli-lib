@@ -9,7 +9,7 @@ export class PathFilteringService implements IPathFilteringService {
 		let rules: string[] = [];
 
 		try {
-			let fileContent = this.$fs.readText(fullFilePath).wait();
+			let fileContent = this.$fs.readText(fullFilePath);
 			rules = _.reject(fileContent.split(/[\n\r]/),
 				(line: string) => line.length === 0 || line[0] === COMMENT_START);
 

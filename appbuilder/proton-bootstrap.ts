@@ -14,8 +14,8 @@ import {installUncaughtExceptionListener} from "../errors";
 installUncaughtExceptionListener();
 
 $injector.register("emulatorSettingsService", {
-	canStart(platform: string): IFuture<boolean> {
-		return Future.fromResult(true);
+	canStart(platform: string): boolean {
+		return true;
 	},
 	minVersion(): number {
 		return 10;

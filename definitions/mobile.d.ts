@@ -435,7 +435,7 @@ declare module Mobile {
 	}
 
 	interface IiTunesValidator {
-		getError(): IFuture<string>;
+		getError(): string;
 	}
 
 	interface IiOSCore {
@@ -607,7 +607,14 @@ declare module Mobile {
 
 	interface IEmulatorPlatformServices {
 		checkDependencies(): IFuture<void>;
-		checkAvailability(dependsOnProject?: boolean): IFuture<void>;
+
+		/**
+		 * Checks if the current system can start emulator of the specified mobile platform and throws error in case it cannot.
+		 * @param {boolean} dependsOnProject Defines if the starting of emulator depends on the project configuration.
+		 * @returns void
+		 */
+		checkAvailability(dependsOnProject?: boolean): void;
+
 		startEmulator(): IFuture<string>;
 		runApplicationOnEmulator(app: string, emulatorOptions?: IEmulatorOptions): IFuture<any>;
 		getEmulatorId(): IFuture<string>;
@@ -635,7 +642,12 @@ declare module Mobile {
 	}
 
 	interface IEmulatorSettingsService {
-		canStart(platform: string): IFuture<boolean>;
+		/**
+		 * Gives information if current project can be started in emulator.
+		 * @param {string} platform The mobile platform of the emulator (android, ios, wp8).
+		 * @returns {boolean} true in case the project can be started in emulator. In case not, the method will throw error.
+		 */
+		canStart(platform: string): boolean;
 		minVersion: number;
 	}
 

@@ -128,30 +128,162 @@ interface IDisposable {
 	dispose(): void;
 }
 
+/**
+ * Describes options that can be passed to fs.readFile method.
+ */
+interface IReadFileOptions {
+	/**
+	 * Defines the encoding. Defaults to null.
+	 */
+	encoding: string;
+
+	/**
+	 * Defines file flags. Defaults to "r".
+	 */
+	flag?: string;
+}
+
 interface IFileSystem {
 	zipFiles(zipFile: string, files: string[], zipPathCallback: (path: string) => string): IFuture<void>;
 	unzip(zipFile: string, destinationDir: string, options?: { overwriteExisitingFiles?: boolean; caseSensitive?: boolean }, fileFilters?: string[]): IFuture<void>;
-	exists(path: string): IFuture<boolean>;
-	tryExecuteFileOperation(path: string, operation: () => IFuture<any>, enoentErrorMessage?: string): IFuture<void>;
-	deleteFile(path: string): IFuture<void>;
-	deleteDirectory(directory: string): IFuture<void>;
-	getFileSize(path: string): IFuture<number>;
+
+	/**
+	 * Test whether or not the given path exists by checking with the file system.
+	 * @param {string} path Path to be checked.
+	 * @returns {boolean} True if path exists, false otherwise.
+	 */
+	exists(path: string): boolean;
+
+	/**
+	 * Deletes a file.
+	 * @param {string} path Path to be deleted.
+	 * @returns {void} undefined
+	 */
+	deleteFile(path: string): void;
+
+	/**
+	 * Deletes whole directory. Implementation uses shelljs.
+	 * @param {string} directory Path to directory that has to be deleted.
+	 * @returns {void}
+	 */
+	deleteDirectory(directory: string): void;
+
+	/**
+	 * Returns the size of specified file.
+	 * @param {string} path Path to file.
+	 * @returns {number} File size in bytes.
+	 */
+	getFileSize(path: string): number;
+
 	futureFromEvent(eventEmitter: NodeJS.EventEmitter, event: string): IFuture<any>;
-	createDirectory(path: string): IFuture<void>;
-	readDirectory(path: string): IFuture<string[]>;
-	readFile(filename: string): IFuture<NodeBuffer>;
-	readText(filename: string, encoding?: string): IFuture<string>;
-	readJson(filename: string, encoding?: string): IFuture<any>;
+
+	/**
+	 * Create a new directory and any necessary subdirectories at specified location.
+	 * @param {string} path Directory to be created.
+	 * @returns {void}
+	 */
+	createDirectory(path: string): void;
+
+	/**
+	 * Reads contents of directory and returns an array of filenames excluding '.' and '..'.
+	 * @param {string} path Path to directory to be checked.
+	 * @retruns {string[]} Array of filenames excluding '.' and '..'
+	 */
+	readDirectory(path: string): string[];
+
+	/**
+	 * Reads the entire contents of a file.
+	 * @param {string} filename Path to the file that has to be read.
+	 * @param {string} @optional options Options used for reading the file - encoding and flags.
+	 * @returns {string|NodeBuffer} Content of the file as buffer. In case encoding is specified, the content is returned as string.
+	 */
+	readFile(filename: string, options?: IReadFileOptions): string|NodeBuffer;
+
+	/**
+	 * Reads the entire contents of a file and returns the result as string.
+	 * @param {string} filename Path to the file that has to be read.
+	 * @param {string} @optional options Options used for reading the file - encoding and flags. If options are not passed, utf8 is used.
+	 * @returns {string} Content of the file as string.
+	 */
+	readText(filename: string, encoding?: IReadFileOptions | string): string;
+
+	/**
+	 * Reads the entire content of a file and parses it to JSON object.
+	 * @param {string} filename Path to the file that has to be read.
+	 * @param {string} @optional encoding File encoding, defaults to utf8.
+	 * @returns {string} Content of the file as JSON object.
+	 */
+	readJson(filename: string, encoding?: string): any;
+
 	readStdin(): IFuture<string>;
-	writeFile(filename: string, data: any, encoding?: string): IFuture<void>;
-	appendFile(filename: string, data: any, encoding?: string): IFuture<void>;
-	writeJson(filename: string, data: any, space?: string, encoding?: string): IFuture<void>;
-	copyFile(sourceFileName: string, destinationFileName: string): IFuture<void>;
-	getUniqueFileName(baseName: string): IFuture<string>;
-	isEmptyDir(directoryPath: string): IFuture<boolean>;
+
+	/**
+	 * Writes data to a file, replacing the file if it already exists. data can be a string or a buffer.
+	 * @param {string} filename Path to file to be created.
+	 * @param {string | NodeBuffer} data Data to be written to file.
+	 * @param {string} encoding @optional File encoding, defaults to utf8.
+	 * @returns {void}
+	 */
+	writeFile(filename: string, data: string | NodeBuffer, encoding?: string): void;
+
+	/**
+	 * Appends data to a file, creating the file if it does not yet exist. Data can be a string or a buffer.
+	 * @param {string} filename Path to file to be created.
+	 * @param {string | NodeBuffer} data Data to be appended to file.
+	 * @param {string} encoding @optional File encoding, defaults to utf8.
+	 * @returns {void}
+	 */
+	appendFile(filename: string, data: string | NodeBuffer, encoding?: string): void;
+
+	/**
+	 * Writes JSON data to file.
+	 * @param {string} filename Path to file to be created.
+	 * @param {any} data JSON data to be written to file.
+	 * @param {string} space Identation that will be used for the file.
+	 * @param {string} encoding @optional File encoding, defaults to utf8.
+	 * @returns {void}
+	 */
+	writeJson(filename: string, data: any, space?: string, encoding?: string): void;
+
+	/**
+	 * Copies a file.
+	 * @param {string} sourceFileName The original file that has to be copied.
+	 * @param {string} destinationFileName The filepath where the file should be copied.
+	 * @returns {void}
+	 */
+	copyFile(sourceFileName: string, destinationFileName: string): void;
+
+	/**
+	 * Returns unique file name based on the passed name by checkin if it exists and adding numbers to the passed name until a non-existent file is found.
+	 * @param {string} baseName The name based on which the unique name will be generated.
+	 * @returns {string} Unique filename. In case baseName does not exist, it will be returned.
+	 */
+	getUniqueFileName(baseName: string): string;
+
+	/**
+	 * Checks if specified directory is empty.
+	 * @param {string} directoryPath The directory that will be checked.
+	 * @returns {boolean} True in case the directory is empty. False otherwise.
+	 */
+	isEmptyDir(directoryPath: string): boolean;
+
 	isRelativePath(path: string): boolean /* feels so lonely here, I don't have a Future */;
-	ensureDirectoryExists(directoryPath: string): IFuture<void>;
-	rename(oldPath: string, newPath: string): IFuture<void>;
+
+	/**
+	 * Checks if directory exists and if not - creates it.
+	 * @param {string} directoryPath Directory path.
+	 * @returns {void}
+	 */
+	ensureDirectoryExists(directoryPath: string): void;
+
+	/**
+	 * Renames file/directory. This method throws error in case the original file name does not exist.
+	 * @param {string} oldPath The original filename.
+	 * @param {string} newPath New filename.
+	 * @returns {string} void.
+	 */
+	rename(oldPath: string, newPath: string): void;
+
 	/**
 	 * Renames specified file to the specified name only in case it exists.
 	 * Used to skip ENOENT errors when rename is called directly.
@@ -159,14 +291,42 @@ interface IFileSystem {
 	 * @param {string} newPath The path where the file will be moved.
 	 * @return {boolean} True in case of successful rename. False in case the file does not exist.
 	 */
-	renameIfExists(oldPath: string, newPath: string): IFuture<boolean>
-	getFsStats(path: string): IFuture<IFsStats>;
-	getLsStats(path: string): IFuture<IFsStats>;
-	symlink(sourcePath: string, destinationPath: string, type: "file"): IFuture<void>;
-	symlink(sourcePath: string, destinationPath: string, type: "dir"): IFuture<void>;
-	symlink(sourcePath: string, destinationPath: string, type: "junction"): IFuture<void>;
-	symlink(sourcePath: string, destinationPath: string, type?: string): IFuture<void>;
-	closeStream(stream: any): IFuture<void>;
+	renameIfExists(oldPath: string, newPath: string): boolean
+
+	/**
+	 * Returns information about the specified file.
+	 * In case the passed path is symlink, the returned information is about the original file.
+	 * @param {string} path Path to file for which the information will be taken.
+	 * @returns {IFsStats} Inforamation about the specified file.
+	 */
+	getFsStats(path: string): IFsStats;
+
+	/**
+	 * Returns information about the specified file.
+	 * In case the passed path is symlink, the returned information is about the symlink itself.
+	 * @param {string} path Path to file for which the information will be taken.
+	 * @returns {IFsStats} Inforamation about the specified file.
+	 */
+	getLsStats(path: string): IFsStats;
+
+	symlink(sourcePath: string, destinationPath: string, type: "file"): void;
+	symlink(sourcePath: string, destinationPath: string, type: "dir"): void;
+	symlink(sourcePath: string, destinationPath: string, type: "junction"): void;
+
+	/**
+	 * Creates a symbolic link.
+	 * Symbolic links are interpreted at run time as if the contents of the
+	 * link had been substituted into the path being followed to find a file
+	 * or directory.
+	 * @param {string} sourcePath The original path of the file/dir.
+	 * @param {string} destinationPath The destination where symlink will be created.
+	 * @param {string} @optional type "file", "dir" or "junction". Default is 'file'.
+	 * Type option is only available on Windows (ignored on other platforms).
+	 * Note that Windows junction points require the destination path to be absolute.
+	 * When using 'junction', the target argument will automatically be normalized to absolute path.
+	 * @returns {void}
+	 */
+	symlink(sourcePath: string, destinationPath: string, type?: string): void;
 
 	createReadStream(path: string, options?: {
 		flags?: string;
@@ -184,8 +344,13 @@ interface IFileSystem {
 		string?: string;
 	}): any;
 
-	chmod(path: string, mode: number): IFuture<any>;
-	chmod(path: string, mode: string): IFuture<any>;
+	/**
+	 * Changes file mode of the specified file. In case it is a symlink, the original file's mode is modified.
+	 * @param {string} path Filepath to be modified.
+	 * @param {number | string} mode File mode.
+	 * @returns {void}
+	 */
+	chmod(path: string, mode: number | string): void;
 
 	setCurrentUserAsOwner(path: string, owner: string): IFuture<void>;
 	enumerateFilesInDirectorySync(directoryPath: string, filterCallback?: (file: string, stat: IFsStats) => boolean, opts?: { enumerateDirectories?: boolean, includeEmptyDirectories?: boolean }): string[];
@@ -207,8 +372,9 @@ interface IFileSystem {
 	/**
 	 * Deletes all empty parent directories.
 	 * @param {string} directory The directory from which this method will start looking for empty parents.
+	 * @returns {void}
 	 */
-	deleteEmptyParents(directory: string): IFuture<void>;
+	deleteEmptyParents(directory: string): void;
 }
 
 // duplicated from fs.Stats, because I cannot import it here
@@ -391,10 +557,30 @@ interface IHostCapability {
 }
 
 interface IAutoCompletionService {
+
+	/**
+	 * Enables command line autocompletion by creating a `.<cliname>rc` file and sourcing it in all profiles (.bash_profile, .bashrc, etc.).
+	 * @returns {IFuture<void>}
+	 */
 	enableAutoCompletion(): IFuture<void>;
-	disableAutoCompletion(): IFuture<void>;
-	isAutoCompletionEnabled(): IFuture<boolean>;
-	isObsoleteAutoCompletionEnabled(): IFuture<boolean>;
+
+	/**
+	 * Disables auto completion by removing the entries from all profiles.
+	 * @returns {void}
+	 */
+	disableAutoCompletion(): void;
+
+	/**
+	 * Checks if autocompletion is enabled.
+	 * @returns {boolean} true in case autocompletion is enabled in any file. false otherwise.
+	 */
+	isAutoCompletionEnabled(): boolean;
+
+	/**
+	 * Checks if obsolete autocompletion code exists in any profile file.
+	 * @returns {boolean} true in case there's some old code in any profile file. false otherwise.
+	 */
+	isObsoleteAutoCompletionEnabled(): boolean;
 }
 
 interface IHooksService {
@@ -445,14 +631,37 @@ interface ITypeScriptService {
 }
 
 interface IDynamicHelpService {
-	isProjectType(...args: string[]): IFuture<boolean>;
+	/**
+	 * Checks if current project's framework is one of the specified as arguments.
+	 * @param args {string[]} Frameworks to be checked.
+	 * @returns {boolean} True in case the current project's framework is one of the passed as args, false otherwise.
+	 */
+	isProjectType(...args: string[]): boolean;
+
 	isPlatform(...args: string[]): boolean;
-	getLocalVariables(options: { isHtml: boolean }): IFuture<IDictionary<any>>;
+
+	/**
+	 * Gives an object containing all required variables that can be used in help content and their values.
+	 * @param {any} Object with one boolean property - `isHtml` - it defines if the help content is generated for html or for console help.
+	 * @returs {IDictionary<any>} Key-value pairs of variables and their values.
+	 */
+	getLocalVariables(options: { isHtml: boolean }): IDictionary<any>;
 }
 
 interface IDynamicHelpProvider {
-	isProjectType(args: string[]): IFuture<boolean>;
-	getLocalVariables(options: { isHtml: boolean }): IFuture<IDictionary<any>>;
+	/**
+	 * Checks if current project's framework is one of the specified as arguments.
+	 * @param args {string[]} Frameworks to be checked.
+	 * @returns {boolean} True in case the current project's framework is one of the passed as args, false otherwise.
+	 */
+	isProjectType(args: string[]): boolean;
+
+	/**
+	 * Gives an object containing all required variables that can be used in help content and their values.
+	 * @param {any} Object with one boolean property - `isHtml` - it defines if the help content is generated for html or for console help.
+	 * @returs {IDictionary<any>} Key-value pairs of variables and their values.
+	 */
+	getLocalVariables(options: { isHtml: boolean }): IDictionary<any>;
 }
 
 interface IMicroTemplateService {
@@ -461,7 +670,14 @@ interface IMicroTemplateService {
 
 interface IHtmlHelpService {
 	generateHtmlPages(): IFuture<void>;
-	getCommandLineHelpForCommand(commandName: string): IFuture<string>;
+
+	/**
+	 * Gets the help content for a specific command that should be shown on the terminal.
+	 * @param {string} commandName Name of the command for which to read the help.
+	 * @returns {string} Help content of the command parsed with all terminal rules applied (stripped content that should be shown only for html help).
+	 */
+	getCommandLineHelpForCommand(commandName: string): string;
+
 	openHelpForCommandInBrowser(commandName: string): IFuture<void>;
 }
 
@@ -669,7 +885,7 @@ interface ISysInfo {
 	getXCodeProjGemLocation(): IFuture<string>;
 
 	/** Returns if ITunes is installed or not. **/
-	getITunesInstalled(): IFuture<boolean>;
+	getITunesInstalled(): boolean;
 
 	/** Returns Cocoapod version. **/
 	getCocoapodVersion(): IFuture<string>;
@@ -872,14 +1088,15 @@ interface IResourceLoader {
 	 */
 	openFile(path: string): NodeJS.ReadableStream;
 
-	readText(path: string): IFuture<string>;
+	readText(path: string): string;
 
 	/**
 	 * Reads the contents of a resource file in JSON format.
 	 * @param  {string}       path Relative path to resource
-	 * @return {IFuture<any>}      Object based on the JSON contents of the resource file.
+	 * @return {any}      Object based on the JSON contents of the resource file.
 	 */
-	readJson(path: string): IFuture<any>;
+	readJson(path: string): any;
+
 	/**
 	 * Returns the path to App_Resources folder, which contains all resources for a given application.
 	 * @param  {string} framework The application's framework name
@@ -1070,7 +1287,7 @@ interface IProjectFilesManager {
 	/**
 	 * Enumerates all files and directories from the specified project files path.
 	 */
-	getProjectFiles(projectFilesPath: string, excludedProjectDirsAndFiles?: string[], filter?: (filePath: string, stat: IFsStats) => IFuture<boolean>, opts?: any): string[];
+	getProjectFiles(projectFilesPath: string, excludedProjectDirsAndFiles?: string[], filter?: (filePath: string, stat: IFsStats) => boolean, opts?: any): string[];
 	/**
 	 * Checks if the file is excluded
 	 */
@@ -1080,10 +1297,15 @@ interface IProjectFilesManager {
 	 * If projectFiles parameter is not specified enumerates the files from the specified projectFilesPath
 	 */
 	createLocalToDevicePaths(deviceAppData: Mobile.IDeviceAppData, projectFilesPath: string, files: string[], excludedProjectDirsAndFiles: string[], projectFilesConfig?: IProjectFilesConfig): Mobile.ILocalToDevicePathData[];
+
 	/**
-	 * Handle platform specific files
+	 * Handle platform specific files.
+	 * @param {string} directoryPath Directory from which to start looking for platform specific files. All subdirectories will be included.
+	 * @param {string} platform Mobile platform - only platform specific files for this platform will be included.
+	 * @param {string[]} excludedDirs Directories which should be skipped.
+	 * @returns {void}
 	 */
-	processPlatformSpecificFiles(directoryPath: string, platform: string, excludedDirs?: string[]): IFuture<void>;
+	processPlatformSpecificFiles(directoryPath: string, platform: string, excludedDirs?: string[]): void;
 }
 
 interface IProjectFilesProvider {
