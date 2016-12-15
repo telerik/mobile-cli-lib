@@ -42,11 +42,11 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		}).future<any>()();
 	}
 
-	public getFile(deviceFilePath: string): IFuture<void> {
+	public getFile(deviceFilePath: string, outputPath: string): IFuture<void> {
 		return (() => {
 			let afcClient = this.resolveAfc();
 			let fileToRead = afcClient.open(deviceFilePath, "r");
-			let fileToWrite = this.$options.file ? this.$fs.createWriteStream(this.$options.file) : process.stdout;
+			let fileToWrite = outputPath ? this.$fs.createWriteStream(outputPath) : process.stdout;
 			let dataSizeToRead = 8192;
 			let size = 0;
 
