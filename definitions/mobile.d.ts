@@ -340,6 +340,7 @@ declare module Mobile {
 		getDevicesForPlatform(platform: string): Mobile.IDevice[];
 		getDeviceInstances(): Mobile.IDevice[];
 		getDeviceByDeviceOption(): Mobile.IDevice;
+		getDeviceByName(name: string): Mobile.IDevice;
 		isAndroidDevice(device: Mobile.IDevice): boolean;
 		isiOSDevice(device: Mobile.IDevice): boolean;
 		isiOSSimulator(device: Mobile.IDevice): boolean;
