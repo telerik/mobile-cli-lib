@@ -523,6 +523,7 @@ interface IPrompter extends IDisposable {
 	get(schemas: IPromptSchema[]): IFuture<any>;
 	getPassword(prompt: string, options?: IAllowEmpty): IFuture<string>;
 	getString(prompt: string, options?: IPrompterOptions): IFuture<string>;
+	getEmail(prompt: string, options?: IPrompterOptions): IFuture<string>;
 	promptForChoice(promptMessage: string, choices: any[]): IFuture<string>;
 	confirm(prompt: string, defaultAction?: () => boolean): IFuture<boolean>;
 }
