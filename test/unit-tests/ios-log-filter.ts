@@ -46,7 +46,7 @@ let iosTestData = [
 	},
 	{
 		input: 'Dec 29 08:49:06 Dragons-iPhone Cordova370[13309] <Notice>: Multi-tasking -> Device: YES, App: YES',
-		output: null,
+		output: '<Notice>: Multi-tasking -> Device: YES, App: YES',
 		pid13309Output: 'Dec 29 08:49:06 Dragons-iPhone Cordova370[13309] <Notice>: Multi-tasking -> Device: YES, App: YES'
 	},
 	{

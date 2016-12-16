@@ -361,7 +361,7 @@ export class NpmService implements INpmService {
 	}
 
 	private executeNpmCommandCore(projectDir: string, npmArguments: string[]): IFuture<ISpawnResult> {
-		return this.$childProcess.spawnFromEvent(this.npmExecutableName, npmArguments, "close", { cwd: projectDir });
+		return this.$childProcess.spawnFromEvent(this.npmExecutableName, npmArguments, "close", { cwd: projectDir, stdio: "inherit" });
 	}
 
 	private getNpmProxySettings(): IFuture<IProxySettings> {
