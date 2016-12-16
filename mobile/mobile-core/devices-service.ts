@@ -213,6 +213,10 @@ export class DevicesService implements Mobile.IDevicesService {
 		return searchedDevice;
 	}
 
+	public getDeviceByName(name: string): Mobile.IDevice {
+		return _.find(this.getDeviceInstances(), (device: Mobile.IDevice) => { return device.deviceInfo.displayName === name; });
+	}
+
 	private startLookingForDevices(): IFuture<void> {
 		return (() => {
 			this.$logger.trace("startLookingForDevices; platform is %s", this._platform);
@@ -244,6 +248,8 @@ export class DevicesService implements Mobile.IDevicesService {
 				device = this.getDeviceByIdentifier(deviceOption);
 			} else if (helpers.isNumber(deviceOption)) {
 				device = this.getDeviceByIndex(parseInt(deviceOption, 10));
+			} else {
+				device = this.getDeviceByName(deviceOption);
 			}
 
 			if (!device) {
