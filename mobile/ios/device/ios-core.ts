@@ -709,7 +709,6 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 			if (this.format === CoreTypes.kCFPropertyListBinaryFormat_v1_0) {
 				return this.receiveBinaryMessage();
 			}
-
 			return null;
 		}).future<Mobile.IiOSSocketResponseData>()();
 	}
