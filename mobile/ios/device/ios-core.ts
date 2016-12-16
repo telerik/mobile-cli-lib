@@ -703,7 +703,6 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 			if (this.format === CoreTypes.kCFPropertyListBinaryFormat_v1_0) {
 				return this.receiveBinaryMessage();
 			}
-
 			return null;
 		}).future<Mobile.IiOSSocketResponseData>()();
 	}
@@ -881,88 +880,82 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 		this.socket
 			.on("data", (data: NodeBuffer) => {
 				this.buffer = Buffer.concat([this.buffer, data]);
-				if (this.format === CoreTypes.kCFPropertyListBinaryFormat_v1_0) {
-					try {
-						while (this.buffer.length >= this.length) {
-							switch (this.state) {
-								case ReadState.Length:
-									this.length = this.buffer.readInt32BE(0);
-									this.buffer = this.buffer.slice(4);
-									this.state = ReadState.Plist;
-									break;
-								case ReadState.Plist:
+				while (this.buffer.length >= this.length) {
+					switch (this.state) {
+						case ReadState.Length:
+							this.length = this.buffer.readInt32BE(0);
+							this.buffer = this.buffer.slice(4);
+							this.state = ReadState.Plist;
+							break;
+						case ReadState.Plist:
+							let plistBuffer = this.buffer.slice(0, this.length);
+							if (this.format === CoreTypes.kCFPropertyListBinaryFormat_v1_0) {
+								let message = bplistParser.parseBuffer(plistBuffer);
+								try {
+									this.$logger.trace("MESSAGE RECEIVING");
+									this.$logger.trace(message);
 									try {
-										let plistBuffer = this.buffer.slice(0, this.length);
-										let message = bplistParser.parseBuffer(plistBuffer);
-										this.$logger.trace("MESSAGE RECEIVING");
-										this.$logger.trace(message);
-										try {
-											if (message && typeof (message) === "object" && message[0]) {
-												message = message[0];
-												let output = "";
-												if (message.Status) {
-													output += util.format("Status: %s", message.Status);
-												}
-												if (message.PercentComplete) {
-													output += util.format(" PercentComplete: %s", message.PercentComplete);
-												}
-												this.$logger.trace(output);
-
-												let errorMessage: string = "";
-												if (message.Error) {
-													errorMessage += `Error: ${message.Error} ${EOL}`;
-												}
-												if (message.ErrorDescription) {
-													errorMessage += `ErrorDescription: ${message.ErrorDescription} ${EOL}`;
-												}
-												if (message.ErrorDetail) {
-													errorMessage += `ErrorDetail: ${message.ErrorDetail} ${EOL}`;
-												}
-
-												if (errorMessage && !result.isResolved()) {
-													result.throw(new Error(errorMessage));
-												}
-
-												if (message.Status && message.Status === "Complete") {
-													if (!result.isResolved()) {
-														result.return(messages);
-													}
-												} else {
-													messages.push(message);
-												}
-
-												let status = message.Status;
-												let percentComplete = message.PercentComplete;
-												this.$logger.trace("Status: " + status + " PercentComplete: " + percentComplete);
+										if (message && typeof (message) === "object" && message[0]) {
+											message = message[0];
+											let output = "";
+											if (message.Status) {
+												output += util.format("Status: %s", message.Status);
 											}
-										} catch (e) {
-											this.$logger.trace("Failed to retreive state: " + e);
+											if (message.PercentComplete) {
+												output += util.format(" PercentComplete: %s", message.PercentComplete);
+											}
+											this.$logger.trace(output);
+
+											let errorMessage: string = "";
+											if (message.Error) {
+												errorMessage += `Error: ${message.Error} ${EOL}`;
+											}
+											if (message.ErrorDescription) {
+												errorMessage += `ErrorDescription: ${message.ErrorDescription} ${EOL}`;
+											}
+											if (message.ErrorDetail) {
+												errorMessage += `ErrorDetail: ${message.ErrorDetail} ${EOL}`;
+											}
+
+											if (errorMessage && !result.isResolved()) {
+												result.throw(new Error(errorMessage));
+											}
+
+											if (message.Status && message.Status === "Complete") {
+												if (!result.isResolved()) {
+													result.return(messages);
+												}
+											} else {
+												messages.push(message);
+											}
+
+											let status = message.Status;
+											let percentComplete = message.PercentComplete;
+											this.$logger.trace("Status: " + status + " PercentComplete: " + percentComplete);
 										}
 									} catch (e) {
-										this.$logger.trace("Failed to parse bplist: " + e);
+										this.$logger.trace("Failed to retreive state: " + e);
 									}
+								} catch (e) {
+									this.$logger.trace("Failed to parse bplist: " + e);
+								}
 
-									this.buffer = this.buffer.slice(this.length);
+								this.buffer = this.buffer.slice(this.length);
 
-									this.state = ReadState.Length;
-									this.length = 4;
-
-									break;
+							} else if (this.format === CoreTypes.kCFPropertyListXMLFormat_v1_0) {
+								let parsedData: IDictionary<any> = {};
+								try {
+									parsedData = plist.parse(this.buffer.toString());
+								} catch (e) {
+									this.$logger.trace(`An error has occured: ${e.toString()}`);
+								}
+								if (!result.isResolved()) {
+									result.return(parsedData);
+								}
 							}
-						}
-					} catch (e) {
-						this.$logger.trace("Exception thrown: " + e);
-					}
-				} else if (this.format === CoreTypes.kCFPropertyListXMLFormat_v1_0) {
-					let parsedData: IDictionary<any> = {};
-					try {
-						parsedData = plist.parse(this.buffer.toString());
-					} catch (e) {
-						this.$logger.trace(`An error has occured: ${e.toString()}`);
-					}
-
-					if (!result.isResolved()) {
-						result.return(parsedData);
+							this.state = ReadState.Length;
+							this.length = 4;
+							break;
 					}
 				}
 			})
