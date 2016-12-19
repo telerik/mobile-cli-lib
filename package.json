@@ -1,7 +1,7 @@
 {
   "name": "mobile-cli-lib",
   "preferGlobal": false,
-  "version": "0.21.1",
+  "version": "0.22.0",
   "author": "Telerik <support@telerik.com>",
   "description": "common lib used by different CLI",
   "bin": {
@@ -48,7 +48,6 @@
     "mkdirp": "0.3.5",
     "moment": "2.10.6",
     "mute-stream": "0.0.4",
-    "npm": "3.10.5",
     "open": "0.0.4",
     "osenv": "0.1.0",
     "parse5": "2.2.0",
