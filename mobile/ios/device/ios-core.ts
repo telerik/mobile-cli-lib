@@ -887,7 +887,7 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 		this.socket
 			.on("data", (data: NodeBuffer) => {
 				this.buffer = Buffer.concat([this.buffer, data]);
-				if (this.format === CoreTypes.kCFPropertyListBinaryFormat_v1_0) {
+
 					try {
 						while (this.buffer.length >= this.length) {
 							switch (this.state) {
@@ -899,12 +899,19 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 								case ReadState.Plist:
 									try {
 										let plistBuffer = this.buffer.slice(0, this.length);
-										let message = bplistParser.parseBuffer(plistBuffer);
+										let message: any;
+										if (this.format === CoreTypes.kCFPropertyListBinaryFormat_v1_0) {
+											message = bplistParser.parseBuffer(plistBuffer);
+										} else if (this.format === CoreTypes.kCFPropertyListXMLFormat_v1_0) {
+											message = plist.parse(this.buffer.toString());
+										}
+
 										this.$logger.trace("MESSAGE RECEIVING");
 										this.$logger.trace(message);
 										try {
-											if (message && typeof (message) === "object" && message[0]) {
-												message = message[0];
+											message = _.isArray(message) && message[0] || message;
+
+											if (message && typeof (message) === "object") {
 												let output = "";
 												if (message.Status) {
 													output += util.format("Status: %s", message.Status);
@@ -959,18 +966,6 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 					} catch (e) {
 						this.$logger.trace("Exception thrown: " + e);
 					}
-				} else if (this.format === CoreTypes.kCFPropertyListXMLFormat_v1_0) {
-					let parsedData: IDictionary<any> = {};
-					try {
-						parsedData = plist.parse(this.buffer.toString());
-					} catch (e) {
-						this.$logger.trace(`An error has occured: ${e.toString()}`);
-					}
-
-					if (!result.isResolved()) {
-						result.return(parsedData);
-					}
-				}
 			})
 			.on("error", (error: Error) => {
 				if (!result.isResolved()) {
