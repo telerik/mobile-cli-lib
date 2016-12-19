@@ -2,6 +2,7 @@ import * as path from "path";
 import * as temp from "temp";
 import {AndroidDeviceHashService} from "./android-device-hash-service";
 import Future = require("fibers/future");
+import * as shelljs from "shelljs";
 
 export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	private _deviceHashServices = Object.create(null);
@@ -23,12 +24,35 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		return this.adb.executeShellCommand(listCommandArgs);
 	}
 
-	public getFile(deviceFilePath: string): IFuture<void> {
-		return Future.fromResult();
+	public getFile(deviceFilePath: string, outputPath?: string): IFuture<void> {
+		return (() => {
+			let stdout = false;
+			if (!outputPath) {
+				let fileName = path.basename(deviceFilePath);
+				outputPath = path.join(shelljs.tempdir(), this.$fs.getUniqueFileName(fileName));
+				stdout = true;
+			}
+			this.adb.executeCommand(["pull", deviceFilePath, outputPath]).wait();
+			if (stdout) {
+				let fileToRead = this.$fs.createReadStream(outputPath);
+				let fileToWrite = process.stdout;
+				let dataSizeToRead = 8192;
+				let size = 0;
+
+				while(true) {
+					let data = fileToRead.read(dataSizeToRead);
+					if(!data || data.length === 0) {
+						break;
+					}
+					fileToWrite.write(data);
+					size += data.length;
+				}
+			}
+		}).future<void>()();
 	}
 
 	public putFile(localFilePath: string, deviceFilePath: string): IFuture<void> {
-		return Future.fromResult();
+		return this.adb.executeCommand(["push", localFilePath, deviceFilePath]);
 	}
 
 	public transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void> {
