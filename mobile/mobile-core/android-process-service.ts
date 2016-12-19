@@ -11,7 +11,8 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 		private $staticConfig: Config.IStaticConfig,
 		private $injector: IInjector,
 		private $net: INet,
-		private $processService: IProcessService) {
+		private $processService: IProcessService,
+		private $logger: ILogger) {
 		this._devicesAdbs = {};
 		this._forwardedLocalPorts = [];
 	}
@@ -285,7 +286,12 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 				// We need to use shelljs here instead of $adb because listener functions of exit, SIGINT and SIGTERM must only perform synchronous operations.
 				// The Node.js process will exit immediately after calling the 'exit' event listeners causing any additional work still queued in the event loop to be abandoned.
 				// See the official documentation for more information and examples - https://nodejs.org/dist/latest-v6.x/docs/api/process.html#process_event_exit.
-				shelljs.exec(`adb forward --remove tcp:${port}`);
+
+				try {
+					shelljs.exec(`adb forward --remove tcp:${port}`);
+				} catch (e) {
+					this.$logger.warn(`"adb forward --remove ${port}" failed with err: ${e}`);
+				}
 			});
 		});
 	}

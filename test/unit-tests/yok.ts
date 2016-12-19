@@ -601,9 +601,12 @@ describe("yok", () => {
 	});
 
 	function deleteDirectory(directory: string): boolean {
-		shelljs.rm("-rf", directory);
-		let err = shelljs.error();
-		return err === null;
+		try {
+			shelljs.rm("-rf", directory);
+		} catch(e) {
+			return false;
+		}
+		return true;
 	}
 
 	it("adds whole class to public api when requirePublicClass is used", () => {
