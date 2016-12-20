@@ -606,7 +606,7 @@ describe("yok", () => {
 		} catch(e) {
 			return false;
 		}
-		return true;
+		return shelljs.error() === null;
 	}
 
 	it("adds whole class to public api when requirePublicClass is used", () => {
