@@ -3,7 +3,42 @@ import * as Fiber from "fibers";
 import * as net from "net";
 let Table = require("cli-table");
 import Future = require("fibers/future");
-import { platform } from "os";
+import { platform, EOL } from "os";
+
+/**
+ * Executes all promises and does not stop in case any of them throws.
+ * Returns the results of all promises in array when all are successfully resolved.
+ * In case any of the promises is rejected, rejects the resulted promise with all accumulated errors.
+ * @param {Promise<T>[]} promises Promises to be resolved.
+ * @returns {Promise<T[]>} New promise which will be resolved with the results of all promises.
+ */
+export function settlePromises<T>(promises: Promise<T>[]): Promise<T[]> {
+	return new Promise((resolve, reject) => {
+		let settledPromisesCount = 0,
+			results: T[] = [],
+			errors: Error[] = [];
+
+		const length = promises.length;
+
+		_.forEach(promises, currentPromise => {
+			currentPromise
+				.then(result => {
+					results.push(result);
+				})
+				.catch(err => {
+					// Accumulate all errors.
+					errors.push(err);
+				})
+				.then(() => {
+					settledPromisesCount++;
+
+					if (settledPromisesCount === length) {
+						errors.length ? reject(new Error(`Multiple errors were thrown:${EOL}${errors.map(e => e.message || e).join(EOL)}`)) : resolve(results);
+					}
+				});
+		});
+	});
+}
 
 export function getPropertyName(func: Function): string {
 	if (func) {
