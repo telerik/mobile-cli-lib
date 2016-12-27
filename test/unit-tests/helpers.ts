@@ -1,9 +1,11 @@
 import * as helpers from "../../helpers";
-import {assert} from "chai";
+import { assert } from "chai";
+import { EOL } from "os";
 
 interface ITestData {
 	input: any;
 	expectedResult: any;
+	expectedError?: any;
 }
 
 describe("helpers", () => {
@@ -292,6 +294,76 @@ describe("helpers", () => {
 		it("returns false when Object.create(null) is passed", () => {
 			let actualResult = helpers.isNullOrWhitespace(Object.create(null));
 			assert.deepEqual(actualResult, false);
+		});
+	});
+
+	describe("settlePromises<T>", () => {
+		const getErrorMessage = (messages: any[]): string => {
+			return `Multiple errors were thrown:${EOL}${messages.join(EOL)}`;
+		};
+
+		const settlePromisesTestData: ITestData[] = [
+			{
+				input: [Promise.resolve(1)],
+				expectedResult: [1]
+			},
+			{
+				input: [Promise.resolve(1), Promise.resolve(2)],
+				expectedResult: [1, 2]
+			},
+			{
+				input: [Promise.resolve(1), Promise.resolve(2), Promise.resolve(3), Promise.resolve(4), Promise.resolve(5)],
+				expectedResult: [1, 2, 3, 4, 5]
+			},
+			{
+				input: [Promise.resolve(1), Promise.reject(2)],
+				expectedResult: null,
+				expectedError: getErrorMessage([2])
+			},
+			{
+				input: [Promise.reject(1), Promise.resolve(2)],
+				expectedResult: null,
+				expectedError: getErrorMessage([1])
+			},
+			{
+				input: [Promise.resolve(1), Promise.reject(2), Promise.resolve(3), Promise.reject(new Error("4"))],
+				expectedResult: null,
+				expectedError: getErrorMessage([2, 4])
+			}
+		];
+
+		_.each(settlePromisesTestData, (testData, inputNumber) => {
+			it(`returns correct data, test case ${inputNumber}`, (done) => {
+				helpers.settlePromises<any>(testData.input)
+					.then(res => {
+						assert.deepEqual(res, testData.expectedResult);
+					}, err => {
+						assert.deepEqual(err.message, testData.expectedError);
+					})
+					.then(done, done);
+			});
+		});
+
+		it("executes all promises even when some of them are rejected", (done) => {
+			let isPromiseSettled = false;
+
+			const testData: ITestData = {
+				input: [Promise.reject(1), Promise.resolve(2).then(() => isPromiseSettled = true)],
+				expectedResult: null,
+				expectedError: getErrorMessage([1])
+			};
+
+			helpers.settlePromises<any>(testData.input)
+				.then(res => {
+					assert.deepEqual(res, testData.expectedResult);
+				}, err => {
+					assert.deepEqual(err.message, testData.expectedError);
+				})
+				.then(() => {
+					assert.isTrue(isPromiseSettled, "When the first promise is rejected, the second one should still be executed.");
+					done();
+				})
+				.catch(done);
 		});
 	});
 });
