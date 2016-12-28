@@ -86,13 +86,13 @@ describe("androidLogFilter", () => {
 			beforeEach(() => logLevel = "FULL");
 			it("when API level 23 or later is used", () => {
 				_.each(androidApiLevel23TestData, testData => {
-					assertFiltering(testData.input, testData.input, logLevel);
+					assertFiltering(testData.input, testData.input + "\n", logLevel);
 				});
 			});
 
 			it("when API level 22 is used", () => {
 				_.each(androidApiLevel22TestData, testData => {
-					assertFiltering(testData.input, testData.input, logLevel);
+					assertFiltering(testData.input, testData.input + "\n", logLevel);
 				});
 			});
 		});
@@ -101,13 +101,13 @@ describe("androidLogFilter", () => {
 			beforeEach(() => logLevel = "info");
 			it("when API level 23 or later is used", () => {
 				_.each(androidApiLevel23TestData, testData => {
-					assertFiltering(testData.input, testData.output, logLevel);
+					assertFiltering(testData.input, testData.output ? testData.output + "\n" : testData.output, logLevel);
 				});
 			});
 
 			it("when API level 22 is used", () => {
 				_.each(androidApiLevel22TestData, testData => {
-					assertFiltering(testData.input, testData.output, logLevel);
+					assertFiltering(testData.input, testData.output ? testData.output + "\n" : testData.output, logLevel);
 				});
 			});
 		});
@@ -116,13 +116,13 @@ describe("androidLogFilter", () => {
 			beforeEach(() => logLevel = "");
 			it("when API level 23 or later is used", () => {
 				_.each(androidApiLevel22TestData, testData => {
-					assertFiltering(testData.input, testData.input, null);
+					assertFiltering(testData.input, testData.input + "\n", null);
 				});
 			});
 
 			it("when API level 22 is used", () => {
 				_.each(androidApiLevel22TestData, testData => {
-					assertFiltering(testData.input, testData.input, null);
+					assertFiltering(testData.input, testData.input + "\n", null);
 				});
 			});
 		});

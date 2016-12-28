@@ -1,3 +1,5 @@
+let os = require("os");
+
 export class AndroidLogFilter implements Mobile.IPlatformLogFilter {
 
 	//sample line is "I/Web Console(    4438): Received Event: deviceready at file:///storage/emulated/0/Icenium/com.telerik.TestApp/js/index.js:48"
@@ -15,16 +17,16 @@ export class AndroidLogFilter implements Mobile.IPlatformLogFilter {
 			let log = this.getConsoleLogFromLine(data);
 			if(log) {
 				if(log.tag) {
-					return `${log.tag}: ${log.message}`;
+					return `${log.tag}: ${log.message}` + os.EOL;
 				} else {
-					return log.message;
+					return log.message + os.EOL;
 				}
 			}
 
 			return null;
 		}
 
-		return data;
+		return data + os.EOL;
 	}
 
 	private getConsoleLogFromLine(lineText: string): any {
