@@ -5,7 +5,7 @@ interface ILiveSyncDeviceAppData extends Mobile.IDeviceAppData {
 }
 
 interface IDeployHelper {
-	deploy(platform?: string): IFuture<void>;
+	deploy(platform?: string): Promise<void>;
 }
 
 declare module Project {
@@ -110,14 +110,14 @@ declare module Project {
 		/**
 		 * Gets the app identifier which is going to be used to build the application.
 		 * @parameter Optional parameter the platform for which the app identifier will be returned.
-		 * @return {IFuture<string>} the app identifier which will be used to build the application.
+		 * @return {Promise<string>} the app identifier which will be used to build the application.
 		 */
-		getAppIdentifierForPlatform(platform?: string): IFuture<string>;
+		getAppIdentifierForPlatform(platform?: string): Promise<string>;
 
 		/**
 		 * Checks if the app identifier is valid and if it is not - this method will throw an exception.
 		 */
-		validateAppIdentifier(platform?: string): IFuture<void>;
+		validateAppIdentifier(platform?: string): Promise<void>;
 	}
 
 	/**
@@ -164,7 +164,7 @@ interface IProtonLiveSyncService {
 	 * @param {string[]} filePaths Passed only in cases when only some of the files must be synced.
 	 * @return {IDeviceLiveSyncResult[]} Information about each LiveSync operation.
 	 */
-	livesync(deviceDescriptors: IDeviceLiveSyncInfo[], projectDir: string, filePaths?: string[]): IFuture<IDeviceLiveSyncResult>[];
+	livesync(deviceDescriptors: IDeviceLiveSyncInfo[], projectDir: string, filePaths?: string[]): Promise<IDeviceLiveSyncResult>[];
 }
 
 /**
@@ -322,29 +322,29 @@ interface INpmService {
 	 * The method will remove them from package.json and from node_modules dir.
 	 * @param {string} projectDir Directory of the project, where package.json is located.
 	 * @param {string} dependency The name of the dependency that has to be removed.
-	 * @return {IFuture<void>}
+	 * @return {Promise<void>}
 	 */
-	uninstall(projectDir: string, dependency: string): IFuture<void>;
+	uninstall(projectDir: string, dependency: string): Promise<void>;
 
 	/**
 	 * Installs everything from package.json or specified dependency.
 	 * In case there's information which dependency to install, the method will check it and install only this dependency and possibly its @types.
 	 * @param {string} projectDir Directory of the project, where package.json is located.
 	 * @param @optional {INpmDependency} dependency Description of the dependency that has to be installed.
-	 * @return {IFuture<INpmInstallResult>} Returns object that will have error in case something fails.
+	 * @return {Promise<INpmInstallResult>} Returns object that will have error in case something fails.
 	 * In case there's no specific dependency that has to be installed and everything is installed successfully, the result will be empty object.
 	 * In case there's dependency that has to be installed, the result object will contain information for the successfull installation of the dependency and the @types reference.
 	 */
-	install(projectDir: string, dependencyToInstall?: INpmDependency): IFuture<INpmInstallResult>;
+	install(projectDir: string, dependencyToInstall?: INpmDependency): Promise<INpmInstallResult>;
 
 	/**
 	 * Searches for plugins in npm.
 	 * @param {string} projectDir The project directory.
 	 * @param {string[]} keywords The keywords for the search.
 	 * @param @optional {string[]} args Additional flags for the npm search command.
-	 * @return {IFuture<IBasicPluginInformation[]>} Array of basic plugin information for the search results.
+	 * @return {Promise<IBasicPluginInformation[]>} Array of basic plugin information for the search results.
 	 */
-	search(projectDir: string, keywords: string[], args?: string[]): IFuture<IBasicPluginInformation[]>;
+	search(projectDir: string, keywords: string[], args?: string[]): Promise<IBasicPluginInformation[]>;
 
 	/**
 	 * Gets package.json of a specific dependency from registry.npmjs.org.
@@ -352,7 +352,7 @@ interface INpmService {
 	 * @param {string} version The version that has to be taken from registry. "latest" will be used in case there's no version passed.
 	 * @return {any} package.json of a dependency or null in case such dependency or version does not exist.
 	 */
-	getPackageJsonFromNpmRegistry(packageName: string, version?: string): IFuture<any>;
+	getPackageJsonFromNpmRegistry(packageName: string, version?: string): Promise<any>;
 
 	/**
 	 * Checks if dependency is scoped.
@@ -379,16 +379,16 @@ interface INpmPluginsService {
 	 * @param {string} projectDir The directory of the project.
 	 * @param {string[]} keywords The keywords for the search.
 	 * @param @optional {(keywords: string[]) => string[]} modifySearchQuery Function which will be used to modify the search query when using the npm binary.
-	 * @return {IFuture<IPluginsSource>} The plugins source which can be used to get the result.
+	 * @return {Promise<IPluginsSource>} The plugins source which can be used to get the result.
 	 */
-	search(projectDir: string, keywords: string[], modifySearchQuery?: (keywords: string[]) => string[]): IFuture<IPluginsSource>;
+	search(projectDir: string, keywords: string[], modifySearchQuery?: (keywords: string[]) => string[]): Promise<IPluginsSource>;
 
 	/**
 	 * Searches for plugin in http://registry.npmjs.org plugins and if plugin is not found will continue the search in http://npmjs.org and the npm binary.
 	 * @param {string} projectDir The directory of the project.
 	 * @param {string[]} keywords The keywords for the search.
 	 * @param @optional {(keywords: string[]) => string[]} modifySearchQuery Function which will be used to modify the search query when using the npm binary.
-	 * @return {IFuture<IPluginsSource>} The plugins source which can be used to get the result.
+	 * @return {Promise<IPluginsSource>} The plugins source which can be used to get the result.
 	 */
-	optimizedSearch(projectDir: string, keywords: string[], modifySearchQuery?: (keywords: string[]) => string[]): IFuture<IPluginsSource>;
+	optimizedSearch(projectDir: string, keywords: string[], modifySearchQuery?: (keywords: string[]) => string[]): Promise<IPluginsSource>;
 }

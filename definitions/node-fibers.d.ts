@@ -9,13 +9,13 @@ interface Fiber {
 	throwInto: (ex: any) => any;
 }
 
-interface IFuture<T> {
+interface Promise<T> {
 	detach(): void;
 	get(): T;
 	isResolved (): boolean;
-	proxy<U>(future: IFuture<U>): void;
-	proxyErrors(future: IFuture<any>): IFuture<T>;
-	proxyErrors(futureList: IFuture<any>[]): IFuture<T>;
+	proxy<U>(future: Promise<U>): void;
+	proxyErrors(future: Promise<any>): IFuture<T>;
+	proxyErrors(futureList: Promise<any>[]): IFuture<T>;
 	resolver(): Function;
 	resolve(fn: (err: any, result?: T) => void): void;
 	resolveSuccess(fn: (result: T) => void): void;
@@ -38,11 +38,11 @@ export = Fiber;
 }
 
 interface ICallableFuture<T> {
-	(...args: any[]): IFuture<T>;
+	(...args: any[]): Promise<T>;
 }
 
 interface IFutureFactory<T> {
-	(): IFuture<T>;
+	(): Promise<T>;
 }
 
 interface Function {
@@ -51,14 +51,14 @@ interface Function {
 
 declare module "fibers/future" {
 
-	class Future<T> implements IFuture<T> {
+	class Future<T> implements Promise<T> {
 		constructor();
 		detach(): void;
 		get(): T;
 		isResolved (): boolean;
-		proxy<U>(future: IFuture<U>): void;
-		proxyErrors(future: IFuture<any>): IFuture<T>;
-		proxyErrors(futureList: IFuture<any>[]): IFuture<T>;
+		proxy<U>(future: Promise<U>): void;
+		proxyErrors(future: Promise<any>): IFuture<T>;
+		proxyErrors(futureList: Promise<any>[]): IFuture<T>;
 		resolver(): Function;
 		resolve(fn: Function): void;
 		resolveSuccess(fn: Function): void;
@@ -67,19 +67,19 @@ declare module "fibers/future" {
 		wait(): T;
 		error: Error;
 
-		static task<T>(fn: Function): IFuture<T>;
+		static task<T>(fn: Function): Promise<T>;
 
-		static wait<T>(future: IFuture<T>): void;
-		static wait(future_list: IFuture<any>[]): void;
-		static wait(...future_list: IFuture<any>[]): void;
+		static wait<T>(future: Promise<T>): void;
+		static wait(future_list: Promise<any>[]): void;
+		static wait(...future_list: Promise<any>[]): void;
 
-		static settle<T>(future: IFuture<T>): void;
-		static settle(future_list: IFuture<any>[]): void;
-		static settle(...future_list: IFuture<any>[]): void;
+		static settle<T>(future: Promise<T>): void;
+		static settle(future_list: Promise<any>[]): void;
+		static settle(...future_list: Promise<any>[]): void;
 
-		static fromResult<T>(value: T): IFuture<T>;
-		static fromResult<T>(value: any): IFuture<T>;
-		static fromResult(): IFuture<void>;
+		static fromResult<T>(value: T): Promise<T>;
+		static fromResult<T>(value: any): Promise<T>;
+		static fromResult(): Promise<void>;
 
 		static assertNoFutureLeftBehind(): void;
 	}

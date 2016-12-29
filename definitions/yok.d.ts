@@ -21,7 +21,7 @@ interface IInjector extends IDisposable {
 	registerCommand(names: string[], resolver: any): void;
 	getRegisteredCommandsNames(includeDev: boolean): string[];
 	dynamicCallRegex: RegExp;
-	dynamicCall(call: string, args?: any[]): IFuture<any>;
+	dynamicCall(call: string, args?: any[]): Promise<any>;
 	isDefaultCommand(commandName: string): boolean;
 	isValidHierarchicalCommand(commandName: string, commandArguments: string[]): boolean;
 	getChildrenCommandsNames(commandName: string): string[];
