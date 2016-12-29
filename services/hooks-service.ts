@@ -1,6 +1,6 @@
 import * as path from "path";
 import * as util from "util";
-import {annotate} from "../helpers";
+import { annotate } from "../helpers";
 import Future = require("fibers/future");
 
 class Hook implements IHook {
@@ -63,80 +63,80 @@ export class HooksService implements IHooksService {
 	}
 
 	private async executeHooks(hookName: string, traceMessage: string, hookArguments?: IDictionary<any>): Promise<void> {
-			if (this.$config.DISABLE_HOOKS || !this.$options.hooks) {
-				return;
-			}
+		if (this.$config.DISABLE_HOOKS || !this.$options.hooks) {
+			return;
+		}
 
-			if (!this.hooksDirectories) {
-				this.initialize();
-			}
+		if (!this.hooksDirectories) {
+			this.initialize();
+		}
 
-			this.$logger.trace(traceMessage);
+		this.$logger.trace(traceMessage);
 
-			try {
-				_.each(this.hooksDirectories, hooksDirectory => {
-					await this.executeHooksInDirectory(hooksDirectory, hookName, hookArguments);
-				});
-			} catch (err) {
-				this.$logger.trace("Failed during hook execution.");
-				this.$errors.failWithoutHelp(err.message);
-			}
+		try {
+			_.each(this.hooksDirectories, async hooksDirectory => {
+				await this.executeHooksInDirectory(hooksDirectory, hookName, hookArguments);
+			});
+		} catch (err) {
+			this.$logger.trace("Failed during hook execution.");
+			this.$errors.failWithoutHelp(err.message);
+		}
 	}
 
 	private async executeHooksInDirectory(directoryPath: string, hookName: string, hookArguments?: IDictionary<any>): Promise<void> {
-			let hooks = this.getHooksByName(directoryPath, hookName);
-			hooks.forEach(hook => {
-				this.$logger.info("Executing %s hook from %s", hookName, hook.fullPath);
-				let command = this.getSheBangInterpreter(hook);
-				let inProc = false;
-				if (!command) {
-					command = hook.fullPath;
-					if (path.extname(hook.fullPath).toLowerCase() === ".js") {
-						command = process.argv[0];
-						inProc = this.shouldExecuteInProcess(this.$fs.readText(hook.fullPath));
-					}
+		let hooks = this.getHooksByName(directoryPath, hookName);
+		hooks.forEach(async hook => {
+			this.$logger.info("Executing %s hook from %s", hookName, hook.fullPath);
+			let command = this.getSheBangInterpreter(hook);
+			let inProc = false;
+			if (!command) {
+				command = hook.fullPath;
+				if (path.extname(hook.fullPath).toLowerCase() === ".js") {
+					command = process.argv[0];
+					inProc = this.shouldExecuteInProcess(this.$fs.readText(hook.fullPath));
+				}
+			}
+
+			if (inProc) {
+				this.$logger.trace("Executing %s hook at location %s in-process", hookName, hook.fullPath);
+				let hookEntryPoint = require(hook.fullPath);
+
+				this.$logger.trace(`Validating ${hookName} arguments.`);
+
+				let invalidArguments = this.validateHookArguments(hookEntryPoint);
+
+				if (invalidArguments.length) {
+					this.$logger.warn(`${hookName} will NOT be executed because it has invalid arguments - ${invalidArguments.join(", ").grey}.`);
+					return;
 				}
 
-				if (inProc) {
-					this.$logger.trace("Executing %s hook at location %s in-process", hookName, hook.fullPath);
-					let hookEntryPoint = require(hook.fullPath);
-
-					this.$logger.trace(`Validating ${hookName} arguments.`);
-
-					let invalidArguments = this.validateHookArguments(hookEntryPoint);
-
-					if (invalidArguments.length) {
-						this.$logger.warn(`${hookName} will NOT be executed because it has invalid arguments - ${invalidArguments.join(", ").grey}.`);
-						return;
-					}
-
-					let maybePromise = this.$injector.resolve(hookEntryPoint, hookArguments);
-					if (maybePromise) {
-						this.$logger.trace('Hook promises to signal completion');
-						let hookCompletion = new Future<void>();
-						maybePromise.then(
-							() => hookCompletion.return(),
-							(err: any) => {
-								if (_.isBoolean(err.stopExecution) && err.errorAsWarning === true) {
-									this.$logger.warn(err.message);
-									hookCompletion.return();
-								} else {
-									hookCompletion.throw(err);
-								}
-							});
-						await hookCompletion;
-					}
-					this.$logger.trace('Hook completed');
-				} else {
-					let environment = this.prepareEnvironment(hook.fullPath);
-					this.$logger.trace("Executing %s hook at location %s with environment ", hookName, hook.fullPath, environment);
-
-					let output = await  this.$childProcess.spawnFromEvent(command, [hook.fullPath], "close", environment, { throwError: false });
-					if (output.exitCode !== 0) {
-						throw new Error(output.stdout + output.stderr);
-					}
+				let maybePromise = this.$injector.resolve(hookEntryPoint, hookArguments);
+				if (maybePromise) {
+					this.$logger.trace('Hook promises to signal completion');
+					let hookCompletion = new Future<void>();
+					maybePromise.then(
+						() => hookCompletion.return(),
+						(err: any) => {
+							if (_.isBoolean(err.stopExecution) && err.errorAsWarning === true) {
+								this.$logger.warn(err.message);
+								hookCompletion.return();
+							} else {
+								hookCompletion.throw(err);
+							}
+						});
+					await hookCompletion;
 				}
-			});
+				this.$logger.trace('Hook completed');
+			} else {
+				let environment = this.prepareEnvironment(hook.fullPath);
+				this.$logger.trace("Executing %s hook at location %s with environment ", hookName, hook.fullPath, environment);
+
+				let output = await  this.$childProcess.spawnFromEvent(command, [hook.fullPath], "close", environment, { throwError: false });
+				if (output.exitCode !== 0) {
+					throw new Error(output.stdout + output.stderr);
+				}
+			}
+		});
 	}
 
 	private getHooksByName(directoryPath: string, hookName: string): IHook[] {

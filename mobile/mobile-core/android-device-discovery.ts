@@ -1,7 +1,7 @@
-import {DeviceDiscovery} from "./device-discovery";
+import { DeviceDiscovery } from "./device-discovery";
 import * as helpers from "../../helpers";
-import {AndroidDevice} from "../android/android-device";
-import {EOL} from "os";
+import { AndroidDevice } from "../android/android-device";
+import { EOL } from "os";
 import Future = require("fibers/future");
 import * as fiberBootstrap from "../../fiber-bootstrap";
 
@@ -32,15 +32,15 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 	}
 
 	public async startLookingForDevices(): Promise<void> {
-			await this.ensureAdbServerStarted();
-			let blockingFuture = new Future<void>();
-			await this.checkForDevices(blockingFuture);
+		await this.ensureAdbServerStarted();
+		let blockingFuture = new Future<void>();
+		await this.checkForDevices(blockingFuture);
 	}
 
 	public async checkForDevices(future?: Promise<void>): Promise<void> {
 		let adbData = "";
 
-		let result = await  this.$adb.executeCommand(["devices"], { returnChildProcess: true });
+		let result = await this.$adb.executeCommand(["devices"], { returnChildProcess: true });
 		result.stdout.on("data", (data: NodeBuffer) => {
 			adbData += data.toString();
 		});
@@ -75,39 +75,39 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 	}
 
 	private async checkCurrentData(result: any): Promise<void> {
-			let currentDevices: IAdbAndroidDeviceInfo[] = result.toString().split(EOL).slice(1)
-				.filter((element: string) => !helpers.isNullOrWhitespace(element))
-				.map((element: string) => {
-					// http://developer.android.com/tools/help/adb.html#devicestatus
-					let data = element.split('\t'),
-						identifier = data[0],
-						status = data[1];
-					return {
-						identifier: identifier,
-						status: status
-					};
-				});
+		let currentDevices: IAdbAndroidDeviceInfo[] = result.toString().split(EOL).slice(1)
+			.filter((element: string) => !helpers.isNullOrWhitespace(element))
+			.map((element: string) => {
+				// http://developer.android.com/tools/help/adb.html#devicestatus
+				let data = element.split('\t'),
+					identifier = data[0],
+					status = data[1];
+				return {
+					identifier: identifier,
+					status: status
+				};
+			});
 
-			_(this._devices)
-				.reject(d => _.find(currentDevices, device => device.identifier === d.identifier && device.status === d.status))
-				.each(d => this.deleteAndRemoveDevice(d.identifier));
+		_(this._devices)
+			.reject(d => _.find(currentDevices, device => device.identifier === d.identifier && device.status === d.status))
+			.each(d => this.deleteAndRemoveDevice(d.identifier));
 
-			_(currentDevices)
-				.reject(d => _.find(this._devices, device => device.identifier === d.identifier && device.status === d.status))
-				.each(d => this.createAndAddDevice(d));
+		_(currentDevices)
+			.reject(d => _.find(this._devices, device => device.identifier === d.identifier && device.status === d.status))
+			.each(d => this.createAndAddDevice(d));
 	}
 
 	public async ensureAdbServerStarted(): Promise<any> {
-			if (!this.isStarted) {
-				this.isStarted = true;
+		if (!this.isStarted) {
+			this.isStarted = true;
 
-				try {
-					return await this.$adb.executeCommand(["start-server"]);
-				} catch (err) {
-					this.isStarted = false;
-					throw err;
-				}
+			try {
+				return await this.$adb.executeCommand(["start-server"]);
+			} catch (err) {
+				this.isStarted = false;
+				throw err;
 			}
+		}
 	}
 }
 $injector.register("androidDeviceDiscovery", AndroidDeviceDiscovery);
