@@ -35,36 +35,36 @@ export class HostInfo implements IHostInfo {
 
 	public async dotNetVersion(): Promise<string> {
 		if (this.isWindows) {
-			let result = new Future<string>();
-			let Winreg = require("winreg");
-			let regKey = new Winreg({
-				hive: Winreg.HKLM,
-				key: HostInfo.DOT_NET_REGISTRY_PATH
+			return new Promise<string>((resolve, reject) => {
+				let Winreg = require("winreg");
+				let regKey = new Winreg({
+					hive: Winreg.HKLM,
+					key: HostInfo.DOT_NET_REGISTRY_PATH
+				});
+				regKey.get("Version", (err: Error, value: any) => {
+					if (err) {
+						reject(err);
+					} else {
+						resolve(value.value);
+					}
+				});
 			});
-			regKey.get("Version", (err: Error, value: any) => {
-				if (err) {
-					result.throw(err);
-				} else {
-					result.return(value.value);
-				}
-			});
-			return result;
 		} else {
 			return Promise.resolve<string>(null);
 		}
 	}
 
-	public async isDotNet40Installed(message?: string) : Promise<boolean> {
-			if (this.isWindows) {
-				try {
-					await this.dotNetVersion();
-					return true;
-				} catch (e) {
-					this.$errors.failWithoutHelp(message || "An error occurred while reading the registry.");
-				}
-			} else {
-				return false;
+	public async isDotNet40Installed(message?: string): Promise<boolean> {
+		if (this.isWindows) {
+			try {
+				await this.dotNetVersion();
+				return true;
+			} catch (e) {
+				this.$errors.failWithoutHelp(message || "An error occurred while reading the registry.");
 			}
+		} else {
+			return false;
+		}
 	}
 }
 $injector.register("hostInfo", HostInfo);

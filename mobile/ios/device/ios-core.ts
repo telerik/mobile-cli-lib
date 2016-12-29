@@ -700,16 +700,16 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 	}
 
 	public async receiveMessage(): Promise<Mobile.IiOSSocketResponseData | Mobile.IiOSSocketResponseData[]> {
-			if (this.format === CoreTypes.kCFPropertyListXMLFormat_v1_0) {
-				let message = this.receiveMessageCore();
-				return plist.parse(message.toString());
-			}
+		if (this.format === CoreTypes.kCFPropertyListXMLFormat_v1_0) {
+			let message = this.receiveMessageCore();
+			return plist.parse(message.toString());
+		}
 
-			if (this.format === CoreTypes.kCFPropertyListBinaryFormat_v1_0) {
-				return this.receiveBinaryMessage();
-			}
+		if (this.format === CoreTypes.kCFPropertyListBinaryFormat_v1_0) {
+			return this.receiveBinaryMessage();
+		}
 
-			return null;
+		return null;
 	}
 
 	public sendMessage(data: any): void {
@@ -879,12 +879,13 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 	}
 
 	public async receiveMessage(): Promise<Mobile.IiOSSocketResponseData | Mobile.IiOSSocketResponseData[]> {
-		let result = new Future<Mobile.IiOSSocketResponseData>();
-		let messages: Mobile.IiOSSocketResponseData[] = [];
+		return new Promise<Mobile.IiOSSocketResponseData>((resolve, reject) => {
+			let messages: Mobile.IiOSSocketResponseData[] = [];
+			let isResolved = false;
 
-		this.socket
-			.on("data", (data: NodeBuffer) => {
-				this.buffer = Buffer.concat([this.buffer, data]);
+			this.socket
+				.on("data", (data: NodeBuffer) => {
+					this.buffer = Buffer.concat([this.buffer, data]);
 
 					try {
 						while (this.buffer.length >= this.length) {
@@ -930,13 +931,15 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 													errorMessage += `ErrorDetail: ${message.ErrorDetail} ${EOL}`;
 												}
 
-												if (errorMessage && !result.isResolved()) {
-													result.throw(new Error(errorMessage));
+												if (errorMessage && !isResolved) {
+													isResolved = true;
+													reject(new Error(errorMessage));
 												}
 
 												if (message.Status && message.Status === "Complete") {
-													if (!result.isResolved()) {
-														result.return(messages);
+													if (!isResolved) {
+														isResolved = true;
+														resolve(messages);
 													}
 												} else {
 													messages.push(message);
@@ -964,14 +967,15 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 					} catch (e) {
 						this.$logger.trace("Exception thrown: " + e);
 					}
-			})
-			.on("error", (error: Error) => {
-				if (!result.isResolved()) {
-					result.throw(error);
-				}
-			});
+				})
+				.on("error", (error: Error) => {
+					if (!isResolved) {
+						isResolved = true;
+						reject(error);
+					}
+				});
 
-		return result;
+		});
 	}
 
 	public readSystemLog(action: (_data: string) => void) {
@@ -1183,46 +1187,46 @@ export class GDBServer implements Mobile.IGDBServer {
 	}
 
 	public async init(argv: string[]): Promise<void> {
-			if (!this.isInitilized) {
-				this.awaitResponse("QStartNoAckMode", "+ await ");
-				this.sendCore("+");
-				await this.awaitResponse("QEnvironmentHexEncoded:");
-				await this.awaitResponse("QSetDisableASLR:1");
-				let encodedArguments = _.map(argv, (arg, index) => util.format("%d,%d,%s", arg.length * 2, index, this.toHex(arg))).join(",");
-				this.awaitResponse("A" + await  encodedArguments);
+		if (!this.isInitilized) {
+			this.awaitResponse("QStartNoAckMode", "+ await ");
+			this.sendCore("+");
+			await this.awaitResponse("QEnvironmentHexEncoded:");
+			await this.awaitResponse("QSetDisableASLR:1");
+			let encodedArguments = _.map(argv, (arg, index) => util.format("%d,%d,%s", arg.length * 2, index, this.toHex(arg))).join(",");
+			this.awaitResponse("A" + await encodedArguments);
 
-				this.isInitilized = true;
-			}
+			this.isInitilized = true;
+		}
 	}
 
 	public async run(argv: string[]): Promise<void> {
-			await this.init(argv);
+		await this.init(argv);
 
-			await this.awaitResponse("qLaunchSuccess");
+		await this.awaitResponse("qLaunchSuccess");
 
-			if (this.$hostInfo.isWindows) {
-				this.send("vCont;c");
-			} else {
-				if (this.$options.justlaunch) {
-					if (this.$options.watch) {
-						this.sendCore(this.encodeData("vCont;c"));
-					} else {
-						// Disconnecting the debugger closes the socket and allows the process to quit
-						this.sendCore(this.encodeData("D"));
-					}
-				} else {
-					this.socket.pipe(this.$injector.resolve(GDBStandardOutputAdapter, { deviceIdentifier: this.deviceIdentifier }));
-					this.socket.pipe(new GDBSignalWatcher());
+		if (this.$hostInfo.isWindows) {
+			this.send("vCont;c");
+		} else {
+			if (this.$options.justlaunch) {
+				if (this.$options.watch) {
 					this.sendCore(this.encodeData("vCont;c"));
+				} else {
+					// Disconnecting the debugger closes the socket and allows the process to quit
+					this.sendCore(this.encodeData("D"));
 				}
+			} else {
+				this.socket.pipe(this.$injector.resolve(GDBStandardOutputAdapter, { deviceIdentifier: this.deviceIdentifier }));
+				this.socket.pipe(new GDBSignalWatcher());
+				this.sendCore(this.encodeData("vCont;c"));
 			}
+		}
 	}
 
 	public async kill(argv: string[]): Promise<void> {
-			await this.init(argv);
+		await this.init(argv);
 
-			this.awaitResponse("\x03", "thread", async () => await  this.sendx03Message());
-			await this.send("k");
+		this.awaitResponse("\x03", "thread", async () => await this.sendx03Message());
+		await this.send("k");
 	}
 
 	public destroy(): void {
@@ -1230,35 +1234,37 @@ export class GDBServer implements Mobile.IGDBServer {
 	}
 
 	private async awaitResponse(packet: string, expectedResponse?: string, getResponseAction?: () => Promise<string>): Promise<void> {
-			expectedResponse = expectedResponse || this.okResponse;
-			let actualResponse = getResponseAction ? await getResponseAction.apply(this, []) : await this.send(packet);
-			if (actualResponse.indexOf(expectedResponse) === -1 || _.startsWith(actualResponse, "$E")) {
-				this.$logger.trace(`GDB: actual response: ${actualResponse}, expected response: ${expectedResponse}`);
-				this.$errors.failWithoutHelp(`Unable to send ${packet}.`);
-			}
+		expectedResponse = expectedResponse || this.okResponse;
+		let actualResponse = getResponseAction ? await getResponseAction.apply(this, []) : await this.send(packet);
+		if (actualResponse.indexOf(expectedResponse) === -1 || _.startsWith(actualResponse, "$E")) {
+			this.$logger.trace(`GDB: actual response: ${actualResponse}, expected response: ${expectedResponse}`);
+			this.$errors.failWithoutHelp(`Unable to send ${packet}.`);
+		}
 	}
 
 	private async send(packet: string): Promise<string> {
-		let future = new Future<string>();
+		return new Promise<string>((resolve, reject) => {
+			let isResolved = false;
+			let dataCallback = (data: any) => {
+				this.$logger.trace(`GDB: read packet: ${data}`);
+				this.socket.removeListener("data", dataCallback);
+				if (!isResolved) {
+					isResolved = true;
+					resolve(data.toString());
+				}
+			};
 
-		let dataCallback = (data: any) => {
-			this.$logger.trace(`GDB: read packet: ${data}`);
-			this.socket.removeListener("data", dataCallback);
-			if (!future.isResolved()) {
-				future.return(data.toString());
-			}
-		};
+			this.socket.on("data", dataCallback);
+			this.socket.on("error", (error: string) => {
+				if (!isResolved) {
+					isResolved = true;
+					reject(new Error(error));
+				}
+			});
 
-		this.socket.on("data", dataCallback);
-		this.socket.on("error", (error: string) => {
-			if (!future.isResolved()) {
-				future.throw(new Error(error));
-			}
+			this.sendCore(this.encodeData(packet));
+
 		});
-
-		this.sendCore(this.encodeData(packet));
-
-		return future;
 	}
 
 	private sendCore(data: string): void {
@@ -1267,42 +1273,45 @@ export class GDBServer implements Mobile.IGDBServer {
 	}
 
 	private async sendx03Message(): Promise<string> {
-		let future = new Future<string>();
-		let retryCount = 3;
-		let isDataReceived = false;
+		return new Promise<string>((resolve, reject) => {
+			let isResolved = false;
+			let retryCount = 3;
+			let isDataReceived = false;
 
-		let timer = setInterval(() => {
-			this.sendCore("\x03");
-			retryCount--;
+			let timer = setInterval(() => {
+				this.sendCore("\x03");
+				retryCount--;
 
-			let secondTimer = setTimeout(() => {
-				if (isDataReceived || !retryCount) {
-					clearTimeout(secondTimer);
-					clearInterval(timer);
-				}
+				let secondTimer = setTimeout(() => {
+					if (isDataReceived || !retryCount) {
+						clearTimeout(secondTimer);
+						clearInterval(timer);
+					}
 
-				if (!retryCount && !future.isResolved()) {
-					future.throw(new Error("Unable to kill the application."));
-				}
+					if (!retryCount && !isResolved) {
+						isResolved = true;
+						reject(new Error("Unable to kill the application."));
+					}
+				}, 1000);
 			}, 1000);
-		}, 1000);
 
-		let dataCallback = (data: any) => {
-			let dataAsString = data.toString();
-			if (dataAsString.indexOf("thread") > -1) {
-				isDataReceived = true;
-				this.socket.removeListener("data", dataCallback);
-				clearInterval(timer);
-				if (!future.isResolved()) {
-					future.return(data.toString());
+			let dataCallback = (data: any) => {
+				let dataAsString = data.toString();
+				if (dataAsString.indexOf("thread") > -1) {
+					isDataReceived = true;
+					this.socket.removeListener("data", dataCallback);
+					clearInterval(timer);
+					if (!isResolved) {
+						isResolved = true;
+						resolve(data.toString());
+					}
 				}
-			}
-		};
+			};
 
-		this.socket.on("data", dataCallback);
-		this.sendCore("\x03");
+			this.socket.on("data", dataCallback);
+			this.sendCore("\x03");
 
-		return future;
+		});
 	}
 
 	private encodeData(packet: string): string {

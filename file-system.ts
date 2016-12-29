@@ -25,68 +25,68 @@ export class FileSystem implements IFileSystem {
 		let outFile = fs.createWriteStream(zipFile);
 		zip.pipe(outFile);
 
-		let result = new Future<void>();
-		outFile.on("error", (err: Error) => result.throw(err));
+		return new Promise<void>((resolve, reject) => {
+			outFile.on("error", (err: Error) => reject(err));
 
-		let fileIdx = -1;
-		let zipCallback = () => {
-			fileIdx++;
-			if (fileIdx < files.length) {
-				let file = files[fileIdx];
+			let fileIdx = -1;
+			let zipCallback = () => {
+				fileIdx++;
+				if (fileIdx < files.length) {
+					let file = files[fileIdx];
 
-				let relativePath = zipPathCallback(file);
-				relativePath = relativePath.replace(/\\/g, "/");
-				$logger.trace("zipping as '%s' file '%s'", relativePath, file);
+					let relativePath = zipPathCallback(file);
+					relativePath = relativePath.replace(/\\/g, "/");
+					$logger.trace("zipping as '%s' file '%s'", relativePath, file);
 
-				zip.addFile(
-					fs.createReadStream(file),
-					{ name: relativePath },
-					zipCallback);
-			} else {
-				outFile.on("finish", () => result.return());
+					zip.addFile(
+						fs.createReadStream(file),
+						{ name: relativePath },
+						zipCallback);
+				} else {
+					outFile.on("finish", () => resolve());
 
-				zip.finalize((bytesWritten: number) => {
-					$logger.debug("zipstream: %d bytes written", bytesWritten);
-					outFile.end();
-				});
-			}
-		};
-		zipCallback();
+					zip.finalize((bytesWritten: number) => {
+						$logger.debug("zipstream: %d bytes written", bytesWritten);
+						outFile.end();
+					});
+				}
+			};
+			zipCallback();
 
-		return result;
+		});
 	}
 
 	public async unzip(zipFile: string, destinationDir: string, options?: { overwriteExisitingFiles?: boolean; caseSensitive?: boolean },
 		fileFilters?: string[]): Promise<void> {
-			let shouldOverwriteFiles = !(options && options.overwriteExisitingFiles === false);
-			let isCaseSensitive = !(options && options.caseSensitive === false);
-			let $hostInfo = this.$injector.resolve("$hostInfo");
+		let shouldOverwriteFiles = !(options && options.overwriteExisitingFiles === false);
+		let isCaseSensitive = !(options && options.caseSensitive === false);
+		let $hostInfo = this.$injector.resolve("$hostInfo");
 
-			this.createDirectory(destinationDir);
+		this.createDirectory(destinationDir);
 
-			let proc: string;
-			if ($hostInfo.isWindows) {
-				proc = path.join(__dirname, "resources/platform-tools/unzip/win32/unzip");
-			} else if ($hostInfo.isDarwin) {
-				proc = "unzip"; // darwin unzip is info-zip
-			} else if ($hostInfo.isLinux) {
-				proc = "unzip"; // linux unzip is info-zip
-			}
+		let proc: string;
+		if ($hostInfo.isWindows) {
+			proc = path.join(__dirname, "resources/platform-tools/unzip/win32/unzip");
+		} else if ($hostInfo.isDarwin) {
+			proc = "unzip"; // darwin unzip is info-zip
+		} else if ($hostInfo.isLinux) {
+			proc = "unzip"; // linux unzip is info-zip
+		}
 
-			if (!isCaseSensitive) {
-				zipFile = this.findFileCaseInsensitive(zipFile);
-			}
+		if (!isCaseSensitive) {
+			zipFile = this.findFileCaseInsensitive(zipFile);
+		}
 
-			let args = _.flatten<string>(["-b",
-				shouldOverwriteFiles ? "-o" : "-n",
-				isCaseSensitive ? [] : "-C",
-				zipFile,
-				fileFilters || [],
-				"-d",
-				destinationDir]);
+		let args = _.flatten<string>(["-b",
+			shouldOverwriteFiles ? "-o" : "-n",
+			isCaseSensitive ? [] : "-C",
+			zipFile,
+			fileFilters || [],
+			"-d",
+			destinationDir]);
 
-			let $childProcess = this.$injector.resolve("childProcess");
-			await $childProcess.spawnFromEvent(proc, args, "close", { stdio: "ignore", detached: true });
+		let $childProcess = this.$injector.resolve("childProcess");
+		await $childProcess.spawnFromEvent(proc, args, "close", { stdio: "ignore", detached: true });
 	}
 
 	private findFileCaseInsensitive(file: string): string {
@@ -304,14 +304,14 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public async setCurrentUserAsOwner(path: string, owner: string): Promise<void> {
-			let $childProcess = this.$injector.resolve("childProcess");
+		let $childProcess = this.$injector.resolve("childProcess");
 
-			if (!this.$injector.resolve("$hostInfo").isWindows) {
-				let chown = $childProcess.spawn("chown", ["-R", owner, path],
-					{ stdio: "ignore", detached: true });
-				await this.futureFromEvent(chown, "close");
-			}
-			// nothing to do on Windows, as chown does not work on this platform
+		if (!this.$injector.resolve("$hostInfo").isWindows) {
+			let chown = $childProcess.spawn("chown", ["-R", owner, path],
+				{ stdio: "ignore", detached: true });
+			await this.futureFromEvent(chown, "close");
+		}
+		// nothing to do on Windows, as chown does not work on this platform
 	}
 
 	// filterCallback: function(path: String, stat: fs.Stats): Boolean
@@ -351,35 +351,35 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public async getFileShasum(fileName: string, options?: { algorithm?: string, encoding?: string }): Promise<string> {
-		let future = new Future<string>();
-		let algorithm = (options && options.algorithm) || "sha1";
-		let encoding = (options && options.encoding) || "hex";
-		let logger: ILogger = this.$injector.resolve("$logger");
-		let shasumData = crypto.createHash(algorithm);
-		let fileStream = this.createReadStream(fileName);
-		fileStream.on("data", (data: NodeBuffer | string) => {
-			shasumData.update(data);
-		});
+		return new Promise<string>((resolve, reject) => {
+			let algorithm = (options && options.algorithm) || "sha1";
+			let encoding = (options && options.encoding) || "hex";
+			let logger: ILogger = this.$injector.resolve("$logger");
+			let shasumData = crypto.createHash(algorithm);
+			let fileStream = this.createReadStream(fileName);
+			fileStream.on("data", (data: NodeBuffer | string) => {
+				shasumData.update(data);
+			});
 
-		fileStream.on("end", () => {
-			let shasum: string = shasumData.digest(encoding);
-			logger.trace(`Shasum of file ${fileName} is ${shasum}`);
-			future.return(shasum);
-		});
+			fileStream.on("end", () => {
+				let shasum: string = shasumData.digest(encoding);
+				logger.trace(`Shasum of file ${fileName} is ${shasum}`);
+				resolve(shasum);
+			});
 
-		fileStream.on("error", (err: Error) => {
-			future.throw(err);
-		});
+			fileStream.on("error", (err: Error) => {
+				reject(err);
+			});
 
-		return future;
+		});
 	}
 
 	public async readStdin(): Promise<string> {
-		let future = new Future<string>();
-		let buffer = '';
-		process.stdin.on('data', (data: string) => buffer += data);
-		process.stdin.on('end', () => future.return(buffer));
-		return future;
+		return new Promise<string>((resolve, reject) => {
+			let buffer = '';
+			process.stdin.on('data', (data: string) => buffer += data);
+			process.stdin.on('end', () => resolve(buffer));
+		});
 	}
 
 	public rm(options?: string, ...files: string[]): void {

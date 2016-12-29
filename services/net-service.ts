@@ -5,26 +5,28 @@ export class Net implements INet {
 	constructor(private $logger: ILogger) { }
 
 	public async getFreePort(): Promise<number> {
-			let server = net.createServer((sock: string) => { /* empty - noone will connect here */ });
+		let server = net.createServer((sock: string) => { /* empty - noone will connect here */ });
 
-			let createServerFuture = new Future<number>();
-
+		return new Promise<number>((resolve, reject) => {
+			let isResolved = false;
 			server.listen(0, () => {
 				let portUsed = server.address().port;
 				server.close();
 
-				if (!createServerFuture.isResolved()) {
-					createServerFuture.return(portUsed);
+				if (!isResolved) {
+					isResolved = true;
+					resolve(portUsed);
 				}
 			});
 
 			server.on("error", (err: Error) => {
-				if (!createServerFuture.isResolved()) {
-					createServerFuture.throw(err);
+				if (!isResolved) {
+					isResolved = true;
+					reject(err);
 				}
 			});
 
-			return await createServerFuture;
+		});
 	}
 }
 $injector.register("net", Net);

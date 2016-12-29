@@ -43,7 +43,7 @@ export function settlePromises<T>(promises: Promise<T>[]): Promise<T[]> {
 export function getPropertyName(func: Function): string {
 	if (func) {
 		let match = func.toString().match(/(?:return\s+?.*\.(.+);)|(?:=>\s*?.*\.(.+)\b)/);
-		if(match) {
+		if (match) {
 			return (match[1] || match[2]).trim();
 		}
 	}
@@ -291,7 +291,7 @@ export function hook(commandName: string) {
 			await hooksService.executeBeforeHooks(commandName, prepareArguments(method, args, hooksService));
 		},
 		async (method: any, self: any, resultPromise: any, args: any[]) => {
-			let result = await  resultPromise;
+			let result = await resultPromise;
 			let hooksService = getHooksService(self);
 			await hooksService.executeAfterHooks(commandName, prepareArguments(method, args, hooksService));
 			return Promise.resolve(result);
@@ -303,24 +303,27 @@ export function isFuture(candidateFuture: any): boolean {
 }
 
 export function whenAny<T>(...futures: Promise<T>[]): Promise<Promise<T>> {
-	let resultFuture = new Future<Promise<T>>();
-	let futuresLeft = futures.length;
+	return new Promise<Promise<T>>((resolve, reject) => {
+		let futuresLeft = futures.length;
+		let isResolved = false;
 
-	_.each(futures, future => {
-		future.resolve((error, result?) => {
-			futuresLeft--;
+		_.each(futures, future => {
+			future.resolve((error, result?) => {
+				futuresLeft--;
 
-			if (!resultFuture.isResolved()) {
-				if (typeof error === "undefined") {
-					resultFuture.return(future);
-				} else if (futuresLeft === 0) {
-					resultFuture.throw(new Error("None of the futures succeeded."));
+				if (!isResolved) {
+					isResolved = true;
+
+					if (typeof error === "undefined") {
+						resolve(future);
+					} else if (futuresLeft === 0) {
+						reject(new Error("None of the futures succeeded."));
+					}
 				}
-			}
+			});
 		});
-	});
 
-	return resultFuture;
+	});
 }
 
 export function connectEventually(factory: () => net.Socket, handler: (_socket: net.Socket) => void): void {
@@ -338,37 +341,40 @@ export function connectEventually(factory: () => net.Socket, handler: (_socket: 
 	tryConnect();
 }
 
-export async function  connectEventuallyUntilTimeout(factory: () => net.Socket, timeout: number): Promise<net.Socket> {
-	let future = new Future<net.Socket>();
-	let lastKnownError: Error;
+export async function connectEventuallyUntilTimeout(factory: () => net.Socket, timeout: number): Promise<net.Socket> {
+	return new Promise<net.Socket>((resolve, reject) => {
+		let lastKnownError: Error;
+		let isResolved = false;
 
-	setTimeout(function () {
-		if (!future.isResolved()) {
-			future.throw(lastKnownError);
-		}
-	}, timeout);
-
-	function tryConnect() {
-		let tryConnectAfterTimeout = (error: Error) => {
-			if (future.isResolved()) {
-				return;
+		setTimeout(function () {
+			if (!isResolved) {
+				isResolved = true;
+				reject(lastKnownError);
 			}
+		}, timeout);
 
-			lastKnownError = error;
-			setTimeout(tryConnect, 1000);
-		};
+		function tryConnect() {
+			let tryConnectAfterTimeout = (error: Error) => {
+				if (isResolved) {
+					return;
+				}
 
-		let socket = factory();
-		socket.on("connect", () => {
-			socket.removeListener("error", tryConnectAfterTimeout);
-			future.return(socket);
-		});
-		socket.on("error", tryConnectAfterTimeout);
-	}
+				lastKnownError = error;
+				setTimeout(tryConnect, 1000);
+			};
 
-	tryConnect();
+			let socket = factory();
+			socket.on("connect", () => {
+				socket.removeListener("error", tryConnectAfterTimeout);
+				isResolved = true;
+				resolve(socket);
+			});
+			socket.on("error", tryConnectAfterTimeout);
+		}
 
-	return future;
+		tryConnect();
+
+	});
 }
 
 //--- begin part copied from AngularJS
