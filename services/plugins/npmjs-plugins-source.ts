@@ -40,7 +40,7 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 			let getAllPluginsFuture = this.getAllPluginsCore();
 
 			this.$logger.printInfoMessageOnSameLine("Getting all results, please wait.");
-			this.$progressIndicator.showProgressIndicator(getAllPluginsFuture, 2000).wait();
+			await this.$progressIndicator.showProgressIndicator(getAllPluginsFuture, 2000);
 
 			return getAllPluginsFuture.get();
 	}

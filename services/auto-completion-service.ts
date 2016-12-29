@@ -112,7 +112,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 	}
 
 	public async enableAutoCompletion(): Promise<void> {
-			this.updateCLIShellScript().wait();
+			await this.updateCLIShellScript();
 			_.each(this.shellProfiles, shellFile => this.addAutoCompletionToShellScript(shellFile));
 			this.removeObsoleteAutoCompletion();
 
@@ -216,7 +216,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 				if(doUpdate) {
 					let clientExecutableFileName = (this.$staticConfig.CLIENT_NAME_ALIAS || this.$staticConfig.CLIENT_NAME).toLowerCase();
 					let pathToExecutableFile = path.join(__dirname, `../../../bin/${clientExecutableFileName}.js`);
-					this.$childProcess.exec(`"${process.argv[0]}" "${pathToExecutableFile}" completion >> "${filePath}"`).wait();
+					await this.$childProcess.exec(`"${process.argv[0]}" "${pathToExecutableFile}" completion >> "${filePath}"`);
 					this.$fs.chmod(filePath, "0644");
 				}
 			} catch(err) {

@@ -1186,8 +1186,8 @@ export class GDBServer implements Mobile.IGDBServer {
 			if (!this.isInitilized) {
 				this.awaitResponse("QStartNoAckMode", "+ await ");
 				this.sendCore("+");
-				this.awaitResponse("QEnvironmentHexEncoded:").wait();
-				this.awaitResponse("QSetDisableASLR:1").wait();
+				await this.awaitResponse("QEnvironmentHexEncoded:");
+				await this.awaitResponse("QSetDisableASLR:1");
 				let encodedArguments = _.map(argv, (arg, index) => util.format("%d,%d,%s", arg.length * 2, index, this.toHex(arg))).join(",");
 				this.awaitResponse("A" + await  encodedArguments);
 
@@ -1196,9 +1196,9 @@ export class GDBServer implements Mobile.IGDBServer {
 	}
 
 	public async run(argv: string[]): Promise<void> {
-			this.init(argv).wait();
+			await this.init(argv);
 
-			this.awaitResponse("qLaunchSuccess").wait();
+			await this.awaitResponse("qLaunchSuccess");
 
 			if (this.$hostInfo.isWindows) {
 				this.send("vCont;c");
@@ -1219,10 +1219,10 @@ export class GDBServer implements Mobile.IGDBServer {
 	}
 
 	public async kill(argv: string[]): Promise<void> {
-			this.init(argv).wait();
+			await this.init(argv);
 
 			this.awaitResponse("\x03", "thread", () => await  this.sendx03Message());
-			this.send("k").wait();
+			await this.send("k");
 	}
 
 	public destroy(): void {
@@ -1231,7 +1231,7 @@ export class GDBServer implements Mobile.IGDBServer {
 
 	private async awaitResponse(packet: string, expectedResponse?: string, getResponseAction?: () => IFuture<string>): Promise<void> {
 			expectedResponse = expectedResponse || this.okResponse;
-			let actualResponse = await  getResponseAction ? getResponseAction.apply(this, []).wait() : this.send(packet);
+			await let actualResponse = await  getResponseAction ? getResponseAction.apply(this, []) : this.send(packet);
 			if (actualResponse.indexOf(expectedResponse) === -1 || _.startsWith(actualResponse, "$E")) {
 				this.$logger.trace(`GDB: actual response: ${actualResponse}, expected response: ${expectedResponse}`);
 				this.$errors.failWithoutHelp(`Unable to send ${packet}.`);

@@ -103,25 +103,25 @@ describe("FileSystem", () => {
 				fs.writeFile(file, msg);
 			});
 			it("does not overwrite files when overwriteExisitingFiles is false", () => {
-				fs.unzip(sampleZipFileTest, tempDir, { overwriteExisitingFiles: false }, [unzippedFileName]).wait();
+				await fs.unzip(sampleZipFileTest, tempDir, { overwriteExisitingFiles: false }, [unzippedFileName]);
 				let data = fs.readFile(file);
 				assert.strictEqual(msg, data.toString(), "When overwriteExistingFiles is false, we should not ovewrite files.");
 			});
 
 			it("overwrites files when overwriteExisitingFiles is true", () => {
-				fs.unzip(sampleZipFileTest, tempDir, { overwriteExisitingFiles: true }, [unzippedFileName]).wait();
+				await fs.unzip(sampleZipFileTest, tempDir, { overwriteExisitingFiles: true }, [unzippedFileName]);
 				let data = fs.readFile(file);
 				assert.notEqual(msg, data.toString(), "We must overwrite files when overwriteExisitingFiles is true.");
 			});
 
 			it("overwrites files when overwriteExisitingFiles is not set", () => {
-				fs.unzip(sampleZipFileTest, tempDir, {}, [unzippedFileName]).wait();
+				await fs.unzip(sampleZipFileTest, tempDir, {}, [unzippedFileName]);
 				let data = fs.readFile(file);
 				assert.notEqual(msg, data.toString(), "We must overwrite files when overwriteExisitingFiles is not set.");
 			});
 
 			it("overwrites files when options is not set", () => {
-				fs.unzip(sampleZipFileTest, tempDir, undefined, [unzippedFileName]).wait();
+				await fs.unzip(sampleZipFileTest, tempDir, undefined, [unzippedFileName]);
 				let data = fs.readFile(file);
 				assert.notEqual(msg, data.toString(), "We must overwrite files when options is not defined.");
 			});
@@ -161,7 +161,7 @@ describe("FileSystem", () => {
 				let tempDir = temp.mkdirSync("projectToUnzip");
 				let fs: IFileSystem = testInjector.resolve("fs");
 				let file = path.join(tempDir, unzippedFileName);
-				fs.unzip(sampleZipFileTestIncorrectName, tempDir, { caseSensitive: false }, [unzippedFileName]).wait();
+				await fs.unzip(sampleZipFileTestIncorrectName, tempDir, { caseSensitive: false }, [unzippedFileName]);
 				// This will throw error in case file is not extracted
 				fs.readFile(file);
 			});

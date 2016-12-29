@@ -19,18 +19,18 @@ export class PostInstallCommand implements ICommand {
 				// it is no longer accessible for the user initiating the installation
 				// patch the owner here
 				if (process.env.SUDO_USER) {
-					this.$fs.setCurrentUserAsOwner(this.$options.profileDir, process.env.SUDO_USER).wait();
+					await this.$fs.setCurrentUserAsOwner(this.$options.profileDir, process.env.SUDO_USER);
 				}
 			}
 
-			this.$htmlHelpService.generateHtmlPages().wait();
+			await this.$htmlHelpService.generateHtmlPages();
 
 			let doctorResult = await  this.$doctorService.printWarnings({ trackResult: false });
 			// Explicitly ask for confirmation of usage-reporting:
-			this.$analyticsService.checkConsent().wait();
+			await this.$analyticsService.checkConsent();
 
-			this.$commandsService.tryExecuteCommand("autocomplete", []).wait();
-			this.$analyticsService.track("InstallEnvironmentSetup", doctorResult ? "incorrect" : "correct").wait();
+			await this.$commandsService.tryExecuteCommand("autocomplete", []);
+			await this.$analyticsService.track("InstallEnvironmentSetup", doctorResult ? "incorrect" : "correct");
 
 			if(this.$staticConfig.INSTALLATION_SUCCESS_MESSAGE) {
 				// Make sure the success message is separated with at least one line from all other messages.

@@ -19,7 +19,7 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 			let adb: Mobile.IDeviceAndroidDebugBridge = this.$injector.resolve(DeviceAndroidDebugBridge, { identifier: deviceIdentifier });
 
 			// remove cached logs:
-			adb.executeCommand(["logcat", "-c"]).wait();
+			await adb.executeCommand(["logcat", "-c"]);
 
 			let adbLogcat = await  adb.executeCommand(["logcat"], { returnChildProcess: true });
 			let lineStream = byline(adbLogcat.stdout);

@@ -134,10 +134,10 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	public async detectCurrentlyAttachedDevices(): Promise<void> {
 			try {
-				this.$iOSDeviceDiscovery.startLookingForDevices().wait();
-				this.$androidDeviceDiscovery.startLookingForDevices().wait();
+				await this.$iOSDeviceDiscovery.startLookingForDevices();
+				await this.$androidDeviceDiscovery.startLookingForDevices();
 				if (this.$hostInfo.isDarwin) {
-					this.$iOSSimulatorDiscovery.startLookingForDevices().wait();
+					await this.$iOSSimulatorDiscovery.startLookingForDevices();
 				}
 			} catch (err) {
 				this.$logger.trace("Error while detecting devices.", err);
@@ -159,20 +159,20 @@ export class DevicesService implements Mobile.IDevicesService {
 					this.deviceDetectionIntervalFuture = new Future<void>();
 
 					try {
-						this.$iOSDeviceDiscovery.checkForDevices().wait();
+						await this.$iOSDeviceDiscovery.checkForDevices();
 					} catch (err) {
 						this.$logger.trace("Error while checking for new iOS devices.", err);
 					}
 
 					try {
-						this.$androidDeviceDiscovery.startLookingForDevices().wait();
+						await this.$androidDeviceDiscovery.startLookingForDevices();
 					} catch (err) {
 						this.$logger.trace("Error while checking for new Android devices.", err);
 					}
 
 					try {
 						if (this.$hostInfo.isDarwin) {
-							this.$iOSSimulatorDiscovery.checkForDevices().wait();
+							await this.$iOSSimulatorDiscovery.checkForDevices();
 						}
 					} catch (err) {
 						this.$logger.trace("Error while checking for new iOS Simulators.", err);
@@ -180,14 +180,14 @@ export class DevicesService implements Mobile.IDevicesService {
 
 					_.each(this._devices, device => {
 						try {
-							device.applicationManager.checkForApplicationUpdates().wait();
+							await device.applicationManager.checkForApplicationUpdates();
 						} catch (err) {
 							this.$logger.trace(`Error checking for application updates on device ${device.deviceInfo.identifier}.`, err);
 						}
 					});
 
 					this.deviceDetectionIntervalFuture.return();
-					this.deviceDetectionIntervalFuture.wait();
+					await this.deviceDetectionIntervalFuture;
 					this.deviceDetectionIntervalFuture = null;
 				});
 			}, DevicesService.DEVICE_LOOKING_INTERVAL).unref();
@@ -197,7 +197,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	public async stopDeviceDetectionInterval(): Promise<void> {
 			this.clearDeviceDetectionInterval();
 			this.deviceDetectionInterval = null;
-			this.getDeviceDetectionIntervalFuture().wait();
+			await this.getDeviceDetectionIntervalFuture();
 	}
 
 	public getDeviceByIdentifier(identifier: string): Mobile.IDevice {
@@ -216,15 +216,15 @@ export class DevicesService implements Mobile.IDevicesService {
 	private async startLookingForDevices(): Promise<void> {
 			this.$logger.trace("startLookingForDevices; platform is %s", this._platform);
 			if (!this._platform) {
-				this.detectCurrentlyAttachedDevices().wait();
+				await this.detectCurrentlyAttachedDevices();
 				this.startDeviceDetectionInterval();
 			} else if (this.$mobileHelper.isiOSPlatform(this._platform)) {
-				this.$iOSDeviceDiscovery.startLookingForDevices().wait();
+				await this.$iOSDeviceDiscovery.startLookingForDevices();
 				if (this.$hostInfo.isDarwin) {
-					this.$iOSSimulatorDiscovery.startLookingForDevices().wait();
+					await this.$iOSSimulatorDiscovery.startLookingForDevices();
 				}
 			} else if (this.$mobileHelper.isAndroidPlatform(this._platform)) {
-				this.$androidDeviceDiscovery.startLookingForDevices().wait();
+				await this.$androidDeviceDiscovery.startLookingForDevices();
 			}
 	}
 
@@ -234,7 +234,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	private async getDevice(deviceOption: string): Promise<Mobile.IDevice> {
-			this.detectCurrentlyAttachedDevices().wait();
+			await this.detectCurrentlyAttachedDevices();
 			let device: Mobile.IDevice = null;
 
 			if (this.hasDevice(deviceOption)) {
@@ -254,7 +254,7 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	private async executeOnDevice(action: (dev: Mobile.IDevice) => IFuture<void>, canExecute?: (_dev: Mobile.IDevice) => boolean): Promise<void> {
 			if (!canExecute || canExecute(this._device)) {
-				action(this._device).wait();
+				await action(this._device);
 			}
 	}
 
@@ -288,12 +288,12 @@ export class DevicesService implements Mobile.IDevicesService {
 			if (this.hasDevices) {
 				if (this.$hostInfo.isDarwin && this._platform && this.$mobileHelper.isiOSPlatform(this._platform) &&
 					this.$options.emulator && !this.isOnlyiOSSimultorRunning()) {
-					this.startEmulator().wait();
+					await this.startEmulator();
 					// Executes the command only on iOS simulator
 					let originalCanExecute = canExecute;
 					canExecute = (dev: Mobile.IDevice): boolean => this.isiOSSimulator(dev) && (!originalCanExecute || !!(originalCanExecute(dev)));
 				}
-				this.executeCore(action, canExecute).wait();
+				await this.executeCore(action, canExecute);
 			} else {
 				let message = constants.ERROR_NO_DEVICES;
 				if (options && options.allowNoDevices) {
@@ -302,8 +302,8 @@ export class DevicesService implements Mobile.IDevicesService {
 					if (!this.$hostInfo.isDarwin && this._platform && this.$mobileHelper.isiOSPlatform(this._platform)) {
 						this.$errors.failWithoutHelp(message);
 					} else {
-						this.startEmulator().wait();
-						this.executeCore(action, canExecute).wait();
+						await this.startEmulator();
+						await this.executeCore(action, canExecute);
 					}
 				}
 			}
@@ -332,13 +332,13 @@ export class DevicesService implements Mobile.IDevicesService {
 				this._platform = this._device.deviceInfo.platform;
 			} else if (platform && !deviceOption) {
 				this._platform = this.getPlatform(platform);
-				this.startLookingForDevices().wait();
+				await this.startLookingForDevices();
 			} else {
 				// platform and deviceId are not specified
 				if (data.skipInferPlatform) {
-					this.startLookingForDevices().wait();
+					await this.startLookingForDevices();
 				} else {
-					this.detectCurrentlyAttachedDevices().wait();
+					await this.detectCurrentlyAttachedDevices();
 					let devices = this.getDeviceInstances();
 					let platforms = _(devices)
 						.map(device => device.deviceInfo.platform)
@@ -416,15 +416,15 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	private async getDebuggableAppsCore(deviceIdentifier: string): Promise<Mobile.IDeviceApplicationInformation[]> {
 			let device = this.getDeviceByIdentifier(deviceIdentifier);
-			return device.applicationManager.getDebuggableApps().wait();
+			await return device.applicationManager.getDebuggableApps();
 	}
 
 	private async deployOnDevice(deviceIdentifier: string, packageFile: string, packageName: string, framework: string): Promise<void> {
-			this.stopDeviceDetectionInterval().wait();
+			await this.stopDeviceDetectionInterval();
 			let device = this.getDeviceByIdentifier(deviceIdentifier);
-			device.applicationManager.reinstallApplication(packageName, packageFile).wait();
+			await device.applicationManager.reinstallApplication(packageName, packageFile);
 			this.$logger.info(`Successfully deployed on device with identifier '${device.deviceInfo.identifier}'.`);
-			device.applicationManager.tryStartApplication(packageName, framework).wait();
+			await device.applicationManager.tryStartApplication(packageName, framework);
 	}
 
 	private hasDevice(identifier: string): boolean {
@@ -468,12 +468,12 @@ export class DevicesService implements Mobile.IDevicesService {
 			if (!emulatorServices) {
 				this.$errors.failWithoutHelp("Unable to detect platform for which to start emulator.");
 			}
-			emulatorServices.startEmulator().wait();
+			await emulatorServices.startEmulator();
 
 			if (this.$mobileHelper.isAndroidPlatform(platform)) {
-				this.$androidDeviceDiscovery.startLookingForDevices().wait();
+				await this.$androidDeviceDiscovery.startLookingForDevices();
 			} else if (this.$mobileHelper.isiOSPlatform(platform) && this.$hostInfo.isDarwin) {
-				this.$iOSSimulatorDiscovery.startLookingForDevices().wait();
+				await this.$iOSSimulatorDiscovery.startLookingForDevices();
 			}
 	}
 
@@ -491,7 +491,7 @@ export class DevicesService implements Mobile.IDevicesService {
 				device = this.getDeviceByIdentifier(deviceIdentifier);
 			try {
 				isInstalled = await  device.applicationManager.isApplicationInstalled(appIdentifier);
-				device.applicationManager.tryStartApplication(appIdentifier, framework).wait();
+				await device.applicationManager.tryStartApplication(appIdentifier, framework);
 				isLiveSyncSupported = await  isInstalled && !!device.applicationManager.isLiveSyncSupported(appIdentifier);
 			} catch (err) {
 				this.$logger.trace("Error while checking is application installed. Error is: ", err);

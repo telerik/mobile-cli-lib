@@ -49,7 +49,7 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 
 			if (!localPort) {
 				localPort = await  this.$net.getFreePort();
-				adb.executeCommand(["forward", `tcp:${localPort}`, `localabstract:${abstractPort}`]).wait();
+				await adb.executeCommand(["forward", `tcp:${localPort}`, `localabstract:${abstractPort}`]);
 			}
 
 			this._forwardedLocalPorts.push(localPort);

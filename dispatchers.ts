@@ -35,9 +35,9 @@ export class CommandDispatcher implements ICommandDispatcher {
 				commandName = "help";
 			}
 
-			this.$cancellation.begin("cli").wait();
+			await this.$cancellation.begin("cli");
 
-			this.$commandsService.tryExecuteCommand(commandName, commandArguments).wait();
+			await this.$commandsService.tryExecuteCommand(commandName, commandArguments);
 	}
 
 	public completeCommand(): IFuture<boolean> {
@@ -79,7 +79,7 @@ class FutureDispatcher implements IFutureDispatcher {
 
 		while(true) {
 			let action = await  this.actions.dequeue();
-			action().wait();
+			await action();
 		}
 	}
 

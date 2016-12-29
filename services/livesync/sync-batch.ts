@@ -24,7 +24,7 @@ export class SyncBatch {
 
 	public async syncFiles(syncAction: (filesToSync: string[]) => IFuture<void>): Promise<void> {
 			if (this.filesToSync.length > 0) {
-				syncAction(this.filesToSync).wait();
+				await syncAction(this.filesToSync);
 				this.reset();
 			}
 	}
@@ -44,7 +44,7 @@ export class SyncBatch {
 					fiberBootstrap.run(() => {
 						try {
 							this.syncInProgress = true;
-							this.done().wait();
+							await this.done();
 						} finally {
 							this.syncInProgress = false;
 						}

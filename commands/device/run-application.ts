@@ -10,7 +10,7 @@ export class RunApplicationOnDeviceCommand implements ICommand {
 	allowedParameters: ICommandParameter[] = [this.$stringParameter];
 
 	public async execute(args: string[]): Promise<void> {
-			this.$devicesService.initialize({ deviceId: this.$options.device, skipInferPlatform: true }).wait();
+			await this.$devicesService.initialize({ deviceId: this.$options.device, skipInferPlatform: true });
 
 			if (this.$devicesService.deviceCount > 1) {
 				this.$errors.failWithoutHelp("More than one device found. Specify device explicitly with --device option. To discover device ID, use $%s device command.", this.$staticConfig.CLIENT_NAME.toLowerCase());

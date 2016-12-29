@@ -18,7 +18,7 @@ export class AppBuilderAndroidLiveSyncService extends AndroidLiveSyncService imp
 				commands.push(this.liveSyncCommands.ReloadStartViewCommand());
 			}
 
-			this.livesync(deviceAppData.appIdentifier, deviceAppData.deviceProjectRootPath, commands).wait();
+			await this.livesync(deviceAppData.appIdentifier, deviceAppData.deviceProjectRootPath, commands);
 	}
 
 	public async removeFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
@@ -31,7 +31,7 @@ export class AppBuilderAndroidLiveSyncService extends AndroidLiveSyncService imp
 
 					return this.liveSyncCommands.DeleteFile(unixPath);
 				});
-				this.livesync(appIdentifier, deviceProjectRootPath, commands).wait();
+				await this.livesync(appIdentifier, deviceProjectRootPath, commands);
 			}
 	}
 }

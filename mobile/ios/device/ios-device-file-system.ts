@@ -88,11 +88,12 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 
 	public async transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
 		let houseArrestClient: Mobile.IHouseArrestClient = this.$injector.resolve(iOSProxyServices.HouseArrestClient, { device: this.device });
+
 		let afcClient = this.getAfcClient(houseArrestClient, deviceAppData.deviceProjectRootPath, deviceAppData.appIdentifier);
 		_.each(localToDevicePaths, (localToDevicePathData) => {
 			let stats = this.$fs.getFsStats(localToDevicePathData.getLocalPath());
-			if (stats.isFile()) {
-				afcClient.transfer(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()).wait();
+			if(stats.isFile()) {
+				await afcClient.transfer(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath());
 			}
 		});
 		houseArrestClient.closeSocket();

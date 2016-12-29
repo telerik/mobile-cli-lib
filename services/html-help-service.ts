@@ -81,7 +81,7 @@ export class HtmlHelpService implements IHtmlHelpService {
 			if(!this.tryOpeningSelectedPage(htmlPage)) {
 				// HTML pages may have been skipped on post-install, lets generate them.
 				this.$logger.trace("Required HTML file '%s' is missing. Let's try generating HTML files and see if we'll find it.", htmlPage);
-				this.generateHtmlPages().wait();
+				await this.generateHtmlPages();
 				if(!this.tryOpeningSelectedPage(htmlPage)) {
 					this.$errors.failWithoutHelp("Unable to find help for '%s'", commandName);
 				}

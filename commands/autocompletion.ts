@@ -14,7 +14,7 @@ export class AutoCompleteCommand implements ICommand {
 				if(this.$autoCompletionService.isAutoCompletionEnabled()) {
 					if(this.$autoCompletionService.isObsoleteAutoCompletionEnabled()) {
 						// obsolete autocompletion is enabled, update it to the new one:
-						this.$autoCompletionService.enableAutoCompletion().wait();
+						await this.$autoCompletionService.enableAutoCompletion();
 					} else {
 						this.$logger.info("Autocompletion is already enabled");
 					}
@@ -24,7 +24,7 @@ export class AutoCompleteCommand implements ICommand {
 
 					let autoCompetionStatus = await  this.$prompter.confirm(message,() => true);
 					if(autoCompetionStatus) {
-						this.$autoCompletionService.enableAutoCompletion().wait();
+						await this.$autoCompletionService.enableAutoCompletion();
 					} else {
 						// make sure we've removed all autocompletion code from all shell profiles
 						this.$autoCompletionService.disableAutoCompletion();
@@ -64,7 +64,7 @@ export class EnableAutoCompleteCommand implements ICommand {
 			if(this.$autoCompletionService.isAutoCompletionEnabled()) {
 				this.$logger.info("Autocompletion is already enabled.");
 			} else {
-				this.$autoCompletionService.enableAutoCompletion().wait();
+				await this.$autoCompletionService.enableAutoCompletion();
 			}
 	}
 }

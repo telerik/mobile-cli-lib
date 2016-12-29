@@ -288,12 +288,12 @@ export function hook(commandName: string) {
 	return decorateMethod(
 		(method: any, self: any, args: any[]) => {
 			let hooksService = getHooksService(self);
-			hooksService.executeBeforeHooks(commandName, prepareArguments(method, args, hooksService)).wait();
+			await hooksService.executeBeforeHooks(commandName, prepareArguments(method, args, hooksService));
 		},
 		(method: any, self: any, resultPromise: any, args: any[]) => {
 			let result = await  resultPromise;
 			let hooksService = getHooksService(self);
-			hooksService.executeAfterHooks(commandName, prepareArguments(method, args, hooksService)).wait();
+			await hooksService.executeAfterHooks(commandName, prepareArguments(method, args, hooksService));
 			return Future.fromResult(result);
 		});
 }

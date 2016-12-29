@@ -99,7 +99,7 @@ export abstract class ProjectBase implements Project.IProjectBase {
 	}
 
 	public async validateAppIdentifier(platform: string): Promise<void> {
-			this.getAppIdentifierForPlatform(platform).wait();
+			await this.getAppIdentifierForPlatform(platform);
 	}
 
 	protected abstract validate(): void;

@@ -43,7 +43,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 			this.adb.executeShellCommand(["monkey",
 				"-p", appIdentifier,
 				"-c", "android.intent.category.LAUNCHER",
-				"1"]).wait();
+				await "1"]);
 
 			if (!this.$options.justlaunch) {
 				this.$logcatHelper.start(this.identifier);

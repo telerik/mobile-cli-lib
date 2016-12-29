@@ -32,9 +32,9 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 	}
 
 	public async startLookingForDevices(): Promise<void> {
-			this.ensureAdbServerStarted().wait();
+			await this.ensureAdbServerStarted();
 			let blockingFuture = new Future<void>();
-			this.checkForDevices(blockingFuture).wait();
+			await this.checkForDevices(blockingFuture);
 	}
 
 	public checkForDevices(future?: IFuture<void>): IFuture<void> {
@@ -64,7 +64,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 
 		result.on("close", (exitCode: any) => {
 			fiberBootstrap.run(() => {
-				this.checkCurrentData(adbData).wait();
+				await this.checkCurrentData(adbData);
 				if (future && !future.isResolved()) {
 					future.return();
 				}
@@ -102,7 +102,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 				this.isStarted = true;
 
 				try {
-					return this.$adb.executeCommand(["start-server"]).wait();
+					await return this.$adb.executeCommand(["start-server"]);
 				} catch (err) {
 					this.isStarted = false;
 					throw err;

@@ -58,7 +58,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		let nodeCommandName = process.argv[0];
 
 		if (this.$options.availableDevices) {
-			this.$childProcess.spawnFromEvent(nodeCommandName, [iosSimPath, "device-types"], "close", { stdio: "inherit" }).wait();
+			await this.$childProcess.spawnFromEvent(nodeCommandName, [iosSimPath, "device-types"], "close", { stdio: "inherit" });
 			return;
 		}
 

@@ -41,7 +41,7 @@ export class Prompter implements IPrompter {
 						}
 					});
 				}
-				return future.wait();
+				await return future;
 			} finally {
 				this.unmuteStdout();
 			}

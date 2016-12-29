@@ -5,11 +5,11 @@ export class ProgressIndicator implements IProgressIndicator {
 			let surpressTrailingNewLine = options && options.surpressTrailingNewLine;
 			try {
 				while(!future.isResolved()) {
-					this.$logger.printMsgWithTimeout(".", timeout).wait();
+					await this.$logger.printMsgWithTimeout(".", timeout);
 				}
 
 				// Make sure future is not left behind and prevent "There are outstanding futures." error.
-				future.wait();
+				await future;
 			} catch (err) {
 				this.$logger.out();
 				throw err;

@@ -94,7 +94,7 @@ function tryTrackException(error: Error, injector: IInjector): void {
 		try {
 			let analyticsService = injector.resolve("analyticsService");
 			fiberBootstrap.run(() => {
-				analyticsService.trackException(error, error.message).wait();
+				await analyticsService.trackException(error, error.message);
 			});
 		} catch (e) {
 			// Do not replace with logger due to cyclic dependency
@@ -140,7 +140,7 @@ export class Errors implements IErrors {
 
 	public async beginCommand(action: () => IFuture<boolean>, printCommandHelp: () => IFuture<boolean>): Promise<boolean> {
 			try {
-				return action().wait();
+				await return action();
 			} catch(ex) {
 				let loggerLevel: string = $injector.resolve("logger").getLevel().toUpperCase();
 				let printCallStack = this.printCallStack || loggerLevel === "TRACE" || loggerLevel === "DEBUG";
@@ -149,7 +149,7 @@ export class Errors implements IErrors {
 					: "\x1B[31;1m" + ex.message + "\x1B[0m");
 
 				if (!ex.suppressCommandHelp) {
-					printCommandHelp().wait();
+					await printCommandHelp();
 				}
 
 				tryTrackException(ex, this.$injector);

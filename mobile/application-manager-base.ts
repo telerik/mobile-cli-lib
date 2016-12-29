@@ -12,18 +12,18 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 	}
 
 	public async reinstallApplication(appIdentifier: string, packageFilePath: string): Promise<void> {
-			this.uninstallApplication(appIdentifier).wait();
-			this.installApplication(packageFilePath).wait();
+			await this.uninstallApplication(appIdentifier);
+			await this.installApplication(packageFilePath);
 	}
 
 	public async restartApplication(appIdentifier: string, bundleExecutable?: string, framework?: string): Promise<void> {
 			this.stopApplication(bundleExecutable || await  appIdentifier);
-			this.startApplication(appIdentifier, framework).wait();
+			await this.startApplication(appIdentifier, framework);
 	}
 
 	public async isApplicationInstalled(appIdentifier: string): Promise<boolean> {
 			if (!this.lastInstalledAppIdentifiers || !this.lastInstalledAppIdentifiers.length) {
-				this.checkForApplicationUpdates().wait();
+				await this.checkForApplicationUpdates();
 			}
 
 			return _.includes(this.lastInstalledAppIdentifiers, appIdentifier);
@@ -48,7 +48,7 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 					_.each(newAppIdentifiers, appIdentifier => this.emit("applicationInstalled", appIdentifier));
 					_.each(removedAppIdentifiers, appIdentifier => this.emit("applicationUninstalled", appIdentifier));
 
-					this.checkForAvailableDebuggableAppsChanges().wait();
+					await this.checkForAvailableDebuggableAppsChanges();
 				} finally {
 					this.isChecking = false;
 				}
@@ -58,7 +58,7 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 	public async tryStartApplication(appIdentifier: string, framework?: string): Promise<void> {
 			try {
 				if (this.canStartApplication()) {
-					this.startApplication(appIdentifier, framework).wait();
+					await this.startApplication(appIdentifier, framework);
 				}
 			} catch (err) {
 				this.$logger.trace(`Unable to start application ${appIdentifier}. Error is: ${err.message}`);

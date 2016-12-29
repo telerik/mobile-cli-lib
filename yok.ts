@@ -127,14 +127,14 @@ export class Yok implements IInjector {
 		let classInstance = this.modules[name].instance;
 		if (!classInstance) {
 			classInstance = this.resolve(name);
-			// This is in order to remove .wait() from constructors
+			await // This is in order to remove  from constructors
 			// as we cannot wait without fiber.
 			if (classInstance.initialize) {
 				let result = classInstance.initialize.apply(classInstance);
 				if (isFuture(result)) {
 					let fiberBootstrap = require("./fiber-bootstrap");
 					fiberBootstrap.run(() => {
-						result.wait();
+						await result;
 					});
 				}
 			}
@@ -267,7 +267,7 @@ export class Yok implements IInjector {
 					let defaultCommand = this.resolveCommand(`${commandName}|${defaultCommandName}`);
 					if (defaultCommand) {
 						if (defaultCommand.canExecute) {
-							return defaultCommand.canExecute(commandArguments).wait();
+							await return defaultCommand.canExecute(commandArguments);
 						}
 
 						if (defaultCommand.allowedParameters.length > 0) {
@@ -344,7 +344,7 @@ export class Yok implements IInjector {
 
 			let data = module[parsed[2]].apply(module, args);
 			if (isFuture(data)) {
-				return data.wait();
+				await return data;
 			}
 			return data;
 	}

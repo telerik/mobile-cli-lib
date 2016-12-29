@@ -38,8 +38,8 @@ export class CommandsService implements ICommandsService {
 			if (command) {
 				if (!this.$staticConfig.disableAnalytics && !command.disableAnalytics) {
 					let analyticsService = this.$injector.resolve("analyticsService"); // This should be resolved here due to cyclic dependency
-					analyticsService.checkConsent().wait();
-					analyticsService.trackFeature(commandName).wait();
+					await analyticsService.checkConsent();
+					await analyticsService.trackFeature(commandName);
 				}
 				if (!this.$staticConfig.disableCommandHooks && (command.enableHooks === undefined || command.enableHooks === true)) {
 					// Handle correctly hierarchical commands
@@ -49,12 +49,12 @@ export class CommandsService implements ICommandsService {
 						commandName = helpers.stringReplaceAll(commandName, CommandsService.HIERARCHICAL_COMMANDS_DELIMITER, CommandsService.HOOKS_COMMANDS_DELIMITER);
 					}
 
-					this.$hooksService.executeBeforeHooks(commandName).wait();
-					command.execute(commandArguments).wait();
-					this.$hooksService.executeAfterHooks(commandName).wait();
+					await this.$hooksService.executeBeforeHooks(commandName);
+					await command.execute(commandArguments);
+					await this.$hooksService.executeAfterHooks(commandName);
 
 				} else {
-					command.execute(commandArguments).wait();
+					await command.execute(commandArguments);
 				}
 
 				let commandHelp = this.getCommandHelp();
@@ -91,14 +91,14 @@ export class CommandsService implements ICommandsService {
 	}
 
 	public async tryExecuteCommand(commandName: string, commandArguments: string[]): Promise<void> {
-			if (this.executeCommandAction(commandName, commandArguments, this.tryExecuteCommandAction).wait()) {
-				this.executeCommandAction(commandName, commandArguments, this.executeCommandUnchecked).wait();
+			await if (this.executeCommandAction(commandName, commandArguments, this.tryExecuteCommandAction)) {
+				await this.executeCommandAction(commandName, commandArguments, this.executeCommandUnchecked);
 			} else {
 				// If canExecuteCommand returns false, the command cannot be executed or there's no such command at all.
 				let command = this.$injector.resolveCommand(commandName);
 				if (command) {
 					// If command cannot be executed we should print its help.
-					this.printHelp(commandName).wait();
+					await this.printHelp(commandName);
 				}
 			}
 	}
@@ -115,7 +115,7 @@ export class CommandsService implements ICommandsService {
 
 				// If command wants to handle canExecute logic on its own.
 				if (command.canExecute) {
-					return command.canExecute(commandArguments).wait();
+					await return command.canExecute(commandArguments);
 				}
 
 				// First part of hierarchical commands should be validated in specific way.
@@ -123,16 +123,16 @@ export class CommandsService implements ICommandsService {
 					return true;
 				}
 
-				if (this.validateCommandArguments(command, commandArguments).wait()) {
+				await if (this.validateCommandArguments(command, commandArguments)) {
 					return true;
 				}
 
 				this.$errors.fail("Unable to execute command '%s'. Use '$ %s %s --help' for help.", beautifiedName, this.$staticConfig.CLIENT_NAME.toLowerCase(), beautifiedName);
 				return false;
 			} else if (!isDynamicCommand && _.startsWith(commandName, this.$commandsServiceProvider.dynamicCommandsPrefix)) {
-				if (_.some(this.$commandsServiceProvider.getDynamicCommands().wait())) {
-					this.$commandsServiceProvider.generateDynamicCommands().wait();
-					return this.canExecuteCommand(commandName, commandArguments, true).wait();
+				await if (_.some(this.$commandsServiceProvider.getDynamicCommands())) {
+					await this.$commandsServiceProvider.generateDynamicCommands();
+					await return this.canExecuteCommand(commandName, commandArguments, true);
 				}
 			}
 

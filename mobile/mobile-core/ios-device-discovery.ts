@@ -58,7 +58,7 @@ export class IOSDeviceDiscovery extends DeviceDiscovery {
 	public async startLookingForDevices(): Promise<void> {
 			if (this.validateiTunes()) {
 				this.subscribeForNotifications();
-				this.checkForDevices().wait();
+				await this.checkForDevices();
 			}
 	}
 

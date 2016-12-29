@@ -47,14 +47,14 @@ describe("xcode-select-service", () => {
 		injector = createTestInjector({ xcodeSelectStdout: "  /Applications/Xcode.app/Contents/Developer/  ", isDarwin: true });
 		service = injector.resolve("$xcodeSelectService");
 
-		assert.deepEqual(service.getDeveloperDirectoryPath().wait(), defaultXcodeSelectStdout, "xcode-select service should get correct trimmed  path to Developer directory on Mac OS X.");
+		await assert.deepEqual(service.getDeveloperDirectoryPath(), defaultXcodeSelectStdout, "xcode-select service should get correct trimmed  path to Developer directory on Mac OS X.");
 	});
 
 	it("gets correct path to Developer directory on Mac OS X whitout new lines", () => {
 		injector = createTestInjector({ xcodeSelectStdout: "\r\n/Applications/Xcode.app/Contents/Developer/\n", isDarwin: true });
 		service = injector.resolve("$xcodeSelectService");
 
-		assert.deepEqual(service.getDeveloperDirectoryPath().wait(), defaultXcodeSelectStdout, "xcode-select service should get correct trimmed  path to Developer directory on Mac OS X.");
+		await assert.deepEqual(service.getDeveloperDirectoryPath(), defaultXcodeSelectStdout, "xcode-select service should get correct trimmed  path to Developer directory on Mac OS X.");
 	});
 
 	it("gets correct Xcode version", () => {
@@ -71,7 +71,7 @@ describe("xcode-select-service", () => {
 		injector = createTestInjector({ xcodeSelectStdout: defaultXcodeSelectStdout, isDarwin: true });
 		service = injector.resolve("$xcodeSelectService");
 
-		assert.deepEqual(service.getDeveloperDirectoryPath().wait(), defaultXcodeSelectStdout, "xcode-select service should get correct path to Developer directory on Mac OS X.");
+		await assert.deepEqual(service.getDeveloperDirectoryPath(), defaultXcodeSelectStdout, "xcode-select service should get correct path to Developer directory on Mac OS X.");
 	});
 
 	it("gets correct path to Contents directory on Mac OS X", () => {
@@ -80,14 +80,14 @@ describe("xcode-select-service", () => {
 		injector = createTestInjector({ xcodeSelectStdout: defaultXcodeSelectStdout, isDarwin: true });
 		service = injector.resolve("$xcodeSelectService");
 
-		assert.deepEqual(service.getContentsDirectoryPath().wait(), expected, "xcode-select service should get correct path to Contents directory on Mac OS X.");
+		await assert.deepEqual(service.getContentsDirectoryPath(), expected, "xcode-select service should get correct path to Contents directory on Mac OS X.");
 	});
 
 	it("stops execution when trying to get Developer directory if not on Mac OS X", () => {
 		injector = createTestInjector({ xcodeSelectStdout: defaultXcodeSelectStdout, isDarwin: false });
 		service = injector.resolve("$xcodeSelectService");
 
-		service.getDeveloperDirectoryPath().wait();
+		await service.getDeveloperDirectoryPath();
 
 		assert.deepEqual(executionStopped, true, "xcode-select service should stop executon unless on Mac OS X.");
 	});
@@ -96,7 +96,7 @@ describe("xcode-select-service", () => {
 		injector = createTestInjector({ xcodeSelectStdout: defaultXcodeSelectStdout, isDarwin: false });
 		service = injector.resolve("$xcodeSelectService");
 
-		service.getContentsDirectoryPath().wait();
+		await service.getContentsDirectoryPath();
 
 		assert.deepEqual(executionStopped, true, "xcode-select service should stop executon unless on Mac OS X.");
 	});
@@ -105,7 +105,7 @@ describe("xcode-select-service", () => {
 		injector = createTestInjector({ xcodeSelectStdout: "", isDarwin: true });
 		service = injector.resolve("$xcodeSelectService");
 
-		service.getDeveloperDirectoryPath().wait();
+		await service.getDeveloperDirectoryPath();
 
 		assert.deepEqual(executionStopped, true, "xcode-select service should stop executon when Developer directory is empty on Mac OS X.");
 	});
@@ -114,7 +114,7 @@ describe("xcode-select-service", () => {
 		injector = createTestInjector({ xcodeSelectStdout: "", isDarwin: true });
 		service = injector.resolve("$xcodeSelectService");
 
-		service.getContentsDirectoryPath().wait();
+		await service.getContentsDirectoryPath();
 
 		assert.deepEqual(executionStopped, true, "xcode-select service should stop executon when Contents directory is empty on Mac OS X.");
 	});

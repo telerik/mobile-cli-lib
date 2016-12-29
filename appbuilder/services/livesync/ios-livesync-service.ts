@@ -48,7 +48,7 @@ export class IOSLiveSyncService implements IDeviceLiveSyncService {
 				shell.cp("-Rf", path.join(sourcePath, "*"), destinationPath);
 
 				let cfBundleExecutable = `${this.$project.projectData.Framework}${this.$project.projectData.FrameworkVersion.split(".").join("")}`;
-				this.device.applicationManager.restartApplication(deviceAppData.appIdentifier, cfBundleExecutable).wait();
+				await this.device.applicationManager.restartApplication(deviceAppData.appIdentifier, cfBundleExecutable);
 			} else {
 				this.device.fileSystem.deleteFile("/Documents/AppBuilder/ServerInfo.plist", deviceAppData.appIdentifier);
 				let notificationProxyClient = this.$injector.resolve(iOSProxyServices.NotificationProxyClient, {device: this.device});

@@ -53,11 +53,11 @@ export class StaticConfigBase implements Config.IStaticConfig {
 				let proc = await  $childProcess.spawnFromEvent("adb", ["version"], "exit", undefined, { throwError: false });
 
 				if (proc.stderr) {
-					return this.spawnPrivateAdb().wait();
+					await return this.spawnPrivateAdb();
 				}
 			} catch (e) {
 				if (e.code === "ENOENT") {
-					return this.spawnPrivateAdb().wait();
+					await return this.spawnPrivateAdb();
 				}
 			}
 
@@ -99,7 +99,7 @@ export class StaticConfigBase implements Config.IStaticConfig {
 			}
 
 			// let adb start its global server
-			$childProcess.spawnFromEvent(targetAdb, ["start-server"], "exit").wait();
+			await $childProcess.spawnFromEvent(targetAdb, ["start-server"], "exit");
 
 			return targetAdb;
 	}

@@ -28,11 +28,11 @@ export class AppBuilderDeviceAppDataBase extends DeviceAppDataBase implements IL
 			let isApplicationInstalled = await  this.device.applicationManager.isApplicationInstalled(this.appIdentifier);
 
 			if (!isApplicationInstalled) {
-				this.$deployHelper.deploy(this.platform.toString()).wait();
+				await this.$deployHelper.deploy(this.platform.toString());
 				// Update cache of installed apps
-				this.device.applicationManager.checkForApplicationUpdates().wait();
+				await this.device.applicationManager.checkForApplicationUpdates();
 			}
 
-			return this.device.applicationManager.isLiveSyncSupported(this.appIdentifier).wait();
+			await return this.device.applicationManager.isLiveSyncSupported(this.appIdentifier);
 	}
 }

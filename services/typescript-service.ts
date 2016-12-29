@@ -73,7 +73,7 @@ export class TypeScriptService implements ITypeScriptService {
 
 			this.$logger.out(`Using tsc version ${typeScriptCompilerSettings.version}`.cyan);
 			// Core compilation
-			return this.runTranspilation(projectDir, typeScriptCompilerSettings.pathToCompiler, runTranspilationOptions).wait();
+			await return this.runTranspilation(projectDir, typeScriptCompilerSettings.pathToCompiler, runTranspilationOptions);
 	}
 
 	public async getTypeScriptFilesData(projectDir: string): Promise<ITypeScriptFiles> {
@@ -156,7 +156,7 @@ export class TypeScriptService implements ITypeScriptService {
 						installTypes: false
 					};
 
-					this.$npmService.install(typeScriptModuleInstallationDir, pluginToInstall).wait();
+					await this.$npmService.install(typeScriptModuleInstallationDir, pluginToInstall);
 					this.typeScriptModuleFilePath = path.join(typeScriptModuleInstallationDir, typeScriptInNodeModulesDir);
 				}
 			}

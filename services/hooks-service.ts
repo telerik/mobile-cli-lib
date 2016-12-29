@@ -75,7 +75,7 @@ export class HooksService implements IHooksService {
 
 			try {
 				_.each(this.hooksDirectories, hooksDirectory => {
-					this.executeHooksInDirectory(hooksDirectory, hookName, hookArguments).wait();
+					await this.executeHooksInDirectory(hooksDirectory, hookName, hookArguments);
 				});
 			} catch (err) {
 				this.$logger.trace("Failed during hook execution.");
@@ -124,7 +124,7 @@ export class HooksService implements IHooksService {
 									hookCompletion.throw(err);
 								}
 							});
-						hookCompletion.wait();
+						await hookCompletion;
 					}
 					this.$logger.trace('Hook completed');
 				} else {

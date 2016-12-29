@@ -27,14 +27,14 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 			if (this.$fs.exists(packageFilePath) && path.extname(packageFilePath) === ".zip") {
 				temp.track();
 				let dir = temp.mkdirSync("simulatorPackage");
-				this.$fs.unzip(packageFilePath, dir).wait();
+				await this.$fs.unzip(packageFilePath, dir);
 				let app = _.find(this.$fs.readDirectory(dir), directory => path.extname(directory) === ".app");
 				if (app) {
 					packageFilePath = path.join(dir, app);
 				}
 			}
 
-			this.iosSim.installApplication(this.identifier, packageFilePath).wait();
+			await this.iosSim.installApplication(this.identifier, packageFilePath);
 	}
 
 	public uninstallApplication(appIdentifier: string): IFuture<void> {
@@ -92,7 +92,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 			let applicationPath = this.iosSim.getApplicationPath(this.identifier, appIdentifier),
 				pathToInfoPlist = path.join(applicationPath, "Info.plist");
 
-			return this.$fs.exists(pathToInfoPlist) ? this.$bplistParser.parseFile(pathToInfoPlist).wait()[0] : null;
+			await return this.$fs.exists(pathToInfoPlist) ? this.$bplistParser.parseFile(pathToInfoPlist)[0] : null;
 		}).future<any>()();
 	}
 

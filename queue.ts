@@ -18,7 +18,7 @@ export class Queue<T> implements IQueue<T> {
 	public async dequeue(): Promise<T> {
 			if (!this.items.length) {
 				this.future = new Future<void>();
-				this.future.wait();
+				await this.future;
 				this.future = null;
 			}
 

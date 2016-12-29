@@ -265,7 +265,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 					ImageSize: imageSize,
 					ImageType: "Developer",
 					ImageSignature: imageSignature
-				}).wait();
+				await });
 
 				if(result.Status === "ReceiveBytesAck") {
 					let fileData = <NodeBuffer>this.$fs.readFile(imagePath);
@@ -273,7 +273,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 				} else {
 					let afcService = this.startService(iOSProxyServices.MobileServices.APPLE_FILE_CONNECTION);
 					let afcClient = this.$injector.resolve(iOSProxyServices.AfcClient, {service: afcService});
-					afcClient.transfer(imagePath, "PublicStaging/staging.dimage").wait();
+					await afcClient.transfer(imagePath, "PublicStaging/staging.dimage");
 				}
 
 				try {
@@ -282,7 +282,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 						ImageType: "Developer",
 						ImageSignature: imageSignature,
 						ImagePath: "/let/mobile/Media/PublicStaging/staging.dimage"
-					}).wait();
+					await });
 
 					if(result.Error) {
 						this.$errors.fail("Unable to mount image. %s", result.Error);

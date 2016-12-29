@@ -26,8 +26,8 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 	}
 
 	public async checkConsent(): Promise<void> {
-			if (this.$analyticsSettingsService.canDoRequest().wait()) {
-				if (this.isNotConfirmed(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME).wait() && helpers.isInteractive()) {
+			await if (this.$analyticsSettingsService.canDoRequest()) {
+				await if (this.isNotConfirmed(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME) && helpers.isInteractive()) {
 					this.$logger.out("Do you want to help us improve "
 						+ this.$analyticsSettingsService.getClientName()
 						+ " by automatically sending anonymous usage statistics? We will not use this information to identify or contact you."
@@ -35,18 +35,18 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 					let message = this.$analyticsSettingsService.getPrivacyPolicyLink();
 
 					let trackFeatureUsage = await  this.$prompter.confirm(message, () => true);
-					this.setStatus(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, trackFeatureUsage, true).wait();
+					await this.setStatus(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, trackFeatureUsage, true);
 					if (!trackFeatureUsage) {
 						// In case user selects to disable feature tracking, disable the exceptions reporting as well.
-						this.setStatus(this.$staticConfig.ERROR_REPORT_SETTING_NAME, trackFeatureUsage, true).wait();
+						await this.setStatus(this.$staticConfig.ERROR_REPORT_SETTING_NAME, trackFeatureUsage, true);
 					}
 
-					this.checkConsentCore(trackFeatureUsage).wait();
+					await this.checkConsentCore(trackFeatureUsage);
 				}
 
-				if (this.isNotConfirmed(this.$staticConfig.ERROR_REPORT_SETTING_NAME).wait()) {
+				await if (this.isNotConfirmed(this.$staticConfig.ERROR_REPORT_SETTING_NAME)) {
 					this.$logger.out(`Error reporting will be enabled. You can disable it by running '$ ${this.$staticConfig.CLIENT_NAME.toLowerCase()} error-reporting disable'.`);
-					this.setStatus(this.$staticConfig.ERROR_REPORT_SETTING_NAME, true).wait();
+					await this.setStatus(this.$staticConfig.ERROR_REPORT_SETTING_NAME, true);
 				}
 			}
 	}
@@ -58,22 +58,22 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 	}
 
 	public async track(featureName: string, featureValue: string): Promise<void> {
-			this.initAnalyticsStatuses().wait();
+			await this.initAnalyticsStatuses();
 			this.$logger.trace(`Trying to track feature '${featureName}' with value '${featureValue}'.`);
 
 			if (this.analyticsStatuses[this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME] === AnalyticsStatus.enabled) {
-				this.trackFeatureCore(`${featureName}.${featureValue}`).wait();
+				await this.trackFeatureCore(`${featureName}.${featureValue}`);
 			}
 	}
 
 	public async trackException(exception: any, message: string): Promise<void> {
-			this.initAnalyticsStatuses().wait();
+			await this.initAnalyticsStatuses();
 			this.$logger.trace(`Trying to track exception with message '${message}'.`);
 
 			if (this.analyticsStatuses[this.$staticConfig.ERROR_REPORT_SETTING_NAME] === AnalyticsStatus.enabled
 				&& await  this.$analyticsSettingsService.canDoRequest()) {
 				try {
-					this.start().wait();
+					await this.start();
 
 					if (this._eqatecMonitor) {
 						this.$logger.printInfoMessageOnSameLine("Sending exception report (press Ctrl+C to stop)...");
@@ -81,7 +81,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 						// Sending the exception might take a while.
 						// As in most cases we exit immediately after exception is caught,
 						// wait for tracking the exception.
-						this.$progressIndicator.showProgressIndicator(this.waitForSending(), 500).wait();
+						await this.$progressIndicator.showProgressIndicator(this.waitForSending(), 500);
 					}
 				} catch (e) {
 					this.$logger.trace("Analytics exception: '%s'", e.toString());
@@ -91,10 +91,10 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 
 	public async setStatus(settingName: string, enabled: boolean, doNotTrackSetting?: boolean): Promise<void> {
 			this.analyticsStatuses[settingName] = enabled ? AnalyticsStatus.enabled : AnalyticsStatus.disabled;
-			this.$userSettingsService.saveSetting(settingName, enabled.toString()).wait();
+			await this.$userSettingsService.saveSetting(settingName, enabled.toString());
 
 			if (!doNotTrackSetting) {
-				this.trackFeatureCore(`${settingName}.${enabled ? "enabled" : "disabled"}`).wait();
+				await this.trackFeatureCore(`${settingName}.${enabled ? "enabled" : "disabled"}`);
 			}
 
 			if (this.analyticsStatuses[settingName] === AnalyticsStatus.disabled
@@ -127,7 +127,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 
 	protected async restartEqatecMonitor(projectApiKey: string): Promise<void> {
 			this.tryStopEqatecMonitor();
-			this.start(projectApiKey).wait();
+			await this.start(projectApiKey);
 	}
 
 	protected checkConsentCore(trackFeatureUsage: boolean): IFuture<void> {
@@ -136,11 +136,11 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 
 	protected async trackFeatureCore(featureTrackString: string): Promise<void> {
 			try {
-				if (this.$analyticsSettingsService.canDoRequest().wait()) {
-					this.start().wait();
+				await if (this.$analyticsSettingsService.canDoRequest()) {
+					await this.start();
 					if (this._eqatecMonitor) {
 						this._eqatecMonitor.trackFeature(featureTrackString);
-						this.waitForSending().wait();
+						await this.waitForSending();
 					}
 				}
 			} catch (e) {
@@ -189,13 +189,13 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 			let guid = await  this.$userSettingsService.getSettingValue(this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME);
 			if (!guid) {
 				guid = helpers.createGUID(false);
-				this.$userSettingsService.saveSetting(this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME, guid).wait();
+				await this.$userSettingsService.saveSetting(this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME, guid);
 			}
 			this.$logger.trace("%s: %s", this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME, guid.toString());
 			this._eqatecMonitor.setInstallationID(guid);
 
 			try {
-				this._eqatecMonitor.setUserID(this.$analyticsSettingsService.getUserId().wait());
+				await this._eqatecMonitor.setUserID(this.$analyticsSettingsService.getUserId());
 				let currentCount = await  this.$analyticsSettingsService.getUserSessionsCount(analyticsProjectKey);
 				// increment with 1 every time and persist the new value so next execution will be marked as new session
 				this.$analyticsSettingsService.setUserSessionsCount(+ await +currentCount, analyticsProjectKey);
@@ -210,12 +210,12 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 			// End the session on process.exit only or in case user disables both usage tracking and exceptions tracking.
 			process.on("exit", this.tryStopEqatecMonitor);
 
-			this.reportNodeVersion().wait();
+			await this.reportNodeVersion();
 	}
 
 	private async reportNodeVersion(): Promise<void> {
 			let reportedVersion: string = process.version.slice(1).replace(/[.]/g, "_");
-			this.track("NodeJSVersion", reportedVersion).wait();
+			await this.track("NodeJSVersion", reportedVersion);
 	}
 
 	private getUserAgentString(): string {
@@ -240,7 +240,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 	private async getHumanReadableStatusMessage(settingName: string, readableSettingName: string): Promise<string> {
 			let status: string = null;
 
-			if (this.isNotConfirmed(settingName).wait()) {
+			await if (this.isNotConfirmed(settingName)) {
 				status = "disabled until confirmed";
 			} else {
 				status = await  AnalyticsStatus[this.getStatus(settingName)];
@@ -256,7 +256,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 	}
 
 	private async initAnalyticsStatuses(): Promise<void> {
-			if (this.$analyticsSettingsService.canDoRequest().wait()) {
+			await if (this.$analyticsSettingsService.canDoRequest()) {
 				if (!this.isAnalyticsStatusesInitialized) {
 					this.$logger.trace("Initializing analytics statuses.");
 					let settingsNames = [this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, this.$staticConfig.ERROR_REPORT_SETTING_NAME];

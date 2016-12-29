@@ -10,7 +10,7 @@ export class ListDevicesCommand implements ICommand {
 
 	public async execute(args: string[]): Promise<void> {
 			let index = 1;
-			this.$devicesService.initialize({platform: args[0], deviceId: null, skipInferPlatform: true}).wait();
+			await this.$devicesService.initialize({platform: args[0], deviceId: null, skipInferPlatform: true});
 
 			let table: any = createTable(["#", "Device Name", "Platform", "Device Identifier", "Type", "Status"], []);
 			let action: (_device: Mobile.IDevice) => IFuture<void>;
@@ -30,7 +30,7 @@ export class ListDevicesCommand implements ICommand {
 				};
 			}
 
-			this.$devicesService.execute(action, undefined, {allowNoDevices: true}).wait();
+			await this.$devicesService.execute(action, undefined, {allowNoDevices: true});
 
 			if (!this.$options.json && table.length) {
 				this.$logger.out(table.toString());
@@ -49,7 +49,7 @@ class ListAndroidDevicesCommand implements ICommand {
 	public async execute(args: string[]): Promise<void> {
 			let listDevicesCommand: ICommand = this.$injector.resolve(ListDevicesCommand);
 			let platform = this.$devicePlatformsConstants.Android;
-			listDevicesCommand.execute([platform]).wait();
+			await listDevicesCommand.execute([platform]);
 	}
 }
 $injector.registerCommand("device|android", ListAndroidDevicesCommand);
@@ -63,7 +63,7 @@ class ListiOSDevicesCommand implements ICommand {
 	public async execute(args: string[]): Promise<void> {
 			let listDevicesCommand: ICommand = this.$injector.resolve(ListDevicesCommand);
 			let platform = this.$devicePlatformsConstants.iOS;
-			listDevicesCommand.execute([platform]).wait();
+			await listDevicesCommand.execute([platform]);
 	}
 }
 $injector.registerCommand("device|ios", ListiOSDevicesCommand);

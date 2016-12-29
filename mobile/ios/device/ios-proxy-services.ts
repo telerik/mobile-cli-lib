@@ -180,7 +180,7 @@ export class AfcClient extends AfcBase implements Mobile.IAfcClient {
 	}
 
 	public async transferPackage(localFilePath: string, devicePath: string): Promise<void> {
-			this.transfer(localFilePath, devicePath).wait();
+			await this.transfer(localFilePath, devicePath);
 	}
 
 	public deleteFile(devicePath: string): void {
@@ -238,7 +238,7 @@ export class AfcClient extends AfcBase implements Mobile.IAfcClient {
 					future.throw(err);
 				}
 			}
-			future.wait();
+			await future;
 	}
 
 	private ensureDevicePathExist(deviceDirPath: string): void {
@@ -267,14 +267,14 @@ export class InstallationProxyClient {
 			let afcClient = this.$injector.resolve(AfcClient, {service: service});
 			let devicePath = path.join("PublicStaging", path.basename(packageFile));
 
-			afcClient.transferPackage(packageFile, devicePath).wait();
+			await afcClient.transferPackage(packageFile, devicePath);
 			this.plistService = this.getPlistService();
 
 			this.plistService.sendMessage({
 				Command: "Install",
 				PackagePath: helpers.fromWindowsRelativePathToUnix(devicePath)
 			});
-			this.plistService.receiveMessage().wait();
+			await this.plistService.receiveMessage();
 	}
 
 	public async sendMessage(message: any): Promise<any> {

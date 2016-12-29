@@ -44,8 +44,8 @@ describe("ios-simulator-discovery", () => {
 		iOSSimulatorDiscovery.once("deviceFound", (device: Mobile.IDevice) => {
 			future.return(device);
 		});
-		iOSSimulatorDiscovery.startLookingForDevices().wait();
-		return future.wait();
+		await iOSSimulatorDiscovery.startLookingForDevices();
+		await return future;
 	};
 
 	let detectSimulatorDetached = (): Mobile.IiOSSimulator => {
@@ -55,8 +55,8 @@ describe("ios-simulator-discovery", () => {
 		iOSSimulatorDiscovery.once("deviceLost", (device: Mobile.IDevice) => {
 			lostDeviceFuture.return(device);
 		});
-		iOSSimulatorDiscovery.startLookingForDevices().wait();
-		return lostDeviceFuture.wait();
+		await iOSSimulatorDiscovery.startLookingForDevices();
+		await return lostDeviceFuture;
 	};
 
 	let detectSimulatorChanged = (newId: string): any => {
@@ -72,7 +72,7 @@ describe("ios-simulator-discovery", () => {
 			foundDeviceFuture.return(device);
 		});
 
-		iOSSimulatorDiscovery.startLookingForDevices().wait();
+		await iOSSimulatorDiscovery.startLookingForDevices();
 
 		let deviceLost = await  lostDeviceFuture;
 		let deviceFound = await  foundDeviceFuture;
@@ -144,8 +144,8 @@ describe("ios-simulator-discovery", () => {
 		iOSSimulatorDiscovery.on("deviceFound", (d: Mobile.IDevice) => {
 			throw new Error("Device found should not be raised for the same device.");
 		});
-		iOSSimulatorDiscovery.startLookingForDevices().wait();
-		iOSSimulatorDiscovery.startLookingForDevices().wait();
+		await iOSSimulatorDiscovery.startLookingForDevices();
+		await iOSSimulatorDiscovery.startLookingForDevices();
 	});
 
 	it("does not detect devices and does not throw when getting running iOS Simulator throws", () => {
@@ -158,7 +158,7 @@ describe("ios-simulator-discovery", () => {
 		iOSSimulatorDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
 			throw new Error("Device found should not be raised when getting running iOS Simulator fails.");
 		});
-		iOSSimulatorDiscovery.startLookingForDevices().wait();
+		await iOSSimulatorDiscovery.startLookingForDevices();
 	});
 
 	it("does not detect iOS Simulator when not running on OS X", () => {
@@ -167,7 +167,7 @@ describe("ios-simulator-discovery", () => {
 		iOSSimulatorDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
 			throw new Error("Device found should not be raised when OS is not OS X.");
 		});
-		iOSSimulatorDiscovery.startLookingForDevices().wait();
+		await iOSSimulatorDiscovery.startLookingForDevices();
 	});
 
 	it("checkForDevices return future", () => {
@@ -176,6 +176,6 @@ describe("ios-simulator-discovery", () => {
 		iOSSimulatorDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
 			throw new Error("Device found should not be raised when OS is not OS X.");
 		});
-		iOSSimulatorDiscovery.checkForDevices().wait();
+		await iOSSimulatorDiscovery.checkForDevices();
 	});
 });

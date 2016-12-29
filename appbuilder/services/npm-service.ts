@@ -48,7 +48,7 @@ export class NpmService implements INpmService {
 				};
 
 				try {
-					this.npmInstall(projectDir, dependencyToInstall.name, dependencyToInstall.version, ["--save", "--save-exact"]).wait();
+					await this.npmInstall(projectDir, dependencyToInstall.name, dependencyToInstall.version, ["--save", "--save-exact"]);
 					npmInstallResult.result.isInstalled = true;
 				} catch (err) {
 					npmInstallResult.error = err;
@@ -56,7 +56,7 @@ export class NpmService implements INpmService {
 
 				if (dependencyToInstall.installTypes && await  npmInstallResult.result.isInstalled && this.hasTypesForDependency(dependencyToInstall.name)) {
 					try {
-						this.installTypingsForDependency(projectDir, dependencyToInstall.name).wait();
+						await this.installTypingsForDependency(projectDir, dependencyToInstall.name);
 						npmInstallResult.result.isTypesInstalled = true;
 					} catch (err) {
 						npmInstallResult.error = err;
@@ -64,8 +64,8 @@ export class NpmService implements INpmService {
 				}
 			} else {
 				try {
-					this.npmPrune(projectDir).wait();
-					this.npmInstall(projectDir).wait();
+					await this.npmPrune(projectDir);
+					await this.npmInstall(projectDir);
 				} catch (err) {
 					npmInstallResult.error = err;
 				}
@@ -81,11 +81,11 @@ export class NpmService implements INpmService {
 			let packageJsonContent = this.getPackageJsonContent(projectDir);
 
 			if (packageJsonContent && packageJsonContent.dependencies && packageJsonContent.dependencies[dependency]) {
-				this.npmUninstall(projectDir, dependency, ["--save"]).wait();
+				await this.npmUninstall(projectDir, dependency, ["--save"]);
 			}
 
 			if (packageJsonContent && packageJsonContent.devDependencies && packageJsonContent.devDependencies[`${NpmService.TYPES_DIRECTORY}${dependency}`]) {
-				this.npmUninstall(projectDir, `${NpmService.TYPES_DIRECTORY}${dependency}`, ["--save-dev"]).wait();
+				await this.npmUninstall(projectDir, `${NpmService.TYPES_DIRECTORY}${dependency}`, ["--save-dev"]);
 			}
 
 			this.generateReferencesFile(projectDir);
@@ -318,7 +318,7 @@ export class NpmService implements INpmService {
 				npmArguments.push(dependencyToInstall);
 			}
 
-			return this.executeNpmCommandCore(projectDir, npmArguments).wait();
+			await return this.executeNpmCommandCore(projectDir, npmArguments);
 	}
 
 	private executeNpmCommandCore(projectDir: string, npmArguments: string[]): IFuture<ISpawnResult> {

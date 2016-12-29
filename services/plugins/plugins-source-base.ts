@@ -20,7 +20,7 @@ export abstract class PluginsSourceBase implements IPluginsSource {
 			this._isInitialized = true;
 
 			this.$logger.printInfoMessageOnSameLine(this.progressIndicatorMessage);
-			this.$progressIndicator.showProgressIndicator(this.initializeCore(projectDir, keywords), 2000).wait();
+			await this.$progressIndicator.showProgressIndicator(this.initializeCore(projectDir, keywords), 2000);
 	}
 
 	public hasPlugins(): boolean {

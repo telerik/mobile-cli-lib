@@ -23,7 +23,7 @@ export class DeviceEmitter extends EventEmitter {
 
 	public async initialize(): Promise<void> {
 			try {
-				this.$androidDeviceDiscovery.ensureAdbServerStarted().wait();
+				await this.$androidDeviceDiscovery.ensureAdbServerStarted();
 			} catch(err) {
 				this.$logger.warn(`Unable to start adb server. Error message is: ${err.message}`);
 			}
@@ -58,7 +58,7 @@ export class DeviceEmitter extends EventEmitter {
 				this.emit("deviceLost", device.deviceInfo);
 			});
 
-			this.$devicesService.initialize({ skipInferPlatform: true }).wait();
+			await this.$devicesService.initialize({ skipInferPlatform: true });
 
 			this.$deviceLogProvider.on("data", (identifier: string, data: any) => {
 				this.emit('deviceLogData', identifier, data.toString());

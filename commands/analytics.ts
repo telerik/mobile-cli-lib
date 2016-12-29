@@ -14,16 +14,16 @@ class AnalyticsCommand implements ICommand {
 			let arg = args[0] || "";
 			switch(arg.toLowerCase()) {
 				case "enable":
-					this.$analyticsService.setStatus(this.settingName, true).wait();
+					await this.$analyticsService.setStatus(this.settingName, true);
 					this.$logger.info(`${this.humanReadableSettingName} is now enabled.`);
 					break;
 				case "disable":
-					this.$analyticsService.setStatus(this.settingName, false).wait();
+					await this.$analyticsService.setStatus(this.settingName, false);
 					this.$logger.info(`${this.humanReadableSettingName} is now disabled.`);
 					break;
 				case "status":
 				case "":
-					this.$logger.out(this.$analyticsService.getStatusMessage(this.settingName, this.$options.json, this.humanReadableSettingName).wait());
+					await this.$logger.out(this.$analyticsService.getStatusMessage(this.settingName, this.$options.json, this.humanReadableSettingName));
 					break;
 			}
 	}

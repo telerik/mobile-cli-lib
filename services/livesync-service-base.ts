@@ -31,9 +31,9 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 	}
 
 	public async sync(data: ILiveSyncData[], filePaths?: string[]): Promise<void> {
-			this.syncCore(data, filePaths).wait();
+			await this.syncCore(data, filePaths);
 			if (this.$options.watch) {
-				this.$hooksService.executeBeforeHooks('watch').wait();
+				await this.$hooksService.executeBeforeHooks('watch');
 				this.partialSync(data, data[0].syncWorkingDirectory);
 			}
 	}
@@ -88,7 +88,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 									that.batchSync(dataItem, mappedFilePath);
 								} else if (event === "deleted") {
 									that.fileHashes = <any>(_.omit(that.fileHashes, filePath));
-									that.syncRemovedFile(dataItem, mappedFilePath).wait();
+									await that.syncRemovedFile(dataItem, mappedFilePath);
 								}
 							}
 						} catch (err) {
@@ -119,9 +119,9 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 										let batch = this.batch[platformName];
 										let livesyncData = this.livesyncData[platformName];
 										batch.syncFiles(((filesToSync: string[]) => {
-											this.$liveSyncProvider.preparePlatformForSync(platformName).wait();
+											await this.$liveSyncProvider.preparePlatformForSync(platformName);
 											this.syncCore([livesyncData], filesToSync);
-										}).future<void>()).wait();
+										await }).future<void>());
 									}
 								} catch (err) {
 									this.$logger.warn(`Unable to sync files. Error is:`, err.message);
@@ -143,7 +143,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 			let filePathArray = [filePath],
 				deviceFilesAction = this.getSyncRemovedFilesAction(data);
 
-			this.syncCore([data], filePathArray, deviceFilesAction).wait();
+			await this.syncCore([data], filePathArray, deviceFilesAction);
 	}
 
 	public getSyncRemovedFilesAction(data: ILiveSyncData): (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void> {
@@ -164,15 +164,15 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 			return (() => {
 				let shouldRefreshApplication = true;
 				let deviceAppData = this.$deviceAppDataFactory.create(appIdentifier, this.$mobileHelper.normalizePlatformName(platform), device, liveSyncOptions);
-				if (deviceAppData.isLiveSyncSupported().wait()) {
+				await if (deviceAppData.isLiveSyncSupported()) {
 					let platformLiveSyncService = this.resolveDeviceLiveSyncService(platform, device);
 
 					if (platformLiveSyncService.beforeLiveSyncAction) {
-						platformLiveSyncService.beforeLiveSyncAction(deviceAppData).wait();
+						await platformLiveSyncService.beforeLiveSyncAction(deviceAppData);
 					}
 
 					// Not installed application
-					device.applicationManager.checkForApplicationUpdates().wait();
+					await device.applicationManager.checkForApplicationUpdates();
 
 					let wasInstalled = true;
 					if (! await device.applicationManager.isApplicationInstalled(appIdentifier) && !this.$options.companion) {
@@ -180,7 +180,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 						if (!packageFilePath) {
 							packageFilePath = await  this.$liveSyncProvider.buildForDevice(device);
 						}
-						device.applicationManager.installApplication(packageFilePath).wait();
+						await device.applicationManager.installApplication(packageFilePath);
 
 						if (platformLiveSyncService.afterInstallApplicationAction) {
 							let localToDevicePaths = this.$projectFilesManager.createLocalToDevicePaths(deviceAppData, projectFilesPath, filesToSync, data.excludedProjectDirsAndFiles, liveSyncOptions);
@@ -190,7 +190,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 						}
 
 						if (device.applicationManager.canStartApplication() && !shouldRefreshApplication) {
-							device.applicationManager.startApplication(appIdentifier).wait();
+							await device.applicationManager.startApplication(appIdentifier);
 						}
 						wasInstalled = false;
 					}
@@ -200,7 +200,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 						// Transfer or remove files on device
 						let localToDevicePaths = this.$projectFilesManager.createLocalToDevicePaths(deviceAppData, projectFilesPath, filesToSync, data.excludedProjectDirsAndFiles, liveSyncOptions);
 						if (deviceFilesAction) {
-							deviceFilesAction(deviceAppData, device, localToDevicePaths).wait();
+							await deviceFilesAction(deviceAppData, device, localToDevicePaths);
 						} else {
 							this.transferFiles(deviceAppData, localToDevicePaths, projectFilesPath, ! await filesToSync);
 						}
@@ -224,7 +224,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 				let platform = dataItem.platform;
 				let canExecute = this.getCanExecuteAction(platform, appIdentifier, dataItem.canExecute);
 				let action = this.getSyncAction(dataItem, filesToSync, deviceFilesAction, { isForCompanionApp: this.$options.companion, additionalConfigurations: dataItem.additionalConfigurations, configuration: dataItem.configuration, isForDeletedFiles: false });
-				this.$devicesService.execute(action, canExecute).wait();
+				await this.$devicesService.execute(action, canExecute);
 			}
 	}
 
@@ -242,9 +242,9 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 						shell.cp("-f", localToDevicePath.getLocalPath(), path.join(fileDirname, path.basename(localToDevicePath.getDevicePath())));
 					}
 				});
-				deviceAppData.device.fileSystem.transferDirectory(deviceAppData, localToDevicePaths, tempDir).wait();
+				await deviceAppData.device.fileSystem.transferDirectory(deviceAppData, localToDevicePaths, tempDir);
 			} else {
-				this.$liveSyncProvider.transferFiles(deviceAppData, localToDevicePaths, projectFilesPath, isFullSync).wait();
+				await this.$liveSyncProvider.transferFiles(deviceAppData, localToDevicePaths, projectFilesPath, isFullSync);
 			}
 
 			this.logFilesSyncInformation(localToDevicePaths, "Successfully transferred %s.", this.$logger.info);

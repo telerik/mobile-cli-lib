@@ -57,7 +57,7 @@ export class HostInfo implements IHostInfo {
 	public async isDotNet40Installed(message?: string) : Promise<boolean> {
 			if (this.isWindows) {
 				try {
-					this.dotNetVersion().wait();
+					await this.dotNetVersion();
 					return true;
 				} catch (e) {
 					this.$errors.failWithoutHelp(message || "An error occurred while reading the registry.");

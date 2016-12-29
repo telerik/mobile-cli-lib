@@ -6,10 +6,10 @@ export class UninstallApplicationCommand implements ICommand {
 	allowedParameters: ICommandParameter[] = [this.$stringParameter];
 
 	public async execute(args: string[]): Promise<void> {
-			this.$devicesService.initialize({ deviceId: this.$options.device, skipInferPlatform: true }).wait();
+			await this.$devicesService.initialize({ deviceId: this.$options.device, skipInferPlatform: true });
 
 			let action = (device: Mobile.IDevice) => device.applicationManager.uninstallApplication(args[0]);
-			this.$devicesService.execute(action).wait();
+			await this.$devicesService.execute(action);
 	}
 }
 $injector.registerCommand("device|uninstall", UninstallApplicationCommand);

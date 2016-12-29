@@ -36,7 +36,7 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 	private async liveSyncOnDevice(deviceDescriptor: IDeviceLiveSyncInfo, filePaths: string[], liveSyncOptions?: ILiveSyncDeletionOptions): Promise<IDeviceLiveSyncResult> {
 			let isForDeletedFiles = liveSyncOptions && liveSyncOptions.isForDeletedFiles;
 
-			this.$devicesService.stopDeviceDetectionInterval().wait();
+			await this.$devicesService.stopDeviceDetectionInterval();
 			let result: IDeviceLiveSyncResult = {
 				deviceIdentifier: deviceDescriptor.deviceIdentifier
 			};
@@ -105,12 +105,12 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 				livesyncData.appIdentifier = appIdentifier = this.$companionAppsService.getCompanionAppIdentifier(this.$project.projectData.Framework, device.deviceInfo.platform);
 			}
 
-			if (device.applicationManager.isApplicationInstalled(appIdentifier).wait()) {
+			await if (device.applicationManager.isApplicationInstalled(appIdentifier)) {
 
 				let deletedFilesAction: any = liveSyncOptions && liveSyncOptions.isForDeletedFiles ? this.$liveSyncServiceBase.getSyncRemovedFilesAction(livesyncData) : null;
 				let action: any = this.$liveSyncServiceBase.getSyncAction(livesyncData, filePaths, deletedFilesAction, liveSyncOptions);
 				try {
-					this.$devicesService.execute(action, canExecuteAction).wait();
+					await this.$devicesService.execute(action, canExecuteAction);
 					liveSyncOperationResult.isResolved = true;
 				} catch (err) {
 					liveSyncOperationResult.error = err;

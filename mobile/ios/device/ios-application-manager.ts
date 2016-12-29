@@ -37,7 +37,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async getInstalledApplications(): Promise<string[]> {
-			return _(this.getApplicationsLiveSyncSupportedStatus().wait())
+			await return _(this.getApplicationsLiveSyncSupportedStatus())
 				.map(appLiveSyncStatus => appLiveSyncStatus.applicationIdentifier)
 				.sortBy((identifier: string) => identifier.toLowerCase())
 				.value();
@@ -47,7 +47,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	public async installApplication(packageFilePath: string): Promise<void> {
 			let installationProxy = this.getInstallationProxy();
 			try {
-				installationProxy.deployApplication(packageFilePath).wait();
+				await installationProxy.deployApplication(packageFilePath);
 			} finally {
 				installationProxy.closeSocket();
 			}
@@ -55,7 +55,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 
 	public async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
 			if (!this.applicationsLiveSyncInfos || !this.applicationsLiveSyncInfos.length) {
-				this.getApplicationsLiveSyncSupportedStatus().wait();
+				await this.getApplicationsLiveSyncSupportedStatus();
 			}
 
 			return _.find(this.applicationsLiveSyncInfos, app => app.applicationIdentifier === applicationIdentifier);
@@ -74,7 +74,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 							"configuration"
 						]
 					}
-				}).wait();
+				await });
 
 				/*
 					Sample Result:
@@ -166,7 +166,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 
 	public async isLiveSyncSupported(appIdentifier: string): Promise<boolean> {
 			if (!this.applicationsLiveSyncInfos || !this.applicationsLiveSyncInfos.length) {
-				this.getApplicationsLiveSyncSupportedStatus().wait();
+				await this.getApplicationsLiveSyncSupportedStatus();
 			}
 
 			let selectedApplication = _.find(this.applicationsLiveSyncInfos, app => app.applicationIdentifier === appIdentifier);
@@ -193,9 +193,9 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 			}
 
 			this.validateApplicationId(appIdentifier);
-			this.device.mountImage().wait();
+			await this.device.mountImage();
 
-			this.runApplicationCore(appIdentifier).wait();
+			await this.runApplicationCore(appIdentifier);
 			this.$logger.info(`Successfully run application ${appIdentifier} on device with ID ${this.device.deviceInfo.identifier}.`);
 	}
 
@@ -206,8 +206,8 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async restartApplication(applicationId: string): Promise<void> {
-			this.stopApplication(applicationId).wait();
-			this.runApplicationCore(applicationId).wait();
+			await this.stopApplication(applicationId);
+			await this.runApplicationCore(applicationId);
 	}
 
 	public canStartApplication(): boolean {

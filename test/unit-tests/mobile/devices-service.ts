@@ -345,7 +345,7 @@ describe("devicesService", () => {
 			let assertAllMethodsResults = (deviceId: string) => {
 				assert.isFalse(devicesService.hasDevices, "Initially devicesService hasDevices must be false.");
 				androidDeviceDiscovery.emit("deviceFound", androidDevice);
-				devicesService.initialize({ platform: "android", deviceId: deviceId }).wait();
+				await devicesService.initialize({ platform: "android", deviceId: deviceId });
 				assert.deepEqual(devicesService.platform, "android");
 				assert.deepEqual(devicesService.deviceCount, 1);
 				androidDeviceDiscovery.emit("deviceFound", tempDevice);
@@ -396,7 +396,7 @@ describe("devicesService", () => {
 			it("does not fail when androidDeviceDiscovery startLookingForDevices fails", () => {
 				(<any>androidDeviceDiscovery).startLookingForDevices = (): IFuture<void> => { throw new Error("my error"); };
 				iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
-				devicesService.initialize({ platform: "ios", deviceId: iOSDevice.deviceInfo.identifier }).wait();
+				await devicesService.initialize({ platform: "ios", deviceId: iOSDevice.deviceInfo.identifier });
 				assert.isTrue(logger.traceOutput.indexOf("my error") !== -1);
 			});
 
@@ -405,7 +405,7 @@ describe("devicesService", () => {
 				hostInfo.isDarwin = true;
 				(<any>iOSSimulatorDiscovery).startLookingForDevices = (): IFuture<void> => { throw new Error("my error"); };
 				iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
-				devicesService.initialize({ platform: "ios", deviceId: iOSDevice.deviceInfo.identifier }).wait();
+				await devicesService.initialize({ platform: "ios", deviceId: iOSDevice.deviceInfo.identifier });
 				assert.isTrue(logger.traceOutput.indexOf("my error") !== -1);
 			});
 		});
@@ -434,7 +434,7 @@ describe("devicesService", () => {
 			let assertAllMethodsResults = (deviceId: string) => {
 				assert.isFalse(devicesService.hasDevices, "Initially devicesService hasDevices must be false.");
 				androidDeviceDiscovery.emit("deviceFound", androidDevice);
-				devicesService.initialize({ deviceId: deviceId }).wait();
+				await devicesService.initialize({ deviceId: deviceId });
 				assert.deepEqual(devicesService.platform, "android");
 				assert.deepEqual(devicesService.deviceCount, 1);
 				androidDeviceDiscovery.emit("deviceFound", tempDevice);
@@ -488,7 +488,7 @@ describe("devicesService", () => {
 			it("does not fail when androidDeviceDiscovery startLookingForDevices fails", () => {
 				(<any>androidDeviceDiscovery).startLookingForDevices = (): IFuture<void> => { throw new Error("my error"); };
 				iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
-				devicesService.initialize({ deviceId: iOSDevice.deviceInfo.identifier }).wait();
+				await devicesService.initialize({ deviceId: iOSDevice.deviceInfo.identifier });
 				assert.isTrue(logger.traceOutput.indexOf("my error") !== -1);
 			});
 		});
@@ -496,14 +496,14 @@ describe("devicesService", () => {
 		describe("when only platform is passed", () => {
 			it("execute fails when platform is iOS on non-Darwin platform and there are no devices attached when --emulator is passed", () => {
 				testInjector.resolve("hostInfo").isDarwin = false;
-				devicesService.initialize({ platform: "ios" }).wait();
+				await devicesService.initialize({ platform: "ios" });
 				testInjector.resolve("options").emulator = true;
 				assert.throws(() => await  devicesService.execute(() => { counter++; return Future.fromResult(); }), "Cannot find connected devices. Reconnect any connected devices");
 			});
 
 			it("execute fails when platform is iOS on non-Darwin platform and there are no devices attached", () => {
 				testInjector.resolve("hostInfo").isDarwin = false;
-				devicesService.initialize({ platform: "ios" }).wait();
+				await devicesService.initialize({ platform: "ios" });
 				assert.isFalse(devicesService.hasDevices, "MUST BE FALSE!!!");
 				assert.throws(() => await  devicesService.execute(() => { counter++; return Future.fromResult(); }), "Cannot find connected devices. Reconnect any connected devices");
 			});
@@ -512,7 +512,7 @@ describe("devicesService", () => {
 				testInjector.resolve("options").emulator = true;
 				testInjector.resolve("hostInfo").isDarwin = true;
 				iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
-				devicesService.initialize({ platform: "ios" }).wait();
+				await devicesService.initialize({ platform: "ios" });
 				let deviceIdentifier: string;
 				counter = 0;
 				devicesService.execute((d: Mobile.IDevice) => await  { deviceIdentifier = d.deviceInfo.identifier; counter++; return Future.fromResult(); });
@@ -537,7 +537,7 @@ describe("devicesService", () => {
 			it("all methods work as expected", () => {
 				assert.isFalse(devicesService.hasDevices, "Initially devicesService hasDevices must be false.");
 				androidDeviceDiscovery.emit("deviceFound", androidDevice);
-				devicesService.initialize({ platform: "android" }).wait();
+				await devicesService.initialize({ platform: "android" });
 				assert.deepEqual(devicesService.platform, "android");
 				assert.deepEqual(devicesService.deviceCount, 1);
 				androidDeviceDiscovery.emit("deviceFound", tempDevice);
@@ -573,7 +573,7 @@ describe("devicesService", () => {
 			assert.isFalse(devicesService.hasDevices, "Initially devicesService hasDevices must be false.");
 			androidDeviceDiscovery.emit("deviceFound", androidDevice);
 			iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
-			devicesService.initialize({ skipInferPlatform: true }).wait();
+			await devicesService.initialize({ skipInferPlatform: true });
 			assert.deepEqual(devicesService.platform, undefined);
 			assert.deepEqual(devicesService.deviceCount, 2);
 			androidDeviceDiscovery.emit("deviceFound", tempDevice);
@@ -607,7 +607,7 @@ describe("devicesService", () => {
 		it("when parameters are not passed and devices with same platform are detected", () => {
 			assert.isFalse(devicesService.hasDevices, "Initially devicesService hasDevices must be false.");
 			androidDeviceDiscovery.emit("deviceFound", androidDevice);
-			devicesService.initialize().wait();
+			await devicesService.initialize();
 			assert.deepEqual(devicesService.platform, "android");
 			assert.deepEqual(devicesService.deviceCount, 1);
 			androidDeviceDiscovery.emit("deviceFound", tempDevice);
@@ -653,7 +653,7 @@ describe("devicesService", () => {
 					platform: "invalid-platform"
 				}
 			});
-			devicesService.initialize().wait();
+			await devicesService.initialize();
 			assert.isTrue(logger.output.indexOf("is not supported") !== -1);
 		});
 
@@ -672,10 +672,10 @@ describe("devicesService", () => {
 		it("caches execution result and does not execute next time when called", () => {
 			assert.isFalse(devicesService.hasDevices, "Initially devicesService hasDevices must be false.");
 			androidDeviceDiscovery.emit("deviceFound", androidDevice);
-			devicesService.initialize({ platform: "android" }).wait();
+			await devicesService.initialize({ platform: "android" });
 			assert.deepEqual(devicesService.platform, "android");
 			assert.deepEqual(devicesService.deviceCount, 1);
-			devicesService.initialize({ platform: "ios" }).wait();
+			await devicesService.initialize({ platform: "ios" });
 			assert.deepEqual(devicesService.platform, "android");
 		});
 
@@ -707,12 +707,12 @@ describe("devicesService", () => {
 			});
 
 			it("does not throw when only skipInferPlatform is passed", () => {
-				devicesService.initialize({ skipInferPlatform: true }).wait();
+				await devicesService.initialize({ skipInferPlatform: true });
 			});
 
 			it("does not throw when Android platform is specified and Android device identifier is passed", () => {
 				androidDeviceDiscovery.emit("deviceFound", androidDevice);
-				devicesService.initialize({ platform: "android", deviceId: androidDevice.deviceInfo.identifier }).wait();
+				await devicesService.initialize({ platform: "android", deviceId: androidDevice.deviceInfo.identifier });
 			});
 		});
 
@@ -726,40 +726,40 @@ describe("devicesService", () => {
 
 			it("when iOS platform is specified and iOS device identifier is passed", () => {
 				iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
-				devicesService.initialize({ platform: "ios", deviceId: iOSDevice.deviceInfo.identifier }).wait();
+				await devicesService.initialize({ platform: "ios", deviceId: iOSDevice.deviceInfo.identifier });
 			});
 
 			it("when iOS device identifier is passed", () => {
 				iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
-				devicesService.initialize({ deviceId: iOSDevice.deviceInfo.identifier }).wait();
+				await devicesService.initialize({ deviceId: iOSDevice.deviceInfo.identifier });
 			});
 
 			it("when iOS platform is specified", () => {
-				devicesService.initialize({ platform: "ios" }).wait();
+				await devicesService.initialize({ platform: "ios" });
 			});
 
 			it("when paramaters are not passed, but iOS device is detected", () => {
 				iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
-				devicesService.initialize().wait();
+				await devicesService.initialize();
 			});
 
 			it("when only skipInferPlatform is passed", () => {
-				devicesService.initialize({ skipInferPlatform: true }).wait();
+				await devicesService.initialize({ skipInferPlatform: true });
 			});
 
 			it("when iOS platform is specified and iOS simulator device identifier is passed", () => {
 				iOSDeviceDiscovery.emit("deviceFound", iOSSimulator);
-				devicesService.initialize({ platform: "ios", deviceId: iOSSimulator.deviceInfo.identifier }).wait();
+				await devicesService.initialize({ platform: "ios", deviceId: iOSSimulator.deviceInfo.identifier });
 			});
 
 			it("when iOS simulator identifier is passed", () => {
 				iOSDeviceDiscovery.emit("deviceFound", iOSSimulator);
-				devicesService.initialize({ deviceId: iOSSimulator.deviceInfo.identifier }).wait();
+				await devicesService.initialize({ deviceId: iOSSimulator.deviceInfo.identifier });
 			});
 
 			it("when paramaters are not passed, but iOS simulator is detected", () => {
 				iOSDeviceDiscovery.emit("deviceFound", iOSSimulator);
-				devicesService.initialize().wait();
+				await devicesService.initialize();
 			});
 		});
 	});
@@ -941,36 +941,36 @@ describe("devicesService", () => {
 		});
 
 		it("returns undefined when devicesService is initialized with platform only", () => {
-			devicesService.initialize({ platform: "android" }).wait();
+			await devicesService.initialize({ platform: "android" });
 			assert.deepEqual(devicesService.getDeviceByDeviceOption(), undefined);
 		});
 
 		it("returns undefined when devicesService is initialized with skipInferPlatform only", () => {
-			devicesService.initialize({ skipInferPlatform: true }).wait();
+			await devicesService.initialize({ skipInferPlatform: true });
 			assert.deepEqual(devicesService.getDeviceByDeviceOption(), undefined);
 		});
 
 		it("returns deviceIdentifier when devicesService is initialized with deviceId only", () => {
 			androidDeviceDiscovery.emit("deviceFound", androidDevice);
-			devicesService.initialize({ deviceId: androidDevice.deviceInfo.identifier }).wait();
+			await devicesService.initialize({ deviceId: androidDevice.deviceInfo.identifier });
 			assert.deepEqual(devicesService.getDeviceByDeviceOption(), androidDevice);
 		});
 
 		it("returns deviceIdentifier when devicesService is initialized with deviceId (passed as number)", () => {
 			androidDeviceDiscovery.emit("deviceFound", androidDevice);
-			devicesService.initialize({ deviceId: "1" }).wait();
+			await devicesService.initialize({ deviceId: "1" });
 			assert.deepEqual(devicesService.getDeviceByDeviceOption(), androidDevice);
 		});
 
 		it("returns deviceIdentifier when devicesService is initialized with deviceId and platform", () => {
 			androidDeviceDiscovery.emit("deviceFound", androidDevice);
-			devicesService.initialize({ deviceId: androidDevice.deviceInfo.identifier, platform: "android" }).wait();
+			await devicesService.initialize({ deviceId: androidDevice.deviceInfo.identifier, platform: "android" });
 			assert.deepEqual(devicesService.getDeviceByDeviceOption(), androidDevice);
 		});
 
 		it("returns deviceIdentifier when devicesService is initialized with deviceId (passed as number) and platform", () => {
 			androidDeviceDiscovery.emit("deviceFound", androidDevice);
-			devicesService.initialize({ deviceId: "1", platform: "android" }).wait();
+			await devicesService.initialize({ deviceId: "1", platform: "android" });
 			assert.deepEqual(devicesService.getDeviceByDeviceOption(), androidDevice);
 		});
 	});
@@ -1038,7 +1038,7 @@ describe("devicesService", () => {
 		});
 
 		afterEach(() => {
-			devicesService.stopDeviceDetectionInterval().wait();
+			await devicesService.stopDeviceDetectionInterval();
 			resetDefaultSetInterval();
 		});
 
@@ -1249,7 +1249,7 @@ describe("devicesService", () => {
 		});
 
 		afterEach(() => {
-			devicesService.stopDeviceDetectionInterval().wait();
+			await devicesService.stopDeviceDetectionInterval();
 			resetDefaultSetInterval();
 		});
 
@@ -1264,7 +1264,7 @@ describe("devicesService", () => {
 			});
 
 			devicesService.startDeviceDetectionInterval();
-			devicesService.stopDeviceDetectionInterval().wait();
+			await devicesService.stopDeviceDetectionInterval();
 			devicesService.startDeviceDetectionInterval();
 
 			assert.deepEqual(setIntervalStartedCount, 2);
@@ -1278,8 +1278,8 @@ describe("devicesService", () => {
 			};
 
 			devicesService.startDeviceDetectionInterval();
-			devicesService.stopDeviceDetectionInterval().wait();
-			devicesService.stopDeviceDetectionInterval().wait();
+			await devicesService.stopDeviceDetectionInterval();
+			await devicesService.stopDeviceDetectionInterval();
 
 			assert.deepEqual(clearIntervalCount, 1);
 		});
@@ -1307,7 +1307,7 @@ describe("devicesService", () => {
 				}).future<void>()();
 			};
 
-			devicesService.detectCurrentlyAttachedDevices().wait();
+			await devicesService.detectCurrentlyAttachedDevices();
 
 			assert.isTrue(hasStartedLookingForAndroidDevices);
 		});
@@ -1321,7 +1321,7 @@ describe("devicesService", () => {
 				}).future<void>()();
 			};
 
-			devicesService.detectCurrentlyAttachedDevices().wait();
+			await devicesService.detectCurrentlyAttachedDevices();
 
 			assert.isTrue(hasStartedLookingForIosDevices);
 		});
@@ -1335,7 +1335,7 @@ describe("devicesService", () => {
 				}).future<void>()();
 			};
 
-			devicesService.detectCurrentlyAttachedDevices().wait();
+			await devicesService.detectCurrentlyAttachedDevices();
 
 			assert.isTrue(hasStartedLookingForIosSimulator);
 		});
@@ -1349,7 +1349,7 @@ describe("devicesService", () => {
 				}).future<void>()();
 			};
 
-			devicesService.detectCurrentlyAttachedDevices().wait();
+			await devicesService.detectCurrentlyAttachedDevices();
 
 			assert.isFalse(hasStartedLookingForIosSimulator);
 		});
@@ -1358,7 +1358,7 @@ describe("devicesService", () => {
 			$iOSDeviceDiscovery.startLookingForDevices = throwErrorFuture;
 
 			let callback = () => {
-				devicesService.detectCurrentlyAttachedDevices.call(devicesService).wait();
+				await devicesService.detectCurrentlyAttachedDevices.call(devicesService);
 			};
 
 			assert.doesNotThrow(callback);
@@ -1382,7 +1382,7 @@ describe("devicesService", () => {
 			}).future<string>()();
 		};
 
-		devicesService.mapAbstractToTcpPort(expectedDeviceIdentifier, expectedAppIdentifier, expectedFramework).wait();
+		await devicesService.mapAbstractToTcpPort(expectedDeviceIdentifier, expectedAppIdentifier, expectedFramework);
 
 		assert.deepEqual(actualDeviceIdentifier, expectedDeviceIdentifier);
 		assert.deepEqual(actualAppIdentifier, expectedAppIdentifier);

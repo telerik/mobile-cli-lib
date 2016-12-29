@@ -8,7 +8,7 @@ export class UserSettingsServiceBase implements IUserSettingsService {
 	}
 
 	public async getSettingValue<T>(settingName: string): Promise<T> {
-			this.loadUserSettingsFile().wait();
+			await this.loadUserSettingsFile();
 			return this.userSettingsData ? this.userSettingsData[settingName] : null;
 	}
 
@@ -20,14 +20,14 @@ export class UserSettingsServiceBase implements IUserSettingsService {
 	}
 
 	public async removeSetting(key: string): Promise<void> {
-			this.loadUserSettingsFile().wait();
+			await this.loadUserSettingsFile();
 
 			delete this.userSettingsData[key];
-			this.saveSettings().wait();
+			await this.saveSettings();
 	}
 
 	public async saveSettings(data?: any): Promise<void> {
-			this.loadUserSettingsFile().wait();
+			await this.loadUserSettingsFile();
 			this.userSettingsData = this.userSettingsData || {};
 
 			_(data)

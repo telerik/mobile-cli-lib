@@ -87,7 +87,7 @@ export class FileSystem implements IFileSystem {
 				destinationDir]);
 
 			let $childProcess = this.$injector.resolve("childProcess");
-			$childProcess.spawnFromEvent(proc, args, "close", { stdio: "ignore", detached: true }).wait();
+			await $childProcess.spawnFromEvent(proc, args, "close", { stdio: "ignore", detached: true });
 		}).future<void>()();
 	}
 
@@ -311,7 +311,7 @@ export class FileSystem implements IFileSystem {
 			if (!this.$injector.resolve("$hostInfo").isWindows) {
 				let chown = $childProcess.spawn("chown", ["-R", owner, path],
 					{ stdio: "ignore", detached: true });
-				this.futureFromEvent(chown, "close").wait();
+				await this.futureFromEvent(chown, "close");
 			}
 			// nothing to do on Windows, as chown does not work on this platform
 	}

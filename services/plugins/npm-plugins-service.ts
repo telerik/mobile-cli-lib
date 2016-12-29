@@ -9,14 +9,14 @@ export class NpmPluginsService implements INpmPluginsService {
 			let query = modifySearchQuery ? modifySearchQuery(keywords) : keywords;
 
 			let pluginsSource = await  this.searchCore(NpmjsPluginsSource, projectDir, keywords) ||
-				this.searchCore(NpmRegistryPluginsSource, projectDir, keywords).wait() ||
-				this.preparePluginsSource(NpmPluginsSource, projectDir, query).wait();
+				await this.searchCore(NpmRegistryPluginsSource, projectDir, keywords) ||
+				await this.preparePluginsSource(NpmPluginsSource, projectDir, query);
 
 			return pluginsSource;
 	}
 
 	public async optimizedSearch(projectDir: string, keywords: string[], modifySearchQuery: (keywords: string[]) => string[]): Promise<IPluginsSource> {
-			return this.searchCore(NpmRegistryPluginsSource, projectDir, keywords).wait() || await  this.search(projectDir, keywords, modifySearchQuery);
+			await return this.searchCore(NpmRegistryPluginsSource, projectDir, keywords) || await  this.search(projectDir, keywords, modifySearchQuery);
 	}
 
 	private async searchCore(pluginsSourceConstructor: Function, projectDir: string, keywords: string[]): Promise<IPluginsSource> {
@@ -27,7 +27,7 @@ export class NpmPluginsService implements INpmPluginsService {
 
 	private async preparePluginsSource(pluginsSourceConstructor: Function, projectDir: string, keywords: string[]): Promise<IPluginsSource> {
 			let pluginsSource: IPluginsSource = this.$injector.resolve(pluginsSourceConstructor, { projectDir, keywords });
-			pluginsSource.initialize(projectDir, keywords).wait();
+			await pluginsSource.initialize(projectDir, keywords);
 			return pluginsSource;
 	}
 }

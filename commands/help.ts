@@ -30,7 +30,7 @@ export class HelpCommand implements ICommand {
 
 				this.$logger.printMarkdown(help);
 			} else {
-				this.$htmlHelpService.openHelpForCommandInBrowser(topic).wait();
+				await this.$htmlHelpService.openHelpForCommandInBrowser(topic);
 			}
 	}
 }

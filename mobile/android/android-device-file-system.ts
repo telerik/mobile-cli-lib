@@ -54,13 +54,13 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 			_(localToDevicePaths)
 				.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).isFile())
 				.each(localToDevicePathData =>
-					this.adb.executeCommand(["push", localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()]).wait()
+					await this.adb.executeCommand(["push", localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()])
 				);
 
 			_(localToDevicePaths)
 				.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).isDirectory())
 				.each(localToDevicePathData =>
-					this.adb.executeShellCommand(["chmod", "0777", localToDevicePathData.getDevicePath()]).wait()
+					await this.adb.executeShellCommand(["chmod", "0777", localToDevicePathData.getDevicePath()])
 				);
 
 			// Update hashes
@@ -89,8 +89,8 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 			let deviceHashService = this.getDeviceHashService(deviceAppData.appIdentifier);
 			let filesToChmodOnDevice: string[] = devicePaths;
 			if (this.$options.force) {
-				this.adb.executeShellCommand(["rm", "-rf", deviceHashService.hashFileDevicePath]).wait();
-				this.adb.executeCommand(["push", projectFilesPath, deviceAppData.deviceProjectRootPath]).wait();
+				await this.adb.executeShellCommand(["rm", "-rf", deviceHashService.hashFileDevicePath]);
+				await this.adb.executeCommand(["push", projectFilesPath, deviceAppData.deviceProjectRootPath]);
 			} else {
 				// Create or update file hashes on device
 				let oldShasums = await  deviceHashService.getShasumsFromDevice();
@@ -107,24 +107,24 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 						.value();
 					Future.wait(futures);
 				} else {
-					this.adb.executeCommand(["push", projectFilesPath, deviceAppData.deviceProjectRootPath]).wait();
+					await this.adb.executeCommand(["push", projectFilesPath, deviceAppData.deviceProjectRootPath]);
 				}
 			}
 
 			if (filesToChmodOnDevice.length) {
 				this.createFileOnDevice(commandsDeviceFilePath, "chmod 0777 " + await  filesToChmodOnDevice.join(" "));
-				this.adb.executeShellCommand([commandsDeviceFilePath]).wait();
+				await this.adb.executeShellCommand([commandsDeviceFilePath]);
 			}
-			deviceHashService.uploadHashFileToDevice(currentShasums).wait();
+			await deviceHashService.uploadHashFileToDevice(currentShasums);
 	}
 
 	public async transferFile(localPath: string, devicePath: string): Promise<void> {
 			this.$logger.trace(`Transfering ${localPath} to ${devicePath}`);
 			let stats = this.$fs.getFsStats(localPath);
 			if (stats.isDirectory()) {
-				this.adb.executeShellCommand(["mkdir", path.dirname(devicePath)]).wait();
+				await this.adb.executeShellCommand(["mkdir", path.dirname(devicePath)]);
 			} else {
-				this.adb.executeCommand(["push", localPath, devicePath]).wait();
+				await this.adb.executeCommand(["push", localPath, devicePath]);
 			}
 	}
 
@@ -134,8 +134,8 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 			this.$fs.writeFile(commandsFileHostPath, fileContent);
 
 			// copy it to the device
-			this.transferFile(commandsFileHostPath, deviceFilePath).wait();
-			this.adb.executeShellCommand(["chmod", "0777", deviceFilePath]).wait();
+			await this.transferFile(commandsFileHostPath, deviceFilePath);
+			await this.adb.executeShellCommand(["chmod", "0777", deviceFilePath]);
 	}
 
 	private getTempDir(): string {

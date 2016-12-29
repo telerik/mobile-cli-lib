@@ -89,7 +89,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 			status: adbStatusInfo ? adbStatusInfo.deviceStatus : status,
 			errorHelp: adbStatusInfo ? adbStatusInfo.errorHelp : "Unknown status",
 			isTablet: this.getIsTablet(details),
-			type: this.getType().wait()
+			await type: this.getType()
 		};
 
 		this.$logger.trace(this.deviceInfo);

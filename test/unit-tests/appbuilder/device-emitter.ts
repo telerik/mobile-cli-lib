@@ -77,7 +77,7 @@ describe("deviceEmitter", () => {
 			let warnOutput = "";
 			logger.warn = (warnMsg: string) => { warnOutput += warnMsg; };
 
-			deviceEmitter.initialize().wait();
+			await deviceEmitter.initialize();
 			assert.isTrue(warnOutput.indexOf("Unable to start adb server") !== -1, "When ensureAdbServerStarted throws, the string 'Unable to start adb server' must be shown as warning.");
 			assert.isTrue(warnOutput.indexOf("error1") !== -1, "When ensureAdbServerStarted throws, the error message must be shown as warning.");
 		});
@@ -92,7 +92,7 @@ describe("deviceEmitter", () => {
 			iOSSimulator: any;
 
 		beforeEach(() => {
-			deviceEmitter.initialize().wait();
+			await deviceEmitter.initialize();
 			androidDeviceDiscovery = testInjector.resolve("androidDeviceDiscovery");
 			iOSDeviceDiscovery = testInjector.resolve("iOSDeviceDiscovery");
 			iOSSimulatorDiscovery = testInjector.resolve("iOSSimulatorDiscovery");

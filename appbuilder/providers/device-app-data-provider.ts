@@ -42,7 +42,7 @@ export class AndroidAppIdentifier extends AppBuilderDeviceAppDataBase implements
 	}
 
 	public async isLiveSyncSupported(): Promise<boolean> {
-			return super.isLiveSyncSupported().wait() && await  this.getLiveSyncVersion() !== 0;
+			await return super.isLiveSyncSupported() && await  this.getLiveSyncVersion() !== 0;
 	}
 
 	private async getLiveSyncVersion(): Promise<number> {
