@@ -219,7 +219,7 @@ export class WP8CompanionAppIdentifier extends AppBuilderCompanionDeviceAppDataB
 		return hostUri;
 	}
 
-	public isLiveSyncSupported(): IFuture<boolean> {
+	public async isLiveSyncSupported(): Promise<boolean> {
 		return Future.fromResult(true);
 	}
 

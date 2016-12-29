@@ -30,11 +30,11 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 	}
 
 	@hook('install')
-	public installApplication(packageFilePath: string): IFuture<void> {
+	public async installApplication(packageFilePath: string): Promise<void> {
 		return this.adb.executeCommand(["install", "-r", `${packageFilePath}`]);
 	}
 
-	public uninstallApplication(appIdentifier: string): IFuture<void> {
+	public async uninstallApplication(appIdentifier: string): Promise<void> {
 		// Need to set the treatErrorsAsWarnings to true because when using tns run command if the application is not installed on the device it will throw error
 		return this.adb.executeShellCommand(["pm", "uninstall", `${appIdentifier}`], { treatErrorsAsWarnings: true });
 	}
@@ -50,13 +50,13 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 			}
 	}
 
-	public stopApplication(appIdentifier: string): IFuture<void> {
+	public async stopApplication(appIdentifier: string): Promise<void> {
 		return this.adb.executeShellCommand(["am", "force-stop", `${appIdentifier}`]);
 	}
 
-	public getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo> {
+	public async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
 		// This method is currently only used in the ios application managers. Configurations for Android are acquired through filesystem listing.
-		return Future.fromResult(null);
+		return Promise.resolve(null);
 	}
 
 	public canStartApplication(): boolean {
@@ -68,7 +68,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 			return liveSyncVersion === LiveSyncConstants.VERSION_2 || liveSyncVersion === LiveSyncConstants.VERSION_3;
 	}
 
-	public getDebuggableApps(): IFuture<Mobile.IDeviceApplicationInformation[]> {
+	public async getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]> {
 		return this.$androidProcessService.getDebuggableApps(this.identifier);
 	}
 

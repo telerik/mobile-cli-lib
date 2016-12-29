@@ -309,9 +309,9 @@ export class DevicesService implements Mobile.IDevicesService {
 			}
 	}
 
-	public initialize(data?: Mobile.IDevicesServicesInitializationOptions): IFuture<void> {
+	public async initialize(data?: Mobile.IDevicesServicesInitializationOptions): Promise<void> {
 		if (this._isInitialized) {
-			return Future.fromResult();
+			return Promise.resolve();
 		}
 		return (() => {
 			data = data || {};
@@ -389,7 +389,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	@exportedPromise("devicesService")
-	public mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string, framework: string): IFuture<string> {
+	public async mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string, framework: string): Promise<string> {
 		return this.$androidProcessService.mapAbstractToTcpPort(deviceIdentifier, appIdentifier, framework);
 	}
 
@@ -477,7 +477,7 @@ export class DevicesService implements Mobile.IDevicesService {
 			}
 	}
 
-	private executeCore(action: (device: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean): IFuture<void> {
+	private async executeCore(action: (device: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean): Promise<void> {
 		if (this._device) {
 			return this.executeOnDevice(action, canExecute);
 		}
@@ -525,8 +525,8 @@ export class DevicesService implements Mobile.IDevicesService {
 			};
 	}
 
-	private getDeviceDetectionIntervalFuture(): IFuture<void> {
-		return this.deviceDetectionIntervalFuture || Future.fromResult();
+	private async getDeviceDetectionIntervalFuture(): Promise<void> {
+		return this.deviceDetectionIntervalFuture || Promise.resolve();
 	}
 }
 

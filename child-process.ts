@@ -5,7 +5,7 @@ export class ChildProcess implements IChildProcess {
 	constructor(private $logger: ILogger,
 		private $errors: IErrors) {}
 
-	public exec(command: string, options?: any, execOptions?: IExecOptions): IFuture<any> {
+	public async exec(command: string, options?: any, execOptions?: IExecOptions): Promise<any> {
 		let future = new Future<any>();
 		let callback = (error: Error, stdout: NodeBuffer, stderr: NodeBuffer) => {
 			this.$logger.trace("Exec %s \n stdout: %s \n stderr: %s", command, stdout.toString(), stderr.toString());
@@ -27,7 +27,7 @@ export class ChildProcess implements IChildProcess {
 		return future;
 	}
 
-	public execFile(command: string, args: string[]): IFuture<any> {
+	public async execFile(command: string, args: string[]): Promise<any> {
 		this.$logger.debug("execFile: %s %s", command, this.getArgumentsAsQuotedString(args));
 		let future = new Future<any>();
 		child_process.execFile(command, args, (error: any, stdout: NodeBuffer) => {
@@ -130,7 +130,7 @@ export class ChildProcess implements IChildProcess {
 		}).future<void>()();
 	}
 
-	private tryExecuteApplicationCore(command: string, args: string[], event: string, errorMessage: string): IFuture<any> {
+	private async tryExecuteApplicationCore(command: string, args: string[], event: string, errorMessage: string): Promise<any> {
 		try {
 			return this.spawnFromEvent(command, args, event, undefined, { throwError: false });
 		} catch(e) {

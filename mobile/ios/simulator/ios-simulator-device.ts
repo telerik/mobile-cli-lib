@@ -31,7 +31,7 @@ export class IOSSimulator implements Mobile.IiOSSimulator {
 		return true;
 	}
 
-	public getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo> {
+	public async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
 		return this.applicationManager.getApplicationInfo(applicationIdentifier);
 	}
 

@@ -12,11 +12,11 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 		super();
 	}
 
-	public startLookingForDevices(): IFuture<void> {
+	public async startLookingForDevices(): Promise<void> {
 		return this.checkForDevices(new Future<void>());
 	}
 
-	public checkForDevices(future?: IFuture<void>): IFuture<void> {
+	public async async checkForDevices(future?: Promise<void>): Promise<void> {
 		if (this.$hostInfo.isDarwin) {
 			let currentSimulator:any = null;
 			await if (this.isSimulatorRunning()) {
@@ -41,7 +41,7 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 			future.return();
 		}
 
-		return future || Future.fromResult();
+		return future || Promise.resolve();
 	}
 
 	private async isSimulatorRunning(): Promise<boolean> {

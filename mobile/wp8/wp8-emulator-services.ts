@@ -17,11 +17,11 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 		private $hostInfo: IHostInfo,
 		private $fs: IFileSystem) { }
 
-	public getEmulatorId(): IFuture<string> {
+	public async getEmulatorId(): Promise<string> {
 		return future.fromResult("");
 	}
 
-	public checkDependencies(): IFuture<void> {
+	public async checkDependencies(): Promise<void> {
 		return future.fromResult();
 	}
 
@@ -40,7 +40,7 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 		}
 	}
 
-	public startEmulator(): IFuture<string> {
+	public async startEmulator(): Promise<string> {
 		return future.fromResult("Not implemented.");
 	}
 

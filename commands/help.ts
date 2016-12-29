@@ -9,7 +9,7 @@ export class HelpCommand implements ICommand {
 		private $options: ICommonOptions) { }
 
 	public enableHooks = false;
-	public canExecute(args: string[]): IFuture<boolean> {
+	public async canExecute(args: string[]): Promise<boolean> {
 		return Future.fromResult(true);
 	}
 

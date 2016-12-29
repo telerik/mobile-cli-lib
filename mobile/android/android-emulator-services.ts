@@ -165,7 +165,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 			}
 	}
 
-	private unlockScreen(emulatorId: string): IFuture<void> {
+	private async unlockScreen(emulatorId: string): Promise<void> {
 		let adb = this.getDeviceAndroidDebugBridge(emulatorId);
 		let childProcess = await  adb.executeShellCommand(["input", "keyevent", "82"], { returnChildProcess: true });
 		return this.$fs.futureFromEvent(childProcess, "close");
@@ -197,13 +197,13 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 			return model;
 	}
 
-	private getNameFromSDKEmulatorId(emulatorId: string): IFuture<string> {
+	private async getNameFromSDKEmulatorId(emulatorId: string): Promise<string> {
 		let match = emulatorId.match(/^emulator-(\d+)/);
 		let portNumber: string;
 		if (match && match[1]) {
 			portNumber = match[1];
 		} else {
-			return Future.fromResult("");
+			return Promise.resolve("");
 		}
 
 		let future = new Future<string>();

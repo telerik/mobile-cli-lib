@@ -50,13 +50,13 @@ export class HooksService implements IHooksService {
 		return commandName.replace(/\|[\s\S]*$/, "");
 	}
 
-	public executeBeforeHooks(commandName: string, hookArguments?: IDictionary<any>): IFuture<void> {
+	public async executeBeforeHooks(commandName: string, hookArguments?: IDictionary<any>): Promise<void> {
 		let beforeHookName = `before-${HooksService.formatHookName(commandName)}`;
 		let traceMessage = `BeforeHookName for command ${commandName} is ${beforeHookName}`;
 		return this.executeHooks(beforeHookName, traceMessage, hookArguments);
 	}
 
-	public executeAfterHooks(commandName: string, hookArguments?: IDictionary<any>): IFuture<void> {
+	public async executeAfterHooks(commandName: string, hookArguments?: IDictionary<any>): Promise<void> {
 		let afterHookName = `after-${HooksService.formatHookName(commandName)}`;
 		let traceMessage = `AfterHookName for command ${commandName} is ${afterHookName}`;
 		return this.executeHooks(afterHookName, traceMessage, hookArguments);

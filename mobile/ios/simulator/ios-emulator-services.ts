@@ -10,12 +10,12 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		private $options: ICommonOptions,
 		private $iOSSimResolver: Mobile.IiOSSimResolver) { }
 
-	public getEmulatorId(): IFuture<string> {
-		return Future.fromResult("");
+	public async getEmulatorId(): Promise<string> {
+		return Promise.resolve("");
 	}
 
-	public checkDependencies(): IFuture<void> {
-		return Future.fromResult();
+	public async checkDependencies(): Promise<void> {
+		return Promise.resolve();
 	}
 
 	public checkAvailability(dependsOnProject?: boolean): void {
@@ -31,7 +31,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		}
 	}
 
-	public startEmulator(): IFuture<string> {
+	public async startEmulator(): Promise<string> {
 		return this.$iOSSimResolver.iOSSim.startSimulator();
 	}
 
@@ -39,7 +39,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 			return this.runApplicationOnEmulatorCore(app, emulatorOptions);
 	}
 
-	public postDarwinNotification(notification: string): IFuture<void> {
+	public async postDarwinNotification(notification: string): Promise<void> {
 		let iosSimPath = this.$iOSSimResolver.iOSSimPath;
 		let nodeCommandName = process.argv[0];
 

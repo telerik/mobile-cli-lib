@@ -10,7 +10,7 @@ export class WinReg implements IWinReg {
 		HKU: { registry: Registry.HKU }
 	};
 
-	public getRegistryValue(valueName: string, hive?: IHiveId, key?: string, host?: string): IFuture<IWinRegResult> {
+	public async getRegistryValue(valueName: string, hive?: IHiveId, key?: string, host?: string): Promise<IWinRegResult> {
 		let future = new Future<IWinRegResult>();
 		try {
 			let regKey = new Registry({

@@ -37,7 +37,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 			await this.checkForDevices(blockingFuture);
 	}
 
-	public checkForDevices(future?: IFuture<void>): IFuture<void> {
+	public async async checkForDevices(future?: Promise<void>): Promise<void> {
 		let adbData = "";
 
 		let result = await  this.$adb.executeCommand(["devices"], { returnChildProcess: true });
@@ -71,7 +71,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 			});
 		});
 
-		return future || Future.fromResult();
+		return future || Promise.resolve();
 	}
 
 	private async checkCurrentData(result: any): Promise<void> {

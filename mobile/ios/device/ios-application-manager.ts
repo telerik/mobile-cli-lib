@@ -199,7 +199,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 			this.$logger.info(`Successfully run application ${appIdentifier} on device with ID ${this.device.deviceInfo.identifier}.`);
 	}
 
-	public stopApplication(appIdentifier: string): IFuture<void> {
+	public async stopApplication(appIdentifier: string): Promise<void> {
 		let application = this.getApplicationById(appIdentifier);
 		let gdbServer = this.createGdbServer(this.device.deviceInfo.identifier);
 		return gdbServer.kill([`${application.Path}`]);
@@ -214,14 +214,14 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		return this.$hostInfo.isDarwin || (this.$hostInfo.isWindows && this.$staticConfig.enableDeviceRunCommandOnWindows);
 	}
 
-	public getDebuggableApps(): IFuture<Mobile.IDeviceApplicationInformation[]> {
+	public async getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]> {
 		// Implement when we can find debuggable applications for iOS.
-		return Future.fromResult([]);
+		return Promise.resolve([]);
 	}
 
-	public getDebuggableAppViews(appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>> {
+	public async getDebuggableAppViews(appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> {
 		// Implement when we can find debuggable applications for iOS.
-		return Future.fromResult(null);
+		return Promise.resolve(null);
 	}
 
 	private lookupApplications(): IDictionary<Mobile.IDeviceApplication> {

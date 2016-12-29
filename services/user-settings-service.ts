@@ -12,7 +12,7 @@ export class UserSettingsServiceBase implements IUserSettingsService {
 			return this.userSettingsData ? this.userSettingsData[settingName] : null;
 	}
 
-	public saveSetting<T>(key: string, value: T): IFuture<void> {
+	public async saveSetting<T>(key: string, value: T): Promise<void> {
 		let settingObject: any = {};
 		settingObject[key] = value;
 

@@ -7,7 +7,7 @@ import { ProjectConstants } from "../../../appbuilder/project-constants";
 import { DeviceEmitter } from "../../../appbuilder/device-emitter";
 
 class AndroidDeviceDiscoveryMock extends EventEmitter {
-	public ensureAdbServerStarted(): IFuture<void> {
+	public async ensureAdbServerStarted(): Promise<void> {
 		return Future.fromResult();
 	}
 }

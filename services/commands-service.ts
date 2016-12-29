@@ -68,18 +68,18 @@ export class CommandsService implements ICommandsService {
 			return false;
 	}
 
-	private printHelp(commandName: string): IFuture<boolean> {
+	private async printHelp(commandName: string): Promise<boolean> {
 		this.$options.help = true;
 		return this.executeCommandUnchecked("help", [this.beautifyCommandName(commandName)]);
 	}
 
-	private executeCommandAction(commandName: string, commandArguments: string[], action: (_commandName: string, _commandArguments: string[]) => IFuture<boolean>): IFuture<boolean> {
+	private async executeCommandAction(commandName: string, commandArguments: string[], action: (_commandName: string, _commandArguments: string[]) => IFuture<boolean>): Promise<boolean> {
 		return this.$errors.beginCommand(
 			() => action.apply(this, [commandName, commandArguments]),
 			() => this.printHelp(commandName));
 	}
 
-	private tryExecuteCommandAction(commandName: string, commandArguments: string[]): IFuture<boolean> {
+	private async tryExecuteCommandAction(commandName: string, commandArguments: string[]): Promise<boolean> {
 		let command = this.$injector.resolveCommand(commandName);
 		this.$options.validateOptions(command ? command.dashedOptions : null);
 

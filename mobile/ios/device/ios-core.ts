@@ -747,7 +747,7 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 		this.close();
 	}
 
-	public exchange(message: IDictionary<any>): IFuture<Mobile.IiOSSocketResponseData> {
+	public async exchange(message: IDictionary<any>): Promise<Mobile.IiOSSocketResponseData> {
 		this.sendMessage(message);
 		return this.receiveMessage();
 	}
@@ -878,7 +878,7 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 		this.socket = new net.Socket({ fd: service });
 	}
 
-	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData | Mobile.IiOSSocketResponseData[]> {
+	public async receiveMessage(): Promise<Mobile.IiOSSocketResponseData | Mobile.IiOSSocketResponseData[]> {
 		let result = new Future<Mobile.IiOSSocketResponseData>();
 		let messages: Mobile.IiOSSocketResponseData[] = [];
 
@@ -1010,7 +1010,7 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 		this.socket.on('data', handler);
 	}
 
-	public exchange(message: IDictionary<any>): IFuture<Mobile.IiOSSocketResponseData> {
+	public async exchange(message: IDictionary<any>): Promise<Mobile.IiOSSocketResponseData> {
 		this.$errors.fail("Exchange function is not implemented for OSX");
 		return null;
 	}
@@ -1037,7 +1037,7 @@ export class PlistService implements Mobile.IiOSDeviceSocket {
 		this.$processService.attachToProcessExitSignals(this, this.close);
 	}
 
-	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData> {
+	public async receiveMessage(): Promise<Mobile.IiOSSocketResponseData> {
 		return this.socket.receiveMessage();
 	}
 
@@ -1049,7 +1049,7 @@ export class PlistService implements Mobile.IiOSDeviceSocket {
 		this.socket.sendMessage(message, this.format);
 	}
 
-	public exchange(message: IDictionary<any>): IFuture<Mobile.IiOSSocketResponseData> {
+	public async exchange(message: IDictionary<any>): Promise<Mobile.IiOSSocketResponseData> {
 		return this.socket.exchange(message);
 	}
 
@@ -1238,7 +1238,7 @@ export class GDBServer implements Mobile.IGDBServer {
 			}
 	}
 
-	private send(packet: string): IFuture<string> {
+	private async send(packet: string): Promise<string> {
 		let future = new Future<string>();
 
 		let dataCallback = (data: any) => {
@@ -1266,7 +1266,7 @@ export class GDBServer implements Mobile.IGDBServer {
 		this.socket.write(data);
 	}
 
-	private sendx03Message(): IFuture<string> {
+	private async sendx03Message(): Promise<string> {
 		let future = new Future<string>();
 		let retryCount = 3;
 		let isDataReceived = false;

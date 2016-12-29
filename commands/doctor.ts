@@ -7,7 +7,7 @@ export class DoctorCommand implements ICommand {
 		private $logger: ILogger,
 		private $staticConfig: Config.IStaticConfig) { }
 
-	public canExecute(args: string[]): IFuture<boolean> {
+	public async canExecute(args: string[]): Promise<boolean> {
 		return future.fromResult(true);
 	}
 

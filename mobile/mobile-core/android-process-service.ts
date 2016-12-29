@@ -189,7 +189,7 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 		return this.getPortInformation(abstractPortsInformation, `${appIdentifier}-debug`);
 	}
 
-	private getAbstractPortsInformation(adb: Mobile.IDeviceAndroidDebugBridge): IFuture<string> {
+	private async getAbstractPortsInformation(adb: Mobile.IDeviceAndroidDebugBridge): Promise<string> {
 		return adb.executeShellCommand(["cat", "/proc/net/unix"]);
 	}
 

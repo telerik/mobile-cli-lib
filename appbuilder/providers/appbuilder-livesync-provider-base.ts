@@ -17,15 +17,15 @@ export abstract class AppBuilderLiveSyncProviderBase implements ILiveSyncProvide
 
 	public abstract buildForDevice(device: Mobile.IDevice): IFuture<string>;
 
-	public preparePlatformForSync(platform: string): IFuture<void> {
-		return Future.fromResult();
+	public async preparePlatformForSync(platform: string): Promise<void> {
+		return Promise.resolve();
 	}
 
 	public canExecuteFastSync(filePath: string): boolean {
 		return false;
 	}
 
-	public transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string, isFullSync: boolean): IFuture<void> {
+	public async transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string, isFullSync: boolean): Promise<void> {
 		return deviceAppData.device.fileSystem.transferFiles(deviceAppData, localToDevicePaths);
 	}
 

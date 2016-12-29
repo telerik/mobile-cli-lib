@@ -16,7 +16,7 @@ export class NpmRegistryPluginsSource extends PluginsSourceBase implements IPlug
 		return "Searching for plugin in http://registry.npmjs.org.";
 	}
 
-	public getPlugins(page: number, count: number): IFuture<IBasicPluginInformation[]> {
+	public async getPlugins(page: number, count: number): Promise<IBasicPluginInformation[]> {
 		return Future.fromResult(page === 1 ? this.plugins : null);
 	}
 

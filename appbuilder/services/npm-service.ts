@@ -227,7 +227,7 @@ export class NpmService implements INpmService {
 		return path.join(projectDir, this.$projectConstants.REFERENCES_FILE_NAME);
 	}
 
-	private installTypingsForDependency(projectDir: string, dependency: string): IFuture<ISpawnResult> {
+	private async installTypingsForDependency(projectDir: string, dependency: string): Promise<ISpawnResult> {
 		return this.npmInstall(projectDir, `${NpmService.TYPES_DIRECTORY}${dependency}`, null, ["--save-dev", "--save-exact"]);
 	}
 
@@ -296,15 +296,15 @@ export class NpmService implements INpmService {
 		return npmArguments.concat([command]);
 	}
 
-	private npmInstall(projectDir: string, dependency?: string, version?: string, npmArguments?: string[]): IFuture<ISpawnResult> {
+	private async npmInstall(projectDir: string, dependency?: string, version?: string, npmArguments?: string[]): Promise<ISpawnResult> {
 		return this.executeNpmCommand(projectDir, this.getNpmArguments("install", npmArguments), dependency, version);
 	}
 
-	private npmUninstall(projectDir: string, dependency?: string, npmArguments?: string[]): IFuture<ISpawnResult> {
+	private async npmUninstall(projectDir: string, dependency?: string, npmArguments?: string[]): Promise<ISpawnResult> {
 		return this.executeNpmCommand(projectDir, this.getNpmArguments("uninstall", npmArguments), dependency, null);
 	}
 
-	private npmPrune(projectDir: string, dependency?: string, version?: string): IFuture<ISpawnResult> {
+	private async npmPrune(projectDir: string, dependency?: string, version?: string): Promise<ISpawnResult> {
 		return this.executeNpmCommand(projectDir, this.getNpmArguments("prune"), dependency, version);
 	}
 
@@ -321,7 +321,7 @@ export class NpmService implements INpmService {
 			await return this.executeNpmCommandCore(projectDir, npmArguments);
 	}
 
-	private executeNpmCommandCore(projectDir: string, npmArguments: string[]): IFuture<ISpawnResult> {
+	private async executeNpmCommandCore(projectDir: string, npmArguments: string[]): Promise<ISpawnResult> {
 		return this.$childProcess.spawnFromEvent(this.npmExecutableName, npmArguments, "close", { cwd: projectDir, stdio: "inherit" });
 	}
 

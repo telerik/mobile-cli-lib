@@ -8,22 +8,18 @@ export class IOSSimulatorFileSystem implements Mobile.IDeviceFileSystem {
 		private $fs: IFileSystem,
 		private $logger: ILogger) { }
 
-	public listFiles(devicePath: string): IFuture<void> {
+	public async listFiles(devicePath: string): Promise<void> {
 		return this.iosSim.listFiles(devicePath);
 	}
 
-	public getFile(deviceFilePath: string, outputFilePath?: string): IFuture<void> {
-		return (() => {
-			if (outputFilePath) {
-				shelljs.cp("-f", deviceFilePath, outputFilePath);
-			}
-		}).future<void>()();
+	public async getFile(deviceFilePath: string, outputFilePath?: string): Promise<void> {
+		if (outputFilePath) {
+			shelljs.cp("-f", deviceFilePath, outputFilePath);
+		}
 	}
 
-	public putFile(localFilePath: string, deviceFilePath: string): IFuture<void> {
-		return (() => {
-			shelljs.cp("-f", localFilePath, deviceFilePath);
-		}).future<void>()();
+	public async putFile(localFilePath: string, deviceFilePath: string): Promise<void> {
+		shelljs.cp("-f", localFilePath, deviceFilePath);
 	}
 
 	public deleteFile(deviceFilePath: string, appIdentifier: string): void {
@@ -34,10 +30,10 @@ export class IOSSimulatorFileSystem implements Mobile.IDeviceFileSystem {
 			_.each(localToDevicePaths, localToDevicePathData => await  this.transferFile(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()));
 	}
 
-	public transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): IFuture<void> {
+	public async transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): Promise<void> {
 		let destinationPath = deviceAppData.deviceProjectRootPath;
 		this.$logger.trace(`Transferring from ${projectFilesPath} to ${destinationPath}`);
-		return Future.fromResult(shelljs.cp("-Rf", path.join(projectFilesPath, "*"), destinationPath));
+		return Promise.resolve(shelljs.cp("-Rf", path.join(projectFilesPath, "*"), destinationPath));
 	}
 
 	public async transferFile(localFilePath: string, deviceFilePath: string): Promise<void> {

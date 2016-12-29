@@ -9,7 +9,7 @@ export class PropertiesParser implements IPropertiesParser {
 		return propertiesParser.parse(text);
 	}
 
-	public read(filePath: string): IFuture<IStringDictionary> {
+	public async read(filePath: string): Promise<IStringDictionary> {
 		let future = new Future<IStringDictionary>();
 		propertiesParser.read(filePath, (err, data) => {
 			if(err) {
@@ -36,7 +36,7 @@ export class PropertiesParser implements IPropertiesParser {
 		return future;
 	}
 
-	public saveEditor(): IFuture<void> {
+	public async saveEditor(): Promise<void> {
 		assert.ok(this._editor, "Editor is undefied. Ensure that createEditor is called.");
 
 		let future = new Future<void>();

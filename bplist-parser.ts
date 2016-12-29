@@ -3,7 +3,7 @@ import * as bplistParser from "bplist-parser";
 
 export class BPlistParser implements IBinaryPlistParser{
 
-	public parseFile(plistFilePath: string): IFuture<any> {
+	public async parseFile(plistFilePath: string): Promise<any> {
 		let future = new Future<any>();
 		bplistParser.parseFile(plistFilePath, (err: Error, obj: any) => {
 			if(err) {

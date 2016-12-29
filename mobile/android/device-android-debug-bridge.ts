@@ -15,7 +15,7 @@ export class DeviceAndroidDebugBridge extends AndroidDebugBridge implements Mobi
 		super($childProcess, $errors, $logger, $staticConfig, $androidDebugBridgeResultHandler);
 	}
 
-	public executeShellCommand(args: string[], options?: Mobile.IAndroidDebugBridgeCommandOptions): IFuture<any> {
+	public async executeShellCommand(args: string[], options?: Mobile.IAndroidDebugBridgeCommandOptions): Promise<any> {
 		args.unshift("shell");
 		return super.executeCommand(args, options);
 	}
@@ -36,7 +36,7 @@ export class DeviceAndroidDebugBridge extends AndroidDebugBridge implements Mobi
 			this.$errors.failWithoutHelp("Unable to broadcast to android device:\n%s", result);
 	}
 
-	protected composeCommand(params: string[]): IFuture<IComposeCommandResult> {
+	protected async composeCommand(params: string[]): Promise<IComposeCommandResult> {
 		return super.composeCommand(params, this.identifier);
 	}
 }

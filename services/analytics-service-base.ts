@@ -51,7 +51,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 			}
 	}
 
-	public trackFeature(featureName: string): IFuture<void> {
+	public async trackFeature(featureName: string): Promise<void> {
 		let category = this.$options.analyticsClient ||
 			(helpers.isInteractive() ? "CLI" : "Non-interactive");
 		return this.track(category, featureName);
@@ -117,7 +117,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 		}
 	}
 
-	public getStatusMessage(settingName: string, jsonFormat: boolean, readableSettingName: string): IFuture<string> {
+	public async getStatusMessage(settingName: string, jsonFormat: boolean, readableSettingName: string): Promise<string> {
 		if (jsonFormat) {
 			return this.getJsonStatusMessage(settingName);
 		}
@@ -130,7 +130,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 			await this.start(projectApiKey);
 	}
 
-	protected checkConsentCore(trackFeatureUsage: boolean): IFuture<void> {
+	protected async checkConsentCore(trackFeatureUsage: boolean): Promise<void> {
 		return this.trackFeatureCore(`${this.acceptTrackFeatureSetting}.${!!trackFeatureUsage}`);
 	}
 
@@ -272,7 +272,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 		return this._eqatecMonitor.status().isSending;
 	}
 
-	private waitForSending(): IFuture<void> {
+	private async waitForSending(): Promise<void> {
 		let future = new Future<void>();
 		let intervalTime = 1000;
 		let remainingTime = AnalyticsServiceBase.MAX_WAIT_SENDING_INTERVAL;

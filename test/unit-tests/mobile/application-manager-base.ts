@@ -13,31 +13,31 @@ class ApplicationManager extends ApplicationManagerBase {
 		super($logger, $hooksService);
 	}
 
-	public isLiveSyncSupported(appIdentifier: string): IFuture<boolean> {
+	public async isLiveSyncSupported(appIdentifier: string): Promise<boolean> {
 		return Future.fromResult(true);
 	}
 
-	public installApplication(packageFilePath: string): IFuture<void> {
+	public async installApplication(packageFilePath: string): Promise<void> {
 		return Future.fromResult();
 	}
 
-	public uninstallApplication(appIdentifier: string): IFuture<void> {
+	public async uninstallApplication(appIdentifier: string): Promise<void> {
 		return Future.fromResult();
 	}
 
-	public startApplication(appIdentifier: string, framework?: string): IFuture<void> {
+	public async startApplication(appIdentifier: string, framework?: string): Promise<void> {
 		return Future.fromResult();
 	}
 
-	public stopApplication(appIdentifier: string): IFuture<void> {
+	public async stopApplication(appIdentifier: string): Promise<void> {
 		return Future.fromResult();
 	}
 
-	public getInstalledApplications(): IFuture<string[]> {
+	public async getInstalledApplications(): Promise<string[]> {
 		return Future.fromResult(_.cloneDeep(currentlyInstalledApps));
 	}
 
-	public getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo> {
+	public async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
 		return Future.fromResult(null);
 	}
 
@@ -45,11 +45,11 @@ class ApplicationManager extends ApplicationManagerBase {
 		return true;
 	}
 
-	public getDebuggableApps(): IFuture<Mobile.IDeviceApplicationInformation[]> {
+	public async getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]> {
 		return Future.fromResult(currentlyAvailableAppsForDebugging);
 	}
 
-	public getDebuggableAppViews(appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>> {
+	public async getDebuggableAppViews(appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> {
 		return Future.fromResult(_.cloneDeep(currentlyAvailableAppWebViewsForDebugging));
 	}
 }

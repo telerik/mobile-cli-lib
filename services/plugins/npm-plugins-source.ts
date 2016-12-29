@@ -15,7 +15,7 @@ export class NpmPluginsSource extends PluginsSourceBase implements IPluginsSourc
 		return "Searching for plugins with npm search command.";
 	}
 
-	public getPlugins(page: number, count: number): IFuture<IBasicPluginInformation[]> {
+	public async getPlugins(page: number, count: number): Promise<IBasicPluginInformation[]> {
 		let skip = page * count;
 
 		return Future.fromResult(_.slice(this.plugins, skip, skip + count));

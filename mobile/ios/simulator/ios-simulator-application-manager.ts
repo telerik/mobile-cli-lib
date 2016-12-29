@@ -17,8 +17,8 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		super($logger, $hooksService);
 	}
 
-	public getInstalledApplications(): IFuture<string[]> {
-		return Future.fromResult(this.iosSim.getInstalledApplications(this.identifier));
+	public async getInstalledApplications(): Promise<string[]> {
+		return Promise.resolve(this.iosSim.getInstalledApplications(this.identifier));
 	}
 
 	// TODO: Remove IFuture, reason: readDirectory - cannot until android and iOS implementatios have async calls.
@@ -37,7 +37,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 			await this.iosSim.installApplication(this.identifier, packageFilePath);
 	}
 
-	public uninstallApplication(appIdentifier: string): IFuture<void> {
+	public async uninstallApplication(appIdentifier: string): Promise<void> {
 		return this.iosSim.uninstallApplication(this.identifier, appIdentifier);
 	}
 
@@ -51,7 +51,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 			}
 	}
 
-	public stopApplication(cfBundleExecutable: string): IFuture<void> {
+	public async stopApplication(cfBundleExecutable: string): Promise<void> {
 		return this.iosSim.stopApplication(this.identifier, cfBundleExecutable);
 	}
 
@@ -96,12 +96,12 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		}).future<any>()();
 	}
 
-	public getDebuggableApps(): IFuture<Mobile.IDeviceApplicationInformation[]> {
-		return Future.fromResult([]);
+	public async getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]> {
+		return Promise.resolve([]);
 	}
 
-	public getDebuggableAppViews(appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>> {
+	public async getDebuggableAppViews(appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> {
 		// Implement when we can find debuggable applications for iOS.
-		return Future.fromResult(null);
+		return Promise.resolve(null);
 	}
 }

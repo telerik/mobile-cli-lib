@@ -1,7 +1,7 @@
 import {AppBuilderDeviceAppDataBase} from "./appbuilder-device-app-data-base";
 
 export abstract class AppBuilderCompanionDeviceAppDataBase extends AppBuilderDeviceAppDataBase {
-	public isLiveSyncSupported(): IFuture<boolean> {
+	public async isLiveSyncSupported(): Promise<boolean> {
 		return this.device.applicationManager.isApplicationInstalled(this.appIdentifier);
 	}
 

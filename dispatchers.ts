@@ -40,7 +40,7 @@ export class CommandDispatcher implements ICommandDispatcher {
 			await this.$commandsService.tryExecuteCommand(commandName, commandArguments);
 	}
 
-	public completeCommand(): IFuture<boolean> {
+	public async completeCommand(): Promise<boolean> {
 		return this.$commandsService.completeCommand();
 	}
 

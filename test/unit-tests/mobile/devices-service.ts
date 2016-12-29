@@ -9,31 +9,31 @@ import * as constants from "../../../constants";
 import { DevicePlatformsConstants } from "../../../mobile/device-platforms-constants";
 
 class IOSDeviceDiscoveryStub extends EventEmitter {
-	public startLookingForDevices(): IFuture<void> {
+	public async startLookingForDevices(): Promise<void> {
 		return Future.fromResult();
 	}
 
-	public checkForDevices(): IFuture<void> {
+	public async checkForDevices(): Promise<void> {
 		return Future.fromResult();
 	}
 }
 
 class AndroidDeviceDiscoveryStub extends EventEmitter {
-	public startLookingForDevices(): IFuture<void> {
+	public async startLookingForDevices(): Promise<void> {
 		return Future.fromResult();
 	}
 
-	public checkForDevices(): IFuture<void> {
+	public async checkForDevices(): Promise<void> {
 		return Future.fromResult();
 	}
 }
 
 class IOSSimulatorDiscoveryStub extends EventEmitter {
-	public startLookingForDevices(): IFuture<void> {
+	public async startLookingForDevices(): Promise<void> {
 		return Future.fromResult();
 	}
 
-	public checkForDevices(): IFuture<void> {
+	public async checkForDevices(): Promise<void> {
 		return Future.fromResult();
 	}
 }
@@ -62,7 +62,7 @@ let androidDeviceDiscovery: EventEmitter,
 
 class AndroidEmulatorServices {
 	public isStartEmulatorCalled = false;
-	public startEmulator(): IFuture<void> {
+	public async startEmulator(): Promise<void> {
 		this.isStartEmulatorCalled = true;
 		androidDeviceDiscovery.emit("deviceFound", androidEmulatorDevice);
 		return Future.fromResult();
@@ -71,7 +71,7 @@ class AndroidEmulatorServices {
 
 class IOSEmulatorServices {
 	public isStartEmulatorCalled = false;
-	public startEmulator(): IFuture<void> {
+	public async startEmulator(): Promise<void> {
 		if (!this.isStartEmulatorCalled) {
 			this.isStartEmulatorCalled = true;
 			iOSSimulatorDiscovery.emit("deviceFound", iOSSimulator);

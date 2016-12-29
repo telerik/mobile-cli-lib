@@ -74,7 +74,7 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		});
 	}
 
-	public putFile(localFilePath: string, deviceFilePath: string): IFuture<void> {
+	public async putFile(localFilePath: string, deviceFilePath: string): Promise<void> {
 		let afcClient = this.resolveAfc();
 		return afcClient.transfer(path.resolve(localFilePath), deviceFilePath);
 	}
@@ -99,7 +99,7 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		houseArrestClient.closeSocket();
 	}
 
-	public transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): IFuture<void> {
+	public async transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): Promise<void> {
 		return this.transferFiles(deviceAppData, localToDevicePaths);
 	}
 

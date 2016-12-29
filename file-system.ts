@@ -17,7 +17,7 @@ export class FileSystem implements IFileSystem {
 	constructor(private $injector: IInjector) { }
 
 	//TODO: try 'archiver' module for zipping
-	public zipFiles(zipFile: string, files: string[], zipPathCallback: (path: string) => string): IFuture<void> {
+	public async zipFiles(zipFile: string, files: string[], zipPathCallback: (path: string) => string): Promise<void> {
 		//we are resolving it here instead of in the constructor, because config has dependency on file system and config shouldn't require logger
 		let $logger = this.$injector.resolve("logger");
 		let zipstream = require("zipstream");
@@ -129,7 +129,7 @@ export class FileSystem implements IFileSystem {
 		return stat.size;
 	}
 
-	public futureFromEvent(eventEmitter: any, event: string): IFuture<any> {
+	public async futureFromEvent(eventEmitter: any, event: string): Promise<any> {
 		let future = new Future();
 		eventEmitter.once(event, function () {
 			let args = _.toArray(arguments);
@@ -352,7 +352,7 @@ export class FileSystem implements IFileSystem {
 		return foundFiles;
 	}
 
-	public getFileShasum(fileName: string, options?: { algorithm?: string, encoding?: string }): IFuture<string> {
+	public async getFileShasum(fileName: string, options?: { algorithm?: string, encoding?: string }): Promise<string> {
 		let future = new Future<string>();
 		let algorithm = (options && options.algorithm) || "sha1";
 		let encoding = (options && options.encoding) || "hex";
@@ -376,7 +376,7 @@ export class FileSystem implements IFileSystem {
 		return future;
 	}
 
-	public readStdin(): IFuture<string> {
+	public async readStdin(): Promise<string> {
 		let future = new Future<string>();
 		let buffer = '';
 		process.stdin.on('data', (data: string) => buffer += data);
