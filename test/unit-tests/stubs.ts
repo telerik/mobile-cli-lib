@@ -68,10 +68,10 @@ export class ErrorsStub implements IErrors {
 
 export class HooksServiceStub implements IHooksService {
 	executeBeforeHooks(commandName: string): IFuture<void> {
-		return Future.fromResult();
+		return Promise.resolve();
 	}
 	executeAfterHooks(commandName: string): IFuture<void> {
-		return Future.fromResult();
+		return Promise.resolve();
 	}
 
 	hookArgsName = "hookArgs";

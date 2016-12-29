@@ -75,7 +75,7 @@ describe("decorators", () => {
 
 		it("returns Promise, which is resolved to correct value (function returning IFuture without arguments)", (done) => {
 			let expectedResult = "result";
-			$injector.register(moduleName, { propertyName: () => Future.fromResult(expectedResult) });
+			$injector.register(moduleName, { propertyName: () => Promise.resolve(expectedResult) });
 			generatePublicApiFromExportedPromiseDecorator();
 
 			let promise: any = $injector.publicApi.__modules__[moduleName][propertyName]();
@@ -86,7 +86,7 @@ describe("decorators", () => {
 
 		it("returns Promise, which is resolved to correct value (function returning IFuture with arguments)", (done) => {
 			let expectedArgs = ["result", "result1", "result2"];
-			$injector.register(moduleName, { propertyName: (args: string[]) => Future.fromResult(args) });
+			$injector.register(moduleName, { propertyName: (args: string[]) => Promise.resolve(args) });
 			generatePublicApiFromExportedPromiseDecorator();
 
 			let promise: any = $injector.publicApi.__modules__[moduleName][propertyName](expectedArgs);
@@ -124,7 +124,7 @@ describe("decorators", () => {
 
 		it("returns Promises, which are resolved to correct value (function returning IFuture<T>[] without arguments)", (done) => {
 			let expectedResults = ["result1", "result2", "result3"];
-			$injector.register(moduleName, { propertyName: () => _.map(expectedResults, expectedResult => Future.fromResult(expectedResult)) });
+			$injector.register(moduleName, { propertyName: () => _.map(expectedResults, expectedResult => Promise.resolve(expectedResult)) });
 			generatePublicApiFromExportedPromiseDecorator();
 
 			let promises: Promise<string>[] = $injector.publicApi.__modules__[moduleName][propertyName]();
@@ -162,7 +162,7 @@ describe("decorators", () => {
 
 		it("rejects only Promises which throw, resolves the others correctly (function returning IFuture<T>[] without arguments)", (done) => {
 			let expectedResults: any[] = ["result1", new Error("result2")];
-			$injector.register(moduleName, { propertyName: () => _.map(expectedResults, expectedResult => Future.fromResult(expectedResult)) });
+			$injector.register(moduleName, { propertyName: () => _.map(expectedResults, expectedResult => Promise.resolve(expectedResult)) });
 			generatePublicApiFromExportedPromiseDecorator();
 
 			new Promise((onFulfilled: Function, onRejected: Function) => {
@@ -423,7 +423,7 @@ describe("decorators", () => {
 		});
 
 		it("throws error when passed function returns IFuture", () => {
-			$injector.register(moduleName, { propertyName: () => Future.fromResult(expectedResults) });
+			$injector.register(moduleName, { propertyName: () => Promise.resolve(expectedResults) });
 			generatePublicApiFromExportedDecorator();
 			assert.throws(() => $injector.publicApi.__modules__[moduleName][propertyName](), "Cannot use exported decorator with function returning IFuture<T>.");
 		});

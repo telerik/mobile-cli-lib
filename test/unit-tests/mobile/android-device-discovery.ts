@@ -43,13 +43,13 @@ function createTestInjector(): IInjector {
 			return mockChildProcess;
 		},
 		spawnFromEvent: (command: string, args: string[], event: string, options?: any, spawnFromEventOptions?: any) => {
-			return Future.fromResult(args);
+			return Promise.resolve(args);
 		}
 	});
 
 	injector.register("staticConfig", {
 		getAdbFilePath: () => {
-			return Future.fromResult("adbPath");
+			return Promise.resolve("adbPath");
 		}
 	});
 

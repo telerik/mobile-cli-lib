@@ -14,31 +14,31 @@ class ApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async isLiveSyncSupported(appIdentifier: string): Promise<boolean> {
-		return Future.fromResult(true);
+		return Promise.resolve(true);
 	}
 
 	public async installApplication(packageFilePath: string): Promise<void> {
-		return Future.fromResult();
+		return Promise.resolve();
 	}
 
 	public async uninstallApplication(appIdentifier: string): Promise<void> {
-		return Future.fromResult();
+		return Promise.resolve();
 	}
 
 	public async startApplication(appIdentifier: string, framework?: string): Promise<void> {
-		return Future.fromResult();
+		return Promise.resolve();
 	}
 
 	public async stopApplication(appIdentifier: string): Promise<void> {
-		return Future.fromResult();
+		return Promise.resolve();
 	}
 
 	public async getInstalledApplications(): Promise<string[]> {
-		return Future.fromResult(_.cloneDeep(currentlyInstalledApps));
+		return Promise.resolve(_.cloneDeep(currentlyInstalledApps));
 	}
 
 	public async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
-		return Future.fromResult(null);
+		return Promise.resolve(null);
 	}
 
 	public canStartApplication(): boolean {
@@ -46,11 +46,11 @@ class ApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]> {
-		return Future.fromResult(currentlyAvailableAppsForDebugging);
+		return Promise.resolve(currentlyAvailableAppsForDebugging);
 	}
 
 	public async getDebuggableAppViews(appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> {
-		return Future.fromResult(_.cloneDeep(currentlyAvailableAppWebViewsForDebugging));
+		return Promise.resolve(_.cloneDeep(currentlyAvailableAppWebViewsForDebugging));
 	}
 }
 
@@ -602,7 +602,7 @@ describe("ApplicationManagerBase", () => {
 			let stopApplicationParam: string;
 			applicationManager.stopApplication = (appId: string) => {
 				stopApplicationParam = appId;
-				return Future.fromResult();
+				return Promise.resolve();
 			};
 
 			await applicationManager.restartApplication("appId");
@@ -618,7 +618,7 @@ describe("ApplicationManagerBase", () => {
 			applicationManager.startApplication = (appId: string, framework: string) => {
 				startApplicationAppIdParam = appId;
 				startApplicationFrameworkParam = framework;
-				return Future.fromResult();
+				return Promise.resolve();
 			};
 
 			await applicationManager.restartApplication("appId");
@@ -636,13 +636,13 @@ describe("ApplicationManagerBase", () => {
 
 			applicationManager.stopApplication = (appId: string) => {
 				isStopApplicationCalled = true;
-				return Future.fromResult();
+				return Promise.resolve();
 			};
 
 			applicationManager.startApplication = (appId: string, framework: string) => {
 				assert.isTrue(isStopApplicationCalled, "When startApplication is called, stopApplication must have been resolved.");
 				isStartApplicationCalled = true;
-				return Future.fromResult();
+				return Promise.resolve();
 			};
 
 			await applicationManager.restartApplication("appId");
@@ -660,7 +660,7 @@ describe("ApplicationManagerBase", () => {
 			applicationManager.startApplication = (appId: string, framework: string) => {
 				startApplicationAppIdParam = appId;
 				startApplicationFrameworkParam = framework;
-				return Future.fromResult();
+				return Promise.resolve();
 			};
 
 			await applicationManager.tryStartApplication("appId");
@@ -677,7 +677,7 @@ describe("ApplicationManagerBase", () => {
 			applicationManager.canStartApplication = () => false;
 			applicationManager.startApplication = (appId: string, framework: string) => {
 				isStartApplicationCalled = true;
-				return Future.fromResult();
+				return Promise.resolve();
 			};
 
 			await applicationManager.tryStartApplication("appId");
@@ -716,13 +716,13 @@ describe("ApplicationManagerBase", () => {
 				applicationManager.canStartApplication = (): boolean => {
 					throw error;
 				};
-				applicationManager.isApplicationInstalled = (appId: string) => Future.fromResult(true);
+				applicationManager.isApplicationInstalled = (appId: string) => Promise.resolve(true);
 				assertDoesNotThrow();
 			});
 
 			it("when startApplications throws", () => {
 				applicationManager.canStartApplication = () => true;
-				applicationManager.isApplicationInstalled = (appId: string) => Future.fromResult(true);
+				applicationManager.isApplicationInstalled = (appId: string) => Promise.resolve(true);
 				assertDoesNotThrow({ shouldStartApplicatinThrow: true });
 			});
 		});
@@ -734,7 +734,7 @@ describe("ApplicationManagerBase", () => {
 			let uninstallApplicationAppIdParam: string;
 			applicationManager.uninstallApplication = (appId: string) => {
 				uninstallApplicationAppIdParam = appId;
-				return Future.fromResult();
+				return Promise.resolve();
 			};
 
 			await applicationManager.reinstallApplication("appId", "packageFilePath");
@@ -745,7 +745,7 @@ describe("ApplicationManagerBase", () => {
 			let installApplicationPackageFilePathParam: string;
 			applicationManager.installApplication = (packageFilePath: string) => {
 				installApplicationPackageFilePathParam = packageFilePath;
-				return Future.fromResult();
+				return Promise.resolve();
 			};
 
 			await applicationManager.reinstallApplication("appId", "packageFilePath");
@@ -759,13 +759,13 @@ describe("ApplicationManagerBase", () => {
 			applicationManager.uninstallApplication = (appId: string) => {
 				assert.isFalse(isInstallApplicationCalled, "When uninstallApplication is called, installApplication should not have been called.");
 				isUninstallApplicationCalled = true;
-				return Future.fromResult();
+				return Promise.resolve();
 			};
 
 			applicationManager.installApplication = (packageFilePath: string) => {
 				assert.isTrue(isUninstallApplicationCalled, "When installApplication is called, uninstallApplication should have been called.");
 				isInstallApplicationCalled = true;
-				return Future.fromResult();
+				return Promise.resolve();
 			};
 
 			await applicationManager.reinstallApplication("appId", "packageFilePath");

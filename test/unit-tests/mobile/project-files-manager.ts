@@ -29,7 +29,7 @@ class IOSAppIdentifierMock implements Mobile.IDeviceAppData {
 	public deviceSyncZipPath = iOSDeviceSyncZipPath;
 
 	public async isLiveSyncSupported(): Promise<boolean> {
-		return Future.fromResult(true);
+		return Promise.resolve(true);
 	}
 }
 
@@ -40,7 +40,7 @@ class AndroidAppIdentifierMock implements Mobile.IDeviceAppData {
 	public deviceProjectRootPath = androidDeviceProjectRootPath;
 
 	public async isLiveSyncSupported(): Promise<boolean> {
-		return Future.fromResult(true);
+		return Promise.resolve(true);
 	}
 }
 

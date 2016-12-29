@@ -68,7 +68,7 @@ class CancellationServiceDummy implements ICancellationService {
 	}
 
 	begin(name:string):IFuture<void> {
-		return Future.fromResult();
+		return Promise.resolve();
 	}
 
 	end(name:string):void {

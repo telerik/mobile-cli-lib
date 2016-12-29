@@ -50,7 +50,7 @@ export class HostInfo implements IHostInfo {
 			});
 			return result;
 		} else {
-			return Future.fromResult<string>(null);
+			return Promise.resolve<string>(null);
 		}
 	}
 

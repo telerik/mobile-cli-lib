@@ -268,7 +268,7 @@ export class DevicesService implements Mobile.IDevicesService {
 					Future.settle(future);
 					return future;
 				} else {
-					return Future.fromResult();
+					return Promise.resolve();
 				}
 			});
 

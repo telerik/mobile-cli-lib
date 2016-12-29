@@ -307,10 +307,10 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 					if (match && match[1]) {
 						// possible genymotion emulator
 						let emulatorId = match[1];
-						return Future.fromResult(await this.isGenymotionEmulator(emulatorId) ? emulatorId : undefined);
+						return Promise.resolve(await this.isGenymotionEmulator(emulatorId) ? emulatorId : undefined);
 					}
 
-					return Future.fromResult(undefined);
+					return Promise.resolve(undefined);
 				}).value());
 
 			Future.wait(futures);

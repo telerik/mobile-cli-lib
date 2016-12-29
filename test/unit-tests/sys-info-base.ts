@@ -75,13 +75,13 @@ function createTestInjector(childProcessResult: IChildProcessResults, hostInfoDa
 	});
 
 	injector.register("hostInfo", {
-		dotNetVersion: () => Future.fromResult(hostInfoData.dotNetVersion),
+		dotNetVersion: () => Promise.resolve(hostInfoData.dotNetVersion),
 		isWindows: hostInfoData.isWindows,
 		isDarwin: hostInfoData.isDarwin
 	});
 
 	injector.register("iTunesValidator", {
-		getError: () => Future.fromResult(itunesError)
+		getError: () => Promise.resolve(itunesError)
 	});
 
 	injector.register("logger", {

@@ -18,11 +18,11 @@ class AndroidDebugBridgeMock {
 			isAdbPushExecuted = true;
 		}
 
-		return Future.fromResult();
+		return Promise.resolve();
 	}
 
 	public executeShellCommand() {
-		return Future.fromResult();
+		return Promise.resolve();
 	}
 }
 
@@ -85,7 +85,7 @@ function createTestInjector(): IInjector {
 function createAndroidDeviceFileSystem(injector: IInjector) {
 	let adb = new AndroidDebugBridgeMock();
 	let androidDeviceFileSystem = injector.resolve(AndroidDeviceFileSystem, { "adb": adb, "identifier": myTestAppIdentifier });
-	androidDeviceFileSystem.createFileOnDevice = () => Future.fromResult();
+	androidDeviceFileSystem.createFileOnDevice = () => Promise.resolve();
 	return androidDeviceFileSystem;
 }
 
@@ -151,7 +151,7 @@ describe("Android device file system tests", () => {
 			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
 			androidDeviceFileSystem.transferFile = (localPath: string, devicePath: string) => {
 				assert.equal(localPath, "~/TestApp/app/test.js");
-				return Future.fromResult();
+				return Promise.resolve();
 			};
 			androidDeviceFileSystem.transferDirectory(deviceAppData, localToDevicePaths, "~ await /TestApp/app");
 		});
@@ -177,7 +177,7 @@ describe("Android device file system tests", () => {
 			let transferedFilesOnDevice: string[] = [];
 			androidDeviceFileSystem.transferFile = (localPath: string, devicePath: string) => {
 				transferedFilesOnDevice.push(localPath);
-				return Future.fromResult();
+				return Promise.resolve();
 			};
 			androidDeviceFileSystem.transferDirectory(deviceAppData, localToDevicePaths, "~ await /TestApp/app");
 
@@ -207,7 +207,7 @@ describe("Android device file system tests", () => {
 			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
 			androidDeviceFileSystem.transferFile = (localPath: string, devicePath: string) => {
 				assert.equal(localPath, "~/TestApp/app/newDir/test.js");
-				return Future.fromResult();
+				return Promise.resolve();
 			};
 			androidDeviceFileSystem.transferDirectory(deviceAppData, localToDevicePaths, "~ await /TestApp/app");
 		});
@@ -232,7 +232,7 @@ describe("Android device file system tests", () => {
 			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
 			androidDeviceFileSystem.transferFile = (localPath: string, devicePath: string) => {
 				assert.equal(localPath, "~/TestApp/app/newDir/test.js");
-				return Future.fromResult();
+				return Promise.resolve();
 			};
 			androidDeviceFileSystem.transferDirectory(deviceAppData, localToDevicePaths, "~ await /TestApp/app");
 		});

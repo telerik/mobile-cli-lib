@@ -95,7 +95,7 @@ function createTestInjector(testScenario: ITestScenario): IInjector {
 	testInjector.register("analyticsService", AnalyticsServiceBase);
 	testInjector.register("analyticsSettingsService", {
 		canDoRequest: () => {
-			return Future.fromResult(testScenario.canDoRequest);
+			return Promise.resolve(testScenario.canDoRequest);
 		},
 		getClientName: () => {
 			return "UnitTests";
@@ -104,10 +104,10 @@ function createTestInjector(testScenario: ITestScenario): IInjector {
 			return "privacy policy link";
 		},
 		getUserId: () => {
-			return Future.fromResult("UnitTestsUserId");
+			return Promise.resolve("UnitTestsUserId");
 		},
-		getUserSessionsCount: () => Future.fromResult(0),
-		setUserSessionsCount: (count: number) => Future.fromResult()
+		getUserSessionsCount: () => Promise.resolve(0),
+		setUserSessionsCount: (count: number) => Promise.resolve()
 	});
 
 	testInjector.register("options", {
@@ -115,7 +115,7 @@ function createTestInjector(testScenario: ITestScenario): IInjector {
 	});
 	testInjector.register("prompter", {
 		confirm: (message: string, defaultAction?: () => boolean) => {
-			return Future.fromResult(testScenario.prompterConfirmResult);
+			return Promise.resolve(testScenario.prompterConfirmResult);
 		}
 	});
 	testInjector.register("staticConfig", {

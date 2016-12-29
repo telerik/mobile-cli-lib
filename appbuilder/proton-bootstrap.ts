@@ -29,7 +29,7 @@ $injector.require("logger", "./logger");
 // Mock as it is used in LiveSync logic to deploy on devices.
 // When called from Proton we'll not deploy on device, just livesync.
 $injector.register("deployHelper", {
-	deploy: (platform?: string) => Future.fromResult()
+	deploy: (platform?: string) => Promise.resolve()
 });
 
 $injector.require("liveSyncProvider", "./appbuilder/providers/livesync-provider");

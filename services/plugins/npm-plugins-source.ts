@@ -18,7 +18,7 @@ export class NpmPluginsSource extends PluginsSourceBase implements IPluginsSourc
 	public async getPlugins(page: number, count: number): Promise<IBasicPluginInformation[]> {
 		let skip = page * count;
 
-		return Future.fromResult(_.slice(this.plugins, skip, skip + count));
+		return Promise.resolve(_.slice(this.plugins, skip, skip + count));
 	}
 
 	protected async initializeCore(projectDir: string, keywords: string[]): Promise<void> {

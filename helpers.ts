@@ -294,7 +294,7 @@ export function hook(commandName: string) {
 			let result = await  resultPromise;
 			let hooksService = getHooksService(self);
 			await hooksService.executeAfterHooks(commandName, prepareArguments(method, args, hooksService));
-			return Future.fromResult(result);
+			return Promise.resolve(result);
 		});
 }
 

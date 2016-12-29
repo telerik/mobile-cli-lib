@@ -10,7 +10,7 @@ let currentlyRunningSimulator: any,
 function createTestInjector(): IInjector {
 	let injector = new Yok();
 	injector.register("childProcess", {
-		exec: (command: string) => Future.fromResult(isCurrentlyRunning ? 'launchd_sim' : '')
+		exec: (command: string) => Promise.resolve(isCurrentlyRunning ? 'launchd_sim' : '')
  	});
 	injector.register("injector", injector);
 	injector.register("iOSSimResolver", {

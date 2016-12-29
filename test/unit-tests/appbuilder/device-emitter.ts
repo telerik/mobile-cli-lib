@@ -8,7 +8,7 @@ import { DeviceEmitter } from "../../../appbuilder/device-emitter";
 
 class AndroidDeviceDiscoveryMock extends EventEmitter {
 	public async ensureAdbServerStarted(): Promise<void> {
-		return Future.fromResult();
+		return Promise.resolve();
 	}
 }
 
@@ -37,7 +37,7 @@ function createTestInjector(): IInjector {
 	testInjector.register("iOSDeviceDiscovery", CustomEventEmitter);
 	testInjector.register("iOSSimulatorDiscovery", CustomEventEmitter);
 	testInjector.register("devicesService", {
-		initialize: (opts: { skipInferPlatform: boolean }) => Future.fromResult()
+		initialize: (opts: { skipInferPlatform: boolean }) => Promise.resolve()
 	});
 	testInjector.register("deviceLogProvider", CustomEventEmitter);
 	testInjector.register("companionAppsService", {

@@ -10,31 +10,31 @@ import { DevicePlatformsConstants } from "../../../mobile/device-platforms-const
 
 class IOSDeviceDiscoveryStub extends EventEmitter {
 	public async startLookingForDevices(): Promise<void> {
-		return Future.fromResult();
+		return Promise.resolve();
 	}
 
 	public async checkForDevices(): Promise<void> {
-		return Future.fromResult();
+		return Promise.resolve();
 	}
 }
 
 class AndroidDeviceDiscoveryStub extends EventEmitter {
 	public async startLookingForDevices(): Promise<void> {
-		return Future.fromResult();
+		return Promise.resolve();
 	}
 
 	public async checkForDevices(): Promise<void> {
-		return Future.fromResult();
+		return Promise.resolve();
 	}
 }
 
 class IOSSimulatorDiscoveryStub extends EventEmitter {
 	public async startLookingForDevices(): Promise<void> {
-		return Future.fromResult();
+		return Promise.resolve();
 	}
 
 	public async checkForDevices(): Promise<void> {
-		return Future.fromResult();
+		return Promise.resolve();
 	}
 }
 
@@ -48,15 +48,15 @@ let androidDeviceDiscovery: EventEmitter,
 			platform: "ios"
 		},
 		applicationManager: {
-			getInstalledApplications: () => Future.fromResult(["com.telerik.unitTest1", "com.telerik.unitTest2"]),
+			getInstalledApplications: () => Promise.resolve(["com.telerik.unitTest1", "com.telerik.unitTest2"]),
 			canStartApplication: () => true,
-			startApplication: (packageName: string, framework: string) => Future.fromResult(),
-			tryStartApplication: (packageName: string, framework: string) => Future.fromResult(),
-			reinstallApplication: (packageName: string, packageFile: string) => Future.fromResult(),
-			isApplicationInstalled: (packageName: string) => Future.fromResult(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], packageName)),
-			isLiveSyncSupported: (appIdentifier: string) => Future.fromResult(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], appIdentifier))
+			startApplication: (packageName: string, framework: string) => Promise.resolve(),
+			tryStartApplication: (packageName: string, framework: string) => Promise.resolve(),
+			reinstallApplication: (packageName: string, packageFile: string) => Promise.resolve(),
+			isApplicationInstalled: (packageName: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], packageName)),
+			isLiveSyncSupported: (appIdentifier: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], appIdentifier))
 		},
-		deploy: (packageFile: string, packageName: string) => Future.fromResult(),
+		deploy: (packageFile: string, packageName: string) => Promise.resolve(),
 		isEmulator: true
 	};
 
@@ -65,7 +65,7 @@ class AndroidEmulatorServices {
 	public async startEmulator(): Promise<void> {
 		this.isStartEmulatorCalled = true;
 		androidDeviceDiscovery.emit("deviceFound", androidEmulatorDevice);
-		return Future.fromResult();
+		return Promise.resolve();
 	}
 }
 
@@ -76,7 +76,7 @@ class IOSEmulatorServices {
 			this.isStartEmulatorCalled = true;
 			iOSSimulatorDiscovery.emit("deviceFound", iOSSimulator);
 		}
-		return Future.fromResult();
+		return Promise.resolve();
 	}
 }
 
@@ -119,7 +119,7 @@ function createTestInjector(): IInjector {
 }
 
 function mockIsAppInstalled(devices: { applicationManager: { isApplicationInstalled(packageName: string): IFuture<boolean> } }[], expectedResult: boolean[]): void {
-	_.each(devices, (device, index) => device.applicationManager.isApplicationInstalled = (packageName: string) => Future.fromResult(expectedResult[index]));
+	_.each(devices, (device, index) => device.applicationManager.isApplicationInstalled = (packageName: string) => Promise.resolve(expectedResult[index]));
 }
 
 async function throwErrorFuture(): Promise<void> {
@@ -159,18 +159,18 @@ describe("devicesService", () => {
 				platform: "ios"
 			},
 			applicationManager: {
-				getInstalledApplications: () => Future.fromResult(["com.telerik.unitTest1", "com.telerik.unitTest2"]),
+				getInstalledApplications: () => Promise.resolve(["com.telerik.unitTest1", "com.telerik.unitTest2"]),
 				canStartApplication: () => true,
-				startApplication: (packageName: string, framework: string) => Future.fromResult(),
-				tryStartApplication: (packageName: string, framework: string) => Future.fromResult(),
-				reinstallApplication: (packageName: string, packageFile: string) => Future.fromResult(),
-				isApplicationInstalled: (packageName: string) => Future.fromResult(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], packageName)),
-				isLiveSyncSupported: (appIdentifier: string) => Future.fromResult(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], appIdentifier)),
-				checkForApplicationUpdates: (): IFuture<void> => Future.fromResult(),
-				getDebuggableApps: (): IFuture<Mobile.IDeviceApplicationInformation[]> => Future.fromResult(null),
-				getDebuggableAppViews: (appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>> => Future.fromResult(null)
+				startApplication: (packageName: string, framework: string) => Promise.resolve(),
+				tryStartApplication: (packageName: string, framework: string) => Promise.resolve(),
+				reinstallApplication: (packageName: string, packageFile: string) => Promise.resolve(),
+				isApplicationInstalled: (packageName: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], packageName)),
+				isLiveSyncSupported: (appIdentifier: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], appIdentifier)),
+				checkForApplicationUpdates: (): IFuture<void> => Promise.resolve(),
+				getDebuggableApps: (): IFuture<Mobile.IDeviceApplicationInformation[]> => Promise.resolve(null),
+				getDebuggableAppViews: (appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>> => Promise.resolve(null)
 			},
-			deploy: (packageFile: string, packageName: string) => Future.fromResult()
+			deploy: (packageFile: string, packageName: string) => Promise.resolve()
 		},
 		androidDevice = {
 			deviceInfo: {
@@ -178,18 +178,18 @@ describe("devicesService", () => {
 				platform: "android"
 			},
 			applicationManager: {
-				getInstalledApplications: () => Future.fromResult(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"]),
+				getInstalledApplications: () => Promise.resolve(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"]),
 				canStartApplication: () => true,
-				startApplication: (packageName: string, framework: string) => Future.fromResult(),
-				tryStartApplication: (packageName: string, framework: string) => Future.fromResult(),
-				reinstallApplication: (packageName: string, packageFile: string) => Future.fromResult(),
-				isApplicationInstalled: (packageName: string) => Future.fromResult(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], packageName)),
-				isLiveSyncSupported: (appIdentifier: string) => Future.fromResult(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], appIdentifier)),
-				checkForApplicationUpdates: (): IFuture<void> => Future.fromResult(),
-				getDebuggableApps: (): IFuture<Mobile.IDeviceApplicationInformation[]> => Future.fromResult(null),
-				getDebuggableAppViews: (appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>> => Future.fromResult(null)
+				startApplication: (packageName: string, framework: string) => Promise.resolve(),
+				tryStartApplication: (packageName: string, framework: string) => Promise.resolve(),
+				reinstallApplication: (packageName: string, packageFile: string) => Promise.resolve(),
+				isApplicationInstalled: (packageName: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], packageName)),
+				isLiveSyncSupported: (appIdentifier: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], appIdentifier)),
+				checkForApplicationUpdates: (): IFuture<void> => Promise.resolve(),
+				getDebuggableApps: (): IFuture<Mobile.IDeviceApplicationInformation[]> => Promise.resolve(null),
+				getDebuggableAppViews: (appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>> => Promise.resolve(null)
 			},
-			deploy: (packageFile: string, packageName: string) => Future.fromResult()
+			deploy: (packageFile: string, packageName: string) => Promise.resolve()
 		},
 		testInjector: IInjector,
 		devicesService: Mobile.IDevicesService,
@@ -197,7 +197,7 @@ describe("devicesService", () => {
 		logger: CommonLoggerStub,
 		assertAndroidEmulatorIsStarted = () => {
 			assert.isFalse(androidEmulatorServices.isStartEmulatorCalled);
-			devicesService.execute(() => await  { counter++; return Future.fromResult(); }, () => true);
+			devicesService.execute(() => await  { counter++; return Promise.resolve(); }, () => true);
 			assert.deepEqual(counter, 1, "The action must be executed on only one device.");
 			assert.isTrue(androidEmulatorServices.isStartEmulatorCalled);
 			androidDeviceDiscovery.emit("deviceLost", androidEmulatorDevice);
@@ -334,9 +334,9 @@ describe("devicesService", () => {
 				platform: "android"
 			},
 			applicationManager: {
-				getInstalledApplications: () => Future.fromResult(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"]),
-				isApplicationInstalled: (packageName: string) => Future.fromResult(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], packageName)),
-				isLiveSyncSupported: (appIdentifier: string) => Future.fromResult(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], appIdentifier))
+				getInstalledApplications: () => Promise.resolve(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"]),
+				isApplicationInstalled: (packageName: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], packageName)),
+				isLiveSyncSupported: (appIdentifier: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], appIdentifier))
 			}
 		};
 
@@ -353,20 +353,20 @@ describe("devicesService", () => {
 				assert.deepEqual(devicesService.getDeviceInstances(), [androidDevice, tempDevice]);
 				assert.deepEqual(devicesService.getDevices(), [androidDevice.deviceInfo, tempDevice.deviceInfo]);
 				assert.deepEqual(devicesService.deviceCount, 1);
-				devicesService.execute(() => await  { counter++; return Future.fromResult(); });
+				devicesService.execute(() => await  { counter++; return Promise.resolve(); });
 				assert.deepEqual(counter, 1, "The action must be executed on only one device.");
 				counter = 0;
-				devicesService.execute(() => await  { counter++; return Future.fromResult(); }, () => false);
+				devicesService.execute(() => await  { counter++; return Promise.resolve(); }, () => false);
 				assert.deepEqual(counter, 0, "The action must not be executed when canExecute returns false.");
 				counter = 0;
-				devicesService.execute(() => await  { counter++; return Future.fromResult(); }, () => true);
+				devicesService.execute(() => await  { counter++; return Promise.resolve(); }, () => true);
 				assert.deepEqual(counter, 1, "The action must be executed on only one device.");
 				androidDeviceDiscovery.emit("deviceLost", androidDevice);
 				androidDeviceDiscovery.emit("deviceLost", tempDevice);
 				counter = 0;
 				assertAndroidEmulatorIsStarted();
 				counter = 0;
-				devicesService.execute(() => await  { counter++; return Future.fromResult(); }, () => true, { allowNoDevices: true });
+				devicesService.execute(() => await  { counter++; return Promise.resolve(); }, () => true, { allowNoDevices: true });
 				assert.deepEqual(counter, 0, "The action must not be executed when there are no devices.");
 				assert.isTrue(logger.output.indexOf(constants.ERROR_NO_DEVICES) !== -1);
 			};
@@ -444,13 +444,13 @@ describe("devicesService", () => {
 				assert.deepEqual(devicesService.getDevices(), [androidDevice.deviceInfo, tempDevice.deviceInfo, iOSDevice.deviceInfo]);
 				assert.deepEqual(devicesService.deviceCount, 1);
 				counter = 0;
-				devicesService.execute(() => await  { counter++; return Future.fromResult(); });
+				devicesService.execute(() => await  { counter++; return Promise.resolve(); });
 				assert.deepEqual(counter, 1, "The action must be executed on only one device.");
 				counter = 0;
-				devicesService.execute(() => await  { counter++; return Future.fromResult(); }, () => false);
+				devicesService.execute(() => await  { counter++; return Promise.resolve(); }, () => false);
 				assert.deepEqual(counter, 0, "The action must not be executed when canExecute returns false.");
 				counter = 0;
-				devicesService.execute(() => await  { counter++; return Future.fromResult(); }, () => true);
+				devicesService.execute(() => await  { counter++; return Promise.resolve(); }, () => true);
 				assert.deepEqual(counter, 1, "The action must be executed on only one device.");
 				androidDeviceDiscovery.emit("deviceLost", androidDevice);
 				androidDeviceDiscovery.emit("deviceLost", tempDevice);
@@ -458,7 +458,7 @@ describe("devicesService", () => {
 				counter = 0;
 				assertAndroidEmulatorIsStarted();
 				counter = 0;
-				devicesService.execute(() => await  { counter++; return Future.fromResult(); }, () => true, { allowNoDevices: true });
+				devicesService.execute(() => await  { counter++; return Promise.resolve(); }, () => true, { allowNoDevices: true });
 				assert.deepEqual(counter, 0, "The action must not be executed when there are no devices.");
 				assert.isTrue(logger.output.indexOf(constants.ERROR_NO_DEVICES) !== -1);
 			};
@@ -498,14 +498,14 @@ describe("devicesService", () => {
 				testInjector.resolve("hostInfo").isDarwin = false;
 				await devicesService.initialize({ platform: "ios" });
 				testInjector.resolve("options").emulator = true;
-				assert.throws(() => await  devicesService.execute(() => { counter++; return Future.fromResult(); }), "Cannot find connected devices. Reconnect any connected devices");
+				assert.throws(() => await  devicesService.execute(() => { counter++; return Promise.resolve(); }), "Cannot find connected devices. Reconnect any connected devices");
 			});
 
 			it("execute fails when platform is iOS on non-Darwin platform and there are no devices attached", () => {
 				testInjector.resolve("hostInfo").isDarwin = false;
 				await devicesService.initialize({ platform: "ios" });
 				assert.isFalse(devicesService.hasDevices, "MUST BE FALSE!!!");
-				assert.throws(() => await  devicesService.execute(() => { counter++; return Future.fromResult(); }), "Cannot find connected devices. Reconnect any connected devices");
+				assert.throws(() => await  devicesService.execute(() => { counter++; return Promise.resolve(); }), "Cannot find connected devices. Reconnect any connected devices");
 			});
 
 			it("executes action only on iOS Simulator when iOS device is found and --emulator is passed", () => {
@@ -515,21 +515,21 @@ describe("devicesService", () => {
 				await devicesService.initialize({ platform: "ios" });
 				let deviceIdentifier: string;
 				counter = 0;
-				devicesService.execute((d: Mobile.IDevice) => await  { deviceIdentifier = d.deviceInfo.identifier; counter++; return Future.fromResult(); });
+				devicesService.execute((d: Mobile.IDevice) => await  { deviceIdentifier = d.deviceInfo.identifier; counter++; return Promise.resolve(); });
 				assert.deepEqual(counter, 1, "The action must be executed on only one device. ASAAS");
 				assert.deepEqual(deviceIdentifier, iOSSimulator.deviceInfo.identifier);
 				counter = 0;
-				devicesService.execute(() => await  { counter++; return Future.fromResult(); }, () => false);
+				devicesService.execute(() => await  { counter++; return Promise.resolve(); }, () => false);
 				assert.deepEqual(counter, 0, "The action must not be executed when canExecute returns false.");
 				counter = 0;
 				iOSDeviceDiscovery.emit("deviceLost", iOSDevice);
 				deviceIdentifier = null;
-				devicesService.execute((d: Mobile.IDevice) => await  { deviceIdentifier = d.deviceInfo.identifier; counter++; return Future.fromResult(); });
+				devicesService.execute((d: Mobile.IDevice) => await  { deviceIdentifier = d.deviceInfo.identifier; counter++; return Promise.resolve(); });
 				assert.deepEqual(counter, 1, "The action must be executed on only one device.");
 				assert.deepEqual(deviceIdentifier, iOSSimulator.deviceInfo.identifier);
 				counter = 0;
 				deviceIdentifier = null;
-				devicesService.execute((d: Mobile.IDevice) => await  { deviceIdentifier = d.deviceInfo.identifier; counter++; return Future.fromResult(); }, () => false);
+				devicesService.execute((d: Mobile.IDevice) => await  { deviceIdentifier = d.deviceInfo.identifier; counter++; return Promise.resolve(); }, () => false);
 				assert.deepEqual(counter, 0, "The action must not be executed when canExecute returns false.");
 				assert.deepEqual(deviceIdentifier, null);
 			});
@@ -546,23 +546,23 @@ describe("devicesService", () => {
 				assert.deepEqual(devicesService.getDevices(), [androidDevice.deviceInfo, tempDevice.deviceInfo]);
 				assert.deepEqual(devicesService.deviceCount, 2);
 				counter = 0;
-				devicesService.execute(() => await  { counter++; return Future.fromResult(); });
+				devicesService.execute(() => await  { counter++; return Promise.resolve(); });
 				assert.deepEqual(counter, 2, "The action must be executed on two devices.");
 				counter = 0;
-				devicesService.execute(() => await  { counter++; return Future.fromResult(); }, () => false);
+				devicesService.execute(() => await  { counter++; return Promise.resolve(); }, () => false);
 				assert.deepEqual(counter, 0, "The action must not be executed when canExecute returns false.");
 				counter = 0;
-				devicesService.execute(() => await  { counter++; return Future.fromResult(); }, () => true);
+				devicesService.execute(() => await  { counter++; return Promise.resolve(); }, () => true);
 				assert.deepEqual(counter, 2, "The action must be executed on two devices.");
 				androidDeviceDiscovery.emit("deviceLost", androidDevice);
 				counter = 0;
-				devicesService.execute(() => await  { counter++; return Future.fromResult(); }, () => true);
+				devicesService.execute(() => await  { counter++; return Promise.resolve(); }, () => true);
 				assert.deepEqual(counter, 1, "The action must be executed on only one device.");
 				androidDeviceDiscovery.emit("deviceLost", tempDevice);
 				counter = 0;
 				assertAndroidEmulatorIsStarted();
 				counter = 0;
-				devicesService.execute(() => await  { counter++; return Future.fromResult(); }, () => true, { allowNoDevices: true });
+				devicesService.execute(() => await  { counter++; return Promise.resolve(); }, () => true, { allowNoDevices: true });
 				assert.deepEqual(counter, 0, "The action must not be executed when there are no devices.");
 				assert.isTrue(logger.output.indexOf(constants.ERROR_NO_DEVICES) !== -1);
 				assert.isFalse(androidEmulatorServices.isStartEmulatorCalled);
@@ -582,24 +582,24 @@ describe("devicesService", () => {
 			assert.deepEqual(devicesService.getDevices(), [androidDevice.deviceInfo, iOSDevice.deviceInfo, tempDevice.deviceInfo]);
 			assert.deepEqual(devicesService.deviceCount, 3);
 			counter = 0;
-			devicesService.execute(() => await  { counter++; return Future.fromResult(); });
+			devicesService.execute(() => await  { counter++; return Promise.resolve(); });
 			assert.deepEqual(counter, 3, "The action must be executed on two devices.");
 			counter = 0;
-			devicesService.execute(() => await  { counter++; return Future.fromResult(); }, () => false);
+			devicesService.execute(() => await  { counter++; return Promise.resolve(); }, () => false);
 			assert.deepEqual(counter, 0, "The action must not be executed when canExecute returns false.");
 			counter = 0;
-			devicesService.execute(() => await  { counter++; return Future.fromResult(); }, () => true);
+			devicesService.execute(() => await  { counter++; return Promise.resolve(); }, () => true);
 			assert.deepEqual(counter, 3, "The action must be executed on three devices.");
 			androidDeviceDiscovery.emit("deviceLost", androidDevice);
 			counter = 0;
-			devicesService.execute(() => await  { counter++; return Future.fromResult(); }, () => true);
+			devicesService.execute(() => await  { counter++; return Promise.resolve(); }, () => true);
 			assert.deepEqual(counter, 2, "The action must be executed on two devices.");
 			androidDeviceDiscovery.emit("deviceLost", tempDevice);
 			iOSDeviceDiscovery.emit("deviceLost", iOSDevice);
 			counter = 0;
-			assert.throws(() => await  devicesService.execute(() => { counter++; return Future.fromResult(); }, () => true));
+			assert.throws(() => await  devicesService.execute(() => { counter++; return Promise.resolve(); }, () => true));
 			counter = 0;
-			devicesService.execute(() => await  { counter++; return Future.fromResult(); }, () => true, { allowNoDevices: true });
+			devicesService.execute(() => await  { counter++; return Promise.resolve(); }, () => true, { allowNoDevices: true });
 			assert.deepEqual(counter, 0, "The action must not be executed when there are no devices.");
 			assert.isTrue(logger.output.indexOf(constants.ERROR_NO_DEVICES) !== -1);
 		});
@@ -616,23 +616,23 @@ describe("devicesService", () => {
 			assert.deepEqual(devicesService.getDevices(), [androidDevice.deviceInfo, tempDevice.deviceInfo]);
 			assert.deepEqual(devicesService.deviceCount, 2);
 			counter = 0;
-			devicesService.execute(() => await  { counter++; return Future.fromResult(); });
+			devicesService.execute(() => await  { counter++; return Promise.resolve(); });
 			assert.deepEqual(counter, 2, "The action must be executed on two devices.");
 			counter = 0;
-			devicesService.execute(() => await  { counter++; return Future.fromResult(); }, () => false);
+			devicesService.execute(() => await  { counter++; return Promise.resolve(); }, () => false);
 			assert.deepEqual(counter, 0, "The action must not be executed when canExecute returns false.");
 			counter = 0;
-			devicesService.execute(() => await  { counter++; return Future.fromResult(); }, () => true);
+			devicesService.execute(() => await  { counter++; return Promise.resolve(); }, () => true);
 			assert.deepEqual(counter, 2, "The action must be executed on two devices.");
 			androidDeviceDiscovery.emit("deviceLost", androidDevice);
 			counter = 0;
-			devicesService.execute(() => await  { counter++; return Future.fromResult(); }, () => true);
+			devicesService.execute(() => await  { counter++; return Promise.resolve(); }, () => true);
 			assert.deepEqual(counter, 1, "The action must be executed on only one device.");
 			androidDeviceDiscovery.emit("deviceLost", tempDevice);
 			counter = 0;
 			assertAndroidEmulatorIsStarted();
 			counter = 0;
-			devicesService.execute(() => await  { counter++; return Future.fromResult(); }, () => true, { allowNoDevices: true });
+			devicesService.execute(() => await  { counter++; return Promise.resolve(); }, () => true, { allowNoDevices: true });
 			assert.deepEqual(counter, 0, "The action must not be executed when there are no devices.");
 			assert.isTrue(logger.output.indexOf(constants.ERROR_NO_DEVICES) !== -1);
 		});
