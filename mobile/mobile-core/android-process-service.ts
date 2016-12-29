@@ -31,7 +31,7 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 			this.tryAttachToProcessExitSignals();
 
 			let adb = this.getAdb(deviceIdentifier);
-			let processId = this.getProcessIds(adb, [appIdentifier]).wait()[appIdentifier];
+			let processId = (await  this.getProcessIds(adb, [appIdentifier]))[appIdentifier];
 			let applicationNotStartedErrorMessage = `The application is not started on the device with identifier ${deviceIdentifier}.`;
 
 			if (!processId) {

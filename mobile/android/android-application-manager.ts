@@ -82,7 +82,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 
 				try {
 					if (port) {
-						let apps = this.$httpClient.httpRequest(localAddress).wait().body;
+						let apps = (await  this.$httpClient.httpRequest(localAddress)).body;
 						applicationViews[appIdentifier] = JSON.parse(apps);
 					}
 				} catch (err) {

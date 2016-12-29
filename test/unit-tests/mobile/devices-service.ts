@@ -993,7 +993,7 @@ describe("devicesService", () => {
 			mockIsAppInstalled([iOSDevice, androidDevice], expectedResult);
 
 			let result = _.map(devicesService.isCompanionAppInstalledOnDevices(deviceIdentifiers, constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova),
-				(future: IFuture<IAppInstalledInfo>) => future.wait().isInstalled);
+				(future: IFuture<IAppInstalledInfo>) => (await  future).isInstalled);
 
 			assert.deepEqual(result.length, deviceIdentifiers.length);
 		});
@@ -1003,7 +1003,7 @@ describe("devicesService", () => {
 			mockIsAppInstalled([iOSDevice, androidDevice], expectedResult);
 
 			let result = _.map(devicesService.isCompanionAppInstalledOnDevices(deviceIdentifiers,
-				constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova), (future: IFuture<IAppInstalledInfo>) => future.wait().isInstalled);
+				constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova), (future: IFuture<IAppInstalledInfo>) => (await  future).isInstalled);
 
 			assert.deepEqual(result, expectedResult);
 		});
@@ -1013,7 +1013,7 @@ describe("devicesService", () => {
 			mockIsAppInstalled([iOSDevice, androidDevice], expectedResult);
 
 			let result = _.map(devicesService.isCompanionAppInstalledOnDevices(deviceIdentifiers,
-				constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova), (future: IFuture<IAppInstalledInfo>) => future.wait().isInstalled);
+				constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova), (future: IFuture<IAppInstalledInfo>) => (await  future).isInstalled);
 
 			assert.deepEqual(result, expectedResult);
 		});
@@ -1023,7 +1023,7 @@ describe("devicesService", () => {
 			mockIsAppInstalled([iOSDevice, androidDevice], expectedResult);
 
 			let result = _.map(devicesService.isCompanionAppInstalledOnDevices(deviceIdentifiers,
-				constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova), (future: IFuture<IAppInstalledInfo>) => future.wait().isInstalled);
+				constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova), (future: IFuture<IAppInstalledInfo>) => (await  future).isInstalled);
 
 			assert.deepEqual(result, expectedResult);
 		});

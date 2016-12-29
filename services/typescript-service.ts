@@ -58,7 +58,7 @@ export class TypeScriptService implements ITypeScriptService {
 					typeScriptDefinitionsFiles = this.getDefaultTypeScriptDefinitionsFiles(options.pathToDefaultDefinitionFiles);
 				}
 
-				typeScriptDefinitionsFiles = typeScriptDefinitionsFiles.concat(this.getTypeScriptFilesData(projectDir).wait().definitionFiles);
+				typeScriptDefinitionsFiles = (await  typeScriptDefinitionsFiles.concat(this.getTypeScriptFilesData(projectDir)).definitionFiles);
 
 				let filesToTranspile = this.typeScriptFiles.concat(typeScriptDefinitionsFiles);
 

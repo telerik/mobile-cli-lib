@@ -148,7 +148,7 @@ export class NpmService implements INpmService {
 					proxySettings = this.getNpmProxySettings().wait();
 
 				// This call will return error with message '{}' in case there's no such package.
-				let result = this.$httpClient.httpRequest({ url, timeout }, proxySettings).wait().body;
+				let result = (await  this.$httpClient.httpRequest({ url, timeout }, proxySettings)).body;
 				packageJsonContent = JSON.parse(result);
 			} catch (err) {
 				this.$logger.trace("Error caught while checking the NPM Registry for plugin with id: %s", packageName);

@@ -347,13 +347,13 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	}
 
 	public async getAllRunningEmulators(): Promise<string[]> {
-			let outputRaw: string[] = this.$childProcess.execFile(this.adbFilePath, ['devices']).wait().split(EOL);
-			let emulators = this.getRunningAvdEmulators(outputRaw).wait().concat(this.getRunningGenymotionEmulators(outputRaw).wait());
+			let outputRaw: string[] = (await  this.$childProcess.execFile(this.adbFilePath, ['devices'])).split(EOL);
+			let emulators = (await  this.getRunningAvdEmulators(outputRaw)).concat(this.getRunningGenymotionEmulators(outputRaw).wait());
 			return emulators;
 	}
 
 	private async getRunningEmulators(): Promise<string[]> {
-			let outputRaw: string[] = this.$childProcess.execFile(this.adbFilePath, ['devices']).wait().split(EOL);
+			let outputRaw: string[] = (await  this.$childProcess.execFile(this.adbFilePath, ['devices'])).split(EOL);
 			if (this.$options.geny) {
 				return this.getRunningGenymotionEmulators(outputRaw).wait();
 			} else {

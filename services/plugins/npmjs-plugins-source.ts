@@ -72,7 +72,7 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 			let url = `${NpmjsPluginsSource.NPMJS_ADDRESS}/search?q=${pluginName}&page=${page}`;
 
 			try {
-				let responseBody: string = this.$httpClient.httpRequest(url).wait().body;
+				let responseBody: string = (await  this.$httpClient.httpRequest(url)).body;
 
 				let document = parse5.parse(responseBody);
 				let html = _.find(document.childNodes, (node: parse5.ASTNode) => node.nodeName === "html");

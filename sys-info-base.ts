@@ -17,7 +17,7 @@ export class SysInfoBase implements ISysInfo {
 			if (!this.javaVerCache) {
 				try {
 					// different java has different format for `java -version` command
-					let output = this.$childProcess.spawnFromEvent("java", ["-version"], "exit").wait().stderr;
+					let output = (await  this.$childProcess.spawnFromEvent("java", ["-version"], "exit")).stderr;
 					this.javaVerCache = /(?:openjdk|java) version \"((?:\d+\.)+(?:\d+))/i.exec(output)[1];
 				} catch (e) {
 					this.javaVerCache = null;
