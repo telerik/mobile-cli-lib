@@ -225,7 +225,7 @@ export function trimSymbol(str: string, symbol: string) {
 }
 
 // TODO: Use generic for predicatе predicate: (element: T|T[]) when TypeScript support this.
-export function getFuturesResults<T>(futures: IFuture<T | T[]>[], predicate: (element: any) => boolean): T[] {
+export function getFuturesResults<T>(futures: Promise<T | T[]>[], predicate: (element: any) => boolean): T[] {
 	Future.wait(futures);
 	return _(futures)
 		.map(f => f.get())
@@ -286,11 +286,11 @@ export function hook(commandName: string) {
 	}
 
 	return decorateMethod(
-		(method: any, self: any, args: any[]) => {
+		async (method: any, self: any, args: any[]) => {
 			let hooksService = getHooksService(self);
 			await hooksService.executeBeforeHooks(commandName, prepareArguments(method, args, hooksService));
 		},
-		(method: any, self: any, resultPromise: any, args: any[]) => {
+		async (method: any, self: any, resultPromise: any, args: any[]) => {
 			let result = await  resultPromise;
 			let hooksService = getHooksService(self);
 			await hooksService.executeAfterHooks(commandName, prepareArguments(method, args, hooksService));
@@ -302,8 +302,8 @@ export function isFuture(candidateFuture: any): boolean {
 	return !!(candidateFuture && typeof (candidateFuture.wait) === "function");
 }
 
-export function whenAny<T>(...futures: IFuture<T>[]): IFuture<IFuture<T>> {
-	let resultFuture = new Future<IFuture<T>>();
+export function whenAny<T>(...futures: Promise<T>[]): Promise<Promise<T>> {
+	let resultFuture = new Future<Promise<T>>();
 	let futuresLeft = futures.length;
 
 	_.each(futures, future => {

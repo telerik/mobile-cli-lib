@@ -56,9 +56,8 @@ export class FileSystem implements IFileSystem {
 		return result;
 	}
 
-	public unzip(zipFile: string, destinationDir: string, options?: { overwriteExisitingFiles?: boolean; caseSensitive?: boolean },
-		fileFilters?: string[]): IFuture<void> {
-		return (() => {
+	public async unzip(zipFile: string, destinationDir: string, options?: { overwriteExisitingFiles?: boolean; caseSensitive?: boolean },
+		fileFilters?: string[]): Promise<void> {
 			let shouldOverwriteFiles = !(options && options.overwriteExisitingFiles === false);
 			let isCaseSensitive = !(options && options.caseSensitive === false);
 			let $hostInfo = this.$injector.resolve("$hostInfo");
@@ -88,7 +87,6 @@ export class FileSystem implements IFileSystem {
 
 			let $childProcess = this.$injector.resolve("childProcess");
 			await $childProcess.spawnFromEvent(proc, args, "close", { stdio: "ignore", detached: true });
-		}).future<void>()();
 	}
 
 	private findFileCaseInsensitive(file: string): string {

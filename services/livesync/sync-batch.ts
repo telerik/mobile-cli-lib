@@ -10,7 +10,7 @@ export class SyncBatch {
 
 	constructor(private $logger: ILogger,
 		private $projectFilesManager: IProjectFilesManager,
-		private done: () => IFuture<void>) { }
+		private done: () => Promise<void>) { }
 
 	private get filesToSync(): string[] {
 		let filteredFiles = _.remove(this.syncQueue, syncFile => this.$projectFilesManager.isFileExcluded(syncFile));
@@ -22,7 +22,7 @@ export class SyncBatch {
 		return this.syncQueue.length > 0;
 	}
 
-	public async syncFiles(syncAction: (filesToSync: string[]) => IFuture<void>): Promise<void> {
+	public async syncFiles(syncAction: (filesToSync: string[]) => Promise<void>): Promise<void> {
 			if (this.filesToSync.length > 0) {
 				await syncAction(this.filesToSync);
 				this.reset();

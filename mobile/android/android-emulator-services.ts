@@ -301,13 +301,14 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	}
 
 	private async getRunningGenymotionEmulators(adbDevicesOutput: string[]): Promise<string[]> {
-			let futures = <IFuture<string>[]>(_(adbDevicesOutput).filter(r => !r.match(AndroidEmulatorServices.RUNNING_ANDROID_EMULATOR_REGEX))
-				.map(row => {
+			let futures = <Promise<string>[]>(_(adbDevicesOutput).filter(r => !r.match(AndroidEmulatorServices.RUNNING_ANDROID_EMULATOR_REGEX))
+				.map(async fafarow => {
 					let match = row.match(/^(.+?)\s+device$/);
 					if (match && match[1]) {
 						// possible genymotion emulator
 						let emulatorId = match[1];
-						return Promise.resolve(await this.isGenymotionEmulator(emulatorId) ? emulatorId : undefined);
+						let result = await this.isGenymotionEmulator(emulatorId) ? emulatorId : undefined;
+						return Promise.resolve(result);
 					}
 
 					return Promise.resolve(undefined);

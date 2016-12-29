@@ -47,7 +47,7 @@ export class HtmlHelpService implements IHtmlHelpService {
 			this.$logger.trace("Finished generating HTML files.");
 	}
 
-	// This method should return IFuture in order to generate all html pages simultaneously.
+	// This method should return Promise in order to generate all html pages simultaneously.
 	private async createHtmlPage(basicHtmlPage: string, pathToMdFile: string): Promise<void> {
 			let mdFileName = path.basename(pathToMdFile);
 			let htmlFileName = mdFileName.replace(HtmlHelpService.MARKDOWN_FILE_EXTENSION, HtmlHelpService.HTML_FILE_EXTENSION);

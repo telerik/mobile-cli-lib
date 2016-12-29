@@ -15,7 +15,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	private _isInitialized = false;
 	private _data: Mobile.IDevicesServicesInitializationOptions;
 	private deviceDetectionInterval: any;
-	private deviceDetectionIntervalFuture: IFuture<void>;
+	private deviceDetectionIntervalFuture: Promise<void>;
 
 	private get $companionAppsService(): ICompanionAppsService {
 		return this.$injector.resolve("companionAppsService");
@@ -76,13 +76,13 @@ export class DevicesService implements Mobile.IDevicesService {
 	/* tslint:enable:no-unused-variable */
 
 	@exportedPromise("devicesService")
-	public async isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string, framework: string): Promise<IAppInstalledInfo>[] {
+	public isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string, framework: string): Promise<IAppInstalledInfo>[] {
 		this.$logger.trace(`Called isInstalledOnDevices for identifiers ${deviceIdentifiers}. AppIdentifier is ${appIdentifier}. Framework is: ${framework}.`);
 		return _.map(deviceIdentifiers, deviceIdentifier => this.isApplicationInstalledOnDevice(deviceIdentifier, appIdentifier, framework));
 	}
 
 	@exportedPromise("devicesService")
-	public async isCompanionAppInstalledOnDevices(deviceIdentifiers: string[], framework: string): Promise<IAppInstalledInfo>[] {
+	public isCompanionAppInstalledOnDevices(deviceIdentifiers: string[], framework: string): Promise<IAppInstalledInfo>[] {
 		this.$logger.trace(`Called isCompanionAppInstalledOnDevices for identifiers ${deviceIdentifiers}. Framework is ${framework}.`);
 		return _.map(deviceIdentifiers, deviceIdentifier => this.isCompanionAppInstalledOnDevice(deviceIdentifier, framework));
 	}
@@ -144,7 +144,7 @@ export class DevicesService implements Mobile.IDevicesService {
 			}
 	}
 
-	public startDeviceDetectionInterval(): void {
+	public async startDeviceDetectionInterval(): Promise<void> {
 		this.$processService.attachToProcessExitSignals(this, this.clearDeviceDetectionInterval);
 
 		if (this.deviceDetectionInterval) {
@@ -252,13 +252,13 @@ export class DevicesService implements Mobile.IDevicesService {
 			return device;
 	}
 
-	private async executeOnDevice(action: (dev: Mobile.IDevice) => IFuture<void>, canExecute?: (_dev: Mobile.IDevice) => boolean): Promise<void> {
+	private async executeOnDevice(action: (dev: Mobile.IDevice) => Promise<void>, canExecute?: (_dev: Mobile.IDevice) => boolean): Promise<void> {
 			if (!canExecute || canExecute(this._device)) {
 				await action(this._device);
 			}
 	}
 
-	private async executeOnAllConnectedDevices(action: (dev: Mobile.IDevice) => IFuture<void>, canExecute?: (_dev: Mobile.IDevice) => boolean): Promise<void> {
+	private async executeOnAllConnectedDevices(action: (dev: Mobile.IDevice) => Promise<void>, canExecute?: (_dev: Mobile.IDevice) => boolean): Promise<void> {
 			let devices = this.filterDevicesByPlatform();
 			let sortedDevices = _.sortBy(devices, device => device.deviceInfo.platform);
 
@@ -283,7 +283,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		return _.map(deviceIdentifiers, deviceIdentifier => this.deployOnDevice(deviceIdentifier, packageFile, packageName, framework));
 	}
 
-	public async execute(action: (device: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: { allowNoDevices?: boolean }): Promise<void> {
+	public async execute(action: (device: Mobile.IDevice) => Promise<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: { allowNoDevices?: boolean }): Promise<void> {
 			assert.ok(this._isInitialized, "Devices services not initialized!");
 			if (this.hasDevices) {
 				if (this.$hostInfo.isDarwin && this._platform && this.$mobileHelper.isiOSPlatform(this._platform) &&
@@ -310,10 +310,9 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	public async initialize(data?: Mobile.IDevicesServicesInitializationOptions): Promise<void> {
-		if (this._isInitialized) {
-			return Promise.resolve();
-		}
-		return (() => {
+			if (this._isInitialized) {
+				return;
+			}
 			data = data || {};
 			this._data = data;
 			let platform = data.platform;
@@ -368,7 +367,6 @@ export class DevicesService implements Mobile.IDevicesService {
 				this.$errors.failWithoutHelp("You can use iOS simulator only on OS X.");
 			}
 			this._isInitialized = true;
-		}).future<void>()();
 	}
 
 	public get hasDevices(): boolean {
@@ -394,7 +392,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	@exportedPromise("devicesService")
-	public async getDebuggableApps(deviceIdentifiers: string[]): Promise<Mobile.IDeviceApplicationInformation[]>[] {
+	public getDebuggableApps(deviceIdentifiers: string[]): Promise<Mobile.IDeviceApplicationInformation[]>[] {
 		return _.map(deviceIdentifiers, (deviceIdentifier: string) => this.getDebuggableAppsCore(deviceIdentifier));
 	}
 
@@ -477,7 +475,7 @@ export class DevicesService implements Mobile.IDevicesService {
 			}
 	}
 
-	private async executeCore(action: (device: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean): Promise<void> {
+	private async executeCore(action: (device: Mobile.IDevice) => Promise<void>, canExecute?: (dev: Mobile.IDevice) => boolean): Promise<void> {
 		if (this._device) {
 			return this.executeOnDevice(action, canExecute);
 		}

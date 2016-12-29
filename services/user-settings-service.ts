@@ -39,7 +39,7 @@ export class UserSettingsServiceBase implements IUserSettingsService {
 			this.$fs.writeJson(this.userSettingsFilePath, this.userSettingsData);
 	}
 
-	// TODO: Remove IFuture, reason: writeFile - blocked as other implementation of the interface has async operation.
+	// TODO: Remove Promise, reason: writeFile - blocked as other implementation of the interface has async operation.
 	public async loadUserSettingsFile(): Promise<void> {
 			if(!this.userSettingsData) {
 				if(!this.$fs.exists(this.userSettingsFilePath)) {

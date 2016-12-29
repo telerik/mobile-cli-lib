@@ -202,7 +202,7 @@ describe("ApplicationManagerBase", () => {
 				let remainingAppsForDebugging = _.difference(allAppsForDebug, currentlyAvailableAppsForDebugging);
 
 				let foundAppsForDebug: Mobile.IDeviceApplicationInformation[] = [],
-					futures: IFuture<void>[] = [];
+					futures: Promise<void>[] = [];
 
 				// This will raise debuggableAppFound 2 times.
 				await applicationManager.checkForApplicationUpdates();
@@ -428,7 +428,7 @@ describe("ApplicationManagerBase", () => {
 				currentlyInstalledApps = ["app1", "app2", "app3"];
 
 				let reportedInstalledApps: string[] = [],
-					future: IFuture<void>;
+					future: Promise<void>;
 
 				applicationManager.on("applicationInstalled", (app: string) => {
 					reportedInstalledApps.push(app);
@@ -488,7 +488,7 @@ describe("ApplicationManagerBase", () => {
 
 				let reportedUninstalledApps: string[] = [],
 					removedApps: string[] = [],
-					future: IFuture<void>;
+					future: Promise<void>;
 
 				// Initialize - all apps are marked as installed.
 				await applicationManager.checkForApplicationUpdates();
@@ -525,8 +525,8 @@ describe("ApplicationManagerBase", () => {
 					reportedInstalledApps: string[] = [],
 					installedApps: string[] = [],
 					removedApps: string[] = [],
-					appUninstalledFuture: IFuture<void>,
-					appInstalledFuture: IFuture<void>,
+					appUninstalledFuture: Promise<void>,
+					appInstalledFuture: Promise<void>,
 					waitForAppInstalledFuture = true;
 
 				// Initialize - all apps are marked as installed.

@@ -63,14 +63,14 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 								return;
 							}
 
-							let fileHash = await  that.$fs.exists(filePath) && that.$fs.getFsStats(filePath).isFile() ? that.$fs.getFileShasum(filePath) : "";
+							let fileHash = await that.$fs.exists(filePath) && that.$fs.getFsStats(filePath).isFile() ? that.$fs.getFileShasum(filePath) : "";
 							if (fileHash === that.fileHashes[filePath]) {
 								that.$logger.trace(`Skipping livesync for ${filePath} file with ${fileHash} hash.`);
 								return;
 							}
 
 							that.$logger.trace(`Adding ${filePath} file with ${fileHash} hash.`);
-							that.fileHashes[filePath] = fileHash;
+							that.fileHashes[filePath] = <string>fileHash;
 
 							for (let dataItem of data) {
 								if (that.isFileExcluded(filePath, dataItem.excludedProjectDirsAndFiles)) {
@@ -118,10 +118,10 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 									for (let platformName in this.batch) {
 										let batch = this.batch[platformName];
 										let livesyncData = this.livesyncData[platformName];
-										batch.syncFiles(((filesToSync: string[]) => {
+										batch.syncFiles(async (filesToSync: string[]) => {
 											await this.$liveSyncProvider.preparePlatformForSync(platformName);
 											this.syncCore([livesyncData], filesToSync);
-										await }).future<void>());
+										});
 									}
 								} catch (err) {
 									this.$logger.warn(`Unable to sync files. Error is:`, err.message);
@@ -146,14 +146,14 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 			await this.syncCore([data], filePathArray, deviceFilesAction);
 	}
 
-	public getSyncRemovedFilesAction(data: ILiveSyncData): (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void> {
+	public getSyncRemovedFilesAction(data: ILiveSyncData): (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => Promise<void> {
 		return (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => {
 			let platformLiveSyncService = this.resolveDeviceLiveSyncService(data.platform, device);
 			return platformLiveSyncService.removeFiles(deviceAppData.appIdentifier, localToDevicePaths);
 		};
 	}
 
-	public getSyncAction(data: ILiveSyncData, filesToSync: string[], deviceFilesAction: (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>, liveSyncOptions: ILiveSyncOptions): (device: Mobile.IDevice) => IFuture<void> {
+	public getSyncAction(data: ILiveSyncData, filesToSync: string[], deviceFilesAction: (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => Promise<void>, liveSyncOptions: ILiveSyncOptions): (device: Mobile.IDevice) => Promise<void> {
 		let appIdentifier = data.appIdentifier;
 		let platform = data.platform;
 		let projectFilesPath = data.projectFilesPath;
@@ -216,7 +216,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		return action;
 	}
 
-	private async syncCore(data: ILiveSyncData[], filesToSync: string[], deviceFilesAction?: (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>): Promise<void> {
+	private async syncCore(data: ILiveSyncData[], filesToSync: string[], deviceFilesAction?: (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => Promise<void>): Promise<void> {
 			for (let dataItem of data) {
 				let appIdentifier = dataItem.appIdentifier;
 				let platform = dataItem.platform;

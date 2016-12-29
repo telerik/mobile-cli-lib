@@ -1221,7 +1221,7 @@ export class GDBServer implements Mobile.IGDBServer {
 	public async kill(argv: string[]): Promise<void> {
 			await this.init(argv);
 
-			this.awaitResponse("\x03", "thread", () => await  this.sendx03Message());
+			this.awaitResponse("\x03", "thread", async () => await  this.sendx03Message());
 			await this.send("k");
 	}
 
@@ -1229,9 +1229,9 @@ export class GDBServer implements Mobile.IGDBServer {
 		this.socket.destroy();
 	}
 
-	private async awaitResponse(packet: string, expectedResponse?: string, getResponseAction?: () => IFuture<string>): Promise<void> {
+	private async awaitResponse(packet: string, expectedResponse?: string, getResponseAction?: () => Promise<string>): Promise<void> {
 			expectedResponse = expectedResponse || this.okResponse;
-			await let actualResponse = await  getResponseAction ? getResponseAction.apply(this, []) : this.send(packet);
+			let actualResponse = getResponseAction ? await getResponseAction.apply(this, []) : await this.send(packet);
 			if (actualResponse.indexOf(expectedResponse) === -1 || _.startsWith(actualResponse, "$E")) {
 				this.$logger.trace(`GDB: actual response: ${actualResponse}, expected response: ${expectedResponse}`);
 				this.$errors.failWithoutHelp(`Unable to send ${packet}.`);

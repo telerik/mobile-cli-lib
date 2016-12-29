@@ -73,7 +73,7 @@ export class CommandsService implements ICommandsService {
 		return this.executeCommandUnchecked("help", [this.beautifyCommandName(commandName)]);
 	}
 
-	private async executeCommandAction(commandName: string, commandArguments: string[], action: (_commandName: string, _commandArguments: string[]) => IFuture<boolean>): Promise<boolean> {
+	private async executeCommandAction(commandName: string, commandArguments: string[], action: (_commandName: string, _commandArguments: string[]) => Promise<boolean>): Promise<boolean> {
 		return this.$errors.beginCommand(
 			() => action.apply(this, [commandName, commandArguments]),
 			() => this.printHelp(commandName));
@@ -230,7 +230,7 @@ export class CommandsService implements ICommandsService {
 	public async completeCommand(): Promise<boolean> {
 			let tabtab = require("tabtab");
 
-			let completeCallback = (err: Error, data: any) => {
+			let completeCallback = async (err: Error, data: any) => {
 				if (err || !data) {
 					return;
 				}

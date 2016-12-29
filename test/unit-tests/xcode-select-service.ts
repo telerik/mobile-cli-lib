@@ -9,7 +9,7 @@ let executionStopped = false;
 function createTestInjector(config: { xcodeSelectStdout: string, isDarwin: boolean, xcodeVersionOutput?: string }): IInjector {
 	let testInjector = new Yok();
 	testInjector.register("childProcess", {
-		spawnFromEvent: (command: string, args: string[], event: string): IFuture<any> => Promise.resolve({
+		spawnFromEvent: (command: string, args: string[], event: string): Promise<any> => Promise.resolve({
 			stdout: config.xcodeSelectStdout
 		})
 	});

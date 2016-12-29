@@ -112,7 +112,7 @@ export class Logger implements ILogger {
 		}
 	}
 
-	public printMsgWithTimeout(message: string, timeout: number): IFuture <void> {
+	public printMsgWithTimeout(message: string, timeout: number): Promise <void> {
 		let printMsgFuture = new Future<void>();
 		setTimeout(() => {
 			this.printInfoMessageOnSameLine(message);

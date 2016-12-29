@@ -25,9 +25,9 @@ export function exportedPromise(moduleName: string, postAction?: () => void): an
 				.value(),
 				postActionMethod = postAction && postAction.bind(originalModule);
 
-			// Check if method returns IFuture<T>[]. In this case we will return Promise<T>[]
+			// Check if method returns Promise<T>[]. In this case we will return Promise<T>[]
 			if (_.isArray(result) && types.length === 1 && isFuture(_.first<any>(result))) {
-				return _.async map(result, (future: Promise<any>, index: number) => getPromise(future,
+				return _.map(result, (future: Promise<any>, index: number) => getPromise(future,
 					{
 						postActionMethod,
 						shouldExecutePostAction: (index + 1) === result.length
@@ -82,7 +82,7 @@ export function exported(moduleName: string): any {
 				originalMethod: any = originalModule[propertyKey],
 				result = originalMethod.apply(originalModule, args);
 
-			assert.strictEqual(isFuture(result), false, "Cannot use exported decorator with function returning IFuture<T>.");
+			assert.strictEqual(isFuture(result), false, "Cannot use exported decorator with function returning Promise<T>.");
 			return result;
 		};
 

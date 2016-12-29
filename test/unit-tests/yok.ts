@@ -634,7 +634,7 @@ describe("yok", () => {
 		assert.deepEqual(resultFooObject, dataObject);
 	});
 
-	it("automatically calls initialize method of a class when initialize returns IFuture", () => {
+	it("automatically calls initialize method of a class when initialize returns Promise", () => {
 		let injector = new Yok();
 		// Call to requirePublicClass will add the class to publicApi object.
 		injector.requirePublicClass("classWithInitMethod", "./test/unit-tests/mocks/mockClassesWithInitializeMethod");
@@ -644,7 +644,7 @@ describe("yok", () => {
 		assert.isTrue(resultClassWithInitMethod.isInitializedCalled, "isInitalizedCalled is not set to true, so method had not been called");
 	});
 
-	it("automatically calls initialize method of a class when initialize does NOT return IFuture", () => {
+	it("automatically calls initialize method of a class when initialize does NOT return Promise", () => {
 		let injector = new Yok();
 		// Call to requirePublicClass will add the class to publicApi object.
 		injector.requirePublicClass("classWithInitMethod", "./test/unit-tests/mocks/mockClassesWithInitializeMethod");

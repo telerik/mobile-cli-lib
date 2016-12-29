@@ -71,19 +71,19 @@ class FutureDispatcher implements IFutureDispatcher {
 
 	public constructor(private $errors: IErrors) { }
 
-	public run(): void {
+	public async run(): Promise<void> {
 		if (this.actions) {
 			this.$errors.fail("You cannot run a running future dispatcher.");
 		}
 		this.actions = new queue.Queue<any>();
 
 		while(true) {
-			let action = await  this.actions.dequeue();
+			let action = await this.actions.dequeue();
 			await action();
 		}
 	}
 
-	public dispatch(action: () => IFuture<void>) {
+	public dispatch(action: () => Promise<void>) {
 		this.actions.enqueue(action);
 	}
 }

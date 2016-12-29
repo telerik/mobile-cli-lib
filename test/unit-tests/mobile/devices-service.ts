@@ -94,7 +94,7 @@ function createTestInjector(): IInjector {
 	testInjector.register("messages", Messages);
 	testInjector.register("companionAppsService", {});
 	testInjector.register("processService", {
-		attachToProcessExitSignals: (context: any, callback: () => IFuture<any>) => { /* no implementation required */ }
+		attachToProcessExitSignals: (context: any, callback: () => Promise<any>) => { /* no implementation required */ }
 	});
 	testInjector.register("mobileHelper", {
 		platformNames: ["ios", "android"],
@@ -118,7 +118,7 @@ function createTestInjector(): IInjector {
 	return testInjector;
 }
 
-function async mockIsAppInstalled(devices: { applicationManager: { isApplicationInstalled(packageName: string): Promise<boolean> } }[], expectedResult: boolean[]): void {
+function mockIsAppInstalled(devices: { applicationManager: { isApplicationInstalled(packageName: string): Promise<boolean> } }[], expectedResult: boolean[]): void {
 	_.each(devices, (device, index) => device.applicationManager.isApplicationInstalled = (packageName: string) => Promise.resolve(expectedResult[index]));
 }
 
@@ -166,9 +166,9 @@ describe("devicesService", () => {
 				reinstallApplication: (packageName: string, packageFile: string) => Promise.resolve(),
 				isApplicationInstalled: (packageName: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], packageName)),
 				isLiveSyncSupported: (appIdentifier: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], appIdentifier)),
-				checkForApplicationUpdates: (): IFuture<void> => Promise.resolve(),
-				getDebuggableApps: (): IFuture<Mobile.IDeviceApplicationInformation[]> => Promise.resolve(null),
-				getDebuggableAppViews: (appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>> => Promise.resolve(null)
+				checkForApplicationUpdates: (): Promise<void> => Promise.resolve(),
+				getDebuggableApps: (): Promise<Mobile.IDeviceApplicationInformation[]> => Promise.resolve(null),
+				getDebuggableAppViews: (appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> => Promise.resolve(null)
 			},
 			deploy: (packageFile: string, packageName: string) => Promise.resolve()
 		},
@@ -185,9 +185,9 @@ describe("devicesService", () => {
 				reinstallApplication: (packageName: string, packageFile: string) => Promise.resolve(),
 				isApplicationInstalled: (packageName: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], packageName)),
 				isLiveSyncSupported: (appIdentifier: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], appIdentifier)),
-				checkForApplicationUpdates: (): IFuture<void> => Promise.resolve(),
-				getDebuggableApps: (): IFuture<Mobile.IDeviceApplicationInformation[]> => Promise.resolve(null),
-				getDebuggableAppViews: (appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>> => Promise.resolve(null)
+				checkForApplicationUpdates: (): Promise<void> => Promise.resolve(),
+				getDebuggableApps: (): Promise<Mobile.IDeviceApplicationInformation[]> => Promise.resolve(null),
+				getDebuggableAppViews: (appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> => Promise.resolve(null)
 			},
 			deploy: (packageFile: string, packageName: string) => Promise.resolve()
 		},
@@ -388,13 +388,13 @@ describe("devicesService", () => {
 			});
 
 			it("does not fail when iOSDeviceDiscovery startLookingForDevices fails", () => {
-				(<any>iOSDeviceDiscovery).startLookingForDevices = (): IFuture<void> => { throw new Error("my error"); };
+				(<any>iOSDeviceDiscovery).startLookingForDevices = (): Promise<void> => { throw new Error("my error"); };
 				assertAllMethodsResults("1");
 				assert.isTrue(logger.traceOutput.indexOf("my error") !== -1);
 			});
 
 			it("does not fail when androidDeviceDiscovery startLookingForDevices fails", () => {
-				(<any>androidDeviceDiscovery).startLookingForDevices = (): IFuture<void> => { throw new Error("my error"); };
+				(<any>androidDeviceDiscovery).startLookingForDevices = (): Promise<void> => { throw new Error("my error"); };
 				iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
 				await devicesService.initialize({ platform: "ios", deviceId: iOSDevice.deviceInfo.identifier });
 				assert.isTrue(logger.traceOutput.indexOf("my error") !== -1);
@@ -403,7 +403,7 @@ describe("devicesService", () => {
 			it("does not fail when iosSimulatorDiscovery startLookingForDevices fails", () => {
 				let hostInfo = testInjector.resolve("hostInfo");
 				hostInfo.isDarwin = true;
-				(<any>iOSSimulatorDiscovery).startLookingForDevices = (): IFuture<void> => { throw new Error("my error"); };
+				(<any>iOSSimulatorDiscovery).startLookingForDevices = (): Promise<void> => { throw new Error("my error"); };
 				iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
 				await devicesService.initialize({ platform: "ios", deviceId: iOSDevice.deviceInfo.identifier });
 				assert.isTrue(logger.traceOutput.indexOf("my error") !== -1);
@@ -480,13 +480,13 @@ describe("devicesService", () => {
 			});
 
 			it("does not fail when iOSDeviceDiscovery startLookingForDevices fails", () => {
-				(<any>iOSDeviceDiscovery).startLookingForDevices = (): IFuture<void> => { throw new Error("my error"); };
+				(<any>iOSDeviceDiscovery).startLookingForDevices = (): Promise<void> => { throw new Error("my error"); };
 				assertAllMethodsResults("1");
 				assert.isTrue(logger.traceOutput.indexOf("my error") !== -1);
 			});
 
 			it("does not fail when androidDeviceDiscovery startLookingForDevices fails", () => {
-				(<any>androidDeviceDiscovery).startLookingForDevices = (): IFuture<void> => { throw new Error("my error"); };
+				(<any>androidDeviceDiscovery).startLookingForDevices = (): Promise<void> => { throw new Error("my error"); };
 				iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
 				await devicesService.initialize({ deviceId: iOSDevice.deviceInfo.identifier });
 				assert.isTrue(logger.traceOutput.indexOf("my error") !== -1);
@@ -802,7 +802,7 @@ describe("devicesService", () => {
 
 		it("does not call startApplication when canStartApplication returns false", () => {
 			iOSDevice.applicationManager.canStartApplication = () => false;
-			iOSDevice.applicationManager.startApplication = (): IFuture<void> => {
+			iOSDevice.applicationManager.startApplication = (): Promise<void> => {
 				throw new Error("Start application must not be called for iOSDevice when canStartApplication returns false.");
 			};
 			let results = devicesService.deployOnDevices([androidDevice.deviceInfo.identifier, iOSDevice.deviceInfo.identifier], "path", "packageName", "cordova");
@@ -993,7 +993,7 @@ describe("devicesService", () => {
 			mockIsAppInstalled([iOSDevice, androidDevice], expectedResult);
 
 			let result = _.map(devicesService.isCompanionAppInstalledOnDevices(deviceIdentifiers, constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova),
-				(future: IFuture<IAppInstalledInfo>) => (await  future).isInstalled);
+				(future: Promise<IAppInstalledInfo>) => (await  future).isInstalled);
 
 			assert.deepEqual(result.length, deviceIdentifiers.length);
 		});
@@ -1003,7 +1003,7 @@ describe("devicesService", () => {
 			mockIsAppInstalled([iOSDevice, androidDevice], expectedResult);
 
 			let result = _.map(devicesService.isCompanionAppInstalledOnDevices(deviceIdentifiers,
-				constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova), (future: IFuture<IAppInstalledInfo>) => (await  future).isInstalled);
+				constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova), (future: Promise<IAppInstalledInfo>) => (await  future).isInstalled);
 
 			assert.deepEqual(result, expectedResult);
 		});
@@ -1013,7 +1013,7 @@ describe("devicesService", () => {
 			mockIsAppInstalled([iOSDevice, androidDevice], expectedResult);
 
 			let result = _.map(devicesService.isCompanionAppInstalledOnDevices(deviceIdentifiers,
-				constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova), (future: IFuture<IAppInstalledInfo>) => (await  future).isInstalled);
+				constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova), (future: Promise<IAppInstalledInfo>) => (await  future).isInstalled);
 
 			assert.deepEqual(result, expectedResult);
 		});
@@ -1023,7 +1023,7 @@ describe("devicesService", () => {
 			mockIsAppInstalled([iOSDevice, androidDevice], expectedResult);
 
 			let result = _.map(devicesService.isCompanionAppInstalledOnDevices(deviceIdentifiers,
-				constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova), (future: IFuture<IAppInstalledInfo>) => (await  future).isInstalled);
+				constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova), (future: Promise<IAppInstalledInfo>) => (await  future).isInstalled);
 
 			assert.deepEqual(result, expectedResult);
 		});

@@ -124,7 +124,7 @@ function createTestInjector(testScenario: ITestScenario): IInjector {
 	testInjector.register("osInfo", OsInfo);
 	testInjector.register("userSettingsService", new UserSettingsServiceStub(testScenario.featureTracking, testScenario.exceptionsTracking, testInjector));
 	testInjector.register("progressIndicator", {
-		showProgressIndicator: (future: IFuture<any>, timeout: number, options?: { surpressTrailingNewLine?: boolean }) => {
+		showProgressIndicator: (future: Promise<any>, timeout: number, options?: { surpressTrailingNewLine?: boolean }) => {
 			return future;
 		}
 	});

@@ -13,12 +13,11 @@ export class ListDevicesCommand implements ICommand {
 			await this.$devicesService.initialize({platform: args[0], deviceId: null, skipInferPlatform: true});
 
 			let table: any = createTable(["#", "Device Name", "Platform", "Device Identifier", "Type", "Status"], []);
-			let action: (_device: Mobile.IDevice) => IFuture<void>;
+			let action: (_device: Mobile.IDevice) => Promise<void>;
 			if (this.$options.json) {
 				this.$logger.setLevel("ERROR");
-				action = (device) => {
-					return (() => {
-						this.$logger.out(JSON.stringify(device.deviceInfo));
+				action = async (device) => {
+					this.$logger.out(JSON.stringify(device.deviceInfo));
 				};
 			} else {
 				action = (device) => {
@@ -35,7 +34,6 @@ export class ListDevicesCommand implements ICommand {
 			if (!this.$options.json && table.length) {
 				this.$logger.out(table.toString());
 			}
-		}).future<void>()();
 	}
 }
 $injector.registerCommand("device|*list", ListDevicesCommand);
