@@ -103,15 +103,13 @@ function createTestInjector(): IInjector {
 	return testInjector;
 }
 
-function createFiles(testInjector: IInjector, filesToCreate: string[]): IFuture<string> {
-	return (() => {
+async function createFiles(testInjector: IInjector, filesToCreate: string[]): Promise<string> {
 		let fs = testInjector.resolve("fs");
 		let directoryPath = temp.mkdirSync("Project Files Manager Tests");
 
 		_.each(filesToCreate, file => fs.writeFile(path.join(directoryPath, file), ""));
 
 		return directoryPath;
-	}).future<string>()();
 }
 
 describe("Project Files Manager Tests", () => {

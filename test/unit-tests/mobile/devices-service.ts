@@ -122,10 +122,8 @@ function mockIsAppInstalled(devices: { applicationManager: { isApplicationInstal
 	_.each(devices, (device, index) => device.applicationManager.isApplicationInstalled = (packageName: string) => Future.fromResult(expectedResult[index]));
 }
 
-function throwErrorFuture(): IFuture<void> {
-	return (() => {
+async function throwErrorFuture(): Promise<void> {
 		throw new Error("error");
-	}).future<void>()();
 }
 
 let intervalId = 1;
