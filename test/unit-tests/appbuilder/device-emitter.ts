@@ -91,7 +91,7 @@ describe("deviceEmitter", () => {
 			iOSDevice: any,
 			iOSSimulator: any;
 
-		beforeEach(() => {
+		beforeEach(async () => {
 			await deviceEmitter.initialize();
 			androidDeviceDiscovery = testInjector.resolve("androidDeviceDiscovery");
 			iOSDeviceDiscovery = testInjector.resolve("iOSDeviceDiscovery");

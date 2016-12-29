@@ -1,7 +1,7 @@
 export class ProgressIndicator implements IProgressIndicator {
 	constructor(private $logger: ILogger) { }
 
-	public async async showProgressIndicator(future: Promise<any>, timeout: number, options?: { surpressTrailingNewLine?: boolean }): Promise<void> {
+	public async showProgressIndicator(future: Promise<any>, timeout: number, options?: { surpressTrailingNewLine?: boolean }): Promise<void> {
 			let surpressTrailingNewLine = options && options.surpressTrailingNewLine;
 			try {
 				while(!future.isResolved()) {

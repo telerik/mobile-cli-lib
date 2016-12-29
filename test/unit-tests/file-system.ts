@@ -102,25 +102,25 @@ describe("FileSystem", () => {
 				file = path.join(tempDir, unzippedFileName);
 				fs.writeFile(file, msg);
 			});
-			it("does not overwrite files when overwriteExisitingFiles is false", () => {
+			it("does not overwrite files when overwriteExisitingFiles is false", async () => {
 				await fs.unzip(sampleZipFileTest, tempDir, { overwriteExisitingFiles: false }, [unzippedFileName]);
 				let data = fs.readFile(file);
 				assert.strictEqual(msg, data.toString(), "When overwriteExistingFiles is false, we should not ovewrite files.");
 			});
 
-			it("overwrites files when overwriteExisitingFiles is true", () => {
+			it("overwrites files when overwriteExisitingFiles is true", async () => {
 				await fs.unzip(sampleZipFileTest, tempDir, { overwriteExisitingFiles: true }, [unzippedFileName]);
 				let data = fs.readFile(file);
 				assert.notEqual(msg, data.toString(), "We must overwrite files when overwriteExisitingFiles is true.");
 			});
 
-			it("overwrites files when overwriteExisitingFiles is not set", () => {
+			it("overwrites files when overwriteExisitingFiles is not set", async () => {
 				await fs.unzip(sampleZipFileTest, tempDir, {}, [unzippedFileName]);
 				let data = fs.readFile(file);
 				assert.notEqual(msg, data.toString(), "We must overwrite files when overwriteExisitingFiles is not set.");
 			});
 
-			it("overwrites files when options is not set", () => {
+			it("overwrites files when options is not set", async () => {
 				await fs.unzip(sampleZipFileTest, tempDir, undefined, [unzippedFileName]);
 				let data = fs.readFile(file);
 				assert.notEqual(msg, data.toString(), "We must overwrite files when options is not defined.");
@@ -134,7 +134,7 @@ describe("FileSystem", () => {
 				let tempDir = temp.mkdirSync("projectToUnzip");
 				let fs: IFileSystem = testInjector.resolve("fs");
 				if (isOsCaseSensitive(testInjector)) {
-					assert.throws(() => await  fs.unzip(sampleZipFileTestIncorrectName, tempDir, undefined, [unzippedFileName]));
+					assert.throws(async () => await  fs.unzip(sampleZipFileTestIncorrectName, tempDir, undefined, [unzippedFileName]));
 				}
 			});
 
@@ -143,7 +143,7 @@ describe("FileSystem", () => {
 				let tempDir = temp.mkdirSync("projectToUnzip");
 				let fs: IFileSystem = testInjector.resolve("fs");
 				if (isOsCaseSensitive(testInjector)) {
-					assert.throws(() => await  fs.unzip(sampleZipFileTestIncorrectName, tempDir, {}, [unzippedFileName]));
+					assert.throws(async () => await  fs.unzip(sampleZipFileTestIncorrectName, tempDir, {}, [unzippedFileName]));
 				}
 			});
 
@@ -152,7 +152,7 @@ describe("FileSystem", () => {
 				let tempDir = temp.mkdirSync("projectToUnzip");
 				let fs: IFileSystem = testInjector.resolve("fs");
 				if (isOsCaseSensitive(testInjector)) {
-					assert.throws(() => await  fs.unzip(sampleZipFileTestIncorrectName, tempDir, { caseSensitive: true }, [unzippedFileName]));
+					assert.throws(async () => await  fs.unzip(sampleZipFileTestIncorrectName, tempDir, { caseSensitive: true }, [unzippedFileName]));
 				}
 			});
 

@@ -133,7 +133,7 @@ export class Yok implements IInjector {
 				let result = classInstance.initialize.apply(classInstance);
 				if (isFuture(result)) {
 					let fiberBootstrap = require("./fiber-bootstrap");
-					fiberBootstrap.run(() => {
+					fiberBootstrap.run(async () => {
 						await result;
 					});
 				}

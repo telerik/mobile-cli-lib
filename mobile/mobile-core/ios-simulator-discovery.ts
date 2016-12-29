@@ -16,7 +16,7 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 		return this.checkForDevices(new Future<void>());
 	}
 
-	public async async checkForDevices(future?: Promise<void>): Promise<void> {
+	public async checkForDevices(future?: Promise<void>): Promise<void> {
 		if (this.$hostInfo.isDarwin) {
 			let currentSimulator:any = null;
 			if (await this.isSimulatorRunning()) {

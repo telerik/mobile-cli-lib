@@ -37,7 +37,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 			await this.checkForDevices(blockingFuture);
 	}
 
-	public async async checkForDevices(future?: Promise<void>): Promise<void> {
+	public async checkForDevices(future?: Promise<void>): Promise<void> {
 		let adbData = "";
 
 		let result = await  this.$adb.executeCommand(["devices"], { returnChildProcess: true });
@@ -63,7 +63,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 		});
 
 		result.on("close", (exitCode: any) => {
-			fiberBootstrap.run(() => {
+			fiberBootstrap.run(async () => {
 				await this.checkCurrentData(adbData);
 				if (future && !future.isResolved()) {
 					future.return();

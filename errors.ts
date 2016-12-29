@@ -93,7 +93,7 @@ function tryTrackException(error: Error, injector: IInjector): void {
 	if(!disableAnalytics) {
 		try {
 			let analyticsService = injector.resolve("analyticsService");
-			fiberBootstrap.run(() => {
+			fiberBootstrap.run(async () => {
 				await analyticsService.trackException(error, error.message);
 			});
 		} catch (e) {
