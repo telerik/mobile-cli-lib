@@ -31,12 +31,10 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 		this.removeDevice(deviceIdentifier);
 	}
 
-	public startLookingForDevices(): IFuture<void> {
-		return (() => {
+	public async startLookingForDevices(): Promise<void> {
 			this.ensureAdbServerStarted().wait();
 			let blockingFuture = new Future<void>();
 			this.checkForDevices(blockingFuture).wait();
-		}).future<void>()();
 	}
 
 	public checkForDevices(future?: IFuture<void>): IFuture<void> {
@@ -76,8 +74,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 		return future || Future.fromResult();
 	}
 
-	private checkCurrentData(result: any): IFuture<void> {
-		return (() => {
+	private async checkCurrentData(result: any): Promise<void> {
 			let currentDevices: IAdbAndroidDeviceInfo[] = result.toString().split(EOL).slice(1)
 				.filter((element: string) => !helpers.isNullOrWhitespace(element))
 				.map((element: string) => {
@@ -98,11 +95,9 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 			_(currentDevices)
 				.reject(d => _.find(this._devices, device => device.identifier === d.identifier && device.status === d.status))
 				.each(d => this.createAndAddDevice(d));
-		}).future<void>()();
 	}
 
-	public ensureAdbServerStarted(): IFuture<any> {
-		return ((): any => {
+	public async ensureAdbServerStarted(): Promise<any> {
 			if (!this.isStarted) {
 				this.isStarted = true;
 
@@ -113,7 +108,6 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 					throw err;
 				}
 			}
-		}).future<any>()();
 	}
 }
 $injector.register("androidDeviceDiscovery", AndroidDeviceDiscovery);

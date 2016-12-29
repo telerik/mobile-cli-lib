@@ -13,8 +13,7 @@ export class SysInfoBase implements ISysInfo {
 	private monoVerRegExp = /version (\d+[.]\d+[.]\d+) /gm;
 	private sysInfoCache: ISysInfoData = undefined;
 	private javaVerCache: string = null;
-	public getJavaVersion(): IFuture<string> {
-		return ((): string => {
+	public async getJavaVersion(): Promise<string> {
 			if (!this.javaVerCache) {
 				try {
 					// different java has different format for `java -version` command
@@ -25,7 +24,6 @@ export class SysInfoBase implements ISysInfo {
 				}
 			}
 			return this.javaVerCache;
-		}).future<string>()();
 	}
 
 	private npmVerCache: string = null;
@@ -39,8 +37,7 @@ export class SysInfoBase implements ISysInfo {
 	}
 
 	private javaCompilerVerCache: string = null;
-	public getJavaCompilerVersion(): IFuture<string> {
-		return ((): string => {
+	public async getJavaCompilerVersion(): Promise<string> {
 			if (!this.javaCompilerVerCache) {
 				try {
 					let javaCompileExecutableName = "javac";
@@ -55,12 +52,10 @@ export class SysInfoBase implements ISysInfo {
 				}
 			}
 			return this.javaCompilerVerCache;
-		}).future<string>()();
 	}
 
 	private xCodeVerCache: string = null;
-	public getXCodeVersion(): IFuture<string> {
-		return ((): string => {
+	public async getXCodeVersion(): Promise<string> {
 			if (!this.xCodeVerCache) {
 				try {
 					this.xCodeVerCache = this.$hostInfo.isDarwin ? this.exec("xcodebuild -version") : null;
@@ -69,12 +64,10 @@ export class SysInfoBase implements ISysInfo {
 				}
 			}
 			return this.xCodeVerCache;
-		}).future<string>()();
 	}
 
 	private nodeGypVerCache: string = null;
-	public getNodeGypVersion(): IFuture<string> {
-		return ((): string => {
+	public async getNodeGypVersion(): Promise<string> {
 				if (!this.nodeGypVerCache) {
 					try {
 						this.nodeGypVerCache = this.exec("node-gyp -v");
@@ -83,12 +76,10 @@ export class SysInfoBase implements ISysInfo {
 					}
 				}
 				return this.nodeGypVerCache;
-		}).future<string>()();
 	}
 
 	private xcodeprojGemLocationCache: string = null;
-	public getXCodeProjGemLocation(): IFuture<string> {
-		return ((): string => {
+	public async getXCodeProjGemLocation(): Promise<string> {
 			if (!this.xcodeprojGemLocationCache) {
 				try {
 					this.xcodeprojGemLocationCache = this.$hostInfo.isDarwin ? this.exec("gem which xcodeproj") : null;
@@ -97,7 +88,6 @@ export class SysInfoBase implements ISysInfo {
 				}
 			}
 			return this.xcodeprojGemLocationCache;
-		}).future<string>()();
 	}
 
 	private itunesInstalledCache: boolean = null;
@@ -114,8 +104,7 @@ export class SysInfoBase implements ISysInfo {
 	}
 
 	private cocoapodVersionCache: string = null;
-	public getCocoapodVersion(): IFuture<string> {
-		return ((): string => {
+	public async getCocoapodVersion(): Promise<string> {
 			if (!this.cocoapodVersionCache) {
 				try {
 					if (this.$hostInfo.isDarwin) {
@@ -135,11 +124,9 @@ export class SysInfoBase implements ISysInfo {
 			}
 
 			return this.cocoapodVersionCache;
-		}).future<string>()();
 	}
 
-	public getSysInfo(pathToPackageJson: string, androidToolsInfo?: {pathToAdb: string, pathToAndroid: string}): IFuture<ISysInfoData> {
-		return((): ISysInfoData => {
+	public async getSysInfo(pathToPackageJson: string, androidToolsInfo?: {pathToAdb: string, pathToAndroid: string}): Promise<ISysInfoData> {
 			if (!this.sysInfoCache) {
 				let res: ISysInfoData = Object.create(null);
 				let procOutput: string;
@@ -203,7 +190,6 @@ export class SysInfoBase implements ISysInfo {
 			}
 
 			return this.sysInfoCache;
-		}).future<ISysInfoData>()();
 	}
 
 	private exec(cmd: string, execOptions?: IExecOptions): string | any {
@@ -219,8 +205,7 @@ export class SysInfoBase implements ISysInfo {
 	}
 
 	// `android -h` returns exit code 1 on successful invocation (Mac OS X for now, possibly Linux). Therefore, we cannot use $childProcess
-	private checkAndroid(pathToAndroid: string): IFuture<boolean> {
-		return ((): boolean => {
+	private async checkAndroid(pathToAndroid: string): Promise<boolean> {
 			let result = false;
 			try {
 				if(pathToAndroid) {
@@ -232,7 +217,6 @@ export class SysInfoBase implements ISysInfo {
 			}
 
 			return result;
-		}).future<boolean>()();
 	}
 
 	private winVer(): string {
@@ -247,10 +231,8 @@ export class SysInfoBase implements ISysInfo {
 		return null;
 	}
 
-	private readRegistryValue(valueName: string): IFuture<string> {
-		return ((): string => {
+	private async readRegistryValue(valueName: string): Promise<string> {
 			return this.$winreg.getRegistryValue(valueName, this.$winreg.registryKeys.HKLM, '\\Software\\Microsoft\\Windows NT\\CurrentVersion').wait().value;
-		}).future<string>()();
 	}
 
 	private unixVer(): string {

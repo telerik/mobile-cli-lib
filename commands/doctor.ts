@@ -13,8 +13,7 @@ export class DoctorCommand implements ICommand {
 
 	public allowedParameters: ICommandParameter[] = [];
 
-	public execute(args: string[]): IFuture<void> {
-		return (() => {
+	public async execute(args: string[]): Promise<void> {
 			let warningsPrinted = this.$doctorService.printWarnings().wait();
 			if (warningsPrinted) {
 				let client = this.$staticConfig.CLIENT_NAME_ALIAS || this.$staticConfig.CLIENT_NAME;
@@ -23,7 +22,6 @@ export class DoctorCommand implements ICommand {
 			} else {
 				this.$logger.out("No issues were detected.".bold);
 			}
-		}).future<void>()();
 	}
 }
 

@@ -44,12 +44,10 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 		return future.fromResult("Not implemented.");
 	}
 
-	public runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): IFuture<void> {
-		return (() => {
+	public async runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): Promise<void> {
 			this.$logger.info("Starting Windows Phone Emulator");
 			let emulatorStarter = this.getPathToEmulatorStarter();
 			this.$childProcess.spawn(emulatorStarter, ["/installlaunch", app, "/targetdevice:xd"], { stdio: "ignore", detached: true }).unref();
-		}).future<void>()();
 	}
 
 	private getPathToEmulatorStarter(): string {

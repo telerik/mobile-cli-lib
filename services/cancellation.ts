@@ -13,8 +13,7 @@ class CancellationService implements ICancellationService {
 		this.$fs.chmod(CancellationService.killSwitchDir, "0777");
 	}
 
-	public begin(name: string): IFuture<void> {
-		return (() => {
+	public async begin(name: string): Promise<void> {
 			let triggerFile = CancellationService.makeKillSwitchFileName(name);
 			if (!this.$fs.exists(triggerFile)) {
 				this.$fs.writeFile(triggerFile, "");
@@ -42,7 +41,6 @@ class CancellationService implements ICancellationService {
 			if (watcher) {
 				this.watches[name] = watcher;
 			}
-		}).future<void>()();
 	}
 
 	public end(name: string): void {

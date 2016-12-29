@@ -194,8 +194,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		}
 	}
 
-	private findDeveloperDiskImageDirectoryPath(): IFuture<string> {
-		return (() => {
+	private async findDeveloperDiskImageDirectoryPath(): Promise<string> {
 			let developerDirectory = this.$xcodeSelectService.getDeveloperDirectoryPath().wait();
 			let buildVersion = this.getDeviceValue("BuildVersion");
 			let productVersion = this.getDeviceValue("ProductVersion");
@@ -246,11 +245,9 @@ export class IOSDevice implements Mobile.IiOSDevice {
 			}
 
 			return supportPath.path;
-		}).future<string>()();
 	}
 
-	public mountImage(): IFuture<void> {
-		return (() => {
+	public async mountImage(): Promise<void> {
 			let imagePath = this.$options.ddi;
 
 			if(this.$hostInfo.isWindows) {
@@ -323,7 +320,6 @@ export class IOSDevice implements Mobile.IiOSDevice {
 
 				this.tryExecuteFunction<void>(func);
 			}
-		}).future<void>()();
 	}
 
 	private getInterfaceType(): number {

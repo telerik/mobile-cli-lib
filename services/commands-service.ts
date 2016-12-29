@@ -33,8 +33,7 @@ export class CommandsService implements ICommandsService {
 		return _.reject(commands, (command) => _.includes(command, '|'));
 	}
 
-	public executeCommandUnchecked(commandName: string, commandArguments: string[]): IFuture<boolean> {
-		return (() => {
+	public async executeCommandUnchecked(commandName: string, commandArguments: string[]): Promise<boolean> {
 			let command = this.$injector.resolveCommand(commandName);
 			if (command) {
 				if (!this.$staticConfig.disableAnalytics && !command.disableAnalytics) {
@@ -67,7 +66,6 @@ export class CommandsService implements ICommandsService {
 				return true;
 			}
 			return false;
-		}).future<boolean>()();
 	}
 
 	private printHelp(commandName: string): IFuture<boolean> {
@@ -92,8 +90,7 @@ export class CommandsService implements ICommandsService {
 		return this.canExecuteCommand(commandName, commandArguments);
 	}
 
-	public tryExecuteCommand(commandName: string, commandArguments: string[]): IFuture<void> {
-		return (() => {
+	public async tryExecuteCommand(commandName: string, commandArguments: string[]): Promise<void> {
 			if (this.executeCommandAction(commandName, commandArguments, this.tryExecuteCommandAction).wait()) {
 				this.executeCommandAction(commandName, commandArguments, this.executeCommandUnchecked).wait();
 			} else {
@@ -104,11 +101,9 @@ export class CommandsService implements ICommandsService {
 					this.printHelp(commandName).wait();
 				}
 			}
-		}).future<void>()();
 	}
 
-	private canExecuteCommand(commandName: string, commandArguments: string[], isDynamicCommand?: boolean): IFuture<boolean> {
-		return (() => {
+	private async canExecuteCommand(commandName: string, commandArguments: string[], isDynamicCommand?: boolean): Promise<boolean> {
 
 			let command = this.$injector.resolveCommand(commandName);
 			let beautifiedName = helpers.stringReplaceAll(commandName, "|", " ");
@@ -145,11 +140,9 @@ export class CommandsService implements ICommandsService {
 			this.tryMatchCommand(commandName);
 
 			return false;
-		}).future<boolean>()();
 	}
 
-	private validateMandatoryParams(commandArguments: string[], mandatoryParams: ICommandParameter[]): IFuture<CommandArgumentsValidationHelper> {
-		return (() => {
+	private async validateMandatoryParams(commandArguments: string[], mandatoryParams: ICommandParameter[]): Promise<CommandArgumentsValidationHelper> {
 			let commandArgsHelper = new CommandArgumentsValidationHelper(true, commandArguments);
 
 			if (mandatoryParams.length > 0) {
@@ -173,11 +166,9 @@ export class CommandsService implements ICommandsService {
 			}
 
 			return commandArgsHelper;
-		}).future<CommandArgumentsValidationHelper>()();
 	}
 
-	private validateCommandArguments(command: ICommand, commandArguments: string[]): IFuture<boolean> {
-		return (() => {
+	private async validateCommandArguments(command: ICommand, commandArguments: string[]): Promise<boolean> {
 			let mandatoryParams: ICommandParameter[] = _.filter(command.allowedParameters, (param) => param.mandatory);
 			let commandArgsHelper = this.validateMandatoryParams(commandArguments, mandatoryParams).wait();
 			if (!commandArgsHelper.isValid) {
@@ -206,7 +197,6 @@ export class CommandsService implements ICommandsService {
 			}
 
 			return true;
-		}).future<boolean>()();
 	}
 
 	private tryMatchCommand(commandName: string): void {
@@ -237,8 +227,7 @@ export class CommandsService implements ICommandsService {
 		}
 	}
 
-	public completeCommand(): IFuture<boolean> {
-		return (() => {
+	public async completeCommand(): Promise<boolean> {
 			let tabtab = require("tabtab");
 
 			let completeCallback = (err: Error, data: any) => {
@@ -315,7 +304,6 @@ export class CommandsService implements ICommandsService {
 			}
 
 			return true;
-		}).future<boolean>()();
 	}
 
 	private getCommandHelp(): any {

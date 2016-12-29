@@ -44,15 +44,13 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 		return future || Future.fromResult();
 	}
 
-	private isSimulatorRunning(): IFuture<boolean> {
-		return (() => {
+	private async isSimulatorRunning(): Promise<boolean> {
 			try {
 				let output = this.$childProcess.exec("ps cax | grep launchd_sim").wait();
 				return output.indexOf('launchd_sim') !== -1;
 			} catch(e) {
 				return false;
 			}
-		}).future<boolean>()();
 	}
 
 	private createAndAddDevice(simulator: Mobile.IiSimDevice): void {

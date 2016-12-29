@@ -14,8 +14,7 @@ export class Prompter implements IPrompter {
 		}
 	}
 
-	public get(schemas: IPromptSchema[]): IFuture<any> {
-		return (() => {
+	public async get(schemas: IPromptSchema[]): Promise<any> {
 			try {
 				this.muteStdout();
 
@@ -46,11 +45,9 @@ export class Prompter implements IPrompter {
 			} finally {
 				this.unmuteStdout();
 			}
-		}).future<any>()();
 	}
 
-	public getPassword(prompt: string, options?: IAllowEmpty): IFuture<string> {
-		return (() => {
+	public async getPassword(prompt: string, options?: IAllowEmpty): Promise<string> {
 			let schema: IPromptSchema = {
 				message: prompt,
 				type: "password",
@@ -63,11 +60,9 @@ export class Prompter implements IPrompter {
 
 			let result = this.get([schema]).wait();
 			return result.password;
-		}).future<string>()();
 	}
 
-	public getString(prompt: string, options?: IPrompterOptions): IFuture<string> {
-		return (() => {
+	public async getString(prompt: string, options?: IPrompterOptions): Promise<string> {
 			let schema: IPromptSchema = {
 				message: prompt,
 				type: "input",
@@ -81,11 +76,9 @@ export class Prompter implements IPrompter {
 
 			let result = this.get([schema]).wait();
 			return result.inputString;
-		}).future<string>()();
 	}
 
-	public promptForChoice(promptMessage: string, choices: any[]): IFuture<string> {
-		return (() => {
+	public async promptForChoice(promptMessage: string, choices: any[]): Promise<string> {
 			let schema: IPromptSchema = {
 				message: promptMessage,
 				type: "list",
@@ -95,11 +88,9 @@ export class Prompter implements IPrompter {
 
 			let result = this.get([schema]).wait();
 			return result.userAnswer;
-		}).future<string>()();
 	}
 
-	public confirm(prompt: string, defaultAction?: () => boolean): IFuture<boolean> {
-		return ((): boolean => {
+	public async confirm(prompt: string, defaultAction?: () => boolean): Promise<boolean> {
 			let schema = {
 				type: "confirm",
 				name: "prompt",
@@ -109,7 +100,6 @@ export class Prompter implements IPrompter {
 
 			let result = this.get([schema]).wait();
 			return result.prompt;
-		}).future<boolean>()();
 	}
 
 	private muteStdout(): void {

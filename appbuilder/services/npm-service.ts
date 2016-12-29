@@ -38,8 +38,7 @@ export class NpmService implements INpmService {
 	}
 
 	@exportedPromise("npmService")
-	public install(projectDir: string, dependencyToInstall?: INpmDependency): IFuture<INpmInstallResult> {
-		return (() => {
+	public async install(projectDir: string, dependencyToInstall?: INpmDependency): Promise<INpmInstallResult> {
 			let npmInstallResult: INpmInstallResult = {};
 
 			if (dependencyToInstall) {
@@ -75,12 +74,10 @@ export class NpmService implements INpmService {
 			this.generateReferencesFile(projectDir);
 
 			return npmInstallResult;
-		}).future<INpmInstallResult>()();
 	}
 
 	@exportedPromise("npmService")
-	public uninstall(projectDir: string, dependency: string): IFuture<void> {
-		return (() => {
+	public async uninstall(projectDir: string, dependency: string): Promise<void> {
 			let packageJsonContent = this.getPackageJsonContent(projectDir);
 
 			if (packageJsonContent && packageJsonContent.dependencies && packageJsonContent.dependencies[dependency]) {
@@ -92,11 +89,9 @@ export class NpmService implements INpmService {
 			}
 
 			this.generateReferencesFile(projectDir);
-		}).future<void>()();
 	}
 
-	public search(projectDir: string, keywords: string[], args?: string[]): IFuture<IBasicPluginInformation[]> {
-		return ((): IBasicPluginInformation[] => {
+	public async search(projectDir: string, keywords: string[], args?: string[]): Promise<IBasicPluginInformation[]> {
 			args = args === undefined ? [] : args;
 			let result: IBasicPluginInformation[] = [];
 			let commandArguments = _.concat(["search"], args, keywords);
@@ -142,11 +137,9 @@ export class NpmService implements INpmService {
 			});
 
 			return result;
-		}).future<IBasicPluginInformation[]>()();
 	}
 
-	public getPackageJsonFromNpmRegistry(packageName: string, version?: string): IFuture<any> {
-		return (() => {
+	public async getPackageJsonFromNpmRegistry(packageName: string, version?: string): Promise<any> {
 			const timeout = 6000;
 			let packageJsonContent: any;
 			version = version || "latest";
@@ -163,7 +156,6 @@ export class NpmService implements INpmService {
 			}
 
 			return packageJsonContent;
-		}).future<any>()();
 	}
 
 	public isScopedDependency(dependency: string): boolean {
@@ -182,25 +174,20 @@ export class NpmService implements INpmService {
 		};
 	}
 
-	private hasTypesForDependency(packageName: string): IFuture<boolean> {
-		return (() => {
+	private async hasTypesForDependency(packageName: string): Promise<boolean> {
 			return !!this.getPackageJsonFromNpmRegistry(`${NpmService.TYPES_DIRECTORY}${packageName}`).wait();
-		}).future<boolean>()();
 	}
 
-	private buildNpmRegistryUrl(packageName: string, version: string): IFuture<string> {
-		return (() => {
+	private async buildNpmRegistryUrl(packageName: string, version: string): Promise<string> {
 			let registryUrl = this.getNpmRegistryUrl().wait();
 			if (!_.endsWith(registryUrl, "/")) {
 				registryUrl += "/";
 			}
 
 			return `${registryUrl}${packageName.replace("/", "%2F")}?version=${encodeURIComponent(version)}`;
-		}).future<string>()();
 	}
 
-	private getNpmRegistryUrl(): IFuture<string> {
-		return ((): string => {
+	private async getNpmRegistryUrl(): Promise<string> {
 			if (!this._npmRegistryUrl) {
 				let currentNpmRegistry: string;
 
@@ -216,7 +203,6 @@ export class NpmService implements INpmService {
 			}
 
 			return this._npmRegistryUrl;
-		}).future<string>()();
 	}
 
 	private getPackageJsonContent(projectDir: string): any {
@@ -322,8 +308,7 @@ export class NpmService implements INpmService {
 		return this.executeNpmCommand(projectDir, this.getNpmArguments("prune"), dependency, version);
 	}
 
-	private executeNpmCommand(projectDir: string, npmArguments: string[], dependency: string, version?: string): IFuture<ISpawnResult> {
-		return ((): ISpawnResult => {
+	private async executeNpmCommand(projectDir: string, npmArguments: string[], dependency: string, version?: string): Promise<ISpawnResult> {
 			if (dependency) {
 				let dependencyToInstall = dependency;
 				if (version) {
@@ -334,15 +319,13 @@ export class NpmService implements INpmService {
 			}
 
 			return this.executeNpmCommandCore(projectDir, npmArguments).wait();
-		}).future<ISpawnResult>()();
 	}
 
 	private executeNpmCommandCore(projectDir: string, npmArguments: string[]): IFuture<ISpawnResult> {
 		return this.$childProcess.spawnFromEvent(this.npmExecutableName, npmArguments, "close", { cwd: projectDir, stdio: "inherit" });
 	}
 
-	private getNpmProxySettings(): IFuture<IProxySettings> {
-		return ((): IProxySettings => {
+	private async getNpmProxySettings(): Promise<IProxySettings> {
 			if (!this._hasCheckedNpmProxy) {
 				try {
 					let npmProxy = (this.$childProcess.exec("npm config get proxy").wait() || "").toString().trim();
@@ -365,7 +348,6 @@ export class NpmService implements INpmService {
 			}
 
 			return this._proxySettings;
-		}).future<IProxySettings>()();
 	}
 }
 $injector.register("npmService", NpmService);

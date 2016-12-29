@@ -8,8 +8,7 @@ export class ListApplicationsCommand implements ICommand {
 
 	allowedParameters: ICommandParameter[] = [];
 
-	public execute(args: string[]): IFuture<void> {
-		return (() => {
+	public async execute(args: string[]): Promise<void> {
 
 			this.$devicesService.initialize({ deviceId: this.$options.device, skipInferPlatform: true }).wait();
 			let output: string[] = [];
@@ -17,8 +16,7 @@ export class ListApplicationsCommand implements ICommand {
 			let action = (device: Mobile.IDevice) => { return (() => {
 				let applications = device.applicationManager.getInstalledApplications().wait();
 				output.push(util.format("%s=====Installed applications on device with UDID '%s' are:", EOL, device.deviceInfo.identifier));
-				_.each(applications, (applicationId: string) => output.push(applicationId));
-			}).future<void>()(); };
+				_.each(applications, (applicationId: string) => output.push(applicationId)); };
 			this.$devicesService.execute(action).wait();
 
 			this.$logger.out(output.join(EOL));

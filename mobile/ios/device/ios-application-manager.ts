@@ -36,39 +36,32 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		return this.$injector.resolve(iOSProxyServices.InstallationProxyClient, { device: this.device });
 	}
 
-	public getInstalledApplications(): IFuture<string[]> {
-		return (() => {
+	public async getInstalledApplications(): Promise<string[]> {
 			return _(this.getApplicationsLiveSyncSupportedStatus().wait())
 				.map(appLiveSyncStatus => appLiveSyncStatus.applicationIdentifier)
 				.sortBy((identifier: string) => identifier.toLowerCase())
 				.value();
-		}).future<string[]>()();
 	}
 
 	@hook('install')
-	public installApplication(packageFilePath: string): IFuture<void> {
-		return (() => {
+	public async installApplication(packageFilePath: string): Promise<void> {
 			let installationProxy = this.getInstallationProxy();
 			try {
 				installationProxy.deployApplication(packageFilePath).wait();
 			} finally {
 				installationProxy.closeSocket();
 			}
-		}).future<void>()();
 	}
 
-	public getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo> {
-		return ((): Mobile.IApplicationInfo => {
+	public async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
 			if (!this.applicationsLiveSyncInfos || !this.applicationsLiveSyncInfos.length) {
 				this.getApplicationsLiveSyncSupportedStatus().wait();
 			}
 
 			return _.find(this.applicationsLiveSyncInfos, app => app.applicationIdentifier === applicationIdentifier);
-		}).future<Mobile.IApplicationInfo>()();
 	}
 
-	public getApplicationsLiveSyncSupportedStatus(): IFuture<Mobile.ILiveSyncApplicationInfo[]> {
-		return ((): Mobile.ILiveSyncApplicationInfo[] => {
+	public async getApplicationsLiveSyncSupportedStatus(): Promise<Mobile.ILiveSyncApplicationInfo[]> {
 			let installationProxy = this.getInstallationProxy();
 			try {
 				let result = installationProxy.sendMessage({
@@ -169,22 +162,18 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 			} finally {
 				installationProxy.closeSocket();
 			}
-		}).future<Mobile.ILiveSyncApplicationInfo[]>()();
 	}
 
-	public isLiveSyncSupported(appIdentifier: string): IFuture<boolean> {
-		return ((): boolean => {
+	public async isLiveSyncSupported(appIdentifier: string): Promise<boolean> {
 			if (!this.applicationsLiveSyncInfos || !this.applicationsLiveSyncInfos.length) {
 				this.getApplicationsLiveSyncSupportedStatus().wait();
 			}
 
 			let selectedApplication = _.find(this.applicationsLiveSyncInfos, app => app.applicationIdentifier === appIdentifier);
 			return !!selectedApplication && selectedApplication.isLiveSyncSupported;
-		}).future<boolean>()();
 	}
 
-	public uninstallApplication(appIdentifier: string): IFuture<void> {
-		return (() => {
+	public async uninstallApplication(appIdentifier: string): Promise<void> {
 			let afc = this.device.startService(iOSProxyServices.MobileServices.INSTALLATION_PROXY);
 			try {
 				let result = this.$mobileDevice.deviceUninstallApplication(afc, this.$coreFoundation.createCFString(appIdentifier), null, this.uninstallApplicationCallbackPtr);
@@ -196,11 +185,9 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 			}
 
 			this.$logger.trace("Application %s has been uninstalled successfully.", appIdentifier);
-		}).future<void>()();
 	}
 
-	public startApplication(appIdentifier: string): IFuture<void> {
-		return (() => {
+	public async startApplication(appIdentifier: string): Promise<void> {
 			if (this.$hostInfo.isWindows && !this.$staticConfig.enableDeviceRunCommandOnWindows) {
 				this.$errors.fail("$%s device run command is not supported on Windows for iOS devices.", this.$staticConfig.CLIENT_NAME.toLowerCase());
 			}
@@ -210,7 +197,6 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 
 			this.runApplicationCore(appIdentifier).wait();
 			this.$logger.info(`Successfully run application ${appIdentifier} on device with ID ${this.device.deviceInfo.identifier}.`);
-		}).future<void>()();
 	}
 
 	public stopApplication(appIdentifier: string): IFuture<void> {
@@ -219,11 +205,9 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		return gdbServer.kill([`${application.Path}`]);
 	}
 
-	public restartApplication(applicationId: string): IFuture<void> {
-		return (() => {
+	public async restartApplication(applicationId: string): Promise<void> {
 			this.stopApplication(applicationId).wait();
 			this.runApplicationCore(applicationId).wait();
-		}).future<void>()();
 	}
 
 	public canStartApplication(): boolean {

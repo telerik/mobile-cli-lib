@@ -10,8 +10,7 @@ export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 		protected $staticConfig: Config.IStaticConfig,
 		protected $androidDebugBridgeResultHandler: Mobile.IAndroidDebugBridgeResultHandler) { }
 
-	public executeCommand(args: string[], options?: Mobile.IAndroidDebugBridgeCommandOptions): IFuture<any> {
-		return (() => {
+	public async executeCommand(args: string[], options?: Mobile.IAndroidDebugBridgeCommandOptions): Promise<any> {
 			let event = "close";
 			let command = this.composeCommand(args).wait();
 			let treatErrorsAsWarnings = false;
@@ -40,11 +39,9 @@ export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 
 			// Some adb commands returns array of strings instead of object with stdout and stderr. (adb start-server)
 			return (result.stdout === undefined || result.stdout === null) ? result : result.stdout;
-		}).future<any>()();
 	}
 
-	protected composeCommand(params: string[], identifier?: string): IFuture<IComposeCommandResult> {
-		return (() => {
+	protected async composeCommand(params: string[], identifier?: string): Promise<IComposeCommandResult> {
 			let command = this.$staticConfig.getAdbFilePath().wait();
 			let deviceIdentifier: string[] = [];
 			if (identifier) {
@@ -53,7 +50,6 @@ export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 
 			let args: string[] = deviceIdentifier.concat(params);
 			return { command, args };
-		}).future<IComposeCommandResult>()();
 	}
 }
 

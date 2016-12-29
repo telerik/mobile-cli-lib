@@ -39,19 +39,16 @@ export class HtmlHelpService implements IHtmlHelpService {
 		this.pathToManPages = this.$staticConfig.MAN_PAGES_DIR;
 	}
 
-	public generateHtmlPages(): IFuture<void> {
-		return (() => {
+	public async generateHtmlPages(): Promise<void> {
 			let mdFiles = this.$fs.enumerateFilesInDirectorySync(this.pathToManPages);
 			let basicHtmlPage = this.$fs.readText(this.pathToBasicPage);
 			let futures = _.map(mdFiles, markdownFile => this.createHtmlPage(basicHtmlPage, markdownFile));
 			Future.wait(futures);
 			this.$logger.trace("Finished generating HTML files.");
-		}).future<void>()();
 	}
 
 	// This method should return IFuture in order to generate all html pages simultaneously.
-	private createHtmlPage(basicHtmlPage: string, pathToMdFile: string): IFuture<void> {
-		return (() => {
+	private async createHtmlPage(basicHtmlPage: string, pathToMdFile: string): Promise<void> {
 			let mdFileName = path.basename(pathToMdFile);
 			let htmlFileName = mdFileName.replace(HtmlHelpService.MARKDOWN_FILE_EXTENSION, HtmlHelpService.HTML_FILE_EXTENSION);
 			this.$logger.trace("Generating '%s' help topic.", htmlFileName);
@@ -74,11 +71,9 @@ export class HtmlHelpService implements IHtmlHelpService {
 
 			this.$fs.writeFile(filePath, outputHtml);
 			this.$logger.trace("Finished writing file '%s'.", filePath);
-		}).future<void>()();
 	}
 
-	public openHelpForCommandInBrowser(commandName: string): IFuture<void> {
-		return ((): void => {
+	public async openHelpForCommandInBrowser(commandName: string): Promise<void> {
 			let htmlPage = this.convertCommandNameToFileName(commandName) + HtmlHelpService.HTML_FILE_EXTENSION;
 			this.$logger.trace("Opening help for command '%s'. FileName is '%s'.", commandName, htmlPage);
 
@@ -91,7 +86,6 @@ export class HtmlHelpService implements IHtmlHelpService {
 					this.$errors.failWithoutHelp("Unable to find help for '%s'", commandName);
 				}
 			}
-		}).future<void>()();
 	}
 
 	private convertCommandNameToFileName(commandName: string): string {

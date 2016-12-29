@@ -55,24 +55,20 @@ export class IOSDeviceDiscovery extends DeviceDiscovery {
 		this.notificationCallbackPtr = CoreTypes.am_device_notification_callback.toPointer(IOSDeviceDiscovery.deviceNotificationCallback);
 	}
 
-	public startLookingForDevices(): IFuture<void> {
-		return (() => {
+	public async startLookingForDevices(): Promise<void> {
 			if (this.validateiTunes()) {
 				this.subscribeForNotifications();
 				this.checkForDevices().wait();
 			}
-		}).future<void>()();
 	}
 
-	public checkForDevices(): IFuture<void> {
-		return (() => {
+	public async checkForDevices(): Promise<void> {
 			if (this.validateiTunes()) {
 				let defaultTimeoutInSeconds = 1;
 				let parsedTimeout =  this.$utils.getParsedTimeout(defaultTimeoutInSeconds);
 				let timeout = parsedTimeout > defaultTimeoutInSeconds ? parsedTimeout/1000 : defaultTimeoutInSeconds;
 				this.startRunLoopWithTimer(timeout);
 			}
-		}).future<void>()();
 	}
 
 	private static deviceNotificationCallback(devicePointer?: NodeBuffer, user?: number) : any {

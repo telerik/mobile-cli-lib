@@ -27,8 +27,7 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 		return new RegExp(`(\\d+):\\s+${hexIpAddressWithPortWithSpaceMatch}${hexIpAddressWithPortWithSpaceMatch}${wordCharacters}\\s+${hexIpAddressWithPortWithSpace}${hexIpAddressWithPortWithSpace}${wordCharacters}\\s+(\\d+)`, "g");
 	}
 
-	public mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string, framework: string): IFuture<string> {
-		return (() => {
+	public async mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string, framework: string): Promise<string> {
 			this.tryAttachToProcessExitSignals();
 
 			let adb = this.getAdb(deviceIdentifier);
@@ -55,11 +54,9 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 
 			this._forwardedLocalPorts.push(localPort);
 			return localPort;
-		}).future<string>()();
 	}
 
-	public getMappedAbstractToTcpPorts(deviceIdentifier: string, appIdentifiers: string[], framework: string): IFuture<IDictionary<number>> {
-		return ((): IDictionary<number> => {
+	public async getMappedAbstractToTcpPorts(deviceIdentifier: string, appIdentifiers: string[], framework: string): Promise<IDictionary<number>> {
 			let adb = this.getAdb(deviceIdentifier),
 				abstractPortsInformation = this.getAbstractPortsInformation(adb).wait(),
 				processIds = this.getProcessIds(adb, appIdentifiers).wait(),
@@ -88,11 +85,9 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 			});
 
 			return localPorts;
-		}).future<IDictionary<number>>()();
 	}
 
-	public getDebuggableApps(deviceIdentifier: string): IFuture<Mobile.IDeviceApplicationInformation[]> {
-		return ((): Mobile.IDeviceApplicationInformation[] => {
+	public async getDebuggableApps(deviceIdentifier: string): Promise<Mobile.IDeviceApplicationInformation[]> {
 			let adb = this.getAdb(deviceIdentifier);
 			let androidWebViewPortInformation = (<string>this.getAbstractPortsInformation(adb).wait()).split(EOL);
 
@@ -118,11 +113,9 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 				.map((group: Mobile.IDeviceApplicationInformation[]) => _.uniqBy(group, g => g.appIdentifier))
 				.flatten<Mobile.IDeviceApplicationInformation>()
 				.value();
-		}).future<Mobile.IDeviceApplicationInformation[]>()();
 	}
 
-	private getApplicationInfoFromWebViewPortInformation(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, information: string): IFuture<Mobile.IDeviceApplicationInformation> {
-		return ((): Mobile.IDeviceApplicationInformation => {
+	private async getApplicationInfoFromWebViewPortInformation(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, information: string): Promise<Mobile.IDeviceApplicationInformation> {
 			// Need to search by processId to check for old Android webviews (@webview_devtools_remote_<processId>).
 			let processIdRegExp = /@webview_devtools_remote_(.+)/g,
 				processIdMatches = processIdRegExp.exec(information),
@@ -150,11 +143,9 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 			}
 
 			return null;
-		}).future<Mobile.IDeviceApplicationInformation>()();
 	}
 
-	private getNativeScriptApplicationInformation(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, information: string): IFuture<Mobile.IDeviceApplicationInformation> {
-		return ((): Mobile.IDeviceApplicationInformation => {
+	private async getNativeScriptApplicationInformation(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, information: string): Promise<Mobile.IDeviceApplicationInformation> {
 			// Search for appIdentifier (@<appIdentifier-debug>).
 			let nativeScriptAppIdentifierRegExp = /@(.+)-debug/g;
 			let nativeScriptAppIdentifierMatches = nativeScriptAppIdentifierRegExp.exec(information);
@@ -169,11 +160,9 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 			}
 
 			return null;
-		}).future<Mobile.IDeviceApplicationInformation>()();
 	}
 
-	private getAbstractPortForApplication(adb: Mobile.IDeviceAndroidDebugBridge, processId: string | number, appIdentifier: string, abstractPortsInformation: string, framework: string): IFuture<string> {
-		return (() => {
+	private async getAbstractPortForApplication(adb: Mobile.IDeviceAndroidDebugBridge, processId: string | number, appIdentifier: string, abstractPortsInformation: string, framework: string): Promise<string> {
 			// The result will look like this (without the columns names):
 			// Num       		 RefCount Protocol Flags    Type St Inode  Path
 			// 0000000000000000: 00000002 00000000 00010000 0001 01 189004 @webview_devtools_remote_25512
@@ -190,8 +179,6 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 					return this.getCordovaPortInformation(abstractPortsInformation, appIdentifier, processId) ||
 						this.getNativeScriptPortInformation(abstractPortsInformation, appIdentifier);
 			}
-
-		}).future<string>()();
 	}
 
 	private getCordovaPortInformation(abstractPortsInformation: string, appIdentifier: string, processId: string | number): string {
@@ -213,8 +200,7 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 		return match && match[1];
 	}
 
-	private getProcessIds(adb: Mobile.IDeviceAndroidDebugBridge, appIdentifiers: string[]): IFuture<IDictionary<number>> {
-		return (() => {
+	private async getProcessIds(adb: Mobile.IDeviceAndroidDebugBridge, appIdentifiers: string[]): Promise<IDictionary<number>> {
 			// Process information will look like this (without the columns names):
 			// USER     PID   PPID  VSIZE   RSS   WCHAN    PC         NAME
 			// u0_a63   25512 1334  1519560 96040 ffffffff f76a8f75 S com.telerik.appbuildertabstest
@@ -226,11 +212,9 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 			});
 
 			return result;
-		}).future<IDictionary<number>>()();
 	}
 
-	private getAlreadyMappedPort(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, abstractPort: string, adbForwardList?: any): IFuture<number> {
-		return ((): number => {
+	private async getAlreadyMappedPort(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, abstractPort: string, adbForwardList?: any): Promise<number> {
 			let allForwardedPorts: string = adbForwardList || adb.executeCommand(["forward", "--list"]).wait() || "";
 
 			// Sample output:
@@ -241,7 +225,6 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 			let regex = new RegExp(`${deviceIdentifier}\\s+?tcp:(\\d+?)\\s+?.*?${abstractPort}$`);
 
 			return this.getFirstMatchingGroupFromMultilineResult<number>(allForwardedPorts, regex);
-		}).future<number>()();
 	}
 
 	private getAdb(deviceIdentifier: string): Mobile.IDeviceAndroidDebugBridge {
@@ -252,14 +235,12 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 		return this._devicesAdbs[deviceIdentifier];
 	}
 
-	private getApplicationIdentifierFromPid(adb: Mobile.IDeviceAndroidDebugBridge, pid: string, psData?: string): IFuture<string> {
-		return ((): string => {
+	private async getApplicationIdentifierFromPid(adb: Mobile.IDeviceAndroidDebugBridge, pid: string, psData?: string): Promise<string> {
 			psData = psData || adb.executeShellCommand(["ps"]).wait();
 			// Process information will look like this (without the columns names):
 			// USER     PID   PPID  VSIZE   RSS   WCHAN    PC         NAME
 			// u0_a63   25512 1334  1519560 96040 ffffffff f76a8f75 S com.telerik.appbuildertabstest
 			return this.getFirstMatchingGroupFromMultilineResult<string>(psData, new RegExp(`\\s+${pid}(?:\\s+\\d+){3}\\s+.*\\s+(.*?)$`));
-		}).future<string>()();
 	}
 
 	private getFirstMatchingGroupFromMultilineResult<T>(input: string, regex: RegExp): T {

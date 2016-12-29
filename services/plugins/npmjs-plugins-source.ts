@@ -21,8 +21,7 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 		return "Searching for plugins in http://npmjs.org.";
 	}
 
-	public getPlugins(page: number, count: number): IFuture<IBasicPluginInformation[]> {
-		return ((): IBasicPluginInformation[] => {
+	public async getPlugins(page: number, count: number): Promise<IBasicPluginInformation[]> {
 			let loadedPlugins = this._pages[page];
 			if (loadedPlugins) {
 				return loadedPlugins;
@@ -35,30 +34,24 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 			this.plugins = this.plugins.concat(result);
 
 			return result;
-		}).future<IBasicPluginInformation[]>()();
 	}
 
-	public getAllPlugins(): IFuture<IBasicPluginInformation[]> {
-		return ((): IBasicPluginInformation[] => {
+	public async getAllPlugins(): Promise<IBasicPluginInformation[]> {
 			let getAllPluginsFuture = this.getAllPluginsCore();
 
 			this.$logger.printInfoMessageOnSameLine("Getting all results, please wait.");
 			this.$progressIndicator.showProgressIndicator(getAllPluginsFuture, 2000).wait();
 
 			return getAllPluginsFuture.get();
-		}).future<IBasicPluginInformation[]>()();
 	}
 
-	protected initializeCore(projectDir: string, keywords: string[]): IFuture<void> {
-		return (() => {
+	protected async initializeCore(projectDir: string, keywords: string[]): Promise<void> {
 			this._keywords = keywords;
 
 			this.plugins = this.getPluginsFromNpmjs(keywords, 1).wait();
-		}).future<void>()();
 	}
 
-	private getAllPluginsCore(): IFuture<IBasicPluginInformation[]> {
-		return ((): IBasicPluginInformation[] => {
+	private async getAllPluginsCore(): Promise<IBasicPluginInformation[]> {
 			let result: IBasicPluginInformation[] = [];
 
 			let currentPluginsFound: IBasicPluginInformation[] = [];
@@ -72,11 +65,9 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 			} while (currentPluginsFound && currentPluginsFound.length);
 
 			return result;
-		}).future<IBasicPluginInformation[]>()();
 	}
 
-	private getPluginsFromNpmjs(keywords: string[], page: number): IFuture<IBasicPluginInformation[]> {
-		return ((): IBasicPluginInformation[] => {
+	private async getPluginsFromNpmjs(keywords: string[], page: number): Promise<IBasicPluginInformation[]> {
 			let pluginName = encodeURIComponent(keywords.join(" "));
 			let url = `${NpmjsPluginsSource.NPMJS_ADDRESS}/search?q=${pluginName}&page=${page}`;
 
@@ -97,7 +88,6 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 				this.$logger.trace(`Error while getting information for ${keywords} from http://npmjs.org - ${err}`);
 				return null;
 			}
-		}).future<IBasicPluginInformation[]>()();
 	}
 
 	private getPluginInfo(node: parse5.ASTNode): IBasicPluginInformation {

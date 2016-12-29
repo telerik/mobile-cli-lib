@@ -25,14 +25,12 @@ export class StaticConfigBase implements Config.IStaticConfig {
 		return null;
 	}
 
-	public getAdbFilePath(): IFuture<string> {
-		return (() => {
+	public async getAdbFilePath(): Promise<string> {
 			if (!this._adbFilePath) {
 				this._adbFilePath = this.getAdbFilePathCore().wait();
 			}
 
 			return this._adbFilePath;
-		}).future<string>()();
 	}
 
 	public get MAN_PAGES_DIR(): string {
@@ -47,8 +45,7 @@ export class StaticConfigBase implements Config.IStaticConfig {
 		return path.join(__dirname, "docs", "helpers");
 	}
 
-	private getAdbFilePathCore(): IFuture<string> {
-		return ((): string => {
+	private async getAdbFilePathCore(): Promise<string> {
 			let $childProcess: IChildProcess = this.$injector.resolve("$childProcess");
 
 			try {
@@ -65,7 +62,6 @@ export class StaticConfigBase implements Config.IStaticConfig {
 			}
 
 			return "adb";
-		}).future<string>()();
 	}
 
 	/*
@@ -79,8 +75,7 @@ export class StaticConfigBase implements Config.IStaticConfig {
 		- Tie common lib version to updates of adb, so that when we integrate a newer adb we can use it
 		- Adb is named differently on OSes and may have additional files. The code is hairy to accommodate these differences
 	 */
-	private spawnPrivateAdb(): IFuture<string> {
-		return ((): string => {
+	private async spawnPrivateAdb(): Promise<string> {
 			let $fs: IFileSystem = this.$injector.resolve("$fs"),
 				$childProcess: IChildProcess = this.$injector.resolve("$childProcess"),
 				$hostInfo: IHostInfo = this.$injector.resolve("$hostInfo");
@@ -107,7 +102,6 @@ export class StaticConfigBase implements Config.IStaticConfig {
 			$childProcess.spawnFromEvent(targetAdb, ["start-server"], "exit").wait();
 
 			return targetAdb;
-		}).future<string>()();
 	}
 
 	public PATH_TO_BOOTSTRAP: string;

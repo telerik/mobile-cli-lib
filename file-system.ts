@@ -305,8 +305,7 @@ export class FileSystem implements IFileSystem {
 		fs.symlinkSync(sourcePath, destinationPath, type);
 	}
 
-	public setCurrentUserAsOwner(path: string, owner: string): IFuture<void> {
-		return (() => {
+	public async setCurrentUserAsOwner(path: string, owner: string): Promise<void> {
 			let $childProcess = this.$injector.resolve("childProcess");
 
 			if (!this.$injector.resolve("$hostInfo").isWindows) {
@@ -315,7 +314,6 @@ export class FileSystem implements IFileSystem {
 				this.futureFromEvent(chown, "close").wait();
 			}
 			// nothing to do on Windows, as chown does not work on this platform
-		}).future<void>()();
 	}
 
 	// filterCallback: function(path: String, stat: fs.Stats): Boolean

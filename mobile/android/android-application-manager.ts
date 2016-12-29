@@ -18,8 +18,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		super($logger, $hooksService);
 	}
 
-	public getInstalledApplications(): IFuture<string[]> {
-		return (() => {
+	public async getInstalledApplications(): Promise<string[]> {
 			let result = this.adb.executeShellCommand(["pm", "list", "packages"]).wait() || "";
 			let regex = /package:(.+)/;
 			return result.split(EOL)
@@ -28,8 +27,6 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 					return match ? match[1] : null;
 				})
 				.filter((parsedPackage: string) => parsedPackage !== null);
-
-		}).future<string[]>()();
 	}
 
 	@hook('install')
@@ -42,8 +39,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		return this.adb.executeShellCommand(["pm", "uninstall", `${appIdentifier}`], { treatErrorsAsWarnings: true });
 	}
 
-	public startApplication(appIdentifier: string, framework?: string): IFuture<void> {
-		return (() => {
+	public async startApplication(appIdentifier: string, framework?: string): Promise<void> {
 			this.adb.executeShellCommand(["monkey",
 				"-p", appIdentifier,
 				"-c", "android.intent.category.LAUNCHER",
@@ -52,7 +48,6 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 			if (!this.$options.justlaunch) {
 				this.$logcatHelper.start(this.identifier);
 			}
-		}).future<void>()();
 	}
 
 	public stopApplication(appIdentifier: string): IFuture<void> {
@@ -68,19 +63,16 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		return true;
 	}
 
-	public isLiveSyncSupported(appIdentifier: string): IFuture<boolean> {
-		return ((): boolean => {
+	public async isLiveSyncSupported(appIdentifier: string): Promise<boolean> {
 			let liveSyncVersion = this.adb.sendBroadcastToDevice(LiveSyncConstants.CHECK_LIVESYNC_INTENT_NAME, { "app-id": appIdentifier }).wait();
 			return liveSyncVersion === LiveSyncConstants.VERSION_2 || liveSyncVersion === LiveSyncConstants.VERSION_3;
-		}).future<boolean>()();
 	}
 
 	public getDebuggableApps(): IFuture<Mobile.IDeviceApplicationInformation[]> {
 		return this.$androidProcessService.getDebuggableApps(this.identifier);
 	}
 
-	public getDebuggableAppViews(appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>> {
-		return ((): IDictionary<Mobile.IDebugWebViewInfo[]> => {
+	public async getDebuggableAppViews(appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> {
 			let mappedAppIdentifierPorts = this.$androidProcessService.getMappedAbstractToTcpPorts(this.identifier, appIdentifiers, TARGET_FRAMEWORK_IDENTIFIERS.Cordova).wait(),
 				applicationViews: IDictionary<Mobile.IDebugWebViewInfo[]> = {};
 
@@ -99,7 +91,5 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 			});
 
 			return applicationViews;
-
-		}).future<IDictionary<Mobile.IDebugWebViewInfo[]>>()();
 	}
 }

@@ -15,8 +15,7 @@ export class HelpCommand implements ICommand {
 
 	public allowedParameters: ICommandParameter[] = [];
 
-	public execute(args: string[]): IFuture<void> {
-		return (() => {
+	public async execute(args: string[]): Promise<void> {
 			let topic = (args[0] || "").toLowerCase();
 			let hierarchicalCommand = this.$injector.buildHierarchicalCommand(args[0], _.tail(args));
 			if (hierarchicalCommand) {
@@ -33,7 +32,6 @@ export class HelpCommand implements ICommand {
 			} else {
 				this.$htmlHelpService.openHelpForCommandInBrowser(topic).wait();
 			}
-		}).future<void>()();
 	}
 }
 

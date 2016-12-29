@@ -7,11 +7,9 @@ export class UserSettingsServiceBase implements IUserSettingsService {
 		this.userSettingsFilePath = userSettingsFilePath;
 	}
 
-	public getSettingValue<T>(settingName: string): IFuture<T> {
-		return(() => {
+	public async getSettingValue<T>(settingName: string): Promise<T> {
 			this.loadUserSettingsFile().wait();
 			return this.userSettingsData ? this.userSettingsData[settingName] : null;
-		}).future<T>()();
 	}
 
 	public saveSetting<T>(key: string, value: T): IFuture<void> {
@@ -21,17 +19,14 @@ export class UserSettingsServiceBase implements IUserSettingsService {
 		return this.saveSettings(settingObject);
 	}
 
-	public removeSetting(key: string): IFuture<void> {
-		return (() => {
+	public async removeSetting(key: string): Promise<void> {
 			this.loadUserSettingsFile().wait();
 
 			delete this.userSettingsData[key];
 			this.saveSettings().wait();
-		}).future<void>()();
 	}
 
-	public saveSettings(data?: any): IFuture<void> {
-		return(() => {
+	public async saveSettings(data?: any): Promise<void> {
 			this.loadUserSettingsFile().wait();
 			this.userSettingsData = this.userSettingsData || {};
 
@@ -42,12 +37,10 @@ export class UserSettingsServiceBase implements IUserSettingsService {
 				});
 
 			this.$fs.writeJson(this.userSettingsFilePath, this.userSettingsData);
-		}).future<void>()();
 	}
 
 	// TODO: Remove IFuture, reason: writeFile - blocked as other implementation of the interface has async operation.
-	public loadUserSettingsFile(): IFuture<void> {
-		return (() => {
+	public async loadUserSettingsFile(): Promise<void> {
 			if(!this.userSettingsData) {
 				if(!this.$fs.exists(this.userSettingsFilePath)) {
 					this.$fs.writeFile(this.userSettingsFilePath, null);
@@ -55,6 +48,5 @@ export class UserSettingsServiceBase implements IUserSettingsService {
 
 				this.userSettingsData = this.$fs.readJson(this.userSettingsFilePath);
 			}
-		}).future<void>()();
 	}
 }

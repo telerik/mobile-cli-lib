@@ -335,8 +335,7 @@ export class Yok implements IInjector {
 		return /#{([^.]+)\.([^}]+?)(\((.+)\))*}/;
 	}
 
-	public dynamicCall(call: string, args?: any[]): IFuture<any> {
-		return (() => {
+	public async dynamicCall(call: string, args?: any[]): Promise<any> {
 			let parsed = call.match(this.dynamicCallRegex);
 			let module = this.resolve(parsed[1]);
 			if (!args && parsed[3]) {
@@ -348,7 +347,6 @@ export class Yok implements IInjector {
 				return data.wait();
 			}
 			return data;
-		}).future<any>()();
 	}
 
 	private resolveConstructor(ctor: Function, ctorArguments?: { [key: string]: any }): any {

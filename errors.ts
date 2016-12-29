@@ -138,8 +138,7 @@ export class Errors implements IErrors {
 		this.fail({ formatStr: util.format.apply(null, args), suppressCommandHelp: true });
 	}
 
-	public beginCommand(action: () => IFuture<boolean>, printCommandHelp: () => IFuture<boolean>): IFuture<boolean> {
-		return (() => {
+	public async beginCommand(action: () => IFuture<boolean>, printCommandHelp: () => IFuture<boolean>): Promise<boolean> {
 			try {
 				return action().wait();
 			} catch(ex) {
@@ -156,7 +155,6 @@ export class Errors implements IErrors {
 				tryTrackException(ex, this.$injector);
 				process.exit(_.isNumber(ex.errorCode) ? ex.errorCode : ErrorCodes.UNKNOWN);
 			}
-		}).future<boolean>()();
 	}
 
 	// If you want to activate this function, start Node with flags --nouse_idle_notification and --expose_gc

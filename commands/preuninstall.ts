@@ -10,10 +10,8 @@ export class PreUninstallCommand implements ICommand {
 
 	public allowedParameters: ICommandParameter[] = [];
 
-	public execute(args: string[]): IFuture<void> {
-		return (() => {
+	public async execute(args: string[]): Promise<void> {
 			this.$fs.deleteFile(path.join(this.$options.profileDir, "KillSwitches", "cli"));
-		}).future<void>()();
 	}
 }
 $injector.registerCommand("dev-preuninstall", PreUninstallCommand);

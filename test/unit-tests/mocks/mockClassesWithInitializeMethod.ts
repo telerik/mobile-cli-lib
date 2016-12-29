@@ -1,8 +1,6 @@
 export class ClassWithFuturizedInitializeMethod {
-	public initialize(): IFuture<void> {
-		return (() => {
+	public async initialize(): Promise<void> {
 			this.isInitializedCalled = true;
-		}).future<void>()();
 	}
 
 	public isInitializedCalled = false;

@@ -132,8 +132,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		delete this._devices[device.deviceInfo.identifier];
 	}
 
-	public detectCurrentlyAttachedDevices(): IFuture<void> {
-		return (() => {
+	public async detectCurrentlyAttachedDevices(): Promise<void> {
 			try {
 				this.$iOSDeviceDiscovery.startLookingForDevices().wait();
 				this.$androidDeviceDiscovery.startLookingForDevices().wait();
@@ -143,7 +142,6 @@ export class DevicesService implements Mobile.IDevicesService {
 			} catch (err) {
 				this.$logger.trace("Error while detecting devices.", err);
 			}
-		}).future<void>()();
 	}
 
 	public startDeviceDetectionInterval(): void {
@@ -196,12 +194,10 @@ export class DevicesService implements Mobile.IDevicesService {
 		}
 	}
 
-	public stopDeviceDetectionInterval(): IFuture<void> {
-		return (() => {
+	public async stopDeviceDetectionInterval(): Promise<void> {
 			this.clearDeviceDetectionInterval();
 			this.deviceDetectionInterval = null;
 			this.getDeviceDetectionIntervalFuture().wait();
-		}).future<void>()();
 	}
 
 	public getDeviceByIdentifier(identifier: string): Mobile.IDevice {
@@ -217,8 +213,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		return _.find(this.getDeviceInstances(), (device: Mobile.IDevice) => { return device.deviceInfo.displayName === name; });
 	}
 
-	private startLookingForDevices(): IFuture<void> {
-		return (() => {
+	private async startLookingForDevices(): Promise<void> {
 			this.$logger.trace("startLookingForDevices; platform is %s", this._platform);
 			if (!this._platform) {
 				this.detectCurrentlyAttachedDevices().wait();
@@ -231,7 +226,6 @@ export class DevicesService implements Mobile.IDevicesService {
 			} else if (this.$mobileHelper.isAndroidPlatform(this._platform)) {
 				this.$androidDeviceDiscovery.startLookingForDevices().wait();
 			}
-		}).future<void>()();
 	}
 
 	private getDeviceByIndex(index: number): Mobile.IDevice {
@@ -239,8 +233,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		return this.getDeviceInstances()[index - 1];
 	}
 
-	private getDevice(deviceOption: string): IFuture<Mobile.IDevice> {
-		return (() => {
+	private async getDevice(deviceOption: string): Promise<Mobile.IDevice> {
 			this.detectCurrentlyAttachedDevices().wait();
 			let device: Mobile.IDevice = null;
 
@@ -257,19 +250,15 @@ export class DevicesService implements Mobile.IDevicesService {
 			}
 
 			return device;
-		}).future<Mobile.IDevice>()();
 	}
 
-	private executeOnDevice(action: (dev: Mobile.IDevice) => IFuture<void>, canExecute?: (_dev: Mobile.IDevice) => boolean): IFuture<void> {
-		return ((): void => {
+	private async executeOnDevice(action: (dev: Mobile.IDevice) => IFuture<void>, canExecute?: (_dev: Mobile.IDevice) => boolean): Promise<void> {
 			if (!canExecute || canExecute(this._device)) {
 				action(this._device).wait();
 			}
-		}).future<void>()();
 	}
 
-	private executeOnAllConnectedDevices(action: (dev: Mobile.IDevice) => IFuture<void>, canExecute?: (_dev: Mobile.IDevice) => boolean): IFuture<void> {
-		return ((): void => {
+	private async executeOnAllConnectedDevices(action: (dev: Mobile.IDevice) => IFuture<void>, canExecute?: (_dev: Mobile.IDevice) => boolean): Promise<void> {
 			let devices = this.filterDevicesByPlatform();
 			let sortedDevices = _.sortBy(devices, device => device.deviceInfo.platform);
 
@@ -284,7 +273,6 @@ export class DevicesService implements Mobile.IDevicesService {
 			});
 
 			Future.wait(futures);
-		}).future<void>()();
 	}
 
 	@exportedPromise("devicesService", function () {
@@ -295,8 +283,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		return _.map(deviceIdentifiers, deviceIdentifier => this.deployOnDevice(deviceIdentifier, packageFile, packageName, framework));
 	}
 
-	public execute(action: (device: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: { allowNoDevices?: boolean }): IFuture<void> {
-		return ((): void => {
+	public async execute(action: (device: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: { allowNoDevices?: boolean }): Promise<void> {
 			assert.ok(this._isInitialized, "Devices services not initialized!");
 			if (this.hasDevices) {
 				if (this.$hostInfo.isDarwin && this._platform && this.$mobileHelper.isiOSPlatform(this._platform) &&
@@ -320,7 +307,6 @@ export class DevicesService implements Mobile.IDevicesService {
 					}
 				}
 			}
-		}).future<void>()();
 	}
 
 	public initialize(data?: Mobile.IDevicesServicesInitializationOptions): IFuture<void> {
@@ -413,13 +399,11 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	@exportedPromise("devicesService")
-	public getDebuggableViews(deviceIdentifier: string, appIdentifier: string): IFuture<Mobile.IDebugWebViewInfo[]> {
-		return ((): Mobile.IDebugWebViewInfo[] => {
+	public async getDebuggableViews(deviceIdentifier: string, appIdentifier: string): Promise<Mobile.IDebugWebViewInfo[]> {
 			let device = this.getDeviceByIdentifier(deviceIdentifier),
 				debuggableViewsPerApp = device.applicationManager.getDebuggableAppViews([appIdentifier]).wait();
 
 			return debuggableViewsPerApp && debuggableViewsPerApp[appIdentifier];
-		}).future<Mobile.IDebugWebViewInfo[]>()();
 	}
 
 	private clearDeviceDetectionInterval(): void {
@@ -430,21 +414,17 @@ export class DevicesService implements Mobile.IDevicesService {
 		}
 	}
 
-	private getDebuggableAppsCore(deviceIdentifier: string): IFuture<Mobile.IDeviceApplicationInformation[]> {
-		return ((): Mobile.IDeviceApplicationInformation[] => {
+	private async getDebuggableAppsCore(deviceIdentifier: string): Promise<Mobile.IDeviceApplicationInformation[]> {
 			let device = this.getDeviceByIdentifier(deviceIdentifier);
 			return device.applicationManager.getDebuggableApps().wait();
-		}).future<Mobile.IDeviceApplicationInformation[]>()();
 	}
 
-	private deployOnDevice(deviceIdentifier: string, packageFile: string, packageName: string, framework: string): IFuture<void> {
-		return (() => {
+	private async deployOnDevice(deviceIdentifier: string, packageFile: string, packageName: string, framework: string): Promise<void> {
 			this.stopDeviceDetectionInterval().wait();
 			let device = this.getDeviceByIdentifier(deviceIdentifier);
 			device.applicationManager.reinstallApplication(packageName, packageFile).wait();
 			this.$logger.info(`Successfully deployed on device with identifier '${device.deviceInfo.identifier}'.`);
 			device.applicationManager.tryStartApplication(packageName, framework).wait();
-		}).future<void>()();
 	}
 
 	private hasDevice(identifier: string): boolean {
@@ -480,8 +460,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		return null;
 	}
 
-	public startEmulator(platform?: string): IFuture<void> {
-		return (() => {
+	public async startEmulator(platform?: string): Promise<void> {
 
 			platform = platform || this._platform;
 
@@ -496,7 +475,6 @@ export class DevicesService implements Mobile.IDevicesService {
 			} else if (this.$mobileHelper.isiOSPlatform(platform) && this.$hostInfo.isDarwin) {
 				this.$iOSSimulatorDiscovery.startLookingForDevices().wait();
 			}
-		}).future<void>()();
 	}
 
 	private executeCore(action: (device: Mobile.IDevice) => IFuture<void>, canExecute?: (dev: Mobile.IDevice) => boolean): IFuture<void> {
@@ -507,8 +485,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		return this.executeOnAllConnectedDevices(action, canExecute);
 	}
 
-	private isApplicationInstalledOnDevice(deviceIdentifier: string, appIdentifier: string, framework: string): IFuture<IAppInstalledInfo> {
-		return ((): IAppInstalledInfo => {
+	private async isApplicationInstalledOnDevice(deviceIdentifier: string, appIdentifier: string, framework: string): Promise<IAppInstalledInfo> {
 			let isInstalled = false,
 				isLiveSyncSupported = false,
 				device = this.getDeviceByIdentifier(deviceIdentifier);
@@ -526,11 +503,9 @@ export class DevicesService implements Mobile.IDevicesService {
 				isInstalled,
 				isLiveSyncSupported
 			};
-		}).future<IAppInstalledInfo>()();
 	}
 
-	private isCompanionAppInstalledOnDevice(deviceIdentifier: string, framework: string): IFuture<IAppInstalledInfo> {
-		return ((): IAppInstalledInfo => {
+	private async isCompanionAppInstalledOnDevice(deviceIdentifier: string, framework: string): Promise<IAppInstalledInfo> {
 			let isInstalled = false,
 				isLiveSyncSupported = false,
 				device = this.getDeviceByIdentifier(deviceIdentifier),
@@ -548,7 +523,6 @@ export class DevicesService implements Mobile.IDevicesService {
 				isInstalled,
 				isLiveSyncSupported
 			};
-		}).future<IAppInstalledInfo>()();
 	}
 
 	private getDeviceDetectionIntervalFuture(): IFuture<void> {

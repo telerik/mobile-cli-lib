@@ -5,13 +5,11 @@ export class ListFilesCommand implements ICommand {
 
 	allowedParameters: ICommandParameter[] = [this.$stringParameter];
 
-	public execute(args: string[]): IFuture<void> {
-		return (() => {
+	public async execute(args: string[]): Promise<void> {
 			this.$devicesService.initialize({ deviceId: this.$options.device, skipInferPlatform: true }).wait();
 
 			let action = (device: Mobile.IDevice) =>  { return (() => device.fileSystem.listFiles(args[0]).wait()).future<void>()(); };
 			this.$devicesService.execute(action).wait();
-		}).future<void>()();
 	}
 }
 $injector.registerCommand("device|list-files", ListFilesCommand);

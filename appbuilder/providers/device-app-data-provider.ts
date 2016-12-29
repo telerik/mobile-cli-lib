@@ -41,20 +41,16 @@ export class AndroidAppIdentifier extends AppBuilderDeviceAppDataBase implements
 		return hostUri;
 	}
 
-	public isLiveSyncSupported(): IFuture<boolean> {
-		return (() => {
+	public async isLiveSyncSupported(): Promise<boolean> {
 			return super.isLiveSyncSupported().wait() && this.getLiveSyncVersion().wait() !== 0;
-		}).future<boolean>()();
 	}
 
-	private getLiveSyncVersion(): IFuture<number> {
-		return (() => {
+	private async getLiveSyncVersion(): Promise<number> {
 			if (!this._liveSyncVersion) {
 				this._liveSyncVersion = (<Mobile.IAndroidDevice>this.device).adb.sendBroadcastToDevice(LiveSyncConstants.CHECK_LIVESYNC_INTENT_NAME, { "app-id": this.appIdentifier }).wait();
 			}
 
 			return this._liveSyncVersion;
-		}).future<number>()();
 	}
 }
 

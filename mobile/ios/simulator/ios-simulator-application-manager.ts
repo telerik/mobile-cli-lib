@@ -23,8 +23,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 
 	// TODO: Remove IFuture, reason: readDirectory - cannot until android and iOS implementatios have async calls.
 	@hook('install')
-	public installApplication(packageFilePath: string): IFuture<void> {
-		return (() => {
+	public async installApplication(packageFilePath: string): Promise<void> {
 			if (this.$fs.exists(packageFilePath) && path.extname(packageFilePath) === ".zip") {
 				temp.track();
 				let dir = temp.mkdirSync("simulatorPackage");
@@ -36,15 +35,13 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 			}
 
 			this.iosSim.installApplication(this.identifier, packageFilePath).wait();
-		}).future<void>()();
 	}
 
 	public uninstallApplication(appIdentifier: string): IFuture<void> {
 		return this.iosSim.uninstallApplication(this.identifier, appIdentifier);
 	}
 
-	public startApplication(appIdentifier: string): IFuture<void> {
-		return (() => {
+	public async startApplication(appIdentifier: string): Promise<void> {
 			let launchResult = this.iosSim.startApplication(this.identifier, appIdentifier).wait();
 
 			if (!this.$options.justlaunch) {
@@ -52,8 +49,6 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 				this.$deviceLogProvider.setApplictionPidForDevice(this.identifier, pid);
 				this.$iOSSimulatorLogProvider.startLogProcess(this.identifier);
 			}
-
-		}).future<void>()();
 	}
 
 	public stopApplication(cfBundleExecutable: string): IFuture<void> {
@@ -64,8 +59,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		return true;
 	}
 
-	public getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo> {
-		return ((): Mobile.IApplicationInfo => {
+	public async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
 			let result: Mobile.IApplicationInfo = null,
 				plistContent = this.getParsedPlistContent(applicationIdentifier).wait();
 
@@ -78,18 +72,15 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 			}
 
 			return result;
-		}).future<Mobile.IApplicationInfo>()();
 	}
 
-	public isLiveSyncSupported(appIdentifier: string): IFuture<boolean> {
-		return ((): boolean => {
+	public async isLiveSyncSupported(appIdentifier: string): Promise<boolean> {
 			let plistContent = this.getParsedPlistContent(appIdentifier).wait();
 			if (plistContent) {
 				return !!plistContent && !!plistContent.IceniumLiveSyncEnabled;
 			}
 
 			return false;
-		}).future<boolean>()();
 	}
 
 	private getParsedPlistContent(appIdentifier: string): any {

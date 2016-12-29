@@ -21,8 +21,7 @@ export class DeviceEmitter extends EventEmitter {
 		return this._companionAppIdentifiers;
 	}
 
-	public initialize(): IFuture<void> {
-		return (() => {
+	public async initialize(): Promise<void> {
 			try {
 				this.$androidDeviceDiscovery.ensureAdbServerStarted().wait();
 			} catch(err) {
@@ -64,7 +63,6 @@ export class DeviceEmitter extends EventEmitter {
 			this.$deviceLogProvider.on("data", (identifier: string, data: any) => {
 				this.emit('deviceLogData', identifier, data.toString());
 			});
-		}).future<void>()();
 	}
 
 	private attachApplicationChangedHandlers(device: Mobile.IDevice): void {

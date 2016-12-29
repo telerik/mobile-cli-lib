@@ -20,19 +20,16 @@ export class NpmRegistryPluginsSource extends PluginsSourceBase implements IPlug
 		return Future.fromResult(page === 1 ? this.plugins : null);
 	}
 
-	protected initializeCore(projectDir: string, keywords: string[]): IFuture<void> {
-		return (() => {
+	protected async initializeCore(projectDir: string, keywords: string[]): Promise<void> {
 			let plugin = this.getPluginFromNpmRegistry(keywords[0]).wait();
 			this.plugins = plugin ? [plugin] : null;
-		}).future<void>()();
 	}
 
 	private prepareScopedPluginName(plugin: string): string {
 		return plugin.replace("/", "%2F");
 	}
 
-	private getPluginFromNpmRegistry(plugin: string): IFuture<IBasicPluginInformation> {
-		return ((): IBasicPluginInformation => {
+	private async getPluginFromNpmRegistry(plugin: string): Promise<IBasicPluginInformation> {
 			let dependencyInfo = this.$npmService.getDependencyInformation(plugin);
 
 			let pluginName = this.$npmService.isScopedDependency(plugin) ? this.prepareScopedPluginName(dependencyInfo.name) : dependencyInfo.name;
@@ -45,6 +42,5 @@ export class NpmRegistryPluginsSource extends PluginsSourceBase implements IPlug
 
 			result.author = (result.author && result.author.name) || result.author;
 			return result;
-		}).future<IBasicPluginInformation>()();
 	}
 }

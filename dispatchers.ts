@@ -10,8 +10,7 @@ export class CommandDispatcher implements ICommandDispatcher {
 		private $options: ICommonOptions,
 		private $fs: IFileSystem) { }
 
-	public dispatchCommand(): IFuture<void> {
-		return(() => {
+	public async dispatchCommand(): Promise<void> {
 			if (this.$options.version) {
 				return this.printVersion();
 			}
@@ -39,7 +38,6 @@ export class CommandDispatcher implements ICommandDispatcher {
 			this.$cancellation.begin("cli").wait();
 
 			this.$commandsService.tryExecuteCommand(commandName, commandArguments).wait();
-		}).future<void>()();
 	}
 
 	public completeCommand(): IFuture<boolean> {

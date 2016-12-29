@@ -10,8 +10,7 @@ export class AppBuilderAndroidLiveSyncService extends AndroidLiveSyncService imp
 			super(_device, $fs, $mobileHelper);
 		}
 
-	public refreshApplication(deviceAppData: Mobile.IDeviceAppData): IFuture<void> {
-		return (() => {
+	public async refreshApplication(deviceAppData: Mobile.IDeviceAppData): Promise<void> {
 			let commands = [ this.liveSyncCommands.SyncFilesCommand() ];
 			if(this.$options.watch || this.$options.file) {
 				commands.push(this.liveSyncCommands.RefreshCurrentViewCommand());
@@ -20,11 +19,9 @@ export class AppBuilderAndroidLiveSyncService extends AndroidLiveSyncService imp
 			}
 
 			this.livesync(deviceAppData.appIdentifier, deviceAppData.deviceProjectRootPath, commands).wait();
-		}).future<void>()();
 	}
 
-	public removeFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void> {
-		return (() => {
+	public async removeFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
 			if (localToDevicePaths && localToDevicePaths.length) {
 				let deviceProjectRootPath = localToDevicePaths[0].deviceProjectRootPath;
 				let commands =_.map(localToDevicePaths, ldp => {
@@ -36,7 +33,6 @@ export class AppBuilderAndroidLiveSyncService extends AndroidLiveSyncService imp
 				});
 				this.livesync(appIdentifier, deviceProjectRootPath, commands).wait();
 			}
-		}).future<void>()();
 	}
 }
 $injector.register("androidLiveSyncServiceLocator", {factory: AppBuilderAndroidLiveSyncService});

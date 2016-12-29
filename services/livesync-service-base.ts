@@ -30,14 +30,12 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		this.fileHashes = Object.create(null);
 	}
 
-	public sync(data: ILiveSyncData[], filePaths?: string[]): IFuture<void> {
-		return (() => {
+	public async sync(data: ILiveSyncData[], filePaths?: string[]): Promise<void> {
 			this.syncCore(data, filePaths).wait();
 			if (this.$options.watch) {
 				this.$hooksService.executeBeforeHooks('watch').wait();
 				this.partialSync(data, data[0].syncWorkingDirectory);
 			}
-		}).future<void>()();
 	}
 
 	private isFileExcluded(filePath: string, excludedPatterns: string[]): boolean {
@@ -141,13 +139,11 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		this.batch[data.platform].addFile(filePath);
 	}
 
-	private syncRemovedFile(data: ILiveSyncData, filePath: string): IFuture<void> {
-		return (() => {
+	private async syncRemovedFile(data: ILiveSyncData, filePath: string): Promise<void> {
 			let filePathArray = [filePath],
 				deviceFilesAction = this.getSyncRemovedFilesAction(data);
 
 			this.syncCore([data], filePathArray, deviceFilesAction).wait();
-		}).future<void>()();
 	}
 
 	public getSyncRemovedFilesAction(data: ILiveSyncData): (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void> {
@@ -222,8 +218,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		return action;
 	}
 
-	private syncCore(data: ILiveSyncData[], filesToSync: string[], deviceFilesAction?: (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>): IFuture<void> {
-		return (() => {
+	private async syncCore(data: ILiveSyncData[], filesToSync: string[], deviceFilesAction?: (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>): Promise<void> {
 			for (let dataItem of data) {
 				let appIdentifier = dataItem.appIdentifier;
 				let platform = dataItem.platform;
@@ -231,11 +226,9 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 				let action = this.getSyncAction(dataItem, filesToSync, deviceFilesAction, { isForCompanionApp: this.$options.companion, additionalConfigurations: dataItem.additionalConfigurations, configuration: dataItem.configuration, isForDeletedFiles: false });
 				this.$devicesService.execute(action, canExecute).wait();
 			}
-		}).future<void>()();
 	}
 
-	private transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string, isFullSync: boolean): IFuture<void> {
-		return (() => {
+	private async transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string, isFullSync: boolean): Promise<void> {
 			this.$logger.info("Transferring project files...");
 			this.logFilesSyncInformation(localToDevicePaths, "Transferring %s.", this.$logger.trace);
 
@@ -255,7 +248,6 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 			}
 
 			this.logFilesSyncInformation(localToDevicePaths, "Successfully transferred %s.", this.$logger.info);
-		}).future<void>()();
 	}
 
 	private logFilesSyncInformation(localToDevicePaths: Mobile.ILocalToDevicePathData[], message: string, action: Function): void {

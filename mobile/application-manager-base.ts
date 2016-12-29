@@ -11,33 +11,26 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 		super();
 	}
 
-	public reinstallApplication(appIdentifier: string, packageFilePath: string): IFuture<void> {
-		return (() => {
+	public async reinstallApplication(appIdentifier: string, packageFilePath: string): Promise<void> {
 			this.uninstallApplication(appIdentifier).wait();
 			this.installApplication(packageFilePath).wait();
-		}).future<void>()();
 	}
 
-	public restartApplication(appIdentifier: string, bundleExecutable?: string, framework?: string): IFuture<void> {
-		return (() => {
+	public async restartApplication(appIdentifier: string, bundleExecutable?: string, framework?: string): Promise<void> {
 			this.stopApplication(bundleExecutable || appIdentifier).wait();
 			this.startApplication(appIdentifier, framework).wait();
-		}).future<void>()();
 	}
 
-	public isApplicationInstalled(appIdentifier: string): IFuture<boolean> {
-		return (() => {
+	public async isApplicationInstalled(appIdentifier: string): Promise<boolean> {
 			if (!this.lastInstalledAppIdentifiers || !this.lastInstalledAppIdentifiers.length) {
 				this.checkForApplicationUpdates().wait();
 			}
 
 			return _.includes(this.lastInstalledAppIdentifiers, appIdentifier);
-		}).future<boolean>()();
 	}
 
 	private isChecking = false;
-	public checkForApplicationUpdates(): IFuture<void> {
-		return (() => {
+	public async checkForApplicationUpdates(): Promise<void> {
 			// As this method is called on 500ms, but it's execution may last much longer
 			// use locking, so the next executions will not get into the body, while the first one is still working.
 			// In case we do not break the next executions, we'll report each app as newly installed several times.
@@ -60,11 +53,9 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 					this.isChecking = false;
 				}
 			}
-		}).future<void>()();
 	}
 
-	public tryStartApplication(appIdentifier: string, framework?: string): IFuture<void> {
-		return (() => {
+	public async tryStartApplication(appIdentifier: string, framework?: string): Promise<void> {
 			try {
 				if (this.canStartApplication()) {
 					this.startApplication(appIdentifier, framework).wait();
@@ -72,7 +63,6 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 			} catch (err) {
 				this.$logger.trace(`Unable to start application ${appIdentifier}. Error is: ${err.message}`);
 			}
-		}).future<void>()();
 	}
 
 	public abstract isLiveSyncSupported(appIdentifier: string): IFuture<boolean>;
@@ -87,8 +77,7 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 	public abstract getDebuggableApps(): IFuture<Mobile.IDeviceApplicationInformation[]>;
 	public abstract getDebuggableAppViews(appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>>;
 
-	private checkForAvailableDebuggableAppsChanges(): IFuture<void> {
-		return (() => {
+	private async checkForAvailableDebuggableAppsChanges(): Promise<void> {
 			let currentlyAvailableDebuggableApps = this.getDebuggableApps().wait();
 			let previouslyAvailableDebuggableApps = this.lastAvailableDebuggableApps || [];
 
@@ -142,7 +131,5 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 
 				this.lastAvailableDebuggableAppViews[appIdentifier] = currentlyAvailableViews;
 			});
-
-		}).future<void>()();
 	}
 }

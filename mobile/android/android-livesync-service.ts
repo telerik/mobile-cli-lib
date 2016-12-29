@@ -32,12 +32,10 @@ export class AndroidLiveSyncService implements Mobile.IAndroidLiveSyncService {
 		return LiveSyncCommands;
 	}
 
-	public livesync(appIdentifier: string, liveSyncRoot: string, commands: string[]): IFuture<void> {
-		return (() => {
+	public async livesync(appIdentifier: string, liveSyncRoot: string, commands: string[]): Promise<void> {
 			let commandsFileDevicePath = this.$mobileHelper.buildDevicePath(liveSyncRoot, AndroidLiveSyncService.COMMANDS_FILE);
 			this.createCommandsFileOnDevice(commandsFileDevicePath, commands).wait();
 			this.device.adb.sendBroadcastToDevice(AndroidLiveSyncService.LIVESYNC_BROADCAST_NAME, { "app-id": appIdentifier }).wait();
-		}).future<void>()();
 	}
 
 	public createCommandsFileOnDevice(commandsFileDevicePath: string, commands: string[]): IFuture<void> {

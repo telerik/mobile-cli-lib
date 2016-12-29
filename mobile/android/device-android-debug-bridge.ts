@@ -20,8 +20,7 @@ export class DeviceAndroidDebugBridge extends AndroidDebugBridge implements Mobi
 		return super.executeCommand(args, options);
 	}
 
-	public sendBroadcastToDevice(action: string, extras?: IStringDictionary): IFuture<number> {
-		return (() => {
+	public async sendBroadcastToDevice(action: string, extras?: IStringDictionary): Promise<number> {
 			extras = extras || {};
 			let broadcastCommand = ["am", "broadcast", "-a", `${action}`];
 			_.each(extras, (value, key) => broadcastCommand.push("-e", key, value));
@@ -35,7 +34,6 @@ export class DeviceAndroidDebugBridge extends AndroidDebugBridge implements Mobi
 			}
 
 			this.$errors.failWithoutHelp("Unable to broadcast to android device:\n%s", result);
-		}).future<number>()();
 	}
 
 	protected composeCommand(params: string[]): IFuture<IComposeCommandResult> {

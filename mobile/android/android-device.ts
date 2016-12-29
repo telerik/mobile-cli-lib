@@ -99,8 +99,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		return this.deviceInfo.type === "Emulator";
 	}
 
-	public getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo> {
-		return ((): Mobile.IApplicationInfo => {
+	public async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
 			let files = this.fileSystem.listFiles(constants.LiveSyncConstants.ANDROID_FILES_PATH, applicationIdentifier).wait(),
 				androidFilesMatch = files.match(/(\S+)\.abproject/),
 				result: Mobile.IApplicationInfo = null;
@@ -114,7 +113,6 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 			}
 
 			return result;
-		}).future<Mobile.IApplicationInfo>()();
 	}
 
 	public openDeviceLogStream(): void {
@@ -123,8 +121,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		}
 	}
 
-	private getDeviceDetails(shellCommandArgs: string[]): IFuture<IAndroidDeviceDetails> {
-		return (() => {
+	private async getDeviceDetails(shellCommandArgs: string[]): Promise<IAndroidDeviceDetails> {
 			let details = this.adb.executeShellCommand(shellCommandArgs).wait();
 
 			let parsedDetails: any = {};
@@ -140,7 +137,6 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 
 			this.$logger.trace(parsedDetails);
 			return parsedDetails;
-		}).future<IAndroidDeviceDetails>()();
 	}
 
 	private getIsTablet(details: any): boolean {
@@ -148,14 +144,12 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		return details && ( _.startsWith(details.release, "3.") || _.includes((details.characteristics || '').toLowerCase(), "tablet") );
 	}
 
-	private getType(): IFuture<string> {
-		return (() => {
+	private async getType(): Promise<string> {
 			let runningEmulators = this.$androidEmulatorServices.getAllRunningEmulators().wait();
 			if (_.includes(runningEmulators, this.identifier)) {
 				return "Emulator";
 			}
 
 			return "Device";
-		}).future<string>()();
 	}
 }

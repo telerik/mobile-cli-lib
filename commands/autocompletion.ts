@@ -9,8 +9,7 @@ export class AutoCompleteCommand implements ICommand {
 	public disableAnalytics = true;
 	public allowedParameters: ICommandParameter[] = [];
 
-	public execute(args: string[]): IFuture<void> {
-		return (() => {
+	public async execute(args: string[]): Promise<void> {
 			if (helpers.isInteractive()) {
 				if(this.$autoCompletionService.isAutoCompletionEnabled()) {
 					if(this.$autoCompletionService.isObsoleteAutoCompletionEnabled()) {
@@ -32,7 +31,6 @@ export class AutoCompleteCommand implements ICommand {
 					}
 				}
 			}
-		}).future<void>()();
 	}
 }
 $injector.registerCommand("autocomplete|*default", AutoCompleteCommand);
@@ -45,14 +43,12 @@ export class DisableAutoCompleteCommand implements ICommand {
 	public disableAnalytics = true;
 	public allowedParameters: ICommandParameter[] = [];
 
-	public execute(args: string[]): IFuture<void> {
-		return (() => {
+	public async execute(args: string[]): Promise<void> {
 			if(this.$autoCompletionService.isAutoCompletionEnabled()) {
 				this.$autoCompletionService.disableAutoCompletion();
 			} else {
 				this.$logger.info("Autocompletion is already disabled.");
 			}
-		}).future<void>()();
 	}
 }
 $injector.registerCommand("autocomplete|disable", DisableAutoCompleteCommand);
@@ -64,14 +60,12 @@ export class EnableAutoCompleteCommand implements ICommand {
 	public disableAnalytics = true;
 	public allowedParameters: ICommandParameter[] = [];
 
-	public execute(args: string[]): IFuture<void> {
-		return (() => {
+	public async execute(args: string[]): Promise<void> {
 			if(this.$autoCompletionService.isAutoCompletionEnabled()) {
 				this.$logger.info("Autocompletion is already enabled.");
 			} else {
 				this.$autoCompletionService.enableAutoCompletion().wait();
 			}
-		}).future<void>()();
 	}
 }
 $injector.registerCommand("autocomplete|enable", EnableAutoCompleteCommand);
@@ -83,14 +77,12 @@ export class AutoCompleteStatusCommand implements ICommand {
 	public disableAnalytics = true;
 	public allowedParameters: ICommandParameter[] = [];
 
-	public execute(args: string[]): IFuture<void> {
-		return (() => {
+	public async execute(args: string[]): Promise<void> {
 			if(this.$autoCompletionService.isAutoCompletionEnabled()) {
 				this.$logger.info("Autocompletion is enabled.");
 			} else {
 				this.$logger.info("Autocompletion is disabled.");
 			}
-		}).future<void>()();
 	}
 }
 $injector.registerCommand("autocomplete|status", AutoCompleteStatusCommand);

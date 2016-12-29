@@ -10,8 +10,7 @@ export class MessageContractGenerator implements IServiceContractGenerator {
 		this.pendingModels = {};
 	}
 
-	public generate(): IFuture<IServiceContractClientCode> {
-		return ((): IServiceContractClientCode => {
+	public async generate(): Promise<IServiceContractClientCode> {
 			let interfacesFile= new Block();
 			let implementationsFile = new Block();
 
@@ -48,7 +47,6 @@ export class MessageContractGenerator implements IServiceContractGenerator {
 				interfaceFile: codePrinter.composeBlock(interfacesFile),
 				implementationFile: codePrinter.composeBlock(implementationsFile)
 			};
-		}).future<IServiceContractClientCode>()();
 	}
 
 	private generateFileRecursive(jsonContents: any, propertyValue: string, block: CodeGeneration.IBlock, depth: number, options: {shouldGenerateInterface: boolean}): void {

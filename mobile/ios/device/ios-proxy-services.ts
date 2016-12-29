@@ -179,10 +179,8 @@ export class AfcClient extends AfcBase implements Mobile.IAfcClient {
 		}
 	}
 
-	public transferPackage(localFilePath: string, devicePath: string): IFuture<void> {
-		return (() => {
+	public async transferPackage(localFilePath: string, devicePath: string): Promise<void> {
 			this.transfer(localFilePath, devicePath).wait();
-		}).future<void>()();
 	}
 
 	public deleteFile(devicePath: string): void {
@@ -190,8 +188,7 @@ export class AfcClient extends AfcBase implements Mobile.IAfcClient {
 		this.$logger.trace("Removing device file '%s', result: %s", devicePath, removeResult.toString());
 	}
 
-	public transfer(localFilePath: string, devicePath: string): IFuture<void> {
-		return(() => {
+	public async transfer(localFilePath: string, devicePath: string): Promise<void> {
 			let future = new Future<void>();
 			try {
 				this.ensureDevicePathExist(path.dirname(devicePath));
@@ -242,7 +239,6 @@ export class AfcClient extends AfcBase implements Mobile.IAfcClient {
 				}
 			}
 			future.wait();
-		}).future<void>()();
 	}
 
 	private ensureDevicePathExist(deviceDirPath: string): void {
@@ -266,8 +262,7 @@ export class InstallationProxyClient {
 		private $injector: IInjector,
 		private $errors: IErrors) { }
 
-	public deployApplication(packageFile: string) : IFuture<void>  {
-		return(() => {
+	public async deployApplication(packageFile: string) : Promise<void> {
 			let service = this.device.startService(MobileServices.APPLE_FILE_CONNECTION);
 			let afcClient = this.$injector.resolve(AfcClient, {service: service});
 			let devicePath = path.join("PublicStaging", path.basename(packageFile));
@@ -280,11 +275,9 @@ export class InstallationProxyClient {
 				PackagePath: helpers.fromWindowsRelativePathToUnix(devicePath)
 			});
 			this.plistService.receiveMessage().wait();
-		}).future<void>()();
 	}
 
-	public sendMessage(message: any): IFuture<any> {
-		return (() => {
+	public async sendMessage(message: any): Promise<any> {
 			this.plistService = this.getPlistService();
 			this.plistService.sendMessage(message);
 
@@ -294,7 +287,6 @@ export class InstallationProxyClient {
 			}
 
 			return response;
-		}).future<any>()();
 	}
 
 	public closeSocket() {

@@ -13,8 +13,7 @@ export class PostInstallCommand implements ICommand {
 	public disableAnalytics = true;
 	public allowedParameters: ICommandParameter[] = [];
 
-	public execute(args: string[]): IFuture<void> {
-		return (() => {
+	public async execute(args: string[]): Promise<void> {
 			if(process.platform !== "win32") {
 				// when running under 'sudo' we create a working dir with wrong owner (root) and
 				// it is no longer accessible for the user initiating the installation
@@ -38,7 +37,6 @@ export class PostInstallCommand implements ICommand {
 				this.$logger.out();
 				this.$logger.printMarkdown(this.$staticConfig.INSTALLATION_SUCCESS_MESSAGE);
 			}
-		}).future<void>()();
 	}
 }
 $injector.registerCommand("dev-post-install", PostInstallCommand);

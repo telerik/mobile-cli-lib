@@ -50,8 +50,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		return this.adb.executeCommand(["push", localFilePath, deviceFilePath]);
 	}
 
-	public transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void> {
-		return (() => {
+	public async transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
 			_(localToDevicePaths)
 				.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).isFile())
 				.each(localToDevicePathData =>
@@ -69,11 +68,9 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 			if (!deviceHashService.updateHashes(localToDevicePaths).wait()) {
 				this.$logger.trace("Unable to find hash file on device. The next livesync command will create it.");
 			}
-		}).future<void>()();
 	}
 
-	public transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): IFuture<void> {
-		return (() => {
+	public async transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): Promise<void> {
 			let devicePaths: string[] = [],
 				currentShasums: IStringDictionary = {};
 
@@ -119,11 +116,9 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 				this.adb.executeShellCommand([commandsDeviceFilePath]).wait();
 			}
 			deviceHashService.uploadHashFileToDevice(currentShasums).wait();
-		}).future<void>()();
 	}
 
-	public transferFile(localPath: string, devicePath: string): IFuture<void> {
-		return (() => {
+	public async transferFile(localPath: string, devicePath: string): Promise<void> {
 			this.$logger.trace(`Transfering ${localPath} to ${devicePath}`);
 			let stats = this.$fs.getFsStats(localPath);
 			if (stats.isDirectory()) {
@@ -131,11 +126,9 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 			} else {
 				this.adb.executeCommand(["push", localPath, devicePath]).wait();
 			}
-		}).future<void>()();
 	}
 
-	public createFileOnDevice(deviceFilePath: string, fileContent: string): IFuture<void> {
-		return (() => {
+	public async createFileOnDevice(deviceFilePath: string, fileContent: string): Promise<void> {
 			let hostTmpDir = this.getTempDir();
 			let commandsFileHostPath = path.join(hostTmpDir, "temp.commands.file");
 			this.$fs.writeFile(commandsFileHostPath, fileContent);
@@ -143,7 +136,6 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 			// copy it to the device
 			this.transferFile(commandsFileHostPath, deviceFilePath).wait();
 			this.adb.executeShellCommand(["chmod", "0777", deviceFilePath]).wait();
-		}).future<void>()();
 	}
 
 	private getTempDir(): string {

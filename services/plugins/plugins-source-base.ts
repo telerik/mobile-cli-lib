@@ -10,8 +10,7 @@ export abstract class PluginsSourceBase implements IPluginsSource {
 	constructor(protected $progressIndicator: IProgressIndicator,
 		protected $logger: ILogger) { }
 
-	public initialize(projectDir: string, keywords: string[]): IFuture<void> {
-		return (() => {
+	public async initialize(projectDir: string, keywords: string[]): Promise<void> {
 			if (this._isInitialized) {
 				return;
 			}
@@ -22,7 +21,6 @@ export abstract class PluginsSourceBase implements IPluginsSource {
 
 			this.$logger.printInfoMessageOnSameLine(this.progressIndicatorMessage);
 			this.$progressIndicator.showProgressIndicator(this.initializeCore(projectDir, keywords), 2000).wait();
-		}).future<void>()();
 	}
 
 	public hasPlugins(): boolean {

@@ -9,8 +9,7 @@ export class RunApplicationOnDeviceCommand implements ICommand {
 
 	allowedParameters: ICommandParameter[] = [this.$stringParameter];
 
-	public execute(args: string[]): IFuture<void> {
-		return (() => {
+	public async execute(args: string[]): Promise<void> {
 			this.$devicesService.initialize({ deviceId: this.$options.device, skipInferPlatform: true }).wait();
 
 			if (this.$devicesService.deviceCount > 1) {
@@ -18,7 +17,6 @@ export class RunApplicationOnDeviceCommand implements ICommand {
 			}
 
 			this.$devicesService.execute((device: Mobile.IDevice) => device.applicationManager.startApplication(args[0])).wait();
-		}).future<void>()();
 	}
 }
 

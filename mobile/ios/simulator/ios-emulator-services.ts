@@ -35,10 +35,8 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		return this.$iOSSimResolver.iOSSim.startSimulator();
 	}
 
-	public runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): IFuture<any> {
-		return (() => {
+	public async runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): Promise<any> {
 			return this.runApplicationOnEmulatorCore(app, emulatorOptions);
-		}).future<any>()();
 	}
 
 	public postDarwinNotification(notification: string): IFuture<void> {

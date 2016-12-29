@@ -9,8 +9,7 @@ export class XcodeSelectService implements IXcodeSelectService {
 		private $injector: IInjector) {
 	}
 
-	public getDeveloperDirectoryPath(): IFuture<string> {
-		return (() => {
+	public async getDeveloperDirectoryPath(): Promise<string> {
 			if (!this.$hostInfo.isDarwin) {
 				this.$errors.failWithoutHelp("xcode-select is only available on Mac OS X.");
 			}
@@ -23,17 +22,13 @@ export class XcodeSelectService implements IXcodeSelectService {
 			}
 
 			return result;
-		}).future<string>()();
 	}
 
-	public getContentsDirectoryPath(): IFuture<string> {
-		return (() => {
+	public async getContentsDirectoryPath(): Promise<string> {
 			return path.join(this.getDeveloperDirectoryPath().wait(), "..");
-		}).future<string>()();
 	}
 
-	public getXcodeVersion(): IFuture<IVersionData> {
-		return ((): IVersionData => {
+	public async getXcodeVersion(): Promise<IVersionData> {
 			if (!this._xcodeVerionCache) {
 				let sysInfoBase = this.$injector.resolve("sysInfoBase");
 				let xcodeVer = sysInfoBase.getXCodeVersion().wait(),
@@ -49,7 +44,6 @@ export class XcodeSelectService implements IXcodeSelectService {
 			}
 
 			return this._xcodeVerionCache;
-		}).future<IVersionData>()();
 	}
 }
 

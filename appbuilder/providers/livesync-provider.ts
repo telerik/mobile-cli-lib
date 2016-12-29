@@ -6,10 +6,8 @@ export class LiveSyncProvider extends AppBuilderLiveSyncProviderBase {
 			super($androidLiveSyncServiceLocator, $iosLiveSyncServiceLocator);
 		}
 
-	public buildForDevice(device: Mobile.IDevice): IFuture<string> {
-		return (() => {
+	public async buildForDevice(device: Mobile.IDevice): Promise<string> {
 			throw new Error(`Application is not installed on device ${device.deviceInfo.identifier}. Cannot LiveSync changes without installing the application before that.`);
-		}).future<string>()();
 	}
 }
 $injector.register("liveSyncProvider", LiveSyncProvider);

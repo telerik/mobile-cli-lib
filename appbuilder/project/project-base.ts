@@ -77,8 +77,7 @@ export abstract class ProjectBase implements Project.IProjectBase {
 		};
 	}
 
-	public getAppIdentifierForPlatform(platform?: string): IFuture<string> {
-		return ((): string => {
+	public async getAppIdentifierForPlatform(platform?: string): Promise<string> {
 			if (!this._platformSpecificAppIdentifier) {
 				this._platformSpecificAppIdentifier = this.projectData.AppIdentifier;
 
@@ -97,13 +96,10 @@ export abstract class ProjectBase implements Project.IProjectBase {
 			}
 
 			return this._platformSpecificAppIdentifier;
-		}).future<string>()();
 	}
 
-	public validateAppIdentifier(platform: string): IFuture<void> {
-		return (() => {
+	public async validateAppIdentifier(platform: string): Promise<void> {
 			this.getAppIdentifierForPlatform(platform).wait();
-		}).future<void>()();
 	}
 
 	protected abstract validate(): void;

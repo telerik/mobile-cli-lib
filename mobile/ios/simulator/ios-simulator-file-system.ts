@@ -30,10 +30,8 @@ export class IOSSimulatorFileSystem implements Mobile.IDeviceFileSystem {
 		shelljs.rm("-rf", deviceFilePath);
 	}
 
-	public transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void> {
-		return (() => {
+	public async transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
 			_.each(localToDevicePaths, localToDevicePathData => this.transferFile(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()).wait());
-		}).future<void>()();
 	}
 
 	public transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): IFuture<void> {
@@ -42,14 +40,12 @@ export class IOSSimulatorFileSystem implements Mobile.IDeviceFileSystem {
 		return Future.fromResult(shelljs.cp("-Rf", path.join(projectFilesPath, "*"), destinationPath));
 	}
 
-	public transferFile(localFilePath: string, deviceFilePath: string): IFuture<void> {
-		return (() => {
+	public async transferFile(localFilePath: string, deviceFilePath: string): Promise<void> {
 			this.$logger.trace(`Transferring from ${localFilePath} to ${deviceFilePath}`);
 			if (this.$fs.getFsStats(localFilePath).isDirectory()) {
 				shelljs.mkdir(deviceFilePath);
 			} else {
 				shelljs.cp("-f", localFilePath, deviceFilePath);
 			}
-		}).future<void>()();
 	}
 }

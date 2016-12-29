@@ -33,8 +33,7 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 		return _.map(deviceDescriptors, deviceDescriptor => this.liveSyncOnDevice(deviceDescriptor, filePaths, { isForDeletedFiles: true }));
 	}
 
-	private liveSyncOnDevice(deviceDescriptor: IDeviceLiveSyncInfo, filePaths: string[], liveSyncOptions?: ILiveSyncDeletionOptions): IFuture<IDeviceLiveSyncResult> {
-		return ((): IDeviceLiveSyncResult => {
+	private async liveSyncOnDevice(deviceDescriptor: IDeviceLiveSyncInfo, filePaths: string[], liveSyncOptions?: ILiveSyncDeletionOptions): Promise<IDeviceLiveSyncResult> {
 			let isForDeletedFiles = liveSyncOptions && liveSyncOptions.isForDeletedFiles;
 
 			this.$devicesService.stopDeviceDetectionInterval().wait();
@@ -94,11 +93,9 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 			}
 
 			return result;
-		}).future<IDeviceLiveSyncResult>()();
 	}
 
-	private liveSyncCore(livesyncData: ILiveSyncData, device: Mobile.IDevice, appIdentifier: string, canExecuteAction: (dev: Mobile.IDevice) => boolean, liveSyncOptions: ILiveSyncOptions, filePaths: string[]): IFuture<ILiveSyncOperationResult> {
-		return (() => {
+	private async liveSyncCore(livesyncData: ILiveSyncData, device: Mobile.IDevice, appIdentifier: string, canExecuteAction: (dev: Mobile.IDevice) => boolean, liveSyncOptions: ILiveSyncOptions, filePaths: string[]): Promise<ILiveSyncOperationResult> {
 			let liveSyncOperationResult: ILiveSyncOperationResult = {
 				isResolved: false
 			};
@@ -125,7 +122,6 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 			}
 
 			return liveSyncOperationResult;
-		}).future<ILiveSyncOperationResult>()();
 	}
 }
 $injector.register("liveSyncService", ProtonLiveSyncService);

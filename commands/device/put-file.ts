@@ -5,13 +5,11 @@ export class PutFileCommand implements ICommand {
 
 	allowedParameters: ICommandParameter[] = [this.$stringParameter, this.$stringParameter];
 
-	public execute(args: string[]): IFuture<void> {
-		return (() => {
+	public async execute(args: string[]): Promise<void> {
 			this.$devicesService.initialize({ deviceId: this.$options.device, skipInferPlatform: true }).wait();
 
 			let action = (device: Mobile.IDevice) =>  { return (() => device.fileSystem.putFile(args[0], args[1]).wait()).future<void>()(); };
 			this.$devicesService.execute(action).wait();
-		}).future<void>()();
 	}
 }
 $injector.registerCommand("device|put-file", PutFileCommand);

@@ -15,8 +15,7 @@ export class Queue<T> implements IQueue<T> {
 		}
 	}
 
-	public dequeue(): IFuture<T> {
-		return (() => {
+	public async dequeue(): Promise<T> {
 			if (!this.items.length) {
 				this.future = new Future<void>();
 				this.future.wait();
@@ -24,6 +23,5 @@ export class Queue<T> implements IQueue<T> {
 			}
 
 			return this.items.pop();
-		}).future<T>()();
 	}
 }

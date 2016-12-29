@@ -11,8 +11,7 @@ export class PrintPluginsService implements IPrintPluginsService {
 		this._page = 1;
 	}
 
-	public printPlugins(pluginsSource: IPluginsSource, options: IPrintPluginsOptions): IFuture<void> {
-		return (() => {
+	public async printPlugins(pluginsSource: IPluginsSource, options: IPrintPluginsOptions): Promise<void> {
 			if (!pluginsSource.hasPlugins()) {
 				this.$logger.warn("No plugins found.");
 				return;
@@ -46,7 +45,6 @@ export class PrintPluginsService implements IPrintPluginsService {
 					return;
 				}
 			} while (shouldDisplayMorePlugins);
-		}).future<void>()();
 	}
 
 	private displayTableWithPlugins(plugins: IBasicPluginInformation[]): void {

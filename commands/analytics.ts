@@ -10,8 +10,7 @@ class AnalyticsCommand implements ICommand {
 	public allowedParameters = [new AnalyticsCommandParameter(this.$errors)];
 	public disableAnalytics = true;
 
-	public execute(args: string[]): IFuture<void> {
-		return(() => {
+	public async execute(args: string[]): Promise<void> {
 			let arg = args[0] || "";
 			switch(arg.toLowerCase()) {
 				case "enable":
@@ -27,7 +26,6 @@ class AnalyticsCommand implements ICommand {
 					this.$logger.out(this.$analyticsService.getStatusMessage(this.settingName, this.$options.json, this.humanReadableSettingName).wait());
 					break;
 			}
-		}).future<void>()();
 	}
 }
 

@@ -22,13 +22,11 @@ export class SyncBatch {
 		return this.syncQueue.length > 0;
 	}
 
-	public syncFiles(syncAction: (filesToSync: string[]) => IFuture<void>): IFuture<void> {
-		return (() => {
+	public async syncFiles(syncAction: (filesToSync: string[]) => IFuture<void>): Promise<void> {
 			if (this.filesToSync.length > 0) {
 				syncAction(this.filesToSync).wait();
 				this.reset();
 			}
-		}).future<void>()();
 	}
 
 	public addFile(file: string): void {

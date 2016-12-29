@@ -54,8 +54,7 @@ export class HostInfo implements IHostInfo {
 		}
 	}
 
-	public isDotNet40Installed(message?: string) : IFuture<boolean> {
-		return (() => {
+	public async isDotNet40Installed(message?: string) : Promise<boolean> {
 			if (this.isWindows) {
 				try {
 					this.dotNetVersion().wait();
@@ -66,7 +65,6 @@ export class HostInfo implements IHostInfo {
 			} else {
 				return false;
 			}
-		}).future<boolean>()();
 	}
 }
 $injector.register("hostInfo", HostInfo);

@@ -24,8 +24,7 @@ export class AppBuilderDeviceAppDataBase extends DeviceAppDataBase implements IL
 		return `You can't LiveSync on device with id ${this.device.deviceInfo.identifier}! Deploy the app with LiveSync enabled and wait for the initial start up before LiveSyncing.`;
 	}
 
-	public isLiveSyncSupported(): IFuture<boolean> {
-		return (() => {
+	public async isLiveSyncSupported(): Promise<boolean> {
 			let isApplicationInstalled = this.device.applicationManager.isApplicationInstalled(this.appIdentifier).wait();
 
 			if (!isApplicationInstalled) {
@@ -35,6 +34,5 @@ export class AppBuilderDeviceAppDataBase extends DeviceAppDataBase implements IL
 			}
 
 			return this.device.applicationManager.isLiveSyncSupported(this.appIdentifier).wait();
-		}).future<boolean>()();
 	}
 }

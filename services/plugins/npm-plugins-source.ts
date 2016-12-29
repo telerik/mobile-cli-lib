@@ -21,9 +21,7 @@ export class NpmPluginsSource extends PluginsSourceBase implements IPluginsSourc
 		return Future.fromResult(_.slice(this.plugins, skip, skip + count));
 	}
 
-	protected initializeCore(projectDir: string, keywords: string[]): IFuture<void> {
-		return (() => {
+	protected async initializeCore(projectDir: string, keywords: string[]): Promise<void> {
 			this.plugins = this.$npmService.search(this.projectDir, keywords).wait();
-		}).future<void>()();
 	}
 }

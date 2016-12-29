@@ -62,8 +62,7 @@ export class HooksService implements IHooksService {
 		return this.executeHooks(afterHookName, traceMessage, hookArguments);
 	}
 
-	private executeHooks(hookName: string, traceMessage: string, hookArguments?: IDictionary<any>): IFuture<void> {
-		return (() => {
+	private async executeHooks(hookName: string, traceMessage: string, hookArguments?: IDictionary<any>): Promise<void> {
 			if (this.$config.DISABLE_HOOKS || !this.$options.hooks) {
 				return;
 			}
@@ -82,11 +81,9 @@ export class HooksService implements IHooksService {
 				this.$logger.trace("Failed during hook execution.");
 				this.$errors.failWithoutHelp(err.message);
 			}
-		}).future<void>()();
 	}
 
-	private executeHooksInDirectory(directoryPath: string, hookName: string, hookArguments?: IDictionary<any>): IFuture<void> {
-		return (() => {
+	private async executeHooksInDirectory(directoryPath: string, hookName: string, hookArguments?: IDictionary<any>): Promise<void> {
 			let hooks = this.getHooksByName(directoryPath, hookName);
 			hooks.forEach(hook => {
 				this.$logger.info("Executing %s hook from %s", hookName, hook.fullPath);
@@ -140,7 +137,6 @@ export class HooksService implements IHooksService {
 					}
 				}
 			});
-		}).future<void>()();
 	}
 
 	private getHooksByName(directoryPath: string, hookName: string): IHook[] {

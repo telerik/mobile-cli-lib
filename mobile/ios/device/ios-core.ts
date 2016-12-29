@@ -699,8 +699,7 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 		});
 	}
 
-	public receiveMessage(): IFuture<Mobile.IiOSSocketResponseData | Mobile.IiOSSocketResponseData[]> {
-		return (() => {
+	public async receiveMessage(): Promise<Mobile.IiOSSocketResponseData | Mobile.IiOSSocketResponseData[]> {
 			if (this.format === CoreTypes.kCFPropertyListXMLFormat_v1_0) {
 				let message = this.receiveMessageCore();
 				return plist.parse(message.toString());
@@ -711,7 +710,6 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 			}
 
 			return null;
-		}).future<Mobile.IiOSSocketResponseData>()();
 	}
 
 	public sendMessage(data: any): void {
@@ -1184,8 +1182,7 @@ export class GDBServer implements Mobile.IGDBServer {
 		this.socket.on("close", (hadError: boolean) => this.$logger.trace("GDB socket get closed. HadError", hadError.toString()));
 	}
 
-	public init(argv: string[]): IFuture<void> {
-		return (() => {
+	public async init(argv: string[]): Promise<void> {
 			if (!this.isInitilized) {
 				this.awaitResponse("QStartNoAckMode", "+").wait();
 				this.sendCore("+");
@@ -1196,11 +1193,9 @@ export class GDBServer implements Mobile.IGDBServer {
 
 				this.isInitilized = true;
 			}
-		}).future<void>()();
 	}
 
-	public run(argv: string[]): IFuture<void> {
-		return (() => {
+	public async run(argv: string[]): Promise<void> {
 			this.init(argv).wait();
 
 			this.awaitResponse("qLaunchSuccess").wait();
@@ -1221,31 +1216,26 @@ export class GDBServer implements Mobile.IGDBServer {
 					this.sendCore(this.encodeData("vCont;c"));
 				}
 			}
-		}).future<void>()();
 	}
 
-	public kill(argv: string[]): IFuture<void> {
-		return (() => {
+	public async kill(argv: string[]): Promise<void> {
 			this.init(argv).wait();
 
 			this.awaitResponse("\x03", "thread", () => this.sendx03Message()).wait();
 			this.send("k").wait();
-		}).future<void>()();
 	}
 
 	public destroy(): void {
 		this.socket.destroy();
 	}
 
-	private awaitResponse(packet: string, expectedResponse?: string, getResponseAction?: () => IFuture<string>): IFuture<void> {
-		return (() => {
+	private async awaitResponse(packet: string, expectedResponse?: string, getResponseAction?: () => IFuture<string>): Promise<void> {
 			expectedResponse = expectedResponse || this.okResponse;
 			let actualResponse = getResponseAction ? getResponseAction.apply(this, []).wait() : this.send(packet).wait();
 			if (actualResponse.indexOf(expectedResponse) === -1 || _.startsWith(actualResponse, "$E")) {
 				this.$logger.trace(`GDB: actual response: ${actualResponse}, expected response: ${expectedResponse}`);
 				this.$errors.failWithoutHelp(`Unable to send ${packet}.`);
 			}
-		}).future<void>()();
 	}
 
 	private send(packet: string): IFuture<string> {

@@ -6,11 +6,9 @@ export class ProtonStaticConfig extends StaticConfigBase {
 		super($injector);
 	}
 
-	public getAdbFilePath(): IFuture<string> {
-		return (() => {
+	public async getAdbFilePath(): Promise<string> {
 			let value = super.getAdbFilePath().wait();
 			return value.replace("app.asar", "app.asar.unpacked");
-		}).future<string>()();
 	}
 
 	public get PATH_TO_BOOTSTRAP(): string {

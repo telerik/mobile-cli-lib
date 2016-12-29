@@ -111,8 +111,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 		}
 	}
 
-	public enableAutoCompletion(): IFuture<void> {
-		return (() => {
+	public async enableAutoCompletion(): Promise<void> {
 			this.updateCLIShellScript().wait();
 			_.each(this.shellProfiles, shellFile => this.addAutoCompletionToShellScript(shellFile));
 			this.removeObsoleteAutoCompletion();
@@ -120,7 +119,6 @@ export class AutoCompletionService implements IAutoCompletionService {
 			if(this.scriptsOk && this.scriptsUpdated) {
 				this.$logger.out("Restart your shell to enable command auto-completion.");
 			}
-		}).future<void>()();
 	}
 
 	public isObsoleteAutoCompletionEnabled(): boolean {
@@ -197,8 +195,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 		}
 	}
 
-	private updateCLIShellScript(): IFuture<void> {
-		return (() => {
+	private async updateCLIShellScript(): Promise<void> {
 			let filePath = this.cliRunCommandsFile;
 
 			try {
@@ -227,7 +224,6 @@ export class AutoCompletionService implements IAutoCompletionService {
 				this.$logger.trace(err);
 				this.scriptsOk = false;
 			}
-		}).future<void>()();
 	}
 
 	private getHomePath(fileName: string): string {

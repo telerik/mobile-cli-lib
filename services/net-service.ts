@@ -4,8 +4,7 @@ import Future = require("fibers/future");
 export class Net implements INet {
 	constructor(private $logger: ILogger) { }
 
-	public getFreePort(): IFuture<number> {
-		return ((): number => {
+	public async getFreePort(): Promise<number> {
 			let server = net.createServer((sock: string) => { /* empty - noone will connect here */ });
 
 			let createServerFuture = new Future<number>();
@@ -26,7 +25,6 @@ export class Net implements INet {
 			});
 
 			return createServerFuture.wait();
-		}).future<number>()();
 	}
 }
 $injector.register("net", Net);

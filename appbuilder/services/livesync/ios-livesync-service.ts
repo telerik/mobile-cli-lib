@@ -20,8 +20,7 @@ export class IOSLiveSyncService implements IDeviceLiveSyncService {
 		return this._device;
 	}
 
-	public refreshApplication(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void> {
-		return (() => {
+	public async refreshApplication(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
 			if (this.device.isEmulator) {
 				let simulatorLogFilePath = path.join(osenv.home(), `/Library/Developer/CoreSimulator/Devices/${this.device.deviceInfo.identifier}/data/Library/Logs/system.log`);
 				let simulatorLogFileContent = this.$fs.readText(simulatorLogFilePath) || "";
@@ -57,16 +56,12 @@ export class IOSLiveSyncService implements IDeviceLiveSyncService {
 				notificationProxyClient.postNotification(notification);
 				notificationProxyClient.closeSocket();
 			}
-
-		}).future<void>()();
 	}
 
-	public removeFiles(appIdentifier: string, localToDevicePaths:  Mobile.ILocalToDevicePathData[]): IFuture<void> {
-		return (() => {
+	public async removeFiles(appIdentifier: string, localToDevicePaths:  Mobile.ILocalToDevicePathData[]): Promise<void> {
 			localToDevicePaths
 				.map(localToDevicePath => localToDevicePath.getDevicePath())
 				.forEach(deviceFilePath => this.device.fileSystem.deleteFile(deviceFilePath, appIdentifier));
-		}).future<void>()();
 	}
 }
 $injector.register("iosLiveSyncServiceLocator", {factory: IOSLiveSyncService});
