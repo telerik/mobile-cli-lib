@@ -254,13 +254,11 @@ describe("decorators", () => {
 				let errorMessage = "This future throws";
 
 				$injector.register(moduleName, {
-					propertyName: (): IFuture<void> => {
-						return (() => {
+					propertyName: async (): Promise<void> => {
 							assert.isFalse(isPostActionExecuted, "Post action MUST NOT be called before all actions are executed.");
 
 							isActionExecuted = true;
 							throw new Error(errorMessage);
-						}).future<void>()();
 					}
 				});
 

@@ -160,8 +160,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 
 		let packageFilePath: string = null;
 
-		let action = (device: Mobile.IDevice): IFuture<void> => {
-			return (() => {
+		let action = async (device: Mobile.IDevice): Promise<void> => {
 				let shouldRefreshApplication = true;
 				let deviceAppData = this.$deviceAppDataFactory.create(appIdentifier, this.$mobileHelper.normalizePlatformName(platform), device, liveSyncOptions);
 				if (await deviceAppData.isLiveSyncSupported()) {
@@ -212,7 +211,6 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 				} else {
 					this.$logger.warn(`LiveSync is not supported for application: ${deviceAppData.appIdentifier} on device with identifier ${device.deviceInfo.identifier}.`);
 				}
-			}).future<void>()();
 		};
 
 		return action;

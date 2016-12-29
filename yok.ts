@@ -201,8 +201,7 @@ export class Yok implements IInjector {
 	private createHierarchicalCommand(name: string) {
 		let factory = () => {
 			return {
-				execute: (args: string[]): IFuture<void> => {
-					return (() => {
+				execute: async (args: string[]): Promise<void> => {
 						let commandsService = $injector.resolve("commandsService");
 						let commandName: string = null;
 						let defaultCommand = this.getDefaultCommand(name);
@@ -237,7 +236,6 @@ export class Yok implements IInjector {
 						}
 
 						commandsService.tryExecuteCommand(commandName, commandName = await == "help" ? [name] : commandArguments);
-					}).future<void>()();
 				}
 			};
 		};

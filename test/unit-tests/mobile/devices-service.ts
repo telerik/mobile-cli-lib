@@ -1087,10 +1087,8 @@ describe("devicesService", () => {
 			it("should check for ios devices.", () => {
 				let hasCheckedForIosDevices = false;
 
-				$iOSDeviceDiscovery.checkForDevices = (): IFuture<void> => {
-					return (() => {
+				$iOSDeviceDiscovery.checkForDevices = async (): Promise<void> => {
 						hasCheckedForIosDevices = true;
-					}).future<void>()();
 				};
 
 				devicesService.startDeviceDetectionInterval();
@@ -1119,10 +1117,8 @@ describe("devicesService", () => {
 			it("should check for android devices.", () => {
 				let hasCheckedForAndroidDevices = false;
 
-				$androidDeviceDiscovery.startLookingForDevices = (): IFuture<void> => {
-					return (() => {
+				$androidDeviceDiscovery.startLookingForDevices = async (): Promise<void> => {
 						hasCheckedForAndroidDevices = true;
-					}).future<void>()();
 				};
 
 				devicesService.startDeviceDetectionInterval();
@@ -1148,10 +1144,8 @@ describe("devicesService", () => {
 
 			beforeEach(() => {
 				$iOSSimulatorDiscovery = testInjector.resolve("iOSSimulatorDiscovery");
-				$iOSSimulatorDiscovery.checkForDevices = (): IFuture<void> => {
-					return (() => {
+				$iOSSimulatorDiscovery.checkForDevices = async (): Promise<void> => {
 						hasCheckedForIosSimulator = true;
-					}).future<void>()();
 				};
 
 				$hostInfo = testInjector.resolve("hostInfo");
@@ -1196,16 +1190,12 @@ describe("devicesService", () => {
 				$iOSDeviceDiscovery = testInjector.resolve("iOSDeviceDiscovery");
 				$androidDeviceDiscovery = testInjector.resolve("androidDeviceDiscovery");
 
-				androidDevice.applicationManager.checkForApplicationUpdates = (): IFuture<void> => {
-					return (() => {
+				androidDevice.applicationManager.checkForApplicationUpdates = async (): Promise<void> => {
 						hasCheckedForAndroidAppUpdates = true;
-					}).future<void>()();
 				};
 
-				iOSDevice.applicationManager.checkForApplicationUpdates = (): IFuture<void> => {
-					return (() => {
+				iOSDevice.applicationManager.checkForApplicationUpdates = async (): Promise<void> => {
 						hasCheckedForIosAppUpdates = true;
-					}).future<void>()();
 				};
 
 				$androidDeviceDiscovery.emit("deviceFound", androidDevice);
@@ -1301,10 +1291,8 @@ describe("devicesService", () => {
 		it("should start looking for android devices.", () => {
 			let hasStartedLookingForAndroidDevices = false;
 
-			$androidDeviceDiscovery.startLookingForDevices = (): IFuture<void> => {
-				return (() => {
+			$androidDeviceDiscovery.startLookingForDevices = async (): Promise<void> => {
 					hasStartedLookingForAndroidDevices = true;
-				}).future<void>()();
 			};
 
 			await devicesService.detectCurrentlyAttachedDevices();
@@ -1315,10 +1303,8 @@ describe("devicesService", () => {
 		it("should start looking for ios devices.", () => {
 			let hasStartedLookingForIosDevices = false;
 
-			$iOSDeviceDiscovery.startLookingForDevices = (): IFuture<void> => {
-				return (() => {
+			$iOSDeviceDiscovery.startLookingForDevices = async (): Promise<void> => {
 					hasStartedLookingForIosDevices = true;
-				}).future<void>()();
 			};
 
 			await devicesService.detectCurrentlyAttachedDevices();
@@ -1329,10 +1315,8 @@ describe("devicesService", () => {
 		it("should start looking for ios simulator if the host is Darwin.", () => {
 			let hasStartedLookingForIosSimulator = false;
 			$hostInfo.isDarwin = true;
-			$iOSSimulatorDiscovery.startLookingForDevices = (): IFuture<void> => {
-				return (() => {
+			$iOSSimulatorDiscovery.startLookingForDevices = async (): Promise<void> => {
 					hasStartedLookingForIosSimulator = true;
-				}).future<void>()();
 			};
 
 			await devicesService.detectCurrentlyAttachedDevices();
@@ -1343,10 +1327,8 @@ describe("devicesService", () => {
 		it("should not start looking for ios simulator if the host is not Darwin.", () => {
 			let hasStartedLookingForIosSimulator = false;
 			$hostInfo.isDarwin = false;
-			$iOSSimulatorDiscovery.startLookingForDevices = (): IFuture<void> => {
-				return (() => {
+			$iOSSimulatorDiscovery.startLookingForDevices = async (): Promise<void> => {
 					hasStartedLookingForIosSimulator = true;
-				}).future<void>()();
 			};
 
 			await devicesService.detectCurrentlyAttachedDevices();
@@ -1373,13 +1355,11 @@ describe("devicesService", () => {
 		let actualAppIdentifier: string;
 		let actualFramework: string;
 		let $androidProcessService: Mobile.IAndroidProcessService = testInjector.resolve("androidProcessService");
-		$androidProcessService.mapAbstractToTcpPort = (deviceIdentifier: string, appIdentifier: string, framework: string): IFuture<string> => {
-			return ((): string => {
+		$androidProcessService.mapAbstractToTcpPort = async (deviceIdentifier: string, appIdentifier: string, framework: string): Promise<string> => {
 				actualDeviceIdentifier = deviceIdentifier;
 				actualAppIdentifier = appIdentifier;
 				actualFramework = framework;
 				return "";
-			}).future<string>()();
 		};
 
 		await devicesService.mapAbstractToTcpPort(expectedDeviceIdentifier, expectedAppIdentifier, expectedFramework);
@@ -1416,20 +1396,16 @@ describe("devicesService", () => {
 				framework: constants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript
 			}];
 
-		androidDevice.applicationManager.getDebuggableApps = (): IFuture<Mobile.IDeviceApplicationInformation[]> => {
-			return ((): Mobile.IDeviceApplicationInformation[] => {
+		androidDevice.applicationManager.getDebuggableApps = async (): Promise<Mobile.IDeviceApplicationInformation[]> => {
 				return androidDebuggableApps;
-			}).future<Mobile.IDeviceApplicationInformation[]>()();
 		};
 
-		iOSDevice.applicationManager.getDebuggableApps = (): IFuture<Mobile.IDeviceApplicationInformation[]> => {
-			return ((): Mobile.IDeviceApplicationInformation[] => {
+		iOSDevice.applicationManager.getDebuggableApps = async (): Promise<Mobile.IDeviceApplicationInformation[]> => {
 				return iosDebuggableApps;
-			}).future<Mobile.IDeviceApplicationInformation[]>()();
 		};
 		let futures = devicesService.getDebuggableApps([androidDevice.deviceInfo.identifier, iOSDevice.deviceInfo.identifier]);
 		let debuggableApps = _(futures)
-			.async map((future: Promise<Mobile.IDeviceApplicationInformation[]>) => await  future)
+			.map(async (future: Promise<Mobile.IDeviceApplicationInformation[]>) => await  future)
 			.flatten<Mobile.IDeviceApplicationInformation>()
 			.value();
 
@@ -1463,12 +1439,10 @@ describe("devicesService", () => {
 		});
 
 		it("should get the correct debuggable views.", () => {
-			androidDevice.applicationManager.getDebuggableAppViews = (appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>> => {
-				return ((): IDictionary<Mobile.IDebugWebViewInfo[]> => {
+			androidDevice.applicationManager.getDebuggableAppViews = async (appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> => {
 					let result: any = {};
 					result[appIdentifiers[0]] = debuggableViews;
 					return result;
-				}).future<IDictionary<Mobile.IDebugWebViewInfo[]>>()();
 			};
 
 			let actualDebuggableViews = await  devicesService.getDebuggableViews(androidDevice.deviceInfo.identifier, "com.telerik.myapp");
@@ -1477,12 +1451,10 @@ describe("devicesService", () => {
 		});
 
 		it("should return undefined if debuggable views are found for otheer app but not for the specified.", () => {
-			androidDevice.applicationManager.getDebuggableAppViews = (appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>> => {
-				return ((): IDictionary<Mobile.IDebugWebViewInfo[]> => {
+			androidDevice.applicationManager.getDebuggableAppViews = async (appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> => {
 					let result: any = {};
 					result["com.telerik.otherApp"] = debuggableViews;
 					return result;
-				}).future<IDictionary<Mobile.IDebugWebViewInfo[]>>()();
 			};
 
 			let actualDebuggableViews = await  devicesService.getDebuggableViews(androidDevice.deviceInfo.identifier, "com.telerik.myapp");

@@ -55,8 +55,7 @@ class UserSettingsServiceStub {
 		public exceptionsTracking: boolean,
 		public testInjector: IInjector) { }
 
-	getSettingValue<T>(settingName: string): IFuture<T> {
-		return (() => {
+	async getSettingValue<T> (settingName: string): Promise<T|string> {
 			let $staticConfig: Config.IStaticConfig = this.testInjector.resolve("staticConfig");
 
 			if (settingName === $staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME) {
@@ -66,13 +65,10 @@ class UserSettingsServiceStub {
 			}
 
 			return undefined;
-		}).future<T>()();
 	}
 
-	saveSetting<T>(key: string, value: T): IFuture<void> {
-		return (() => {
+	async saveSetting<T> (key: string, value: T): Promise<void> {
 			savedSettingNamesAndValues += `${key}.${value}`;
-		}).future<void>()();
 	}
 }
 
