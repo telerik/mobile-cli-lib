@@ -27,7 +27,7 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 				return loadedPlugins;
 			}
 
-			let result = this.getPluginsFromNpmjs(this._keywords, page).wait();
+			let result = await  this.getPluginsFromNpmjs(this._keywords, page);
 
 			this._pages[page] = result;
 
@@ -48,7 +48,7 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 	protected async initializeCore(projectDir: string, keywords: string[]): Promise<void> {
 			this._keywords = keywords;
 
-			this.plugins = this.getPluginsFromNpmjs(keywords, 1).wait();
+			this.plugins = await  this.getPluginsFromNpmjs(keywords, 1);
 	}
 
 	private async getAllPluginsCore(): Promise<IBasicPluginInformation[]> {
@@ -58,7 +58,7 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 			let page = 1;
 
 			do {
-				currentPluginsFound = this.getPluginsFromNpmjs(this._keywords, page++).wait();
+				currentPluginsFound = await  this.getPluginsFromNpmjs(this._keywords, page++);
 				if (currentPluginsFound && currentPluginsFound.length) {
 					result = result.concat(currentPluginsFound);
 				}

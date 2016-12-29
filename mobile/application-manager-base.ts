@@ -17,7 +17,7 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 	}
 
 	public async restartApplication(appIdentifier: string, bundleExecutable?: string, framework?: string): Promise<void> {
-			this.stopApplication(bundleExecutable || appIdentifier).wait();
+			this.stopApplication(bundleExecutable || await  appIdentifier);
 			this.startApplication(appIdentifier, framework).wait();
 	}
 
@@ -37,7 +37,7 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 			if (!this.isChecking) {
 				try {
 					this.isChecking = true;
-					let currentlyInstalledAppIdentifiers = this.getInstalledApplications().wait();
+					let currentlyInstalledAppIdentifiers = await  this.getInstalledApplications();
 					let previouslyInstalledAppIdentifiers = this.lastInstalledAppIdentifiers || [];
 
 					let newAppIdentifiers = _.difference(currentlyInstalledAppIdentifiers, previouslyInstalledAppIdentifiers);
@@ -78,7 +78,7 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 	public abstract getDebuggableAppViews(appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>>;
 
 	private async checkForAvailableDebuggableAppsChanges(): Promise<void> {
-			let currentlyAvailableDebuggableApps = this.getDebuggableApps().wait();
+			let currentlyAvailableDebuggableApps = await  this.getDebuggableApps();
 			let previouslyAvailableDebuggableApps = this.lastAvailableDebuggableApps || [];
 
 			let newAvailableDebuggableApps = _.differenceBy(currentlyAvailableDebuggableApps, previouslyAvailableDebuggableApps, "appIdentifier");
@@ -104,7 +104,7 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 				.map(c => c.appIdentifier)
 				.value();
 
-			let currentlyAvailableAppViews = this.getDebuggableAppViews(cordovaDebuggableAppIdentifiers).wait();
+			let currentlyAvailableAppViews = await  this.getDebuggableAppViews(cordovaDebuggableAppIdentifiers);
 
 			_.each(currentlyAvailableAppViews, (currentlyAvailableViews, appIdentifier) => {
 				let previouslyAvailableViews = this.lastAvailableDebuggableAppViews[appIdentifier];

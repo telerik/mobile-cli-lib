@@ -131,7 +131,7 @@ export class HooksService implements IHooksService {
 					let environment = this.prepareEnvironment(hook.fullPath);
 					this.$logger.trace("Executing %s hook at location %s with environment ", hookName, hook.fullPath, environment);
 
-					let output = this.$childProcess.spawnFromEvent(command, [hook.fullPath], "close", environment, { throwError: false }).wait();
+					let output = await  this.$childProcess.spawnFromEvent(command, [hook.fullPath], "close", environment, { throwError: false });
 					if (output.exitCode !== 0) {
 						throw new Error(output.stdout + output.stderr);
 					}

@@ -22,6 +22,6 @@ export class NpmPluginsSource extends PluginsSourceBase implements IPluginsSourc
 	}
 
 	protected async initializeCore(projectDir: string, keywords: string[]): Promise<void> {
-			this.plugins = this.$npmService.search(this.projectDir, keywords).wait();
+			this.plugins = await  this.$npmService.search(this.projectDir, keywords);
 	}
 }

@@ -21,7 +21,7 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 			// remove cached logs:
 			adb.executeCommand(["logcat", "-c"]).wait();
 
-			let adbLogcat = adb.executeCommand(["logcat"], { returnChildProcess: true }).wait();
+			let adbLogcat = await  adb.executeCommand(["logcat"], { returnChildProcess: true });
 			let lineStream = byline(adbLogcat.stdout);
 
 			adbLogcat.stderr.on("data", (data: NodeBuffer) => {

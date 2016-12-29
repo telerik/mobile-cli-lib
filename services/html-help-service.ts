@@ -98,7 +98,7 @@ export class HtmlHelpService implements IHtmlHelpService {
 		let availableCommands = this.$injector.getRegisteredCommandsNames(true).sort();
 		this.$logger.trace("List of registered commands: %s", availableCommands.join(", "));
 		if(commandName && _.startsWith(commandName, this.$commandsServiceProvider.dynamicCommandsPrefix) && !_.includes(availableCommands, commandName)) {
-			let dynamicCommands = this.$commandsServiceProvider.getDynamicCommands().wait();
+			let dynamicCommands = await  this.$commandsServiceProvider.getDynamicCommands();
 			if(!_.includes(dynamicCommands, commandName)) {
 				this.$errors.failWithoutHelp("Unknown command '%s'. Try '$ %s help' for a full list of supported commands.", commandName, this.$staticConfig.CLIENT_NAME.toLowerCase());
 			}

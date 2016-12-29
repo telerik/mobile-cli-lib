@@ -8,7 +8,7 @@ export class ListFilesCommand implements ICommand {
 	public async execute(args: string[]): Promise<void> {
 			this.$devicesService.initialize({ deviceId: this.$options.device, skipInferPlatform: true }).wait();
 
-			let action = (device: Mobile.IDevice) =>  { return (() => device.fileSystem.listFiles(args[0]).wait()).future<void>()(); };
+			let action = await  (device: Mobile.IDevice) =>  { return (() => device.fileSystem.listFiles(args[0])).future<void>()(); };
 			this.$devicesService.execute(action).wait();
 	}
 }

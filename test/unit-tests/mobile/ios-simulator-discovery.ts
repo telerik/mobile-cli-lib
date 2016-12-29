@@ -74,8 +74,8 @@ describe("ios-simulator-discovery", () => {
 
 		iOSSimulatorDiscovery.startLookingForDevices().wait();
 
-		let deviceLost = lostDeviceFuture.wait();
-		let deviceFound = foundDeviceFuture.wait();
+		let deviceLost = await  lostDeviceFuture;
+		let deviceFound = await  foundDeviceFuture;
 		return { deviceLost, deviceFound };
 	};
 

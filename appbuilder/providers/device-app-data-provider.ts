@@ -22,7 +22,7 @@ export class AndroidAppIdentifier extends AppBuilderDeviceAppDataBase implements
 		if (!this._deviceProjectRootPath) {
 			let deviceTmpDirFormat = "";
 
-			let version = this.getLiveSyncVersion().wait();
+			let version = await  this.getLiveSyncVersion();
 			if (version === 2) {
 				deviceTmpDirFormat = LiveSyncConstants.DEVICE_TMP_DIR_FORMAT_V2;
 			} else if (version === 3) {
@@ -42,12 +42,12 @@ export class AndroidAppIdentifier extends AppBuilderDeviceAppDataBase implements
 	}
 
 	public async isLiveSyncSupported(): Promise<boolean> {
-			return super.isLiveSyncSupported().wait() && this.getLiveSyncVersion().wait() !== 0;
+			return super.isLiveSyncSupported().wait() && await  this.getLiveSyncVersion() !== 0;
 	}
 
 	private async getLiveSyncVersion(): Promise<number> {
 			if (!this._liveSyncVersion) {
-				this._liveSyncVersion = (<Mobile.IAndroidDevice>this.device).adb.sendBroadcastToDevice(LiveSyncConstants.CHECK_LIVESYNC_INTENT_NAME, { "app-id": this.appIdentifier }).wait();
+				this._liveSyncVersion = await  (<Mobile.IAndroidDevice>this.device).adb.sendBroadcastToDevice(LiveSyncConstants.CHECK_LIVESYNC_INTENT_NAME, { "app-id": this.appIdentifier });
 			}
 
 			return this._liveSyncVersion;

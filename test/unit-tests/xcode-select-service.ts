@@ -61,7 +61,7 @@ describe("xcode-select-service", () => {
 		injector = createTestInjector({ xcodeSelectStdout: null, isDarwin: true, xcodeVersionOutput: "Xcode 7.3\nBuild version 7D175" });
 		service = injector.resolve("$xcodeSelectService");
 
-		let xcodeVersion = service.getXcodeVersion().wait();
+		let xcodeVersion = await  service.getXcodeVersion();
 
 		assert.strictEqual(xcodeVersion.major, "7", "xcodeSelectService should get correct Xcode version");
 		assert.strictEqual(xcodeVersion.minor, "3", "xcodeSelectService should get correct Xcode version");

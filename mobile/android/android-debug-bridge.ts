@@ -12,7 +12,7 @@ export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 
 	public async executeCommand(args: string[], options?: Mobile.IAndroidDebugBridgeCommandOptions): Promise<any> {
 			let event = "close";
-			let command = this.composeCommand(args).wait();
+			let command = await  this.composeCommand(args);
 			let treatErrorsAsWarnings = false;
 			let childProcessOptions: any = undefined;
 
@@ -29,7 +29,7 @@ export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 			// If adb -s <invalid device id> install <smth> is executed the childProcess won't get any response
 			// because the adb will be waiting for valid device and will not send close or exit event.
 			// For example `adb -s <invalid device id> install <smth>` throws error 'error: device \'030939f508e6c773\' not found\r\n' exitCode 4294967295
-			let result: any = this.$childProcess.spawnFromEvent(command.command, command.args, event, childProcessOptions, { throwError: false }).wait();
+			let result: any = await  this.$childProcess.spawnFromEvent(command.command, command.args, event, childProcessOptions, { throwError: false });
 
 			let errors = this.$androidDebugBridgeResultHandler.checkForErrors(result);
 
@@ -42,7 +42,7 @@ export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 	}
 
 	protected async composeCommand(params: string[], identifier?: string): Promise<IComposeCommandResult> {
-			let command = this.$staticConfig.getAdbFilePath().wait();
+			let command = await  this.$staticConfig.getAdbFilePath();
 			let deviceIdentifier: string[] = [];
 			if (identifier) {
 				deviceIdentifier = ["-s", `${identifier}`];

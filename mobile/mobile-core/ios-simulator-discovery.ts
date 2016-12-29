@@ -46,7 +46,7 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 
 	private async isSimulatorRunning(): Promise<boolean> {
 			try {
-				let output = this.$childProcess.exec("ps cax | grep launchd_sim").wait();
+				let output = await  this.$childProcess.exec("ps cax | grep launchd_sim");
 				return output.indexOf('launchd_sim') !== -1;
 			} catch(e) {
 				return false;

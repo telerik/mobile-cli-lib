@@ -31,7 +31,7 @@ export class IOSSimulatorFileSystem implements Mobile.IDeviceFileSystem {
 	}
 
 	public async transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
-			_.each(localToDevicePaths, localToDevicePathData => this.transferFile(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()).wait());
+			_.each(localToDevicePaths, localToDevicePathData => await  this.transferFile(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()));
 	}
 
 	public transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): IFuture<void> {

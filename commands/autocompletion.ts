@@ -22,7 +22,7 @@ export class AutoCompleteCommand implements ICommand {
 					this.$logger.out("If you are using bash or zsh, you can enable command-line completion.");
 					let message = "Do you want to enable it now?";
 
-					let autoCompetionStatus = this.$prompter.confirm(message,() => true).wait();
+					let autoCompetionStatus = await  this.$prompter.confirm(message,() => true);
 					if(autoCompetionStatus) {
 						this.$autoCompletionService.enableAutoCompletion().wait();
 					} else {

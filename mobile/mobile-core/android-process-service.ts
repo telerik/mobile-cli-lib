@@ -38,17 +38,17 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 				this.$errors.failWithoutHelp(applicationNotStartedErrorMessage);
 			}
 
-			let abstractPortsInformation = this.getAbstractPortsInformation(adb).wait();
-			let abstractPort = this.getAbstractPortForApplication(adb, processId, appIdentifier, abstractPortsInformation, framework).wait();
+			let abstractPortsInformation = await  this.getAbstractPortsInformation(adb);
+			let abstractPort = await  this.getAbstractPortForApplication(adb, processId, appIdentifier, abstractPortsInformation, framework);
 
 			if (!abstractPort) {
 				this.$errors.failWithoutHelp(applicationNotStartedErrorMessage);
 			}
 
-			let localPort = this.getAlreadyMappedPort(adb, deviceIdentifier, abstractPort).wait();
+			let localPort = await  this.getAlreadyMappedPort(adb, deviceIdentifier, abstractPort);
 
 			if (!localPort) {
-				localPort = this.$net.getFreePort().wait();
+				localPort = await  this.$net.getFreePort();
 				adb.executeCommand(["forward", `tcp:${localPort}`, `localabstract:${abstractPort}`]).wait();
 			}
 
@@ -58,9 +58,9 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 
 	public async getMappedAbstractToTcpPorts(deviceIdentifier: string, appIdentifiers: string[], framework: string): Promise<IDictionary<number>> {
 			let adb = this.getAdb(deviceIdentifier),
-				abstractPortsInformation = this.getAbstractPortsInformation(adb).wait(),
-				processIds = this.getProcessIds(adb, appIdentifiers).wait(),
-				adbForwardList = adb.executeCommand(["forward", "--list"]).wait(),
+				abstractPortsInformation = await  this.getAbstractPortsInformation(adb),
+				processIds = await  this.getProcessIds(adb, appIdentifiers),
+				adbForwardList = await  adb.executeCommand(["forward", "--list"]),
 				localPorts: IDictionary<number> = {};
 
 			_.each(appIdentifiers, appIdentifier => {
@@ -71,13 +71,13 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 					return;
 				}
 
-				let abstractPort = this.getAbstractPortForApplication(adb, processId, appIdentifier, abstractPortsInformation, framework).wait();
+				let abstractPort = await  this.getAbstractPortForApplication(adb, processId, appIdentifier, abstractPortsInformation, framework);
 
 				if (!abstractPort) {
 					return;
 				}
 
-				let localPort = this.getAlreadyMappedPort(adb, deviceIdentifier, abstractPort, adbForwardList).wait();
+				let localPort = await  this.getAlreadyMappedPort(adb, deviceIdentifier, abstractPort, adbForwardList);
 
 				if (localPort) {
 					localPorts[appIdentifier] = localPort;
@@ -89,7 +89,7 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 
 	public async getDebuggableApps(deviceIdentifier: string): Promise<Mobile.IDeviceApplicationInformation[]> {
 			let adb = this.getAdb(deviceIdentifier);
-			let androidWebViewPortInformation = (<string>this.getAbstractPortsInformation(adb).wait()).split(EOL);
+			let androidWebViewPortInformation = await  (<string>this.getAbstractPortsInformation(adb)).split(EOL);
 
 			// TODO: Add tests and make sure only unique names are returned. Input before groupBy is:
 			// [ { deviceIdentifier: 'SH26BW100473',
@@ -105,8 +105,8 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 			// 	appIdentifier: 'chrome',
 			// 	framework: 'Cordova' } ]
 			return _(androidWebViewPortInformation)
-				.map(line => this.getApplicationInfoFromWebViewPortInformation(adb, deviceIdentifier, line).wait()
-					|| this.getNativeScriptApplicationInformation(adb, deviceIdentifier, line).wait()
+				.map(line => await  this.getApplicationInfoFromWebViewPortInformation(adb, deviceIdentifier, line)
+					|| await  this.getNativeScriptApplicationInformation(adb, deviceIdentifier, line)
 				)
 				.filter(deviceAppInfo => !!deviceAppInfo)
 				.groupBy(element => element.framework)
@@ -123,7 +123,7 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 
 			if (processIdMatches) {
 				let processId = processIdMatches[1];
-				cordovaAppIdentifier = this.getApplicationIdentifierFromPid(adb, processId).wait();
+				cordovaAppIdentifier = await  this.getApplicationIdentifierFromPid(adb, processId);
 			} else {
 				// Search for appIdentifier (@<appIdentifier>_devtools_remote).
 				let chromeAppIdentifierRegExp = /@(.+)_devtools_remote\s?/g;
@@ -205,7 +205,7 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 			// USER     PID   PPID  VSIZE   RSS   WCHAN    PC         NAME
 			// u0_a63   25512 1334  1519560 96040 ffffffff f76a8f75 S com.telerik.appbuildertabstest
 			let result: IDictionary<number> = {};
-			let processIdInformation: string = adb.executeShellCommand(["ps"]).wait();
+			let processIdInformation: string = await  adb.executeShellCommand(["ps"]);
 			_.each(appIdentifiers, appIdentifier => {
 				let processIdRegExp = new RegExp(`^\\w*\\s*(\\d+).*?${appIdentifier}$`);
 				result[appIdentifier] = this.getFirstMatchingGroupFromMultilineResult<number>(processIdInformation, processIdRegExp);
@@ -215,7 +215,7 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 	}
 
 	private async getAlreadyMappedPort(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, abstractPort: string, adbForwardList?: any): Promise<number> {
-			let allForwardedPorts: string = adbForwardList || adb.executeCommand(["forward", "--list"]).wait() || "";
+			let allForwardedPorts: string = await  adbForwardList || adb.executeCommand(["forward", "--list"]) || "";
 
 			// Sample output:
 			// 5e2e580b tcp:62503 localabstract:webview_devtools_remote_7985
@@ -236,7 +236,7 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 	}
 
 	private async getApplicationIdentifierFromPid(adb: Mobile.IDeviceAndroidDebugBridge, pid: string, psData?: string): Promise<string> {
-			psData = psData || adb.executeShellCommand(["ps"]).wait();
+			psData = await  psData || adb.executeShellCommand(["ps"]);
 			// Process information will look like this (without the columns names):
 			// USER     PID   PPID  VSIZE   RSS   WCHAN    PC         NAME
 			// u0_a63   25512 1334  1519560 96040 ffffffff f76a8f75 S com.telerik.appbuildertabstest

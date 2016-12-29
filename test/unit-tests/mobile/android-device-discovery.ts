@@ -105,7 +105,7 @@ describe("androidDeviceDiscovery", () => {
 
 	describe("ensureAdbServerStarted", () => {
 		it("should spawn adb with start-server parameter", () => {
-			let ensureAdbServerStartedOutput = androidDeviceDiscovery.ensureAdbServerStarted().wait();
+			let ensureAdbServerStartedOutput = await  androidDeviceDiscovery.ensureAdbServerStarted();
 			assert.isTrue(_.includes(ensureAdbServerStartedOutput, "start-server"), "start-server should be passed to adb.");
 		});
 	});
@@ -196,7 +196,7 @@ describe("androidDeviceDiscovery", () => {
 				let output = `List of devices attached${EOL}`;
 				mockStdoutEmitter.emit('data', output);
 				mockChildProcess.emit('close', 0);
-				let lostDevice = future.wait();
+				let lostDevice = await  future;
 				assert.deepEqual(lostDevice.deviceInfo.identifier, androidDeviceIdentifier);
 				assert.deepEqual(lostDevice.status, androidDeviceStatus);
 			});
@@ -211,7 +211,7 @@ describe("androidDeviceDiscovery", () => {
 				let output = `List of devices attached${EOL}`;
 				mockStdoutEmitter.emit('data', output);
 				mockChildProcess.emit('close', 0);
-				let lostDevice = future.wait();
+				let lostDevice = await  future;
 				assert.deepEqual(lostDevice.deviceInfo.identifier, androidDeviceIdentifier);
 				assert.deepEqual(lostDevice.status, androidDeviceStatus);
 
@@ -240,7 +240,7 @@ describe("androidDeviceDiscovery", () => {
 				let output = `List of devices attached${EOL}${androidDeviceIdentifier}	unauthorized${EOL}${EOL}`;
 				mockStdoutEmitter.emit('data', output);
 				mockChildProcess.emit('close', 0);
-				let lostDevice = deviceLostFuture.wait();
+				let lostDevice = await  deviceLostFuture;
 				assert.deepEqual(lostDevice.deviceInfo.identifier, androidDeviceIdentifier);
 				assert.deepEqual(lostDevice.status, androidDeviceStatus);
 

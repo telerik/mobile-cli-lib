@@ -195,7 +195,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 	}
 
 	private async findDeveloperDiskImageDirectoryPath(): Promise<string> {
-			let developerDirectory = this.$xcodeSelectService.getDeveloperDirectoryPath().wait();
+			let developerDirectory = await  this.$xcodeSelectService.getDeveloperDirectoryPath();
 			let buildVersion = this.getDeviceValue("BuildVersion");
 			let productVersion = this.getDeviceValue("ProductVersion");
 			let productVersionParts = productVersion.split(".");
@@ -295,7 +295,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 				}
 			} else {
 				let func = () => {
-					let developerDiskImageDirectoryPath = this.findDeveloperDiskImageDirectoryPath().wait();
+					let developerDiskImageDirectoryPath = await  this.findDeveloperDiskImageDirectoryPath();
 					imagePath = path.join(developerDiskImageDirectoryPath, "DeveloperDiskImage.dmg");
 					this.$logger.info("Mounting %s", imagePath);
 

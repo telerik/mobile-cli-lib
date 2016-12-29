@@ -20,12 +20,12 @@ export class PrintPluginsService implements IPrintPluginsService {
 			let count: number = options.count || PrintPluginsService.COUNT_OF_PLUGINS_TO_DISPLAY;
 
 			if (!isInteractive() || options.showAllPlugins) {
-				let allPlugins = pluginsSource.getAllPlugins().wait();
+				let allPlugins = await  pluginsSource.getAllPlugins();
 				this.displayTableWithPlugins(allPlugins);
 				return;
 			}
 
-			let pluginsToDisplay: IBasicPluginInformation[] = pluginsSource.getPlugins(this._page++, count).wait();
+			let pluginsToDisplay: IBasicPluginInformation[] = await  pluginsSource.getPlugins(this._page++, count);
 			let shouldDisplayMorePlugins = true;
 
 			this.$logger.out("Available plugins:");
@@ -37,9 +37,9 @@ export class PrintPluginsService implements IPrintPluginsService {
 					return;
 				}
 
-				shouldDisplayMorePlugins = this.$prompter.confirm("Load more plugins?").wait();
+				shouldDisplayMorePlugins = await  this.$prompter.confirm("Load more plugins?");
 
-				pluginsToDisplay = pluginsSource.getPlugins(this._page++, count).wait();
+				pluginsToDisplay = await  pluginsSource.getPlugins(this._page++, count);
 
 				if (!pluginsToDisplay || pluginsToDisplay.length < 1) {
 					return;

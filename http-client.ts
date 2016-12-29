@@ -156,7 +156,7 @@ export class HttpClient implements Server.IHttpClient {
 				body.pipe(request);
 			}
 
-			let response = result.wait();
+			let response = await  result;
 			if (helpers.isResponseRedirect(response.response)) {
 				if (response.response.statusCode === 303) {
 					unmodifiedOptions.method = "GET";

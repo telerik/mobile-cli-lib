@@ -23,12 +23,12 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 	}
 
 	public async doesShasumFileExistsOnDevice(): Promise<boolean> {
-			let lsResult = this.adb.executeShellCommand(["ls", this.hashFileDevicePath]).wait();
+			let lsResult = await  this.adb.executeShellCommand(["ls", this.hashFileDevicePath]);
 			return !!(lsResult && lsResult.trim() === this.hashFileDevicePath);
 	}
 
 	public async getShasumsFromDevice(): Promise<IStringDictionary> {
-			let hashFileLocalPath = this.downloadHashFileFromDevice().wait();
+			let hashFileLocalPath = await  this.downloadHashFileFromDevice();
 
 			if (this.$fs.exists(hashFileLocalPath)) {
 				return this.$fs.readJson(hashFileLocalPath);
@@ -44,7 +44,7 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 					let localPath = localToDevicePathData.getLocalPath();
 					let stats = this.$fs.getFsStats(localPath);
 					if (stats.isFile()) {
-						let fileShasum = this.$fs.getFileShasum(localPath).wait();
+						let fileShasum = await  this.$fs.getFileShasum(localPath);
 						shasums[localPath] = fileShasum;
 					}
 				});
@@ -57,12 +57,12 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 	}
 
 	public async updateHashes(localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<boolean> {
-			let oldShasums = this.getShasumsFromDevice().wait();
+			let oldShasums = await  this.getShasumsFromDevice();
 			if (oldShasums) {
 				_.each(localToDevicePaths, ldp => {
 					let localPath = ldp.getLocalPath();
 					if (this.$fs.getFsStats(localPath).isFile()) {
-						oldShasums[localPath] = this.$fs.getFileShasum(localPath).wait();
+						oldShasums[localPath] = await  this.$fs.getFileShasum(localPath);
 					}
 				});
 				this.uploadHashFileToDevice(oldShasums).wait();
@@ -73,7 +73,7 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 	}
 
 	public async removeHashes(localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<boolean> {
-			let oldShasums = this.getShasumsFromDevice().wait();
+			let oldShasums = await  this.getShasumsFromDevice();
 			if (oldShasums) {
 				let fileToShasumDictionary = <IStringDictionary>(_.omit(oldShasums, localToDevicePaths.map(ldp => ldp.getLocalPath())));
 				this.uploadHashFileToDevice(fileToShasumDictionary).wait();

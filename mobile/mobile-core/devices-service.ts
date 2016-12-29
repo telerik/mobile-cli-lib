@@ -320,7 +320,7 @@ export class DevicesService implements Mobile.IDevicesService {
 			let deviceOption = data.deviceId;
 
 			if (platform && deviceOption) {
-				this._device = this.getDevice(deviceOption).wait();
+				this._device = await  this.getDevice(deviceOption);
 				this._platform = this._device.deviceInfo.platform;
 				if (this._platform !== this.getPlatform(platform)) {
 					this.$errors.fail("Cannot resolve the specified connected device. The provided platform does not match the provided index or identifier." +
@@ -328,7 +328,7 @@ export class DevicesService implements Mobile.IDevicesService {
 				}
 				this.$logger.warn("Your application will be deployed only on the device specified by the provided index or identifier.");
 			} else if (!platform && deviceOption) {
-				this._device = this.getDevice(deviceOption).wait();
+				this._device = await  this.getDevice(deviceOption);
 				this._platform = this._device.deviceInfo.platform;
 			} else if (platform && !deviceOption) {
 				this._platform = this.getPlatform(platform);
@@ -401,7 +401,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	@exportedPromise("devicesService")
 	public async getDebuggableViews(deviceIdentifier: string, appIdentifier: string): Promise<Mobile.IDebugWebViewInfo[]> {
 			let device = this.getDeviceByIdentifier(deviceIdentifier),
-				debuggableViewsPerApp = device.applicationManager.getDebuggableAppViews([appIdentifier]).wait();
+				debuggableViewsPerApp = await  device.applicationManager.getDebuggableAppViews([appIdentifier]);
 
 			return debuggableViewsPerApp && debuggableViewsPerApp[appIdentifier];
 	}
@@ -490,9 +490,9 @@ export class DevicesService implements Mobile.IDevicesService {
 				isLiveSyncSupported = false,
 				device = this.getDeviceByIdentifier(deviceIdentifier);
 			try {
-				isInstalled = device.applicationManager.isApplicationInstalled(appIdentifier).wait();
+				isInstalled = await  device.applicationManager.isApplicationInstalled(appIdentifier);
 				device.applicationManager.tryStartApplication(appIdentifier, framework).wait();
-				isLiveSyncSupported = isInstalled && !!device.applicationManager.isLiveSyncSupported(appIdentifier).wait();
+				isLiveSyncSupported = await  isInstalled && !!device.applicationManager.isLiveSyncSupported(appIdentifier);
 			} catch (err) {
 				this.$logger.trace("Error while checking is application installed. Error is: ", err);
 			}
@@ -512,7 +512,7 @@ export class DevicesService implements Mobile.IDevicesService {
 				appIdentifier = this.$companionAppsService.getCompanionAppIdentifier(framework, device.deviceInfo.platform);
 
 			try {
-				isLiveSyncSupported = isInstalled = device.applicationManager.isApplicationInstalled(appIdentifier).wait();
+				isLiveSyncSupported = await  isInstalled = device.applicationManager.isApplicationInstalled(appIdentifier);
 			} catch (err) {
 				this.$logger.trace("Error while checking is application installed. Error is: ", err);
 			}

@@ -281,7 +281,7 @@ export class InstallationProxyClient {
 			this.plistService = this.getPlistService();
 			this.plistService.sendMessage(message);
 
-			let response = this.plistService.receiveMessage().wait();
+			let response = await  this.plistService.receiveMessage();
 			if(response.Error) {
 				this.$errors.failWithoutHelp(response.Error);
 			}
@@ -455,7 +455,7 @@ export class HouseArrestClient implements Mobile.IHouseArrestClient {
 			"Identifier": applicationIdentifier
 		});
 
-		let response = this.plistService.receiveMessage().wait();
+		let response = await  this.plistService.receiveMessage();
 		if(response.Error) {
 			this.$errors.failWithoutHelp(HouseArrestClient.PREDEFINED_ERRORS[response.Error] || response.Error);
 		}

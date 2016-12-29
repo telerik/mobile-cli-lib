@@ -34,7 +34,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 						+ " You can read our official Privacy Policy at");
 					let message = this.$analyticsSettingsService.getPrivacyPolicyLink();
 
-					let trackFeatureUsage = this.$prompter.confirm(message, () => true).wait();
+					let trackFeatureUsage = await  this.$prompter.confirm(message, () => true);
 					this.setStatus(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, trackFeatureUsage, true).wait();
 					if (!trackFeatureUsage) {
 						// In case user selects to disable feature tracking, disable the exceptions reporting as well.
@@ -71,7 +71,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 			this.$logger.trace(`Trying to track exception with message '${message}'.`);
 
 			if (this.analyticsStatuses[this.$staticConfig.ERROR_REPORT_SETTING_NAME] === AnalyticsStatus.enabled
-				&& this.$analyticsSettingsService.canDoRequest().wait()) {
+				&& await  this.$analyticsSettingsService.canDoRequest()) {
 				try {
 					this.start().wait();
 
@@ -104,7 +104,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 	}
 
 	public async isEnabled(settingName: string): Promise<boolean> {
-			let analyticsStatus = this.getStatus(settingName).wait();
+			let analyticsStatus = await  this.getStatus(settingName);
 			return analyticsStatus === AnalyticsStatus.enabled;
 	}
 
@@ -150,7 +150,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 
 	private async getStatus(settingName: string): Promise<AnalyticsStatus> {
 			if (!this.analyticsStatuses[settingName]) {
-				let settingValue = this.$userSettingsService.getSettingValue<string>(settingName).wait();
+				let settingValue = await  this.$userSettingsService.getSettingValue<string>(settingName);
 
 				if (settingValue) {
 					let isEnabled = helpers.toBoolean(settingValue);
@@ -186,7 +186,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 
 			this._eqatecMonitor = global._eqatec.createMonitor(settings);
 
-			let guid = this.$userSettingsService.getSettingValue(this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME).wait();
+			let guid = await  this.$userSettingsService.getSettingValue(this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME);
 			if (!guid) {
 				guid = helpers.createGUID(false);
 				this.$userSettingsService.saveSetting(this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME, guid).wait();
@@ -196,9 +196,9 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 
 			try {
 				this._eqatecMonitor.setUserID(this.$analyticsSettingsService.getUserId().wait());
-				let currentCount = this.$analyticsSettingsService.getUserSessionsCount(analyticsProjectKey).wait();
+				let currentCount = await  this.$analyticsSettingsService.getUserSessionsCount(analyticsProjectKey);
 				// increment with 1 every time and persist the new value so next execution will be marked as new session
-				this.$analyticsSettingsService.setUserSessionsCount(++currentCount, analyticsProjectKey).wait();
+				this.$analyticsSettingsService.setUserSessionsCount(+ await +currentCount, analyticsProjectKey);
 				this._eqatecMonitor.setStartCount(currentCount);
 			} catch (e) {
 				// user not logged in. don't care.
@@ -233,7 +233,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 	}
 
 	private async isNotConfirmed(settingName: string): Promise<boolean> {
-			let analyticsStatus = this.getStatus(settingName).wait();
+			let analyticsStatus = await  this.getStatus(settingName);
 			return analyticsStatus === AnalyticsStatus.notConfirmed;
 	}
 
@@ -243,14 +243,14 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 			if (this.isNotConfirmed(settingName).wait()) {
 				status = "disabled until confirmed";
 			} else {
-				status = AnalyticsStatus[this.getStatus(settingName).wait()];
+				status = await  AnalyticsStatus[this.getStatus(settingName)];
 			}
 
 			return `${readableSettingName} is ${status}.`;
 	}
 
 	private async getJsonStatusMessage(settingName: string): Promise<string> {
-			let status = this.getStatus(settingName).wait();
+			let status = await  this.getStatus(settingName);
 			let enabled = status === AnalyticsStatus.notConfirmed ? null : status === AnalyticsStatus.disabled ? false : true;
 			return JSON.stringify({ enabled: enabled });
 	}
@@ -260,7 +260,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 				if (!this.isAnalyticsStatusesInitialized) {
 					this.$logger.trace("Initializing analytics statuses.");
 					let settingsNames = [this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, this.$staticConfig.ERROR_REPORT_SETTING_NAME];
-					settingsNames.forEach(settingName => this.getStatus(settingName).wait());
+					settingsNames.forEach(settingName => await  this.getStatus(settingName));
 					this.isAnalyticsStatusesInitialized = true;
 				}
 				this.$logger.trace("Analytics statuses: ");

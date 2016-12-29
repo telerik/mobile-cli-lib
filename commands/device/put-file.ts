@@ -8,7 +8,7 @@ export class PutFileCommand implements ICommand {
 	public async execute(args: string[]): Promise<void> {
 			this.$devicesService.initialize({ deviceId: this.$options.device, skipInferPlatform: true }).wait();
 
-			let action = (device: Mobile.IDevice) =>  { return (() => device.fileSystem.putFile(args[0], args[1]).wait()).future<void>()(); };
+			let action = await  (device: Mobile.IDevice) =>  { return (() => device.fileSystem.putFile(args[0], args[1])).future<void>()(); };
 			this.$devicesService.execute(action).wait();
 	}
 }

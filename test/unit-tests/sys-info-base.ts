@@ -147,7 +147,7 @@ describe("sysInfoBase", () => {
 			it("on Windows", () => {
 				testInjector = createTestInjector(childProcessResult, {isWindows: true, isDarwin: false, dotNetVersion: "4.5.1"}, null);
 				sysInfoBase = testInjector.resolve("sysInfoBase");
-				let result = sysInfoBase.getSysInfo(toolsPackageJson).wait();
+				let result = await  sysInfoBase.getSysInfo(toolsPackageJson);
 				assertCommonValues(result);
 				assert.deepEqual(result.xcodeVer, null);
 				assert.deepEqual(result.cocoapodVer, null);
@@ -156,7 +156,7 @@ describe("sysInfoBase", () => {
 			it("on Mac", () => {
 				testInjector = createTestInjector(childProcessResult, {isWindows: false, isDarwin: true, dotNetVersion: "4.5.1"}, null);
 				sysInfoBase = testInjector.resolve("sysInfoBase");
-				let result = sysInfoBase.getSysInfo(toolsPackageJson).wait();
+				let result = await  sysInfoBase.getSysInfo(toolsPackageJson);
 				assertCommonValues(result);
 				assert.deepEqual(result.xcodeVer, childProcessResult.xCodeVersion.result);
 				assert.deepEqual(result.cocoapodVer, childProcessResult.podVersion.result);
@@ -165,7 +165,7 @@ describe("sysInfoBase", () => {
 			it("on Linux", () => {
 				testInjector = createTestInjector(childProcessResult, {isWindows: false, isDarwin: false, dotNetVersion: "4.5.1"}, null);
 				sysInfoBase = testInjector.resolve("sysInfoBase");
-				let result = sysInfoBase.getSysInfo(toolsPackageJson).wait();
+				let result = await  sysInfoBase.getSysInfo(toolsPackageJson);
 				assertCommonValues(result);
 				assert.deepEqual(result.xcodeVer, null);
 				assert.deepEqual(result.cocoapodVer, null);
@@ -178,14 +178,14 @@ describe("sysInfoBase", () => {
 				childProcessResult.podVersion = { shouldThrowError: true };
 				testInjector = createTestInjector(childProcessResult, {isWindows: false, isDarwin: true, dotNetVersion: "4.5.1"}, null);
 				sysInfoBase = testInjector.resolve("sysInfoBase");
-				let result = sysInfoBase.getSysInfo(toolsPackageJson).wait();
+				let result = await  sysInfoBase.getSysInfo(toolsPackageJson);
 				assert.deepEqual(result.cocoapodVer, null);
 			});
 
 			it("is null when OS is not Mac", () => {
 				testInjector = createTestInjector(childProcessResult, {isWindows: true, isDarwin: false, dotNetVersion: "4.5.1"}, null);
 				sysInfoBase = testInjector.resolve("sysInfoBase");
-				let result = sysInfoBase.getSysInfo(toolsPackageJson).wait();
+				let result = await  sysInfoBase.getSysInfo(toolsPackageJson);
 				assert.deepEqual(result.cocoapodVer, null);
 			});
 
@@ -193,7 +193,7 @@ describe("sysInfoBase", () => {
 				childProcessResult.podVersion = { result: "0.38.2\nWARNING:\n" };
 				testInjector = createTestInjector(childProcessResult, {isWindows: false, isDarwin: true, dotNetVersion: "4.5.1"}, null);
 				sysInfoBase = testInjector.resolve("sysInfoBase");
-				let result = sysInfoBase.getSysInfo(toolsPackageJson).wait();
+				let result = await  sysInfoBase.getSysInfo(toolsPackageJson);
 				assert.deepEqual(result.cocoapodVer, "0.38.2");
 			});
 
@@ -201,7 +201,7 @@ describe("sysInfoBase", () => {
 				childProcessResult.podVersion = { result: "WARNING\nWARNING2\n0.38.2" };
 				testInjector = createTestInjector(childProcessResult, {isWindows: false, isDarwin: true, dotNetVersion: "4.5.1"}, null);
 				sysInfoBase = testInjector.resolve("sysInfoBase");
-				let result = sysInfoBase.getSysInfo(toolsPackageJson).wait();
+				let result = await  sysInfoBase.getSysInfo(toolsPackageJson);
 				assert.deepEqual(result.cocoapodVer, "0.38.2");
 			});
 		});
@@ -234,7 +234,7 @@ describe("sysInfoBase", () => {
 					};
 					testInjector = createTestInjector(childProcessResult, {isWindows: false, isDarwin: false, dotNetVersion: "4.5.1"}, null);
 					sysInfoBase = testInjector.resolve("sysInfoBase");
-					let result = sysInfoBase.getSysInfo(toolsPackageJson, {pathToAdb: null, pathToAndroid: null}).wait();
+					let result = await  sysInfoBase.getSysInfo(toolsPackageJson, {pathToAdb: null, pathToAndroid: null});
 					assert.deepEqual(result.adbVer, null);
 					assert.deepEqual(result.androidInstalled, false);
 				});
@@ -243,7 +243,7 @@ describe("sysInfoBase", () => {
 			describe("when all of calls throw", () => {
 				let assertAllValuesAreNull = () => {
 					sysInfoBase = testInjector.resolve("sysInfoBase");
-					let result = sysInfoBase.getSysInfo(toolsPackageJson).wait();
+					let result = await  sysInfoBase.getSysInfo(toolsPackageJson);
 					assert.deepEqual(result.npmVer, null);
 					assert.deepEqual(result.javaVer, null);
 					assert.deepEqual(result.javacVersion, null);

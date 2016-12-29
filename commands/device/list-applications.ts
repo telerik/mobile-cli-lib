@@ -14,7 +14,7 @@ export class ListApplicationsCommand implements ICommand {
 			let output: string[] = [];
 
 			let action = (device: Mobile.IDevice) => { return (() => {
-				let applications = device.applicationManager.getInstalledApplications().wait();
+				let applications = await  device.applicationManager.getInstalledApplications();
 				output.push(util.format("%s=====Installed applications on device with UDID '%s' are:", EOL, device.deviceInfo.identifier));
 				_.each(applications, (applicationId: string) => output.push(applicationId)); };
 			this.$devicesService.execute(action).wait();

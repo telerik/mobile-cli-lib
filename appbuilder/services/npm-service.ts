@@ -54,7 +54,7 @@ export class NpmService implements INpmService {
 					npmInstallResult.error = err;
 				}
 
-				if (dependencyToInstall.installTypes && npmInstallResult.result.isInstalled && this.hasTypesForDependency(dependencyToInstall.name).wait()) {
+				if (dependencyToInstall.installTypes && await  npmInstallResult.result.isInstalled && this.hasTypesForDependency(dependencyToInstall.name)) {
 					try {
 						this.installTypingsForDependency(projectDir, dependencyToInstall.name).wait();
 						npmInstallResult.result.isTypesInstalled = true;
@@ -95,7 +95,7 @@ export class NpmService implements INpmService {
 			args = args === undefined ? [] : args;
 			let result: IBasicPluginInformation[] = [];
 			let commandArguments = _.concat(["search"], args, keywords);
-			let spawnResult = this.executeNpmCommandCore(projectDir, commandArguments).wait();
+			let spawnResult = await  this.executeNpmCommandCore(projectDir, commandArguments);
 			if (spawnResult.stderr) {
 				// npm will write "npm WARN Building the local index for the first time, please be patient" to the stderr and if it is the only message on the stderr we should ignore it.
 				let splitError = spawnResult.stderr.trim().split("\n");
@@ -144,8 +144,8 @@ export class NpmService implements INpmService {
 			let packageJsonContent: any;
 			version = version || "latest";
 			try {
-				let url = this.buildNpmRegistryUrl(packageName, version).wait(),
-					proxySettings = this.getNpmProxySettings().wait();
+				let url = await  this.buildNpmRegistryUrl(packageName, version),
+					proxySettings = await  this.getNpmProxySettings();
 
 				// This call will return error with message '{}' in case there's no such package.
 				let result = (await  this.$httpClient.httpRequest({ url, timeout }, proxySettings)).body;
@@ -175,11 +175,11 @@ export class NpmService implements INpmService {
 	}
 
 	private async hasTypesForDependency(packageName: string): Promise<boolean> {
-			return !!this.getPackageJsonFromNpmRegistry(`${NpmService.TYPES_DIRECTORY}${packageName}`).wait();
+			return ! await !this.getPackageJsonFromNpmRegistry(`${NpmService.TYPES_DIRECTORY}${packageName}`);
 	}
 
 	private async buildNpmRegistryUrl(packageName: string, version: string): Promise<string> {
-			let registryUrl = this.getNpmRegistryUrl().wait();
+			let registryUrl = await  this.getNpmRegistryUrl();
 			if (!_.endsWith(registryUrl, "/")) {
 				registryUrl += "/";
 			}
@@ -192,7 +192,7 @@ export class NpmService implements INpmService {
 				let currentNpmRegistry: string;
 
 				try {
-					currentNpmRegistry = (this.$childProcess.exec("npm config get registry").wait() || "").toString().trim();
+					currentNpmRegistry = await  (this.$childProcess.exec("npm config get registry") || "").toString().trim();
 				} catch (err) {
 					this.$logger.trace(`Unable to get registry from npm config. Error is ${err.message}.`);
 				}
@@ -328,7 +328,7 @@ export class NpmService implements INpmService {
 	private async getNpmProxySettings(): Promise<IProxySettings> {
 			if (!this._hasCheckedNpmProxy) {
 				try {
-					let npmProxy = (this.$childProcess.exec("npm config get proxy").wait() || "").toString().trim();
+					let npmProxy = await  (this.$childProcess.exec("npm config get proxy") || "").toString().trim();
 
 					// npm will return null as string in case there's no proxy set.
 					if (npmProxy && npmProxy !== "null") {

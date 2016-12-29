@@ -65,7 +65,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 
 			// Update hashes
 			let deviceHashService = this.getDeviceHashService(deviceAppData.appIdentifier);
-			if (!deviceHashService.updateHashes(localToDevicePaths).wait()) {
+			if (! await deviceHashService.updateHashes(localToDevicePaths)) {
 				this.$logger.trace("Unable to find hash file on device. The next livesync command will create it.");
 			}
 	}
@@ -78,7 +78,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 				let localPath = localToDevicePathData.getLocalPath();
 				let stats = this.$fs.getFsStats(localPath);
 				if (stats.isFile()) {
-					let fileShasum = this.$fs.getFileShasum(localPath).wait();
+					let fileShasum = await  this.$fs.getFileShasum(localPath);
 					currentShasums[localPath] = fileShasum;
 				}
 				devicePaths.push(`"${localToDevicePathData.getDevicePath()}"`);
@@ -93,7 +93,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 				this.adb.executeCommand(["push", projectFilesPath, deviceAppData.deviceProjectRootPath]).wait();
 			} else {
 				// Create or update file hashes on device
-				let oldShasums = deviceHashService.getShasumsFromDevice().wait();
+				let oldShasums = await  deviceHashService.getShasumsFromDevice();
 				if (oldShasums) {
 					let changedShasums: any = _.omitBy(currentShasums, (hash: string, pathToFile: string) => !!_.find(oldShasums, (oldHash: string, oldPath: string) => pathToFile === oldPath && hash === oldHash));
 					this.$logger.trace("Changed file hashes are:", changedShasums);
@@ -112,7 +112,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 			}
 
 			if (filesToChmodOnDevice.length) {
-				this.createFileOnDevice(commandsDeviceFilePath, "chmod 0777 " + filesToChmodOnDevice.join(" ")).wait();
+				this.createFileOnDevice(commandsDeviceFilePath, "chmod 0777 " + await  filesToChmodOnDevice.join(" "));
 				this.adb.executeShellCommand([commandsDeviceFilePath]).wait();
 			}
 			deviceHashService.uploadHashFileToDevice(currentShasums).wait();

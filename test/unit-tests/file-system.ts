@@ -134,7 +134,7 @@ describe("FileSystem", () => {
 				let tempDir = temp.mkdirSync("projectToUnzip");
 				let fs: IFileSystem = testInjector.resolve("fs");
 				if (isOsCaseSensitive(testInjector)) {
-					assert.throws(() => fs.unzip(sampleZipFileTestIncorrectName, tempDir, undefined, [unzippedFileName]).wait());
+					assert.throws(() => await  fs.unzip(sampleZipFileTestIncorrectName, tempDir, undefined, [unzippedFileName]));
 				}
 			});
 
@@ -143,7 +143,7 @@ describe("FileSystem", () => {
 				let tempDir = temp.mkdirSync("projectToUnzip");
 				let fs: IFileSystem = testInjector.resolve("fs");
 				if (isOsCaseSensitive(testInjector)) {
-					assert.throws(() => fs.unzip(sampleZipFileTestIncorrectName, tempDir, {}, [unzippedFileName]).wait());
+					assert.throws(() => await  fs.unzip(sampleZipFileTestIncorrectName, tempDir, {}, [unzippedFileName]));
 				}
 			});
 
@@ -152,7 +152,7 @@ describe("FileSystem", () => {
 				let tempDir = temp.mkdirSync("projectToUnzip");
 				let fs: IFileSystem = testInjector.resolve("fs");
 				if (isOsCaseSensitive(testInjector)) {
-					assert.throws(() => fs.unzip(sampleZipFileTestIncorrectName, tempDir, { caseSensitive: true }, [unzippedFileName]).wait());
+					assert.throws(() => await  fs.unzip(sampleZipFileTestIncorrectName, tempDir, { caseSensitive: true }, [unzippedFileName]));
 				}
 			});
 

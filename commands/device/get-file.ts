@@ -8,7 +8,7 @@ export class GetFileCommand implements ICommand {
 	public async execute(args: string[]): Promise<void> {
 			this.$devicesService.initialize({ deviceId: this.$options.device, skipInferPlatform: true }).wait();
 
-			let action = (device: Mobile.IDevice) =>  { return (() => device.fileSystem.getFile(args[0], this.$options.file).wait()).future<void>()(); };
+			let action = await  (device: Mobile.IDevice) =>  { return (() => device.fileSystem.getFile(args[0], this.$options.file)).future<void>()(); };
 			this.$devicesService.execute(action).wait();
 	}
 }

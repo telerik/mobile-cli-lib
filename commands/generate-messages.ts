@@ -13,7 +13,7 @@ export class GenerateMessages implements ICommand {
 
 	execute(args: string[]): IFuture<void> {
 		return (() => {
-			let result = this.$messageContractGenerator.generate().wait(),
+			let result = await  this.$messageContractGenerator.generate(),
 				innerMessagesDirectory = path.join(__dirname, "../messages"),
 				outerMessagesDirectory = path.join(__dirname, "../.."),
 				interfaceFilePath: string,

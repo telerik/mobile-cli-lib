@@ -291,7 +291,7 @@ export function hook(commandName: string) {
 			hooksService.executeBeforeHooks(commandName, prepareArguments(method, args, hooksService)).wait();
 		},
 		(method: any, self: any, resultPromise: any, args: any[]) => {
-			let result = resultPromise.wait();
+			let result = await  resultPromise;
 			let hooksService = getHooksService(self);
 			hooksService.executeAfterHooks(commandName, prepareArguments(method, args, hooksService)).wait();
 			return Future.fromResult(result);

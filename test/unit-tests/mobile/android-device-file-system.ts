@@ -111,7 +111,7 @@ describe("Android device file system tests", () => {
 			fs.getFsStats = mockFsStats({ isDirectory: false, isFile: true });
 
 			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
-			androidDeviceFileSystem.transferDirectory(deviceAppData, localToDevicePaths, "~/TestApp/app").wait();
+			androidDeviceFileSystem.transferDirectory(deviceAppData, localToDevicePaths, "~ await /TestApp/app");
 
 			assert.isTrue(isAdbPushExecuted);
 			isAdbPushExecuted = false;
@@ -126,7 +126,7 @@ describe("Android device file system tests", () => {
 			fs.getFileShasum = (filePath: string) => (() => "0").future<string>()();
 
 			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
-			androidDeviceFileSystem.transferDirectory(createDeviceAppData(), [], "~/TestApp/app").wait();
+			androidDeviceFileSystem.transferDirectory(createDeviceAppData(), [], "~ await /TestApp/app");
 
 			assert.isTrue(isAdbPushExecuted);
 			isAdbPushExecuted = false;
@@ -153,7 +153,7 @@ describe("Android device file system tests", () => {
 				assert.equal(localPath, "~/TestApp/app/test.js");
 				return Future.fromResult();
 			};
-			androidDeviceFileSystem.transferDirectory(deviceAppData, localToDevicePaths, "~/TestApp/app").wait();
+			androidDeviceFileSystem.transferDirectory(deviceAppData, localToDevicePaths, "~ await /TestApp/app");
 		});
 		it("pushes only changed files when hashes file exists on device", () => {
 			let injector = createTestInjector();
@@ -179,7 +179,7 @@ describe("Android device file system tests", () => {
 				transferedFilesOnDevice.push(localPath);
 				return Future.fromResult();
 			};
-			androidDeviceFileSystem.transferDirectory(deviceAppData, localToDevicePaths, "~/TestApp/app").wait();
+			androidDeviceFileSystem.transferDirectory(deviceAppData, localToDevicePaths, "~ await /TestApp/app");
 
 			assert.equal(transferedFilesOnDevice.length, 2);
 			assert.isTrue(_.includes(transferedFilesOnDevice, "~/TestApp/app/test.js"));
@@ -209,7 +209,7 @@ describe("Android device file system tests", () => {
 				assert.equal(localPath, "~/TestApp/app/newDir/test.js");
 				return Future.fromResult();
 			};
-			androidDeviceFileSystem.transferDirectory(deviceAppData, localToDevicePaths, "~/TestApp/app").wait();
+			androidDeviceFileSystem.transferDirectory(deviceAppData, localToDevicePaths, "~ await /TestApp/app");
 		});
 
 		it("pushes files which has different location and different shasum when hash file exists on device", () => {
@@ -234,7 +234,7 @@ describe("Android device file system tests", () => {
 				assert.equal(localPath, "~/TestApp/app/newDir/test.js");
 				return Future.fromResult();
 			};
-			androidDeviceFileSystem.transferDirectory(deviceAppData, localToDevicePaths, "~/TestApp/app").wait();
+			androidDeviceFileSystem.transferDirectory(deviceAppData, localToDevicePaths, "~ await /TestApp/app");
 		});
 	});
 });

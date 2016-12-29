@@ -236,7 +236,7 @@ export class Yok implements IInjector {
 							}
 						}
 
-						commandsService.tryExecuteCommand(commandName, commandName === "help" ? [name] : commandArguments).wait();
+						commandsService.tryExecuteCommand(commandName, commandName = await == "help" ? [name] : commandArguments);
 					}).future<void>()();
 				}
 			};

@@ -8,7 +8,7 @@ export class NpmPluginsService implements INpmPluginsService {
 	public async search(projectDir: string, keywords: string[], modifySearchQuery: (keywords: string[]) => string[]): Promise<IPluginsSource> {
 			let query = modifySearchQuery ? modifySearchQuery(keywords) : keywords;
 
-			let pluginsSource = this.searchCore(NpmjsPluginsSource, projectDir, keywords).wait() ||
+			let pluginsSource = await  this.searchCore(NpmjsPluginsSource, projectDir, keywords) ||
 				this.searchCore(NpmRegistryPluginsSource, projectDir, keywords).wait() ||
 				this.preparePluginsSource(NpmPluginsSource, projectDir, query).wait();
 
@@ -16,11 +16,11 @@ export class NpmPluginsService implements INpmPluginsService {
 	}
 
 	public async optimizedSearch(projectDir: string, keywords: string[], modifySearchQuery: (keywords: string[]) => string[]): Promise<IPluginsSource> {
-			return this.searchCore(NpmRegistryPluginsSource, projectDir, keywords).wait() || this.search(projectDir, keywords, modifySearchQuery).wait();
+			return this.searchCore(NpmRegistryPluginsSource, projectDir, keywords).wait() || await  this.search(projectDir, keywords, modifySearchQuery);
 	}
 
 	private async searchCore(pluginsSourceConstructor: Function, projectDir: string, keywords: string[]): Promise<IPluginsSource> {
-			let npmPluginsSource = this.preparePluginsSource(pluginsSourceConstructor, projectDir, keywords).wait();
+			let npmPluginsSource = await  this.preparePluginsSource(pluginsSourceConstructor, projectDir, keywords);
 
 			return npmPluginsSource.hasPlugins() ? npmPluginsSource : null;
 	}

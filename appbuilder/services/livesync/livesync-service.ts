@@ -72,7 +72,7 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 				}
 			}
 
-			let appIdentifier = this.$project.getAppIdentifierForPlatform(this.$devicesService.platform).wait(),
+			let appIdentifier = await  this.$project.getAppIdentifierForPlatform(this.$devicesService.platform),
 				canExecute = (d: Mobile.IDevice) => d.deviceInfo.identifier === device.deviceInfo.identifier,
 				livesyncData: ILiveSyncData = {
 					platform: device.deviceInfo.platform,
@@ -85,11 +85,11 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 			let canExecuteAction = this.$liveSyncServiceBase.getCanExecuteAction(device.deviceInfo.platform, appIdentifier, canExecute);
 
 			if (deviceDescriptor.syncToApp) {
-				result.liveSyncToApp = this.liveSyncCore(livesyncData, device, appIdentifier, canExecuteAction, { isForCompanionApp: false, isForDeletedFiles: isForDeletedFiles }, filePaths).wait();
+				result.liveSyncToApp = await  this.liveSyncCore(livesyncData, device, appIdentifier, canExecuteAction, { isForCompanionApp: false, isForDeletedFiles: isForDeletedFiles }, filePaths);
 			}
 
 			if (deviceDescriptor.syncToCompanion) {
-				result.liveSyncToCompanion = this.liveSyncCore(livesyncData, device, appIdentifier, canExecuteAction, { isForCompanionApp: true, isForDeletedFiles: isForDeletedFiles }, filePaths).wait();
+				result.liveSyncToCompanion = await  this.liveSyncCore(livesyncData, device, appIdentifier, canExecuteAction, { isForCompanionApp: true, isForDeletedFiles: isForDeletedFiles }, filePaths);
 			}
 
 			return result;

@@ -17,7 +17,7 @@ export class CommandDispatcher implements ICommandDispatcher {
 
 			if (this.$logger.getLevel() === "TRACE") {
 				// CommandDispatcher is called from external CLI's only, so pass the path to their package.json
-				let sysInfo = this.$sysInfo.getSysInfo(path.join(__dirname, "..", "..", "package.json")).wait();
+				let sysInfo = await  this.$sysInfo.getSysInfo(path.join(__dirname, "..", "..", "package.json"));
 				this.$logger.trace("System information:");
 				this.$logger.trace(sysInfo);
 			}
@@ -78,7 +78,7 @@ class FutureDispatcher implements IFutureDispatcher {
 		this.actions = new queue.Queue<any>();
 
 		while(true) {
-			let action = this.actions.dequeue().wait();
+			let action = await  this.actions.dequeue();
 			action().wait();
 		}
 	}

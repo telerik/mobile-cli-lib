@@ -168,7 +168,7 @@ describe("Project Files Manager Tests", () => {
 
 	it("filters android specific files", () => {
 		let files = ["test.ios.x", "test.android.x"];
-		let directoryPath = createFiles(testInjector, files).wait();
+		let directoryPath = await  createFiles(testInjector, files);
 
 		projectFilesManager.processPlatformSpecificFiles(directoryPath, "android");
 
@@ -180,7 +180,7 @@ describe("Project Files Manager Tests", () => {
 
 	it("filters ios specific files", () => {
 		let files = ["index.ios.html", "index1.android.html", "a.test"];
-		let directoryPath = createFiles(testInjector, files).wait();
+		let directoryPath = await  createFiles(testInjector, files);
 
 		projectFilesManager.processPlatformSpecificFiles(directoryPath, "ios");
 
@@ -193,7 +193,7 @@ describe("Project Files Manager Tests", () => {
 
 	it("doesn't filter non platform specific files", () => {
 		let files = ["index1.js", "index2.js", "index3.js"];
-		let directoryPath = createFiles(testInjector, files).wait();
+		let directoryPath = await  createFiles(testInjector, files);
 
 		projectFilesManager.processPlatformSpecificFiles(directoryPath, "ios");
 

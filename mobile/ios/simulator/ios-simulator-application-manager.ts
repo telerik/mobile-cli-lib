@@ -42,7 +42,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async startApplication(appIdentifier: string): Promise<void> {
-			let launchResult = this.iosSim.startApplication(this.identifier, appIdentifier).wait();
+			let launchResult = await  this.iosSim.startApplication(this.identifier, appIdentifier);
 
 			if (!this.$options.justlaunch) {
 				let pid = launchResult.split(":")[1].trim();
@@ -61,7 +61,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 
 	public async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
 			let result: Mobile.IApplicationInfo = null,
-				plistContent = this.getParsedPlistContent(applicationIdentifier).wait();
+				plistContent = await  this.getParsedPlistContent(applicationIdentifier);
 
 			if (plistContent) {
 				result = {
@@ -75,7 +75,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async isLiveSyncSupported(appIdentifier: string): Promise<boolean> {
-			let plistContent = this.getParsedPlistContent(appIdentifier).wait();
+			let plistContent = await  this.getParsedPlistContent(appIdentifier);
 			if (plistContent) {
 				return !!plistContent && !!plistContent.IceniumLiveSyncEnabled;
 			}
@@ -85,7 +85,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 
 	private getParsedPlistContent(appIdentifier: string): any {
 		return ((): any => {
-			if (!this.isApplicationInstalled(appIdentifier).wait()) {
+			if (! await this.isApplicationInstalled(appIdentifier)) {
 				return null;
 			}
 

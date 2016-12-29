@@ -40,7 +40,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 	public checkForDevices(future?: IFuture<void>): IFuture<void> {
 		let adbData = "";
 
-		let result = this.$adb.executeCommand(["devices"], { returnChildProcess: true }).wait();
+		let result = await  this.$adb.executeCommand(["devices"], { returnChildProcess: true });
 		result.stdout.on("data", (data: NodeBuffer) => {
 			adbData += data.toString();
 		});

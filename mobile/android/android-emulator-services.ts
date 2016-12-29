@@ -42,7 +42,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		private $utils: IUtils,
 		private $injector: IInjector) {
 		iconv.extendNodeEncodings();
-		this.adbFilePath = this.$staticConfig.getAdbFilePath().wait();
+		this.adbFilePath = await  this.$staticConfig.getAdbFilePath();
 	}
 
 	private get pathToEmulatorExecutable(): string {
@@ -61,7 +61,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 				this.$errors.fail("Could not find an emulator image to run your project.");
 			}
 
-			let emulatorId = this.startEmulatorInstance(image).wait();
+			let emulatorId = await  this.startEmulatorInstance(image);
 			return emulatorId;
 	}
 
@@ -93,7 +93,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 			let image = this.getEmulatorImage();
 			if (image) {
 				// start the emulator, if needed
-				emulatorId = this.startEmulatorInstance(image).wait();
+				emulatorId = await  this.startEmulatorInstance(image);
 
 				// waits for the boot animation property of the emulator to switch to 'stopped'
 				this.waitForEmulatorBootToComplete(emulatorId).wait();
@@ -108,7 +108,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	}
 
 	public async runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): Promise<void> {
-			let emulatorId = this.startEmulator().wait();
+			let emulatorId = await  this.startEmulator();
 			this.runApplicationOnEmulatorCore(app, emulatorOptions.appId, emulatorId).wait();
 	}
 
@@ -144,7 +144,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 			// install the app
 			this.$logger.info("installing %s through adb", app);
 			let adb = this.getDeviceAndroidDebugBridge(emulatorId);
-			let childProcess = adb.executeCommand(["install", "-r", app], { returnChildProcess: true }).wait();
+			let childProcess = await  adb.executeCommand(["install", "-r", app], { returnChildProcess: true });
 			this.$fs.futureFromEvent(childProcess, "close").wait();
 
 			// unlock screen again in cases when the installation is slow
@@ -157,7 +157,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 				childProcessOptions: { stdio: "ignore", detached: true },
 				returnChildProcess: true
 			};
-			childProcess = adb.executeShellCommand(["monkey", "-p", appId, "-c", "android.intent.category.LAUNCHER", "1"], androidDebugBridgeCommandOptions).wait();
+			childProcess = await  adb.executeShellCommand(["monkey", "-p", appId, "-c", "android.intent.category.LAUNCHER", "1"], androidDebugBridgeCommandOptions);
 			this.$fs.futureFromEvent(childProcess, "close").wait();
 
 			if (!this.$options.justlaunch) {
@@ -167,7 +167,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 
 	private unlockScreen(emulatorId: string): IFuture<void> {
 		let adb = this.getDeviceAndroidDebugBridge(emulatorId);
-		let childProcess = adb.executeShellCommand(["input", "keyevent", "82"], { returnChildProcess: true }).wait();
+		let childProcess = await  adb.executeShellCommand(["input", "keyevent", "82"], { returnChildProcess: true });
 		return this.$fs.futureFromEvent(childProcess, "close");
 	}
 
@@ -178,20 +178,20 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	}
 
 	private async getRunningEmulatorId(image: string): Promise<string> {
-			let runningEmulators = this.getRunningEmulators().wait();
+			let runningEmulators = await  this.getRunningEmulators();
 			if (runningEmulators.length === 0) {
 				return "";
 			}
 
 			// if we get here, there's at least one running emulator
 			let getNameFunction = this.$options.geny ? this.getNameFromGenymotionEmulatorId : this.getNameFromSDKEmulatorId;
-			let emulatorId = _(runningEmulators).find(emulator => getNameFunction.apply(this, [emulator]).wait() === image);
+			let emulatorId = await  _(runningEmulators).find(emulator => getNameFunction.apply(this, [emulator]) === image);
 
 			return emulatorId;
 	}
 
 	private async getNameFromGenymotionEmulatorId(emulatorId: string): Promise<string> {
-			let modelOutputLines: string = this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.model"]).wait();
+			let modelOutputLines: string = await  this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.model"]);
 			this.$logger.trace(modelOutputLines);
 			let model = (<string>_.first(modelOutputLines.split(EOL))).trim();
 			return model;
@@ -262,7 +262,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	}
 
 	private async startEmulatorInstance(image: string): Promise<string> {
-			let emulatorId = this.getRunningEmulatorId(image).wait();
+			let emulatorId = await  this.getRunningEmulatorId(image);
 			this.endTimeEpoch = helpers.getCurrentEpochTime() + this.$utils.getMilliSecondsTimeout(AndroidEmulatorServices.TIMEOUT_SECONDS);
 			if (emulatorId) {
 				// If there's already a running instance of this image, we'll just deploy the app to it.
@@ -284,7 +284,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 			let hasTimeLeft = helpers.getCurrentEpochTime() < this.endTimeEpoch;
 
 			while (hasTimeLeft || isInfiniteWait) {
-				emulatorId = this.getRunningEmulatorId(image).wait();
+				emulatorId = await  this.getRunningEmulatorId(image);
 				if (emulatorId) {
 					return emulatorId;
 				}
@@ -333,12 +333,12 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	}
 
 	private async isGenymotionEmulator(emulatorId: string): Promise<boolean> {
-			let manufacturer = this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.manufacturer"]).wait();
+			let manufacturer = await  this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.manufacturer"]);
 			if (manufacturer.match(/^Genymotion/i)) {
 				return true;
 			}
 
-			let buildProduct = this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.build.product"]).wait();
+			let buildProduct = await  this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.build.product"]);
 			if (buildProduct && _.includes(buildProduct.toLowerCase(), "vbox")) {
 				return true;
 			}
@@ -348,7 +348,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 
 	public async getAllRunningEmulators(): Promise<string[]> {
 			let outputRaw: string[] = (await  this.$childProcess.execFile(this.adbFilePath, ['devices'])).split(EOL);
-			let emulators = (await  this.getRunningAvdEmulators(outputRaw)).concat(this.getRunningGenymotionEmulators(outputRaw).wait());
+			let emulators = await  (await  this.getRunningAvdEmulators(outputRaw)).concat(this.getRunningGenymotionEmulators(outputRaw));
 			return emulators;
 	}
 
@@ -470,7 +470,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 
 			let isInfiniteWait = this.$utils.getMilliSecondsTimeout(AndroidEmulatorServices.TIMEOUT_SECONDS) === 0;
 			while (helpers.getCurrentEpochTime() < this.endTimeEpoch || isInfiniteWait) {
-				let isEmulatorBootCompleted = this.isEmulatorBootCompleted(emulatorId).wait();
+				let isEmulatorBootCompleted = await  this.isEmulatorBootCompleted(emulatorId);
 
 				if (isEmulatorBootCompleted) {
 					this.$logger.printInfoMessageOnSameLine(EOL);
@@ -486,7 +486,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	}
 
 	private async isEmulatorBootCompleted(emulatorId: string): Promise<boolean> {
-			let output = this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "dev.bootcomplete"]).wait();
+			let output = await  this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "dev.bootcomplete"]);
 			let matches = output.match("1");
 			return matches && matches.length > 0;
 	}

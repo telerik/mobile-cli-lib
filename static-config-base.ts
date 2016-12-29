@@ -27,7 +27,7 @@ export class StaticConfigBase implements Config.IStaticConfig {
 
 	public async getAdbFilePath(): Promise<string> {
 			if (!this._adbFilePath) {
-				this._adbFilePath = this.getAdbFilePathCore().wait();
+				this._adbFilePath = await  this.getAdbFilePathCore();
 			}
 
 			return this._adbFilePath;
@@ -50,7 +50,7 @@ export class StaticConfigBase implements Config.IStaticConfig {
 
 			try {
 				// Do NOT use the adb wrapper because it will end blow up with Segmentation fault because the wrapper uses this method!!!
-				let proc = $childProcess.spawnFromEvent("adb", ["version"], "exit", undefined, { throwError: false }).wait();
+				let proc = await  $childProcess.spawnFromEvent("adb", ["version"], "exit", undefined, { throwError: false });
 
 				if (proc.stderr) {
 					return this.spawnPrivateAdb().wait();

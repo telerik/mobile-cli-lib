@@ -46,7 +46,7 @@ export class TypeScriptService implements ITypeScriptService {
 	public async transpile(projectDir: string, typeScriptFiles?: string[], definitionFiles?: string[], options?: ITypeScriptTranspileOptions): Promise<string> {
 			options = options || {};
 			let compilerOptions = this.getCompilerOptions(projectDir, options);
-			let typeScriptCompilerSettings = this.getTypeScriptCompilerSettings({ useLocalTypeScriptCompiler: options.useLocalTypeScriptCompiler }).wait();
+			let typeScriptCompilerSettings = await  this.getTypeScriptCompilerSettings({ useLocalTypeScriptCompiler: options.useLocalTypeScriptCompiler });
 			this.noEmitOnError = compilerOptions.noEmitOnError;
 			this.typeScriptFiles = typeScriptFiles || [];
 			this.definitionFiles = definitionFiles || [];
@@ -87,7 +87,7 @@ export class TypeScriptService implements ITypeScriptService {
 	}
 
 	public async isTypeScriptProject(projectDir: string): Promise<boolean> {
-			let typeScriptFilesData = this.getTypeScriptFilesData(projectDir).wait();
+			let typeScriptFilesData = await  this.getTypeScriptFilesData(projectDir);
 
 			return !!typeScriptFilesData.typeScriptFiles.length;
 	}
@@ -176,7 +176,7 @@ export class TypeScriptService implements ITypeScriptService {
 				.concat(this.getTypeScriptCompilerOptionsAsArguments(options.compilerOptions) || [])
 				.value();
 
-			let output = this.$childProcess.spawnFromEvent(process.argv[0], params, "close", { cwd: projectDir }, { throwError: false }).wait();
+			let output = await  this.$childProcess.spawnFromEvent(process.argv[0], params, "close", { cwd: projectDir }, { throwError: false });
 			let compilerOutput = output.stderr || output.stdout;
 
 			// EmitReturnStatus enum in https://github.com/Microsoft/TypeScript/blob/8947757d096338532f1844d55788df87fb5a39ed/src/compiler/types.ts#L605

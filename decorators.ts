@@ -62,7 +62,7 @@ function getPromise(originalValue: any, config?: { postActionMethod: () => void,
 		if (isFuture(originalValue)) {
 			fiberBootstrap.run(function () {
 				try {
-					let realResult = originalValue.wait();
+					let realResult = await  originalValue;
 					onFulfilled(realResult);
 				} catch (err) {
 					onRejected(err);

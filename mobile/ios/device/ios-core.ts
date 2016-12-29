@@ -1184,12 +1184,12 @@ export class GDBServer implements Mobile.IGDBServer {
 
 	public async init(argv: string[]): Promise<void> {
 			if (!this.isInitilized) {
-				this.awaitResponse("QStartNoAckMode", "+").wait();
+				this.awaitResponse("QStartNoAckMode", "+ await ");
 				this.sendCore("+");
 				this.awaitResponse("QEnvironmentHexEncoded:").wait();
 				this.awaitResponse("QSetDisableASLR:1").wait();
 				let encodedArguments = _.map(argv, (arg, index) => util.format("%d,%d,%s", arg.length * 2, index, this.toHex(arg))).join(",");
-				this.awaitResponse("A" + encodedArguments).wait();
+				this.awaitResponse("A" + await  encodedArguments);
 
 				this.isInitilized = true;
 			}
@@ -1221,7 +1221,7 @@ export class GDBServer implements Mobile.IGDBServer {
 	public async kill(argv: string[]): Promise<void> {
 			this.init(argv).wait();
 
-			this.awaitResponse("\x03", "thread", () => this.sendx03Message()).wait();
+			this.awaitResponse("\x03", "thread", () => await  this.sendx03Message());
 			this.send("k").wait();
 	}
 
@@ -1231,7 +1231,7 @@ export class GDBServer implements Mobile.IGDBServer {
 
 	private async awaitResponse(packet: string, expectedResponse?: string, getResponseAction?: () => IFuture<string>): Promise<void> {
 			expectedResponse = expectedResponse || this.okResponse;
-			let actualResponse = getResponseAction ? getResponseAction.apply(this, []).wait() : this.send(packet).wait();
+			let actualResponse = await  getResponseAction ? getResponseAction.apply(this, []).wait() : this.send(packet);
 			if (actualResponse.indexOf(expectedResponse) === -1 || _.startsWith(actualResponse, "$E")) {
 				this.$logger.trace(`GDB: actual response: ${actualResponse}, expected response: ${expectedResponse}`);
 				this.$errors.failWithoutHelp(`Unable to send ${packet}.`);

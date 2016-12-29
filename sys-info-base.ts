@@ -139,7 +139,7 @@ export class SysInfoBase implements ISysInfo {
 				res.os = this.$hostInfo.isWindows ? this.winVer() : this.unixVer();
 				res.shell = osenv.shell();
 				try {
-					res.dotNetVer = this.$hostInfo.dotNetVersion().wait();
+					res.dotNetVer = await  this.$hostInfo.dotNetVersion();
 				} catch(err) {
 					res.dotNetVer = ".Net is not installed.";
 				}
@@ -150,14 +150,14 @@ export class SysInfoBase implements ISysInfo {
 
 				res.npmVer = this.getNpmVersion();
 
-				res.javaVer = this.getJavaVersion().wait();
+				res.javaVer = await  this.getJavaVersion();
 
-				res.nodeGypVer = this.getNodeGypVersion().wait();
-				res.xcodeVer = this.getXCodeVersion().wait();
-				res.xcodeprojGemLocation = this.getXCodeProjGemLocation().wait();
+				res.nodeGypVer = await  this.getNodeGypVersion();
+				res.xcodeVer = await  this.getXCodeVersion();
+				res.xcodeprojGemLocation = await  this.getXCodeProjGemLocation();
 				res.itunesInstalled = this.getITunesInstalled();
 
-				res.cocoapodVer = this.getCocoapodVersion().wait();
+				res.cocoapodVer = await  this.getCocoapodVersion();
 				let pathToAdb = androidToolsInfo ? androidToolsInfo.pathToAdb : "adb";
 				let pathToAndroid = androidToolsInfo ? androidToolsInfo.pathToAndroid : "android";
 
@@ -168,7 +168,7 @@ export class SysInfoBase implements ISysInfo {
 				procOutput = this.exec(`${quoteString(pathToAdb)} version`);
 				res.adbVer = procOutput ? procOutput.split(os.EOL)[0] : null;
 
-				res.androidInstalled = this.checkAndroid(pathToAndroid).wait();
+				res.androidInstalled = await  this.checkAndroid(pathToAndroid);
 
 				procOutput = this.exec("mono --version");
 				if (!!procOutput) {
@@ -184,7 +184,7 @@ export class SysInfoBase implements ISysInfo {
 				procOutput = this.exec("gradle -v");
 				res.gradleVer = procOutput ? /Gradle (.*)/i.exec(procOutput)[1] : null;
 
-				res.javacVersion = this.getJavaCompilerVersion().wait();
+				res.javacVersion = await  this.getJavaCompilerVersion();
 
 				this.sysInfoCache = res;
 			}
@@ -209,7 +209,7 @@ export class SysInfoBase implements ISysInfo {
 			let result = false;
 			try {
 				if(pathToAndroid) {
-					let androidChildProcess = this.$childProcess.spawnFromEvent(pathToAndroid, ["-h"], "close", {}, {throwError: false}).wait();
+					let androidChildProcess = await  this.$childProcess.spawnFromEvent(pathToAndroid, ["-h"], "close", {}, {throwError: false});
 					result = androidChildProcess && androidChildProcess.stdout && _.includes(androidChildProcess.stdout, "android");
 				}
 			} catch(err) {

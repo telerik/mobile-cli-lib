@@ -122,7 +122,7 @@ export class ChildProcess implements IChildProcess {
 	public tryExecuteApplication(command: string, args: string[], event: string,
 			errorMessage: string, condition: (_childProcess: any) => boolean): IFuture<any> {
 		return (() => {
-			let childProcess = this.tryExecuteApplicationCore(command, args, event, errorMessage).wait();
+			let childProcess = await  this.tryExecuteApplicationCore(command, args, event, errorMessage);
 
 			if(condition && condition(childProcess)) {
 				this.$errors.fail(errorMessage);

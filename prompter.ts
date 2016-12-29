@@ -58,7 +58,7 @@ export class Prompter implements IPrompter {
 				}
 			};
 
-			let result = this.get([schema]).wait();
+			let result = await  this.get([schema]);
 			return result.password;
 	}
 
@@ -74,7 +74,7 @@ export class Prompter implements IPrompter {
 				default: options && options.defaultAction
 			};
 
-			let result = this.get([schema]).wait();
+			let result = await  this.get([schema]);
 			return result.inputString;
 	}
 
@@ -86,7 +86,7 @@ export class Prompter implements IPrompter {
 				choices: choices
 			};
 
-			let result = this.get([schema]).wait();
+			let result = await  this.get([schema]);
 			return result.userAnswer;
 	}
 
@@ -98,7 +98,7 @@ export class Prompter implements IPrompter {
 				message: prompt
 			};
 
-			let result = this.get([schema]).wait();
+			let result = await  this.get([schema]);
 			return result.prompt;
 	}
 

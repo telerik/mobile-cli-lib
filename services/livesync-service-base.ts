@@ -63,7 +63,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 								return;
 							}
 
-							let fileHash = that.$fs.exists(filePath) && that.$fs.getFsStats(filePath).isFile() ? that.$fs.getFileShasum(filePath).wait() : "";
+							let fileHash = await  that.$fs.exists(filePath) && that.$fs.getFsStats(filePath).isFile() ? that.$fs.getFileShasum(filePath) : "";
 							if (fileHash === that.fileHashes[filePath]) {
 								that.$logger.trace(`Skipping livesync for ${filePath} file with ${fileHash} hash.`);
 								return;
@@ -175,16 +175,16 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 					device.applicationManager.checkForApplicationUpdates().wait();
 
 					let wasInstalled = true;
-					if (!device.applicationManager.isApplicationInstalled(appIdentifier).wait() && !this.$options.companion) {
+					if (! await device.applicationManager.isApplicationInstalled(appIdentifier) && !this.$options.companion) {
 						this.$logger.warn(`The application with id "${appIdentifier}" is not installed on device with identifier ${device.deviceInfo.identifier}.`);
 						if (!packageFilePath) {
-							packageFilePath = this.$liveSyncProvider.buildForDevice(device).wait();
+							packageFilePath = await  this.$liveSyncProvider.buildForDevice(device);
 						}
 						device.applicationManager.installApplication(packageFilePath).wait();
 
 						if (platformLiveSyncService.afterInstallApplicationAction) {
 							let localToDevicePaths = this.$projectFilesManager.createLocalToDevicePaths(deviceAppData, projectFilesPath, filesToSync, data.excludedProjectDirsAndFiles, liveSyncOptions);
-							shouldRefreshApplication = platformLiveSyncService.afterInstallApplicationAction(deviceAppData, localToDevicePaths).wait();
+							shouldRefreshApplication = await  platformLiveSyncService.afterInstallApplicationAction(deviceAppData, localToDevicePaths);
 						} else {
 							shouldRefreshApplication = false;
 						}
@@ -202,11 +202,11 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 						if (deviceFilesAction) {
 							deviceFilesAction(deviceAppData, device, localToDevicePaths).wait();
 						} else {
-							this.transferFiles(deviceAppData, localToDevicePaths, projectFilesPath, !filesToSync).wait();
+							this.transferFiles(deviceAppData, localToDevicePaths, projectFilesPath, ! await filesToSync);
 						}
 
 						this.$logger.info("Applying changes...");
-						platformLiveSyncService.refreshApplication(deviceAppData, localToDevicePaths, data.forceExecuteFullSync || !wasInstalled).wait();
+						platformLiveSyncService.refreshApplication(deviceAppData, localToDevicePaths, data.forceExecuteFullSync || await  !wasInstalled);
 						this.$logger.info(`Successfully synced application ${data.appIdentifier} on device ${device.deviceInfo.identifier}.`);
 					}
 				} else {
@@ -280,8 +280,8 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 				if (simulator) {
 					let iOSDevices = _.filter(devices, d => d.deviceInfo.identifier !== simulator.deviceInfo.identifier);
 					if (iOSDevices && iOSDevices.length) {
-						let isApplicationInstalledOnSimulator = simulator.applicationManager.isApplicationInstalled(appIdentifier).wait();
-						let isApplicationInstalledOnAllDevices = _.intersection.apply(null, iOSDevices.map(device => device.applicationManager.isApplicationInstalled(appIdentifier).wait()));
+						let isApplicationInstalledOnSimulator = await  simulator.applicationManager.isApplicationInstalled(appIdentifier);
+						let isApplicationInstalledOnAllDevices = await  _.intersection.apply(null, iOSDevices.map(device => device.applicationManager.isApplicationInstalled(appIdentifier)));
 						// In case the application is not installed on both device and simulator, syncs only on device.
 						if (!isApplicationInstalledOnSimulator && !isApplicationInstalledOnAllDevices) {
 							finalCanExecute = (device: Mobile.IDevice): boolean => canExecute(device) && this.$devicesService.isiOSDevice(device);

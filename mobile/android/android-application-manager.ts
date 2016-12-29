@@ -19,7 +19,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async getInstalledApplications(): Promise<string[]> {
-			let result = this.adb.executeShellCommand(["pm", "list", "packages"]).wait() || "";
+			let result = await  this.adb.executeShellCommand(["pm", "list", "packages"]) || "";
 			let regex = /package:(.+)/;
 			return result.split(EOL)
 				.map((packageString: string) => {
@@ -64,7 +64,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async isLiveSyncSupported(appIdentifier: string): Promise<boolean> {
-			let liveSyncVersion = this.adb.sendBroadcastToDevice(LiveSyncConstants.CHECK_LIVESYNC_INTENT_NAME, { "app-id": appIdentifier }).wait();
+			let liveSyncVersion = await  this.adb.sendBroadcastToDevice(LiveSyncConstants.CHECK_LIVESYNC_INTENT_NAME, { "app-id": appIdentifier });
 			return liveSyncVersion === LiveSyncConstants.VERSION_2 || liveSyncVersion === LiveSyncConstants.VERSION_3;
 	}
 
@@ -73,7 +73,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async getDebuggableAppViews(appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> {
-			let mappedAppIdentifierPorts = this.$androidProcessService.getMappedAbstractToTcpPorts(this.identifier, appIdentifiers, TARGET_FRAMEWORK_IDENTIFIERS.Cordova).wait(),
+			let mappedAppIdentifierPorts = await  this.$androidProcessService.getMappedAbstractToTcpPorts(this.identifier, appIdentifiers, TARGET_FRAMEWORK_IDENTIFIERS.Cordova),
 				applicationViews: IDictionary<Mobile.IDebugWebViewInfo[]> = {};
 
 			_.each(mappedAppIdentifierPorts, (port: number, appIdentifier: string) => {

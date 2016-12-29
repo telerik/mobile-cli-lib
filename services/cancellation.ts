@@ -36,7 +36,7 @@ class CancellationService implements ICancellationService {
 				}
 			});
 
-			let watcher = watcherInitialized.wait();
+			let watcher = await  watcherInitialized;
 
 			if (watcher) {
 				this.watches[name] = watcher;

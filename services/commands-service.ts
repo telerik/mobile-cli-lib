@@ -155,7 +155,7 @@ export class CommandsService implements ICommandsService {
 
 				// If we reach here, the commandArguments are at least as much as mandatoryParams. Now we should verify that we have each of them.
 				_.each(mandatoryParams, (mandatoryParam) => {
-					let argument = _.find(commandArgsHelper.remainingArguments, c => mandatoryParam.validate(c).wait());
+					let argument = await  _.find(commandArgsHelper.remainingArguments, c => mandatoryParam.validate(c));
 
 					if (argument) {
 						helpers.remove(commandArgsHelper.remainingArguments, arg => arg === argument);
@@ -170,7 +170,7 @@ export class CommandsService implements ICommandsService {
 
 	private async validateCommandArguments(command: ICommand, commandArguments: string[]): Promise<boolean> {
 			let mandatoryParams: ICommandParameter[] = _.filter(command.allowedParameters, (param) => param.mandatory);
-			let commandArgsHelper = this.validateMandatoryParams(commandArguments, mandatoryParams).wait();
+			let commandArgsHelper = await  this.validateMandatoryParams(commandArguments, mandatoryParams);
 			if (!commandArgsHelper.isValid) {
 				return false;
 			}
@@ -185,7 +185,7 @@ export class CommandsService implements ICommandsService {
 				let unverifiedAllowedParams = command.allowedParameters.filter((param) => !param.mandatory);
 
 				_.each(commandArgsHelper.remainingArguments, (argument) => {
-					let parameter = _.find(unverifiedAllowedParams, (c) => c.validate(argument).wait());
+					let parameter = await  _.find(unverifiedAllowedParams, (c) => c.validate(argument));
 					if (parameter) {
 						let index = unverifiedAllowedParams.indexOf(parameter);
 						// Remove the matched parameter from unverifiedAllowedParams collection, so it will not be used to verify another argument.
@@ -253,7 +253,7 @@ export class CommandsService implements ICommandsService {
 				if (data.words === 1) {
 					let allCommands = this.allCommands({ includeDevCommands: false });
 					if (_.startsWith(data.last, this.$commandsServiceProvider.dynamicCommandsPrefix)) {
-						allCommands = allCommands.concat(this.$commandsServiceProvider.getDynamicCommands().wait());
+						allCommands = await  allCommands.concat(this.$commandsServiceProvider.getDynamicCommands());
 					}
 					return tabtab.log(allCommands, data);
 				}

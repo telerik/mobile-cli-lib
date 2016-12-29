@@ -65,7 +65,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		this.fileSystem = this.$injector.resolve(fileSystemPath.AndroidDeviceFileSystem, { adb: this.adb, identifier: this.identifier });
 		let details: IAndroidDeviceDetails;
 		try {
-			details = this.getDeviceDetails(["getprop"]).wait();
+			details = await  this.getDeviceDetails(["getprop"]);
 		} catch(err) {
 			this.$logger.trace(`Error while calling getprop: ${err.message}`);
 		}
@@ -73,7 +73,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		if(!details || !details.name) {
 			// In older CLI versions we are calling cat /system/build.prop to get details.
 			// Keep this logic for compatibility and possibly for devices for which getprop is not working
-			details = this.getDeviceDetails(["cat", "/system/build.prop"]).wait();
+			details = await  this.getDeviceDetails(["cat", "/system/build.prop"]);
 		}
 
 		this.$logger.trace(details);
@@ -100,7 +100,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 	}
 
 	public async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
-			let files = this.fileSystem.listFiles(constants.LiveSyncConstants.ANDROID_FILES_PATH, applicationIdentifier).wait(),
+			let files = await  this.fileSystem.listFiles(constants.LiveSyncConstants.ANDROID_FILES_PATH, applicationIdentifier),
 				androidFilesMatch = files.match(/(\S+)\.abproject/),
 				result: Mobile.IApplicationInfo = null;
 
@@ -122,7 +122,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 	}
 
 	private async getDeviceDetails(shellCommandArgs: string[]): Promise<IAndroidDeviceDetails> {
-			let details = this.adb.executeShellCommand(shellCommandArgs).wait();
+			let details = await  this.adb.executeShellCommand(shellCommandArgs);
 
 			let parsedDetails: any = {};
 			details.split(/\r?\n|\r/).forEach((value: any) => {
@@ -145,7 +145,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 	}
 
 	private async getType(): Promise<string> {
-			let runningEmulators = this.$androidEmulatorServices.getAllRunningEmulators().wait();
+			let runningEmulators = await  this.$androidEmulatorServices.getAllRunningEmulators();
 			if (_.includes(runningEmulators, this.identifier)) {
 				return "Emulator";
 			}
