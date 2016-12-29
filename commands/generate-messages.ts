@@ -11,8 +11,7 @@ export class GenerateMessages implements ICommand {
 
 	allowedParameters: ICommandParameter[] = [];
 
-	execute(args: string[]): IFuture<void> {
-		return (() => {
+	async execute(args: string[]): Promise<void> {
 			let result = await  this.$messageContractGenerator.generate(),
 				innerMessagesDirectory = path.join(__dirname, "../messages"),
 				outerMessagesDirectory = path.join(__dirname, "../.."),
@@ -29,7 +28,6 @@ export class GenerateMessages implements ICommand {
 
 			this.$fs.writeFile(interfaceFilePath, result.interfaceFile);
 			this.$fs.writeFile(implementationFilePath, result.implementationFile);
-		}).future<void>()();
 	}
 }
 $injector.registerCommand("dev-generate-messages", GenerateMessages);

@@ -13,8 +13,7 @@ export class HttpClient implements Server.IHttpClient {
 		private $staticConfig: Config.IStaticConfig,
 		private $config: Config.IConfig) { }
 
-	httpRequest(options: any, proxySettings?: IProxySettings): IFuture<Server.IResponse> {
-		return (() => {
+	async httpRequest(options: any, proxySettings?: IProxySettings): Promise<Server.IResponse> {
 			if (_.isString(options)) {
 				options = {
 					url: options,
@@ -168,7 +167,6 @@ export class HttpClient implements Server.IHttpClient {
 			}
 
 			return response;
-		}).future<Server.IResponse>()();
 	}
 
 	private setResponseResult(result: IFuture<Server.IResponse>, timerId: number, resultData: { response?: Server.IRequestResponseData, body?: string, err?: Error }): void {

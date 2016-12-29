@@ -54,8 +54,7 @@ $injector.registerCommand("error-reporting", ErrorReportingCommand);
 export class AnalyticsCommandParameter implements ICommandParameter {
 	constructor(private $errors: IErrors) { }
 	mandatory = false;
-	validate(validationValue: string): IFuture<boolean> {
-		return (() => {
+	async validate(validationValue: string): Promise<boolean> {
 			let val = validationValue || "";
 			switch(val.toLowerCase()) {
 				case "enable":
@@ -66,6 +65,5 @@ export class AnalyticsCommandParameter implements ICommandParameter {
 				default:
 					this.$errors.fail(`The value '${validationValue}' is not valid. Valid values are 'enable', 'disable' and 'status'.`);
 			}
-		}).future<boolean>()();
 	}
 }
