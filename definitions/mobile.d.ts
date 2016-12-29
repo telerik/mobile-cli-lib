@@ -333,7 +333,7 @@ declare module Mobile {
 	interface IDevicesService {
 		hasDevices: boolean;
 		deviceCount: number;
-		execute(action: (device: Mobile.IDevice) => Promise<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: { allowNoDevices?: boolean }): IFuture<void>;
+		async execute(action: (device: Mobile.IDevice) => Promise<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: { allowNoDevices?: boolean }): Promise<void>;
 		initialize(data?: IDevicesServicesInitializationOptions): Promise<void>;
 		platform: string;
 		getDevices(): Mobile.IDeviceInfo[];

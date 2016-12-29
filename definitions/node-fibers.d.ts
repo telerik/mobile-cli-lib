@@ -14,8 +14,8 @@ interface Promise<T> {
 	get(): T;
 	isResolved (): boolean;
 	proxy<U>(future: Promise<U>): void;
-	proxyErrors(future: Promise<any>): IFuture<T>;
-	proxyErrors(futureList: Promise<any>[]): IFuture<T>;
+	async proxyErrors(future: Promise<any>): Promise<T>;
+	async proxyErrors(futureList: Promise<any>[]): Promise<T>;
 	resolver(): Function;
 	resolve(fn: (err: any, result?: T) => void): void;
 	resolveSuccess(fn: (result: T) => void): void;
@@ -57,8 +57,8 @@ declare module "fibers/future" {
 		get(): T;
 		isResolved (): boolean;
 		proxy<U>(future: Promise<U>): void;
-		proxyErrors(future: Promise<any>): IFuture<T>;
-		proxyErrors(futureList: Promise<any>[]): IFuture<T>;
+		async proxyErrors(future: Promise<any>): Promise<T>;
+		async proxyErrors(futureList: Promise<any>[]): Promise<T>;
 		resolver(): Function;
 		resolve(fn: Function): void;
 		resolveSuccess(fn: Function): void;

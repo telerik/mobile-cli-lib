@@ -118,7 +118,7 @@ function createTestInjector(): IInjector {
 	return testInjector;
 }
 
-function mockIsAppInstalled(devices: { applicationManager: { isApplicationInstalled(packageName: string): IFuture<boolean> } }[], expectedResult: boolean[]): void {
+function async mockIsAppInstalled(devices: { applicationManager: { isApplicationInstalled(packageName: string): Promise<boolean> } }[], expectedResult: boolean[]): void {
 	_.each(devices, (device, index) => device.applicationManager.isApplicationInstalled = (packageName: string) => Promise.resolve(expectedResult[index]));
 }
 
@@ -297,7 +297,7 @@ describe("devicesService", () => {
 				appId = "com.telerik.unitTest1";
 			let results = devicesService.isAppInstalledOnDevices(deviceIdentifiers, appId, "cordova");
 			assert.isTrue(results.length > 0);
-			_.each(results, (futurizedResult: IFuture<IAppInstalledInfo>, index: number) => {
+			_.async each(results, (futurizedResult: Promise<IAppInstalledInfo>, index: number) => {
 				let realResult = await  futurizedResult;
 				assert.isTrue(realResult.isInstalled);
 				assert.deepEqual(realResult.appIdentifier, appId);
@@ -1429,7 +1429,7 @@ describe("devicesService", () => {
 		};
 		let futures = devicesService.getDebuggableApps([androidDevice.deviceInfo.identifier, iOSDevice.deviceInfo.identifier]);
 		let debuggableApps = _(futures)
-			.map((future: IFuture<Mobile.IDeviceApplicationInformation[]>) => await  future)
+			.async map((future: Promise<Mobile.IDeviceApplicationInformation[]>) => await  future)
 			.flatten<Mobile.IDeviceApplicationInformation>()
 			.value();
 

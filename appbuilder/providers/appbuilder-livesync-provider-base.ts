@@ -15,7 +15,7 @@ export abstract class AppBuilderLiveSyncProviderBase implements ILiveSyncProvide
 		};
 	}
 
-	public abstract buildForDevice(device: Mobile.IDevice): IFuture<string>;
+	public abstract async buildForDevice(device: Mobile.IDevice): Promise<string>;
 
 	public async preparePlatformForSync(platform: string): Promise<void> {
 		return Promise.resolve();

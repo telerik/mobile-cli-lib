@@ -409,7 +409,7 @@ interface IErrors {
 	fail(formatStr: string, ...args: any[]): void;
 	fail(opts: { formatStr?: string; errorCode?: number; suppressCommandHelp?: boolean }, ...args: any[]): void;
 	failWithoutHelp(message: string, ...args: any[]): void;
-	beginCommand(action: () => Promise<boolean>, printCommandHelp: () => IFuture<boolean>): IFuture<boolean>;
+	async beginCommand(action: () => Promise<boolean>, printCommandHelp: () => IFuture<boolean>): Promise<boolean>;
 	verifyHeap(message: string): void;
 	printCallStack: boolean;
 }
@@ -769,7 +769,7 @@ interface ISyncBatch {
 	 * Adds the file to the sync queue. All files from the queue will be pushed on the device after 250ms.
 	 */
 	addFile(file: string): void;
-	syncFiles(syncAction: (filesToSync: string[]) => Promise<void>): IFuture<void>;
+	async syncFiles(syncAction: (filesToSync: string[]) => Promise<void>): Promise<void>;
 }
 
 interface ILiveSyncData {
@@ -1260,7 +1260,7 @@ interface IProgressIndicator {
 	 * @param  {boolean}		options		whether to surpress the trailing new line printed after the process ends
 	 * @return {Promise<void>}
 	 */
-	showProgressIndicator(future: Promise<any>, timeout: number, options?: { surpressTrailingNewLine?: boolean }): IFuture<void>;
+	async showProgressIndicator(future: Promise<any>, timeout: number, options?: { surpressTrailingNewLine?: boolean }): Promise<void>;
 }
 
 /**

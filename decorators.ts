@@ -27,7 +27,7 @@ export function exportedPromise(moduleName: string, postAction?: () => void): an
 
 			// Check if method returns IFuture<T>[]. In this case we will return Promise<T>[]
 			if (_.isArray(result) && types.length === 1 && isFuture(_.first<any>(result))) {
-				return _.map(result, (future: IFuture<any>, index: number) => getPromise(future,
+				return _.async map(result, (future: Promise<any>, index: number) => getPromise(future,
 					{
 						postActionMethod,
 						shouldExecutePostAction: (index + 1) === result.length

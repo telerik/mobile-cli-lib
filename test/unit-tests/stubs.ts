@@ -34,7 +34,7 @@ export class CommonLoggerStub implements ILogger {
 	}
 
 	printInfoMessageOnSameLine(message: string): void { }
-	printMsgWithTimeout(message: string, timeout: number): IFuture<void> {
+	async printMsgWithTimeout(message: string, timeout: number): Promise<void> {
 		return null;
 	}
 
@@ -55,7 +55,7 @@ export class ErrorsStub implements IErrors {
 		throw new Error(message);
 	}
 
-	beginCommand(action:() => IFuture<boolean>, printHelpCommand: () => IFuture<boolean>): IFuture<boolean> {
+	async beginCommand(action:() => IFuture<boolean>, printHelpCommand: () => IFuture<boolean>): Promise<boolean> {
 		return action();
 	}
 
@@ -67,10 +67,10 @@ export class ErrorsStub implements IErrors {
 }
 
 export class HooksServiceStub implements IHooksService {
-	executeBeforeHooks(commandName: string): IFuture<void> {
+	async executeBeforeHooks(commandName: string): Promise<void> {
 		return Promise.resolve();
 	}
-	executeAfterHooks(commandName: string): IFuture<void> {
+	async executeAfterHooks(commandName: string): Promise<void> {
 		return Promise.resolve();
 	}
 

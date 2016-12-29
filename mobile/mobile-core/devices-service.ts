@@ -76,13 +76,13 @@ export class DevicesService implements Mobile.IDevicesService {
 	/* tslint:enable:no-unused-variable */
 
 	@exportedPromise("devicesService")
-	public isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string, framework: string): IFuture<IAppInstalledInfo>[] {
+	public async isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string, framework: string): Promise<IAppInstalledInfo>[] {
 		this.$logger.trace(`Called isInstalledOnDevices for identifiers ${deviceIdentifiers}. AppIdentifier is ${appIdentifier}. Framework is: ${framework}.`);
 		return _.map(deviceIdentifiers, deviceIdentifier => this.isApplicationInstalledOnDevice(deviceIdentifier, appIdentifier, framework));
 	}
 
 	@exportedPromise("devicesService")
-	public isCompanionAppInstalledOnDevices(deviceIdentifiers: string[], framework: string): IFuture<IAppInstalledInfo>[] {
+	public async isCompanionAppInstalledOnDevices(deviceIdentifiers: string[], framework: string): Promise<IAppInstalledInfo>[] {
 		this.$logger.trace(`Called isCompanionAppInstalledOnDevices for identifiers ${deviceIdentifiers}. Framework is ${framework}.`);
 		return _.map(deviceIdentifiers, deviceIdentifier => this.isCompanionAppInstalledOnDevice(deviceIdentifier, framework));
 	}
@@ -278,7 +278,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	@exportedPromise("devicesService", function () {
 		this.startDeviceDetectionInterval();
 	})
-	public deployOnDevices(deviceIdentifiers: string[], packageFile: string, packageName: string, framework: string): IFuture<void>[] {
+	public async deployOnDevices(deviceIdentifiers: string[], packageFile: string, packageName: string, framework: string): Promise<void>[] {
 		this.$logger.trace(`Called deployOnDevices for identifiers ${deviceIdentifiers} for packageFile: ${packageFile}. packageName is ${packageName}.`);
 		return _.map(deviceIdentifiers, deviceIdentifier => this.deployOnDevice(deviceIdentifier, packageFile, packageName, framework));
 	}
@@ -394,7 +394,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	@exportedPromise("devicesService")
-	public getDebuggableApps(deviceIdentifiers: string[]): IFuture<Mobile.IDeviceApplicationInformation[]>[] {
+	public async getDebuggableApps(deviceIdentifiers: string[]): Promise<Mobile.IDeviceApplicationInformation[]>[] {
 		return _.map(deviceIdentifiers, (deviceIdentifier: string) => this.getDebuggableAppsCore(deviceIdentifier));
 	}
 

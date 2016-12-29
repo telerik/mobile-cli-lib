@@ -65,17 +65,17 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 			}
 	}
 
-	public abstract isLiveSyncSupported(appIdentifier: string): IFuture<boolean>;
+	public abstract async isLiveSyncSupported(appIdentifier: string): Promise<boolean>;
 
-	public abstract installApplication(packageFilePath: string): IFuture<void>;
-	public abstract uninstallApplication(appIdentifier: string): IFuture<void>;
-	public abstract startApplication(appIdentifier: string, framework?: string): IFuture<void>;
-	public abstract stopApplication(appIdentifier: string): IFuture<void>;
-	public abstract getInstalledApplications(): IFuture<string[]>;
-	public abstract getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo>;
+	public abstract async installApplication(packageFilePath: string): Promise<void>;
+	public abstract async uninstallApplication(appIdentifier: string): Promise<void>;
+	public abstract async startApplication(appIdentifier: string, framework?: string): Promise<void>;
+	public abstract async stopApplication(appIdentifier: string): Promise<void>;
+	public abstract async getInstalledApplications(): Promise<string[]>;
+	public abstract async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo>;
 	public abstract canStartApplication(): boolean;
-	public abstract getDebuggableApps(): IFuture<Mobile.IDeviceApplicationInformation[]>;
-	public abstract getDebuggableAppViews(appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>>;
+	public abstract async getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]>;
+	public abstract async getDebuggableAppViews(appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>>;
 
 	private async checkForAvailableDebuggableAppsChanges(): Promise<void> {
 			let currentlyAvailableDebuggableApps = await  this.getDebuggableApps();

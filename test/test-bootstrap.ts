@@ -9,13 +9,13 @@ $injector.register("config", {});
 
 // Our help reporting requires analyticsService. Give it this mock so that errors during test executions can be printed out
 $injector.register("analyticsService", {
-	checkConsent(): IFuture<void> { return Promise.resolve(); },
-	trackFeature(featureName: string): IFuture<void>{ return Promise.resolve(); },
-	trackException(exception: any, message: string): IFuture<void> { return Promise.resolve(); },
-	setStatus(settingName: string, enabled: boolean): IFuture<void>{ return Promise.resolve(); },
-	getStatusMessage(settingName: string, jsonFormat: boolean, readableSettingName: string): IFuture<string>{ return Promise.resolve("Fake message"); },
-	isEnabled(settingName: string): IFuture<boolean>{ return Promise.resolve(false); },
-	track(featureName: string, featureValue: string): IFuture<void>{ return Promise.resolve(); }
+	async checkConsent(): Promise<void> { return Promise.resolve(); },
+	async trackFeature(featureName: string): Promise<void>{ return Promise.resolve(); },
+	async trackException(exception: any, message: string): Promise<void> { return Promise.resolve(); },
+	async setStatus(settingName: string, enabled: boolean): Promise<void>{ return Promise.resolve(); },
+	async getStatusMessage(settingName: string, jsonFormat: boolean, readableSettingName: string): Promise<string>{ return Promise.resolve("Fake message"); },
+	async isEnabled(settingName: string): Promise<boolean>{ return Promise.resolve(false); },
+	async track(featureName: string, featureValue: string): Promise<void>{ return Promise.resolve(); }
 });
 
 // Converts the js callstack to typescript

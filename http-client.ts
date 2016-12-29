@@ -169,7 +169,7 @@ export class HttpClient implements Server.IHttpClient {
 			return response;
 	}
 
-	private setResponseResult(result: IFuture<Server.IResponse>, timerId: number, resultData: { response?: Server.IRequestResponseData, body?: string, err?: Error }): void {
+	private async setResponseResult(result: Promise<Server.IResponse>, timerId: number, resultData: { response?: Server.IRequestResponseData, body?: string, err?: Error }): void {
 		if (timerId) {
 			clearTimeout(timerId);
 			timerId = null;

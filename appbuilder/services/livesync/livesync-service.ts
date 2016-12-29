@@ -20,14 +20,14 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 	@exportedPromise("liveSyncService", function () {
 		this.$devicesService.startDeviceDetectionInterval();
 	})
-	public livesync(deviceDescriptors: IDeviceLiveSyncInfo[], projectDir: string, filePaths?: string[]): IFuture<IDeviceLiveSyncResult>[] {
+	public async livesync(deviceDescriptors: IDeviceLiveSyncInfo[], projectDir: string, filePaths?: string[]): Promise<IDeviceLiveSyncResult>[] {
 		this.$project.projectDir = projectDir;
 		this.$logger.trace(`Called livesync for identifiers ${_.map(deviceDescriptors, d => d.deviceIdentifier)}. Project dir is ${projectDir}. Files are: ${filePaths}`);
 		return _.map(deviceDescriptors, deviceDescriptor => this.liveSyncOnDevice(deviceDescriptor, filePaths));
 	}
 
 	@exportedPromise("liveSyncService")
-	public deleteFiles(deviceDescriptors: IDeviceLiveSyncInfo[], projectDir: string, filePaths: string[]): IFuture<IDeviceLiveSyncResult>[] {
+	public async deleteFiles(deviceDescriptors: IDeviceLiveSyncInfo[], projectDir: string, filePaths: string[]): Promise<IDeviceLiveSyncResult>[] {
 		this.$project.projectDir = projectDir;
 		this.$logger.trace(`Called deleteFiles for identifiers ${_.map(deviceDescriptors, d => d.deviceIdentifier)}. Project dir is ${projectDir}. Files are: ${filePaths}`);
 		return _.map(deviceDescriptors, deviceDescriptor => this.liveSyncOnDevice(deviceDescriptor, filePaths, { isForDeletedFiles: true }));

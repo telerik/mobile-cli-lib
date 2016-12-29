@@ -338,7 +338,7 @@ export function connectEventually(factory: () => net.Socket, handler: (_socket: 
 	tryConnect();
 }
 
-export function connectEventuallyUntilTimeout(factory: () => net.Socket, timeout: number): IFuture<net.Socket> {
+export async function  connectEventuallyUntilTimeout(factory: () => net.Socket, timeout: number): Promise<net.Socket> {
 	let future = new Future<net.Socket>();
 	let lastKnownError: Error;
 
