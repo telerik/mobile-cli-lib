@@ -37,7 +37,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async getInstalledApplications(): Promise<string[]> {
-			await return _(this.getApplicationsLiveSyncSupportedStatus())
+			return _(await this.getApplicationsLiveSyncSupportedStatus())
 				.map(appLiveSyncStatus => appLiveSyncStatus.applicationIdentifier)
 				.sortBy((identifier: string) => identifier.toLowerCase())
 				.value();

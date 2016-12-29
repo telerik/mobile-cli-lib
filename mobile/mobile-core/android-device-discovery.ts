@@ -102,7 +102,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 				this.isStarted = true;
 
 				try {
-					await return this.$adb.executeCommand(["start-server"]);
+					return await this.$adb.executeCommand(["start-server"]);
 				} catch (err) {
 					this.isStarted = false;
 					throw err;

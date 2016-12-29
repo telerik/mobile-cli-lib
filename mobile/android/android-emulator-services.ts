@@ -307,7 +307,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 					if (match && match[1]) {
 						// possible genymotion emulator
 						let emulatorId = match[1];
-						await return Future.fromResult(this.isGenymotionEmulator(emulatorId) ? emulatorId : undefined);
+						return Future.fromResult(await this.isGenymotionEmulator(emulatorId) ? emulatorId : undefined);
 					}
 
 					return Future.fromResult(undefined);
@@ -355,9 +355,9 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	private async getRunningEmulators(): Promise<string[]> {
 			let outputRaw: string[] = (await  this.$childProcess.execFile(this.adbFilePath, ['devices'])).split(EOL);
 			if (this.$options.geny) {
-				await return this.getRunningGenymotionEmulators(outputRaw);
+				return await this.getRunningGenymotionEmulators(outputRaw);
 			} else {
-				await return this.getRunningAvdEmulators(outputRaw);
+				return await this.getRunningAvdEmulators(outputRaw);
 			}
 	}
 

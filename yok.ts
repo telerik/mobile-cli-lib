@@ -267,7 +267,7 @@ export class Yok implements IInjector {
 					let defaultCommand = this.resolveCommand(`${commandName}|${defaultCommandName}`);
 					if (defaultCommand) {
 						if (defaultCommand.canExecute) {
-							await return defaultCommand.canExecute(commandArguments);
+							return await defaultCommand.canExecute(commandArguments);
 						}
 
 						if (defaultCommand.allowedParameters.length > 0) {
@@ -344,7 +344,7 @@ export class Yok implements IInjector {
 
 			let data = module[parsed[2]].apply(module, args);
 			if (isFuture(data)) {
-				await return data;
+				return await data;
 			}
 			return data;
 	}

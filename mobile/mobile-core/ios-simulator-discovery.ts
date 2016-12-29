@@ -19,7 +19,7 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 	public async async checkForDevices(future?: Promise<void>): Promise<void> {
 		if (this.$hostInfo.isDarwin) {
 			let currentSimulator:any = null;
-			await if (this.isSimulatorRunning()) {
+			if (await this.isSimulatorRunning()) {
 				currentSimulator = this.$iOSSimResolver.iOSSim.getRunningSimulator();
 			}
 

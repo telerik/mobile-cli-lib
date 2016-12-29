@@ -16,7 +16,7 @@ export class NpmPluginsService implements INpmPluginsService {
 	}
 
 	public async optimizedSearch(projectDir: string, keywords: string[], modifySearchQuery: (keywords: string[]) => string[]): Promise<IPluginsSource> {
-			await return this.searchCore(NpmRegistryPluginsSource, projectDir, keywords) || await  this.search(projectDir, keywords, modifySearchQuery);
+			return await this.searchCore(NpmRegistryPluginsSource, projectDir, keywords) || await  this.search(projectDir, keywords, modifySearchQuery);
 	}
 
 	private async searchCore(pluginsSourceConstructor: Function, projectDir: string, keywords: string[]): Promise<IPluginsSource> {

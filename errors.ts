@@ -140,7 +140,7 @@ export class Errors implements IErrors {
 
 	public async beginCommand(action: () => IFuture<boolean>, printCommandHelp: () => IFuture<boolean>): Promise<boolean> {
 			try {
-				await return action();
+				return await action();
 			} catch(ex) {
 				let loggerLevel: string = $injector.resolve("logger").getLevel().toUpperCase();
 				let printCallStack = this.printCallStack || loggerLevel === "TRACE" || loggerLevel === "DEBUG";

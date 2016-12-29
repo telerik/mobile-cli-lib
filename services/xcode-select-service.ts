@@ -25,7 +25,7 @@ export class XcodeSelectService implements IXcodeSelectService {
 	}
 
 	public async getContentsDirectoryPath(): Promise<string> {
-			await return path.join(this.getDeveloperDirectoryPath(), "..");
+			return path.join(await this.getDeveloperDirectoryPath(), "..");
 	}
 
 	public async getXcodeVersion(): Promise<IVersionData> {

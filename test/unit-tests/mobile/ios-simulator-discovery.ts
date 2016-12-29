@@ -45,7 +45,7 @@ describe("ios-simulator-discovery", () => {
 			future.return(device);
 		});
 		await iOSSimulatorDiscovery.startLookingForDevices();
-		await return future;
+		return await future;
 	};
 
 	let detectSimulatorDetached = (): Mobile.IiOSSimulator => {
@@ -56,7 +56,7 @@ describe("ios-simulator-discovery", () => {
 			lostDeviceFuture.return(device);
 		});
 		await iOSSimulatorDiscovery.startLookingForDevices();
-		await return lostDeviceFuture;
+		return await lostDeviceFuture;
 	};
 
 	let detectSimulatorChanged = (newId: string): any => {

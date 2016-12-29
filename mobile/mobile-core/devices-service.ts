@@ -416,7 +416,7 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	private async getDebuggableAppsCore(deviceIdentifier: string): Promise<Mobile.IDeviceApplicationInformation[]> {
 			let device = this.getDeviceByIdentifier(deviceIdentifier);
-			await return device.applicationManager.getDebuggableApps();
+			return await device.applicationManager.getDebuggableApps();
 	}
 
 	private async deployOnDevice(deviceIdentifier: string, packageFile: string, packageName: string, framework: string): Promise<void> {

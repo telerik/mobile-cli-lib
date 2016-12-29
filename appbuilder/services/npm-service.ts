@@ -318,7 +318,7 @@ export class NpmService implements INpmService {
 				npmArguments.push(dependencyToInstall);
 			}
 
-			await return this.executeNpmCommandCore(projectDir, npmArguments);
+			return await this.executeNpmCommandCore(projectDir, npmArguments);
 	}
 
 	private async executeNpmCommandCore(projectDir: string, npmArguments: string[]): Promise<ISpawnResult> {

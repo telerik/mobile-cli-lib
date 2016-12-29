@@ -33,6 +33,6 @@ export class AppBuilderDeviceAppDataBase extends DeviceAppDataBase implements IL
 				await this.device.applicationManager.checkForApplicationUpdates();
 			}
 
-			await return this.device.applicationManager.isLiveSyncSupported(this.appIdentifier);
+			return await this.device.applicationManager.isLiveSyncSupported(this.appIdentifier);
 	}
 }

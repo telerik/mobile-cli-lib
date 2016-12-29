@@ -73,7 +73,7 @@ export class TypeScriptService implements ITypeScriptService {
 
 			this.$logger.out(`Using tsc version ${typeScriptCompilerSettings.version}`.cyan);
 			// Core compilation
-			await return this.runTranspilation(projectDir, typeScriptCompilerSettings.pathToCompiler, runTranspilationOptions);
+			return await this.runTranspilation(projectDir, typeScriptCompilerSettings.pathToCompiler, runTranspilationOptions);
 	}
 
 	public async getTypeScriptFilesData(projectDir: string): Promise<ITypeScriptFiles> {

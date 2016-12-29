@@ -75,7 +75,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async isLiveSyncSupported(appIdentifier: string): Promise<boolean> {
-			let plistContent = await  this.getParsedPlistContent(appIdentifier);
+			let plistContent = await this.getParsedPlistContent(appIdentifier);
 			if (plistContent) {
 				return !!plistContent && !!plistContent.IceniumLiveSyncEnabled;
 			}
@@ -83,17 +83,15 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 			return false;
 	}
 
-	private getParsedPlistContent(appIdentifier: string): any {
-		return ((): any => {
-			if (! await this.isApplicationInstalled(appIdentifier)) {
-				return null;
-			}
+	private async getParsedPlistContent(appIdentifier: string): Promise<any> {
+		if (! await this.isApplicationInstalled(appIdentifier)) {
+			return null;
+		}
 
-			let applicationPath = this.iosSim.getApplicationPath(this.identifier, appIdentifier),
-				pathToInfoPlist = path.join(applicationPath, "Info.plist");
+		let applicationPath = this.iosSim.getApplicationPath(this.identifier, appIdentifier),
+			pathToInfoPlist = path.join(applicationPath, "Info.plist");
 
-			await return this.$fs.exists(pathToInfoPlist) ? this.$bplistParser.parseFile(pathToInfoPlist)[0] : null;
-		}).future<any>()();
+		return this.$fs.exists(pathToInfoPlist) ? (await this.$bplistParser.parseFile(pathToInfoPlist))[0] : null;
 	}
 
 	public async getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]> {

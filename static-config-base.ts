@@ -53,11 +53,11 @@ export class StaticConfigBase implements Config.IStaticConfig {
 				let proc = await  $childProcess.spawnFromEvent("adb", ["version"], "exit", undefined, { throwError: false });
 
 				if (proc.stderr) {
-					await return this.spawnPrivateAdb();
+					return await this.spawnPrivateAdb();
 				}
 			} catch (e) {
 				if (e.code === "ENOENT") {
-					await return this.spawnPrivateAdb();
+					return await this.spawnPrivateAdb();
 				}
 			}
 

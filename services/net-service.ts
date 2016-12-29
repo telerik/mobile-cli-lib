@@ -24,7 +24,7 @@ export class Net implements INet {
 				}
 			});
 
-			await return createServerFuture;
+			return await createServerFuture;
 	}
 }
 $injector.register("net", Net);

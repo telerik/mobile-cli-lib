@@ -164,7 +164,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 			return (() => {
 				let shouldRefreshApplication = true;
 				let deviceAppData = this.$deviceAppDataFactory.create(appIdentifier, this.$mobileHelper.normalizePlatformName(platform), device, liveSyncOptions);
-				await if (deviceAppData.isLiveSyncSupported()) {
+				if (await deviceAppData.isLiveSyncSupported()) {
 					let platformLiveSyncService = this.resolveDeviceLiveSyncService(platform, device);
 
 					if (platformLiveSyncService.beforeLiveSyncAction) {

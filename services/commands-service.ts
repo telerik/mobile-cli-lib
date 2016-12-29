@@ -91,7 +91,7 @@ export class CommandsService implements ICommandsService {
 	}
 
 	public async tryExecuteCommand(commandName: string, commandArguments: string[]): Promise<void> {
-			await if (this.executeCommandAction(commandName, commandArguments, this.tryExecuteCommandAction)) {
+			if (await this.executeCommandAction(commandName, commandArguments, this.tryExecuteCommandAction)) {
 				await this.executeCommandAction(commandName, commandArguments, this.executeCommandUnchecked);
 			} else {
 				// If canExecuteCommand returns false, the command cannot be executed or there's no such command at all.
@@ -115,7 +115,7 @@ export class CommandsService implements ICommandsService {
 
 				// If command wants to handle canExecute logic on its own.
 				if (command.canExecute) {
-					await return command.canExecute(commandArguments);
+					return await command.canExecute(commandArguments);
 				}
 
 				// First part of hierarchical commands should be validated in specific way.
@@ -123,16 +123,16 @@ export class CommandsService implements ICommandsService {
 					return true;
 				}
 
-				await if (this.validateCommandArguments(command, commandArguments)) {
+				if (await this.validateCommandArguments(command, commandArguments)) {
 					return true;
 				}
 
 				this.$errors.fail("Unable to execute command '%s'. Use '$ %s %s --help' for help.", beautifiedName, this.$staticConfig.CLIENT_NAME.toLowerCase(), beautifiedName);
 				return false;
 			} else if (!isDynamicCommand && _.startsWith(commandName, this.$commandsServiceProvider.dynamicCommandsPrefix)) {
-				await if (_.some(this.$commandsServiceProvider.getDynamicCommands())) {
+				if (_.some(await this.$commandsServiceProvider.getDynamicCommands())) {
 					await this.$commandsServiceProvider.generateDynamicCommands();
-					await return this.canExecuteCommand(commandName, commandArguments, true);
+					return await this.canExecuteCommand(commandName, commandArguments, true);
 				}
 			}
 
@@ -155,7 +155,7 @@ export class CommandsService implements ICommandsService {
 
 				// If we reach here, the commandArguments are at least as much as mandatoryParams. Now we should verify that we have each of them.
 				_.each(mandatoryParams, (mandatoryParam) => {
-					let argument = await  _.find(commandArgsHelper.remainingArguments, c => mandatoryParam.validate(c));
+					let argument = _.find(commandArgsHelper.remainingArguments, async c => await mandatoryParam.validate(c));
 
 					if (argument) {
 						helpers.remove(commandArgsHelper.remainingArguments, arg => arg === argument);
@@ -185,7 +185,7 @@ export class CommandsService implements ICommandsService {
 				let unverifiedAllowedParams = command.allowedParameters.filter((param) => !param.mandatory);
 
 				_.each(commandArgsHelper.remainingArguments, (argument) => {
-					let parameter = await  _.find(unverifiedAllowedParams, (c) => c.validate(argument));
+					let parameter = _.find(unverifiedAllowedParams, async c => await c.validate(argument));
 					if (parameter) {
 						let index = unverifiedAllowedParams.indexOf(parameter);
 						// Remove the matched parameter from unverifiedAllowedParams collection, so it will not be used to verify another argument.
@@ -253,7 +253,7 @@ export class CommandsService implements ICommandsService {
 				if (data.words === 1) {
 					let allCommands = this.allCommands({ includeDevCommands: false });
 					if (_.startsWith(data.last, this.$commandsServiceProvider.dynamicCommandsPrefix)) {
-						allCommands = await  allCommands.concat(this.$commandsServiceProvider.getDynamicCommands());
+						allCommands = allCommands.concat(await this.$commandsServiceProvider.getDynamicCommands());
 					}
 					return tabtab.log(allCommands, data);
 				}

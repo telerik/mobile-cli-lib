@@ -164,7 +164,7 @@ export class HttpClient implements Server.IHttpClient {
 
 				this.$logger.trace("Begin redirected to %s", response.headers.location);
 				unmodifiedOptions.url = response.headers.location;
-				await return this.httpRequest(unmodifiedOptions);
+				return await this.httpRequest(unmodifiedOptions);
 			}
 
 			return response;

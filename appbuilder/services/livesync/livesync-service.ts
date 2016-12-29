@@ -105,7 +105,7 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 				livesyncData.appIdentifier = appIdentifier = this.$companionAppsService.getCompanionAppIdentifier(this.$project.projectData.Framework, device.deviceInfo.platform);
 			}
 
-			await if (device.applicationManager.isApplicationInstalled(appIdentifier)) {
+			if (await device.applicationManager.isApplicationInstalled(appIdentifier)) {
 
 				let deletedFilesAction: any = liveSyncOptions && liveSyncOptions.isForDeletedFiles ? this.$liveSyncServiceBase.getSyncRemovedFilesAction(livesyncData) : null;
 				let action: any = this.$liveSyncServiceBase.getSyncAction(livesyncData, filePaths, deletedFilesAction, liveSyncOptions);

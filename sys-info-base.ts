@@ -195,7 +195,7 @@ export class SysInfoBase implements ISysInfo {
 	private exec(cmd: string, execOptions?: IExecOptions): string | any {
 		try {
 			if(cmd) {
-				await return this.$childProcess.exec(cmd, null, execOptions);
+				return await this.$childProcess.exec(cmd, null, execOptions);
 			}
 		} catch(e) {
 			// if we got an error, assume not working
@@ -221,7 +221,7 @@ export class SysInfoBase implements ISysInfo {
 
 	private winVer(): string {
 		try {
-			await return this.readRegistryValue("ProductName") + " " +
+			return await this.readRegistryValue("ProductName") + " " +
 					await this.readRegistryValue("CurrentVersion") + "." +
 					await this.readRegistryValue("CurrentBuild");
 		} catch (err) {
@@ -232,7 +232,7 @@ export class SysInfoBase implements ISysInfo {
 	}
 
 	private async readRegistryValue(valueName: string): Promise<string> {
-			await return this.$winreg.getRegistryValue(valueName, this.$winreg.registryKeys.HKLM, '\\Software\\Microsoft\\Windows NT\\CurrentVersion').value;
+			return await this.$winreg.getRegistryValue(valueName, this.$winreg.registryKeys.HKLM, '\\Software\\Microsoft\\Windows NT\\CurrentVersion').value;
 	}
 
 	private unixVer(): string {
