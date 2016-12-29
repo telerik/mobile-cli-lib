@@ -409,7 +409,7 @@ interface IErrors {
 	fail(formatStr: string, ...args: any[]): void;
 	fail(opts: { formatStr?: string; errorCode?: number; suppressCommandHelp?: boolean }, ...args: any[]): void;
 	failWithoutHelp(message: string, ...args: any[]): void;
-	async beginCommand(action: () => Promise<boolean>, printCommandHelp: () => IFuture<boolean>): Promise<boolean>;
+	beginCommand(action: () => Promise<boolean>, printCommandHelp: () => Promise<boolean>): Promise<boolean>;
 	verifyHeap(message: string): void;
 	printCallStack: boolean;
 }
@@ -728,7 +728,7 @@ interface ILiveSyncServiceBase {
 	 * @param {ILiveSyncOptions} liveSyncOptions Additional options for LiveSyncing
 	 * @return {Function} Function that returns Promise<void>.
 	 */
-	getSyncAction(data: ILiveSyncData, filesToSync: string[], deviceFilesAction: (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => Promise<void>, liveSyncOptions: ILiveSyncOptions): (device: Mobile.IDevice) => IFuture<void>;
+	getSyncAction(data: ILiveSyncData, filesToSync: string[], deviceFilesAction: (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => Promise<void>, liveSyncOptions: ILiveSyncOptions): (device: Mobile.IDevice) => Promise<void>;
 
 	/**
 	 * Gets LiveSync action that should be executed per device when files should be deleted.
