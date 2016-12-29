@@ -8,6 +8,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $hostInfo: IHostInfo,
 		private $options: ICommonOptions,
+		private $emulatorInfoService: IEmulatorInfoService,
 		private $iOSSimResolver: Mobile.IiOSSimResolver) { }
 
 	public getEmulatorId(): IFuture<string> {
@@ -32,7 +33,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 	}
 
 	public startEmulator(): IFuture<string> {
-		return this.$iOSSimResolver.iOSSim.startSimulator();
+		return this.$iOSSimResolver.iOSSim.startSimulator(this.$options.device ? { id: this.$options.device } : null);
 	}
 
 	public runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): IFuture<any> {
