@@ -1,5 +1,4 @@
 import {DeviceDiscovery} from "./device-discovery";
-import Future = require("fibers/future");
 import {IOSSimulator} from "./../ios/simulator/ios-simulator-device";
 
 export class IOSSimulatorDiscovery extends DeviceDiscovery {

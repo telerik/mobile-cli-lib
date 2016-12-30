@@ -8,13 +8,11 @@ import * as plist from "plist";
 import * as helpers from "../../../helpers";
 import * as net from "net";
 import * as util from "util";
-import Future = require("fibers/future");
 import * as bplistParser from "bplist-parser";
 import * as string_decoder from "string_decoder";
 import * as stream from "stream";
 import * as assert from "assert";
 import { EOL } from "os";
-import * as fiberBootstrap from "../../../fiber-bootstrap";
 
 export class CoreTypes {
 	public static pointerSize = ref.types.size_t.size;
@@ -1121,9 +1119,7 @@ class GDBStandardOutputAdapter extends stream.Transform {
 			}
 
 			if (this.$deviceLogProvider) {
-				fiberBootstrap.run(() =>
-					this.$deviceLogProvider.logData(result, this.$devicePlatformsConstants.iOS, this.deviceIdentifier)
-				);
+				this.$deviceLogProvider.logData(result, this.$devicePlatformsConstants.iOS, this.deviceIdentifier);
 			}
 
 			done(null, result);

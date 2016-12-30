@@ -1,7 +1,7 @@
 /* tslint:disable:no-empty */
 
 import * as util from "util";
-import Future = require("fibers/future");
+
 
 export class CommonLoggerStub implements ILogger {
 	setLevel(level: string): void { }

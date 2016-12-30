@@ -1,6 +1,6 @@
 import {Yok} from "../../yok";
 import * as assert from "assert";
-import Future = require("fibers/future");
+
 import {SysInfoBase} from "../../sys-info-base";
 import * as temp from "temp";
 import {writeFileSync} from "fs";

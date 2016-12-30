@@ -1,4 +1,3 @@
-import Future = require("fibers/future");
 import * as bplistParser from "bplist-parser";
 
 export class BPlistParser implements IBinaryPlistParser {

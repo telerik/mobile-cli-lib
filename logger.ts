@@ -1,7 +1,6 @@
 import * as log4js from "log4js";
 import * as util from "util";
 import * as stream from "stream";
-import Future = require("fibers/future");
 import * as marked from "marked";
 let TerminalRenderer = require("marked-terminal");
 let chalk = require("chalk");

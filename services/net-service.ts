@@ -1,5 +1,4 @@
 import * as net from "net";
-import Future = require("fibers/future");
 
 export class Net implements INet {
 	constructor(private $logger: ILogger) { }

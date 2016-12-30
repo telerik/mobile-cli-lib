@@ -1,5 +1,4 @@
-import {EOL} from "os";
-import Future = require("fibers/future");
+import { EOL } from "os";
 
 export class HelpCommand implements ICommand {
 	constructor(private $logger: ILogger,
@@ -16,22 +15,22 @@ export class HelpCommand implements ICommand {
 	public allowedParameters: ICommandParameter[] = [];
 
 	public async execute(args: string[]): Promise<void> {
-			let topic = (args[0] || "").toLowerCase();
-			let hierarchicalCommand = this.$injector.buildHierarchicalCommand(args[0], _.tail(args));
-			if (hierarchicalCommand) {
-				topic = hierarchicalCommand.commandName;
+		let topic = (args[0] || "").toLowerCase();
+		let hierarchicalCommand = this.$injector.buildHierarchicalCommand(args[0], _.tail(args));
+		if (hierarchicalCommand) {
+			topic = hierarchicalCommand.commandName;
+		}
+
+		if (this.$options.help) {
+			let help = this.$htmlHelpService.getCommandLineHelpForCommand(topic);
+			if (this.$staticConfig.FULL_CLIENT_NAME) {
+				this.$logger.info(this.$staticConfig.FULL_CLIENT_NAME.green.bold + EOL);
 			}
 
-			if (this.$options.help) {
-				let help = this.$htmlHelpService.getCommandLineHelpForCommand(topic);
-				if (this.$staticConfig.FULL_CLIENT_NAME) {
-					this.$logger.info(this.$staticConfig.FULL_CLIENT_NAME.green.bold + EOL);
-				}
-
-				this.$logger.printMarkdown(help);
-			} else {
-				await this.$htmlHelpService.openHelpForCommandInBrowser(topic);
-			}
+			this.$logger.printMarkdown(help);
+		} else {
+			await this.$htmlHelpService.openHelpForCommandInBrowser(topic);
+		}
 	}
 }
 

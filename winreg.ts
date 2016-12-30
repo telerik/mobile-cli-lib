@@ -1,4 +1,3 @@
-import Future = require("fibers/future");
 let Registry = require("winreg");
 
 export class WinReg implements IWinReg {

@@ -1,7 +1,6 @@
 import * as path from "path";
 import * as temp from "temp";
 import { AndroidDeviceHashService } from "./android-device-hash-service";
-import Future = require("fibers/future");
 
 export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	private _deviceHashServices = Object.create(null);
@@ -54,13 +53,13 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	public async transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
 		_(localToDevicePaths)
 			.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).isFile())
-			.each(localToDevicePathData =>
+			.each(async localToDevicePathData =>
 				await this.adb.executeCommand(["push", localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()])
 			);
 
 		_(localToDevicePaths)
 			.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).isDirectory())
-			.each(localToDevicePathData =>
+			.each(async localToDevicePathData =>
 				await this.adb.executeShellCommand(["chmod", "0777", localToDevicePathData.getDevicePath()])
 			);
 
@@ -75,11 +74,11 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		let devicePaths: string[] = [],
 			currentShasums: IStringDictionary = {};
 
-		localToDevicePaths.forEach(localToDevicePathData => {
+		localToDevicePaths.forEach(async localToDevicePathData => {
 			let localPath = localToDevicePathData.getLocalPath();
 			let stats = this.$fs.getFsStats(localPath);
 			if (stats.isFile()) {
-				let fileShasum = await  this.$fs.getFileShasum(localPath);
+				let fileShasum = await this.$fs.getFileShasum(localPath);
 				currentShasums[localPath] = fileShasum;
 			}
 			devicePaths.push(`"${localToDevicePathData.getDevicePath()}"`);

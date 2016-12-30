@@ -1,4 +1,3 @@
-import Future = require("fibers/future");
 import * as prompt from "inquirer";
 import * as helpers from "./helpers";
 import * as readline from "readline";
@@ -15,13 +14,13 @@ export class Prompter implements IPrompter {
 	}
 
 	public async get(schemas: IPromptSchema[]): Promise<any> {
+		return new Promise((resolve, reject) => {
 			try {
 				this.muteStdout();
 
-				let future = new Future;
 				if (!helpers.isInteractive()) {
 					if (_.some(schemas, s => !s.default)) {
-						future.throw(new Error("Console is not interactive and no default action specified."));
+						reject(new Error("Console is not interactive and no default action specified."));
 					} else {
 						let result: any = {};
 
@@ -30,76 +29,76 @@ export class Prompter implements IPrompter {
 							result[s.name] = s.default();
 						});
 
-						future.return(result);
+						resolve(result);
 					}
 				} else {
 					prompt.prompt(schemas, (result: any) => {
 						if (result) {
-							future.return(result);
+							resolve(result);
 						} else {
-							future.throw(new Error(`Unable to get result from prompt: ${result}`));
+							reject(new Error(`Unable to get result from prompt: ${result}`));
 						}
 					});
 				}
-				return await future;
 			} finally {
 				this.unmuteStdout();
 			}
+		});
 	}
 
 	public async getPassword(prompt: string, options?: IAllowEmpty): Promise<string> {
-			let schema: IPromptSchema = {
-				message: prompt,
-				type: "password",
-				name: "password",
-				validate: (value: any) => {
-					let allowEmpty = options && options.allowEmpty;
-					return (!allowEmpty && !value) ? "Password must be non-empty" : true;
-				}
-			};
+		let schema: IPromptSchema = {
+			message: prompt,
+			type: "password",
+			name: "password",
+			validate: (value: any) => {
+				let allowEmpty = options && options.allowEmpty;
+				return (!allowEmpty && !value) ? "Password must be non-empty" : true;
+			}
+		};
 
-			let result = await  this.get([schema]);
-			return result.password;
+		let result = await this.get([schema]);
+		return result.password;
 	}
 
 	public async getString(prompt: string, options?: IPrompterOptions): Promise<string> {
-			let schema: IPromptSchema = {
-				message: prompt,
-				type: "input",
-				name: "inputString",
-				validate: (value: any) => {
-					let doesNotAllowEmpty = options && _.has(options, "allowEmpty") && !options.allowEmpty;
-					return (doesNotAllowEmpty && !value) ? `${prompt} must be non-empty` : true;
-				},
-				default: options && options.defaultAction
-			};
+		let schema: IPromptSchema = {
+			message: prompt,
+			type: "input",
+			name: "inputString",
+			validate: (value: any) => {
+				let doesNotAllowEmpty = options && _.has(options, "allowEmpty") && !options.allowEmpty;
+				return (doesNotAllowEmpty && !value) ? `${prompt} must be non-empty` : true;
+			},
+			default: options && options.defaultAction
+		};
 
-			let result = await  this.get([schema]);
-			return result.inputString;
+		let result = await this.get([schema]);
+		return result.inputString;
 	}
 
 	public async promptForChoice(promptMessage: string, choices: any[]): Promise<string> {
-			let schema: IPromptSchema = {
-				message: promptMessage,
-				type: "list",
-				name: "userAnswer",
-				choices: choices
-			};
+		let schema: IPromptSchema = {
+			message: promptMessage,
+			type: "list",
+			name: "userAnswer",
+			choices: choices
+		};
 
-			let result = await  this.get([schema]);
-			return result.userAnswer;
+		let result = await this.get([schema]);
+		return result.userAnswer;
 	}
 
 	public async confirm(prompt: string, defaultAction?: () => boolean): Promise<boolean> {
-			let schema = {
-				type: "confirm",
-				name: "prompt",
-				default: defaultAction,
-				message: prompt
-			};
+		let schema = {
+			type: "confirm",
+			name: "prompt",
+			default: defaultAction,
+			message: prompt
+		};
 
-			let result = await  this.get([schema]);
-			return result.prompt;
+		let result = await this.get([schema]);
+		return result.prompt;
 	}
 
 	private muteStdout(): void {

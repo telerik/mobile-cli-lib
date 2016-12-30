@@ -1,5 +1,3 @@
-import Future = require("fibers/future");
-
 export abstract class PluginsSourceBase implements IPluginsSource {
 	protected progressIndicatorMessage: string;
 	protected projectDir: string;

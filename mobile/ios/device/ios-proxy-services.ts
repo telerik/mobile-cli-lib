@@ -3,8 +3,6 @@ import * as path from "path";
 import * as iOSCore from "./ios-core";
 import * as helpers from "../../../helpers";
 import * as plistlib from "plistlib";
-import Future = require("fibers/future");
-import * as fiberBootstrap from "../../../fiber-bootstrap";
 
 export class MobileServices {
 	public static APPLE_FILE_CONNECTION: string = "com.apple.afc";
@@ -471,11 +469,11 @@ export class HouseArrestClient implements Mobile.IHouseArrestClient {
 		return this.$injector.resolve(AfcClient, { service: service });
 	}
 
-	public getAfcClientForAppContainer(applicationIdentifier: string): Mobile.IAfcClient {
+	public getAfcClientForAppContainer(applicationIdentifier: string): Promise<Mobile.IAfcClient> {
 		return this.getAfcClientCore("VendContainer", applicationIdentifier);
 	}
 
-	public getAfcClientForAppDocuments(applicationIdentifier: string): Mobile.IAfcClient {
+	public getAfcClientForAppDocuments(applicationIdentifier: string): Promise<Mobile.IAfcClient> {
 		return this.getAfcClientCore("VendDocuments", applicationIdentifier);
 	}
 
@@ -497,9 +495,7 @@ export class IOSSyslog {
 
 	public read(): void {
 		let printData = (data: string) => {
-			fiberBootstrap.run(() =>
-				this.$deviceLogProvider.logData(data, this.$devicePlatformsConstants.iOS, this.device.deviceInfo.identifier)
-			);
+			this.$deviceLogProvider.logData(data, this.$devicePlatformsConstants.iOS, this.device.deviceInfo.identifier);
 		};
 		this.plistService.readSystemLog(printData);
 	}

@@ -1,5 +1,4 @@
 import * as fs from "fs";
-import Future = require("fibers/future");
 import * as path from "path";
 import * as minimatch from "minimatch";
 import * as injector from "./yok";
@@ -128,29 +127,29 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public async futureFromEvent(eventEmitter: any, event: string): Promise<any> {
-		let future = new Future();
-		eventEmitter.once(event, function () {
-			let args = _.toArray(arguments);
+		return new Promise((resolve, reject) => {
+			eventEmitter.once(event, function () {
+				let args = _.toArray(arguments);
 
-			if (event === "error") {
-				let err = <Error>args[0];
-				future.throw(err);
-				return;
-			}
+				if (event === "error") {
+					let err = <Error>args[0];
+					reject(err);
+					return;
+				}
 
-			switch (args.length) {
-				case 0:
-					future.return();
-					break;
-				case 1:
-					future.return(args[0]);
-					break;
-				default:
-					future.return(args);
-					break;
-			}
+				switch (args.length) {
+					case 0:
+						resolve();
+						break;
+					case 1:
+						resolve(args[0]);
+						break;
+					default:
+						resolve(args);
+						break;
+				}
+			});
 		});
-		return future;
 	}
 
 	public createDirectory(path: string): void {

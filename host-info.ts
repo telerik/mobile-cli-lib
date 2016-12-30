@@ -1,5 +1,3 @@
-import Future = require("fibers/future");
-
 export class HostInfo implements IHostInfo {
 	private static WIN32_NAME = "win32";
 	private static PROCESSOR_ARCHITEW6432 = "PROCESSOR_ARCHITEW6432";

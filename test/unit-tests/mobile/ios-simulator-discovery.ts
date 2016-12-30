@@ -1,6 +1,6 @@
 import {IOSSimulatorDiscovery} from "../../../mobile/mobile-core/ios-simulator-discovery";
 import {Yok} from "../../../yok";
-import Future = require("fibers/future");
+
 import { assert } from "chai";
 import { DevicePlatformsConstants } from "../../../mobile/device-platforms-constants";
 

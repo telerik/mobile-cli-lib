@@ -2,7 +2,7 @@ import {Yok} from "../../yok";
 import {XcodeSelectService} from "../../services/xcode-select-service";
 import {assert} from "chai";
 import * as path from "path";
-import Future = require("fibers/future");
+
 
 let executionStopped = false;
 

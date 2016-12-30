@@ -1,7 +1,6 @@
 import { EOL } from "os";
 import { ApplicationManagerBase } from "../application-manager-base";
 import { LiveSyncConstants, TARGET_FRAMEWORK_IDENTIFIERS } from "../../constants";
-import Future = require("fibers/future");
 import { hook } from "../../helpers";
 
 export class AndroidApplicationManager extends ApplicationManagerBase {
@@ -19,14 +18,14 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async getInstalledApplications(): Promise<string[]> {
-			let result = await  this.adb.executeShellCommand(["pm", "list", "packages"]) || "";
-			let regex = /package:(.+)/;
-			return result.split(EOL)
-				.map((packageString: string) => {
-					let match = packageString.match(regex);
-					return match ? match[1] : null;
-				})
-				.filter((parsedPackage: string) => parsedPackage !== null);
+		let result = await this.adb.executeShellCommand(["pm", "list", "packages"]) || "";
+		let regex = /package:(.+)/;
+		return result.split(EOL)
+			.map((packageString: string) => {
+				let match = packageString.match(regex);
+				return match ? match[1] : null;
+			})
+			.filter((parsedPackage: string) => parsedPackage !== null);
 	}
 
 	@hook('install')
@@ -40,14 +39,14 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async startApplication(appIdentifier: string, framework?: string): Promise<void> {
-			this.adb.executeShellCommand(["monkey",
-				"-p", appIdentifier,
-				"-c", "android.intent.category.LAUNCHER",
-				await "1"]);
+		this.adb.executeShellCommand(["monkey",
+			"-p", appIdentifier,
+			"-c", "android.intent.category.LAUNCHER",
+			await "1"]);
 
-			if (!this.$options.justlaunch) {
-				this.$logcatHelper.start(this.identifier);
-			}
+		if (!this.$options.justlaunch) {
+			this.$logcatHelper.start(this.identifier);
+		}
 	}
 
 	public async stopApplication(appIdentifier: string): Promise<void> {
@@ -64,8 +63,8 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async isLiveSyncSupported(appIdentifier: string): Promise<boolean> {
-			let liveSyncVersion = await  this.adb.sendBroadcastToDevice(LiveSyncConstants.CHECK_LIVESYNC_INTENT_NAME, { "app-id": appIdentifier });
-			return liveSyncVersion === LiveSyncConstants.VERSION_2 || liveSyncVersion === LiveSyncConstants.VERSION_3;
+		let liveSyncVersion = await this.adb.sendBroadcastToDevice(LiveSyncConstants.CHECK_LIVESYNC_INTENT_NAME, { "app-id": appIdentifier });
+		return liveSyncVersion === LiveSyncConstants.VERSION_2 || liveSyncVersion === LiveSyncConstants.VERSION_3;
 	}
 
 	public async getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]> {
@@ -73,23 +72,23 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async getDebuggableAppViews(appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> {
-			let mappedAppIdentifierPorts = await  this.$androidProcessService.getMappedAbstractToTcpPorts(this.identifier, appIdentifiers, TARGET_FRAMEWORK_IDENTIFIERS.Cordova),
-				applicationViews: IDictionary<Mobile.IDebugWebViewInfo[]> = {};
+		let mappedAppIdentifierPorts = await this.$androidProcessService.getMappedAbstractToTcpPorts(this.identifier, appIdentifiers, TARGET_FRAMEWORK_IDENTIFIERS.Cordova),
+			applicationViews: IDictionary<Mobile.IDebugWebViewInfo[]> = {};
 
-			_.each(mappedAppIdentifierPorts, (port: number, appIdentifier: string) => {
-				applicationViews[appIdentifier] = [];
-				let localAddress = `http://127.0.0.1:${port}/json`;
+		_.each(mappedAppIdentifierPorts, async (port: number, appIdentifier: string) => {
+			applicationViews[appIdentifier] = [];
+			let localAddress = `http://127.0.0.1:${port}/json`;
 
-				try {
-					if (port) {
-						let apps = (await  this.$httpClient.httpRequest(localAddress)).body;
-						applicationViews[appIdentifier] = JSON.parse(apps);
-					}
-				} catch (err) {
-					this.$logger.trace(`Error while checking ${localAddress}. Error is: ${err.message}`);
+			try {
+				if (port) {
+					let apps = (await this.$httpClient.httpRequest(localAddress)).body;
+					applicationViews[appIdentifier] = JSON.parse(apps);
 				}
-			});
+			} catch (err) {
+				this.$logger.trace(`Error while checking ${localAddress}. Error is: ${err.message}`);
+			}
+		});
 
-			return applicationViews;
+		return applicationViews;
 	}
 }

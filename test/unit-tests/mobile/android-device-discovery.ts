@@ -2,7 +2,7 @@ import {AndroidDeviceDiscovery} from "../../../mobile/mobile-core/android-device
 import {AndroidDebugBridge} from "../../../mobile/android/android-debug-bridge";
 import {AndroidDebugBridgeResultHandler} from "../../../mobile/android/android-debug-bridge-result-handler";
 import {Yok} from "../../../yok";
-import Future = require("fibers/future");
+
 import { EventEmitter } from "events";
 import { EOL } from "os";
 import { assert } from "chai";

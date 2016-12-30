@@ -1,5 +1,4 @@
-import {PluginsSourceBase} from "./plugins-source-base";
-import Future = require("fibers/future");
+import { PluginsSourceBase } from "./plugins-source-base";
 
 export class NpmRegistryPluginsSource extends PluginsSourceBase implements IPluginsSource {
 	constructor($progressIndicator: IProgressIndicator,
@@ -21,8 +20,8 @@ export class NpmRegistryPluginsSource extends PluginsSourceBase implements IPlug
 	}
 
 	protected async initializeCore(projectDir: string, keywords: string[]): Promise<void> {
-			let plugin = await  this.getPluginFromNpmRegistry(keywords[0]);
-			this.plugins = plugin ? [plugin] : null;
+		let plugin = await this.getPluginFromNpmRegistry(keywords[0]);
+		this.plugins = plugin ? [plugin] : null;
 	}
 
 	private prepareScopedPluginName(plugin: string): string {
@@ -30,17 +29,17 @@ export class NpmRegistryPluginsSource extends PluginsSourceBase implements IPlug
 	}
 
 	private async getPluginFromNpmRegistry(plugin: string): Promise<IBasicPluginInformation> {
-			let dependencyInfo = this.$npmService.getDependencyInformation(plugin);
+		let dependencyInfo = this.$npmService.getDependencyInformation(plugin);
 
-			let pluginName = this.$npmService.isScopedDependency(plugin) ? this.prepareScopedPluginName(dependencyInfo.name) : dependencyInfo.name;
+		let pluginName = this.$npmService.isScopedDependency(plugin) ? this.prepareScopedPluginName(dependencyInfo.name) : dependencyInfo.name;
 
-			let result = await  this.$npmService.getPackageJsonFromNpmRegistry(pluginName, dependencyInfo.version);
+		let result = await this.$npmService.getPackageJsonFromNpmRegistry(pluginName, dependencyInfo.version);
 
-			if (!result) {
-				return null;
-			}
+		if (!result) {
+			return null;
+		}
 
-			result.author = (result.author && result.author.name) || result.author;
-			return result;
+		result.author = (result.author && result.author.name) || result.author;
+		return result;
 	}
 }

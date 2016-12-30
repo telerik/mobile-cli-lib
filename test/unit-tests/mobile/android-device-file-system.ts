@@ -5,7 +5,7 @@ import { FileSystem } from "../../../file-system";
 import { Logger } from "../../../logger";
 import { MobileHelper } from "../../../mobile/mobile-helper";
 import { DevicePlatformsConstants } from "../../../mobile/device-platforms-constants";
-import Future = require("fibers/future");
+
 import * as path from "path";
 import { assert } from "chai";
 

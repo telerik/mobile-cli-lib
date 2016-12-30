@@ -5,7 +5,6 @@ import * as iOSProxyServices from "./ios-proxy-services";
 import { hook } from "../../../helpers";
 import { ApplicationManagerBase } from "../../application-manager-base";
 import { CoreTypes, GDBServer } from "./ios-core";
-import Future = require("fibers/future");
 
 export class IOSApplicationManager extends ApplicationManagerBase {
 	private uninstallApplicationCallbackPtr: NodeBuffer = null;
@@ -37,166 +36,166 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async getInstalledApplications(): Promise<string[]> {
-			return _(await this.getApplicationsLiveSyncSupportedStatus())
-				.map(appLiveSyncStatus => appLiveSyncStatus.applicationIdentifier)
-				.sortBy((identifier: string) => identifier.toLowerCase())
-				.value();
+		return _(await this.getApplicationsLiveSyncSupportedStatus())
+			.map(appLiveSyncStatus => appLiveSyncStatus.applicationIdentifier)
+			.sortBy((identifier: string) => identifier.toLowerCase())
+			.value();
 	}
 
 	@hook('install')
 	public async installApplication(packageFilePath: string): Promise<void> {
-			let installationProxy = this.getInstallationProxy();
-			try {
-				await installationProxy.deployApplication(packageFilePath);
-			} finally {
-				installationProxy.closeSocket();
-			}
+		let installationProxy = this.getInstallationProxy();
+		try {
+			await installationProxy.deployApplication(packageFilePath);
+		} finally {
+			installationProxy.closeSocket();
+		}
 	}
 
 	public async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
-			if (!this.applicationsLiveSyncInfos || !this.applicationsLiveSyncInfos.length) {
-				await this.getApplicationsLiveSyncSupportedStatus();
-			}
+		if (!this.applicationsLiveSyncInfos || !this.applicationsLiveSyncInfos.length) {
+			await this.getApplicationsLiveSyncSupportedStatus();
+		}
 
-			return _.find(this.applicationsLiveSyncInfos, app => app.applicationIdentifier === applicationIdentifier);
+		return _.find(this.applicationsLiveSyncInfos, app => app.applicationIdentifier === applicationIdentifier);
 	}
 
 	public async getApplicationsLiveSyncSupportedStatus(): Promise<Mobile.ILiveSyncApplicationInfo[]> {
-			let installationProxy = this.getInstallationProxy();
-			try {
-				let result = installationProxy.sendMessage({
-					"Command": "Browse",
-					"ClientOptions": {
-						"ApplicationType": "User",
-						"ReturnAttributes": [
-							"CFBundleIdentifier",
-							"IceniumLiveSyncEnabled",
-							"configuration"
-						]
-					}
-				await });
+		let installationProxy = this.getInstallationProxy();
+		try {
+			let result = await installationProxy.sendMessage({
+				"Command": "Browse",
+				"ClientOptions": {
+					"ApplicationType": "User",
+					"ReturnAttributes": [
+						"CFBundleIdentifier",
+						"IceniumLiveSyncEnabled",
+						"configuration"
+					]
+				}
+			});
 
-				/*
-					Sample Result:
-					[{
+			/*
+				Sample Result:
+				[{
+					"Total": 13,
+					"CurrentIndex": 0,
+					"CurrentAmount": 10,
+					"Status": "BrowsingApplications",
+					"CurrentList": [
+					{
+						"CFBundleIdentifier": "com.ebay.redlaserproper"
+					},
+					{
+						"CFBundleIdentifier": "com.apple.TestFlight"
+					},
+					{
+						"IceniumLiveSyncEnabled": true,
+						"CFBundleIdentifier": "com.telerik.TestSpecialChars"
+					},
+					{
+						"CFBundleIdentifier": "com.telerik.PlatformCompanion"
+					},
+					{
+						"IceniumLiveSyncEnabled": true,
+						"CFBundleIdentifier": "com.telerik.KendoUITabStrip1"
+					},
+					{
+						"IceniumLiveSyncEnabled": true,
+						"CFBundleIdentifier": "com.telerik.myAppNative1",
+						"configuration": "live"
+					},
+					{
+						"CFBundleIdentifier": "com.ionic.viewapp"
+					},
+					{
+						"IceniumLiveSyncEnabled": true,
+						"CFBundleIdentifier": "com.telerik.samplepinchandzoom",
+						"configuration": "test"
+					},
+					{
+						"CFBundleIdentifier": "com.telerik.7e4c83f6-4e40-420f-a395-ab3cd9f77afd.AppManager"
+					},
+					{
+						"IceniumLiveSyncEnabled": true,
+						"CFBundleIdentifier": "com.telerik.sampleinappbrowser"
+					}
+					]
+				},
+				{
 						"Total": 13,
-						"CurrentIndex": 0,
-						"CurrentAmount": 10,
+						"CurrentIndex": 10,
+						"CurrentAmount": 3,
 						"Status": "BrowsingApplications",
 						"CurrentList": [
 						{
-							"CFBundleIdentifier": "com.ebay.redlaserproper"
-						},
-						{
-							"CFBundleIdentifier": "com.apple.TestFlight"
+							"IceniumLiveSyncEnabled": true,
+							"CFBundleIdentifier": "com.telerik.KendoUIBlank9"
 						},
 						{
 							"IceniumLiveSyncEnabled": true,
-							"CFBundleIdentifier": "com.telerik.TestSpecialChars"
-						},
-						{
-							"CFBundleIdentifier": "com.telerik.PlatformCompanion"
+							"CFBundleIdentifier": "com.telerik.Blank1"
 						},
 						{
 							"IceniumLiveSyncEnabled": true,
-							"CFBundleIdentifier": "com.telerik.KendoUITabStrip1"
-						},
-						{
-							"IceniumLiveSyncEnabled": true,
-							"CFBundleIdentifier": "com.telerik.myAppNative1",
-							"configuration": "live"
-						},
-						{
-							"CFBundleIdentifier": "com.ionic.viewapp"
-						},
-						{
-							"IceniumLiveSyncEnabled": true,
-							"CFBundleIdentifier": "com.telerik.samplepinchandzoom",
-							"configuration": "test"
-						},
-						{
-							"CFBundleIdentifier": "com.telerik.7e4c83f6-4e40-420f-a395-ab3cd9f77afd.AppManager"
-						},
-						{
-							"IceniumLiveSyncEnabled": true,
-							"CFBundleIdentifier": "com.telerik.sampleinappbrowser"
+							"CFBundleIdentifier": "com.telerik.samplecapture"
 						}
 						]
-					},
-					{
-							"Total": 13,
-							"CurrentIndex": 10,
-							"CurrentAmount": 3,
-							"Status": "BrowsingApplications",
-							"CurrentList": [
-							{
-								"IceniumLiveSyncEnabled": true,
-								"CFBundleIdentifier": "com.telerik.KendoUIBlank9"
-							},
-							{
-								"IceniumLiveSyncEnabled": true,
-								"CFBundleIdentifier": "com.telerik.Blank1"
-							},
-							{
-								"IceniumLiveSyncEnabled": true,
-								"CFBundleIdentifier": "com.telerik.samplecapture"
-							}
-							]
-						}
-					]
-				*/
+					}
+				]
+			*/
 
-				this.$logger.trace("Result when getting applications for which LiveSync is enabled: ", JSON.stringify(result, null, 2));
-				this.applicationsLiveSyncInfos = [];
-				_.each(result, (singleResult: any) => {
-					let currentList = _.map(singleResult.CurrentList, (app: any) => ({
-						applicationIdentifier: app.CFBundleIdentifier,
-						isLiveSyncSupported: app.IceniumLiveSyncEnabled,
-						configuration: app.configuration,
-						deviceIdentifier: this.device.deviceInfo.identifier
-					}));
-					this.applicationsLiveSyncInfos = this.applicationsLiveSyncInfos.concat(currentList);
-				});
+			this.$logger.trace("Result when getting applications for which LiveSync is enabled: ", JSON.stringify(result, null, 2));
+			this.applicationsLiveSyncInfos = [];
+			_.each(result, (singleResult: any) => {
+				let currentList = _.map(singleResult.CurrentList, (app: any) => ({
+					applicationIdentifier: app.CFBundleIdentifier,
+					isLiveSyncSupported: app.IceniumLiveSyncEnabled,
+					configuration: app.configuration,
+					deviceIdentifier: this.device.deviceInfo.identifier
+				}));
+				this.applicationsLiveSyncInfos = this.applicationsLiveSyncInfos.concat(currentList);
+			});
 
-				return this.applicationsLiveSyncInfos;
-			} finally {
-				installationProxy.closeSocket();
-			}
+			return this.applicationsLiveSyncInfos;
+		} finally {
+			installationProxy.closeSocket();
+		}
 	}
 
 	public async isLiveSyncSupported(appIdentifier: string): Promise<boolean> {
-			if (!this.applicationsLiveSyncInfos || !this.applicationsLiveSyncInfos.length) {
-				await this.getApplicationsLiveSyncSupportedStatus();
-			}
+		if (!this.applicationsLiveSyncInfos || !this.applicationsLiveSyncInfos.length) {
+			await this.getApplicationsLiveSyncSupportedStatus();
+		}
 
-			let selectedApplication = _.find(this.applicationsLiveSyncInfos, app => app.applicationIdentifier === appIdentifier);
-			return !!selectedApplication && selectedApplication.isLiveSyncSupported;
+		let selectedApplication = _.find(this.applicationsLiveSyncInfos, app => app.applicationIdentifier === appIdentifier);
+		return !!selectedApplication && selectedApplication.isLiveSyncSupported;
 	}
 
 	public async uninstallApplication(appIdentifier: string): Promise<void> {
-			let afc = this.device.startService(iOSProxyServices.MobileServices.INSTALLATION_PROXY);
-			try {
-				let result = this.$mobileDevice.deviceUninstallApplication(afc, this.$coreFoundation.createCFString(appIdentifier), null, this.uninstallApplicationCallbackPtr);
-				if (result) {
-					this.$errors.failWithoutHelp("AMDeviceUninstallApplication returned '%d'.", result);
-				}
-			} catch (e) {
-				this.$logger.trace(`Error while uninstalling application ${e}.`);
+		let afc = this.device.startService(iOSProxyServices.MobileServices.INSTALLATION_PROXY);
+		try {
+			let result = this.$mobileDevice.deviceUninstallApplication(afc, this.$coreFoundation.createCFString(appIdentifier), null, this.uninstallApplicationCallbackPtr);
+			if (result) {
+				this.$errors.failWithoutHelp("AMDeviceUninstallApplication returned '%d'.", result);
 			}
+		} catch (e) {
+			this.$logger.trace(`Error while uninstalling application ${e}.`);
+		}
 
-			this.$logger.trace("Application %s has been uninstalled successfully.", appIdentifier);
+		this.$logger.trace("Application %s has been uninstalled successfully.", appIdentifier);
 	}
 
 	public async startApplication(appIdentifier: string): Promise<void> {
-			if (this.$hostInfo.isWindows && !this.$staticConfig.enableDeviceRunCommandOnWindows) {
-				this.$errors.fail("$%s device run command is not supported on Windows for iOS devices.", this.$staticConfig.CLIENT_NAME.toLowerCase());
-			}
+		if (this.$hostInfo.isWindows && !this.$staticConfig.enableDeviceRunCommandOnWindows) {
+			this.$errors.fail("$%s device run command is not supported on Windows for iOS devices.", this.$staticConfig.CLIENT_NAME.toLowerCase());
+		}
 
-			this.validateApplicationId(appIdentifier);
-			await this.device.mountImage();
+		this.validateApplicationId(appIdentifier);
+		await this.device.mountImage();
 
-			await this.runApplicationCore(appIdentifier);
-			this.$logger.info(`Successfully run application ${appIdentifier} on device with ID ${this.device.deviceInfo.identifier}.`);
+		await this.runApplicationCore(appIdentifier);
+		this.$logger.info(`Successfully run application ${appIdentifier} on device with ID ${this.device.deviceInfo.identifier}.`);
 	}
 
 	public async stopApplication(appIdentifier: string): Promise<void> {
@@ -206,8 +205,8 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async restartApplication(applicationId: string): Promise<void> {
-			await this.stopApplication(applicationId);
-			await this.runApplicationCore(applicationId);
+		await this.stopApplication(applicationId);
+		await this.runApplicationCore(applicationId);
 	}
 
 	public canStartApplication(): boolean {

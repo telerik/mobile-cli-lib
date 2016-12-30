@@ -1,9 +1,7 @@
 import * as util from "util";
-import Future = require("fibers/future");
 import * as helpers from "../../helpers";
 import * as assert from "assert";
 import * as constants from "../../constants";
-import * as fiberBootstrap from "../../fiber-bootstrap";
 import { exportedPromise, exported } from "../../decorators";
 
 export class DevicesService implements Mobile.IDevicesService {
@@ -151,47 +149,45 @@ export class DevicesService implements Mobile.IDevicesService {
 			this.$logger.trace("Device detection interval is already started. New Interval will not be started.");
 		} else {
 			this.deviceDetectionInterval = setInterval(async () => {
-				fiberBootstrap.run(async () => {
-					if (this.deviceDetectionIntervalFuture) {
-						return;
+				if (this.deviceDetectionIntervalFuture) {
+					return;
+				}
+
+				this.deviceDetectionIntervalFuture = new Promise<void>(async (resolve, reject) => {
+
+					try {
+						await this.$iOSDeviceDiscovery.checkForDevices();
+					} catch (err) {
+						this.$logger.trace("Error while checking for new iOS devices.", err);
 					}
 
-					this.deviceDetectionIntervalFuture = new Promise<void>(async (resolve, reject) => {
+					try {
+						await this.$androidDeviceDiscovery.startLookingForDevices();
+					} catch (err) {
+						this.$logger.trace("Error while checking for new Android devices.", err);
+					}
 
-						try {
-							await this.$iOSDeviceDiscovery.checkForDevices();
-						} catch (err) {
-							this.$logger.trace("Error while checking for new iOS devices.", err);
+					try {
+						if (this.$hostInfo.isDarwin) {
+							await this.$iOSSimulatorDiscovery.checkForDevices();
 						}
+					} catch (err) {
+						this.$logger.trace("Error while checking for new iOS Simulators.", err);
+					}
 
+					_.each(this._devices, async device => {
 						try {
-							await this.$androidDeviceDiscovery.startLookingForDevices();
+							await device.applicationManager.checkForApplicationUpdates();
 						} catch (err) {
-							this.$logger.trace("Error while checking for new Android devices.", err);
+							this.$logger.trace(`Error checking for application updates on device ${device.deviceInfo.identifier}.`, err);
 						}
-
-						try {
-							if (this.$hostInfo.isDarwin) {
-								await this.$iOSSimulatorDiscovery.checkForDevices();
-							}
-						} catch (err) {
-							this.$logger.trace("Error while checking for new iOS Simulators.", err);
-						}
-
-						_.each(this._devices, async device => {
-							try {
-								await device.applicationManager.checkForApplicationUpdates();
-							} catch (err) {
-								this.$logger.trace(`Error checking for application updates on device ${device.deviceInfo.identifier}.`, err);
-							}
-						});
-
-						resolve();
 					});
 
-					await this.deviceDetectionIntervalFuture;
-					this.deviceDetectionIntervalFuture = null;
+					resolve();
 				});
+
+				await this.deviceDetectionIntervalFuture;
+				this.deviceDetectionIntervalFuture = null;
 			}, DevicesService.DEVICE_LOOKING_INTERVAL).unref();
 		}
 	}

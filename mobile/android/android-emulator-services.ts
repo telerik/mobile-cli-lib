@@ -1,5 +1,4 @@
-import * as Fiber from "fibers";
-import Future = require("fibers/future");
+
 import * as iconv from "iconv-lite";
 import { EOL } from "os";
 import * as osenv from "osenv";
@@ -42,7 +41,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		private $utils: IUtils,
 		private $injector: IInjector) {
 		iconv.extendNodeEncodings();
-		this.adbFilePath = await  this.$staticConfig.getAdbFilePath();
+		this.adbFilePath = await this.$staticConfig.getAdbFilePath();
 	}
 
 	private get pathToEmulatorExecutable(): string {

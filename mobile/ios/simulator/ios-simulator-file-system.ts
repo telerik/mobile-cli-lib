@@ -1,4 +1,3 @@
-import Future = require("fibers/future");
 import * as path from "path";
 import * as shelljs from "shelljs";
 
@@ -26,8 +25,8 @@ export class IOSSimulatorFileSystem implements Mobile.IDeviceFileSystem {
 		shelljs.rm("-rf", deviceFilePath);
 	}
 
-	public async transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
-			_.each(localToDevicePaths, localToDevicePathData => await  this.transferFile(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()));
+	public transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): void {
+		_.each(localToDevicePaths,async localToDevicePathData => await this.transferFile(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()));
 	}
 
 	public async transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): Promise<void> {
@@ -37,11 +36,11 @@ export class IOSSimulatorFileSystem implements Mobile.IDeviceFileSystem {
 	}
 
 	public async transferFile(localFilePath: string, deviceFilePath: string): Promise<void> {
-			this.$logger.trace(`Transferring from ${localFilePath} to ${deviceFilePath}`);
-			if (this.$fs.getFsStats(localFilePath).isDirectory()) {
-				shelljs.mkdir(deviceFilePath);
-			} else {
-				shelljs.cp("-f", localFilePath, deviceFilePath);
-			}
+		this.$logger.trace(`Transferring from ${localFilePath} to ${deviceFilePath}`);
+		if (this.$fs.getFsStats(localFilePath).isDirectory()) {
+			shelljs.mkdir(deviceFilePath);
+		} else {
+			shelljs.cp("-f", localFilePath, deviceFilePath);
+		}
 	}
 }

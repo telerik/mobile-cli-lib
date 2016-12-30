@@ -1,5 +1,4 @@
-import {PluginsSourceBase} from "./plugins-source-base";
-import Future = require("fibers/future");
+import { PluginsSourceBase } from "./plugins-source-base";
 
 export class NpmPluginsSource extends PluginsSourceBase implements IPluginsSource {
 	constructor($progressIndicator: IProgressIndicator,
@@ -22,6 +21,6 @@ export class NpmPluginsSource extends PluginsSourceBase implements IPluginsSourc
 	}
 
 	protected async initializeCore(projectDir: string, keywords: string[]): Promise<void> {
-			this.plugins = await  this.$npmService.search(this.projectDir, keywords);
+		this.plugins = await this.$npmService.search(this.projectDir, keywords);
 	}
 }

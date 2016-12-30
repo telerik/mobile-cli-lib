@@ -1,5 +1,4 @@
 import { EventEmitter } from "events";
-import Future = require("fibers/future");
 
 export class DeviceDiscovery extends EventEmitter implements Mobile.IDeviceDiscovery {
 	private devices: IDictionary<Mobile.IDevice> = {};
@@ -11,7 +10,7 @@ export class DeviceDiscovery extends EventEmitter implements Mobile.IDeviceDisco
 
 	public removeDevice(deviceIdentifier: string) {
 		let device = this.devices[deviceIdentifier];
-		if(!device) {
+		if (!device) {
 			return;
 		}
 		delete this.devices[deviceIdentifier];

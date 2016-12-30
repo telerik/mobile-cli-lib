@@ -1,6 +1,6 @@
 import {DevicesService} from "../../../mobile/mobile-core/devices-service";
 import {Yok} from "../../../yok";
-import Future = require("fibers/future");
+
 import { EventEmitter } from "events";
 import { assert } from "chai";
 import { CommonLoggerStub, ErrorsStub } from "../stubs";

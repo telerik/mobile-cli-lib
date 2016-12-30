@@ -1,16 +1,14 @@
-import Future = require("fibers/future");
-
 export abstract class AppBuilderLiveSyncProviderBase implements ILiveSyncProvider {
-	constructor(private $androidLiveSyncServiceLocator: {factory: Function},
-		private $iosLiveSyncServiceLocator: {factory: Function}) { }
+	constructor(private $androidLiveSyncServiceLocator: { factory: Function },
+		private $iosLiveSyncServiceLocator: { factory: Function }) { }
 
 	public get deviceSpecificLiveSyncServices(): IDictionary<any> {
 		return {
 			android: (_device: Mobile.IDevice, $injector: IInjector): IDeviceLiveSyncService => {
-				return $injector.resolve(this.$androidLiveSyncServiceLocator.factory, {_device: _device});
+				return $injector.resolve(this.$androidLiveSyncServiceLocator.factory, { _device: _device });
 			},
 			ios: (_device: Mobile.IDevice, $injector: IInjector): IDeviceLiveSyncService => {
-				return $injector.resolve(this.$iosLiveSyncServiceLocator.factory, {_device: _device});
+				return $injector.resolve(this.$iosLiveSyncServiceLocator.factory, { _device: _device });
 			}
 		};
 	}

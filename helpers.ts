@@ -1,8 +1,7 @@
 import * as uuid from "uuid";
-import * as Fiber from "fibers";
+
 import * as net from "net";
 let Table = require("cli-table");
-import Future = require("fibers/future");
 import { platform, EOL } from "os";
 
 /**

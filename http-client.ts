@@ -1,5 +1,4 @@
 import * as url from "url";
-import Future = require("fibers/future");
 import * as helpers from "./helpers";
 import * as zlib from "zlib";
 import * as util from "util";

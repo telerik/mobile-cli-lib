@@ -1,5 +1,3 @@
-import Future = require("fibers/future");
-
 class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 	constructor(private $logger: ILogger,
 		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
@@ -36,7 +34,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 	}
 
 	public async runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): Promise<any> {
-			return this.runApplicationOnEmulatorCore(app, emulatorOptions);
+		return this.runApplicationOnEmulatorCore(app, emulatorOptions);
 	}
 
 	public async postDarwinNotification(notification: string): Promise<void> {
@@ -52,7 +50,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		return this.$childProcess.exec(`${nodeCommandName} ${iosSimPath} ${opts.join(' ')}`);
 	}
 
-	private runApplicationOnEmulatorCore(app: string, emulatorOptions?: Mobile.IEmulatorOptions): any {
+	private async runApplicationOnEmulatorCore(app: string, emulatorOptions?: Mobile.IEmulatorOptions): Promise<any> {
 		this.$logger.info("Starting iOS Simulator");
 		let iosSimPath = this.$iOSSimResolver.iOSSimPath;
 		let nodeCommandName = process.argv[0];

@@ -1,7 +1,6 @@
 import * as path from "path";
 import * as util from "util";
 import { annotate } from "../helpers";
-import Future = require("fibers/future");
 
 class Hook implements IHook {
 	constructor(public name: string,
@@ -131,7 +130,7 @@ export class HooksService implements IHooksService {
 				let environment = this.prepareEnvironment(hook.fullPath);
 				this.$logger.trace("Executing %s hook at location %s with environment ", hookName, hook.fullPath, environment);
 
-				let output = await  this.$childProcess.spawnFromEvent(command, [hook.fullPath], "close", environment, { throwError: false });
+				let output = await this.$childProcess.spawnFromEvent(command, [hook.fullPath], "close", environment, { throwError: false });
 				if (output.exitCode !== 0) {
 					throw new Error(output.stdout + output.stderr);
 				}

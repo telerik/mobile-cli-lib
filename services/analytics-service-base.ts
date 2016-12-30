@@ -1,5 +1,4 @@
 import * as helpers from "../helpers";
-import Future = require("fibers/future");
 // HACK
 global.XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 global.XMLHttpRequest.prototype.withCredentials = false;

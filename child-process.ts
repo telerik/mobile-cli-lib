@@ -1,4 +1,3 @@
-import Future = require("fibers/future");
 import * as child_process from "child_process";
 
 export class ChildProcess implements IChildProcess {

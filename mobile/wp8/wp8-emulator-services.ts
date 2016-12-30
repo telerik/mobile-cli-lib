@@ -1,5 +1,4 @@
 import * as path from "path";
-import future = require("fibers/future");
 
 class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private static WP8_LAUNCHER = "XapDeployCmd.exe";
@@ -45,9 +44,9 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 	}
 
 	public async runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): Promise<void> {
-			this.$logger.info("Starting Windows Phone Emulator");
-			let emulatorStarter = this.getPathToEmulatorStarter();
-			this.$childProcess.spawn(emulatorStarter, ["/installlaunch", app, "/targetdevice:xd"], { stdio: "ignore", detached: true }).unref();
+		this.$logger.info("Starting Windows Phone Emulator");
+		let emulatorStarter = this.getPathToEmulatorStarter();
+		this.$childProcess.spawn(emulatorStarter, ["/installlaunch", app, "/targetdevice:xd"], { stdio: "ignore", detached: true }).unref();
 	}
 
 	private getPathToEmulatorStarter(): string {

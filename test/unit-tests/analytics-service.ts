@@ -1,7 +1,6 @@
 import { CommonLoggerStub, ErrorsStub } from "./stubs";
 import { Yok } from "../../yok";
 import { AnalyticsServiceBase } from "../../services/analytics-service-base";
-import Future = require("fibers/future");
 import * as os from "os";
 import helpersLib = require("../../helpers");
 import { HostInfo } from "../../host-info";
@@ -55,20 +54,20 @@ class UserSettingsServiceStub {
 		public exceptionsTracking: boolean,
 		public testInjector: IInjector) { }
 
-	async getSettingValue<T> (settingName: string): Promise<T|string> {
-			let $staticConfig: Config.IStaticConfig = this.testInjector.resolve("staticConfig");
+	async getSettingValue<T>(settingName: string): Promise<T | string> {
+		let $staticConfig: Config.IStaticConfig = this.testInjector.resolve("staticConfig");
 
-			if (settingName === $staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME) {
-				return this.featureTracking !== undefined ? this.featureTracking.toString() : undefined;
-			} else if (settingName === $staticConfig.ERROR_REPORT_SETTING_NAME) {
-				return this.exceptionsTracking !== undefined ? this.exceptionsTracking.toString() : undefined;
-			}
+		if (settingName === $staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME) {
+			return this.featureTracking !== undefined ? this.featureTracking.toString() : undefined;
+		} else if (settingName === $staticConfig.ERROR_REPORT_SETTING_NAME) {
+			return this.exceptionsTracking !== undefined ? this.exceptionsTracking.toString() : undefined;
+		}
 
-			return undefined;
+		return undefined;
 	}
 
-	async saveSetting<T> (key: string, value: T): Promise<void> {
-			savedSettingNamesAndValues += `${key}.${value}`;
+	async saveSetting<T>(key: string, value: T): Promise<void> {
+		savedSettingNamesAndValues += `${key}.${value}`;
 	}
 }
 

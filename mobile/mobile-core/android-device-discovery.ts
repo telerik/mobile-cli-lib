@@ -2,8 +2,6 @@ import { DeviceDiscovery } from "./device-discovery";
 import * as helpers from "../../helpers";
 import { AndroidDevice } from "../android/android-device";
 import { EOL } from "os";
-import Future = require("fibers/future");
-import * as fiberBootstrap from "../../fiber-bootstrap";
 
 interface IAdbAndroidDeviceInfo {
 	identifier: string;

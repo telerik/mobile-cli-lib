@@ -3,7 +3,7 @@ import {DeviceAppDataFactory} from "../../../mobile/device-app-data/device-app-d
 import {DevicePlatformsConstants} from "../../../mobile/device-platforms-constants";
 import {Errors} from "../../../errors";
 import {FileSystem} from "../../../file-system";
-import Future = require("fibers/future");
+
 import {HostInfo} from "../../../host-info";
 import {LocalToDevicePathDataFactory} from "../../../mobile/local-to-device-path-data-factory";
 import {MobileHelper} from "../../../mobile/mobile-helper";

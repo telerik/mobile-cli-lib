@@ -1,7 +1,7 @@
 import {Yok} from "../../../yok";
 import {assert} from "chai";
 import { CommonLoggerStub } from "../stubs";
-import Future = require("fibers/future");
+
 import { EventEmitter } from "events";
 import { ProjectConstants } from "../../../appbuilder/project-constants";
 import { DeviceEmitter } from "../../../appbuilder/device-emitter";

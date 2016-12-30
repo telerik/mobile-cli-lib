@@ -2,7 +2,7 @@ import { Yok } from "../../../yok";
 import { assert } from "chai";
 import { CommonLoggerStub, HooksServiceStub } from "../stubs";
 import { ApplicationManagerBase } from "../../../mobile/application-manager-base";
-import Future = require("fibers/future");
+
 
 let currentlyAvailableAppsForDebugging: Mobile.IDeviceApplicationInformation[],
 	currentlyInstalledApps: string[],

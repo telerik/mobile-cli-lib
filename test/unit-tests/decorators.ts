@@ -1,7 +1,6 @@
 import * as decoratorsLib from "../../decorators";
 import { Yok } from "../../yok";
-import {assert} from "chai";
-import Future = require("fibers/future");
+import { assert } from "chai";
 
 describe("decorators", () => {
 	let moduleName = "moduleName", // This is the name of the injected dependency that will be resolved, for example fs, devicesService, etc.
@@ -255,10 +254,10 @@ describe("decorators", () => {
 
 				$injector.register(moduleName, {
 					propertyName: async (): Promise<void> => {
-							assert.isFalse(isPostActionExecuted, "Post action MUST NOT be called before all actions are executed.");
+						assert.isFalse(isPostActionExecuted, "Post action MUST NOT be called before all actions are executed.");
 
-							isActionExecuted = true;
-							throw new Error(errorMessage);
+						isActionExecuted = true;
+						throw new Error(errorMessage);
 					}
 				});
 
