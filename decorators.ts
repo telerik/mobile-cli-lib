@@ -1,6 +1,40 @@
-import * as fiberBootstrap from "./fiber-bootstrap";
 import * as assert from "assert";
-import {isFuture} from "./helpers";
+import { isFuture } from "./helpers";
+
+export function cache(): any {
+	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>, a: any): TypedPropertyDescriptor<any> => {
+		let isCalled = false;
+		let result: any;
+
+		const originalValue = descriptor.value;
+		descriptor.value = (...args: any[]) => {
+			if (!isCalled) {
+				isCalled = true;
+				result = originalValue.apply(target, args);
+			}
+
+			return result;
+		};
+
+		return descriptor;
+	};
+}
+
+export function invokeBefore(methodName: string, methodArgs?: any[]): any {
+	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>, a: any): TypedPropertyDescriptor<any> => {
+		const originalValue = descriptor.value;
+		descriptor.value = async (...args: any[]) => {
+			await target[methodName].apply(target, methodArgs);
+			return originalValue.apply(target, args);
+		};
+
+		return descriptor;
+	};
+}
+
+export function invokeInit(): any {
+	return invokeBefore("init");
+}
 
 export function exportedPromise(moduleName: string, postAction?: () => void): any {
 	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> => {
@@ -58,16 +92,14 @@ function getPromise(originalValue: any, config?: { postActionMethod: () => void,
 		return data;
 	};
 
-	return new Promise((onFulfilled: Function, onRejected: Function) => {
+	return new Promise(async (onFulfilled: Function, onRejected: Function) => {
 		if (isFuture(originalValue)) {
-			fiberBootstrap.run(function () {
-				try {
-					let realResult = await  originalValue;
-					onFulfilled(realResult);
-				} catch (err) {
-					onRejected(err);
-				}
-			});
+			try {
+				let realResult = await originalValue;
+				onFulfilled(realResult);
+			} catch (err) {
+				onRejected(err);
+			}
 		} else {
 			onFulfilled(originalValue);
 		}

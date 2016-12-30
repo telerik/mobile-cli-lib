@@ -29,31 +29,31 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 	}
 
 	@hook('install')
-	public async installApplication(packageFilePath: string): Promise<void> {
+	public installApplication(packageFilePath: string): Promise<void> {
 		return this.adb.executeCommand(["install", "-r", `${packageFilePath}`]);
 	}
 
-	public async uninstallApplication(appIdentifier: string): Promise<void> {
+	public uninstallApplication(appIdentifier: string): Promise<void> {
 		// Need to set the treatErrorsAsWarnings to true because when using tns run command if the application is not installed on the device it will throw error
 		return this.adb.executeShellCommand(["pm", "uninstall", `${appIdentifier}`], { treatErrorsAsWarnings: true });
 	}
 
 	public async startApplication(appIdentifier: string, framework?: string): Promise<void> {
-		this.adb.executeShellCommand(["monkey",
+		await this.adb.executeShellCommand(["monkey",
 			"-p", appIdentifier,
 			"-c", "android.intent.category.LAUNCHER",
-			await "1"]);
+			"1"]);
 
 		if (!this.$options.justlaunch) {
 			this.$logcatHelper.start(this.identifier);
 		}
 	}
 
-	public async stopApplication(appIdentifier: string): Promise<void> {
+	public stopApplication(appIdentifier: string): Promise<void> {
 		return this.adb.executeShellCommand(["am", "force-stop", `${appIdentifier}`]);
 	}
 
-	public async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
+	public getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
 		// This method is currently only used in the ios application managers. Configurations for Android are acquired through filesystem listing.
 		return Promise.resolve(null);
 	}
@@ -67,7 +67,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		return liveSyncVersion === LiveSyncConstants.VERSION_2 || liveSyncVersion === LiveSyncConstants.VERSION_3;
 	}
 
-	public async getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]> {
+	public getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]> {
 		return this.$androidProcessService.getDebuggableApps(this.identifier);
 	}
 
@@ -75,7 +75,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		let mappedAppIdentifierPorts = await this.$androidProcessService.getMappedAbstractToTcpPorts(this.identifier, appIdentifiers, TARGET_FRAMEWORK_IDENTIFIERS.Cordova),
 			applicationViews: IDictionary<Mobile.IDebugWebViewInfo[]> = {};
 
-		_.each(mappedAppIdentifierPorts, async (port: number, appIdentifier: string) => {
+		await Promise.all(_.map(mappedAppIdentifierPorts, async (port: number, appIdentifier: string) => {
 			applicationViews[appIdentifier] = [];
 			let localAddress = `http://127.0.0.1:${port}/json`;
 
@@ -87,7 +87,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 			} catch (err) {
 				this.$logger.trace(`Error while checking ${localAddress}. Error is: ${err.message}`);
 			}
-		});
+		}));
 
 		return applicationViews;
 	}
