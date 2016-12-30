@@ -19,8 +19,8 @@ export class ProjectFilesProvider extends ProjectFilesProviderBase {
 		private $injector: IInjector,
 		$mobileHelper: Mobile.IMobileHelper,
 		$options: ICommonOptions) {
-			super($mobileHelper, $options);
-		 }
+		super($mobileHelper, $options);
+	}
 
 	public isFileExcluded(filePath: string): boolean {
 		let exclusionList = ProjectFilesProvider.INTERNAL_NONPROJECT_FILES.concat(this.getIgnoreFilesRules());
@@ -43,7 +43,7 @@ export class ProjectFilesProvider extends ProjectFilesProviderBase {
 	}
 
 	private get ignoreFilesConfigurations(): string[] {
-		let configurations: string[] = [ ProjectFilesProvider.IGNORE_FILE ];
+		let configurations: string[] = [ProjectFilesProvider.IGNORE_FILE];
 		// unless release is explicitly set, we use debug config
 		let configFileName = "." +
 			(this.$options.release ? this.$projectConstants.RELEASE_CONFIGURATION_NAME : this.$projectConstants.DEBUG_CONFIGURATION_NAME) +

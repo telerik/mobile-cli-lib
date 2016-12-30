@@ -2,9 +2,9 @@ import minimatch = require("minimatch");
 
 export class PathFilteringService implements IPathFilteringService {
 
-	constructor(private $fs: IFileSystem) {	}
+	constructor(private $fs: IFileSystem) { }
 
-	public getRulesFromFile(fullFilePath: string) : string[] {
+	public getRulesFromFile(fullFilePath: string): string[] {
 		let COMMENT_START = '#';
 		let rules: string[] = [];
 
@@ -13,7 +13,7 @@ export class PathFilteringService implements IPathFilteringService {
 			rules = _.reject(fileContent.split(/[\n\r]/),
 				(line: string) => line.length === 0 || line[0] === COMMENT_START);
 
-		} catch(e) {
+		} catch (e) {
 			if (e.code !== "ENOENT") { // file not found
 				throw e;
 			}
@@ -22,7 +22,7 @@ export class PathFilteringService implements IPathFilteringService {
 		return rules;
 	}
 
-	public filterIgnoredFiles(files: string[], rules: string[], rootDir: string): string[]{
+	public filterIgnoredFiles(files: string[], rules: string[], rootDir: string): string[] {
 		return _.reject(files, file => this.isFileExcluded(file, rules, rootDir));
 	}
 
@@ -36,12 +36,12 @@ export class PathFilteringService implements IPathFilteringService {
 			let shouldInclude = rule[0] === '!';
 			if (shouldInclude) {
 				rule = rule.substr(1);
-				let ruleMatched = minimatch(file, rule, {nocase: true, dot: true});
+				let ruleMatched = minimatch(file, rule, { nocase: true, dot: true });
 				if (ruleMatched) {
 					fileMatched = true;
 				}
 			} else {
-				let options = {nocase: true, nonegate: false, dot: true};
+				let options = { nocase: true, nonegate: false, dot: true };
 				if (rule[0] === '\\' && rule[1] === '!') {
 					rule = rule.substr(1);
 					options.nonegate = true;

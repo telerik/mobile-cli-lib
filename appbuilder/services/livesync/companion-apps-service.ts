@@ -16,15 +16,15 @@ export class CompanionAppsService implements ICompanionAppsService {
 		let lowerCasedPlatform = (platform || "").toLowerCase();
 
 		if (lowerCasedFramework === TARGET_FRAMEWORK_IDENTIFIERS.Cordova.toLowerCase()) {
-			if(this.$mobileHelper.isAndroidPlatform(lowerCasedPlatform)) {
+			if (this.$mobileHelper.isAndroidPlatform(lowerCasedPlatform)) {
 				return APPBUILDER_ANDROID_COMPANION_APP_IDENTIFIER;
-			} else if(this.$mobileHelper.isiOSPlatform(lowerCasedPlatform)) {
+			} else if (this.$mobileHelper.isiOSPlatform(lowerCasedPlatform)) {
 				return APPBUILDER_IOS_COMPANION_APP_IDENTIFIER;
-			} else if(this.$mobileHelper.isWP8Platform(lowerCasedPlatform)) {
+			} else if (this.$mobileHelper.isWP8Platform(lowerCasedPlatform)) {
 				return APPBUILDER_WP8_COMPANION_APP_IDENTIFIER;
 			}
 		} else if (lowerCasedFramework === TARGET_FRAMEWORK_IDENTIFIERS.NativeScript.toLowerCase()) {
-			if(!this.$mobileHelper.isWP8Platform(lowerCasedPlatform)) {
+			if (!this.$mobileHelper.isWP8Platform(lowerCasedPlatform)) {
 				return NS_COMPANION_APP_IDENTIFIER;
 			}
 		}

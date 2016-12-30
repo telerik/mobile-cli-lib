@@ -3,7 +3,7 @@ export class MobilePlatformsCapabilities implements Mobile.IPlatformsCapabilitie
 
 	constructor(private $errors: IErrors) { }
 
-	public getPlatformNames(): string[]{
+	public getPlatformNames(): string[] {
 		return _.keys(this.getAllCapabilities());
 	}
 
