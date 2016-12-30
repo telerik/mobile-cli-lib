@@ -2,6 +2,7 @@ import { DeviceAndroidDebugBridge } from "./device-android-debug-bridge";
 import * as applicationManagerPath from "./android-application-manager";
 import * as fileSystemPath from "./android-device-file-system";
 import * as constants from "../../constants";
+import { cache, invokeInit } from "../../decorators";
 
 interface IAndroidDeviceDetails {
 	model: string;
@@ -61,8 +62,8 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		private $injector: IInjector) {
 	}
 
-	@decorators.cache
-	private async _init(): Promise<void> {
+	@cache()
+	private async init(): Promise<void> {
 		this.adb = this.$injector.resolve(DeviceAndroidDebugBridge, { identifier: this.identifier });
 		this.applicationManager = this.$injector.resolve(applicationManagerPath.AndroidApplicationManager, { adb: this.adb, identifier: this.identifier });
 		this.fileSystem = this.$injector.resolve(fileSystemPath.AndroidDeviceFileSystem, { adb: this.adb, identifier: this.identifier });
@@ -99,11 +100,12 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 	}
 
 
-	@decorators.init()
-	public get isEmulator(): boolean {
+	@invokeInit()
+	public async isEmulator(): Promise<boolean> {
 		return this.deviceInfo.type === "Emulator";
 	}
 
+	@invokeInit()
 	public async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
 		let files = await this.fileSystem.listFiles(constants.LiveSyncConstants.ANDROID_FILES_PATH, applicationIdentifier),
 			androidFilesMatch = files.match(/(\S+)\.abproject/),
@@ -120,9 +122,10 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		return result;
 	}
 
-	public openDeviceLogStream(): void {
+	@invokeInit()
+	public async openDeviceLogStream(): Promise<void> {
 		if (this.deviceInfo.status === constants.CONNECTED_STATUS) {
-			this.$logcatHelper.start(this.identifier);
+			await this.$logcatHelper.start(this.identifier);
 		}
 	}
 

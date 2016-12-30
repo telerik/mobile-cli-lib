@@ -45,7 +45,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 			"1"]);
 
 		if (!this.$options.justlaunch) {
-			this.$logcatHelper.start(this.identifier);
+			await this.$logcatHelper.start(this.identifier);
 		}
 	}
 

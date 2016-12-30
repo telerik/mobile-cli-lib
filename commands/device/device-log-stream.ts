@@ -11,17 +11,17 @@ export class OpenDeviceLogStreamCommand implements ICommand {
 	allowedParameters: ICommandParameter[] = [];
 
 	public async execute(args: string[]): Promise<void> {
-			this.$deviceLogProvider.setLogLevel(this.$loggingLevels.full);
+		this.$deviceLogProvider.setLogLevel(this.$loggingLevels.full);
 
-			await this.$devicesService.initialize({ deviceId: this.$options.device, skipInferPlatform: true });
+		await this.$devicesService.initialize({ deviceId: this.$options.device, skipInferPlatform: true });
 
-			if (this.$devicesService.deviceCount > 1) {
-				await this.$commandsService.tryExecuteCommand("device", []);
-				this.$errors.fail(OpenDeviceLogStreamCommand.NOT_SPECIFIED_DEVICE_ERROR_MESSAGE);
-			}
+		if (this.$devicesService.deviceCount > 1) {
+			await this.$commandsService.tryExecuteCommand("device", []);
+			this.$errors.fail(OpenDeviceLogStreamCommand.NOT_SPECIFIED_DEVICE_ERROR_MESSAGE);
+		}
 
-			let action = (device: Mobile.IDevice) =>  { return (() => device.openDeviceLogStream()).future<void>()(); };
-			await this.$devicesService.execute(action);
+		let action = (device: Mobile.IDevice) => device.openDeviceLogStream();
+		await this.$devicesService.execute(action);
 	}
 }
 $injector.registerCommand("device|log", OpenDeviceLogStreamCommand);

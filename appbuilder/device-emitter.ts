@@ -31,6 +31,7 @@ export class DeviceEmitter extends EventEmitter {
 		this.$androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
 			this.emit("deviceFound", device.deviceInfo);
 			this.attachApplicationChangedHandlers(device);
+			// await: Do not await as this will require to mark the lambda with async keyword, but there's no way to await the lambda itself.
 			device.openDeviceLogStream();
 		});
 

@@ -1,4 +1,3 @@
-
 import * as iconv from "iconv-lite";
 import { EOL } from "os";
 import * as osenv from "osenv";
@@ -6,6 +5,7 @@ import * as path from "path";
 import * as helpers from "../../helpers";
 import * as net from "net";
 import { DeviceAndroidDebugBridge } from "./device-android-debug-bridge";
+import { cache, invokeInit } from "../../decorators";
 
 class VirtualMachine {
 	constructor(public name: string, public identifier: string) { }
@@ -41,6 +41,10 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		private $utils: IUtils,
 		private $injector: IInjector) {
 		iconv.extendNodeEncodings();
+	}
+
+	@cache()
+	private async init(): Promise<void> {
 		this.adbFilePath = await this.$staticConfig.getAdbFilePath();
 	}
 
@@ -160,7 +164,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		await this.$fs.futureFromEvent(childProcess, "close");
 
 		if (!this.$options.justlaunch) {
-			this.$logcatHelper.start(emulatorId);
+			await this.$logcatHelper.start(emulatorId);
 		}
 	}
 
@@ -170,10 +174,10 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		return this.$fs.futureFromEvent(childProcess, "close");
 	}
 
-	private sleep(ms: number): void {
-		let fiber = Fiber.current;
-		setTimeout(() => fiber.run(), ms);
-		Fiber.yield();
+	private sleep(ms: number): Promise<void> {
+		return new Promise((resolve, reject) => {
+			setTimeout(async () => resolve(), ms);
+		});
 	}
 
 	private async getRunningEmulatorId(image: string): Promise<string> {
@@ -189,6 +193,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		return emulatorId;
 	}
 
+	@invokeInit()
 	private async getNameFromGenymotionEmulatorId(emulatorId: string): Promise<string> {
 		let modelOutputLines: string = await this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.model"]);
 		this.$logger.trace(modelOutputLines);
@@ -196,7 +201,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		return model;
 	}
 
-	private async getNameFromSDKEmulatorId(emulatorId: string): Promise<string> {
+	private getNameFromSDKEmulatorId(emulatorId: string): Promise<string> {
 		let match = emulatorId.match(/^emulator-(\d+)/);
 		let portNumber: string;
 		if (match && match[1]) {
@@ -290,7 +295,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 				return emulatorId;
 			}
 
-			this.sleep(10000); // the emulator definitely takes its time to wake up
+			await this.sleep(10000); // the emulator definitely takes its time to wake up
 			hasTimeLeft = helpers.getCurrentEpochTime() < this.endTimeEpoch;
 		}
 
@@ -302,23 +307,24 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	}
 
 	private async getRunningGenymotionEmulators(adbDevicesOutput: string[]): Promise<string[]> {
-		let futures = <Promise<string>[]>(_(adbDevicesOutput).filter(r => !r.match(AndroidEmulatorServices.RUNNING_ANDROID_EMULATOR_REGEX))
-			.map(async row => {
-				let match = row.match(/^(.+?)\s+device$/);
-				if (match && match[1]) {
-					// possible genymotion emulator
-					let emulatorId = match[1];
-					let result = await this.isGenymotionEmulator(emulatorId) ? emulatorId : undefined;
-					return Promise.resolve(result);
-				}
+		let results = await Promise.all<string>(
+			<Promise<string>[]>(_(adbDevicesOutput)
+				.filter(r => !r.match(AndroidEmulatorServices.RUNNING_ANDROID_EMULATOR_REGEX))
+				.map(async row => {
+					let match = row.match(/^(.+?)\s+device$/);
+					if (match && match[1]) {
+						// possible genymotion emulator
+						let emulatorId = match[1];
+						let result = await this.isGenymotionEmulator(emulatorId) ? emulatorId : undefined;
+						return Promise.resolve(result);
+					}
 
-				return Promise.resolve(undefined);
-			}).value());
+					return Promise.resolve(undefined);
+				}).value())
+		);
 
-		Future.wait(futures);
-
-		return _(futures).filter(future => !!future.get())
-			.map(f => f.get().toString())
+		return _(results).filter(r => !!r)
+			.map(r => r.toString())
 			.value();
 	}
 
@@ -334,6 +340,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		return emulatorDevices;
 	}
 
+	@invokeInit()
 	private async isGenymotionEmulator(emulatorId: string): Promise<boolean> {
 		let manufacturer = await this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.manufacturer"]);
 		if (manufacturer.match(/^Genymotion/i)) {
@@ -348,12 +355,14 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		return false;
 	}
 
+	@invokeInit()
 	public async getAllRunningEmulators(): Promise<string[]> {
 		let outputRaw: string[] = (await this.$childProcess.execFile(this.adbFilePath, ['devices'])).split(EOL);
 		let emulators = await (await this.getRunningAvdEmulators(outputRaw)).concat(await this.getRunningGenymotionEmulators(outputRaw));
 		return emulators;
 	}
 
+	@invokeInit()
 	private async getRunningEmulators(): Promise<string[]> {
 		let outputRaw: string[] = (await this.$childProcess.execFile(this.adbFilePath, ['devices'])).split(EOL);
 		if (this.$options.geny) {
@@ -480,13 +489,14 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 			}
 
 			this.$logger.printInfoMessageOnSameLine(".");
-			this.sleep(10000);
+			await this.sleep(10000);
 		}
 
 		this.$logger.printInfoMessageOnSameLine(EOL);
 		this.$errors.fail(AndroidEmulatorServices.UNABLE_TO_START_EMULATOR_MESSAGE);
 	}
 
+	@invokeInit()
 	private async isEmulatorBootCompleted(emulatorId: string): Promise<boolean> {
 		let output = await this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "dev.bootcomplete"]);
 		let matches = output.match("1");

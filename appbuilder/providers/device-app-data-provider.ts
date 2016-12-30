@@ -111,7 +111,7 @@ export class IOSAppIdentifier extends AppBuilderDeviceAppDataBase implements ILi
 
 	public get deviceProjectRootPath(): string {
 		if (!this._deviceProjectRootPath) {
-			if (this.device.isEmulator) {
+			if (this.device.isEmulator()) {
 				let applicationPath = this.$iOSSimResolver.iOSSim.getApplicationPath(this.device.deviceInfo.identifier, this.appIdentifier);
 				this._deviceProjectRootPath = path.join(applicationPath, "www");
 			} else {
@@ -141,7 +141,7 @@ export class IOSNativeScriptAppIdentifier extends AppBuilderDeviceAppDataBase im
 
 	public get deviceProjectRootPath(): string {
 		if (!this._deviceProjectRootPath) {
-			if (this.device.isEmulator) {
+			if (this.device.isEmulator()) {
 				let applicationPath = this.$iOSSimResolver.iOSSim.getApplicationPath(this.device.deviceInfo.identifier, this.appIdentifier);
 				this._deviceProjectRootPath = applicationPath;
 			} else {

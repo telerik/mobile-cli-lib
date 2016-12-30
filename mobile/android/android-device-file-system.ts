@@ -51,17 +51,23 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	}
 
 	public async transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
-		_(localToDevicePaths)
-			.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).isFile())
-			.each(async localToDevicePathData =>
-				await this.adb.executeCommand(["push", localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()])
-			);
+		await Promise.all(
+			_(localToDevicePaths)
+				.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).isFile())
+				.map(async localToDevicePathData =>
+					await this.adb.executeCommand(["push", localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()])
+				)
+				.value()
+		);
 
-		_(localToDevicePaths)
-			.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).isDirectory())
-			.each(async localToDevicePathData =>
-				await this.adb.executeShellCommand(["chmod", "0777", localToDevicePathData.getDevicePath()])
-			);
+		await Promise.all(
+			_(localToDevicePaths)
+				.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).isDirectory())
+				.map(async localToDevicePathData =>
+					await this.adb.executeShellCommand(["chmod", "0777", localToDevicePathData.getDevicePath()])
+				)
+				.value()
+		);
 
 		// Update hashes
 		let deviceHashService = this.getDeviceHashService(deviceAppData.appIdentifier);
@@ -74,15 +80,18 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		let devicePaths: string[] = [],
 			currentShasums: IStringDictionary = {};
 
-		localToDevicePaths.forEach(async localToDevicePathData => {
-			let localPath = localToDevicePathData.getLocalPath();
-			let stats = this.$fs.getFsStats(localPath);
-			if (stats.isFile()) {
-				let fileShasum = await this.$fs.getFileShasum(localPath);
-				currentShasums[localPath] = fileShasum;
-			}
-			devicePaths.push(`"${localToDevicePathData.getDevicePath()}"`);
-		});
+		await Promise.all(
+			localToDevicePaths.map(async localToDevicePathData => {
+				let localPath = localToDevicePathData.getLocalPath();
+				let stats = this.$fs.getFsStats(localPath);
+				if (stats.isFile()) {
+					let fileShasum = await this.$fs.getFileShasum(localPath);
+					currentShasums[localPath] = fileShasum;
+				}
+
+				devicePaths.push(`"${localToDevicePathData.getDevicePath()}"`);
+			})
+		);
 
 		let commandsDeviceFilePath = this.$mobileHelper.buildDevicePath(deviceAppData.deviceProjectRootPath, "nativescript.commands.sh");
 
@@ -98,23 +107,25 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 				let changedShasums: any = _.omitBy(currentShasums, (hash: string, pathToFile: string) => !!_.find(oldShasums, (oldHash: string, oldPath: string) => pathToFile === oldPath && hash === oldHash));
 				this.$logger.trace("Changed file hashes are:", changedShasums);
 				filesToChmodOnDevice = [];
-				let futures = _(changedShasums)
+				await Promise.all(
+					_(changedShasums)
 					.map((hash: string, filePath: string) => _.find(localToDevicePaths, ldp => ldp.getLocalPath() === filePath))
 					.map(localToDevicePathData => {
 						filesToChmodOnDevice.push(`"${localToDevicePathData.getDevicePath()}"`);
 						return this.transferFile(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath());
 					})
-					.value();
-				Future.wait(futures);
+					.value()
+				);
 			} else {
 				await this.adb.executeCommand(["push", projectFilesPath, deviceAppData.deviceProjectRootPath]);
 			}
 		}
 
 		if (filesToChmodOnDevice.length) {
-			this.createFileOnDevice(commandsDeviceFilePath, "chmod 0777 " + await filesToChmodOnDevice.join(" "));
+			await this.createFileOnDevice(commandsDeviceFilePath, "chmod 0777 " + filesToChmodOnDevice.join(" "));
 			await this.adb.executeShellCommand([commandsDeviceFilePath]);
 		}
+
 		await deviceHashService.uploadHashFileToDevice(currentShasums);
 	}
 

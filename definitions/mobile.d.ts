@@ -89,8 +89,8 @@ declare module Mobile {
 		deviceInfo: Mobile.IDeviceInfo;
 		applicationManager: Mobile.IDeviceApplicationManager;
 		fileSystem: Mobile.IDeviceFileSystem;
-		isEmulator: boolean;
-		openDeviceLogStream(): void;
+		isEmulator(): Promise<boolean>;
+		openDeviceLogStream(): Promise<void>;
 		getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo>;
 	}
 
@@ -136,7 +136,7 @@ declare module Mobile {
 	}
 
 	interface ILogcatHelper {
-		start(deviceIdentifier: string): void;
+		start(deviceIdentifier: string): Promise<void>;
 	}
 
 	/**
