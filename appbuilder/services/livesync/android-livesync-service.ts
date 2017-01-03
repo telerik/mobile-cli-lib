@@ -18,7 +18,7 @@ export class AppBuilderAndroidLiveSyncService extends AndroidLiveSyncService imp
 			commands.push(this.liveSyncCommands.ReloadStartViewCommand());
 		}
 
-		await this.livesync(deviceAppData.appIdentifier, deviceAppData.deviceProjectRootPath, commands);
+		await this.livesync(deviceAppData.appIdentifier, await deviceAppData.getDeviceProjectRootPath(), commands);
 	}
 
 	public async removeFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {

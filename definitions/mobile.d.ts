@@ -111,7 +111,7 @@ declare module Mobile {
 		appIdentifier: string;
 		device: Mobile.IDevice;
 		platform: string;
-		deviceProjectRootPath(): Promise<string>;
+		getDeviceProjectRootPath(): Promise<string>;
 		deviceSyncZipPath?: string;
 		isLiveSyncSupported(): Promise<boolean>;
 	}

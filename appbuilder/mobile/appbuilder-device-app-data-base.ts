@@ -10,7 +10,7 @@ export class AppBuilderDeviceAppDataBase extends DeviceAppDataBase implements IL
 		super(_appIdentifier);
 	}
 
-	public deviceProjectRootPath(): Promise<string> {
+	public getDeviceProjectRootPath(): Promise<string> {
 		return Promise.resolve();
 	}
 

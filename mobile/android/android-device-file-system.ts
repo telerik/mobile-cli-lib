@@ -93,13 +93,13 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 			})
 		);
 
-		let commandsDeviceFilePath = this.$mobileHelper.buildDevicePath(deviceAppData.deviceProjectRootPath, "nativescript.commands.sh");
+		let commandsDeviceFilePath = this.$mobileHelper.buildDevicePath(await deviceAppData.getDeviceProjectRootPath(), "nativescript.commands.sh");
 
 		let deviceHashService = this.getDeviceHashService(deviceAppData.appIdentifier);
 		let filesToChmodOnDevice: string[] = devicePaths;
 		if (this.$options.force) {
 			await this.adb.executeShellCommand(["rm", "-rf", deviceHashService.hashFileDevicePath]);
-			await this.adb.executeCommand(["push", projectFilesPath, deviceAppData.deviceProjectRootPath]);
+			await this.adb.executeCommand(["push", projectFilesPath, await deviceAppData.getDeviceProjectRootPath()]);
 		} else {
 			// Create or update file hashes on device
 			let oldShasums = await deviceHashService.getShasumsFromDevice();
@@ -117,7 +117,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 					.value()
 				);
 			} else {
-				await this.adb.executeCommand(["push", projectFilesPath, deviceAppData.deviceProjectRootPath]);
+				await this.adb.executeCommand(["push", projectFilesPath, await deviceAppData.getDeviceProjectRootPath()]);
 			}
 		}
 

@@ -1260,7 +1260,7 @@ interface IProgressIndicator {
 	 * @param  {boolean}		options		whether to surpress the trailing new line printed after the process ends
 	 * @return {Promise<void>}
 	 */
-	async showProgressIndicator(future: Promise<any>, timeout: number, options?: { surpressTrailingNewLine?: boolean }): Promise<void>;
+	showProgressIndicator(future: Promise<any>, timeout: number, options?: { surpressTrailingNewLine?: boolean }): Promise<void>;
 }
 
 /**
@@ -1296,7 +1296,7 @@ interface IProjectFilesManager {
 	 * Returns an object that maps every local file path to device file path
 	 * If projectFiles parameter is not specified enumerates the files from the specified projectFilesPath
 	 */
-	createLocalToDevicePaths(deviceAppData: Mobile.IDeviceAppData, projectFilesPath: string, files: string[], excludedProjectDirsAndFiles: string[], projectFilesConfig?: IProjectFilesConfig): Mobile.ILocalToDevicePathData[];
+	createLocalToDevicePaths(deviceAppData: Mobile.IDeviceAppData, projectFilesPath: string, files: string[], excludedProjectDirsAndFiles: string[], projectFilesConfig?: IProjectFilesConfig): Promise<Mobile.ILocalToDevicePathData[]>;
 
 	/**
 	 * Handle platform specific files.

@@ -41,7 +41,7 @@ export class IOSLiveSyncService implements IDeviceLiveSyncService {
 				this.$errors.failWithoutHelp(`Unable to find application GUID for application ${deviceAppData.appIdentifier}. Make sure application is installed on Simulator.`);
 			}
 
-			let sourcePath = deviceAppData.deviceProjectRootPath;
+			let sourcePath = await deviceAppData.getDeviceProjectRootPath();
 			let destinationPath = path.join(simulatorCachePath, guid, LiveSyncConstants.IOS_PROJECT_PATH);
 
 			this.$logger.trace(`Transferring from ${sourcePath} to ${destinationPath}`);
