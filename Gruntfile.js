@@ -5,7 +5,7 @@ var now = new Date().toISOString();
 
 function shallowCopy(obj) {
 	var result = {};
-	Object.keys(obj).forEach(function(key) {
+	Object.keys(obj).forEach(function (key) {
 		result[key] = obj[key];
 	});
 	return result;
@@ -20,7 +20,7 @@ function getBuildVersion(version) {
 	return buildVersion;
 }
 
-module.exports = function(grunt) {
+module.exports = function (grunt) {
 
 	// Windows cmd does not accept paths with / and unix shell does not accept paths with \\ and we need to execute from a sub-dir.
 	// To circumvent the issue, hack our environment's PATH and let the OS deal with it, which in practice works
@@ -60,14 +60,14 @@ module.exports = function(grunt) {
 
 		tslint: {
 			build: {
-                files: {
-                    src: ["**/*.ts", "!node_modules/**/*.ts", "!messages/**/*.ts", "!**/*.d.ts"]
-                },
-                options: {
-                    configuration: grunt.file.readJSON("./tslint.json")
-                }
-            }
-        },
+				files: {
+					src: ["**/*.ts", "!node_modules/**/*.ts", "!messages/**/*.ts", "!**/*.d.ts"]
+				},
+				options: {
+					configuration: grunt.file.readJSON("./tslint.json")
+				}
+			}
+		},
 
 		watch: {
 			devall: {
@@ -90,7 +90,7 @@ module.exports = function(grunt) {
 				command: "npm test",
 				options: {
 					execOptions: {
-						env: (function() {
+						env: (function () {
 							var env = shallowCopy(process.env);
 							env["XUNIT_FILE"] = "test-reports.xml";
 							env["LOG_XUNIT"] = "true";
@@ -104,7 +104,7 @@ module.exports = function(grunt) {
 				command: "npm pack",
 				options: {
 					execOptions: {
-						env: (function() {
+						env: (function () {
 							var env = shallowCopy(process.env);
 							env["COMMON_LIB_SKIP_POSTINSTALL_TASKS"] = "1";
 							return env;
@@ -134,7 +134,7 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks("grunt-ts");
 	grunt.loadNpmTasks("grunt-tslint");
 
-	grunt.registerTask("set_package_version", function(version) {
+	grunt.registerTask("set_package_version", function (version) {
 		var buildVersion = getBuildVersion(version);
 		var packageJson = grunt.file.readJSON("package.json");
 		packageJson.buildVersion = buildVersion;
@@ -147,7 +147,7 @@ module.exports = function(grunt) {
 		var buildVersion = getBuildVersion(version);
 		var packageJson = grunt.file.readJSON("package.json");
 		var oldFileName = packageJson.name + "-" + packageJson.version + fileExtension;
-		if(buildVersion) {
+		if (buildVersion) {
 			var newFileName = oldFileName + "-" + buildVersion + fileExtension;
 			fs.renameSync(oldFileName, newFileName);
 			console.log("Renamed " + oldFileName + " to " + newFileName);
@@ -156,11 +156,11 @@ module.exports = function(grunt) {
 		}
 	});
 
-	grunt.registerTask("delete_coverage_dir", function() {
+	grunt.registerTask("delete_coverage_dir", function () {
 		var done = this.async();
 		var rimraf = require("rimraf");
-		rimraf("coverage", function(err) {
-			if(err) {
+		rimraf("coverage", function (err) {
+			if (err) {
 				console.log("Error while deleting coverage directory from the package.");
 				done(false);
 			}

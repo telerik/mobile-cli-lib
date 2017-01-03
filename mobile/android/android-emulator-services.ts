@@ -175,7 +175,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	}
 
 	private sleep(ms: number): Promise<void> {
-		return new Promise((resolve, reject) => {
+		return new Promise<void>((resolve, reject) => {
 			setTimeout(async () => resolve(), ms);
 		});
 	}

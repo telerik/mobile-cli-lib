@@ -11,33 +11,33 @@ export class CommandDispatcher implements ICommandDispatcher {
 		private $fs: IFileSystem) { }
 
 	public async dispatchCommand(): Promise<void> {
-			if (this.$options.version) {
-				return this.printVersion();
-			}
+		if (this.$options.version) {
+			return this.printVersion();
+		}
 
-			if (this.$logger.getLevel() === "TRACE") {
-				// CommandDispatcher is called from external CLI's only, so pass the path to their package.json
-				let sysInfo = await  this.$sysInfo.getSysInfo(path.join(__dirname, "..", "..", "package.json"));
-				this.$logger.trace("System information:");
-				this.$logger.trace(sysInfo);
-			}
+		if (this.$logger.getLevel() === "TRACE") {
+			// CommandDispatcher is called from external CLI's only, so pass the path to their package.json
+			let sysInfo = await this.$sysInfo.getSysInfo(path.join(__dirname, "..", "..", "package.json"));
+			this.$logger.trace("System information:");
+			this.$logger.trace(sysInfo);
+		}
 
-			let commandName = this.getCommandName();
-			let commandArguments = this.$options.argv._.slice(1);
-			let lastArgument: string = _.last(commandArguments);
+		let commandName = this.getCommandName();
+		let commandArguments = this.$options.argv._.slice(1);
+		let lastArgument: string = _.last(commandArguments);
 
-			if(this.$options.help) {
-				commandArguments.unshift(commandName);
-				commandName = "help";
-			} else if(lastArgument === "/?" || lastArgument === "?") {
-				commandArguments.pop();
-				commandArguments.unshift(commandName);
-				commandName = "help";
-			}
+		if (this.$options.help) {
+			commandArguments.unshift(commandName);
+			commandName = "help";
+		} else if (lastArgument === "/?" || lastArgument === "?") {
+			commandArguments.pop();
+			commandArguments.unshift(commandName);
+			commandName = "help";
+		}
 
-			await this.$cancellation.begin("cli");
+		await this.$cancellation.begin("cli");
 
-			await this.$commandsService.tryExecuteCommand(commandName, commandArguments);
+		await this.$commandsService.tryExecuteCommand(commandName, commandArguments);
 	}
 
 	public async completeCommand(): Promise<boolean> {
@@ -58,7 +58,7 @@ export class CommandDispatcher implements ICommandDispatcher {
 		let version = this.$staticConfig.version;
 
 		let json = this.$fs.readJson(this.$staticConfig.pathToPackageJson);
-		if(json && json.buildVersion) {
+		if (json && json.buildVersion) {
 			version = `${version}-${json.buildVersion}`;
 		}
 		this.$logger.out(version);
@@ -77,7 +77,7 @@ class FutureDispatcher implements IFutureDispatcher {
 		}
 		this.actions = new queue.Queue<any>();
 
-		while(true) {
+		while (true) {
 			let action = await this.actions.dequeue();
 			await action();
 		}

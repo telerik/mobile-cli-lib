@@ -185,10 +185,10 @@ export function getCurrentEpochTime(): number {
 	return dateTime.getTime();
 }
 
-export function sleep(ms: number): void {
-	let fiber = Fiber.current;
-	setTimeout(() => fiber.run(), ms);
-	Fiber.yield();
+export async function sleep(ms: number): Promise<void> {
+	return new Promise<void>((resolve, reject) => {
+		setTimeout(async () => resolve(), ms);
+	});
 }
 
 export function createTable(headers: string[], data: string[][]): any {
@@ -224,10 +224,10 @@ export function trimSymbol(str: string, symbol: string) {
 }
 
 // TODO: Use generic for predicatе predicate: (element: T|T[]) when TypeScript support this.
-export function getFuturesResults<T>(futures: Promise<T | T[]>[], predicate: (element: any) => boolean): T[] {
-	Future.wait(futures);
-	return _(futures)
-		.map(f => f.get())
+export async function getFuturesResults<T>(promises: Promise<T | T[]>[], predicate: (element: any) => boolean): Promise<T[]> {
+	const results = await Promise.all(promises);
+
+	return _(results)
 		.filter(predicate)
 		.flatten<T>()
 		.value();
@@ -297,32 +297,8 @@ export function hook(commandName: string) {
 		});
 }
 
-export function isFuture(candidateFuture: any): boolean {
-	return !!(candidateFuture && typeof (candidateFuture.wait) === "function");
-}
-
-export function whenAny<T>(...futures: Promise<T>[]): Promise<Promise<T>> {
-	return new Promise<Promise<T>>((resolve, reject) => {
-		let futuresLeft = futures.length;
-		let isResolved = false;
-
-		_.each(futures, future => {
-			future.resolve((error, result?) => {
-				futuresLeft--;
-
-				if (!isResolved) {
-					isResolved = true;
-
-					if (typeof error === "undefined") {
-						resolve(future);
-					} else if (futuresLeft === 0) {
-						reject(new Error("None of the futures succeeded."));
-					}
-				}
-			});
-		});
-
-	});
+export function isPromise(candidateFuture: any): boolean {
+	return !!(candidateFuture && typeof (candidateFuture.then) === "function");
 }
 
 export function connectEventually(factory: () => net.Socket, handler: (_socket: net.Socket) => void): void {

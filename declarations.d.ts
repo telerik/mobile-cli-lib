@@ -769,7 +769,7 @@ interface ISyncBatch {
 	 * Adds the file to the sync queue. All files from the queue will be pushed on the device after 250ms.
 	 */
 	addFile(file: string): void;
-	async syncFiles(syncAction: (filesToSync: string[]) => Promise<void>): Promise<void>;
+	syncFiles(syncAction: (filesToSync: string[]) => Promise<void>): Promise<void>;
 }
 
 interface ILiveSyncData {
@@ -891,7 +891,7 @@ interface ISysInfo {
 	getCocoapodVersion(): Promise<string>;
 
 	/** Returns npm version. */
-	getNpmVersion(): string;
+	getNpmVersion(): Promise<string>;
 }
 
 interface IHostInfo {
@@ -1609,4 +1609,10 @@ interface IOsInfo {
 	 * @return {string} A string identifying the operating system release.
 	 */
 	release(): string;
+}
+
+interface IPromiseActions<T> {
+	resolve(value?: T | PromiseLike<T>): void;
+	reject(reason?: any): void;
+	isResolved?: boolean;
 }

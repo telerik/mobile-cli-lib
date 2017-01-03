@@ -28,6 +28,7 @@ export class ChildProcess implements IChildProcess {
 
 	public async execFile(command: string, args: string[]): Promise<any> {
 		this.$logger.debug("execFile: %s %s", command, this.getArgumentsAsQuotedString(args));
+
 		return new Promise<any>((resolve, reject) => {
 			child_process.execFile(command, args, (error: any, stdout: NodeBuffer) => {
 				if (error) {
@@ -52,6 +53,7 @@ export class ChildProcess implements IChildProcess {
 
 	public spawnFromEvent(command: string, args: string[], event: string,
 		options?: any, spawnFromEventOptions?: ISpawnFromEventOptions): Promise<ISpawnResult> { // event should be exit or close
+
 		return new Promise<ISpawnResult>((resolve, reject) => {
 			let childProcess = this.spawn(command, args, options);
 			let isResolved = false;

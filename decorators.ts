@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { isFuture } from "./helpers";
+import { isPromise } from "./helpers";
 
 export function cache(): any {
 	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>, a: any): TypedPropertyDescriptor<any> => {
@@ -62,7 +62,7 @@ export function exportedPromise(moduleName: string, postAction?: () => void): an
 				postActionMethod = postAction && postAction.bind(originalModule);
 
 			// Check if method returns Promise<T>[]. In this case we will return Promise<T>[]
-			if (_.isArray(result) && types.length === 1 && isFuture(_.first<any>(result))) {
+			if (_.isArray(result) && types.length === 1 && isPromise(_.first<any>(result))) {
 				return _.map(result, (future: Promise<any>, index: number) => getPromise(future,
 					{
 						postActionMethod,
@@ -95,7 +95,7 @@ function getPromise(originalValue: any, config?: { postActionMethod: () => void,
 	};
 
 	return new Promise(async (onFulfilled: Function, onRejected: Function) => {
-		if (isFuture(originalValue)) {
+		if (isPromise(originalValue)) {
 			try {
 				let realResult = await originalValue;
 				onFulfilled(realResult);
@@ -116,7 +116,7 @@ export function exported(moduleName: string): any {
 				originalMethod: any = originalModule[propertyKey],
 				result = originalMethod.apply(originalModule, args);
 
-			assert.strictEqual(isFuture(result), false, "Cannot use exported decorator with function returning Promise<T>.");
+			assert.strictEqual(isPromise(result), false, "Cannot use exported decorator with function returning Promise<T>.");
 			return result;
 		};
 

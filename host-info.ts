@@ -31,7 +31,7 @@ export class HostInfo implements IHostInfo {
 		return this.isLinux && process.config.variables.host_arch === "x64";
 	}
 
-	public async dotNetVersion(): Promise<string> {
+	public dotNetVersion(): Promise<string> {
 		if (this.isWindows) {
 			return new Promise<string>((resolve, reject) => {
 				let Winreg = require("winreg");

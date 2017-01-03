@@ -56,12 +56,12 @@ export class ProjectHelper implements IProjectHelper {
 	}
 
 	private isProjectFileCorrect(projectFilePath: string): boolean {
-		if(this.$staticConfig.CLIENT_NAME_KEY_IN_PROJECT_FILE) {
+		if (this.$staticConfig.CLIENT_NAME_KEY_IN_PROJECT_FILE) {
 			try {
 				let fileContent = this.$fs.readJson(projectFilePath);
 				let clientSpecificData = fileContent[this.$staticConfig.CLIENT_NAME_KEY_IN_PROJECT_FILE];
 				return !!clientSpecificData;
-			} catch(err) {
+			} catch (err) {
 				this.$errors.failWithoutHelp("The project file is corrupted. Additional technical information: %s", err);
 			}
 		}
