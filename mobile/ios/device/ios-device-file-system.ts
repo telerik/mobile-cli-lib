@@ -79,9 +79,9 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		return afcClient.transfer(path.resolve(localFilePath), deviceFilePath);
 	}
 
-	public deleteFile(deviceFilePath: string, appIdentifier: string): void {
+	public async deleteFile(deviceFilePath: string, appIdentifier: string): Promise<void> {
 		let houseArrestClient: Mobile.IHouseArrestClient = this.$injector.resolve(iOSProxyServices.HouseArrestClient, { device: this.device });
-		let afcClient = this.getAfcClient(houseArrestClient, deviceFilePath, appIdentifier);
+		let afcClient = await this.getAfcClient(houseArrestClient, deviceFilePath, appIdentifier);
 		afcClient.deleteFile(deviceFilePath);
 		houseArrestClient.closeSocket();
 	}
@@ -89,14 +89,15 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	public async transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
 		let houseArrestClient: Mobile.IHouseArrestClient = this.$injector.resolve(iOSProxyServices.HouseArrestClient, { device: this.device });
 
-		let afcClient = this.getAfcClient(houseArrestClient, await deviceAppData.getDeviceProjectRootPath(), deviceAppData.appIdentifier);
+		let afcClient = await this.getAfcClient(houseArrestClient, await deviceAppData.getDeviceProjectRootPath(), deviceAppData.appIdentifier);
 
-		await Promise.all(_.map(localToDevicePaths, async (localToDevicePathData) => {
-			let stats = this.$fs.getFsStats(localToDevicePathData.getLocalPath());
-			if (stats.isFile()) {
-				await afcClient.transfer(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath());
-			}
-		}));
+		await Promise.all(
+			_.map(localToDevicePaths, async (localToDevicePathData) => {
+				let stats = this.$fs.getFsStats(localToDevicePathData.getLocalPath());
+				if (stats.isFile()) {
+					await afcClient.transfer(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath());
+				}
+			}));
 
 		houseArrestClient.closeSocket();
 	}
@@ -105,7 +106,7 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		return this.transferFiles(deviceAppData, localToDevicePaths);
 	}
 
-	private getAfcClient(houseArrestClient: Mobile.IHouseArrestClient, rootPath: string, appIdentifier: string): Mobile.IAfcClient {
+	private getAfcClient(houseArrestClient: Mobile.IHouseArrestClient, rootPath: string, appIdentifier: string): Promise<Mobile.IAfcClient> {
 		if (rootPath.indexOf("/Documents/") === 0) {
 			return houseArrestClient.getAfcClientForAppDocuments(appIdentifier);
 		}

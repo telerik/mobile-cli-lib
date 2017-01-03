@@ -288,7 +288,7 @@ declare module Mobile {
 		listFiles(devicePath: string, appIdentifier?: string): Promise<any>;
 		getFile(deviceFilePath: string, outputFilePath?: string): Promise<void>;
 		putFile(localFilePath: string, deviceFilePath: string): Promise<void>;
-		deleteFile?(deviceFilePath: string, appIdentifier: string): void;
+		deleteFile?(deviceFilePath: string, appIdentifier: string): Promise<void>;
 		transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void>;
 		transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): Promise<void>;
 		transferFile?(localFilePath: string, deviceFilePath: string): Promise<void>;

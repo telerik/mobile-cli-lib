@@ -21,7 +21,7 @@ export class IOSSimulatorFileSystem implements Mobile.IDeviceFileSystem {
 		shelljs.cp("-f", localFilePath, deviceFilePath);
 	}
 
-	public deleteFile(deviceFilePath: string, appIdentifier: string): void {
+	public async deleteFile(deviceFilePath: string, appIdentifier: string): Promise<void> {
 		shelljs.rm("-rf", deviceFilePath);
 	}
 
