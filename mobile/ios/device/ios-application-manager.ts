@@ -36,7 +36,9 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async getInstalledApplications(): Promise<string[]> {
-		return _(await this.getApplicationsLiveSyncSupportedStatus())
+		const applicationsLiveSyncStatus = await this.getApplicationsLiveSyncSupportedStatus();
+
+		return _(applicationsLiveSyncStatus)
 			.map(appLiveSyncStatus => appLiveSyncStatus.applicationIdentifier)
 			.sortBy((identifier: string) => identifier.toLowerCase())
 			.value();
@@ -45,6 +47,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	@hook('install')
 	public async installApplication(packageFilePath: string): Promise<void> {
 		let installationProxy = this.getInstallationProxy();
+
 		try {
 			await installationProxy.deployApplication(packageFilePath);
 		} finally {
@@ -213,12 +216,12 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		return this.$hostInfo.isDarwin || (this.$hostInfo.isWindows && this.$staticConfig.enableDeviceRunCommandOnWindows);
 	}
 
-	public async getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]> {
+	public getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]> {
 		// Implement when we can find debuggable applications for iOS.
 		return Promise.resolve([]);
 	}
 
-	public async getDebuggableAppViews(appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> {
+	public getDebuggableAppViews(appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> {
 		// Implement when we can find debuggable applications for iOS.
 		return Promise.resolve(null);
 	}

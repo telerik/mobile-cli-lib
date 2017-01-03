@@ -13,6 +13,7 @@ import * as string_decoder from "string_decoder";
 import * as stream from "stream";
 import * as assert from "assert";
 import { EOL } from "os";
+import { cache } from "../../../decorators";
 
 export class CoreTypes {
 	public static pointerSize = ref.types.size_t.size;
@@ -745,7 +746,7 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 		this.close();
 	}
 
-	public async exchange(message: IDictionary<any>): Promise<Mobile.IiOSSocketResponseData> {
+	public exchange(message: IDictionary<any>): Promise<Mobile.IiOSSocketResponseData> {
 		this.sendMessage(message);
 		return this.receiveMessage();
 	}
@@ -876,7 +877,7 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 		this.socket = new net.Socket({ fd: service });
 	}
 
-	public async receiveMessage(): Promise<Mobile.IiOSSocketResponseData | Mobile.IiOSSocketResponseData[]> {
+	public receiveMessage(): Promise<Mobile.IiOSSocketResponseData | Mobile.IiOSSocketResponseData[]> {
 		return new Promise<Mobile.IiOSSocketResponseData>((resolve, reject) => {
 			let messages: Mobile.IiOSSocketResponseData[] = [];
 			let isResolved = false;
@@ -976,7 +977,7 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 		});
 	}
 
-	public readSystemLog(action: (_data: string) => void) {
+	public readSystemLog(action: (_data: string) => void): void {
 		this.socket
 			.on("data", (data: NodeBuffer) => {
 				// We need to use .toString() here instead of ref.readCString() because readCString reads the content of the buffer until the first \0 and sometimes the buffer may contain more than one \0.
@@ -1039,7 +1040,7 @@ export class PlistService implements Mobile.IiOSDeviceSocket {
 		this.$processService.attachToProcessExitSignals(this, this.close);
 	}
 
-	public async receiveMessage(): Promise<Mobile.IiOSSocketResponseData> {
+	public receiveMessage(): Promise<Mobile.IiOSSocketResponseData> {
 		return this.socket.receiveMessage();
 	}
 
@@ -1051,7 +1052,7 @@ export class PlistService implements Mobile.IiOSDeviceSocket {
 		this.socket.sendMessage(message, this.format);
 	}
 
-	public async exchange(message: IDictionary<any>): Promise<Mobile.IiOSSocketResponseData> {
+	public exchange(message: IDictionary<any>): Promise<Mobile.IiOSSocketResponseData> {
 		return this.socket.exchange(message);
 	}
 
@@ -1134,7 +1135,7 @@ class GDBSignalWatcher extends stream.Writable {
 		super(opts);
 	}
 
-	public _write(packet: any, encoding: string, callback: Function) {
+	public _write(packet: any, encoding: string, callback: Function): void {
 		try {
 			const dollarCodePoint = getCharacterCodePoint("$");
 			const TCodePoint = getCharacterCodePoint("T");
@@ -1161,7 +1162,6 @@ class GDBSignalWatcher extends stream.Writable {
 
 export class GDBServer implements Mobile.IGDBServer {
 	private okResponse = "$OK#";
-	private isInitilized = false;
 
 	constructor(private socket: any, // socket is fd on Windows and net.Socket on mac
 		private deviceIdentifier: string,
@@ -1182,17 +1182,14 @@ export class GDBServer implements Mobile.IGDBServer {
 		this.socket.on("close", (hadError: boolean) => this.$logger.trace("GDB socket get closed. HadError", hadError.toString()));
 	}
 
+	@cache()
 	public async init(argv: string[]): Promise<void> {
-		if (!this.isInitilized) {
-			this.awaitResponse("QStartNoAckMode", "+ await ");
-			this.sendCore("+");
-			await this.awaitResponse("QEnvironmentHexEncoded:");
-			await this.awaitResponse("QSetDisableASLR:1");
-			let encodedArguments = _.map(argv, (arg, index) => util.format("%d,%d,%s", arg.length * 2, index, this.toHex(arg))).join(",");
-			this.awaitResponse("A" + await encodedArguments);
-
-			this.isInitilized = true;
-		}
+		this.awaitResponse("QStartNoAckMode", "+ await ");
+		this.sendCore("+");
+		await this.awaitResponse("QEnvironmentHexEncoded:");
+		await this.awaitResponse("QSetDisableASLR:1");
+		let encodedArguments = _.map(argv, (arg, index) => util.format("%d,%d,%s", arg.length * 2, index, this.toHex(arg))).join(",");
+		await this.awaitResponse("A" + encodedArguments);
 	}
 
 	public async run(argv: string[]): Promise<void> {
@@ -1221,7 +1218,7 @@ export class GDBServer implements Mobile.IGDBServer {
 	public async kill(argv: string[]): Promise<void> {
 		await this.init(argv);
 
-		this.awaitResponse("\x03", "thread", async () => await this.sendx03Message());
+		await this.awaitResponse("\x03", "thread", this.sendx03Message);
 		await this.send("k");
 	}
 
@@ -1238,7 +1235,7 @@ export class GDBServer implements Mobile.IGDBServer {
 		}
 	}
 
-	private async send(packet: string): Promise<string> {
+	private send(packet: string): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
 			let isResolved = false;
 			let dataCallback = (data: any) => {
@@ -1268,7 +1265,7 @@ export class GDBServer implements Mobile.IGDBServer {
 		this.socket.write(data);
 	}
 
-	private async sendx03Message(): Promise<string> {
+	private sendx03Message(): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
 			let isResolved = false;
 			let retryCount = 3;

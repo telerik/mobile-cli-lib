@@ -5,9 +5,11 @@ export function cache(): any {
 	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>, a: any): TypedPropertyDescriptor<any> => {
 		let isCalled = false;
 		let result: any;
+		let propName: string = descriptor.value ? "value" : "get";
 
-		const originalValue = descriptor.value;
-		descriptor.value = (...args: any[]) => {
+		const originalValue = (<any>descriptor)[propName];
+
+		(<any>descriptor)[propName] = (...args: any[]) => {
 			if (!isCalled) {
 				isCalled = true;
 				result = originalValue.apply(target, args);
