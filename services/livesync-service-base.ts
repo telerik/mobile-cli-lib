@@ -1,4 +1,3 @@
-import * as fiberBootstrap from "../fiber-bootstrap";
 import syncBatchLib = require("./livesync/sync-batch");
 import * as shell from "shelljs";
 import * as path from "path";
@@ -55,47 +54,45 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		this.showFullLiveSyncInformation = true;
 		gaze("**/*", { cwd: syncWorkingDirectory }, function (err: any, watcher: any) {
 			this.on('all', (event: string, filePath: string) => {
-				fiberBootstrap.run(() => {
-					that.$dispatcher.dispatch(() => (() => {
-						try {
-							if (filePath.indexOf(constants.APP_RESOURCES_FOLDER_NAME) !== -1) {
-								that.$logger.warn(`Skipping livesync for changed file ${filePath}. This change requires a full build to update your application. `.yellow.bold);
-								return;
-							}
-
-							let fileHash = await that.$fs.exists(filePath) && that.$fs.getFsStats(filePath).isFile() ? that.$fs.getFileShasum(filePath) : "";
-							if (fileHash === that.fileHashes[filePath]) {
-								that.$logger.trace(`Skipping livesync for ${filePath} file with ${fileHash} hash.`);
-								return;
-							}
-
-							that.$logger.trace(`Adding ${filePath} file with ${fileHash} hash.`);
-							that.fileHashes[filePath] = <string>fileHash;
-
-							for (let dataItem of data) {
-								if (that.isFileExcluded(filePath, dataItem.excludedProjectDirsAndFiles)) {
-									that.$logger.trace(`Skipping livesync for changed file ${filePath} as it is excluded in the patterns: ${dataItem.excludedProjectDirsAndFiles.join(", ")}`);
-									continue;
-								}
-								let mappedFilePath = that.$projectFilesProvider.mapFilePath(filePath, dataItem.platform);
-								that.$logger.trace(`Syncing filePath ${filePath}, mappedFilePath is ${mappedFilePath}`);
-								if (!mappedFilePath) {
-									that.$logger.warn(`Unable to sync ${filePath}.`);
-									continue;
-								}
-
-								if (event === "added" || event === "changed" || event === "renamed") {
-									that.batchSync(dataItem, mappedFilePath);
-								} else if (event === "deleted") {
-									that.fileHashes = <any>(_.omit(that.fileHashes, filePath));
-									await that.syncRemovedFile(dataItem, mappedFilePath);
-								}
-							}
-						} catch (err) {
-							that.$logger.info(`Unable to sync file ${filePath}. Error is:${err.message}`.red.bold);
-							that.$logger.info("Try saving it again or restart the livesync operation.");
+				that.$dispatcher.dispatch(async () => {
+					try {
+						if (filePath.indexOf(constants.APP_RESOURCES_FOLDER_NAME) !== -1) {
+							that.$logger.warn(`Skipping livesync for changed file ${filePath}. This change requires a full build to update your application. `.yellow.bold);
+							return;
 						}
-					}).future<void>()());
+
+						let fileHash = await that.$fs.exists(filePath) && that.$fs.getFsStats(filePath).isFile() ? that.$fs.getFileShasum(filePath) : "";
+						if (fileHash === that.fileHashes[filePath]) {
+							that.$logger.trace(`Skipping livesync for ${filePath} file with ${fileHash} hash.`);
+							return;
+						}
+
+						that.$logger.trace(`Adding ${filePath} file with ${fileHash} hash.`);
+						that.fileHashes[filePath] = <string>fileHash;
+
+						for (let dataItem of data) {
+							if (that.isFileExcluded(filePath, dataItem.excludedProjectDirsAndFiles)) {
+								that.$logger.trace(`Skipping livesync for changed file ${filePath} as it is excluded in the patterns: ${dataItem.excludedProjectDirsAndFiles.join(", ")}`);
+								continue;
+							}
+							let mappedFilePath = that.$projectFilesProvider.mapFilePath(filePath, dataItem.platform);
+							that.$logger.trace(`Syncing filePath ${filePath}, mappedFilePath is ${mappedFilePath}`);
+							if (!mappedFilePath) {
+								that.$logger.warn(`Unable to sync ${filePath}.`);
+								continue;
+							}
+
+							if (event === "added" || event === "changed" || event === "renamed") {
+								that.batchSync(dataItem, mappedFilePath);
+							} else if (event === "deleted") {
+								that.fileHashes = <any>(_.omit(that.fileHashes, filePath));
+								await that.syncRemovedFile(dataItem, mappedFilePath);
+							}
+						}
+					} catch (err) {
+						that.$logger.info(`Unable to sync file ${filePath}. Error is:${err.message}`.red.bold);
+						that.$logger.info("Try saving it again or restart the livesync operation.");
+					}
 				});
 			});
 		});
@@ -110,27 +107,23 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		let platformBatch: ISyncBatch = this.batch[data.platform];
 		if (!platformBatch || !platformBatch.syncPending) {
 			let done = () => {
-				return (() => {
-					setTimeout(() => {
-						fiberBootstrap.run(() => {
-							this.$dispatcher.dispatch(() => (() => {
-								try {
-									for (let platformName in this.batch) {
-										let batch = this.batch[platformName];
-										let livesyncData = this.livesyncData[platformName];
-										batch.syncFiles(async (filesToSync: string[]) => {
-											await this.$liveSyncProvider.preparePlatformForSync(platformName);
-											this.syncCore([livesyncData], filesToSync);
-										});
-									}
-								} catch (err) {
-									this.$logger.warn(`Unable to sync files. Error is:`, err.message);
-								}
-							}).future<void>()());
+				setTimeout(() => {
+					this.$dispatcher.dispatch(async () => {
+						try {
+							for (let platformName in this.batch) {
+								let batch = this.batch[platformName];
+								let livesyncData = this.livesyncData[platformName];
+								await batch.syncFiles(async (filesToSync: string[]) => {
+									await this.$liveSyncProvider.preparePlatformForSync(platformName);
+									this.syncCore([livesyncData], filesToSync);
+								});
+							}
+						} catch (err) {
+							this.$logger.warn(`Unable to sync files. Error is:`, err.message);
+						}
+					});
 
-						});
-					}, syncBatchLib.SYNC_WAIT_THRESHOLD);
-				}).future<void>()();
+				}, syncBatchLib.SYNC_WAIT_THRESHOLD);
 			};
 			this.batch[data.platform] = this.$injector.resolve(syncBatchLib.SyncBatch, { done: done });
 			this.livesyncData[data.platform] = data;
@@ -160,7 +153,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 
 		let packageFilePath: string = null;
 
-		let action = async (device: Mobile.IDevice): Promise<void> => {
+		return async (device: Mobile.IDevice): Promise<void> => {
 			let shouldRefreshApplication = true;
 			let deviceAppData = this.$deviceAppDataFactory.create(appIdentifier, this.$mobileHelper.normalizePlatformName(platform), device, liveSyncOptions);
 			if (await deviceAppData.isLiveSyncSupported()) {
@@ -212,15 +205,13 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 				this.$logger.warn(`LiveSync is not supported for application: ${deviceAppData.appIdentifier} on device with identifier ${device.deviceInfo.identifier}.`);
 			}
 		};
-
-		return action;
 	}
 
 	private async syncCore(data: ILiveSyncData[], filesToSync: string[], deviceFilesAction?: (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => Promise<void>): Promise<void> {
 		for (let dataItem of data) {
 			let appIdentifier = dataItem.appIdentifier;
 			let platform = dataItem.platform;
-			let canExecute = this.getCanExecuteAction(platform, appIdentifier, dataItem.canExecute);
+			let canExecute = await this.getCanExecuteAction(platform, appIdentifier, dataItem.canExecute);
 			let action = this.getSyncAction(dataItem, filesToSync, deviceFilesAction, { isForCompanionApp: this.$options.companion, additionalConfigurations: dataItem.additionalConfigurations, configuration: dataItem.configuration, isForDeletedFiles: false });
 			await this.$devicesService.execute(action, canExecute);
 		}
@@ -262,7 +253,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		return this.$injector.resolve(this.$liveSyncProvider.deviceSpecificLiveSyncServices[platform.toLowerCase()], { _device: device });
 	}
 
-	public getCanExecuteAction(platform: string, appIdentifier: string, canExecute: (dev: Mobile.IDevice) => boolean): (dev: Mobile.IDevice) => boolean {
+	public async getCanExecuteAction(platform: string, appIdentifier: string, canExecute: (dev: Mobile.IDevice) => boolean): Promise<(dev: Mobile.IDevice) => boolean> {
 		canExecute = canExecute || ((dev: Mobile.IDevice) => dev.deviceInfo.platform.toLowerCase() === platform.toLowerCase());
 		let finalCanExecute = canExecute;
 		if (this.$options.device) {
@@ -279,7 +270,8 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 					let iOSDevices = _.filter(devices, d => d.deviceInfo.identifier !== simulator.deviceInfo.identifier);
 					if (iOSDevices && iOSDevices.length) {
 						let isApplicationInstalledOnSimulator = await simulator.applicationManager.isApplicationInstalled(appIdentifier);
-						let isApplicationInstalledOnAllDevices = await _.intersection.apply(null, iOSDevices.map(device => device.applicationManager.isApplicationInstalled(appIdentifier)));
+						let isInstalledPromises = await Promise.all(iOSDevices.map(device => device.applicationManager.isApplicationInstalled(appIdentifier)));
+						let isApplicationInstalledOnAllDevices = _.intersection.apply(null, isInstalledPromises);
 						// In case the application is not installed on both device and simulator, syncs only on device.
 						if (!isApplicationInstalledOnSimulator && !isApplicationInstalledOnAllDevices) {
 							finalCanExecute = (device: Mobile.IDevice): boolean => canExecute(device) && this.$devicesService.isiOSDevice(device);

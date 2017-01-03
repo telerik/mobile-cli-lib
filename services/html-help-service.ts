@@ -41,8 +41,7 @@ export class HtmlHelpService implements IHtmlHelpService {
 	public async generateHtmlPages(): Promise<void> {
 		let mdFiles = this.$fs.enumerateFilesInDirectorySync(this.pathToManPages);
 		let basicHtmlPage = this.$fs.readText(this.pathToBasicPage);
-		let futures = _.map(mdFiles, markdownFile => this.createHtmlPage(basicHtmlPage, markdownFile));
-		Future.wait(futures);
+		await Promise.all(_.map(mdFiles, markdownFile => this.createHtmlPage(basicHtmlPage, markdownFile)));
 		this.$logger.trace("Finished generating HTML files.");
 	}
 
@@ -53,7 +52,7 @@ export class HtmlHelpService implements IHtmlHelpService {
 		this.$logger.trace("Generating '%s' help topic.", htmlFileName);
 
 		let helpText = this.$fs.readText(pathToMdFile);
-		let outputText = this.$microTemplateService.parseContent(helpText, { isHtml: true });
+		let outputText = await this.$microTemplateService.parseContent(helpText, { isHtml: true });
 		let htmlText = marked(outputText);
 
 		let filePath = pathToMdFile
@@ -73,7 +72,7 @@ export class HtmlHelpService implements IHtmlHelpService {
 	}
 
 	public async openHelpForCommandInBrowser(commandName: string): Promise<void> {
-		let htmlPage = this.convertCommandNameToFileName(commandName) + HtmlHelpService.HTML_FILE_EXTENSION;
+		let htmlPage = await this.convertCommandNameToFileName(commandName) + HtmlHelpService.HTML_FILE_EXTENSION;
 		this.$logger.trace("Opening help for command '%s'. FileName is '%s'.", commandName, htmlPage);
 
 		this.$fs.ensureDirectoryExists(this.pathToHtmlPages);
@@ -87,7 +86,7 @@ export class HtmlHelpService implements IHtmlHelpService {
 		}
 	}
 
-	private convertCommandNameToFileName(commandName: string): string {
+	private async convertCommandNameToFileName(commandName: string): Promise<string> {
 		let defaultCommandMatch = commandName.match(/(\w+?)\|\*/);
 		if (defaultCommandMatch) {
 			this.$logger.trace("Default command found. Replace current command name '%s' with '%s'.", commandName, defaultCommandMatch[1]);
@@ -97,7 +96,7 @@ export class HtmlHelpService implements IHtmlHelpService {
 		let availableCommands = this.$injector.getRegisteredCommandsNames(true).sort();
 		this.$logger.trace("List of registered commands: %s", availableCommands.join(", "));
 		if (commandName && _.startsWith(commandName, this.$commandsServiceProvider.dynamicCommandsPrefix) && !_.includes(availableCommands, commandName)) {
-			let dynamicCommands = await  this.$commandsServiceProvider.getDynamicCommands();
+			let dynamicCommands = await this.$commandsServiceProvider.getDynamicCommands();
 			if (!_.includes(dynamicCommands, commandName)) {
 				this.$errors.failWithoutHelp("Unknown command '%s'. Try '$ %s help' for a full list of supported commands.", commandName, this.$staticConfig.CLIENT_NAME.toLowerCase());
 			}
@@ -121,8 +120,8 @@ export class HtmlHelpService implements IHtmlHelpService {
 		return false;
 	}
 
-	private readMdFileForCommand(commandName: string): string {
-		let mdFileName = this.convertCommandNameToFileName(commandName) + HtmlHelpService.MARKDOWN_FILE_EXTENSION;
+	private async readMdFileForCommand(commandName: string): Promise<string> {
+		let mdFileName = await this.convertCommandNameToFileName(commandName) + HtmlHelpService.MARKDOWN_FILE_EXTENSION;
 		this.$logger.trace("Reading help for command '%s'. FileName is '%s'.", commandName, mdFileName);
 
 		let markdownFile = _.find(this.$fs.enumerateFilesInDirectorySync(this.pathToManPages), file => path.basename(file) === mdFileName);
@@ -133,13 +132,11 @@ export class HtmlHelpService implements IHtmlHelpService {
 		this.$errors.failWithoutHelp("Unknown command '%s'. Try '$ %s help' for a full list of supported commands.", mdFileName.replace(".md", ""), this.$staticConfig.CLIENT_NAME.toLowerCase());
 	}
 
-	public getCommandLineHelpForCommand(commandName: string): string {
-		let helpText = this.readMdFileForCommand(commandName);
-		let outputText = this.$microTemplateService.parseContent(helpText, { isHtml: false })
+	public async getCommandLineHelpForCommand(commandName: string): Promise<string> {
+		let helpText = await this.readMdFileForCommand(commandName);
+		return (await this.$microTemplateService.parseContent(helpText, { isHtml: false }))
 			.replace(/&nbsp;/g, " ")
 			.replace(HtmlHelpService.MARKDOWN_LINK_REGEX, "$1");
-
-		return outputText;
 	}
 }
 $injector.register("htmlHelpService", HtmlHelpService);

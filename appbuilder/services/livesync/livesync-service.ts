@@ -82,7 +82,7 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 				excludedProjectDirsAndFiles: this.excludedProjectDirsAndFiles,
 			};
 
-		let canExecuteAction = this.$liveSyncServiceBase.getCanExecuteAction(device.deviceInfo.platform, appIdentifier, canExecute);
+		let canExecuteAction = await this.$liveSyncServiceBase.getCanExecuteAction(device.deviceInfo.platform, appIdentifier, canExecute);
 
 		if (deviceDescriptor.syncToApp) {
 			result.liveSyncToApp = await this.liveSyncCore(livesyncData, device, appIdentifier, canExecuteAction, { isForCompanionApp: false, isForDeletedFiles: isForDeletedFiles }, filePaths);

@@ -197,7 +197,7 @@ interface IFileSystem {
 	 * @param {string} @optional options Options used for reading the file - encoding and flags.
 	 * @returns {string|NodeBuffer} Content of the file as buffer. In case encoding is specified, the content is returned as string.
 	 */
-	readFile(filename: string, options?: IReadFileOptions): string|NodeBuffer;
+	readFile(filename: string, options?: IReadFileOptions): string | NodeBuffer;
 
 	/**
 	 * Reads the entire contents of a file and returns the result as string.
@@ -611,16 +611,16 @@ interface ITypeScriptService {
 	/**
 	 * Returns new object, containing all TypeScript and all TypeScript definition files.
 	 * @param {string} projectDir The directory of the project which contains TypeScript files.
-	 * @return {Promise<ITypeScriptFiles>} all TypeScript and all TypeScript definition files.
+	 * @return {ITypeScriptFiles} all TypeScript and all TypeScript definition files.
 	 */
-	getTypeScriptFilesData(projectDir: string): Promise<ITypeScriptFiles>
+	getTypeScriptFilesData(projectDir: string): ITypeScriptFiles
 
 	/**
 	 * Checks if the project language is TypeScript by enumerating all files and checking if there are at least one TypeScript file (.ts), that is not definition file(.d.ts)
 	 * @param {string} projectDir The directory of the project.
-	 * @return {Promise<boolean>} true when the project contains .ts files and false otherwise.
+	 * @return {boolean} true when the project contains .ts files and false otherwise.
 	 */
-	isTypeScriptProject(projectDir: string): Promise<boolean>;
+	isTypeScriptProject(projectDir: string): boolean;
 
 	/**
 	 * Checks if the file is TypeScript file.
@@ -665,7 +665,7 @@ interface IDynamicHelpProvider {
 }
 
 interface IMicroTemplateService {
-	parseContent(data: string, options: { isHtml: boolean }): string;
+	parseContent(data: string, options: { isHtml: boolean }): Promise<string>;
 }
 
 interface IHtmlHelpService {
@@ -674,9 +674,9 @@ interface IHtmlHelpService {
 	/**
 	 * Gets the help content for a specific command that should be shown on the terminal.
 	 * @param {string} commandName Name of the command for which to read the help.
-	 * @returns {string} Help content of the command parsed with all terminal rules applied (stripped content that should be shown only for html help).
+	 * @returns {Promise<string>} Help content of the command parsed with all terminal rules applied (stripped content that should be shown only for html help).
 	 */
-	getCommandLineHelpForCommand(commandName: string): string;
+	getCommandLineHelpForCommand(commandName: string): Promise<string>;
 
 	openHelpForCommandInBrowser(commandName: string): Promise<void>;
 }
@@ -715,10 +715,10 @@ interface ILiveSyncServiceBase {
 	 * Returns the `canExecute` method which defines if LiveSync operation can be executed on specified device.
 	 * @param {string} platform Platform for which the LiveSync operation should be executed.
 	 * @param {string} appIdentifier Application identifier.
-	 * @param {Function} [canExecute] Base canExecute function that will be added to the predefined checks.
-	 * @return {Function} Function that returns boolean.
+	 * @param {(dev: Mobile.IDevice) => boolean} canExecute Base canExecute function that will be added to the predefined checks.
+	 * @return {Promise<(dev: Mobile.IDevice) => boolean>} Function that returns boolean.
 	 */
-	getCanExecuteAction(platform: string, appIdentifier: string, canExecute?: (dev: Mobile.IDevice) => boolean): (dev: Mobile.IDevice) => boolean;
+	getCanExecuteAction(platform: string, appIdentifier: string, canExecute?: (dev: Mobile.IDevice) => boolean): Promise<(dev: Mobile.IDevice) => boolean>;
 
 	/**
 	 * Gets LiveSync action that should be executed per device.

@@ -1,13 +1,13 @@
 import * as path from "path";
 import * as util from "util";
-import {Configurations} from "../constants";
+import { Configurations } from "../constants";
 
 export abstract class ProjectFilesProviderBase implements IProjectFilesProvider {
 	abstract isFileExcluded(filePath: string): boolean;
 	abstract mapFilePath(filePath: string, platform: string): string;
 
 	constructor(private $mobileHelper: Mobile.IMobileHelper,
-		protected $options: ICommonOptions) {}
+		protected $options: ICommonOptions) { }
 
 	public getPreparedFilePath(filePath: string): string {
 		let projectFileInfo = this.getProjectFileInfo(filePath, "");

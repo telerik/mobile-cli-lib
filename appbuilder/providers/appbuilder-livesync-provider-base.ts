@@ -16,7 +16,7 @@ export abstract class AppBuilderLiveSyncProviderBase implements ILiveSyncProvide
 	public abstract buildForDevice(device: Mobile.IDevice): Promise<string>;
 
 	public preparePlatformForSync(platform: string): Promise<void> {
-		return Promise.resolve();
+		return ;
 	}
 
 	public canExecuteFastSync(filePath: string): boolean {

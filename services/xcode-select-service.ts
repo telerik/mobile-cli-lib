@@ -1,8 +1,7 @@
 import * as path from "path";
+import { cache } from "../decorators";
 
 export class XcodeSelectService implements IXcodeSelectService {
-	private _xcodeVerionCache: IVersionData;
-
 	constructor(private $childProcess: IChildProcess,
 		private $errors: IErrors,
 		private $hostInfo: IHostInfo,
@@ -10,40 +9,37 @@ export class XcodeSelectService implements IXcodeSelectService {
 	}
 
 	public async getDeveloperDirectoryPath(): Promise<string> {
-			if (!this.$hostInfo.isDarwin) {
-				this.$errors.failWithoutHelp("xcode-select is only available on Mac OS X.");
-			}
+		if (!this.$hostInfo.isDarwin) {
+			this.$errors.failWithoutHelp("xcode-select is only available on Mac OS X.");
+		}
 
-			let childProcess = await  this.$childProcess.spawnFromEvent("xcode-select", ["-print-path"], "close", {}, { throwError: false }),
-				result = childProcess.stdout.trim();
+		let childProcess = await this.$childProcess.spawnFromEvent("xcode-select", ["-print-path"], "close", {}, { throwError: false }),
+			result = childProcess.stdout.trim();
 
-			if (!result) {
-				this.$errors.failWithoutHelp("Cannot find path to Xcode.app - make sure you've installed Xcode correctly.");
-			}
+		if (!result) {
+			this.$errors.failWithoutHelp("Cannot find path to Xcode.app - make sure you've installed Xcode correctly.");
+		}
 
-			return result;
+		return result;
 	}
 
 	public async getContentsDirectoryPath(): Promise<string> {
-			return path.join(await this.getDeveloperDirectoryPath(), "..");
+		return path.join(await this.getDeveloperDirectoryPath(), "..");
 	}
 
+	@cache()
 	public async getXcodeVersion(): Promise<IVersionData> {
-			if (!this._xcodeVerionCache) {
-				let sysInfoBase = this.$injector.resolve("sysInfoBase");
-				let xcodeVer = await  sysInfoBase.getXCodeVersion(),
-					xcodeVersionMatch = xcodeVer.match(/Xcode (.*)/),
-					xcodeVersionGroup = xcodeVersionMatch && xcodeVersionMatch[1],
-					xcodeVersionSplit = xcodeVersionGroup && xcodeVersionGroup.split(".");
+		let sysInfoBase = this.$injector.resolve("sysInfoBase");
+		let xcodeVer = await sysInfoBase.getXCodeVersion(),
+			xcodeVersionMatch = xcodeVer.match(/Xcode (.*)/),
+			xcodeVersionGroup = xcodeVersionMatch && xcodeVersionMatch[1],
+			xcodeVersionSplit = xcodeVersionGroup && xcodeVersionGroup.split(".");
 
-					this._xcodeVerionCache = {
-						major: xcodeVersionSplit && xcodeVersionSplit[0],
-						minor: xcodeVersionSplit && xcodeVersionSplit[1],
-						patch: xcodeVersionSplit && xcodeVersionSplit[2]
-					};
-			}
-
-			return this._xcodeVerionCache;
+		return {
+			major: xcodeVersionSplit && xcodeVersionSplit[0],
+			minor: xcodeVersionSplit && xcodeVersionSplit[1],
+			patch: xcodeVersionSplit && xcodeVersionSplit[2]
+		};
 	}
 }
 
