@@ -1,7 +1,7 @@
 ///<reference path="../../.d.ts"/>
 "use strict";
 
-import {ProjectBase} from "./project-base";
+import { ProjectBase } from "./project-base";
 
 export class Project extends ProjectBase {
 	constructor(protected $cordovaProjectCapabilities: Project.ICapabilities,

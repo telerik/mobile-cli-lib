@@ -13,9 +13,9 @@ export abstract class AppBuilderLiveSyncProviderBase implements ILiveSyncProvide
 		};
 	}
 
-	public abstract async buildForDevice(device: Mobile.IDevice): Promise<string>;
+	public abstract buildForDevice(device: Mobile.IDevice): Promise<string>;
 
-	public async preparePlatformForSync(platform: string): Promise<void> {
+	public preparePlatformForSync(platform: string): Promise<void> {
 		return Promise.resolve();
 	}
 
@@ -23,7 +23,7 @@ export abstract class AppBuilderLiveSyncProviderBase implements ILiveSyncProvide
 		return false;
 	}
 
-	public async transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string, isFullSync: boolean): Promise<void> {
+	public transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string, isFullSync: boolean): Promise<void> {
 		return deviceAppData.device.fileSystem.transferFiles(deviceAppData, localToDevicePaths);
 	}
 

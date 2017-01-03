@@ -1,15 +1,17 @@
 import * as querystring from "querystring";
-import {DeviceAppDataBase} from "./../../mobile/device-app-data/device-app-data-base";
+import { DeviceAppDataBase } from "./../../mobile/device-app-data/device-app-data-base";
 
 export class AppBuilderDeviceAppDataBase extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
-	public deviceProjectRootPath: string;
-
 	constructor(_appIdentifier: string,
 		public device: Mobile.IDevice,
 		public platform: string,
 		private $deployHelper: IDeployHelper,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
 		super(_appIdentifier);
+	}
+
+	public deviceProjectRootPath(): Promise<string> {
+		return Promise.resolve();
 	}
 
 	public get liveSyncFormat(): string {
@@ -25,14 +27,14 @@ export class AppBuilderDeviceAppDataBase extends DeviceAppDataBase implements IL
 	}
 
 	public async isLiveSyncSupported(): Promise<boolean> {
-			let isApplicationInstalled = await  this.device.applicationManager.isApplicationInstalled(this.appIdentifier);
+		let isApplicationInstalled = await this.device.applicationManager.isApplicationInstalled(this.appIdentifier);
 
-			if (!isApplicationInstalled) {
-				await this.$deployHelper.deploy(this.platform.toString());
-				// Update cache of installed apps
-				await this.device.applicationManager.checkForApplicationUpdates();
-			}
+		if (!isApplicationInstalled) {
+			await this.$deployHelper.deploy(this.platform.toString());
+			// Update cache of installed apps
+			await this.device.applicationManager.checkForApplicationUpdates();
+		}
 
-			return await this.device.applicationManager.isLiveSyncSupported(this.appIdentifier);
+		return await this.device.applicationManager.isLiveSyncSupported(this.appIdentifier);
 	}
 }

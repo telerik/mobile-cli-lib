@@ -110,14 +110,9 @@ declare module Project {
 		/**
 		 * Gets the app identifier which is going to be used to build the application.
 		 * @parameter Optional parameter the platform for which the app identifier will be returned.
-		 * @return {Promise<string>} the app identifier which will be used to build the application.
+		 * @return {string} the app identifier which will be used to build the application.
 		 */
-		getAppIdentifierForPlatform(platform?: string): Promise<string>;
-
-		/**
-		 * Checks if the app identifier is valid and if it is not - this method will throw an exception.
-		 */
-		validateAppIdentifier(platform?: string): Promise<void>;
+		getAppIdentifierForPlatform(platform?: string): string;
 	}
 
 	/**

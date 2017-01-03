@@ -1,14 +1,13 @@
-import {EOL} from "os";
+import { EOL } from "os";
 import * as path from "path";
 import { TARGET_FRAMEWORK_IDENTIFIERS } from "../../constants";
+import { cache } from "../../decorators";
 
 export abstract class ProjectBase implements Project.IProjectBase {
 	private static VALID_CONFIGURATION_CHARACTERS_REGEX = "[-_A-Za-z0-9]";
 	private static CONFIGURATION_FROM_FILE_NAME_REGEX = new RegExp(`^[.](${ProjectBase.VALID_CONFIGURATION_CHARACTERS_REGEX}+?)[.]abproject$`, "i");
 	private static ANDROID_MANIFEST_NAME = "AndroidManifest.xml";
 	private static APP_IDENTIFIER_PLACEHOLDER = "$AppIdentifier$";
-
-	private _platformSpecificAppIdentifier: string;
 
 	public configurationSpecificData: IDictionary<Project.IData>;
 
@@ -77,29 +76,24 @@ export abstract class ProjectBase implements Project.IProjectBase {
 		};
 	}
 
-	public async getAppIdentifierForPlatform(platform?: string): Promise<string> {
-			if (!this._platformSpecificAppIdentifier) {
-				this._platformSpecificAppIdentifier = this.projectData.AppIdentifier;
+	@cache()
+	public getAppIdentifierForPlatform(platform?: string): string {
+		let platformSpecificAppIdentifier = this.projectData.AppIdentifier;
 
-				if (platform &&
-					platform.toLowerCase() === this.$projectConstants.ANDROID_PLATFORM_NAME.toLowerCase() &&
-					this.projectData.Framework === TARGET_FRAMEWORK_IDENTIFIERS.Cordova) {
-					let pathToAndroidResources = path.join(this.projectDir, this.$staticConfig.APP_RESOURCES_DIR_NAME, this.$projectConstants.ANDROID_PLATFORM_NAME);
+		if (platform &&
+			platform.toLowerCase() === this.$projectConstants.ANDROID_PLATFORM_NAME.toLowerCase() &&
+			this.projectData.Framework === TARGET_FRAMEWORK_IDENTIFIERS.Cordova) {
+			let pathToAndroidResources = path.join(this.projectDir, this.$staticConfig.APP_RESOURCES_DIR_NAME, this.$projectConstants.ANDROID_PLATFORM_NAME);
 
-					let pathToAndroidManifest = path.join(pathToAndroidResources, ProjectBase.ANDROID_MANIFEST_NAME);
-					let appIdentifierInAndroidManifest = this.getAppIdentifierFromConfigFile(pathToAndroidManifest, /package\s*=\s*"(\S*)"/);
+			let pathToAndroidManifest = path.join(pathToAndroidResources, ProjectBase.ANDROID_MANIFEST_NAME);
+			let appIdentifierInAndroidManifest = this.getAppIdentifierFromConfigFile(pathToAndroidManifest, /package\s*=\s*"(\S*)"/);
 
-					if (appIdentifierInAndroidManifest && appIdentifierInAndroidManifest !== ProjectBase.APP_IDENTIFIER_PLACEHOLDER) {
-						this._platformSpecificAppIdentifier = appIdentifierInAndroidManifest;
-					}
-				}
+			if (appIdentifierInAndroidManifest && appIdentifierInAndroidManifest !== ProjectBase.APP_IDENTIFIER_PLACEHOLDER) {
+				platformSpecificAppIdentifier = appIdentifierInAndroidManifest;
 			}
+		}
 
-			return this._platformSpecificAppIdentifier;
-	}
-
-	public async validateAppIdentifier(platform: string): Promise<void> {
-			await this.getAppIdentifierForPlatform(platform);
+		return platformSpecificAppIdentifier;
 	}
 
 	protected abstract validate(): void;
