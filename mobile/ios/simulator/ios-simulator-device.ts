@@ -27,7 +27,7 @@ export class IOSSimulator implements Mobile.IiOSSimulator {
 		};
 	}
 
-	public get isEmulator(): boolean {
+	public async isEmulator(): Promise<boolean> {
 		return true;
 	}
 
@@ -51,7 +51,7 @@ export class IOSSimulator implements Mobile.IiOSSimulator {
 		return this._fileSystem;
 	}
 
-	public openDeviceLogStream(): void {
+	public async openDeviceLogStream(): Promise<void> {
 		this.$iOSSimulatorLogProvider.startLogProcess(this.simulator.id);
 	}
 }

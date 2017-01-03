@@ -1,5 +1,4 @@
 import { ChildProcess } from "child_process";
-import * as fiberBootstrap from "../../../fiber-bootstrap";
 
 export class IOSSimulatorLogProvider implements Mobile.IiOSSimulatorLogProvider {
 	private isStarted: boolean;
@@ -14,9 +13,7 @@ export class IOSSimulatorLogProvider implements Mobile.IiOSSimulatorLogProvider 
 			let deviceLogChildProcess: ChildProcess = this.$iOSSimResolver.iOSSim.getDeviceLogProcess(deviceIdentifier);
 
 			let action = (data: NodeBuffer | string) => {
-				fiberBootstrap.run(() =>
-					this.$deviceLogProvider.logData(data.toString(), this.$devicePlatformsConstants.iOS, deviceIdentifier)
-				);
+				this.$deviceLogProvider.logData(data.toString(), this.$devicePlatformsConstants.iOS, deviceIdentifier)
 			};
 
 			if (deviceLogChildProcess.stdout) {

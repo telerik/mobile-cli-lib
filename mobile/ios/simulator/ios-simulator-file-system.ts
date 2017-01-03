@@ -25,14 +25,17 @@ export class IOSSimulatorFileSystem implements Mobile.IDeviceFileSystem {
 		shelljs.rm("-rf", deviceFilePath);
 	}
 
-	public transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): void {
-		_.each(localToDevicePaths,async localToDevicePathData => await this.transferFile(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()));
+	public async transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
+		await Promise.all(
+			_.map(localToDevicePaths, localToDevicePathData => this.transferFile(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath())
+			));
 	}
 
 	public async transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): Promise<void> {
-		let destinationPath = deviceAppData.deviceProjectRootPath;
+		let destinationPath = await deviceAppData.deviceProjectRootPath();
 		this.$logger.trace(`Transferring from ${projectFilesPath} to ${destinationPath}`);
-		return Promise.resolve(shelljs.cp("-Rf", path.join(projectFilesPath, "*"), destinationPath));
+		let sourcePath = path.join(projectFilesPath, "*");
+		return shelljs.cp("-Rf", sourcePath, destinationPath);
 	}
 
 	public async transferFile(localFilePath: string, deviceFilePath: string): Promise<void> {

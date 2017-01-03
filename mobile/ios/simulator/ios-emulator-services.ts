@@ -13,7 +13,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 	}
 
 	public async checkDependencies(): Promise<void> {
-		return ;
+		return;
 	}
 
 	public checkAvailability(dependsOnProject?: boolean): void {
@@ -29,15 +29,15 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		}
 	}
 
-	public async startEmulator(): Promise<string> {
+	public startEmulator(): Promise<string> {
 		return this.$iOSSimResolver.iOSSim.startSimulator();
 	}
 
-	public async runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): Promise<any> {
+	public runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): Promise<any> {
 		return this.runApplicationOnEmulatorCore(app, emulatorOptions);
 	}
 
-	public async postDarwinNotification(notification: string): Promise<void> {
+	public postDarwinNotification(notification: string): Promise<void> {
 		let iosSimPath = this.$iOSSimResolver.iOSSimPath;
 		let nodeCommandName = process.argv[0];
 
