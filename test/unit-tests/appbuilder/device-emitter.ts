@@ -8,7 +8,7 @@ import { DeviceEmitter } from "../../../appbuilder/device-emitter";
 
 class AndroidDeviceDiscoveryMock extends EventEmitter {
 	public async ensureAdbServerStarted(): Promise<void> {
-		return Promise.resolve();
+		return ;
 	}
 }
 

@@ -9,7 +9,7 @@ export class HelpCommand implements ICommand {
 
 	public enableHooks = false;
 	public async canExecute(args: string[]): Promise<boolean> {
-		return Promise.resolve(true);
+		return true;
 	}
 
 	public allowedParameters: ICommandParameter[] = [];

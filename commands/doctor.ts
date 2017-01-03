@@ -7,7 +7,7 @@ export class DoctorCommand implements ICommand {
 		private $staticConfig: Config.IStaticConfig) { }
 
 	public async canExecute(args: string[]): Promise<boolean> {
-		return Promise.resolve(true);
+		return true;
 	}
 
 	public allowedParameters: ICommandParameter[] = [];

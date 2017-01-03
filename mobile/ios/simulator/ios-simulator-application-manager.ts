@@ -17,7 +17,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async getInstalledApplications(): Promise<string[]> {
-		return Promise.resolve(this.iosSim.getInstalledApplications(this.identifier));
+		return this.iosSim.getInstalledApplications(this.identifier);
 	}
 
 	// TODO: Remove Promise, reason: readDirectory - cannot until android and iOS implementatios have async calls.
@@ -94,7 +94,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]> {
-		return Promise.resolve([]);
+		return [];
 	}
 
 	public async getDebuggableAppViews(appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> {

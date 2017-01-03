@@ -201,7 +201,7 @@ export class WP8CompanionAppIdentifier extends AppBuilderCompanionDeviceAppDataB
 	}
 
 	public async isLiveSyncSupported(): Promise<boolean> {
-		return Promise.resolve(true);
+		return true;
 	}
 
 	public getLiveSyncNotSupportedError(): string {

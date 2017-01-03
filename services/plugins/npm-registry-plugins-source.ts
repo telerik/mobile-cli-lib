@@ -16,7 +16,7 @@ export class NpmRegistryPluginsSource extends PluginsSourceBase implements IPlug
 	}
 
 	public async getPlugins(page: number, count: number): Promise<IBasicPluginInformation[]> {
-		return Promise.resolve(page === 1 ? this.plugins : null);
+		return page === 1 ? this.plugins : null;
 	}
 
 	protected async initializeCore(projectDir: string, keywords: string[]): Promise<void> {

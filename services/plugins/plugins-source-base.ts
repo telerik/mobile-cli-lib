@@ -26,7 +26,7 @@ export abstract class PluginsSourceBase implements IPluginsSource {
 	}
 
 	public async getAllPlugins(): Promise<IBasicPluginInformation[]> {
-		return Promise.resolve(this.plugins);
+		return this.plugins;
 	}
 
 	public abstract async getPlugins(page: number, count: number): Promise<IBasicPluginInformation[]>;

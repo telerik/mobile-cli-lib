@@ -30,7 +30,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 			outputPath = temp.path({ prefix: "sync", suffix: ".tmp" });
 		}
 
-		this.adb.executeCommand(["pull", deviceFilePath, outputPath]).wait();
+		await this.adb.executeCommand(["pull", deviceFilePath, outputPath]);
 
 		if (stdout) {
 			await new Promise<void>((resolve, reject) => {

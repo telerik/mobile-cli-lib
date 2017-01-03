@@ -10,31 +10,31 @@ import { DevicePlatformsConstants } from "../../../mobile/device-platforms-const
 
 class IOSDeviceDiscoveryStub extends EventEmitter {
 	public async startLookingForDevices(): Promise<void> {
-		return Promise.resolve();
+		return ;
 	}
 
 	public async checkForDevices(): Promise<void> {
-		return Promise.resolve();
+		return ;
 	}
 }
 
 class AndroidDeviceDiscoveryStub extends EventEmitter {
 	public async startLookingForDevices(): Promise<void> {
-		return Promise.resolve();
+		return ;
 	}
 
 	public async checkForDevices(): Promise<void> {
-		return Promise.resolve();
+		return ;
 	}
 }
 
 class IOSSimulatorDiscoveryStub extends EventEmitter {
 	public async startLookingForDevices(): Promise<void> {
-		return Promise.resolve();
+		return ;
 	}
 
 	public async checkForDevices(): Promise<void> {
-		return Promise.resolve();
+		return ;
 	}
 }
 

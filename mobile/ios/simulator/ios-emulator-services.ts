@@ -9,11 +9,11 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		private $iOSSimResolver: Mobile.IiOSSimResolver) { }
 
 	public async getEmulatorId(): Promise<string> {
-		return Promise.resolve("");
+		return "";
 	}
 
 	public async checkDependencies(): Promise<void> {
-		return Promise.resolve();
+		return ;
 	}
 
 	public checkAvailability(dependsOnProject?: boolean): void {

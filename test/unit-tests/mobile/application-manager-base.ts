@@ -14,31 +14,31 @@ class ApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async isLiveSyncSupported(appIdentifier: string): Promise<boolean> {
-		return Promise.resolve(true);
+		return true;
 	}
 
 	public async installApplication(packageFilePath: string): Promise<void> {
-		return Promise.resolve();
+		return ;
 	}
 
 	public async uninstallApplication(appIdentifier: string): Promise<void> {
-		return Promise.resolve();
+		return ;
 	}
 
 	public async startApplication(appIdentifier: string, framework?: string): Promise<void> {
-		return Promise.resolve();
+		return ;
 	}
 
 	public async stopApplication(appIdentifier: string): Promise<void> {
-		return Promise.resolve();
+		return ;
 	}
 
 	public async getInstalledApplications(): Promise<string[]> {
-		return Promise.resolve(_.cloneDeep(currentlyInstalledApps));
+		return _.cloneDeep(currentlyInstalledApps);
 	}
 
 	public async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
-		return Promise.resolve(null);
+		return null;
 	}
 
 	public canStartApplication(): boolean {
@@ -46,11 +46,11 @@ class ApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]> {
-		return Promise.resolve(currentlyAvailableAppsForDebugging);
+		return currentlyAvailableAppsForDebugging;
 	}
 
 	public async getDebuggableAppViews(appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> {
-		return Promise.resolve(_.cloneDeep(currentlyAvailableAppWebViewsForDebugging));
+		return _.cloneDeep(currentlyAvailableAppWebViewsForDebugging);
 	}
 }
 

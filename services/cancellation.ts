@@ -68,7 +68,7 @@ class CancellationServiceDummy implements ICancellationService {
 	}
 
 	async begin(name: string): Promise<void> {
-		return Promise.resolve();
+		return ;
 	}
 
 	end(name: string): void {
