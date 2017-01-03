@@ -1,7 +1,7 @@
-import {DeviceDiscovery} from "./device-discovery";
-import {CoreTypes} from "../ios/device/ios-core";
+import { DeviceDiscovery } from "./device-discovery";
+import { CoreTypes } from "../ios/device/ios-core";
 import * as ref from "ref";
-import {IOSDevice} from "../ios/device/ios-device";
+import { IOSDevice } from "../ios/device/ios-device";
 
 export class IOSDeviceDiscovery extends DeviceDiscovery {
 	private static ADNCI_MSG_CONNECTED = 1;
@@ -18,7 +18,7 @@ export class IOSDeviceDiscovery extends DeviceDiscovery {
 		if (!this._iTunesErrorMessage) {
 			this._iTunesErrorMessage = this.$iTunesValidator.getError();
 
-			if(this._iTunesErrorMessage) {
+			if (this._iTunesErrorMessage) {
 				this.$logger.warn(this._iTunesErrorMessage);
 			}
 		}
@@ -27,7 +27,7 @@ export class IOSDeviceDiscovery extends DeviceDiscovery {
 	}
 
 	private get $coreFoundation(): Mobile.ICoreFoundation {
-		if(!this._coreFoundation) {
+		if (!this._coreFoundation) {
 			this._coreFoundation = this.$injector.resolve("$coreFoundation");
 		}
 
@@ -36,7 +36,7 @@ export class IOSDeviceDiscovery extends DeviceDiscovery {
 
 	private _mobileDevice: Mobile.IMobileDevice;
 	private get $mobileDevice(): Mobile.IMobileDevice {
-		if(!this._mobileDevice) {
+		if (!this._mobileDevice) {
 			this._mobileDevice = this.$injector.resolve("$mobileDevice");
 		}
 
@@ -56,30 +56,31 @@ export class IOSDeviceDiscovery extends DeviceDiscovery {
 	}
 
 	public async startLookingForDevices(): Promise<void> {
-			if (this.validateiTunes()) {
-				this.subscribeForNotifications();
-				await this.checkForDevices();
-			}
+		if (this.validateiTunes()) {
+			this.subscribeForNotifications();
+			await this.checkForDevices();
+		}
 	}
 
 	public async checkForDevices(): Promise<void> {
-			if (this.validateiTunes()) {
-				let defaultTimeoutInSeconds = 1;
-				let parsedTimeout =  this.$utils.getParsedTimeout(defaultTimeoutInSeconds);
-				let timeout = parsedTimeout > defaultTimeoutInSeconds ? parsedTimeout/1000 : defaultTimeoutInSeconds;
-				this.startRunLoopWithTimer(timeout);
-			}
+		if (this.validateiTunes()) {
+			let defaultTimeoutInSeconds = 1;
+			let parsedTimeout = this.$utils.getParsedTimeout(defaultTimeoutInSeconds);
+			let timeout = parsedTimeout > defaultTimeoutInSeconds ? parsedTimeout / 1000 : defaultTimeoutInSeconds;
+			this.startRunLoopWithTimer(timeout);
+		}
 	}
 
-	private static deviceNotificationCallback(devicePointer?: NodeBuffer, user?: number) : any {
+	private static deviceNotificationCallback(devicePointer?: NodeBuffer, user?: number): any {
 		let iOSDeviceDiscovery: IOSDeviceDiscovery = $injector.resolve("iOSDeviceDiscovery");
 		let deviceInfo = ref.deref(devicePointer);
-		if(deviceInfo.msg === IOSDeviceDiscovery.ADNCI_MSG_CONNECTED) {
+
+		if (deviceInfo.msg === IOSDeviceDiscovery.ADNCI_MSG_CONNECTED) {
 			iOSDeviceDiscovery.createAndAddDevice(deviceInfo.dev);
-		} else if(deviceInfo.msg === IOSDeviceDiscovery.ADNCI_MSG_DISCONNECTED) {
+		} else if (deviceInfo.msg === IOSDeviceDiscovery.ADNCI_MSG_DISCONNECTED) {
 			let deviceIdentifier = iOSDeviceDiscovery.$coreFoundation.convertCFStringToCString(iOSDeviceDiscovery.$mobileDevice.deviceCopyDeviceIdentifier(deviceInfo.dev));
 			iOSDeviceDiscovery.removeDevice(deviceIdentifier);
-		} else if(deviceInfo.msg === IOSDeviceDiscovery.ADNCI_MSG_TRUSTED) {
+		} else if (deviceInfo.msg === IOSDeviceDiscovery.ADNCI_MSG_TRUSTED) {
 			let deviceIdentifier = iOSDeviceDiscovery.$coreFoundation.convertCFStringToCString(iOSDeviceDiscovery.$mobileDevice.deviceCopyDeviceIdentifier(deviceInfo.dev));
 			iOSDeviceDiscovery.removeDevice(deviceIdentifier);
 			iOSDeviceDiscovery.createAndAddDevice(deviceInfo.dev);
@@ -91,13 +92,13 @@ export class IOSDeviceDiscovery extends DeviceDiscovery {
 		iOSDeviceDiscovery.$coreFoundation.runLoopStop(iOSDeviceDiscovery.$coreFoundation.runLoopGetCurrent());
 	}
 
-	private validateResult(result: number, error: string) {
-		if(result !== 0)  {
+	private validateResult(result: number, error: string): void {
+		if (result !== 0) {
 			this.$errors.fail(error);
 		}
 	}
 
-	private subscribeForNotifications() {
+	private subscribeForNotifications(): void {
 		let notifyFunction = ref.alloc(CoreTypes.amDeviceNotificationRef);
 
 		let result = this.$mobileDevice.deviceNotificationSubscribe(this.notificationCallbackPtr, 0, 0, 0, notifyFunction);
@@ -111,15 +112,15 @@ export class IOSDeviceDiscovery extends DeviceDiscovery {
 		let kCFRunLoopDefaultMode = this.$coreFoundation.kCFRunLoopDefaultMode();
 		let timer: NodeBuffer = null;
 
-		if(timeout > 0) {
+		if (timeout > 0) {
 			let currentTime = this.$coreFoundation.absoluteTimeGetCurrent() + timeout;
-			timer = this.$coreFoundation.runLoopTimerCreate(null, currentTime , 0, 0, 0, this.timerCallbackPtr, null);
+			timer = this.$coreFoundation.runLoopTimerCreate(null, currentTime, 0, 0, 0, this.timerCallbackPtr, null);
 			this.$coreFoundation.runLoopAddTimer(this.$coreFoundation.runLoopGetCurrent(), timer, kCFRunLoopDefaultMode);
 		}
 
 		this.$coreFoundation.runLoopRun();
 
-		if(timeout > 0) {
+		if (timeout > 0) {
 			this.$coreFoundation.runLoopRemoveTimer(this.$coreFoundation.runLoopGetCurrent(), timer, kCFRunLoopDefaultMode);
 		}
 
@@ -127,7 +128,7 @@ export class IOSDeviceDiscovery extends DeviceDiscovery {
 	}
 
 	private createAndAddDevice(devicePointer: NodeBuffer): void {
-		let device = this.$injector.resolve(IOSDevice, {devicePointer: devicePointer});
+		let device = this.$injector.resolve(IOSDevice, { devicePointer: devicePointer });
 		this.addDevice(device);
 	}
 }

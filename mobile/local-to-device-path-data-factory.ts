@@ -24,16 +24,16 @@ class LocalToDevicePathData implements Mobile.ILocalToDevicePathData {
 	}
 
 	public getRelativeToProjectBasePath(): string {
-		 if (!this.relativeToProjectBasePath) {
-			 this.relativeToProjectBasePath = path.relative(this.localProjectRootPath, this.filePath);
-		 }
+		if (!this.relativeToProjectBasePath) {
+			this.relativeToProjectBasePath = path.relative(this.localProjectRootPath, this.filePath);
+		}
 
-		 return this.relativeToProjectBasePath;
+		return this.relativeToProjectBasePath;
 	}
 }
 
 export class LocalToDevicePathDataFactory implements Mobile.ILocalToDevicePathDataFactory {
-	create(filePath: string, localProjectRootPath: string, onDeviceFileName: string, deviceProjectRootPath: string):  Mobile.ILocalToDevicePathData {
+	create(filePath: string, localProjectRootPath: string, onDeviceFileName: string, deviceProjectRootPath: string): Mobile.ILocalToDevicePathData {
 		return new LocalToDevicePathData(filePath, localProjectRootPath, onDeviceFileName, deviceProjectRootPath);
 	}
 }

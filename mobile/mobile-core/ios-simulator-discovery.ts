@@ -1,5 +1,5 @@
-import {DeviceDiscovery} from "./device-discovery";
-import {IOSSimulator} from "./../ios/simulator/ios-simulator-device";
+import { DeviceDiscovery } from "./device-discovery";
+import { IOSSimulator } from "./../ios/simulator/ios-simulator-device";
 
 export class IOSSimulatorDiscovery extends DeviceDiscovery {
 	private cachedSimulator: Mobile.IiSimDevice;
@@ -12,12 +12,14 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 	}
 
 	public async startLookingForDevices(): Promise<void> {
-		return this.checkForDevices(new Future<void>());
+		return new Promise<void>((resolve, reject) => {
+			return this.checkForDevices(resolve, reject);
+		});
 	}
 
-	public async checkForDevices(future?: Promise<void>): Promise<void> {
+	public async checkForDevices(resolve?: (value?: void | PromiseLike<void>) => void, reject?: (reason?: any) => void): Promise<void> {
 		if (this.$hostInfo.isDarwin) {
-			let currentSimulator:any = null;
+			let currentSimulator: any = null;
 			if (await this.isSimulatorRunning()) {
 				currentSimulator = this.$iOSSimResolver.iOSSim.getRunningSimulator();
 			}
@@ -36,20 +38,18 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 			}
 		}
 
-		if (future) {
-			future.return();
+		if (resolve) {
+			resolve()
 		}
-
-		return future || Promise.resolve();
 	}
 
 	private async isSimulatorRunning(): Promise<boolean> {
-			try {
-				let output = await  this.$childProcess.exec("ps cax | grep launchd_sim");
-				return output.indexOf('launchd_sim') !== -1;
-			} catch(e) {
-				return false;
-			}
+		try {
+			let output = await this.$childProcess.exec("ps cax | grep launchd_sim");
+			return output.indexOf('launchd_sim') !== -1;
+		} catch (e) {
+			return false;
+		}
 	}
 
 	private createAndAddDevice(simulator: Mobile.IiSimDevice): void {

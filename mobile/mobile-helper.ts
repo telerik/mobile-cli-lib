@@ -8,7 +8,7 @@ export class MobileHelper implements Mobile.IMobileHelper {
 		private $errors: IErrors,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) { }
 
-	public get platformNames(): string[]{
+	public get platformNames(): string[] {
 		this.platformNamesCache = this.platformNamesCache ||
 			_.map(this.$mobilePlatformsCapabilities.getPlatformNames(), platform => this.normalizePlatformName(platform));
 
@@ -18,7 +18,7 @@ export class MobileHelper implements Mobile.IMobileHelper {
 	public getPlatformCapabilities(platform: string): Mobile.IPlatformCapabilities {
 		let platformNames = this.$mobilePlatformsCapabilities.getPlatformNames();
 		let validPlatformName = this.validatePlatformName(platform);
-		if(!_.some(platformNames, platformName => platformName === validPlatformName)) {
+		if (!_.some(platformNames, platformName => platformName === validPlatformName)) {
 			this.$errors.failWithoutHelp("'%s' is not a valid device platform. Valid platforms are %s.", platform, platformNames);
 		}
 
@@ -38,11 +38,11 @@ export class MobileHelper implements Mobile.IMobileHelper {
 	}
 
 	public normalizePlatformName(platform: string): string {
-		if(this.isAndroidPlatform(platform)) {
+		if (this.isAndroidPlatform(platform)) {
 			return "Android";
-		} else if(this.isiOSPlatform(platform)) {
+		} else if (this.isiOSPlatform(platform)) {
 			return "iOS";
-		} else if(this.isWP8Platform(platform)) {
+		} else if (this.isWP8Platform(platform)) {
 			return "WP8";
 		}
 
@@ -54,12 +54,12 @@ export class MobileHelper implements Mobile.IMobileHelper {
 	}
 
 	public validatePlatformName(platform: string): string {
-		if(!platform) {
+		if (!platform) {
 			this.$errors.fail("No device platform specified.");
 		}
 
 		let normalizedPlatform = this.normalizePlatformName(platform);
-		if(!normalizedPlatform || !_.includes(this.platformNames, normalizedPlatform)) {
+		if (!normalizedPlatform || !_.includes(this.platformNames, normalizedPlatform)) {
 			this.$errors.fail("'%s' is not a valid device platform. Valid platforms are %s.",
 				platform, helpers.formatListOfNames(this.platformNames));
 		}

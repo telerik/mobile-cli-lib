@@ -18,11 +18,11 @@ export class DeviceDiscovery extends EventEmitter implements Mobile.IDeviceDisco
 	}
 
 	public async startLookingForDevices(): Promise<void> {
-		return ;
+		return;
 	}
 
 	public async checkForDevices(): Promise<void> {
-		return ;
+		return;
 	}
 
 	private raiseOnDeviceFound(device: Mobile.IDevice) {

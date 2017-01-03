@@ -21,7 +21,7 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 	}
 
 	public async checkDependencies(): Promise<void> {
-		return ;
+		return;
 	}
 
 	public checkAvailability(): void {

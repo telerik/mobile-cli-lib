@@ -31,48 +31,51 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 
 	public async startLookingForDevices(): Promise<void> {
 		await this.ensureAdbServerStarted();
-		let blockingFuture = new Future<void>();
-		await this.checkForDevices(blockingFuture);
+		let blockingFuture = new Promise<void>((resolve, reject) => {
+			this.checkForDevices(resolve, reject);
+		});
 	}
 
-	public async checkForDevices(future?: Promise<void>): Promise<void> {
+	public async checkForDevices(resolve?: (value?: void | PromiseLike<void>) => void, reject?: (reason?: any) => void): Promise<void> {
 		let adbData = "";
+		let isResolved = false;
 
 		let result = await this.$adb.executeCommand(["devices"], { returnChildProcess: true });
+
 		result.stdout.on("data", (data: NodeBuffer) => {
 			adbData += data.toString();
 		});
 
 		result.stderr.on("data", (data: NodeBuffer) => {
 			let error = new Error(data.toString());
-			if (future && !future.isResolved()) {
-				return future.throw(error);
+			if (reject && !isResolved) {
+				isResolved = true;
+				return reject(error);
 			} else {
 				throw (error);
 			}
 		});
 
-		result.on("error", (err: Error) => {
-			if (future && !future.isResolved()) {
-				return future.throw(err);
+		result.on("error", (error: Error) => {
+			if (reject && !isResolved) {
+				isResolved = true;
+				return reject(error);
 			} else {
-				throw (err);
+				throw (error);
 			}
 		});
 
 		result.on("close", (exitCode: any) => {
-			fiberBootstrap.run(async () => {
-				await this.checkCurrentData(adbData);
-				if (future && !future.isResolved()) {
-					future.return();
-				}
-			});
-		});
+			this.checkCurrentData(adbData);
 
-		return future || Promise.resolve();
+			if (resolve && !isResolved) {
+				isResolved = true;
+				return resolve();
+			}
+		});
 	}
 
-	private async checkCurrentData(result: any): Promise<void> {
+	private checkCurrentData(result: any): void {
 		let currentDevices: IAdbAndroidDeviceInfo[] = result.toString().split(EOL).slice(1)
 			.filter((element: string) => !helpers.isNullOrWhitespace(element))
 			.map((element: string) => {

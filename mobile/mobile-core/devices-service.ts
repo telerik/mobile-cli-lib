@@ -3,6 +3,7 @@ import * as helpers from "../../helpers";
 import * as assert from "assert";
 import * as constants from "../../constants";
 import { exportedPromise, exported } from "../../decorators";
+import { settlePromises } from "../../helpers";
 
 export class DevicesService implements Mobile.IDevicesService {
 	private static DEVICE_LOOKING_INTERVAL = 2200;
@@ -13,7 +14,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	private _isInitialized = false;
 	private _data: Mobile.IDevicesServicesInitializationOptions;
 	private deviceDetectionInterval: any;
-	private deviceDetectionIntervalFuture: Promise<void>;
+	private deviceDetectionIntervalPromise: Promise<void>;
 
 	private get $companionAppsService(): ICompanionAppsService {
 		return this.$injector.resolve("companionAppsService");
@@ -149,11 +150,11 @@ export class DevicesService implements Mobile.IDevicesService {
 			this.$logger.trace("Device detection interval is already started. New Interval will not be started.");
 		} else {
 			this.deviceDetectionInterval = setInterval(async () => {
-				if (this.deviceDetectionIntervalFuture) {
+				if (this.deviceDetectionIntervalPromise) {
 					return;
 				}
 
-				this.deviceDetectionIntervalFuture = new Promise<void>(async (resolve, reject) => {
+				this.deviceDetectionIntervalPromise = new Promise<void>(async (resolve, reject) => {
 
 					try {
 						await this.$iOSDeviceDiscovery.checkForDevices();
@@ -186,8 +187,8 @@ export class DevicesService implements Mobile.IDevicesService {
 					resolve();
 				});
 
-				await this.deviceDetectionIntervalFuture;
-				this.deviceDetectionIntervalFuture = null;
+				await this.deviceDetectionIntervalPromise;
+				this.deviceDetectionIntervalPromise = null;
 			}, DevicesService.DEVICE_LOOKING_INTERVAL).unref();
 		}
 	}
@@ -260,17 +261,16 @@ export class DevicesService implements Mobile.IDevicesService {
 		let devices = this.filterDevicesByPlatform();
 		let sortedDevices = _.sortBy(devices, device => device.deviceInfo.platform);
 
-		let futures = _.map(sortedDevices, (device: Mobile.IDevice) => {
+		let onDeviceActions = _.map(sortedDevices, (device: Mobile.IDevice) => {
 			if (!canExecute || canExecute(device)) {
 				let future = action(device);
-				Future.settle(future);
 				return future;
 			} else {
 				return Promise.resolve();
 			}
 		});
 
-		Future.wait(futures);
+		await settlePromises(onDeviceActions);
 	}
 
 	@exportedPromise("devicesService", function () {
@@ -283,6 +283,7 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	public async execute(action: (device: Mobile.IDevice) => Promise<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: { allowNoDevices?: boolean }): Promise<void> {
 		assert.ok(this._isInitialized, "Devices services not initialized!");
+
 		if (this.hasDevices) {
 			if (this.$hostInfo.isDarwin && this._platform && this.$mobileHelper.isiOSPlatform(this._platform) &&
 				this.$options.emulator && !this.isOnlyiOSSimultorRunning()) {
@@ -291,6 +292,7 @@ export class DevicesService implements Mobile.IDevicesService {
 				let originalCanExecute = canExecute;
 				canExecute = (dev: Mobile.IDevice): boolean => this.isiOSSimulator(dev) && (!originalCanExecute || !!(originalCanExecute(dev)));
 			}
+
 			await this.executeCore(action, canExecute);
 		} else {
 			let message = constants.ERROR_NO_DEVICES;
@@ -464,6 +466,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		if (!emulatorServices) {
 			this.$errors.failWithoutHelp("Unable to detect platform for which to start emulator.");
 		}
+
 		await emulatorServices.startEmulator();
 
 		if (this.$mobileHelper.isAndroidPlatform(platform)) {
@@ -485,6 +488,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		let isInstalled = false,
 			isLiveSyncSupported = false,
 			device = this.getDeviceByIdentifier(deviceIdentifier);
+
 		try {
 			isInstalled = await device.applicationManager.isApplicationInstalled(appIdentifier);
 			await device.applicationManager.tryStartApplication(appIdentifier, framework);
@@ -522,7 +526,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	private async getDeviceDetectionIntervalFuture(): Promise<void> {
-		return this.deviceDetectionIntervalFuture || Promise.resolve();
+		return this.deviceDetectionIntervalPromise || Promise.resolve();
 	}
 }
 
