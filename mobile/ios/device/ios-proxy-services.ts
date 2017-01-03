@@ -50,6 +50,7 @@ export class AfcFile extends AfcBase implements Mobile.IAfcFile {
 		protected $logger: ILogger) {
 
 		super($logger);
+
 		let modeValue = 0;
 		if (mode.indexOf("r") > -1) {
 			modeValue = 0x1;
@@ -190,7 +191,7 @@ export class AfcClient extends AfcBase implements Mobile.IAfcClient {
 		this.$logger.trace("Removing device file '%s', result: %s", devicePath, removeResult.toString());
 	}
 
-	public async transfer(localFilePath: string, devicePath: string): Promise<void> {
+	public transfer(localFilePath: string, devicePath: string): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			let isResolved = false;
 			try {
@@ -373,7 +374,7 @@ export class NotificationProxyClient implements Mobile.INotificationProxyClient 
 		}
 	}
 
-	private openSocket() {
+	private openSocket(): void {
 		if (!this.plistService) {
 			this.plistService = this.$injector.resolve(iOSCore.PlistService, { service: this.device.startService(MobileServices.NOTIFICATION_PROXY), format: iOSCore.CoreTypes.kCFPropertyListBinaryFormat_v1_0 });
 			if (this.plistService.receiveAll) {

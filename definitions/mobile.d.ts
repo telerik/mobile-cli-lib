@@ -333,7 +333,7 @@ declare module Mobile {
 	interface IDevicesService {
 		hasDevices: boolean;
 		deviceCount: number;
-		async execute(action: (device: Mobile.IDevice) => Promise<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: { allowNoDevices?: boolean }): Promise<void>;
+		execute(action: (device: Mobile.IDevice) => Promise<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: { allowNoDevices?: boolean }): Promise<void>;
 		initialize(data?: IDevicesServicesInitializationOptions): Promise<void>;
 		platform: string;
 		getDevices(): Mobile.IDeviceInfo[];
@@ -527,8 +527,8 @@ declare module Mobile {
 	}
 
 	interface IHouseArrestClient {
-		getAfcClientForAppContainer(applicationIdentifier: string): Mobile.IAfcClient;
-		getAfcClientForAppDocuments(applicationIdentifier: string): Mobile.IAfcClient;
+		getAfcClientForAppContainer(applicationIdentifier: string): Promise<Mobile.IAfcClient>;
+		getAfcClientForAppDocuments(applicationIdentifier: string): Promise<Mobile.IAfcClient>;
 		closeSocket(): void;
 	}
 

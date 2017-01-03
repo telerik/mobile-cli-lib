@@ -74,7 +74,7 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		});
 	}
 
-	public async putFile(localFilePath: string, deviceFilePath: string): Promise<void> {
+	public putFile(localFilePath: string, deviceFilePath: string): Promise<void> {
 		let afcClient = this.resolveAfc();
 		return afcClient.transfer(path.resolve(localFilePath), deviceFilePath);
 	}
@@ -90,12 +90,14 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		let houseArrestClient: Mobile.IHouseArrestClient = this.$injector.resolve(iOSProxyServices.HouseArrestClient, { device: this.device });
 
 		let afcClient = this.getAfcClient(houseArrestClient, deviceAppData.deviceProjectRootPath, deviceAppData.appIdentifier);
-		_.each(localToDevicePaths, (localToDevicePathData) => {
+
+		await Promise.all(_.map(localToDevicePaths, async (localToDevicePathData) => {
 			let stats = this.$fs.getFsStats(localToDevicePathData.getLocalPath());
-			if(stats.isFile()) {
+			if (stats.isFile()) {
 				await afcClient.transfer(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath());
 			}
-		});
+		}));
+
 		houseArrestClient.closeSocket();
 	}
 
