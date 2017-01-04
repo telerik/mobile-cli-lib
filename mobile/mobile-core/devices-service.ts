@@ -216,7 +216,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		this.$logger.trace("startLookingForDevices; platform is %s", this._platform);
 		if (!this._platform) {
 			await this.detectCurrentlyAttachedDevices();
-			this.startDeviceDetectionInterval();
+			await this.startDeviceDetectionInterval();
 		} else if (this.$mobileHelper.isiOSPlatform(this._platform)) {
 			await this.$iOSDeviceDiscovery.startLookingForDevices();
 			if (this.$hostInfo.isDarwin) {
@@ -273,8 +273,8 @@ export class DevicesService implements Mobile.IDevicesService {
 		await settlePromises(onDeviceActions);
 	}
 
-	@exportedPromise("devicesService", function () {
-		this.startDeviceDetectionInterval();
+	@exportedPromise("devicesService", async function () {
+		await this.startDeviceDetectionInterval();
 	})
 	public deployOnDevices(deviceIdentifiers: string[], packageFile: string, packageName: string, framework: string): Promise<void>[] {
 		this.$logger.trace(`Called deployOnDevices for identifiers ${deviceIdentifiers} for packageFile: ${packageFile}. packageName is ${packageName}.`);

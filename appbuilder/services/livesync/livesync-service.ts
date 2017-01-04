@@ -17,8 +17,8 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 		private $logger: ILogger,
 		private $companionAppsService: ICompanionAppsService) { }
 
-	@exportedPromise("liveSyncService", function () {
-		this.$devicesService.startDeviceDetectionInterval();
+	@exportedPromise("liveSyncService", async function () {
+		await this.$devicesService.startDeviceDetectionInterval();
 	})
 	public livesync(deviceDescriptors: IDeviceLiveSyncInfo[], projectDir: string, filePaths?: string[]): Promise<IDeviceLiveSyncResult>[] {
 		this.$project.projectDir = projectDir;

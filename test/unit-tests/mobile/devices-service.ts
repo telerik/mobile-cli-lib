@@ -2,7 +2,10 @@ import { DevicesService } from "../../../mobile/mobile-core/devices-service";
 import { Yok } from "../../../yok";
 
 import { EventEmitter } from "events";
-import { assert } from "chai";
+import { assert, use } from "chai";
+let chaiAsPromised = require('chai-as-promised');
+use(chaiAsPromised);
+
 import { CommonLoggerStub, ErrorsStub } from "../stubs";
 import { Messages } from "../../../messages/messages";
 import * as constants from "../../../constants";
@@ -131,10 +134,12 @@ const getPromisesResults = async (promises: Promise<any>[]): Promise<any[]> => {
 	for (let i = 0; i < promises.length; i++) {
 		let currentResult: any = {};
 		try {
-			currentResult.isInstalled = await promises[i]
+			currentResult.result = await promises[i]
 		} catch (err) {
 			currentResult.error = err;
 		}
+
+		results.push(currentResult);
 	}
 
 	return results;
@@ -324,19 +329,21 @@ describe("devicesService", () => {
 		it("returns false for each device on which the app is not installed", async () => {
 			let results = devicesService.isAppInstalledOnDevices([androidDevice.deviceInfo.identifier, iOSDevice.deviceInfo.identifier], "com.telerik.unitTest3", "cordova");
 			assert.isTrue(results.length > 0);
-			const isInstalledOnDevices = await Promise.all(results);
+			const isInstalledOnDevices = (await Promise.all(results)).map(r => r.isInstalled);
 			assert.deepEqual(isInstalledOnDevices, [true, false]);
 		});
 
 		it("throws error when invalid identifier is passed", async () => {
 			let results = devicesService.isAppInstalledOnDevices(["invalidDeviceId", iOSDevice.deviceInfo.identifier], "com.telerik.unitTest1", "cordova");
-			assert.eventually.throws(() => Promise.all(results));
-			_.each(await getPromisesResults(results), futurizedResult => {
-				let error = futurizedResult.error;
+
+			assert.isRejected(Promise.all(results));
+
+			_.each(await getPromisesResults(results), promiseResult => {
+				let error = promiseResult.error;
 				if (error) {
 					assert.isTrue(error.message.indexOf("invalidDeviceId") !== -1, "The message must contain the id of the invalid device.");
 				} else {
-					assert.isTrue(futurizedResult.get().isInstalled, "The app is installed on iOS Device, so we must return true.");
+					assert.isTrue(promiseResult.result.isInstalled, "The app is installed on iOS Device, so we must return true.");
 				}
 			});
 		});
@@ -395,11 +402,11 @@ describe("devicesService", () => {
 			});
 
 			it("fails when deviceId is invalid index (less than 0)", () => {
-				assert.eventually.throws(() => devicesService.initialize({ platform: "android", deviceId: "-1" }));
+				assert.isRejected(devicesService.initialize({ platform: "android", deviceId: "-1" }));
 			});
 
 			it("fails when deviceId is invalid index (more than currently connected devices)", () => {
-				assert.eventually.throws(() => devicesService.initialize({ platform: "android", deviceId: "100" }));
+				assert.isRejected(devicesService.initialize({ platform: "android", deviceId: "100" }));
 			});
 
 			it("does not fail when iOSDeviceDiscovery startLookingForDevices fails", async () => {
@@ -427,21 +434,21 @@ describe("devicesService", () => {
 
 		it("when initialize is called with platform and deviceId and such device cannot be found", () => {
 			assert.isFalse(devicesService.hasDevices, "Initially devicesService hasDevices must be false.");
-			assert.eventually.throws(() => devicesService.initialize({ platform: "android", deviceId: androidDevice.deviceInfo.identifier }));
+			assert.isRejected(devicesService.initialize({ platform: "android", deviceId: androidDevice.deviceInfo.identifier }));
 		});
 
 		it("when initialize is called with deviceId and invalid platform", () => {
 			assert.isFalse(devicesService.hasDevices, "Initially devicesService hasDevices must be false.");
 			iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
 			androidDeviceDiscovery.emit("deviceFound", androidDevice);
-			assert.eventually.throws(() => devicesService.initialize({ platform: "invalidPlatform", deviceId: androidDevice.deviceInfo.identifier }));
+			assert.isRejected(devicesService.initialize({ platform: "invalidPlatform", deviceId: androidDevice.deviceInfo.identifier }));
 		});
 
 		it("when initialize is called with platform and deviceId and device's platform is different", () => {
 			assert.isFalse(devicesService.hasDevices, "Initially devicesService hasDevices must be false.");
 			iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
 			androidDeviceDiscovery.emit("deviceFound", androidDevice);
-			assert.eventually.throws(() => devicesService.initialize({ platform: "ios", deviceId: androidDevice.deviceInfo.identifier }));
+			assert.isRejected(devicesService.initialize({ platform: "ios", deviceId: androidDevice.deviceInfo.identifier }));
 		});
 
 		describe("when only deviceIdentifier is passed", () => {
@@ -487,11 +494,11 @@ describe("devicesService", () => {
 			});
 
 			it("fails when deviceId is invalid index (less than 0)", () => {
-				assert.eventually.throws(() => devicesService.initialize({ deviceId: "-1" }));
+				assert.isRejected(devicesService.initialize({ deviceId: "-1" }));
 			});
 
 			it("fails when deviceId is invalid index (more than currently connected devices)", () => {
-				assert.eventually.throws(() => devicesService.initialize({ deviceId: "100" }));
+				assert.isRejected(devicesService.initialize({ deviceId: "100" }));
 			});
 
 			it("does not fail when iOSDeviceDiscovery startLookingForDevices fails", async () => {
@@ -513,14 +520,14 @@ describe("devicesService", () => {
 				testInjector.resolve("hostInfo").isDarwin = false;
 				await devicesService.initialize({ platform: "ios" });
 				testInjector.resolve("options").emulator = true;
-				assert.eventually.throws(() => devicesService.execute(() => { counter++; return Promise.resolve(); }), "Cannot find connected devices. Reconnect any connected devices");
+				assert.isRejected(devicesService.execute(() => { counter++; return Promise.resolve(); }), "Cannot find connected devices. Reconnect any connected devices");
 			});
 
 			it("execute fails when platform is iOS on non-Darwin platform and there are no devices attached", async () => {
 				testInjector.resolve("hostInfo").isDarwin = false;
 				await devicesService.initialize({ platform: "ios" });
 				assert.isFalse(devicesService.hasDevices, "MUST BE FALSE!!!");
-				assert.eventually.throws(() => devicesService.execute(() => { counter++; return Promise.resolve(); }), "Cannot find connected devices. Reconnect any connected devices");
+				assert.isRejected(devicesService.execute(() => { counter++; return Promise.resolve(); }), "Cannot find connected devices. Reconnect any connected devices");
 			});
 
 			it("executes action only on iOS Simulator when iOS device is found and --emulator is passed", async () => {
@@ -612,7 +619,7 @@ describe("devicesService", () => {
 			androidDeviceDiscovery.emit("deviceLost", tempDevice);
 			iOSDeviceDiscovery.emit("deviceLost", iOSDevice);
 			counter = 0;
-			assert.eventually.throws(() => devicesService.execute(() => { counter++; return Promise.resolve(); }, () => true));
+			assert.isRejected(devicesService.execute(() => { counter++; return Promise.resolve(); }, () => true));
 			counter = 0;
 			devicesService.execute(() => { counter++; return Promise.resolve(); }, () => true, { allowNoDevices: true });
 			assert.deepEqual(counter, 0, "The action must not be executed when there are no devices.");
@@ -656,7 +663,7 @@ describe("devicesService", () => {
 			assert.isFalse(devicesService.hasDevices, "Initially devicesService hasDevices must be false.");
 			androidDeviceDiscovery.emit("deviceFound", androidDevice);
 			iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
-			assert.eventually.throws(() => devicesService.initialize());
+			assert.isRejected(devicesService.initialize());
 		});
 
 		it("when parameters are not passed and devices with invalid platforms are detected initialize should work with correct devices only", async () => {
@@ -668,7 +675,9 @@ describe("devicesService", () => {
 					platform: "invalid-platform"
 				}
 			});
+
 			await devicesService.initialize();
+
 			assert.isTrue(logger.output.indexOf("is not supported") !== -1);
 		});
 
@@ -680,8 +689,7 @@ describe("devicesService", () => {
 					platform: "invalid-platform"
 				}
 			});
-			assert.eventually.throws(() => devicesService.initialize());
-			assert.isTrue(logger.output.indexOf("is not supported") !== -1);
+			assert.isRejected(devicesService.initialize());
 		});
 
 		it("caches execution result and does not execute next time when called", async () => {
@@ -704,21 +712,21 @@ describe("devicesService", () => {
 
 			it("throws when iOS platform is specified and iOS device identifier is passed", () => {
 				iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
-				assert.eventually.throws(() => devicesService.initialize({ platform: "ios", deviceId: iOSDevice.deviceInfo.identifier }), "You can use iOS simulator only on OS X.");
+				assert.isRejected(devicesService.initialize({ platform: "ios", deviceId: iOSDevice.deviceInfo.identifier }), "You can use iOS simulator only on OS X.");
 			});
 
 			it("throws when iOS device identifier is passed", () => {
 				iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
-				assert.eventually.throws(() => devicesService.initialize({ deviceId: iOSDevice.deviceInfo.identifier }), "You can use iOS simulator only on OS X.");
+				assert.isRejected(devicesService.initialize({ deviceId: iOSDevice.deviceInfo.identifier }), "You can use iOS simulator only on OS X.");
 			});
 
 			it("throws when iOS platform is specified", () => {
-				assert.eventually.throws(() => devicesService.initialize({ platform: "ios" }), "You can use iOS simulator only on OS X.");
+				assert.isRejected(devicesService.initialize({ platform: "ios" }), "You can use iOS simulator only on OS X.");
 			});
 
 			it("throws when paramaters are not passed, but iOS device is detected", () => {
 				iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
-				assert.eventually.throws(() => devicesService.initialize(), "You can use iOS simulator only on OS X.");
+				assert.isRejected(devicesService.initialize(), "You can use iOS simulator only on OS X.");
 			});
 
 			it("does not throw when only skipInferPlatform is passed", async () => {
@@ -832,14 +840,14 @@ describe("devicesService", () => {
 
 		it("throws error when invalid identifier is passed", async () => {
 			let results = devicesService.deployOnDevices(["invalidDeviceId", iOSDevice.deviceInfo.identifier], "path", "packageName", "cordova");
-			assert.eventually.throws(() => Promise.all(results));
+			assert.isRejected(Promise.all(results));
 			let realResults = await getPromisesResults(results);
 			_.each(realResults, singlePromiseResult => {
 				let error = singlePromiseResult.error;
 				if (error) {
 					assert.isTrue(error.message.indexOf("invalidDeviceId") !== -1, "The message must contain the id of the invalid device.");
 				} else {
-					assert.isTrue(singlePromiseResult === undefined, "On success, undefined should be returned.");
+					assert.isTrue(singlePromiseResult.result === undefined, "On success, undefined should be returned.");
 				}
 			});
 		});
@@ -1061,7 +1069,7 @@ describe("devicesService", () => {
 			resetDefaultSetInterval();
 		});
 
-		it("should start device detection interval.", () => {
+		it("should start device detection interval.", async () => {
 			let hasStartedDeviceDetectionInterval = false;
 
 			mockSetInterval({
@@ -1071,12 +1079,12 @@ describe("devicesService", () => {
 				}
 			});
 
-			devicesService.startDeviceDetectionInterval();
+			await devicesService.startDeviceDetectionInterval();
 
 			assert.isTrue(hasStartedDeviceDetectionInterval);
 		});
 
-		it("should not start device detection interval if there is one running.", () => {
+		it("should not start device detection interval if there is one running.", async () => {
 
 			global.setInterval = (callback: (...args: any[]) => void, ms: number, ...args: any[]): NodeJS.Timer => {
 				callback();
@@ -1089,9 +1097,9 @@ describe("devicesService", () => {
 				};
 			};
 
-			devicesService.startDeviceDetectionInterval();
-			devicesService.startDeviceDetectionInterval();
-			devicesService.startDeviceDetectionInterval();
+			await devicesService.startDeviceDetectionInterval();
+			await devicesService.startDeviceDetectionInterval();
+			await devicesService.startDeviceDetectionInterval();
 
 			assert.deepEqual(setIntervalsCalledCount, 1);
 		});
@@ -1103,14 +1111,14 @@ describe("devicesService", () => {
 				$iOSDeviceDiscovery = testInjector.resolve("iOSDeviceDiscovery");
 			});
 
-			it("should check for ios devices.", () => {
+			it("should check for ios devices.", async () => {
 				let hasCheckedForIosDevices = false;
 
 				$iOSDeviceDiscovery.checkForDevices = async (): Promise<void> => {
 					hasCheckedForIosDevices = true;
 				};
 
-				devicesService.startDeviceDetectionInterval();
+				await devicesService.startDeviceDetectionInterval();
 
 				assert.isTrue(hasCheckedForIosDevices);
 			});
@@ -1118,11 +1126,7 @@ describe("devicesService", () => {
 			it("should not throw if ios device check fails throws an exception.", () => {
 				$iOSDeviceDiscovery.checkForDevices = throwErrorFuture;
 
-				let callback = () => {
-					devicesService.startDeviceDetectionInterval.call(devicesService);
-				};
-
-				assert.doesNotThrow(callback);
+				assert.isFulfilled(devicesService.startDeviceDetectionInterval());
 			});
 		});
 
@@ -1133,14 +1137,14 @@ describe("devicesService", () => {
 				$androidDeviceDiscovery = testInjector.resolve("androidDeviceDiscovery");
 			});
 
-			it("should check for android devices.", () => {
+			it("should check for android devices.", async () => {
 				let hasCheckedForAndroidDevices = false;
 
 				$androidDeviceDiscovery.startLookingForDevices = async (): Promise<void> => {
 					hasCheckedForAndroidDevices = true;
 				};
 
-				devicesService.startDeviceDetectionInterval();
+				await devicesService.startDeviceDetectionInterval();
 
 				assert.isTrue(hasCheckedForAndroidDevices);
 			});
@@ -1148,11 +1152,7 @@ describe("devicesService", () => {
 			it("should not throw if android device check fails throws an exception.", () => {
 				$androidDeviceDiscovery.startLookingForDevices = throwErrorFuture;
 
-				let callback = () => {
-					devicesService.startDeviceDetectionInterval.call(devicesService);
-				};
-
-				assert.doesNotThrow(callback);
+				assert.isFulfilled(devicesService.startDeviceDetectionInterval());
 			});
 		});
 
@@ -1172,28 +1172,24 @@ describe("devicesService", () => {
 				hasCheckedForIosSimulator = false;
 			});
 
-			it("should check for ios simulator if the host is Darwin.", () => {
-				devicesService.startDeviceDetectionInterval();
+			it.only("should check for ios simulator if the host is Darwin.", async () => {
+				await devicesService.startDeviceDetectionInterval();
 
 				assert.isTrue(hasCheckedForIosSimulator);
 			});
 
-			it("should not check for ios simulator if the host is not Darwin.", () => {
+			it("should not check for ios simulator if the host is not Darwin.", async () => {
 				$hostInfo.isDarwin = false;
 
-				devicesService.startDeviceDetectionInterval();
+				await devicesService.startDeviceDetectionInterval();
 
 				assert.isFalse(hasCheckedForIosSimulator);
 			});
 
-			it("should not throw if ios simulator check fails throws an exception.", () => {
+			it("should not throw if ios simulator check fails throws an exception.", async () => {
 				$iOSSimulatorDiscovery.checkForDevices = throwErrorFuture;
 
-				let callback = () => {
-					devicesService.startDeviceDetectionInterval.call(devicesService);
-				};
-
-				assert.doesNotThrow(callback);
+				assert.isFulfilled(devicesService.startDeviceDetectionInterval());
 			});
 		});
 
@@ -1221,21 +1217,18 @@ describe("devicesService", () => {
 				$iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
 			});
 
-			it("should check for application updates for all connected devices.", () => {
-				devicesService.startDeviceDetectionInterval();
+			it("should check for application updates for all connected devices.", async () => {
+				await devicesService.startDeviceDetectionInterval();
 
 				assert.isTrue(hasCheckedForAndroidAppUpdates);
 				assert.isTrue(hasCheckedForIosAppUpdates);
 			});
 
-			it("should check for application updates if the check on one device throws an exception.", () => {
+			it("should check for application updates if the check on one device throws an exception.", async () => {
 				iOSDevice.applicationManager.checkForApplicationUpdates = throwErrorFuture;
 
-				let callback = () => {
-					devicesService.startDeviceDetectionInterval.call(devicesService);
-				};
+				assert.isFulfilled(devicesService.startDeviceDetectionInterval());
 
-				assert.doesNotThrow(callback);
 				assert.isTrue(hasCheckedForAndroidAppUpdates);
 			});
 
@@ -1272,9 +1265,9 @@ describe("devicesService", () => {
 				}
 			});
 
-			devicesService.startDeviceDetectionInterval();
+			await devicesService.startDeviceDetectionInterval();
 			await devicesService.stopDeviceDetectionInterval();
-			devicesService.startDeviceDetectionInterval();
+			await devicesService.startDeviceDetectionInterval();
 
 			assert.deepEqual(setIntervalStartedCount, 2);
 		});
@@ -1286,7 +1279,7 @@ describe("devicesService", () => {
 				clearIntervalCount++;
 			};
 
-			devicesService.startDeviceDetectionInterval();
+			await devicesService.startDeviceDetectionInterval();
 			await devicesService.stopDeviceDetectionInterval();
 			await devicesService.stopDeviceDetectionInterval();
 
