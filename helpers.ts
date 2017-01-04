@@ -19,6 +19,10 @@ export function settlePromises<T>(promises: Promise<T>[]): Promise<T[]> {
 
 		const length = promises.length;
 
+		if (!promises.length) {
+			resolve();
+		}
+
 		_.forEach(promises, currentPromise => {
 			currentPromise
 				.then(result => {

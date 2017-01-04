@@ -15,6 +15,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	private _data: Mobile.IDevicesServicesInitializationOptions;
 	private deviceDetectionInterval: any;
 	private deviceDetectionIntervalPromise: Promise<void>;
+	private isDeviceDetectionIntervalPromiseIsInProgress: boolean;
 
 	private get $companionAppsService(): ICompanionAppsService {
 		return this.$injector.resolve("companionAppsService");
@@ -149,12 +150,13 @@ export class DevicesService implements Mobile.IDevicesService {
 		if (this.deviceDetectionInterval) {
 			this.$logger.trace("Device detection interval is already started. New Interval will not be started.");
 		} else {
-			this.deviceDetectionInterval = setInterval(async () => {
-				if (this.deviceDetectionIntervalPromise) {
-					return;
-				}
+			this.deviceDetectionIntervalPromise = new Promise<void>(async (resolve, reject) => {
+				this.deviceDetectionInterval = setInterval(async () => {
+					if (this.isDeviceDetectionIntervalPromiseIsInProgress) {
+						return;
+					}
 
-				this.deviceDetectionIntervalPromise = new Promise<void>(async (resolve, reject) => {
+					this.isDeviceDetectionIntervalPromiseIsInProgress = true;
 
 					try {
 						await this.$iOSDeviceDiscovery.checkForDevices();
@@ -176,20 +178,21 @@ export class DevicesService implements Mobile.IDevicesService {
 						this.$logger.trace("Error while checking for new iOS Simulators.", err);
 					}
 
-					_.each(this._devices, async device => {
-						try {
-							await device.applicationManager.checkForApplicationUpdates();
-						} catch (err) {
-							this.$logger.trace(`Error checking for application updates on device ${device.deviceInfo.identifier}.`, err);
-						}
-					});
+
+					try {
+						await settlePromises(_.map(this._devices, device => device.applicationManager.checkForApplicationUpdates()));
+					} catch (err) {
+						this.$logger.trace("Error checking for application updates on devices.", err);
+					}
 
 					resolve();
-				});
 
-				await this.deviceDetectionIntervalPromise;
-				this.deviceDetectionIntervalPromise = null;
-			}, DevicesService.DEVICE_LOOKING_INTERVAL).unref();
+					this.isDeviceDetectionIntervalPromiseIsInProgress = false;
+
+				}, DevicesService.DEVICE_LOOKING_INTERVAL).unref();
+			});
+
+			return this.deviceDetectionIntervalPromise;
 		}
 	}
 

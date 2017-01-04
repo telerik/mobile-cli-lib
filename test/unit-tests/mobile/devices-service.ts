@@ -152,14 +152,12 @@ let nodeJsTimer = {
 };
 
 let originalSetInterval = setInterval;
-function mockSetInterval(options: { shouldExecuteCallback: boolean, testCaseCallback?: Function }): void {
+function mockSetInterval(testCaseCallback?: Function): void {
 	global.setInterval = (callback: (...args: any[]) => void, ms: number, ...args: any[]): NodeJS.Timer => {
-		if (options.shouldExecuteCallback) {
-			callback();
-		}
+		callback();
 
-		if (options.testCaseCallback) {
-			options.testCaseCallback();
+		if (testCaseCallback) {
+			testCaseCallback();
 		}
 
 		return nodeJsTimer;
@@ -592,6 +590,7 @@ describe("devicesService", () => {
 		});
 
 		it("when only skipInferPlatform is passed (true)", async () => {
+			mockSetInterval();
 			assert.isFalse(devicesService.hasDevices, "Initially devicesService hasDevices must be false.");
 			androidDeviceDiscovery.emit("deviceFound", androidDevice);
 			iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
@@ -730,6 +729,7 @@ describe("devicesService", () => {
 			});
 
 			it("does not throw when only skipInferPlatform is passed", async () => {
+				mockSetInterval();
 				await devicesService.initialize({ skipInferPlatform: true });
 			});
 
@@ -1061,7 +1061,7 @@ describe("devicesService", () => {
 
 		beforeEach(() => {
 			setIntervalsCalledCount = 0;
-			mockSetInterval({ shouldExecuteCallback: true });
+			mockSetInterval();
 		});
 
 		afterEach(async () => {
@@ -1072,11 +1072,8 @@ describe("devicesService", () => {
 		it("should start device detection interval.", async () => {
 			let hasStartedDeviceDetectionInterval = false;
 
-			mockSetInterval({
-				shouldExecuteCallback: false,
-				testCaseCallback: () => {
-					hasStartedDeviceDetectionInterval = true;
-				}
+			mockSetInterval(() => {
+				hasStartedDeviceDetectionInterval = true;
 			});
 
 			await devicesService.startDeviceDetectionInterval();
@@ -1172,7 +1169,7 @@ describe("devicesService", () => {
 				hasCheckedForIosSimulator = false;
 			});
 
-			it.only("should check for ios simulator if the host is Darwin.", async () => {
+			it("should check for ios simulator if the host is Darwin.", async () => {
 				await devicesService.startDeviceDetectionInterval();
 
 				assert.isTrue(hasCheckedForIosSimulator);
@@ -1227,7 +1224,7 @@ describe("devicesService", () => {
 			it("should check for application updates if the check on one device throws an exception.", async () => {
 				iOSDevice.applicationManager.checkForApplicationUpdates = throwErrorFuture;
 
-				assert.isFulfilled(devicesService.startDeviceDetectionInterval());
+				await devicesService.startDeviceDetectionInterval();
 
 				assert.isTrue(hasCheckedForAndroidAppUpdates);
 			});
@@ -1247,7 +1244,7 @@ describe("devicesService", () => {
 
 	describe("stopDeviceDetectionInterval", () => {
 		beforeEach(() => {
-			mockSetInterval({ shouldExecuteCallback: true });
+			mockSetInterval();
 		});
 
 		afterEach(async () => {
@@ -1258,11 +1255,8 @@ describe("devicesService", () => {
 		it("should stop the device detection interval.", async () => {
 			let setIntervalStartedCount = 0;
 
-			mockSetInterval({
-				shouldExecuteCallback: false,
-				testCaseCallback: () => {
-					setIntervalStartedCount++;
-				}
+			mockSetInterval(() => {
+				setIntervalStartedCount++;
 			});
 
 			await devicesService.startDeviceDetectionInterval();
@@ -1351,11 +1345,11 @@ describe("devicesService", () => {
 		it("should not throw if any of the device discovery services throws an exception.", async () => {
 			$iOSDeviceDiscovery.startLookingForDevices = throwErrorFuture;
 
-			let callback = async () => {
-				await devicesService.detectCurrentlyAttachedDevices.call(devicesService);
-			};
+			const promise = devicesService.detectCurrentlyAttachedDevices();
 
-			assert.eventually.doesNotThrow(callback);
+			await promise;
+
+			assert.isFulfilled(promise);
 		});
 	});
 
