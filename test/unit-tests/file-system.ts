@@ -1,11 +1,11 @@
-import {Yok} from "../../yok";
+import { Yok } from "../../yok";
 import * as path from "path";
 import temp = require("temp");
 import * as hostInfoLib from "../../host-info";
-import {assert} from "chai";
+import { assert } from "chai";
 import * as fileSystemFile from "../../file-system";
 import * as childProcessLib from "../../child-process";
-import {CommonLoggerStub} from "./stubs";
+import { CommonLoggerStub } from "./stubs";
 
 let sampleZipFileTest = path.join(__dirname, "../resources/sampleZipFileTest.zip");
 let unzippedFileName = "sampleZipFileTest.txt";
@@ -134,7 +134,7 @@ describe("FileSystem", () => {
 				let tempDir = temp.mkdirSync("projectToUnzip");
 				let fs: IFileSystem = testInjector.resolve("fs");
 				if (isOsCaseSensitive(testInjector)) {
-					assert.throws(async () => await  fs.unzip(sampleZipFileTestIncorrectName, tempDir, undefined, [unzippedFileName]));
+					assert.throws(async () => await fs.unzip(sampleZipFileTestIncorrectName, tempDir, undefined, [unzippedFileName]));
 				}
 			});
 
@@ -143,7 +143,7 @@ describe("FileSystem", () => {
 				let tempDir = temp.mkdirSync("projectToUnzip");
 				let fs: IFileSystem = testInjector.resolve("fs");
 				if (isOsCaseSensitive(testInjector)) {
-					assert.throws(async () => await  fs.unzip(sampleZipFileTestIncorrectName, tempDir, {}, [unzippedFileName]));
+					assert.throws(async () => await fs.unzip(sampleZipFileTestIncorrectName, tempDir, {}, [unzippedFileName]));
 				}
 			});
 
@@ -152,11 +152,11 @@ describe("FileSystem", () => {
 				let tempDir = temp.mkdirSync("projectToUnzip");
 				let fs: IFileSystem = testInjector.resolve("fs");
 				if (isOsCaseSensitive(testInjector)) {
-					assert.throws(async () => await  fs.unzip(sampleZipFileTestIncorrectName, tempDir, { caseSensitive: true }, [unzippedFileName]));
+					assert.throws(async () => await fs.unzip(sampleZipFileTestIncorrectName, tempDir, { caseSensitive: true }, [unzippedFileName]));
 				}
 			});
 
-			it("is case insensitive when caseSensitive option is false", () => {
+			it("is case insensitive when caseSensitive option is false", async () => {
 				let testInjector = createTestInjector();
 				let tempDir = temp.mkdirSync("projectToUnzip");
 				let fs: IFileSystem = testInjector.resolve("fs");

@@ -59,7 +59,7 @@ export class SysInfoBase implements ISysInfo {
 	public async getXCodeVersion(): Promise<string> {
 		if (!this.xCodeVerCache) {
 			try {
-				this.xCodeVerCache = this.$hostInfo.isDarwin ? this.exec("xcodebuild -version") : null;
+				this.xCodeVerCache = this.$hostInfo.isDarwin ? await this.exec("xcodebuild -version") : null;
 			} catch (e) {
 				this.xCodeVerCache = null;
 			}

@@ -2,17 +2,17 @@ import * as assert from "assert";
 import { isPromise } from "./helpers";
 
 export function cache(): any {
-	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>, a: any): TypedPropertyDescriptor<any> => {
+	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> => {
 		let isCalled = false;
 		let result: any;
 		let propName: string = descriptor.value ? "value" : "get";
 
 		const originalValue = (<any>descriptor)[propName];
 
-		(<any>descriptor)[propName] = (...args: any[]) => {
+		(<any>descriptor)[propName] = function (...args: any[]) {
 			if (!isCalled) {
 				isCalled = true;
-				result = originalValue.apply(target, args);
+				result = originalValue.apply(this, args);
 			}
 
 			return result;
@@ -23,11 +23,11 @@ export function cache(): any {
 }
 
 export function invokeBefore(methodName: string, methodArgs?: any[]): any {
-	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>, a: any): TypedPropertyDescriptor<any> => {
+	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> => {
 		const originalValue = descriptor.value;
-		descriptor.value = async (...args: any[]) => {
-			await target[methodName].apply(target, methodArgs);
-			return originalValue.apply(target, args);
+		descriptor.value = async function (...args: any[]) {
+			await target[methodName].apply(this, methodArgs);
+			return originalValue.apply(this, args);
 		};
 
 		return descriptor;

@@ -109,7 +109,7 @@ describe("decorators", () => {
 
 		it("rejects Promise, which is resolved to correct error (function returning Promise without arguments throws)", (done) => {
 			let expectedError = new Error("Test msg");
-			$injector.register(moduleName, { propertyName: () => { return (() => { throw expectedError; }).future<void>()(); } });
+			$injector.register(moduleName, { propertyName: async () => { throw expectedError; } });
 			generatePublicApiFromExportedPromiseDecorator();
 
 			let promise: any = $injector.publicApi.__modules__[moduleName][propertyName]();
@@ -139,7 +139,7 @@ describe("decorators", () => {
 
 		it("rejects Promises, which are resolved to correct error (function returning Promise<T>[] without arguments throws)", (done) => {
 			let expectedErrors = [new Error("result1"), new Error("result2"), new Error("result3")];
-			$injector.register(moduleName, { propertyName: () => _.map(expectedErrors, expectedError => { return (() => { throw expectedError; }).future<void>()(); }) });
+			$injector.register(moduleName, { propertyName: () => _.map(expectedErrors, async expectedError => { throw expectedError; }) });
 			generatePublicApiFromExportedPromiseDecorator();
 
 			new Promise((onFulfilled: Function, onRejected: Function) => {
@@ -213,12 +213,10 @@ describe("decorators", () => {
 				expectedResults = "result";
 
 				$injector.register(moduleName, {
-					propertyName: () => {
-						return (() => {
-							assert.isFalse(isPostActionExecuted, "Post action MUST NOT be called before all actions are executed.");
-							isActionExecuted = true;
-							return expectedResults;
-						}).future<any>()();
+					propertyName: async () => {
+						assert.isFalse(isPostActionExecuted, "Post action MUST NOT be called before all actions are executed.");
+						isActionExecuted = true;
+						return expectedResults;
 					}
 				});
 
@@ -232,13 +230,11 @@ describe("decorators", () => {
 				expectedResults = ["result1", "result2", "result3"];
 
 				$injector.register(moduleName, {
-					propertyName: () => _.map(expectedResults, (expectedResult, index) => {
-						return (() => {
-							assert.isFalse(isPostActionExecuted, "Post action MUST NOT be called before all actions are executed.");
+					propertyName: () => _.map(expectedResults, async (expectedResult, index) => {
+						assert.isFalse(isPostActionExecuted, "Post action MUST NOT be called before all actions are executed.");
 
-							isActionExecuted = (index + 1) === expectedResults.length;
-							return expectedResult;
-						}).future<any>()();
+						isActionExecuted = (index + 1) === expectedResults.length;
+						return expectedResult;
 					})
 				});
 
@@ -278,13 +274,11 @@ describe("decorators", () => {
 				let errorMessage = "This future throws.";
 
 				$injector.register(moduleName, {
-					propertyName: () => _.map(expectedResults, (expectedResult, index) => {
-						return (() => {
-							assert.isFalse(isPostActionExecuted, "Post action MUST NOT be called before all actions are executed.");
+					propertyName: () => _.map(expectedResults, async (expectedResult, index) => {
+						assert.isFalse(isPostActionExecuted, "Post action MUST NOT be called before all actions are executed.");
 
-							isActionExecuted = (index + 1) === expectedResults.length;
-							throw new Error(errorMessage);
-						}).future<void>()();
+						isActionExecuted = (index + 1) === expectedResults.length;
+						throw new Error(errorMessage);
 					})
 				});
 
@@ -319,18 +313,16 @@ describe("decorators", () => {
 				let errorMessage = "This future throws.";
 
 				$injector.register(moduleName, {
-					propertyName: () => _.map(expectedResults, expectedResult => {
-						return (() => {
-							assert.isFalse(isPostActionExecuted, "Post action MUST NOT be called before all actions are executed.");
+					propertyName: () => _.map(expectedResults, async expectedResult => {
+						assert.isFalse(isPostActionExecuted, "Post action MUST NOT be called before all actions are executed.");
 
-							calledActionsCount++;
-							isActionExecuted = calledActionsCount === expectedResults.length;
-							if (calledActionsCount % 2 === 0) {
-								throw new Error(errorMessage);
-							} else {
-								return expectedResult;
-							}
-						}).future<void>()();
+						calledActionsCount++;
+						isActionExecuted = calledActionsCount === expectedResults.length;
+						if (calledActionsCount % 2 === 0) {
+							throw new Error(errorMessage);
+						} else {
+							return expectedResult;
+						}
 					})
 				});
 

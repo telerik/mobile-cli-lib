@@ -1,9 +1,9 @@
-import {Yok} from "../../yok";
+import { Yok } from "../../yok";
 import * as assert from "assert";
 
-import {SysInfoBase} from "../../sys-info-base";
+import { SysInfoBase } from "../../sys-info-base";
 import * as temp from "temp";
-import {writeFileSync} from "fs";
+import { writeFileSync } from "fs";
 import * as path from "path";
 temp.track();
 
@@ -32,7 +32,7 @@ interface IChildProcessResults {
 }
 
 function getResultFromChildProcess(childProcessResultDescription: IChildProcessResultDescription): any {
-	if(childProcessResultDescription.shouldThrowError) {
+	if (childProcessResultDescription.shouldThrowError) {
 		throw new Error("This one throws error.");
 	}
 
@@ -57,20 +57,16 @@ function createChildProcessResults(childProcessResult: IChildProcessResults): ID
 	};
 }
 
-function createTestInjector(childProcessResult: IChildProcessResults, hostInfoData: {isWindows: boolean, dotNetVersion: string, isDarwin: boolean}, itunesError: string): IInjector {
+function createTestInjector(childProcessResult: IChildProcessResults, hostInfoData: { isWindows: boolean, dotNetVersion: string, isDarwin: boolean }, itunesError: string): IInjector {
 	let injector = new Yok();
 	let childProcessResultDictionary = createChildProcessResults(childProcessResult);
 	injector.register("childProcess", {
-		exec: (command: string, options?: any, execOptions?: IExecOptions) => {
-			return (() => {
-				return getResultFromChildProcess(childProcessResultDictionary[command]);
-			}).future<any>()();
+		exec: async (command: string, options?: any, execOptions?: IExecOptions) => {
+			return getResultFromChildProcess(childProcessResultDictionary[command]);
 		},
 
 		spawnFromEvent: (command: string, args: string[], event: string) => {
-			return (() => {
-				return getResultFromChildProcess(childProcessResultDictionary[command]);
-			}).future<any>()();
+			return getResultFromChildProcess(childProcessResultDictionary[command]);
 		}
 	});
 
@@ -85,11 +81,11 @@ function createTestInjector(childProcessResult: IChildProcessResults, hostInfoDa
 	});
 
 	injector.register("logger", {
-		trace: (formatStr?: any, ...args: string[]) => { /* intentionally left blank */}
+		trace: (formatStr?: any, ...args: string[]) => { /* intentionally left blank */ }
 	});
 
 	injector.register("winreg", {
-		getRegistryValue: (valueName: string, hive?: IHiveId, key?: string, host?: string) => { return {value: "registryKey"}; },
+		getRegistryValue: (valueName: string, hive?: IHiveId, key?: string, host?: string) => { return { value: "registryKey" }; },
 		registryKeys: {
 			HKLM: "HKLM"
 		}
@@ -115,8 +111,8 @@ describe("sysInfoBase", () => {
 		childProcessResult = {
 			uname: { result: "name" },
 			npmV: { result: "2.14.1" },
-			javaVersion: { result: {stderr: 'java version "1.8.0_60"'} },
-			javacVersion: { result: {stderr: 'javac 1.8.0_60'} },
+			javaVersion: { result: { stderr: 'java version "1.8.0_60"' } },
+			javacVersion: { result: { stderr: 'javac 1.8.0_60' } },
 			nodeGypVersion: { result: "2.0.0" },
 			xCodeVersion: { result: "6.4.0" },
 			adbVersion: { result: "Android Debug Bridge version 1.0.32" },
@@ -144,28 +140,28 @@ describe("sysInfoBase", () => {
 				assert.deepEqual(result.gitVer, "1.9.5");
 			};
 
-			it("on Windows", () => {
-				testInjector = createTestInjector(childProcessResult, {isWindows: true, isDarwin: false, dotNetVersion: "4.5.1"}, null);
+			it("on Windows", async () => {
+				testInjector = createTestInjector(childProcessResult, { isWindows: true, isDarwin: false, dotNetVersion: "4.5.1" }, null);
 				sysInfoBase = testInjector.resolve("sysInfoBase");
-				let result = await  sysInfoBase.getSysInfo(toolsPackageJson);
+				let result = await sysInfoBase.getSysInfo(toolsPackageJson);
 				assertCommonValues(result);
 				assert.deepEqual(result.xcodeVer, null);
 				assert.deepEqual(result.cocoapodVer, null);
 			});
 
-			it("on Mac", () => {
-				testInjector = createTestInjector(childProcessResult, {isWindows: false, isDarwin: true, dotNetVersion: "4.5.1"}, null);
+			it("on Mac", async () => {
+				testInjector = createTestInjector(childProcessResult, { isWindows: false, isDarwin: true, dotNetVersion: "4.5.1" }, null);
 				sysInfoBase = testInjector.resolve("sysInfoBase");
-				let result = await  sysInfoBase.getSysInfo(toolsPackageJson);
+				let result = await sysInfoBase.getSysInfo(toolsPackageJson);
 				assertCommonValues(result);
 				assert.deepEqual(result.xcodeVer, childProcessResult.xCodeVersion.result);
 				assert.deepEqual(result.cocoapodVer, childProcessResult.podVersion.result);
 			});
 
-			it("on Linux", () => {
-				testInjector = createTestInjector(childProcessResult, {isWindows: false, isDarwin: false, dotNetVersion: "4.5.1"}, null);
+			it("on Linux", async () => {
+				testInjector = createTestInjector(childProcessResult, { isWindows: false, isDarwin: false, dotNetVersion: "4.5.1" }, null);
 				sysInfoBase = testInjector.resolve("sysInfoBase");
-				let result = await  sysInfoBase.getSysInfo(toolsPackageJson);
+				let result = await sysInfoBase.getSysInfo(toolsPackageJson);
 				assertCommonValues(result);
 				assert.deepEqual(result.xcodeVer, null);
 				assert.deepEqual(result.cocoapodVer, null);
@@ -173,35 +169,35 @@ describe("sysInfoBase", () => {
 		});
 
 		describe("cocoapods version", () => {
-			it("is null when cocoapods are not installed", () => {
+			it("is null when cocoapods are not installed", async () => {
 				// simulate error when pod --version command is executed
 				childProcessResult.podVersion = { shouldThrowError: true };
-				testInjector = createTestInjector(childProcessResult, {isWindows: false, isDarwin: true, dotNetVersion: "4.5.1"}, null);
+				testInjector = createTestInjector(childProcessResult, { isWindows: false, isDarwin: true, dotNetVersion: "4.5.1" }, null);
 				sysInfoBase = testInjector.resolve("sysInfoBase");
-				let result = await  sysInfoBase.getSysInfo(toolsPackageJson);
+				let result = await sysInfoBase.getSysInfo(toolsPackageJson);
 				assert.deepEqual(result.cocoapodVer, null);
 			});
 
-			it("is null when OS is not Mac", () => {
-				testInjector = createTestInjector(childProcessResult, {isWindows: true, isDarwin: false, dotNetVersion: "4.5.1"}, null);
+			it("is null when OS is not Mac", async () => {
+				testInjector = createTestInjector(childProcessResult, { isWindows: true, isDarwin: false, dotNetVersion: "4.5.1" }, null);
 				sysInfoBase = testInjector.resolve("sysInfoBase");
-				let result = await  sysInfoBase.getSysInfo(toolsPackageJson);
+				let result = await sysInfoBase.getSysInfo(toolsPackageJson);
 				assert.deepEqual(result.cocoapodVer, null);
 			});
 
-			it("is correct when cocoapods output has warning after version output", () => {
+			it("is correct when cocoapods output has warning after version output", async () => {
 				childProcessResult.podVersion = { result: "0.38.2\nWARNING:\n" };
-				testInjector = createTestInjector(childProcessResult, {isWindows: false, isDarwin: true, dotNetVersion: "4.5.1"}, null);
+				testInjector = createTestInjector(childProcessResult, { isWindows: false, isDarwin: true, dotNetVersion: "4.5.1" }, null);
 				sysInfoBase = testInjector.resolve("sysInfoBase");
-				let result = await  sysInfoBase.getSysInfo(toolsPackageJson);
+				let result = await sysInfoBase.getSysInfo(toolsPackageJson);
 				assert.deepEqual(result.cocoapodVer, "0.38.2");
 			});
 
-			it("is correct when cocoapods output has warnings before version output", () => {
+			it("is correct when cocoapods output has warnings before version output", async () => {
 				childProcessResult.podVersion = { result: "WARNING\nWARNING2\n0.38.2" };
-				testInjector = createTestInjector(childProcessResult, {isWindows: false, isDarwin: true, dotNetVersion: "4.5.1"}, null);
+				testInjector = createTestInjector(childProcessResult, { isWindows: false, isDarwin: true, dotNetVersion: "4.5.1" }, null);
 				sysInfoBase = testInjector.resolve("sysInfoBase");
-				let result = await  sysInfoBase.getSysInfo(toolsPackageJson);
+				let result = await sysInfoBase.getSysInfo(toolsPackageJson);
 				assert.deepEqual(result.cocoapodVer, "0.38.2");
 			});
 		});
@@ -225,25 +221,25 @@ describe("sysInfoBase", () => {
 			});
 
 			describe("when android info is incorrect", () => {
-				it("pathToAdb and pathToAndroid are null", () => {
+				it("pathToAdb and pathToAndroid are null", async () => {
 					childProcessResult.adbVersion = {
 						result: null
 					};
 					childProcessResult.androidInstalled = {
 						result: false
 					};
-					testInjector = createTestInjector(childProcessResult, {isWindows: false, isDarwin: false, dotNetVersion: "4.5.1"}, null);
+					testInjector = createTestInjector(childProcessResult, { isWindows: false, isDarwin: false, dotNetVersion: "4.5.1" }, null);
 					sysInfoBase = testInjector.resolve("sysInfoBase");
-					let result = await  sysInfoBase.getSysInfo(toolsPackageJson, {pathToAdb: null, pathToAndroid: null});
+					let result = await sysInfoBase.getSysInfo(toolsPackageJson, { pathToAdb: null, pathToAndroid: null });
 					assert.deepEqual(result.adbVer, null);
 					assert.deepEqual(result.androidInstalled, false);
 				});
 			});
 
 			describe("when all of calls throw", () => {
-				let assertAllValuesAreNull = () => {
+				let assertAllValuesAreNull = async () => {
 					sysInfoBase = testInjector.resolve("sysInfoBase");
-					let result = await  sysInfoBase.getSysInfo(toolsPackageJson);
+					let result = await sysInfoBase.getSysInfo(toolsPackageJson);
 					assert.deepEqual(result.npmVer, null);
 					assert.deepEqual(result.javaVer, null);
 					assert.deepEqual(result.javacVersion, null);
@@ -257,19 +253,19 @@ describe("sysInfoBase", () => {
 					assert.deepEqual(result.cocoapodVer, null);
 				};
 
-				it("on Windows", () => {
-					testInjector = createTestInjector(childProcessResult, {isWindows: true, isDarwin: false, dotNetVersion: "4.5.1"}, null);
-					assertAllValuesAreNull();
+				it("on Windows", async () => {
+					testInjector = createTestInjector(childProcessResult, { isWindows: true, isDarwin: false, dotNetVersion: "4.5.1" }, null);
+					await assertAllValuesAreNull();
 				});
 
-				it("on Mac", () => {
-					testInjector = createTestInjector(childProcessResult, {isWindows: false, isDarwin: true, dotNetVersion: "4.5.1"}, null);
-					assertAllValuesAreNull();
+				it("on Mac", async () => {
+					testInjector = createTestInjector(childProcessResult, { isWindows: false, isDarwin: true, dotNetVersion: "4.5.1" }, null);
+					await assertAllValuesAreNull();
 				});
 
-				it("on Linux", () => {
-					testInjector = createTestInjector(childProcessResult, {isWindows: false, isDarwin: false, dotNetVersion: "4.5.1"}, null);
-					assertAllValuesAreNull();
+				it("on Linux", async () => {
+					testInjector = createTestInjector(childProcessResult, { isWindows: false, isDarwin: false, dotNetVersion: "4.5.1" }, null);
+					await assertAllValuesAreNull();
 				});
 			});
 		});

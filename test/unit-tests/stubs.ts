@@ -6,16 +6,16 @@ import * as util from "util";
 export class CommonLoggerStub implements ILogger {
 	setLevel(level: string): void { }
 	getLevel(): string { return undefined; }
-	fatal(...args: string[]): void {}
-	error(...args: string[]): void {}
+	fatal(...args: string[]): void { }
+	error(...args: string[]): void { }
 	warn(...args: string[]): void {
 		this.out.apply(this, args);
 	}
-	warnWithLabel(...args: string[]): void {}
+	warnWithLabel(...args: string[]): void { }
 	info(...args: string[]): void {
 		this.out.apply(this, args);
 	}
-	debug(...args: string[]): void {}
+	debug(...args: string[]): void { }
 	trace(...args: string[]): void {
 		this.traceOutput += util.format.apply(null, args) + "\n";
 	}
@@ -44,8 +44,8 @@ export class CommonLoggerStub implements ILogger {
 export class ErrorsStub implements IErrors {
 	printCallStack: boolean = false;
 
-	fail(formatStr:string, ...args: any[]): void;
-	fail(opts:{formatStr?: string; errorCode?: number; suppressCommandHelp?: boolean}, ...args: any[]): void;
+	fail(formatStr: string, ...args: any[]): void;
+	fail(opts: { formatStr?: string; errorCode?: number; suppressCommandHelp?: boolean }, ...args: any[]): void;
 
 	fail(...args: any[]) {
 		throw new Error(util.format.apply(null, args));
@@ -55,7 +55,7 @@ export class ErrorsStub implements IErrors {
 		throw new Error(message);
 	}
 
-	async beginCommand(action:() => Promise<boolean>, printHelpCommand: () => Promise<boolean>): Promise<boolean> {
+	async beginCommand(action: () => Promise<boolean>, printHelpCommand: () => Promise<boolean>): Promise<boolean> {
 		return action();
 	}
 
@@ -68,10 +68,10 @@ export class ErrorsStub implements IErrors {
 
 export class HooksServiceStub implements IHooksService {
 	async executeBeforeHooks(commandName: string): Promise<void> {
-		return ;
+		return;
 	}
 	async executeAfterHooks(commandName: string): Promise<void> {
-		return ;
+		return;
 	}
 
 	hookArgsName = "hookArgs";

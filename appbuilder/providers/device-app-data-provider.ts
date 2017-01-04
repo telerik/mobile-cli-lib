@@ -28,7 +28,7 @@ export class AndroidAppIdentifier extends AppBuilderDeviceAppDataBase implements
 			this.$errors.failWithoutHelp(`Unsupported LiveSync version: ${version}`);
 		}
 
-		return this.getDeviceProjectRootPath(util.format(deviceTmpDirFormat, this.appIdentifier));
+		return this._getDeviceProjectRootPath(util.format(deviceTmpDirFormat, this.appIdentifier));
 	}
 
 	public encodeLiveSyncHostUri(hostUri: string): string {
@@ -55,7 +55,7 @@ export class AndroidCompanionAppIdentifier extends AppBuilderCompanionDeviceAppD
 	}
 
 	public async deviceProjectRootPath(): Promise<string> {
-		return this.getDeviceProjectRootPath(util.format(LiveSyncConstants.DEVICE_TMP_DIR_FORMAT_V3, this.appIdentifier));
+		return this._getDeviceProjectRootPath(util.format(LiveSyncConstants.DEVICE_TMP_DIR_FORMAT_V3, this.appIdentifier));
 	}
 
 	public get liveSyncFormat(): string {

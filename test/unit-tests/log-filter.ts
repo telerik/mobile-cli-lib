@@ -88,7 +88,7 @@ describe("logFilter", () => {
 		});
 
 		describe("when logLevel is not specified and default log level is set to full", () => {
-			beforeEach( () => logFilter.loggingLevel = fullLogLevel );
+			beforeEach(() => logFilter.loggingLevel = fullLogLevel);
 
 			it("returns same data when platform is not correct", () => {
 				let actualData = logFilter.filterData("invalidPlatform", testData);

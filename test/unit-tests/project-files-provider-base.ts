@@ -1,6 +1,6 @@
-import {Yok} from "../../yok";
+import { Yok } from "../../yok";
 import { ProjectFilesProviderBase } from "../../services/project-files-provider-base";
-import {assert} from "chai";
+import { assert } from "chai";
 import * as path from "path";
 
 class ProjectFilesProvider extends ProjectFilesProviderBase {
