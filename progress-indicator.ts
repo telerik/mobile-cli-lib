@@ -1,14 +1,14 @@
 export class ProgressIndicator implements IProgressIndicator {
 	constructor(private $logger: ILogger) { }
 
-	public async showProgressIndicator<T>(prom: Promise<T>, timeout: number, options?: { surpressTrailingNewLine?: boolean }): Promise<T> {
+	public async showProgressIndicator<T>(promise: Promise<T>, timeout: number, options?: { surpressTrailingNewLine?: boolean }): Promise<T> {
 		let surpressTrailingNewLine = options && options.surpressTrailingNewLine;
 
 		let isResolved = false;
 
 		const tempPromise = new Promise<T>((resolve, reject) => {
 			const postAction = (result: any) => isResolved = true;
-			prom.then((res) => {
+			promise.then((res) => {
 				isResolved = true;
 				resolve(res);
 			}, (err) => {

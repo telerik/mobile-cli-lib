@@ -1,5 +1,3 @@
-import * as fiberBootstrap from "../../fiber-bootstrap";
-
 // https://github.com/Microsoft/TypeScript/blob/master/src/compiler/tsc.ts#L487-L489
 export const SYNC_WAIT_THRESHOLD = 250; //milliseconds
 
@@ -23,10 +21,10 @@ export class SyncBatch {
 	}
 
 	public async syncFiles(syncAction: (filesToSync: string[]) => Promise<void>): Promise<void> {
-			if (this.filesToSync.length > 0) {
-				await syncAction(this.filesToSync);
-				this.reset();
-			}
+		if (this.filesToSync.length > 0) {
+			await syncAction(this.filesToSync);
+			this.reset();
+		}
 	}
 
 	public addFile(file: string): void {
@@ -41,14 +39,12 @@ export class SyncBatch {
 			this.timer = setTimeout(() => {
 				if (this.syncQueue.length > 0) {
 					this.$logger.trace("Syncing %s", this.syncQueue.join(", "));
-					fiberBootstrap.run(() => {
-						try {
-							this.syncInProgress = true;
-							await this.done();
-						} finally {
-							this.syncInProgress = false;
-						}
-					});
+					try {
+						this.syncInProgress = true;
+						this.done();
+					} finally {
+						this.syncInProgress = false;
+					}
 				}
 				this.timer = null;
 			}, SYNC_WAIT_THRESHOLD);
@@ -58,5 +54,4 @@ export class SyncBatch {
 	private reset(): void {
 		this.syncQueue = [];
 	}
-
 }

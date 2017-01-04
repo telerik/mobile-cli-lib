@@ -246,7 +246,7 @@ export class CommandsService implements ICommandsService {
 	public async completeCommand(): Promise<boolean> {
 		let tabtab = require("tabtab");
 
-		let completeCallback = async (err: Error, data: any) => {
+		let completeCallback = (err: Error, data: any) => {
 			if (err || !data) {
 				return;
 			}
@@ -268,9 +268,6 @@ export class CommandsService implements ICommandsService {
 
 			if (data.words === 1) {
 				let allCommands = this.allCommands({ includeDevCommands: false });
-				if (_.startsWith(data.last, this.$commandsServiceProvider.dynamicCommandsPrefix)) {
-					allCommands = allCommands.concat(await this.$commandsServiceProvider.getDynamicCommands());
-				}
 				return tabtab.log(allCommands, data);
 			}
 
