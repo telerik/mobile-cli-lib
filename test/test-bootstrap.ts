@@ -19,7 +19,3 @@ $injector.register("analyticsService", {
 // Converts the js callstack to typescript
 import errors = require("../errors");
 errors.installUncaughtExceptionListener();
-
-process.on('exit', (code: number) => {
-	require("fibers/future").assertNoFutureLeftBehind();
-});

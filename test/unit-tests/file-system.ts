@@ -2,10 +2,12 @@ import { Yok } from "../../yok";
 import * as path from "path";
 import temp = require("temp");
 import * as hostInfoLib from "../../host-info";
-import { assert } from "chai";
+import { assert, use } from "chai";
 import * as fileSystemFile from "../../file-system";
 import * as childProcessLib from "../../child-process";
 import { CommonLoggerStub } from "./stubs";
+
+use(require("chai-as-promised"));
 
 let sampleZipFileTest = path.join(__dirname, "../resources/sampleZipFileTest.zip");
 let unzippedFileName = "sampleZipFileTest.txt";
@@ -134,7 +136,7 @@ describe("FileSystem", () => {
 				let tempDir = temp.mkdirSync("projectToUnzip");
 				let fs: IFileSystem = testInjector.resolve("fs");
 				if (isOsCaseSensitive(testInjector)) {
-					assert.throws(async () => await fs.unzip(sampleZipFileTestIncorrectName, tempDir, undefined, [unzippedFileName]));
+					assert.isRejected(fs.unzip(sampleZipFileTestIncorrectName, tempDir, undefined, [unzippedFileName]));
 				}
 			});
 
@@ -143,7 +145,7 @@ describe("FileSystem", () => {
 				let tempDir = temp.mkdirSync("projectToUnzip");
 				let fs: IFileSystem = testInjector.resolve("fs");
 				if (isOsCaseSensitive(testInjector)) {
-					assert.throws(async () => await fs.unzip(sampleZipFileTestIncorrectName, tempDir, {}, [unzippedFileName]));
+					assert.isRejected(fs.unzip(sampleZipFileTestIncorrectName, tempDir, {}, [unzippedFileName]));
 				}
 			});
 
@@ -152,7 +154,7 @@ describe("FileSystem", () => {
 				let tempDir = temp.mkdirSync("projectToUnzip");
 				let fs: IFileSystem = testInjector.resolve("fs");
 				if (isOsCaseSensitive(testInjector)) {
-					assert.throws(async () => await fs.unzip(sampleZipFileTestIncorrectName, tempDir, { caseSensitive: true }, [unzippedFileName]));
+					assert.isRejected(fs.unzip(sampleZipFileTestIncorrectName, tempDir, { caseSensitive: true }, [unzippedFileName]));
 				}
 			});
 
