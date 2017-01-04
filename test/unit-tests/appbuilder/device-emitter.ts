@@ -1,5 +1,5 @@
-import {Yok} from "../../../yok";
-import {assert} from "chai";
+import { Yok } from "../../../yok";
+import { assert } from "chai";
 import { CommonLoggerStub } from "../stubs";
 
 import { EventEmitter } from "events";
@@ -8,7 +8,7 @@ import { DeviceEmitter } from "../../../appbuilder/device-emitter";
 
 class AndroidDeviceDiscoveryMock extends EventEmitter {
 	public async ensureAdbServerStarted(): Promise<void> {
-		return ;
+		return;
 	}
 }
 
@@ -54,7 +54,7 @@ function createTestInjector(): IInjector {
 
 describe("deviceEmitter", () => {
 	let testInjector: IInjector,
-		deviceEmitter: any,
+		deviceEmitter: DeviceEmitter,
 		isOpenDeviceLogStreamCalled = false;
 
 	beforeEach(() => {
@@ -64,14 +64,12 @@ describe("deviceEmitter", () => {
 	});
 
 	describe("initialize", () => {
-		it("does not throw when ensureAdbServerStarted throws", () => {
+		it("does not throw when ensureAdbServerStarted throws", async () => {
 			let androidDeviceDiscovery = testInjector.resolve("androidDeviceDiscovery"),
 				logger: CommonLoggerStub = testInjector.resolve("logger");
 
-			androidDeviceDiscovery.ensureAdbServerStarted = () => {
-				return (() => {
-					throw new Error("error1");
-				}).future<void>()();
+			androidDeviceDiscovery.ensureAdbServerStarted = async () => {
+				throw new Error("error1");
 			};
 
 			let warnOutput = "";

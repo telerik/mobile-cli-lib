@@ -34,6 +34,8 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 		let blockingFuture = new Promise<void>((resolve, reject) => {
 			this.checkForDevices(resolve, reject);
 		});
+
+		return blockingFuture;
 	}
 
 	public async checkForDevices(resolve?: (value?: void | PromiseLike<void>) => void, reject?: (reason?: any) => void): Promise<void> {
