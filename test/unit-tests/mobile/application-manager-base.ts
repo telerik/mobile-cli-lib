@@ -388,7 +388,7 @@ describe("ApplicationManagerBase", () => {
 					});
 
 					viewToChange.id = "new id";
-				}).then(applicationManager.checkForApplicationUpdates);
+				}).then(() => applicationManager.checkForApplicationUpdates());
 			});
 		});
 
@@ -427,6 +427,7 @@ describe("ApplicationManagerBase", () => {
 						applicationManager.on("applicationInstalled", (app: string) => {
 							reportedInstalledApps.push(app);
 							if (reportedInstalledApps.length === currentlyInstalledApps.length) {
+								applicationManager.removeAllListeners("applicationInstalled");
 								resolve();
 							}
 						});
@@ -452,19 +453,18 @@ describe("ApplicationManagerBase", () => {
 
 			it("reports uninstalled applications when initially there are apps and all are uninstalled", async () => {
 				currentlyInstalledApps = ["app1", "app2", "app3"];
+				await applicationManager.checkForApplicationUpdates();
 
 				let reportedUninstalledApps: string[] = [],
 					initiallyInstalledApps = _.cloneDeep(currentlyInstalledApps),
 					promise = new Promise<void>((resolve, reject) => {
-						applicationManager.checkForApplicationUpdates().then(() => {
-							currentlyInstalledApps = [];
+						currentlyInstalledApps = [];
 
-							applicationManager.on("applicationUninstalled", (app: string) => {
-								reportedUninstalledApps.push(app);
-								if (reportedUninstalledApps.length === initiallyInstalledApps.length) {
-									resolve();
-								}
-							});
+						applicationManager.on("applicationUninstalled", (app: string) => {
+							reportedUninstalledApps.push(app);
+							if (reportedUninstalledApps.length === initiallyInstalledApps.length) {
+								resolve();
+							}
 						});
 					});
 
@@ -480,6 +480,8 @@ describe("ApplicationManagerBase", () => {
 
 			it("reports uninstalled applications when apps are changed between executions", async () => {
 				currentlyInstalledApps = ["app1", "app2", "app3", "app4", "app5", "app6"];
+				// Initialize - all apps are marked as installed.
+				await applicationManager.checkForApplicationUpdates();
 
 				let reportedUninstalledApps: string[] = [],
 					removedApps: string[] = [],
@@ -487,14 +489,12 @@ describe("ApplicationManagerBase", () => {
 
 				let testInstalledAppsResults = async () => {
 					promise = new Promise<void>((resolve, reject) => {
-						// Initialize - all apps are marked as installed.
-						applicationManager.checkForApplicationUpdates().then(() => {
-							applicationManager.on("applicationUninstalled", (app: string) => {
-								reportedUninstalledApps.push(app);
-								if (reportedUninstalledApps.length === removedApps.length) {
-									resolve();
-								}
-							});
+						applicationManager.on("applicationUninstalled", (app: string) => {
+							reportedUninstalledApps.push(app);
+							if (reportedUninstalledApps.length === removedApps.length) {
+								applicationManager.removeAllListeners("applicationUninstalled");
+								resolve();
+							}
 						});
 					});
 
@@ -517,6 +517,7 @@ describe("ApplicationManagerBase", () => {
 
 			it("reports installed and uninstalled apps when apps are changed between executions", async () => {
 				currentlyInstalledApps = ["app1", "app2", "app3", "app4", "app5", "app6"];
+				await applicationManager.checkForApplicationUpdates();
 
 				let reportedUninstalledApps: string[] = [],
 					reportedInstalledApps: string[] = [],
@@ -530,20 +531,22 @@ describe("ApplicationManagerBase", () => {
 						applicationManager.on("applicationInstalled", (app: string) => {
 							reportedInstalledApps.push(app);
 							if (reportedInstalledApps.length === installedApps.length) {
+								applicationManager.removeAllListeners("applicationInstalled");
 								resolve();
 							}
 						});
 					});
+
 					appUninstalledPromise = new Promise<void>((resolve, reject) => {
-						applicationManager.checkForApplicationUpdates().then(() => {
-							applicationManager.on("applicationUninstalled", (app: string) => {
-								reportedUninstalledApps.push(app);
-								if (reportedUninstalledApps.length === removedApps.length) {
-									resolve();
-								}
-							});
+						applicationManager.on("applicationUninstalled", (app: string) => {
+							reportedUninstalledApps.push(app);
+							if (reportedUninstalledApps.length === removedApps.length) {
+								applicationManager.removeAllListeners("applicationUninstalled");
+								resolve();
+							}
 						});
 					});
+
 					await applicationManager.checkForApplicationUpdates();
 
 					await Promise.all([appInstalledPromise, appUninstalledPromise]);
@@ -578,14 +581,14 @@ describe("ApplicationManagerBase", () => {
 	describe("isApplicationInstalled", () => {
 		it("returns true when app is installed", async () => {
 			currentlyInstalledApps = ["app1", "app2"];
-			await assert.isTrue(applicationManager.isApplicationInstalled("app1"), "app1 is installed, so result of isAppInstalled must be true.");
-			await assert.isTrue(applicationManager.isApplicationInstalled("app2"), "app2 is installed, so result of isAppInstalled must be true.");
+			assert.isTrue(await applicationManager.isApplicationInstalled("app1"), "app1 is installed, so result of isAppInstalled must be true.");
+			assert.isTrue(await applicationManager.isApplicationInstalled("app2"), "app2 is installed, so result of isAppInstalled must be true.");
 		});
 
 		it("returns false when app is NOT installed", async () => {
 			currentlyInstalledApps = ["app1", "app2"];
-			await assert.isFalse(applicationManager.isApplicationInstalled("app3"), "app3 is NOT installed, so result of isAppInstalled must be false.");
-			await assert.isFalse(applicationManager.isApplicationInstalled("app4"), "app4 is NOT installed, so result of isAppInstalled must be false.");
+			assert.isFalse(await applicationManager.isApplicationInstalled("app3"), "app3 is NOT installed, so result of isAppInstalled must be false.");
+			assert.isFalse(await applicationManager.isApplicationInstalled("app4"), "app4 is NOT installed, so result of isAppInstalled must be false.");
 		});
 	});
 
