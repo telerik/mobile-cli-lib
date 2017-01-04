@@ -63,7 +63,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 	}
 
 	@cache()
-	private async init(): Promise<void> {
+	public async init(): Promise<void> {
 		this.adb = this.$injector.resolve(DeviceAndroidDebugBridge, { identifier: this.identifier });
 		this.applicationManager = this.$injector.resolve(applicationManagerPath.AndroidApplicationManager, { adb: this.adb, identifier: this.identifier });
 		this.fileSystem = this.$injector.resolve(fileSystemPath.AndroidDeviceFileSystem, { adb: this.adb, identifier: this.identifier });
@@ -98,7 +98,6 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 
 		this.$logger.trace(this.deviceInfo);
 	}
-
 
 	@invokeInit()
 	public async isEmulator(): Promise<boolean> {

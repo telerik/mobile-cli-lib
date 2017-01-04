@@ -130,11 +130,11 @@ async function throwErrorFuture(): Promise<void> {
 }
 
 const getPromisesResults = async (promises: Promise<any>[]): Promise<any[]> => {
-	let results: any = []
+	let results: any = [];
 	for (let i = 0; i < promises.length; i++) {
 		let currentResult: any = {};
 		try {
-			currentResult.result = await promises[i]
+			currentResult.result = await promises[i];
 		} catch (err) {
 			currentResult.error = err;
 		}
@@ -143,7 +143,7 @@ const getPromisesResults = async (promises: Promise<any>[]): Promise<any[]> => {
 	}
 
 	return results;
-}
+};
 
 let intervalId = 1;
 let nodeJsTimer = {

@@ -3,7 +3,6 @@ import { XcodeSelectService } from "../../services/xcode-select-service";
 import { assert } from "chai";
 import * as path from "path";
 
-
 let executionStopped = false;
 
 function createTestInjector(config: { xcodeSelectStdout: string, isDarwin: boolean, xcodeVersionOutput?: string }): IInjector {

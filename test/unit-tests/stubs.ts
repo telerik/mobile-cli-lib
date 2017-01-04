@@ -2,7 +2,6 @@
 
 import * as util from "util";
 
-
 export class CommonLoggerStub implements ILogger {
 	setLevel(level: string): void { }
 	getLevel(): string { return undefined; }

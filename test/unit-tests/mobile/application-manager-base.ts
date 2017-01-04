@@ -3,7 +3,6 @@ import { assert } from "chai";
 import { CommonLoggerStub, HooksServiceStub } from "../stubs";
 import { ApplicationManagerBase } from "../../../mobile/application-manager-base";
 
-
 let currentlyAvailableAppsForDebugging: Mobile.IDeviceApplicationInformation[],
 	currentlyInstalledApps: string[],
 	currentlyAvailableAppWebViewsForDebugging: IDictionary<Mobile.IDebugWebViewInfo[]>;

@@ -39,7 +39,7 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 		}
 
 		if (resolve) {
-			resolve()
+			resolve();
 		}
 	}
 

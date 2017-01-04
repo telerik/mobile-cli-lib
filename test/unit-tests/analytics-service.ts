@@ -301,8 +301,8 @@ describe("analytics-service", () => {
 			let testInjector = createTestInjector(baseTestScenario);
 			service = testInjector.resolve("analyticsService");
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
-			await assert.isTrue(service.isEnabled(staticConfig.ERROR_REPORT_SETTING_NAME));
-			await assert.isTrue(service.isEnabled(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME));
+			assert.isTrue(await service.isEnabled(staticConfig.ERROR_REPORT_SETTING_NAME));
+			assert.isTrue(await service.isEnabled(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME));
 		});
 
 		it("returns false when analytics status is disabled", async () => {
@@ -310,8 +310,8 @@ describe("analytics-service", () => {
 			let testInjector = createTestInjector(baseTestScenario);
 			service = testInjector.resolve("analyticsService");
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
-			await assert.isFalse(service.isEnabled(staticConfig.ERROR_REPORT_SETTING_NAME));
-			await assert.isFalse(service.isEnabled(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME));
+			assert.isFalse(await service.isEnabled(staticConfig.ERROR_REPORT_SETTING_NAME));
+			assert.isFalse(await service.isEnabled(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME));
 		});
 
 		it("returns false when analytics status is notConfirmed", async () => {
@@ -319,8 +319,8 @@ describe("analytics-service", () => {
 			let testInjector = createTestInjector(baseTestScenario);
 			service = testInjector.resolve("analyticsService");
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
-			await assert.isFalse(service.isEnabled(staticConfig.ERROR_REPORT_SETTING_NAME));
-			await assert.isFalse(service.isEnabled(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME));
+			assert.isFalse(await service.isEnabled(staticConfig.ERROR_REPORT_SETTING_NAME));
+			assert.isFalse(await service.isEnabled(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME));
 		});
 	});
 
@@ -389,7 +389,7 @@ describe("analytics-service", () => {
 			service = testInjector.resolve("analyticsService");
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
 			let expectedMsg = "Expected result";
-			await assert.equal(`${expectedMsg} is enabled.`, service.getStatusMessage(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, false, expectedMsg));
+			assert.equal(`${expectedMsg} is enabled.`, await service.getStatusMessage(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, false, expectedMsg));
 		});
 
 		it("returns correct string results when status is disabled", async () => {
@@ -398,7 +398,7 @@ describe("analytics-service", () => {
 			service = testInjector.resolve("analyticsService");
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
 			let expectedMsg = "Expected result";
-			await assert.equal(`${expectedMsg} is disabled.`, service.getStatusMessage(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, false, expectedMsg));
+			assert.equal(`${expectedMsg} is disabled.`, await service.getStatusMessage(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, false, expectedMsg));
 		});
 
 		it("returns correct string results when status is not confirmed", async () => {
@@ -407,14 +407,14 @@ describe("analytics-service", () => {
 			service = testInjector.resolve("analyticsService");
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
 			let expectedMsg = "Expected result";
-			await assert.equal(`${expectedMsg} is disabled until confirmed.`, service.getStatusMessage(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, false, expectedMsg));
+			assert.equal(`${expectedMsg} is disabled until confirmed.`, await service.getStatusMessage(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, false, expectedMsg));
 		});
 
 		it("returns correct json results when status is enabled", async () => {
 			let testInjector = createTestInjector(baseTestScenario);
 			service = testInjector.resolve("analyticsService");
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
-			await assert.deepEqual(JSON.stringify({ "enabled": true }), service.getStatusMessage(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, true, ""));
+			assert.deepEqual(JSON.stringify({ "enabled": true }), await service.getStatusMessage(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, true, ""));
 		});
 
 		it("returns correct json results when status is disabled", async () => {
@@ -422,7 +422,7 @@ describe("analytics-service", () => {
 			let testInjector = createTestInjector(baseTestScenario);
 			service = testInjector.resolve("analyticsService");
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
-			await assert.deepEqual(JSON.stringify({ "enabled": false }), service.getStatusMessage(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, true, ""));
+			assert.deepEqual(JSON.stringify({ "enabled": false }), await service.getStatusMessage(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, true, ""));
 		});
 
 		it("returns correct json results when status is not confirmed", async () => {
@@ -430,7 +430,7 @@ describe("analytics-service", () => {
 			let testInjector = createTestInjector(baseTestScenario);
 			service = testInjector.resolve("analyticsService");
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
-			await assert.deepEqual(JSON.stringify({ "enabled": null }), service.getStatusMessage(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, true, ""));
+			assert.deepEqual(JSON.stringify({ "enabled": null }), await service.getStatusMessage(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, true, ""));
 		});
 	});
 

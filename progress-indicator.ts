@@ -7,7 +7,6 @@ export class ProgressIndicator implements IProgressIndicator {
 		let isResolved = false;
 
 		const tempPromise = new Promise<T>((resolve, reject) => {
-			const postAction = (result: any) => isResolved = true;
 			promise.then((res) => {
 				isResolved = true;
 				resolve(res);

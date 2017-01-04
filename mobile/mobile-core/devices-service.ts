@@ -178,7 +178,6 @@ export class DevicesService implements Mobile.IDevicesService {
 						this.$logger.trace("Error while checking for new iOS Simulators.", err);
 					}
 
-
 					try {
 						await settlePromises(_.map(this._devices, device => device.applicationManager.checkForApplicationUpdates()));
 					} catch (err) {

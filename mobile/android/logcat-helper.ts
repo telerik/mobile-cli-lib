@@ -40,7 +40,7 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 
 			lineStream.on('data', (line: NodeBuffer) => {
 				let lineText = line.toString();
-				this.$deviceLogProvider.logData(lineText, this.$devicePlatformsConstants.Android, deviceIdentifier)
+				this.$deviceLogProvider.logData(lineText, this.$devicePlatformsConstants.Android, deviceIdentifier);
 			});
 
 			this.$processService.attachToProcessExitSignals(this, adbLogcat.kill);

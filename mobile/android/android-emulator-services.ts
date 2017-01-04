@@ -44,7 +44,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	}
 
 	@cache()
-	private async init(): Promise<void> {
+	protected async init(): Promise<void> {
 		this.adbFilePath = await this.$staticConfig.getAdbFilePath();
 	}
 
