@@ -1,5 +1,5 @@
 import * as os from "os";
-import {formatListOfNames} from '../helpers';
+import { formatListOfNames } from '../helpers';
 
 export class DynamicHelpService implements IDynamicHelpService {
 	constructor(private $dynamicHelpProvider: IDynamicHelpProvider) { }

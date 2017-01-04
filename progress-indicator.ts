@@ -1,38 +1,31 @@
 export class ProgressIndicator implements IProgressIndicator {
 	constructor(private $logger: ILogger) { }
 
-	public async showProgressIndicator(prom: Promise<any>, timeout: number, options?: { surpressTrailingNewLine?: boolean }): Promise<void> {
+	public async showProgressIndicator<T>(prom: Promise<T>, timeout: number, options?: { surpressTrailingNewLine?: boolean }): Promise<T> {
 		let surpressTrailingNewLine = options && options.surpressTrailingNewLine;
 
 		let isResolved = false;
 
-		const tempPromise = new Promise<void>((resolve, reject) => {
+		const tempPromise = new Promise<T>((resolve, reject) => {
 			const postAction = (result: any) => isResolved = true;
 			prom.then((res) => {
 				isResolved = true;
-				return res;
+				resolve(res);
 			}, (err) => {
 				isResolved = true;
-				throw err;
+				reject(err);
 			});
 		});
 
-		try {
-			while (!isResolved) {
-				await this.$logger.printMsgWithTimeout(".", timeout);
-			}
-
-			// Make sure future is not left behind and prevent "There are outstanding futures." error.
-			await tempPromise;
-		} catch (err) {
-			this.$logger.out();
-			throw err;
+		while (!isResolved) {
+			await this.$logger.printMsgWithTimeout(".", timeout);
 		}
 
 		if (!surpressTrailingNewLine) {
 			this.$logger.out();
 		}
 
+		return tempPromise;
 	}
 }
 $injector.register("progressIndicator", ProgressIndicator);

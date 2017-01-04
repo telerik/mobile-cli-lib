@@ -50,7 +50,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 		}
 	}
 
-	public async trackFeature(featureName: string): Promise<void> {
+	public trackFeature(featureName: string): Promise<void> {
 		let category = this.$options.analyticsClient ||
 			(helpers.isInteractive() ? "CLI" : "Non-interactive");
 		return this.track(category, featureName);
@@ -116,7 +116,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 		}
 	}
 
-	public async getStatusMessage(settingName: string, jsonFormat: boolean, readableSettingName: string): Promise<string> {
+	public getStatusMessage(settingName: string, jsonFormat: boolean, readableSettingName: string): Promise<string> {
 		if (jsonFormat) {
 			return this.getJsonStatusMessage(settingName);
 		}
@@ -129,7 +129,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 		await this.start(projectApiKey);
 	}
 
-	protected async checkConsentCore(trackFeatureUsage: boolean): Promise<void> {
+	protected checkConsentCore(trackFeatureUsage: boolean): Promise<void> {
 		return this.trackFeatureCore(`${this.acceptTrackFeatureSetting}.${!!trackFeatureUsage}`);
 	}
 
@@ -197,7 +197,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 			await this._eqatecMonitor.setUserID(this.$analyticsSettingsService.getUserId());
 			let currentCount = await this.$analyticsSettingsService.getUserSessionsCount(analyticsProjectKey);
 			// increment with 1 every time and persist the new value so next execution will be marked as new session
-			this.$analyticsSettingsService.setUserSessionsCount(+ await +currentCount, analyticsProjectKey);
+			await this.$analyticsSettingsService.setUserSessionsCount(++currentCount, analyticsProjectKey);
 			this._eqatecMonitor.setStartCount(currentCount);
 		} catch (e) {
 			// user not logged in. don't care.
@@ -259,7 +259,11 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 			if (!this.isAnalyticsStatusesInitialized) {
 				this.$logger.trace("Initializing analytics statuses.");
 				let settingsNames = [this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, this.$staticConfig.ERROR_REPORT_SETTING_NAME];
-				settingsNames.forEach(async settingName => await this.getStatus(settingName));
+				for (let settingsIndex = 0; settingsIndex < settingsNames.length; ++settingsIndex) {
+					const settingName = settingsNames[settingsIndex];
+					await this.getStatus(settingName);
+				}
+
 				this.isAnalyticsStatusesInitialized = true;
 			}
 			this.$logger.trace("Analytics statuses: ");
@@ -271,7 +275,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 		return this._eqatecMonitor.status().isSending;
 	}
 
-	private async waitForSending(): Promise<void> {
+	private waitForSending(): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			let intervalTime = 1000;
 			let remainingTime = AnalyticsServiceBase.MAX_WAIT_SENDING_INTERVAL;
@@ -288,7 +292,6 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 			} else {
 				resolve();
 			}
-
 		});
 	}
 }

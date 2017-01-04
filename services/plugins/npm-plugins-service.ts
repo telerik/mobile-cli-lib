@@ -1,34 +1,34 @@
-import {NpmPluginsSource} from "./npm-plugins-source";
-import {NpmRegistryPluginsSource} from "./npm-registry-plugins-source";
-import {NpmjsPluginsSource} from "./npmjs-plugins-source";
+import { NpmPluginsSource } from "./npm-plugins-source";
+import { NpmRegistryPluginsSource } from "./npm-registry-plugins-source";
+import { NpmjsPluginsSource } from "./npmjs-plugins-source";
 
 export class NpmPluginsService implements INpmPluginsService {
 	constructor(private $injector: IInjector) { }
 
 	public async search(projectDir: string, keywords: string[], modifySearchQuery: (keywords: string[]) => string[]): Promise<IPluginsSource> {
-			let query = modifySearchQuery ? modifySearchQuery(keywords) : keywords;
+		let query = modifySearchQuery ? modifySearchQuery(keywords) : keywords;
 
-			let pluginsSource = await  this.searchCore(NpmjsPluginsSource, projectDir, keywords) ||
-				await this.searchCore(NpmRegistryPluginsSource, projectDir, keywords) ||
-				await this.preparePluginsSource(NpmPluginsSource, projectDir, query);
+		let pluginsSource = await this.searchCore(NpmjsPluginsSource, projectDir, keywords) ||
+			await this.searchCore(NpmRegistryPluginsSource, projectDir, keywords) ||
+			await this.preparePluginsSource(NpmPluginsSource, projectDir, query);
 
-			return pluginsSource;
+		return pluginsSource;
 	}
 
 	public async optimizedSearch(projectDir: string, keywords: string[], modifySearchQuery: (keywords: string[]) => string[]): Promise<IPluginsSource> {
-			return await this.searchCore(NpmRegistryPluginsSource, projectDir, keywords) || await  this.search(projectDir, keywords, modifySearchQuery);
+		return await this.searchCore(NpmRegistryPluginsSource, projectDir, keywords) || await this.search(projectDir, keywords, modifySearchQuery);
 	}
 
 	private async searchCore(pluginsSourceConstructor: Function, projectDir: string, keywords: string[]): Promise<IPluginsSource> {
-			let npmPluginsSource = await  this.preparePluginsSource(pluginsSourceConstructor, projectDir, keywords);
+		let npmPluginsSource = await this.preparePluginsSource(pluginsSourceConstructor, projectDir, keywords);
 
-			return npmPluginsSource.hasPlugins() ? npmPluginsSource : null;
+		return npmPluginsSource.hasPlugins() ? npmPluginsSource : null;
 	}
 
 	private async preparePluginsSource(pluginsSourceConstructor: Function, projectDir: string, keywords: string[]): Promise<IPluginsSource> {
-			let pluginsSource: IPluginsSource = this.$injector.resolve(pluginsSourceConstructor, { projectDir, keywords });
-			await pluginsSource.initialize(projectDir, keywords);
-			return pluginsSource;
+		let pluginsSource: IPluginsSource = this.$injector.resolve(pluginsSourceConstructor, { projectDir, keywords });
+		await pluginsSource.initialize(projectDir, keywords);
+		return pluginsSource;
 	}
 }
 

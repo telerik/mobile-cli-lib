@@ -9,16 +9,16 @@ export abstract class PluginsSourceBase implements IPluginsSource {
 		protected $logger: ILogger) { }
 
 	public async initialize(projectDir: string, keywords: string[]): Promise<void> {
-			if (this._isInitialized) {
-				return;
-			}
+		if (this._isInitialized) {
+			return;
+		}
 
-			this.plugins = [];
-			this.projectDir = projectDir;
-			this._isInitialized = true;
+		this.plugins = [];
+		this.projectDir = projectDir;
+		this._isInitialized = true;
 
-			this.$logger.printInfoMessageOnSameLine(this.progressIndicatorMessage);
-			await this.$progressIndicator.showProgressIndicator(this.initializeCore(projectDir, keywords), 2000);
+		this.$logger.printInfoMessageOnSameLine(this.progressIndicatorMessage);
+		await this.$progressIndicator.showProgressIndicator(this.initializeCore(projectDir, keywords), 2000);
 	}
 
 	public hasPlugins(): boolean {
@@ -29,7 +29,7 @@ export abstract class PluginsSourceBase implements IPluginsSource {
 		return this.plugins;
 	}
 
-	public abstract async getPlugins(page: number, count: number): Promise<IBasicPluginInformation[]>;
+	public abstract getPlugins(page: number, count: number): Promise<IBasicPluginInformation[]>;
 
-	protected abstract async initializeCore(projectDir: string, keywords: string[]): Promise<void>;
+	protected abstract initializeCore(projectDir: string, keywords: string[]): Promise<void>;
 }

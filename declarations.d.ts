@@ -1255,12 +1255,12 @@ interface IWinReg {
 interface IProgressIndicator {
 	/**
 	 * Prints indication that a process is running
-	 * @param  {Promise<any>}	future		process
+	 * @param  {Promise<T>}	future		process
 	 * @param  {number}			timeout		time interval for printing indication
 	 * @param  {boolean}		options		whether to surpress the trailing new line printed after the process ends
-	 * @return {Promise<void>}
+	 * @return {Promise<T>}
 	 */
-	showProgressIndicator(future: Promise<any>, timeout: number, options?: { surpressTrailingNewLine?: boolean }): Promise<void>;
+	showProgressIndicator<T>(future: Promise<T>, timeout: number, options?: { surpressTrailingNewLine?: boolean }): Promise<T>;
 }
 
 /**

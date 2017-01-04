@@ -49,13 +49,13 @@ export class HooksService implements IHooksService {
 		return commandName.replace(/\|[\s\S]*$/, "");
 	}
 
-	public async executeBeforeHooks(commandName: string, hookArguments?: IDictionary<any>): Promise<void> {
+	public executeBeforeHooks(commandName: string, hookArguments?: IDictionary<any>): Promise<void> {
 		let beforeHookName = `before-${HooksService.formatHookName(commandName)}`;
 		let traceMessage = `BeforeHookName for command ${commandName} is ${beforeHookName}`;
 		return this.executeHooks(beforeHookName, traceMessage, hookArguments);
 	}
 
-	public async executeAfterHooks(commandName: string, hookArguments?: IDictionary<any>): Promise<void> {
+	public executeAfterHooks(commandName: string, hookArguments?: IDictionary<any>): Promise<void> {
 		let afterHookName = `after-${HooksService.formatHookName(commandName)}`;
 		let traceMessage = `AfterHookName for command ${commandName} is ${afterHookName}`;
 		return this.executeHooks(afterHookName, traceMessage, hookArguments);
@@ -73,9 +73,7 @@ export class HooksService implements IHooksService {
 		this.$logger.trace(traceMessage);
 
 		try {
-			_.each(this.hooksDirectories, async hooksDirectory => {
-				await this.executeHooksInDirectory(hooksDirectory, hookName, hookArguments);
-			});
+			await Promise.all(_.map(this.hooksDirectories, async hooksDirectory => await this.executeHooksInDirectory(hooksDirectory, hookName, hookArguments)));
 		} catch (err) {
 			this.$logger.trace("Failed during hook execution.");
 			this.$errors.failWithoutHelp(err.message);
@@ -84,7 +82,8 @@ export class HooksService implements IHooksService {
 
 	private async executeHooksInDirectory(directoryPath: string, hookName: string, hookArguments?: IDictionary<any>): Promise<void> {
 		let hooks = this.getHooksByName(directoryPath, hookName);
-		hooks.forEach(async hook => {
+		for (let i = 0; i < hooks.length; ++i) {
+			const hook = hooks[i];
 			this.$logger.info("Executing %s hook from %s", hookName, hook.fullPath);
 			let command = this.getSheBangInterpreter(hook);
 			let inProc = false;
@@ -112,18 +111,18 @@ export class HooksService implements IHooksService {
 				let maybePromise = this.$injector.resolve(hookEntryPoint, hookArguments);
 				if (maybePromise) {
 					this.$logger.trace('Hook promises to signal completion');
-					let hookCompletion = new Future<void>();
-					maybePromise.then(
-						() => hookCompletion.return(),
-						(err: any) => {
-							if (_.isBoolean(err.stopExecution) && err.errorAsWarning === true) {
-								this.$logger.warn(err.message);
-								hookCompletion.return();
-							} else {
-								hookCompletion.throw(err);
-							}
-						});
-					await hookCompletion;
+					await new Promise((resolve, reject) => {
+						maybePromise.then(
+							resolve,
+							(err: any) => {
+								if (_.isBoolean(err.stopExecution) && err.errorAsWarning === true) {
+									this.$logger.warn(err.message);
+									resolve();
+								} else {
+									reject(err);
+								}
+							});
+					});
 				}
 				this.$logger.trace('Hook completed');
 			} else {
@@ -135,7 +134,7 @@ export class HooksService implements IHooksService {
 					throw new Error(output.stdout + output.stderr);
 				}
 			}
-		});
+		};
 	}
 
 	private getHooksByName(directoryPath: string, hookName: string): IHook[] {

@@ -25,7 +25,6 @@ class CancellationService implements ICancellationService {
 		this.$logger.trace("Starting watch on killswitch %s", triggerFile);
 
 		let watcherInitialized = new Promise<IWatcherInstance>((resolve, reject) => {
-
 			gaze(triggerFile, function (err: any, watcher: any) {
 				this.on("deleted", (filePath: string) => process.exit());
 				if (err) {
@@ -68,7 +67,7 @@ class CancellationServiceDummy implements ICancellationService {
 	}
 
 	async begin(name: string): Promise<void> {
-		return ;
+		return;
 	}
 
 	end(name: string): void {
