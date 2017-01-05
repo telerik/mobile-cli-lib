@@ -905,6 +905,10 @@ interface IHostInfo {
 	isDotNet40Installed(message: string): Promise<boolean>;
 }
 
+interface GenericFunction<T> extends Function {
+	(...args: any[]): T;
+}
+
 interface Function {
 	$inject: {
 		args: string[];
