@@ -131,30 +131,30 @@ describe("FileSystem", () => {
 
 		// NOTE: This tests will never fail on Windows/Mac as file system is case insensitive
 		describe("case sensitive tests", () => {
-			it("is case sensitive when options is not defined", () => {
+			it("is case sensitive when options is not defined", async () => {
 				let testInjector = createTestInjector();
 				let tempDir = temp.mkdirSync("projectToUnzip");
 				let fs: IFileSystem = testInjector.resolve("fs");
 				if (isOsCaseSensitive(testInjector)) {
-					assert.isRejected(fs.unzip(sampleZipFileTestIncorrectName, tempDir, undefined, [unzippedFileName]));
+					await assert.isRejected(fs.unzip(sampleZipFileTestIncorrectName, tempDir, undefined, [unzippedFileName]));
 				}
 			});
 
-			it("is case sensitive when caseSensitive option is not defined", () => {
+			it("is case sensitive when caseSensitive option is not defined", async () => {
 				let testInjector = createTestInjector();
 				let tempDir = temp.mkdirSync("projectToUnzip");
 				let fs: IFileSystem = testInjector.resolve("fs");
 				if (isOsCaseSensitive(testInjector)) {
-					assert.isRejected(fs.unzip(sampleZipFileTestIncorrectName, tempDir, {}, [unzippedFileName]));
+					await assert.isRejected(fs.unzip(sampleZipFileTestIncorrectName, tempDir, {}, [unzippedFileName]));
 				}
 			});
 
-			it("is case sensitive when caseSensitive option is true", () => {
+			it("is case sensitive when caseSensitive option is true", async () => {
 				let testInjector = createTestInjector();
 				let tempDir = temp.mkdirSync("projectToUnzip");
 				let fs: IFileSystem = testInjector.resolve("fs");
 				if (isOsCaseSensitive(testInjector)) {
-					assert.isRejected(fs.unzip(sampleZipFileTestIncorrectName, tempDir, { caseSensitive: true }, [unzippedFileName]));
+					await assert.isRejected(fs.unzip(sampleZipFileTestIncorrectName, tempDir, { caseSensitive: true }, [unzippedFileName]));
 				}
 			});
 
