@@ -10,24 +10,18 @@ export async function deferPromise<T>(): Promise<IDeferPromise<T>> {
 	let isRejected = false;
 	let promise: Promise<T>;
 
-	await new Promise<void>((res, rej) => {
+	promise = new Promise<T>((innerResolve, innerReject) => {
+		resolve = (value?: T | PromiseLike<T>) => {
+			isResolved = true;
 
-		promise = new Promise<T>((innerResolve, innerReject) => {
-			resolve = (value?: T | PromiseLike<T>) => {
-				isResolved = true;
+			return innerResolve(value);
+		};
 
-				return innerResolve(value);
-			};
+		reject = (reason?: any) => {
+			isRejected = true;
 
-			reject = (reason?: any) => {
-				isRejected = true;
-
-				return innerReject(reason);
-			};
-
-			res();
-		});
-
+			return innerReject(reason);
+		};
 	});
 
 	return {
