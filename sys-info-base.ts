@@ -39,15 +39,16 @@ export class SysInfoBase implements ISysInfo {
 	private javaCompilerVerCache: string = null;
 	public async getJavaCompilerVersion(): Promise<string> {
 		if (!this.javaCompilerVerCache) {
+			let javaCompileExecutableName = "javac";
+			let javaHome = process.env.JAVA_HOME;
+			let pathToJavaCompilerExecutable = javaHome ? path.join(javaHome, "bin", javaCompileExecutableName) : javaCompileExecutableName;
 			try {
-				let javaCompileExecutableName = "javac";
-				let javaHome = process.env.JAVA_HOME;
-				let pathToJavaCompilerExecutable = javaHome ? path.join(javaHome, "bin", javaCompileExecutableName) : javaCompileExecutableName;
 				let output = await this.exec(`"${pathToJavaCompilerExecutable}" -version`, { showStderr: true });
 				// for other versions of java javac version output is not on first line
 				// thus can't use ^ for starts with in regex
 				this.javaCompilerVerCache = output ? /javac (.*)/i.exec(output.stderr)[1] : null;
 			} catch (e) {
+				this.$logger.trace(`Command "${pathToJavaCompilerExecutable} --version" failed: ${e}`);
 				this.javaCompilerVerCache = null;
 			}
 		}
@@ -61,6 +62,7 @@ export class SysInfoBase implements ISysInfo {
 			try {
 				this.xCodeVerCache = this.$hostInfo.isDarwin ? await this.exec("xcodebuild -version") : null;
 			} catch (e) {
+				this.$logger.trace(`Command "xcodebuild -version" failed: ${e}`);
 				this.xCodeVerCache = null;
 			}
 		}
@@ -74,6 +76,7 @@ export class SysInfoBase implements ISysInfo {
 			try {
 				this.nodeGypVerCache = await this.exec("node-gyp -v");
 			} catch (e) {
+				this.$logger.trace(`Command "node-gyp -v" failed: ${e}`);
 				this.nodeGypVerCache = null;
 			}
 		}
@@ -86,6 +89,7 @@ export class SysInfoBase implements ISysInfo {
 			try {
 				this.xcodeprojGemLocationCache = this.$hostInfo.isDarwin ? await this.exec("gem which xcodeproj") : null;
 			} catch (e) {
+				this.$logger.trace(`Command "gem which xcodeproj" failed with: ${e}`);
 				this.xcodeprojGemLocationCache = null;
 			}
 		}
@@ -121,8 +125,8 @@ export class SysInfoBase implements ISysInfo {
 						this.cocoapodVersionCache = cocoapodVersion;
 					}
 				}
-
 			} catch (e) {
+				this.$logger.trace(e);
 				this.cocoapodVersionCache = null;
 			}
 		}
