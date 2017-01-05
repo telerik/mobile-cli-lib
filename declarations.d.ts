@@ -1620,4 +1620,5 @@ interface IPromiseActions<T> {
 interface IDeferPromise<T> extends IPromiseActions<T> {
 	isRejected(): boolean;
 	isPending(): boolean;
+	promise: Promise<T>;
 }
