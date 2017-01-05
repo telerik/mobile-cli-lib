@@ -198,7 +198,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 					}
 
 					this.$logger.info("Applying changes...");
-					platformLiveSyncService.refreshApplication(deviceAppData, localToDevicePaths, data.forceExecuteFullSync || await !wasInstalled);
+					platformLiveSyncService.refreshApplication(deviceAppData, localToDevicePaths, data.forceExecuteFullSync || !(await wasInstalled));
 					this.$logger.info(`Successfully synced application ${data.appIdentifier} on device ${device.deviceInfo.identifier}.`);
 				}
 			} else {
