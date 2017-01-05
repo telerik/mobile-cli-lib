@@ -1614,5 +1614,10 @@ interface IOsInfo {
 interface IPromiseActions<T> {
 	resolve(value?: T | PromiseLike<T>): void;
 	reject(reason?: any): void;
-	isResolved?: boolean;
+	isResolved(): boolean;
+}
+
+interface IDeferPromise<T> extends IPromiseActions<T> {
+	isRejected(): boolean;
+	isPending(): boolean;
 }

@@ -82,10 +82,11 @@ export class HttpClient implements Server.IHttpClient {
 
 		let result = new Promise<Server.IResponse>((resolve, reject) => {
 			let timerId: number;
+
 			let promiseActions: IPromiseActions<Server.IResponse> = {
 				resolve,
 				reject,
-				isResolved: false
+				isResolved: () => false
 			};
 
 			if (options.timeout) {
@@ -181,8 +182,8 @@ export class HttpClient implements Server.IHttpClient {
 			timerId = null;
 		}
 
-		if (!result.isResolved) {
-			result.isResolved = true;
+		if (!result.isResolved()) {
+			result.isResolved = () => true;
 			if (resultData.err) {
 				return result.reject(resultData.err);
 			}

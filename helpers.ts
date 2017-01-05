@@ -1,8 +1,44 @@
 import * as uuid from "uuid";
-
 import * as net from "net";
 let Table = require("cli-table");
 import { platform, EOL } from "os";
+
+export async function deferPromise<T>(): Promise<IDeferPromise<T>> {
+	let resolve: (value?: T | PromiseLike<T>) => void;
+	let reject: (reason?: any) => void;
+	let isResolved = false;
+	let isRejected = false;
+	let promise: Promise<T>;
+
+	await new Promise<void>((res, rej) => {
+
+		promise = new Promise<T>((innerResolve, innerReject) => {
+			resolve = (value?: T | PromiseLike<T>) => {
+				isResolved = true;
+
+				return innerResolve(value);
+			};
+
+			reject = (reason?: any) => {
+				isRejected = true;
+
+				return innerReject(reason);
+			};
+
+			res();
+		});
+
+	});
+
+	return {
+		promise,
+		resolve,
+		reject,
+		isResolved: () => isResolved,
+		isRejected: () => isRejected,
+		isPending: () => !isResolved && !isRejected
+	};
+};
 
 /**
  * Executes all promises and does not stop in case any of them throws.
