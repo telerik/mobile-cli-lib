@@ -1,6 +1,5 @@
 let jaroWinklerDistance = require("../vendor/jaro-winkler_distance");
 import * as helpers from "../helpers";
-import { cache } from "../decorators";
 import { EOL } from "os";
 
 class CommandArgumentsValidationHelper {
