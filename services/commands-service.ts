@@ -118,7 +118,7 @@ export class CommandsService implements ICommandsService {
 			}
 
 			// First part of hierarchical commands should be validated in specific way.
-			if (this.$injector.isValidHierarchicalCommand(commandName, commandArguments)) {
+			if (await this.$injector.isValidHierarchicalCommand(commandName, commandArguments)) {
 				return true;
 			}
 
@@ -319,7 +319,6 @@ export class CommandsService implements ICommandsService {
 		return true;
 	}
 
-	@cache()
 	private getCommandHelp(): any {
 		let commandHelp: any = null;
 		if (this.$fs.exists(this.$resources.resolvePath(this.$staticConfig.COMMAND_HELP_FILE_NAME))) {
