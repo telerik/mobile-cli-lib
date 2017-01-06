@@ -1120,10 +1120,10 @@ describe("devicesService", () => {
 				assert.isTrue(hasCheckedForIosDevices);
 			});
 
-			it("should not throw if ios device check fails throws an exception.", () => {
+			it("should not throw if ios device check fails throws an exception.", async () => {
 				$iOSDeviceDiscovery.checkForDevices = throwErrorFuture;
 
-				assert.isFulfilled(devicesService.startDeviceDetectionInterval());
+				await assert.isFulfilled(devicesService.startDeviceDetectionInterval());
 			});
 		});
 
@@ -1146,10 +1146,10 @@ describe("devicesService", () => {
 				assert.isTrue(hasCheckedForAndroidDevices);
 			});
 
-			it("should not throw if android device check fails throws an exception.", () => {
+			it("should not throw if android device check fails throws an exception.", async () => {
 				$androidDeviceDiscovery.startLookingForDevices = throwErrorFuture;
 
-				assert.isFulfilled(devicesService.startDeviceDetectionInterval());
+				await assert.isFulfilled(devicesService.startDeviceDetectionInterval());
 			});
 		});
 
@@ -1186,7 +1186,7 @@ describe("devicesService", () => {
 			it("should not throw if ios simulator check fails throws an exception.", async () => {
 				$iOSSimulatorDiscovery.checkForDevices = throwErrorFuture;
 
-				assert.isFulfilled(devicesService.startDeviceDetectionInterval());
+				await assert.isFulfilled(devicesService.startDeviceDetectionInterval());
 			});
 		});
 
@@ -1347,9 +1347,7 @@ describe("devicesService", () => {
 
 			const promise = devicesService.detectCurrentlyAttachedDevices();
 
-			await promise;
-
-			assert.isFulfilled(promise);
+			await assert.isFulfilled(promise);
 		});
 	});
 
