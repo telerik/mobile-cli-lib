@@ -412,7 +412,7 @@ export async function connectEventuallyUntilTimeout(factory: () => net.Socket, t
 
 const CLASS_NAME = /class\s+([A-Z].+?)(?:\s+.*?)?\{/;
 const CONSTRUCTOR_ARGS = /constructor\s*([^\(]*)\(\s*([^\)]*)\)/m;
-const FN_NAME_AND_ARGS = /^(?:function)?\s*([^\(]*)\(\s*([^\)]*)\)\s*(=>)?\s*\{/m;
+const FN_NAME_AND_ARGS = /^(?:function)?\s*([^\(]*)\(\s*([^\)]*)\)\s*(=>)?\s*[{_]/m;
 const FN_ARG_SPLIT = /,/;
 const FN_ARG = /^\s*(_?)(\S+?)\1\s*$/;
 const STRIP_COMMENTS = /((\/\/.*$)|(\/\*[\s\S]*?\*\/))/mg;
