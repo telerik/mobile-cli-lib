@@ -330,17 +330,23 @@ export class Yok implements IInjector {
 		return /#{([^.]+)\.([^}]+?)(\((.+)\))*}/;
 	}
 
-	public async dynamicCall(call: string, args?: any[]): Promise<any> {
+	public getDynamicCallData(call: string, args?: any[]): any {
 		let parsed = call.match(this.dynamicCallRegex);
 		let module = this.resolve(parsed[1]);
 		if (!args && parsed[3]) {
 			args = _.map(parsed[4].split(","), arg => arg.trim());
 		}
 
-		let data = module[parsed[2]].apply(module, args);
+		return module[parsed[2]].apply(module, args);
+	}
+
+	public async dynamicCall(call: string, args?: any[]): Promise<any> {
+		const data = this.getDynamicCallData(call, args);
+
 		if (isPromise(data)) {
 			return await data;
 		}
+
 		return data;
 	}
 
