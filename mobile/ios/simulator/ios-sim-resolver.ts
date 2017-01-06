@@ -1,5 +1,8 @@
+import * as path from "path";
+
 export class IOSSimResolver implements Mobile.IiOSSimResolver {
 	private static iOSSimName = "ios-sim-portable";
+	private static iOSStandaloneExecutableName = "ios-sim-standalone.js";
 
 	private _iOSSim: any = null;
 	public get iOSSim(): any {
@@ -11,7 +14,7 @@ export class IOSSimResolver implements Mobile.IiOSSimResolver {
 	}
 
 	public get iOSSimPath(): string {
-		return require.resolve(IOSSimResolver.iOSSimName);
+		return path.join(require.resolve(IOSSimResolver.iOSSimName), "..", IOSSimResolver.iOSStandaloneExecutableName);
 	}
 }
 $injector.register("iOSSimResolver", IOSSimResolver);

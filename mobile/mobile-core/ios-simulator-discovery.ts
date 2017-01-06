@@ -21,7 +21,7 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 		if (this.$hostInfo.isDarwin) {
 			let currentSimulator: any = null;
 			if (await this.isSimulatorRunning()) {
-				currentSimulator = this.$iOSSimResolver.iOSSim.getRunningSimulator();
+				currentSimulator = await this.$iOSSimResolver.iOSSim.getRunningSimulator();
 			}
 
 			if (currentSimulator) {

@@ -29,7 +29,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		}
 	}
 
-	public startEmulator(): Promise<string> {
+	public async startEmulator(): Promise<string> {
 		return this.$iOSSimResolver.iOSSim.startSimulator();
 	}
 

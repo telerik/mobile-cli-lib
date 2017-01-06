@@ -33,7 +33,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 			}
 		}
 
-		await this.iosSim.installApplication(this.identifier, packageFilePath);
+		this.iosSim.installApplication(this.identifier, packageFilePath);
 	}
 
 	public async uninstallApplication(appIdentifier: string): Promise<void> {
@@ -41,7 +41,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async startApplication(appIdentifier: string): Promise<void> {
-		let launchResult = await this.iosSim.startApplication(this.identifier, appIdentifier);
+		let launchResult = this.iosSim.startApplication(this.identifier, appIdentifier);
 
 		if (!this.$options.justlaunch) {
 			let pid = launchResult.split(":")[1].trim();

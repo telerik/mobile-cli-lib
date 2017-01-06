@@ -15,7 +15,7 @@ function createTestInjector(): IInjector {
 	injector.register("injector", injector);
 	injector.register("iOSSimResolver", {
 		iOSSim: {
-			getRunningSimulator: () => currentlyRunningSimulator
+			getRunningSimulator: async () => currentlyRunningSimulator
 		}
 	});
 	injector.register("hostInfo", {
