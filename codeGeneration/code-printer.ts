@@ -29,9 +29,8 @@ export class CodePrinter {
 			content += this.getIndentation(indentSize);
 			content += CodePrinter.END_BLOCK_CHAR;
 			content += block.endingCharacter || '';
+			content += CodePrinter.NEW_LINE_CHAR;
 		}
-
-		content += CodePrinter.NEW_LINE_CHAR;
 
 		return content;
 	}
