@@ -131,12 +131,13 @@ describe("FileSystem", () => {
 
 		// NOTE: This tests will never fail on Windows/Mac as file system is case insensitive
 		describe("case sensitive tests", () => {
+			const commandUnzipFailedMessage = "Command unzip failed with exit code 9";
 			it("is case sensitive when options is not defined", async () => {
 				let testInjector = createTestInjector();
 				let tempDir = temp.mkdirSync("projectToUnzip");
 				let fs: IFileSystem = testInjector.resolve("fs");
 				if (isOsCaseSensitive(testInjector)) {
-					await assert.isRejected(fs.unzip(sampleZipFileTestIncorrectName, tempDir, undefined, [unzippedFileName]));
+					await assert.isRejected(fs.unzip(sampleZipFileTestIncorrectName, tempDir, undefined, [unzippedFileName]), commandUnzipFailedMessage);
 				}
 			});
 
@@ -145,7 +146,7 @@ describe("FileSystem", () => {
 				let tempDir = temp.mkdirSync("projectToUnzip");
 				let fs: IFileSystem = testInjector.resolve("fs");
 				if (isOsCaseSensitive(testInjector)) {
-					await assert.isRejected(fs.unzip(sampleZipFileTestIncorrectName, tempDir, {}, [unzippedFileName]));
+					await assert.isRejected(fs.unzip(sampleZipFileTestIncorrectName, tempDir, {}, [unzippedFileName]), commandUnzipFailedMessage);
 				}
 			});
 
@@ -154,7 +155,7 @@ describe("FileSystem", () => {
 				let tempDir = temp.mkdirSync("projectToUnzip");
 				let fs: IFileSystem = testInjector.resolve("fs");
 				if (isOsCaseSensitive(testInjector)) {
-					await assert.isRejected(fs.unzip(sampleZipFileTestIncorrectName, tempDir, { caseSensitive: true }, [unzippedFileName]));
+					await assert.isRejected(fs.unzip(sampleZipFileTestIncorrectName, tempDir, { caseSensitive: true }, [unzippedFileName]), commandUnzipFailedMessage);
 				}
 			});
 
