@@ -62,7 +62,7 @@ function resolveCallStack(error: Error): string {
 }
 
 export function installUncaughtExceptionListener(actionOnException?: () => void): void {
-	process.on("uncaughtException", (err: Error) => {
+	let handler = (err: Error) => {
 		let callstack = err.stack;
 		if (callstack) {
 			try {
@@ -78,7 +78,10 @@ export function installUncaughtExceptionListener(actionOnException?: () => void)
 		if (actionOnException) {
 			actionOnException();
 		}
-	});
+	};
+
+	process.on("uncaughtException", handler);
+	process.on("unhandledRejection", handler);
 }
 
 async function tryTrackException(error: Error, injector: IInjector): Promise<void> {
