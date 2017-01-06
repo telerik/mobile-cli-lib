@@ -192,7 +192,7 @@ export class NpmService implements INpmService {
 			let currentNpmRegistry: string;
 
 			try {
-				currentNpmRegistry = await (this.$childProcess.exec("npm config get registry") || "").toString().trim();
+				currentNpmRegistry = (await this.$childProcess.exec("npm config get registry") || "").toString().trim();
 			} catch (err) {
 				this.$logger.trace(`Unable to get registry from npm config. Error is ${err.message}.`);
 			}
@@ -328,7 +328,7 @@ export class NpmService implements INpmService {
 	private async getNpmProxySettings(): Promise<IProxySettings> {
 		if (!this._hasCheckedNpmProxy) {
 			try {
-				let npmProxy = await (this.$childProcess.exec("npm config get proxy") || "").toString().trim();
+				let npmProxy = (await this.$childProcess.exec("npm config get proxy") || "").toString().trim();
 
 				// npm will return null as string in case there's no proxy set.
 				if (npmProxy && npmProxy !== "null") {

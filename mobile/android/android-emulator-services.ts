@@ -358,7 +358,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	@invokeInit()
 	public async getAllRunningEmulators(): Promise<string[]> {
 		let outputRaw: string[] = (await this.$childProcess.execFile(this.adbFilePath, ['devices'])).split(EOL);
-		let emulators = await (await this.getRunningAvdEmulators(outputRaw)).concat(await this.getRunningGenymotionEmulators(outputRaw));
+		let emulators = (await this.getRunningAvdEmulators(outputRaw)).concat(await this.getRunningGenymotionEmulators(outputRaw));
 		return emulators;
 	}
 

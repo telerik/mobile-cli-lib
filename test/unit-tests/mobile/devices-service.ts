@@ -175,7 +175,7 @@ function resetDefaultSetInterval(): void {
 	global.setInterval = originalSetInterval;
 }
 
-describe.only("devicesService", () => {
+describe("devicesService", () => {
 	let counter = 0,
 		iOSDevice = {
 			deviceInfo: {
