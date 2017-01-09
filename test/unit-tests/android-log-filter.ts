@@ -2,6 +2,7 @@ import { AndroidLogFilter } from "../../mobile/android/android-log-filter";
 import { LoggingLevels } from "../../mobile/logging-levels";
 import { Yok } from "../../yok";
 import * as assert from "assert";
+import { EOL } from "os";
 
 let androidApiLevel23TestData = [
 	{ input: '12-28 10:14:15.977    99    99 D Genymotion: Received Set Clipboard', output: null },
@@ -86,13 +87,13 @@ describe("androidLogFilter", () => {
 			beforeEach(() => logLevel = "FULL");
 			it("when API level 23 or later is used", () => {
 				_.each(androidApiLevel23TestData, testData => {
-					assertFiltering(testData.input, testData.input + "\n", logLevel);
+					assertFiltering(testData.input, testData.input + EOL, logLevel);
 				});
 			});
 
 			it("when API level 22 is used", () => {
 				_.each(androidApiLevel22TestData, testData => {
-					assertFiltering(testData.input, testData.input + "\n", logLevel);
+					assertFiltering(testData.input, testData.input + EOL, logLevel);
 				});
 			});
 		});
@@ -101,13 +102,13 @@ describe("androidLogFilter", () => {
 			beforeEach(() => logLevel = "info");
 			it("when API level 23 or later is used", () => {
 				_.each(androidApiLevel23TestData, testData => {
-					assertFiltering(testData.input, testData.output ? testData.output + "\n" : testData.output, logLevel);
+					assertFiltering(testData.input, testData.output ? testData.output + EOL : testData.output, logLevel);
 				});
 			});
 
 			it("when API level 22 is used", () => {
 				_.each(androidApiLevel22TestData, testData => {
-					assertFiltering(testData.input, testData.output ? testData.output + "\n" : testData.output, logLevel);
+					assertFiltering(testData.input, testData.output ? testData.output + EOL : testData.output, logLevel);
 				});
 			});
 		});
@@ -116,13 +117,13 @@ describe("androidLogFilter", () => {
 			beforeEach(() => logLevel = "");
 			it("when API level 23 or later is used", () => {
 				_.each(androidApiLevel22TestData, testData => {
-					assertFiltering(testData.input, testData.input + "\n", null);
+					assertFiltering(testData.input, testData.input + EOL, null);
 				});
 			});
 
 			it("when API level 22 is used", () => {
 				_.each(androidApiLevel22TestData, testData => {
-					assertFiltering(testData.input, testData.input + "\n", null);
+					assertFiltering(testData.input, testData.input + EOL, null);
 				});
 			});
 		});
