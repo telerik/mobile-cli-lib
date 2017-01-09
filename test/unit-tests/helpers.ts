@@ -333,18 +333,19 @@ describe("helpers", () => {
 		];
 
 		_.each(settlePromisesTestData, (testData, inputNumber) => {
-			it(`returns correct data, test case ${inputNumber}`, (done) => {
+			it(`returns correct data, test case ${inputNumber}`, (done: mocha.Done) => {
+				const invokeDoneCallback = () => done();
 				helpers.settlePromises<any>(testData.input)
 					.then(res => {
 						assert.deepEqual(res, testData.expectedResult);
 					}, err => {
 						assert.deepEqual(err.message, testData.expectedError);
 					})
-					.then(done, done);
+					.then(invokeDoneCallback, invokeDoneCallback);
 			});
 		});
 
-		it("executes all promises even when some of them are rejected", (done) => {
+		it("executes all promises even when some of them are rejected", (done: mocha.Done) => {
 			let isPromiseSettled = false;
 
 			const testData: ITestData = {
