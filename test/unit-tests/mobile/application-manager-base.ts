@@ -227,7 +227,7 @@ describe("ApplicationManagerBase", () => {
 				await Promise.all([foundAppsPromise, lostAppsPromise]);
 			});
 
-			it("emits debuggableViewFound when new views are available for debug", (done) => {
+			it("emits debuggableViewFound when new views are available for debug", (done: mocha.Done) => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(2);
 				let numberOfViewsPerApp = 2;
 				currentlyAvailableAppWebViewsForDebugging = createDebuggableWebViews(currentlyAvailableAppsForDebugging, numberOfViewsPerApp);
@@ -252,7 +252,7 @@ describe("ApplicationManagerBase", () => {
 				applicationManager.checkForApplicationUpdates();
 			});
 
-			it("emits debuggableViewLost when views for debug are removed", (done) => {
+			it("emits debuggableViewLost when views for debug are removed", (done: mocha.Done) => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(2);
 				let numberOfViewsPerApp = 2;
 				currentlyAvailableAppWebViewsForDebugging = createDebuggableWebViews(currentlyAvailableAppsForDebugging, numberOfViewsPerApp);
@@ -282,7 +282,7 @@ describe("ApplicationManagerBase", () => {
 				});
 			});
 
-			it("emits debuggableViewFound when new views are available for debug", (done) => {
+			it("emits debuggableViewFound when new views are available for debug", (done: mocha.Done) => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(2);
 				let numberOfViewsPerApp = 2;
 				currentlyAvailableAppWebViewsForDebugging = createDebuggableWebViews(currentlyAvailableAppsForDebugging, numberOfViewsPerApp);
@@ -316,7 +316,7 @@ describe("ApplicationManagerBase", () => {
 				});
 			});
 
-			it("emits debuggableViewLost when views for debug are not available anymore", (done) => {
+			it("emits debuggableViewLost when views for debug are not available anymore", (done: mocha.Done) => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(2);
 				let numberOfViewsPerApp = 2;
 				currentlyAvailableAppWebViewsForDebugging = createDebuggableWebViews(currentlyAvailableAppsForDebugging, numberOfViewsPerApp);
@@ -347,7 +347,7 @@ describe("ApplicationManagerBase", () => {
 				});
 			});
 
-			it("emits debuggableViewChanged when view's property is modified (each one except id)", (done) => {
+			it("emits debuggableViewChanged when view's property is modified (each one except id)", (done: mocha.Done) => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(1);
 				currentlyAvailableAppWebViewsForDebugging = createDebuggableWebViews(currentlyAvailableAppsForDebugging, 2);
 				let viewToChange = currentlyAvailableAppWebViewsForDebugging[currentlyAvailableAppsForDebugging[0].appIdentifier][0];
@@ -365,7 +365,7 @@ describe("ApplicationManagerBase", () => {
 				});
 			});
 
-			it("does not emit debuggableViewChanged when id is modified", (done) => {
+			it("does not emit debuggableViewChanged when id is modified", (done: mocha.Done) => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(1);
 				currentlyAvailableAppWebViewsForDebugging = createDebuggableWebViews(currentlyAvailableAppsForDebugging, 2);
 				let viewToChange = currentlyAvailableAppWebViewsForDebugging[currentlyAvailableAppsForDebugging[0].appIdentifier][0];

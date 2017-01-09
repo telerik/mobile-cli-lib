@@ -117,7 +117,7 @@ describe("androidDeviceDiscovery", () => {
 		it("finds correctly one device", async () => {
 			let promise: Promise<void>;
 			androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
-				promise = new Promise((resolve, reject) => {
+				promise = new Promise<void>((resolve, reject) => {
 					devicesFound.push(device);
 					resolve();
 				});
@@ -135,7 +135,7 @@ describe("androidDeviceDiscovery", () => {
 		it("finds correctly more than one device", async () => {
 			let promise: Promise<void>;
 			androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
-				promise = new Promise((resolve, reject) => {
+				promise = new Promise<void>((resolve, reject) => {
 					devicesFound.push(device);
 					if (devicesFound.length === 2) {
 						resolve();
@@ -170,7 +170,7 @@ describe("androidDeviceDiscovery", () => {
 			beforeEach(async () => {
 				let promise: Promise<void>;
 				androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
-					promise = new Promise((resolve, reject) => {
+					promise = new Promise<void>((resolve, reject) => {
 						devicesFound.push(device);
 						resolve();
 					});

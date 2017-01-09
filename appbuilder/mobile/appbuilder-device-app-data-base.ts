@@ -11,7 +11,7 @@ export class AppBuilderDeviceAppDataBase extends DeviceAppDataBase implements IL
 	}
 
 	public getDeviceProjectRootPath(): Promise<string> {
-		return Promise.resolve();
+		return Promise.resolve("");
 	}
 
 	public get liveSyncFormat(): string {
