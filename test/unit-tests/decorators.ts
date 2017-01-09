@@ -1,6 +1,6 @@
 import * as decoratorsLib from "../../decorators";
 import { Yok } from "../../yok";
-import {assert} from "chai";
+import { assert } from "chai";
 import Future = require("fibers/future");
 
 describe("decorators", () => {
@@ -39,7 +39,7 @@ describe("decorators", () => {
 			assert.deepEqual(typeof ($injector.publicApi.__modules__[moduleName][propertyName]), "function");
 		});
 
-		it("returns Promise", (done) => {
+		it("returns Promise", (done: mocha.Done) => {
 			let expectedResult = "result";
 			$injector.register(moduleName, { propertyName: () => expectedResult });
 			generatePublicApiFromExportedPromiseDecorator();
@@ -51,7 +51,7 @@ describe("decorators", () => {
 			}).then(done).catch(done);
 		});
 
-		it("returns Promise, which is resolved to correct value (function without arguments)", (done) => {
+		it("returns Promise, which is resolved to correct value (function without arguments)", (done: mocha.Done) => {
 			let expectedResult = "result";
 			$injector.register(moduleName, { propertyName: () => expectedResult });
 			generatePublicApiFromExportedPromiseDecorator();
@@ -62,7 +62,7 @@ describe("decorators", () => {
 			}).then(done).catch(done);
 		});
 
-		it("returns Promise, which is resolved to correct value (function with arguments)", (done) => {
+		it("returns Promise, which is resolved to correct value (function with arguments)", (done: mocha.Done) => {
 			let expectedArgs = ["result", "result1", "result2"];
 			$injector.register(moduleName, { propertyName: (functionArgs: string[]) => functionArgs });
 			generatePublicApiFromExportedPromiseDecorator();
@@ -73,7 +73,7 @@ describe("decorators", () => {
 			}).then(done).catch(done);
 		});
 
-		it("returns Promise, which is resolved to correct value (function returning IFuture without arguments)", (done) => {
+		it("returns Promise, which is resolved to correct value (function returning IFuture without arguments)", (done: mocha.Done) => {
 			let expectedResult = "result";
 			$injector.register(moduleName, { propertyName: () => Future.fromResult(expectedResult) });
 			generatePublicApiFromExportedPromiseDecorator();
@@ -84,7 +84,7 @@ describe("decorators", () => {
 			}).then(done).catch(done);
 		});
 
-		it("returns Promise, which is resolved to correct value (function returning IFuture with arguments)", (done) => {
+		it("returns Promise, which is resolved to correct value (function returning IFuture with arguments)", (done: mocha.Done) => {
 			let expectedArgs = ["result", "result1", "result2"];
 			$injector.register(moduleName, { propertyName: (args: string[]) => Future.fromResult(args) });
 			generatePublicApiFromExportedPromiseDecorator();
@@ -95,7 +95,7 @@ describe("decorators", () => {
 			}).then(done).catch(done);
 		});
 
-		it("rejects Promise, which is resolved to correct error (function without arguments throws)", (done) => {
+		it("rejects Promise, which is resolved to correct error (function without arguments throws)", (done: mocha.Done) => {
 			let expectedError = new Error("Test msg");
 			$injector.register(moduleName, { propertyName: () => { throw expectedError; } });
 			generatePublicApiFromExportedPromiseDecorator();
@@ -108,7 +108,7 @@ describe("decorators", () => {
 			}).then(done).catch(done);
 		});
 
-		it("rejects Promise, which is resolved to correct error (function returning IFuture without arguments throws)", (done) => {
+		it("rejects Promise, which is resolved to correct error (function returning IFuture without arguments throws)", (done: mocha.Done) => {
 			let expectedError = new Error("Test msg");
 			$injector.register(moduleName, { propertyName: () => { return (() => { throw expectedError; }).future<void>()(); } });
 			generatePublicApiFromExportedPromiseDecorator();
@@ -122,7 +122,7 @@ describe("decorators", () => {
 			}).then(done).catch(done);
 		});
 
-		it("returns Promises, which are resolved to correct value (function returning IFuture<T>[] without arguments)", (done) => {
+		it("returns Promises, which are resolved to correct value (function returning IFuture<T>[] without arguments)", (done: mocha.Done) => {
 			let expectedResults = ["result1", "result2", "result3"];
 			$injector.register(moduleName, { propertyName: () => _.map(expectedResults, expectedResult => Future.fromResult(expectedResult)) });
 			generatePublicApiFromExportedPromiseDecorator();
@@ -134,11 +134,11 @@ describe("decorators", () => {
 						assert.deepEqual(val, expectedResults[index]);
 					});
 				})
-				.then(done)
+				.then(() => done())
 				.catch(done);
 		});
 
-		it("rejects Promises, which are resolved to correct error (function returning IFuture<T>[] without arguments throws)", (done) => {
+		it("rejects Promises, which are resolved to correct error (function returning IFuture<T>[] without arguments throws)", (done: mocha.Done) => {
 			let expectedErrors = [new Error("result1"), new Error("result2"), new Error("result3")];
 			$injector.register(moduleName, { propertyName: () => _.map(expectedErrors, expectedError => { return (() => { throw expectedError; }).future<void>()(); }) });
 			generatePublicApiFromExportedPromiseDecorator();
@@ -160,7 +160,7 @@ describe("decorators", () => {
 			}).then(done).catch(done);
 		});
 
-		it("rejects only Promises which throw, resolves the others correctly (function returning IFuture<T>[] without arguments)", (done) => {
+		it("rejects only Promises which throw, resolves the others correctly (function returning IFuture<T>[] without arguments)", (done: mocha.Done) => {
 			let expectedResults: any[] = ["result1", new Error("result2")];
 			$injector.register(moduleName, { propertyName: () => _.map(expectedResults, expectedResult => Future.fromResult(expectedResult)) });
 			generatePublicApiFromExportedPromiseDecorator();
@@ -210,7 +210,7 @@ describe("decorators", () => {
 				isActionExecuted = false;
 			});
 
-			it("executes postAction after all promises are resolved (function returning IFuture<T>)", (done) => {
+			it("executes postAction after all promises are resolved (function returning IFuture<T>)", (done: mocha.Done) => {
 				expectedResults = "result";
 
 				$injector.register(moduleName, {
@@ -229,7 +229,7 @@ describe("decorators", () => {
 					.catch(done);
 			});
 
-			it("executes postAction after all promises are resolved (function returning IFuture<T>[])", (done) => {
+			it("executes postAction after all promises are resolved (function returning IFuture<T>[])", (done: mocha.Done) => {
 				expectedResults = ["result1", "result2", "result3"];
 
 				$injector.register(moduleName, {
@@ -245,11 +245,11 @@ describe("decorators", () => {
 
 				Promise.all(getPromisesWithPostAction())
 					.then(assertResults)
-					.then(done)
+					.then(() => done())
 					.catch(done);
 			});
 
-			it("executes postAction after a promise is rejected (function returning IFuture<T> that throws)", (done) => {
+			it("executes postAction after a promise is rejected (function returning IFuture<T> that throws)", (done: mocha.Done) => {
 				expectedResults = "result";
 				let errorMessage = "This future throws";
 
@@ -276,7 +276,7 @@ describe("decorators", () => {
 					.catch(done);
 			});
 
-			it("executes postAction after all promises are rejected (function returning IFuture<T>[] that throws)", (done) => {
+			it("executes postAction after all promises are rejected (function returning IFuture<T>[] that throws)", (done: mocha.Done) => {
 				expectedResults = ["result1", "result2", "result3"];
 				let errorMessage = "This future throws.";
 
@@ -316,7 +316,7 @@ describe("decorators", () => {
 					.catch(done);
 			});
 
-			it("executes postAction after all some promises are rejected and others are resolved (function returning IFuture<T>[] where some of the future throw)", (done) => {
+			it("executes postAction after all some promises are rejected and others are resolved (function returning IFuture<T>[] where some of the future throw)", (done: mocha.Done) => {
 				let calledActionsCount = 0;
 				expectedResults = ["result1", "result2", "result3", "result4"];
 				let errorMessage = "This future throws.";
