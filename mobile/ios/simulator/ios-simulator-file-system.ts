@@ -12,12 +12,18 @@ export class IOSSimulatorFileSystem implements Mobile.IDeviceFileSystem {
 		return this.iosSim.listFiles(devicePath);
 	}
 
-	public getFile(deviceFilePath: string): IFuture<void> {
-		return this.iosSim.getFile(deviceFilePath);
+	public getFile(deviceFilePath: string, outputFilePath?: string): IFuture<void> {
+		return (() => {
+			if (outputFilePath) {
+				shelljs.cp("-f", deviceFilePath, outputFilePath);
+			}
+		}).future<void>()();
 	}
 
 	public putFile(localFilePath: string, deviceFilePath: string): IFuture<void> {
-		return this.iosSim.putFile(localFilePath, deviceFilePath);
+		return (() => {
+			shelljs.cp("-f", localFilePath, deviceFilePath);
+		}).future<void>()();
 	}
 
 	public deleteFile(deviceFilePath: string, appIdentifier: string): void {

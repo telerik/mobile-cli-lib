@@ -78,15 +78,10 @@ export class AfcFile extends AfcBase implements Mobile.IAfcFile {
 	public read(len: number): any {
 		let readLengthRef = ref.alloc(iOSCore.CoreTypes.uintType, len);
 		let data = new Buffer(len * iOSCore.CoreTypes.pointerSize);
-		let result = this.tryExecuteAfcAction(() => {
-			data = new Buffer(len * iOSCore.CoreTypes.pointerSize);
-			this.$mobileDevice.afcFileRefRead(this.afcConnection, this.afcFile, data, readLengthRef);
-		});
-
-		if(result !== 0) {
+		let result = this.tryExecuteAfcAction(() =>	this.$mobileDevice.afcFileRefRead(this.afcConnection, this.afcFile, data, readLengthRef));
+		if (result !== 0) {
 			this.$errors.fail("Unable to read data from file '%s'. Result is: '%s'", this.afcFile, result);
 		}
-
 		let readLength = readLengthRef.deref();
 		return data.slice(0, readLength);
 	}

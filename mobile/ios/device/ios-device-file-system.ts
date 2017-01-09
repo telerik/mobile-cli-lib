@@ -2,6 +2,7 @@ import * as iOSProxyServices from "./ios-proxy-services";
 import * as path from "path";
 import * as ref from "ref";
 import * as util from "util";
+import Future = require("fibers/future");
 
 export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	constructor(private device: Mobile.IiOSDevice,
@@ -42,27 +43,32 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		}).future<any>()();
 	}
 
-	public getFile(deviceFilePath: string): IFuture<void> {
-		return (() => {
-			let afcClient = this.resolveAfc();
-			let fileToRead = afcClient.open(deviceFilePath, "r");
-			let fileToWrite = this.$options.file ? this.$fs.createWriteStream(this.$options.file) : process.stdout;
-			let dataSizeToRead = 8192;
-			let size = 0;
-
-			while(true) {
-				let data = fileToRead.read(dataSizeToRead);
-				if(!data || data.length === 0) {
-					break;
-				}
-				fileToWrite.write(data);
-				size += data.length;
+	public getFile(deviceFilePath: string, outputFilePath?: string): IFuture<void> {
+		let future = new Future<void>();
+		let afcClient = this.resolveAfc();
+		let fileToRead = afcClient.open(deviceFilePath, "r");
+		let fileToWrite = outputFilePath ? this.$fs.createWriteStream(outputFilePath) : process.stdout;
+		if (outputFilePath) {
+			fileToWrite.on("close", () => {
+				future.return();
+			});
+		}
+		let dataSizeToRead = 8192;
+		let size = 0;
+		while(true) {
+			let data = fileToRead.read(dataSizeToRead);
+			if(!data || data.length === 0) {
+				break;
 			}
-
-			fileToRead.close();
-			this.$logger.trace("%s bytes read from %s", size.toString(), deviceFilePath);
-
-		}).future<void>()();
+			fileToWrite.write(data);
+			size += data.length;
+		}
+		fileToRead.close();
+		if (outputFilePath) {
+			fileToWrite.end();
+		}
+		this.$logger.trace("%s bytes read from %s", size.toString(), deviceFilePath);
+		return future;
 	}
 
 	public putFile(localFilePath: string, deviceFilePath: string): IFuture<void> {
@@ -80,7 +86,6 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	public transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void> {
 		return (() => {
 			let houseArrestClient: Mobile.IHouseArrestClient = this.$injector.resolve(iOSProxyServices.HouseArrestClient, { device: this.device });
-
 			let afcClient = this.getAfcClient(houseArrestClient, deviceAppData.deviceProjectRootPath, deviceAppData.appIdentifier);
 			_.each(localToDevicePaths, (localToDevicePathData) => {
 				let stats = this.$fs.getFsStats(localToDevicePathData.getLocalPath());

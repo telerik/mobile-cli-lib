@@ -32,7 +32,7 @@ export class OptionsBase {
 		private $errors: IErrors,
 		private $staticConfig: Config.IStaticConfig) {
 
-		_.extend(this.options, this.commonOptions, this.globalOptions);
+		this.options = _.extend({}, this.commonOptions, this.options, this.globalOptions);
 		this.setArgv();
 	}
 

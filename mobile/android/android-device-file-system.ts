@@ -23,12 +23,31 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		return this.adb.executeShellCommand(listCommandArgs);
 	}
 
-	public getFile(deviceFilePath: string): IFuture<void> {
-		return Future.fromResult();
-	}
+	public getFile(deviceFilePath: string, outputPath?: string): IFuture<void> {
+		return (() => {
+			let stdout = !outputPath;
+			if (stdout) {
+				temp.track();
+				outputPath = temp.path({prefix: "sync", suffix: ".tmp"});
+			}
+			this.adb.executeCommand(["pull", deviceFilePath, outputPath]).wait();
+			if (stdout) {
+				let readStream = this.$fs.createReadStream(outputPath);
+				let future = new Future<void>();
+				readStream.pipe(process.stdout);
+				readStream.on("end", () => {
+					future.return();
+				});
+				readStream.on("error", (err: Error) => {
+					future.throw(err);
+				});
+				future.wait();
+			}
+		}).future<void>()();
+ 	}
 
 	public putFile(localFilePath: string, deviceFilePath: string): IFuture<void> {
-		return Future.fromResult();
+		return this.adb.executeCommand(["push", localFilePath, deviceFilePath]);
 	}
 
 	public transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void> {
