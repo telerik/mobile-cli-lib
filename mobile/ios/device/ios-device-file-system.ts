@@ -2,7 +2,6 @@ import * as iOSProxyServices from "./ios-proxy-services";
 import * as path from "path";
 import * as ref from "ref";
 import * as util from "util";
-import Future = require("fibers/future");
 
 export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	constructor(private device: Mobile.IiOSDevice,
