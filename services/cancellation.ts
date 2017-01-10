@@ -2,13 +2,13 @@ let gaze = require("gaze");
 import * as path from "path";
 import * as os from "os";
 import Future = require("fibers/future");
-let hostInfo = $injector.resolve("hostInfo");
+let hostInfo: IHostInfo = $injector.resolve("hostInfo");
 
 class CancellationService implements ICancellationService {
 	private watches: IDictionary<IWatcherInstance> = {};
 
 	constructor(private $fs: IFileSystem,
-			private $logger: ILogger) {
+		private $logger: ILogger) {
 		this.$fs.createDirectory(CancellationService.killSwitchDir);
 		this.$fs.chmod(CancellationService.killSwitchDir, "0777");
 	}
@@ -16,21 +16,21 @@ class CancellationService implements ICancellationService {
 	public begin(name: string): IFuture<void> {
 		return (() => {
 			let triggerFile = CancellationService.makeKillSwitchFileName(name);
-			if(!this.$fs.exists(triggerFile)) {
-				let stream = this.$fs.createWriteStream(triggerFile);
-				let streamEnd = this.$fs.futureFromEvent(stream, "finish");
-				stream.end();
-				streamEnd.wait();
-				this.$fs.chmod(triggerFile, "0777");
+			if (!this.$fs.exists(triggerFile)) {
+				this.$fs.writeFile(triggerFile, "");
+
+				if (!hostInfo.isWindows) {
+					this.$fs.chmod(triggerFile, "0777");
+				}
 			}
 
 			this.$logger.trace("Starting watch on killswitch %s", triggerFile);
 
 			let watcherInitialized = new Future<IWatcherInstance>();
 
-			gaze(triggerFile, function(err: any, watcher: any) {
+			gaze(triggerFile, function (err: any, watcher: any) {
 				this.on("deleted", (filePath: string) => process.exit());
-				if(err) {
+				if (err) {
 					watcherInitialized.throw(err);
 				} else {
 					watcherInitialized.return(watcher);
@@ -56,7 +56,7 @@ class CancellationService implements ICancellationService {
 	}
 
 	private static get killSwitchDir(): string {
-        return path.join(os.tmpdir(), process.env.SUDO_USER || process.env.USER || process.env.USERNAME || '', "KillSwitches");
+		return path.join(os.tmpdir(), process.env.SUDO_USER || process.env.USER || process.env.USERNAME || '', "KillSwitches");
 	}
 
 	private static makeKillSwitchFileName(name: string): string {
@@ -65,15 +65,15 @@ class CancellationService implements ICancellationService {
 }
 
 class CancellationServiceDummy implements ICancellationService {
-	dispose():void {
+	dispose(): void {
 		/* intentionally left blank */
 	}
 
-	begin(name:string):IFuture<void> {
+	begin(name: string): IFuture<void> {
 		return Future.fromResult();
 	}
 
-	end(name:string):void {
+	end(name: string): void {
 		/* intentionally left blank */
 	}
 }
