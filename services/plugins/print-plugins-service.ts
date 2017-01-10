@@ -5,8 +5,7 @@ export class PrintPluginsService implements IPrintPluginsService {
 
 	private _page: number;
 
-	constructor(private $errors: IErrors,
-		private $logger: ILogger,
+	constructor(private $logger: ILogger,
 		private $prompter: IPrompter) {
 		this._page = 1;
 	}

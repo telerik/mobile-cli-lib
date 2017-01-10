@@ -13,7 +13,6 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 	constructor(protected $logger: ILogger,
 		protected $options: ICommonOptions,
 		private $staticConfig: Config.IStaticConfig,
-		private $errors: IErrors,
 		private $prompter: IPrompter,
 		private $userSettingsService: UserSettings.IUserSettingsService,
 		private $analyticsSettingsService: IAnalyticsSettingsService,

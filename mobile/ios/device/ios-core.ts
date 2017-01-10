@@ -230,8 +230,7 @@ $injector.register("iOSCore", IOSCore);
 export class CoreFoundation implements Mobile.ICoreFoundation {
 	private coreFoundationLibrary: any;
 
-	constructor($iOSCore: Mobile.IiOSCore,
-		private $errors: IErrors) {
+	constructor($iOSCore: Mobile.IiOSCore) {
 		this.coreFoundationLibrary = $iOSCore.getCoreFoundationLibrary();
 	}
 
@@ -691,8 +690,8 @@ export class WinSocket implements Mobile.IiOSDeviceSocket {
 		let serviceArg: number | string = this.service || '';
 		let formatArg: number | string = this.format || '';
 		let sysLog = this.$childProcess.fork(path.join(__dirname, "ios-sys-log.js"),
-												[this.$staticConfig.PATH_TO_BOOTSTRAP, serviceArg.toString(), formatArg.toString()],
-												{ silent: true });
+			[this.$staticConfig.PATH_TO_BOOTSTRAP, serviceArg.toString(), formatArg.toString()],
+			{ silent: true });
 		sysLog.on('message', (data: any) => {
 			printData(data);
 		});
@@ -871,7 +870,6 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 	constructor(service: number,
 		private format: number,
 		private $coreFoundation: Mobile.ICoreFoundation,
-		private $mobileDevice: Mobile.IMobileDevice,
 		private $logger: ILogger,
 		private $errors: IErrors) {
 		this.socket = new net.Socket({ fd: service });

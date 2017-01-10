@@ -3,7 +3,6 @@ import * as shelljs from "shelljs";
 
 export class IOSSimulatorFileSystem implements Mobile.IDeviceFileSystem {
 	constructor(private iosSim: any,
-		private identifier: string,
 		private $fs: IFileSystem,
 		private $logger: ILogger) { }
 

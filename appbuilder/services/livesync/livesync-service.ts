@@ -8,9 +8,6 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 	}
 
 	constructor(private $devicesService: Mobile.IDevicesService,
-		private $errors: IErrors,
-		private $mobileHelper: Mobile.IMobileHelper,
-		private $options: ICommonOptions,
 		private $fs: IFileSystem,
 		private $injector: IInjector,
 		private $project: Project.IProjectBase,

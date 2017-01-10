@@ -4,8 +4,7 @@ import { DeviceAndroidDebugBridge } from "./device-android-debug-bridge";
 export class LogcatHelper implements Mobile.ILogcatHelper {
 	private mapDeviceToLoggingStarted: IDictionary<boolean>;
 
-	constructor(private $childProcess: IChildProcess,
-		private $deviceLogProvider: Mobile.IDeviceLogProvider,
+	constructor(private $deviceLogProvider: Mobile.IDeviceLogProvider,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $logger: ILogger,
 		private $injector: IInjector,

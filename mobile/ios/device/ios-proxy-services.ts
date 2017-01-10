@@ -120,7 +120,6 @@ export class AfcClient extends AfcBase implements Mobile.IAfcClient {
 
 	constructor(private service: number,
 		private $mobileDevice: Mobile.IMobileDevice,
-		private $coreFoundation: Mobile.ICoreFoundation,
 		private $fs: IFileSystem,
 		private $errors: IErrors,
 		private $injector: IInjector,
@@ -396,9 +395,9 @@ export class NotificationProxyClient implements Mobile.INotificationProxyClient 
 			let plist = this.buffer.substr(start, end + PLIST_TAIL.length);
 			this.buffer = this.buffer.substr(end + PLIST_TAIL.length);
 
-			plistlib.loadString(plist, (err: any, plist: any) => {
-				if (!err && plist) {
-					this.handlePlistNotification(plist);
+			plistlib.loadString(plist, (err: any, propertyList: any) => {
+				if (!err && propertyList) {
+					this.handlePlistNotification(propertyList);
 				}
 			});
 
@@ -487,7 +486,6 @@ export class IOSSyslog {
 	private plistService: Mobile.IiOSDeviceSocket;
 
 	constructor(private device: Mobile.IiOSDevice,
-		private $logger: ILogger,
 		private $injector: IInjector,
 		private $deviceLogProvider: Mobile.IDeviceLogProvider,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {

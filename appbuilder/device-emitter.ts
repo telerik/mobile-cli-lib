@@ -7,7 +7,6 @@ export class DeviceEmitter extends EventEmitter {
 		private $devicesService: Mobile.IDevicesService,
 		private $deviceLogProvider: EventEmitter,
 		private $companionAppsService: ICompanionAppsService,
-		private $projectConstants: Project.IConstants,
 		private $logger: ILogger) {
 		super();
 	}

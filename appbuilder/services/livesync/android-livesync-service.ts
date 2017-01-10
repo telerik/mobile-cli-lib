@@ -3,7 +3,7 @@ import * as path from "path";
 import * as helpers from "../../../helpers";
 
 export class AppBuilderAndroidLiveSyncService extends AndroidLiveSyncService implements IDeviceLiveSyncService {
-	constructor(private _device: Mobile.IAndroidDevice,
+	constructor(_device: Mobile.IAndroidDevice,
 		$fs: IFileSystem,
 		$mobileHelper: Mobile.IMobileHelper,
 		private $options: ICommonOptions) {

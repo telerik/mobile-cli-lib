@@ -50,23 +50,15 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		private status: string,
 		private $androidEmulatorServices: Mobile.IAndroidEmulatorServices,
 		private $logger: ILogger,
-		private $fs: IFileSystem,
-		private $childProcess: IChildProcess,
-		private $errors: IErrors,
-		private $staticConfig: Config.IStaticConfig,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
-		private $options: ICommonOptions,
 		private $logcatHelper: Mobile.ILogcatHelper,
-		private $hostInfo: IHostInfo,
-		private $mobileHelper: Mobile.IMobileHelper,
-		private $injector: IInjector) {
-	}
+		private $injector: IInjector) { }
 
 	@cache()
 	public async init(): Promise<void> {
 		this.adb = this.$injector.resolve(DeviceAndroidDebugBridge, { identifier: this.identifier });
 		this.applicationManager = this.$injector.resolve(applicationManagerPath.AndroidApplicationManager, { adb: this.adb, identifier: this.identifier });
-		this.fileSystem = this.$injector.resolve(fileSystemPath.AndroidDeviceFileSystem, { adb: this.adb, identifier: this.identifier });
+		this.fileSystem = this.$injector.resolve(fileSystemPath.AndroidDeviceFileSystem, { adb: this.adb });
 		let details: IAndroidDeviceDetails;
 		try {
 			details = await this.getDeviceDetails(["getprop"]);
@@ -90,7 +82,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 			version: details.release,
 			vendor: details.brand,
 			platform: this.$devicePlatformsConstants.Android,
-			status: adbStatusInfo ? adbStatusInfo.deviceStatus : status,
+			status: adbStatusInfo ? adbStatusInfo.deviceStatus : this.status,
 			errorHelp: adbStatusInfo ? adbStatusInfo.errorHelp : "Unknown status",
 			isTablet: this.getIsTablet(details),
 			type: await this.getType()

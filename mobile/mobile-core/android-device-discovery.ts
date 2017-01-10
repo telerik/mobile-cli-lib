@@ -12,8 +12,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 	private _devices: IAdbAndroidDeviceInfo[] = [];
 	private isStarted: boolean;
 
-	constructor(private $childProcess: IChildProcess,
-		private $injector: IInjector,
+	constructor(private $injector: IInjector,
 		private $adb: Mobile.IAndroidDebugBridge) {
 		super();
 	}
@@ -113,4 +112,5 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 		}
 	}
 }
+
 $injector.register("androidDeviceDiscovery", AndroidDeviceDiscovery);

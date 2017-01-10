@@ -5,8 +5,7 @@ export class MessageContractGenerator implements IServiceContractGenerator {
 	private pendingModels: any;
 
 	constructor(private $fs: IFileSystem,
-		private $messagesService: IMessagesService,
-		private $staticConfig: Config.IStaticConfig) {
+		private $messagesService: IMessagesService) {
 		this.pendingModels = {};
 	}
 

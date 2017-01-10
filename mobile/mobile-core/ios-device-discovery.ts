@@ -47,9 +47,7 @@ export class IOSDeviceDiscovery extends DeviceDiscovery {
 		private $injector: IInjector,
 		private $utils: IUtils,
 		private $logger: ILogger,
-		private $iTunesValidator: Mobile.IiTunesValidator,
-		private $hostInfo: IHostInfo,
-		private $staticConfig: Config.IStaticConfig) {
+		private $iTunesValidator: Mobile.IiTunesValidator) {
 		super();
 		this.timerCallbackPtr = CoreTypes.cf_run_loop_timer_callback.toPointer(IOSDeviceDiscovery.timerCallback);
 		this.notificationCallbackPtr = CoreTypes.am_device_notification_callback.toPointer(IOSDeviceDiscovery.deviceNotificationCallback);

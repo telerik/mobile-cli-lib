@@ -4,8 +4,7 @@ export class RunApplicationOnDeviceCommand implements ICommand {
 		private $errors: IErrors,
 		private $stringParameter: ICommandParameter,
 		private $staticConfig: Config.IStaticConfig,
-		private $options: ICommonOptions,
-		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) { }
+		private $options: ICommonOptions) { }
 
 	allowedParameters: ICommandParameter[] = [this.$stringParameter];
 

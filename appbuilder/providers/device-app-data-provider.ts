@@ -12,7 +12,7 @@ export class AndroidAppIdentifier extends AppBuilderDeviceAppDataBase implements
 		$deployHelper: IDeployHelper,
 		$devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $errors: IErrors) {
-		super(_appIdentifier, device, platform, $deployHelper, $devicePlatformsConstants);
+		super(_appIdentifier, device, platform, $deployHelper);
 	}
 
 	@cache()
@@ -50,8 +50,8 @@ export class AndroidCompanionAppIdentifier extends AppBuilderCompanionDeviceAppD
 		platform: string,
 		$deployHelper: IDeployHelper,
 		$devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
-		private $companionAppsService: ICompanionAppsService) {
-		super($companionAppsService.getCompanionAppIdentifier(TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform), device, platform, $deployHelper, $devicePlatformsConstants);
+		$companionAppsService: ICompanionAppsService) {
+		super($companionAppsService.getCompanionAppIdentifier(TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform), device, platform, $deployHelper);
 	}
 
 	public async deviceProjectRootPath(): Promise<string> {
@@ -72,8 +72,8 @@ export class AndroidNativeScriptCompanionAppIdentifier extends AppBuilderCompani
 		platform: string,
 		$deployHelper: IDeployHelper,
 		$devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
-		private $companionAppsService: ICompanionAppsService) {
-		super($companionAppsService.getCompanionAppIdentifier(TARGET_FRAMEWORK_IDENTIFIERS.NativeScript, platform), device, platform, $deployHelper, $devicePlatformsConstants);
+		$companionAppsService: ICompanionAppsService) {
+		super($companionAppsService.getCompanionAppIdentifier(TARGET_FRAMEWORK_IDENTIFIERS.NativeScript, platform), device, platform, $deployHelper);
 	}
 
 	public async deviceProjectRootPath(): Promise<string> {
@@ -96,7 +96,7 @@ export class IOSAppIdentifier extends AppBuilderDeviceAppDataBase implements ILi
 		$deployHelper: IDeployHelper,
 		$devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $iOSSimResolver: Mobile.IiOSSimResolver) {
-		super(_appIdentifier, device, platform, $deployHelper, $devicePlatformsConstants);
+		super(_appIdentifier, device, platform, $deployHelper);
 	}
 
 	@cache()
@@ -121,7 +121,7 @@ export class IOSNativeScriptAppIdentifier extends AppBuilderDeviceAppDataBase im
 		$deployHelper: IDeployHelper,
 		$devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $iOSSimResolver: Mobile.IiOSSimResolver) {
-		super(_appIdentifier, device, platform, $deployHelper, $devicePlatformsConstants);
+		super(_appIdentifier, device, platform, $deployHelper);
 	}
 
 	@cache()
@@ -140,8 +140,8 @@ export class IOSCompanionAppIdentifier extends AppBuilderCompanionDeviceAppDataB
 		platform: string,
 		$deployHelper: IDeployHelper,
 		$devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
-		private $companionAppsService: ICompanionAppsService) {
-		super($companionAppsService.getCompanionAppIdentifier(TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform), device, platform, $deployHelper, $devicePlatformsConstants);
+		$companionAppsService: ICompanionAppsService) {
+		super($companionAppsService.getCompanionAppIdentifier(TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform), device, platform, $deployHelper);
 	}
 
 	public async deviceProjectRootPath(): Promise<string> {
@@ -162,8 +162,8 @@ export class IOSNativeScriptCompanionAppIdentifier extends AppBuilderCompanionDe
 		platform: string,
 		$deployHelper: IDeployHelper,
 		$devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
-		private $companionAppsService: ICompanionAppsService) {
-		super($companionAppsService.getCompanionAppIdentifier(TARGET_FRAMEWORK_IDENTIFIERS.NativeScript, platform), device, platform, $deployHelper, $devicePlatformsConstants);
+		$companionAppsService: ICompanionAppsService) {
+		super($companionAppsService.getCompanionAppIdentifier(TARGET_FRAMEWORK_IDENTIFIERS.NativeScript, platform), device, platform, $deployHelper);
 	}
 
 	public async deviceProjectRootPath(): Promise<string> {
@@ -184,8 +184,8 @@ export class WP8CompanionAppIdentifier extends AppBuilderCompanionDeviceAppDataB
 		$deployHelper: IDeployHelper,
 		$devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		public platform: string,
-		private $companionAppsService: ICompanionAppsService) {
-		super($companionAppsService.getCompanionAppIdentifier(TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform), device, platform, $deployHelper, $devicePlatformsConstants);
+		$companionAppsService: ICompanionAppsService) {
+		super($companionAppsService.getCompanionAppIdentifier(TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform), device, platform, $deployHelper);
 	}
 
 	public async deviceProjectRootPath(): Promise<string> {

@@ -8,7 +8,6 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 	private _forwardedLocalPorts: number[];
 
 	constructor(private $errors: IErrors,
-		private $staticConfig: Config.IStaticConfig,
 		private $injector: IInjector,
 		private $net: INet,
 		private $processService: IProcessService) {

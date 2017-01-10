@@ -7,7 +7,6 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 
 	constructor(private adb: Mobile.IDeviceAndroidDebugBridge,
 		private identifier: string,
-		private $staticConfig: Config.IStaticConfig,
 		private $options: ICommonOptions,
 		private $logcatHelper: Mobile.ILogcatHelper,
 		private $androidProcessService: Mobile.IAndroidProcessService,

@@ -3,7 +3,6 @@ class AnalyticsCommand implements ICommand {
 		private $logger: ILogger,
 		private $errors: IErrors,
 		private $options: ICommonOptions,
-		private $staticConfig: Config.IStaticConfig,
 		private settingName: string,
 		private humanReadableSettingName: string) { }
 
@@ -35,7 +34,7 @@ export class UsageReportingCommand extends AnalyticsCommand {
 		$errors: IErrors,
 		$options: ICommonOptions,
 		$staticConfig: Config.IStaticConfig) {
-		super($analyticsService, $logger, $errors, $options, $staticConfig, $staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, "Usage reporting");
+		super($analyticsService, $logger, $errors, $options, $staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, "Usage reporting");
 	}
 }
 $injector.registerCommand("usage-reporting", UsageReportingCommand);
@@ -46,7 +45,7 @@ export class ErrorReportingCommand extends AnalyticsCommand {
 		$errors: IErrors,
 		$options: ICommonOptions,
 		$staticConfig: Config.IStaticConfig) {
-		super($analyticsService, $logger, $errors, $options, $staticConfig, $staticConfig.ERROR_REPORT_SETTING_NAME, "Error reporting");
+		super($analyticsService, $logger, $errors, $options, $staticConfig.ERROR_REPORT_SETTING_NAME, "Error reporting");
 	}
 }
 $injector.registerCommand("error-reporting", ErrorReportingCommand);

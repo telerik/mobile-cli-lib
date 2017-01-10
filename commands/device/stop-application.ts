@@ -1,9 +1,7 @@
 export class StopApplicationOnDeviceCommand implements ICommand {
 
 	constructor(private $devicesService: Mobile.IDevicesService,
-		private $errors: IErrors,
 		private $stringParameter: ICommandParameter,
-		private $staticConfig: Config.IStaticConfig,
 		private $options: ICommonOptions) { }
 
 	allowedParameters: ICommandParameter[] = [this.$stringParameter, this.$stringParameter];
@@ -15,4 +13,5 @@ export class StopApplicationOnDeviceCommand implements ICommand {
 		await this.$devicesService.execute(action);
 	}
 }
+
 $injector.registerCommand("device|stop", StopApplicationOnDeviceCommand);

@@ -6,7 +6,6 @@ export class ProjectFilesManager implements IProjectFilesManager {
 	constructor(private $fs: IFileSystem,
 		private $localToDevicePathDataFactory: Mobile.ILocalToDevicePathDataFactory,
 		private $logger: ILogger,
-		private $mobileHelper: Mobile.IMobileHelper,
 		private $projectFilesProvider: IProjectFilesProvider) { }
 
 	public getProjectFiles(projectFilesPath: string, excludedProjectDirsAndFiles?: string[], filter?: (filePath: string, stat: IFsStats) => boolean, opts?: any): string[] {

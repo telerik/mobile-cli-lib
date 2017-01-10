@@ -15,16 +15,13 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		protected $hooksService: IHooksService,
 		private device: Mobile.IiOSDevice,
 		private devicePointer: NodeBuffer,
-		private $childProcess: IChildProcess,
 		private $coreFoundation: Mobile.ICoreFoundation,
 		private $errors: IErrors,
 		private $injector: IInjector,
 		private $mobileDevice: Mobile.IMobileDevice,
 		private $hostInfo: IHostInfo,
 		private $staticConfig: Config.IStaticConfig,
-		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
-		private $processService: IProcessService,
-		private $options: ICommonOptions) {
+		private $processService: IProcessService) {
 		super($logger, $hooksService);
 		this.uninstallApplicationCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSApplicationManager.uninstallCallback);
 	}

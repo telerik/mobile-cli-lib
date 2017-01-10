@@ -31,7 +31,6 @@ export class DevicesService implements Mobile.IDevicesService {
 		private $mobileHelper: Mobile.IMobileHelper,
 		private $deviceLogProvider: Mobile.IDeviceLogProvider,
 		private $hostInfo: IHostInfo,
-		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $injector: IInjector,
 		private $options: ICommonOptions,
 		private $androidProcessService: Mobile.IAndroidProcessService,

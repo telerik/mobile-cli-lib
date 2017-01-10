@@ -23,8 +23,6 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		private $projectFilesManager: IProjectFilesManager,
 		private $projectFilesProvider: IProjectFilesProvider,
 		private $liveSyncProvider: ILiveSyncProvider,
-		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
-		private $hostInfo: IHostInfo,
 		private $dispatcher: IFutureDispatcher) {
 		this.fileHashes = Object.create(null);
 	}

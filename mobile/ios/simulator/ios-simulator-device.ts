@@ -45,7 +45,7 @@ export class IOSSimulator implements Mobile.IiOSSimulator {
 
 	public get fileSystem(): Mobile.IDeviceFileSystem {
 		if (!this._fileSystem) {
-			this._fileSystem = this.$injector.resolve(fileSystemPath.IOSSimulatorFileSystem, { iosSim: this.$iOSSimResolver.iOSSim, identifier: this.simulator.id });
+			this._fileSystem = this.$injector.resolve(fileSystemPath.IOSSimulatorFileSystem, { iosSim: this.$iOSSimResolver.iOSSim });
 		}
 
 		return this._fileSystem;

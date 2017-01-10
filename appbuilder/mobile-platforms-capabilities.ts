@@ -1,8 +1,6 @@
 export class MobilePlatformsCapabilities implements Mobile.IPlatformsCapabilities {
 	private platformCapabilities: IDictionary<Mobile.IPlatformCapabilities>;
 
-	constructor(private $errors: IErrors) { }
-
 	public getPlatformNames(): string[] {
 		return _.keys(this.getAllCapabilities());
 	}

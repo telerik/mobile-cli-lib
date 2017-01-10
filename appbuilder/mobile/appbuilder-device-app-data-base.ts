@@ -5,8 +5,7 @@ export class AppBuilderDeviceAppDataBase extends DeviceAppDataBase implements IL
 	constructor(_appIdentifier: string,
 		public device: Mobile.IDevice,
 		public platform: string,
-		private $deployHelper: IDeployHelper,
-		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
+		private $deployHelper: IDeployHelper) {
 		super(_appIdentifier);
 	}
 

@@ -7,12 +7,9 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 	private _keywords: string[];
 	private _pages: IBasicPluginInformation[][];
 
-	constructor($progressIndicator: IProgressIndicator,
-		$logger: ILogger,
-		private $httpClient: Server.IHttpClient,
-		private $childProcess: IChildProcess,
-		private $hostInfo: IHostInfo,
-		private $errors: IErrors) {
+	constructor(protected $progressIndicator: IProgressIndicator,
+		protected $logger: ILogger,
+		private $httpClient: Server.IHttpClient) {
 		super($progressIndicator, $logger);
 		this._pages = [];
 	}

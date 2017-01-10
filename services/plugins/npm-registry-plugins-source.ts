@@ -1,13 +1,9 @@
 import { PluginsSourceBase } from "./plugins-source-base";
 
 export class NpmRegistryPluginsSource extends PluginsSourceBase implements IPluginsSource {
-	constructor($progressIndicator: IProgressIndicator,
-		$logger: ILogger,
-		private $httpClient: Server.IHttpClient,
-		private $childProcess: IChildProcess,
-		private $hostInfo: IHostInfo,
-		private $npmService: INpmService,
-		private $errors: IErrors) {
+	constructor(protected $progressIndicator: IProgressIndicator,
+		protected $logger: ILogger,
+		private $npmService: INpmService) {
 		super($progressIndicator, $logger);
 	}
 

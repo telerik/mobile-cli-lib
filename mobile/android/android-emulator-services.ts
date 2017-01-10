@@ -7,10 +7,6 @@ import * as net from "net";
 import { DeviceAndroidDebugBridge } from "./device-android-debug-bridge";
 import { cache, invokeInit } from "../../decorators";
 
-class VirtualMachine {
-	constructor(public name: string, public identifier: string) { }
-}
-
 class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 	private static ANDROID_DIR_NAME = ".android";
 	private static AVD_DIR_NAME = "avd";

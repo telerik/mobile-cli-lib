@@ -1,8 +1,6 @@
 import * as net from "net";
 
 export class Net implements INet {
-	constructor(private $logger: ILogger) { }
-
 	public async getFreePort(): Promise<number> {
 		let server = net.createServer((sock: string) => { /* empty - noone will connect here */ });
 
@@ -28,4 +26,5 @@ export class Net implements INet {
 		});
 	}
 }
+
 $injector.register("net", Net);
