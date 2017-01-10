@@ -3,7 +3,7 @@ import * as net from "net";
 let Table = require("cli-table");
 import { platform, EOL } from "os";
 
-export async function deferPromise<T>(): Promise<IDeferPromise<T>> {
+export function deferPromise<T>(): IDeferPromise<T> {
 	let resolve: (value?: T | PromiseLike<T>) => void;
 	let reject: (reason?: any) => void;
 	let isResolved = false;
