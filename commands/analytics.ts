@@ -22,7 +22,7 @@ class AnalyticsCommand implements ICommand {
 				break;
 			case "status":
 			case "":
-				await this.$logger.out(this.$analyticsService.getStatusMessage(this.settingName, this.$options.json, this.humanReadableSettingName));
+				this.$logger.out(await this.$analyticsService.getStatusMessage(this.settingName, this.$options.json, this.humanReadableSettingName));
 				break;
 		}
 	}
