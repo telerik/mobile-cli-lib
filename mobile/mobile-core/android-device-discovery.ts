@@ -17,9 +17,10 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 		super();
 	}
 
-	private createAndAddDevice(adbDeviceInfo: IAdbAndroidDeviceInfo): void {
+	private async createAndAddDevice(adbDeviceInfo: IAdbAndroidDeviceInfo): Promise<void> {
 		this._devices.push(adbDeviceInfo);
 		let device = this.$injector.resolve(AndroidDevice, { identifier: adbDeviceInfo.identifier, status: adbDeviceInfo.status });
+		await device.init();
 		this.addDevice(device);
 	}
 
@@ -66,8 +67,8 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 			}
 		});
 
-		result.on("close", (exitCode: any) => {
-			this.checkCurrentData(adbData);
+		result.on("close", async (exitCode: any) => {
+			await this.checkCurrentData(adbData);
 
 			if (resolve && !isResolved) {
 				isResolved = true;
@@ -76,7 +77,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 		});
 	}
 
-	private checkCurrentData(result: any): void {
+	private async checkCurrentData(result: any): Promise<void> {
 		let currentDevices: IAdbAndroidDeviceInfo[] = result.toString().split(EOL).slice(1)
 			.filter((element: string) => !helpers.isNullOrWhitespace(element))
 			.map((element: string) => {
@@ -94,9 +95,9 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 			.reject(d => _.find(currentDevices, device => device.identifier === d.identifier && device.status === d.status))
 			.each(d => this.deleteAndRemoveDevice(d.identifier));
 
-		_(currentDevices)
+		await Promise.all(_(currentDevices)
 			.reject(d => _.find(this._devices, device => device.identifier === d.identifier && device.status === d.status))
-			.each(d => this.createAndAddDevice(d));
+			.map(d => this.createAndAddDevice(d)).value());
 	}
 
 	public async ensureAdbServerStarted(): Promise<any> {

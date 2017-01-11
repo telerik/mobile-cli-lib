@@ -2,7 +2,7 @@ import { DeviceAndroidDebugBridge } from "./device-android-debug-bridge";
 import * as applicationManagerPath from "./android-application-manager";
 import * as fileSystemPath from "./android-device-file-system";
 import * as constants from "../../constants";
-import { cache, invokeInit } from "../../decorators";
+import { invokeInit } from "../../decorators";
 
 interface IAndroidDeviceDetails {
 	model: string;
@@ -54,7 +54,6 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		private $logcatHelper: Mobile.ILogcatHelper,
 		private $injector: IInjector) { }
 
-	@cache()
 	public async init(): Promise<void> {
 		this.adb = this.$injector.resolve(DeviceAndroidDebugBridge, { identifier: this.identifier });
 		this.applicationManager = this.$injector.resolve(applicationManagerPath.AndroidApplicationManager, { adb: this.adb, identifier: this.identifier });
@@ -73,7 +72,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		}
 
 		this.$logger.trace(details);
-		let adbStatusInfo = AndroidDevice.ADB_DEVICE_STATUS_INFO[status];
+		let adbStatusInfo = AndroidDevice.ADB_DEVICE_STATUS_INFO[this.status];
 
 		this.deviceInfo = {
 			identifier: this.identifier,
