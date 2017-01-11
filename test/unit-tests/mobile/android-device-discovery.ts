@@ -9,10 +9,13 @@ import { assert } from "chai";
 
 class AndroidDeviceMock {
 	public deviceInfo: any = {};
+
 	constructor(public identifier: string, public status: string) {
 		this.deviceInfo.identifier = identifier;
 		this.deviceInfo.status = status;
 	}
+
+	public async init() { /* intentionally empty body */ }
 };
 
 interface IChildProcessMock {
@@ -122,10 +125,14 @@ describe("androidDeviceDiscovery", () => {
 					resolve();
 				});
 			});
+
+			setTimeout(() => {
+				let output = `List of devices attached ${EOL}${androidDeviceIdentifier}	${androidDeviceStatus}${EOL}${EOL}`;
+				mockStdoutEmitter.emit('data', output);
+				mockChildProcess.emit('close', 0);
+			}, 0);
+
 			await androidDeviceDiscovery.checkForDevices();
-			let output = `List of devices attached ${EOL}${androidDeviceIdentifier}	${androidDeviceStatus}${EOL}${EOL}`;
-			mockStdoutEmitter.emit('data', output);
-			mockChildProcess.emit('close', 0);
 			await promise;
 			assert.isTrue(devicesFound.length === 1, "We should have found ONE device.");
 			assert.deepEqual(devicesFound[0].deviceInfo.identifier, androidDeviceIdentifier);
@@ -142,10 +149,14 @@ describe("androidDeviceDiscovery", () => {
 					}
 				});
 			});
+
+			setTimeout(() => {
+				let output = `List of devices attached ${EOL}${androidDeviceIdentifier}	${androidDeviceStatus}${EOL}secondDevice	${androidDeviceStatus}${EOL}`;
+				mockStdoutEmitter.emit('data', output);
+				mockChildProcess.emit('close', 0);
+			}, 0);
+
 			await androidDeviceDiscovery.checkForDevices();
-			let output = `List of devices attached ${EOL}${androidDeviceIdentifier}	${androidDeviceStatus}${EOL}secondDevice	${androidDeviceStatus}${EOL}`;
-			mockStdoutEmitter.emit('data', output);
-			mockChildProcess.emit('close', 0);
 			await promise;
 			assert.isTrue(devicesFound.length === 2, "We should have found two devices.");
 			assert.deepEqual(devicesFound[0].deviceInfo.identifier, androidDeviceIdentifier);
@@ -158,10 +169,14 @@ describe("androidDeviceDiscovery", () => {
 			androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
 				throw new Error("Devices should not be found.");
 			});
+
+			setTimeout(() => {
+				let output = `List of devices attached${EOL}`;
+				mockStdoutEmitter.emit('data', output);
+				mockChildProcess.emit('close', 0);
+			}, 0);
+
 			await androidDeviceDiscovery.checkForDevices();
-			let output = `List of devices attached${EOL}`;
-			mockStdoutEmitter.emit('data', output);
-			mockChildProcess.emit('close', 0);
 			assert.isTrue(devicesFound.length === 0, "We should have NOT found devices.");
 		});
 
@@ -176,9 +191,12 @@ describe("androidDeviceDiscovery", () => {
 					});
 				});
 
+				setTimeout(() => {
+					mockStdoutEmitter.emit('data', defaultAdbOutput);
+					mockChildProcess.emit('close', 0);
+				}, 0);
+
 				await androidDeviceDiscovery.checkForDevices();
-				mockStdoutEmitter.emit('data', defaultAdbOutput);
-				mockChildProcess.emit('close', 0);
 				await promise;
 				androidDeviceDiscovery.removeAllListeners("deviceFound");
 			});
@@ -187,9 +205,13 @@ describe("androidDeviceDiscovery", () => {
 				androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
 					throw new Error("Should not report same device as found");
 				});
+
+				setTimeout(() => {
+					mockStdoutEmitter.emit('data', defaultAdbOutput);
+					mockChildProcess.emit('close', 0);
+				}, 0);
+
 				await androidDeviceDiscovery.checkForDevices();
-				mockStdoutEmitter.emit('data', defaultAdbOutput);
-				mockChildProcess.emit('close', 0);
 				assert.isTrue(devicesFound.length === 1, "We should have found ONE device.");
 				assert.deepEqual(devicesFound[0].deviceInfo.identifier, androidDeviceIdentifier);
 				assert.deepEqual(devicesFound[0].status, androidDeviceStatus);
@@ -202,10 +224,12 @@ describe("androidDeviceDiscovery", () => {
 					promise = Promise.resolve(device);
 				});
 
+				setTimeout(() => {
+					let output = `List of devices attached${EOL}`;
+					mockStdoutEmitter.emit('data', output);
+					mockChildProcess.emit('close', 0);
+				}, 0);
 				await androidDeviceDiscovery.checkForDevices();
-				let output = `List of devices attached${EOL}`;
-				mockStdoutEmitter.emit('data', output);
-				mockChildProcess.emit('close', 0);
 				let lostDevice = await promise;
 				assert.deepEqual(lostDevice.deviceInfo.identifier, androidDeviceIdentifier);
 				assert.deepEqual(lostDevice.deviceInfo.status, androidDeviceStatus);
@@ -218,10 +242,14 @@ describe("androidDeviceDiscovery", () => {
 					promise = Promise.resolve(device);
 				});
 
-				await androidDeviceDiscovery.checkForDevices();
 				let output = `List of devices attached${EOL}`;
-				mockStdoutEmitter.emit('data', output);
-				mockChildProcess.emit('close', 0);
+				setTimeout(() => {
+					mockStdoutEmitter.emit('data', output);
+					mockChildProcess.emit('close', 0);
+				}, 0);
+
+				await androidDeviceDiscovery.checkForDevices();
+
 				let lostDevice = await promise;
 				assert.deepEqual(lostDevice.deviceInfo.identifier, androidDeviceIdentifier);
 				assert.deepEqual(lostDevice.deviceInfo.status, androidDeviceStatus);
@@ -229,9 +257,13 @@ describe("androidDeviceDiscovery", () => {
 				androidDeviceDiscovery.on("deviceLost", (device: Mobile.IDevice) => {
 					throw new Error("Should not report device as removed next time after it has been already reported.");
 				});
+
+				setTimeout(() => {
+					mockStdoutEmitter.emit('data', output);
+					mockChildProcess.emit('close', 0);
+				}, 0);
+
 				await androidDeviceDiscovery.checkForDevices();
-				mockStdoutEmitter.emit('data', output);
-				mockChildProcess.emit('close', 0);
 			});
 
 			it("reports it as removed and added after that next time when called and device's status is changed", async () => {
@@ -248,11 +280,14 @@ describe("androidDeviceDiscovery", () => {
 					deviceFoundPromise = Promise.resolve(device);
 				});
 
+				let output = `List of devices attached${EOL}${androidDeviceIdentifier}	unauthorized${EOL}${EOL}`;
+				setTimeout(() => {
+					mockStdoutEmitter.emit('data', output);
+					mockChildProcess.emit('close', 0);
+				}, 0);
+
 				await androidDeviceDiscovery.checkForDevices();
 
-				let output = `List of devices attached${EOL}${androidDeviceIdentifier}	unauthorized${EOL}${EOL}`;
-				mockStdoutEmitter.emit('data', output);
-				mockChildProcess.emit('close', 0);
 				let lostDevice = await deviceLostPromise;
 				assert.deepEqual(lostDevice.deviceInfo.identifier, androidDeviceIdentifier);
 				assert.deepEqual(lostDevice.deviceInfo.status, androidDeviceStatus);
@@ -264,9 +299,11 @@ describe("androidDeviceDiscovery", () => {
 
 				// Verify the device will not be reported as found next time when adb returns the same output:
 				// In case it is reported, an error will be raised - Future resolved more than once for deviceFoundFuture
+				setTimeout(() => {
+					mockStdoutEmitter.emit('data', output);
+					mockChildProcess.emit('close', 0);
+				}, 0);
 				await androidDeviceDiscovery.checkForDevices();
-				mockStdoutEmitter.emit('data', output);
-				mockChildProcess.emit('close', 0);
 				assert.isTrue(devicesFound.length === 1, "We should have found ONE device.");
 			});
 		});
@@ -277,8 +314,10 @@ describe("androidDeviceDiscovery", () => {
 			});
 			let error = new Error("ADB Error");
 			try {
+				setTimeout(() => {
+					mockStderrEmitter.emit('data', error);
+				}, 0);
 				await androidDeviceDiscovery.checkForDevices();
-				mockStderrEmitter.emit('data', error);
 			} catch (err) {
 				assert.deepEqual(err, error);
 			}
@@ -290,8 +329,11 @@ describe("androidDeviceDiscovery", () => {
 			});
 			let error = new Error("ADB Error");
 			try {
+				setTimeout(() => {
+					mockChildProcess.emit('error', error);
+				}, 0);
+
 				await androidDeviceDiscovery.checkForDevices();
-				mockChildProcess.emit('error', error);
 			} catch (err) {
 				assert.deepEqual(err, error);
 			}

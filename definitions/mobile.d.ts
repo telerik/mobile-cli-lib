@@ -96,6 +96,7 @@ declare module Mobile {
 
 	interface IAndroidDevice extends IDevice {
 		adb: Mobile.IDeviceAndroidDebugBridge;
+		init(): Promise<void>;
 	}
 
 	interface IiOSDevice extends IDevice {

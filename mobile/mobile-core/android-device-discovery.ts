@@ -19,7 +19,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 
 	private async createAndAddDevice(adbDeviceInfo: IAdbAndroidDeviceInfo): Promise<void> {
 		this._devices.push(adbDeviceInfo);
-		let device = this.$injector.resolve(AndroidDevice, { identifier: adbDeviceInfo.identifier, status: adbDeviceInfo.status });
+		let device: Mobile.IAndroidDevice = this.$injector.resolve(AndroidDevice, { identifier: adbDeviceInfo.identifier, status: adbDeviceInfo.status });
 		await device.init();
 		this.addDevice(device);
 	}
@@ -31,49 +31,47 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 
 	public async startLookingForDevices(): Promise<void> {
 		await this.ensureAdbServerStarted();
-		let blockingFuture = new Promise<void>((resolve, reject) => {
-			this.checkForDevices(resolve, reject);
-		});
+		await this.checkForDevices();
 
-		return blockingFuture;
 	}
 
-	public async checkForDevices(resolve?: (value?: void | PromiseLike<void>) => void, reject?: (reason?: any) => void): Promise<void> {
-		let adbData = "";
-		let isResolved = false;
-
+	public async checkForDevices(): Promise<void> {
 		let result = await this.$adb.executeCommand(["devices"], { returnChildProcess: true });
+		return new Promise<void>((resolve, reject) => {
+			let adbData = "";
+			let isResolved = false;
 
-		result.stdout.on("data", (data: NodeBuffer) => {
-			adbData += data.toString();
-		});
+			result.stdout.on("data", (data: NodeBuffer) => {
+				adbData += data.toString();
+			});
 
-		result.stderr.on("data", (data: NodeBuffer) => {
-			let error = new Error(data.toString());
-			if (reject && !isResolved) {
-				isResolved = true;
-				return reject(error);
-			} else {
-				throw (error);
-			}
-		});
+			result.stderr.on("data", (data: NodeBuffer) => {
+				let error = new Error(data.toString());
+				if (reject && !isResolved) {
+					isResolved = true;
+					return reject(error);
+				} else {
+					throw (error);
+				}
+			});
 
-		result.on("error", (error: Error) => {
-			if (reject && !isResolved) {
-				isResolved = true;
-				return reject(error);
-			} else {
-				throw (error);
-			}
-		});
+			result.on("error", (error: Error) => {
+				if (reject && !isResolved) {
+					isResolved = true;
+					return reject(error);
+				} else {
+					throw (error);
+				}
+			});
 
-		result.on("close", async (exitCode: any) => {
-			await this.checkCurrentData(adbData);
+			result.on("close", async (exitCode: any) => {
+				await this.checkCurrentData(adbData);
 
-			if (resolve && !isResolved) {
-				isResolved = true;
-				return resolve();
-			}
+				if (resolve && !isResolved) {
+					isResolved = true;
+					return resolve();
+				}
+			});
 		});
 	}
 
