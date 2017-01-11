@@ -397,8 +397,7 @@ export class Yok implements IInjector {
 
 				dependency.instance = this.resolveConstructor(dependency.resolver, ctorArguments);
 			}
-		}
-		finally {
+		} finally {
 			popIndent();
 			delete this.resolutionProgress[name];
 		}

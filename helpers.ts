@@ -122,8 +122,8 @@ export function createGUID(useBraces?: boolean) {
 	return output;
 }
 
-export function stringReplaceAll(string: string, find: any, replace: string): string {
-	return string.split(find).join(replace);
+export function stringReplaceAll(inputString: string, find: any, replace: string): string {
+	return inputString.split(find).join(replace);
 }
 
 export function isRequestSuccessful(request: Server.IRequestResponseData) {
