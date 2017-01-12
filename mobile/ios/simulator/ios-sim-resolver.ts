@@ -17,4 +17,5 @@ export class IOSSimResolver implements Mobile.IiOSSimResolver {
 		return path.join(require.resolve(IOSSimResolver.iOSSimName), "..", IOSSimResolver.iOSStandaloneExecutableName);
 	}
 }
+
 $injector.register("iOSSimResolver", IOSSimResolver);
