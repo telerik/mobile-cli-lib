@@ -45,29 +45,34 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 
 	public getFile(deviceFilePath: string, outputFilePath?: string): IFuture<void> {
 		let future = new Future<void>();
-		let afcClient = this.resolveAfc();
-		let fileToRead = afcClient.open(deviceFilePath, "r");
-		let fileToWrite = outputFilePath ? this.$fs.createWriteStream(outputFilePath) : process.stdout;
-		if (outputFilePath) {
-			fileToWrite.on("close", () => {
-				future.return();
-			});
-		}
-		let dataSizeToRead = 8192;
-		let size = 0;
-		while(true) {
-			let data = fileToRead.read(dataSizeToRead);
-			if(!data || data.length === 0) {
-				break;
+		try {
+			let afcClient = this.resolveAfc();
+			let fileToRead = afcClient.open(deviceFilePath, "r");
+			let fileToWrite = outputFilePath ? this.$fs.createWriteStream(outputFilePath) : process.stdout;
+			if (outputFilePath) {
+				fileToWrite.on("close", () => {
+					future.return();
+				});
 			}
-			fileToWrite.write(data);
-			size += data.length;
+			let dataSizeToRead = 8192;
+			let size = 0;
+			while(true) {
+				let data = fileToRead.read(dataSizeToRead);
+				if(!data || data.length === 0) {
+					break;
+				}
+				fileToWrite.write(data);
+				size += data.length;
+			}
+			fileToRead.close();
+			if (outputFilePath) {
+				fileToWrite.end();
+			}
+			this.$logger.trace("%s bytes read from %s", size.toString(), deviceFilePath);
+		} catch(err) {
+			this.$logger.trace("Error while getting file from device", err);
+			future.throw(err);
 		}
-		fileToRead.close();
-		if (outputFilePath) {
-			fileToWrite.end();
-		}
-		this.$logger.trace("%s bytes read from %s", size.toString(), deviceFilePath);
 		return future;
 	}
 
