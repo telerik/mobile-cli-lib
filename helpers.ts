@@ -276,17 +276,18 @@ export function appendZeroesToVersion(version: string, requiredVersionLength: nu
 	return version;
 }
 
-export function decorateMethod(before: (method1: any, self1: any, args1: any[]) => void, after: (method2: any, self2: any, result2: any, args2: any[]) => any) {
+export function decorateMethod(before: (method1: any, self1: any, args1: any[]) => Promise<void>, after: (method2: any, self2: any, result2: any, args2: any[]) => Promise<any>) {
 	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<Function>) => {
 		let sink = descriptor.value;
-		descriptor.value = function (...args: any[]): any {
+		descriptor.value = async function (...args: any[]): Promise<any> {
 			if (before) {
-				before(sink, this, args);
+				await before(sink, this, args);
 			}
 			let result = sink.apply(this, args);
 			if (after) {
-				return after(sink, this, result, args);
+				return await after(sink, this, result, args);
 			}
+
 			return result;
 		};
 	};

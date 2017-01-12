@@ -166,4 +166,5 @@ export class Errors implements IErrors {
 		}
 	}
 }
+
 $injector.register("errors", Errors);

@@ -73,7 +73,9 @@ export class HooksService implements IHooksService {
 		this.$logger.trace(traceMessage);
 
 		try {
-			await Promise.all(_.map(this.hooksDirectories, async hooksDirectory => await this.executeHooksInDirectory(hooksDirectory, hookName, hookArguments)));
+			for (let hooksDirectory of this.hooksDirectories) {
+				await this.executeHooksInDirectory(hooksDirectory, hookName, hookArguments);
+			}
 		} catch (err) {
 			this.$logger.trace("Failed during hook execution.");
 			this.$errors.failWithoutHelp(err.message);
@@ -108,8 +110,11 @@ export class HooksService implements IHooksService {
 					return;
 				}
 
+				console.log(`--------------------------------------------------------------${hookName}-----------------------------------------------------------------`);
+				console.log(`--------------------------------------------------------------${hook.fullPath}-----------------------------------------------------------------`);
 				let maybePromise = this.$injector.resolve(hookEntryPoint, hookArguments);
 				if (maybePromise) {
+					console.log("---------mbpr: ", maybePromise);
 					this.$logger.trace('Hook promises to signal completion');
 					await new Promise((resolve, reject) => {
 						maybePromise.then(
@@ -123,9 +128,13 @@ export class HooksService implements IHooksService {
 								}
 							});
 					});
+
+					console.log("-------------after await");
 				}
 				this.$logger.trace('Hook completed');
+				console.log("---------mbpr down: ", maybePromise);
 			} else {
+				console.log("------------------down down");
 				let environment = this.prepareEnvironment(hook.fullPath);
 				this.$logger.trace("Executing %s hook at location %s with environment ", hookName, hook.fullPath, environment);
 
