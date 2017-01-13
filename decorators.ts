@@ -3,15 +3,15 @@ import { isPromise } from "./helpers";
 
 export function cache(): any {
 	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> => {
-		let isCalled = false;
 		let result: any;
 		let propName: string = descriptor.value ? "value" : "get";
 
 		const originalValue = (<any>descriptor)[propName];
 
 		(<any>descriptor)[propName] = function (...args: any[]) {
-			if (!isCalled) {
-				isCalled = true;
+			let propertyName = `__isCalled_${propertyKey}__`;
+			if (this && !this[propertyName]) {
+				this[propertyName] = true;
 				result = originalValue.apply(this, args);
 			}
 

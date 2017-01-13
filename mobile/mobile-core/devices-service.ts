@@ -4,6 +4,7 @@ import * as assert from "assert";
 import * as constants from "../../constants";
 import { exportedPromise, exported } from "../../decorators";
 import { settlePromises } from "../../helpers";
+import { EOL } from "os";
 
 export class DevicesService implements Mobile.IDevicesService {
 	private static DEVICE_LOOKING_INTERVAL = 2200;
@@ -262,16 +263,20 @@ export class DevicesService implements Mobile.IDevicesService {
 		let devices = this.filterDevicesByPlatform();
 		let sortedDevices = _.sortBy(devices, device => device.deviceInfo.platform);
 
-		let onDeviceActions = _.map(sortedDevices, (device: Mobile.IDevice) => {
-			if (!canExecute || canExecute(device)) {
-				let future = action(device);
-				return future;
-			} else {
-				return Promise.resolve();
+		let errors: Error[] = [];
+		for (let device of sortedDevices) {
+			try {
+				if (!canExecute || canExecute(device)) {
+					await action(device);
+				}
+			} catch (err) {
+				errors.push(err);
 			}
-		});
+		}
 
-		await settlePromises(onDeviceActions);
+		if (errors.length) {
+			throw new Error(`Multiple errors were thrown:${EOL}${errors.map(e => e.message || e).join(EOL)}`);
+		}
 	}
 
 	@exportedPromise("devicesService", async function () {
