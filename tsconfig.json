@@ -6,7 +6,9 @@
 		"declaration": false,
 		"removeComments": false,
 		"noImplicitAny": true,
-		"experimentalDecorators": true
+		"experimentalDecorators": true,
+		"alwaysStrict": true,
+		"noUnusedLocals": true
 	},
 	"exclude": [
 		"node_modules",

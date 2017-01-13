@@ -1,14 +1,13 @@
-import {EOL} from "os";
+import { EOL } from "os";
 import * as shelljs from "shelljs";
-import {DeviceAndroidDebugBridge} from "../android/device-android-debug-bridge";
-import {TARGET_FRAMEWORK_IDENTIFIERS} from "../../constants";
+import { DeviceAndroidDebugBridge } from "../android/device-android-debug-bridge";
+import { TARGET_FRAMEWORK_IDENTIFIERS } from "../../constants";
 
 export class AndroidProcessService implements Mobile.IAndroidProcessService {
 	private _devicesAdbs: IDictionary<Mobile.IDeviceAndroidDebugBridge>;
 	private _forwardedLocalPorts: number[];
 
 	constructor(private $errors: IErrors,
-		private $staticConfig: Config.IStaticConfig,
 		private $injector: IInjector,
 		private $net: INet,
 		private $processService: IProcessService) {
@@ -27,46 +26,44 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 		return new RegExp(`(\\d+):\\s+${hexIpAddressWithPortWithSpaceMatch}${hexIpAddressWithPortWithSpaceMatch}${wordCharacters}\\s+${hexIpAddressWithPortWithSpace}${hexIpAddressWithPortWithSpace}${wordCharacters}\\s+(\\d+)`, "g");
 	}
 
-	public mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string, framework: string): IFuture<string> {
-		return (() => {
-			this.tryAttachToProcessExitSignals();
+	public async mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string, framework: string): Promise<string> {
+		this.tryAttachToProcessExitSignals();
 
-			let adb = this.getAdb(deviceIdentifier);
-			let processId = this.getProcessIds(adb, [appIdentifier]).wait()[appIdentifier];
-			let applicationNotStartedErrorMessage = `The application is not started on the device with identifier ${deviceIdentifier}.`;
+		let adb = this.getAdb(deviceIdentifier);
+		let processId = (await this.getProcessIds(adb, [appIdentifier]))[appIdentifier];
+		let applicationNotStartedErrorMessage = `The application is not started on the device with identifier ${deviceIdentifier}.`;
 
-			if (!processId) {
-				this.$errors.failWithoutHelp(applicationNotStartedErrorMessage);
-			}
+		if (!processId) {
+			this.$errors.failWithoutHelp(applicationNotStartedErrorMessage);
+		}
 
-			let abstractPortsInformation = this.getAbstractPortsInformation(adb).wait();
-			let abstractPort = this.getAbstractPortForApplication(adb, processId, appIdentifier, abstractPortsInformation, framework).wait();
+		let abstractPortsInformation = await this.getAbstractPortsInformation(adb);
+		let abstractPort = await this.getAbstractPortForApplication(adb, processId, appIdentifier, abstractPortsInformation, framework);
 
-			if (!abstractPort) {
-				this.$errors.failWithoutHelp(applicationNotStartedErrorMessage);
-			}
+		if (!abstractPort) {
+			this.$errors.failWithoutHelp(applicationNotStartedErrorMessage);
+		}
 
-			let localPort = this.getAlreadyMappedPort(adb, deviceIdentifier, abstractPort).wait();
+		let localPort = await this.getAlreadyMappedPort(adb, deviceIdentifier, abstractPort);
 
-			if (!localPort) {
-				localPort = this.$net.getFreePort().wait();
-				adb.executeCommand(["forward", `tcp:${localPort}`, `localabstract:${abstractPort}`]).wait();
-			}
+		if (!localPort) {
+			localPort = await this.$net.getFreePort();
+			await adb.executeCommand(["forward", `tcp:${localPort}`, `localabstract:${abstractPort}`]);
+		}
 
-			this._forwardedLocalPorts.push(localPort);
-			return localPort;
-		}).future<string>()();
+		this._forwardedLocalPorts.push(localPort);
+		return localPort && localPort.toString();
 	}
 
-	public getMappedAbstractToTcpPorts(deviceIdentifier: string, appIdentifiers: string[], framework: string): IFuture<IDictionary<number>> {
-		return ((): IDictionary<number> => {
-			let adb = this.getAdb(deviceIdentifier),
-				abstractPortsInformation = this.getAbstractPortsInformation(adb).wait(),
-				processIds = this.getProcessIds(adb, appIdentifiers).wait(),
-				adbForwardList = adb.executeCommand(["forward", "--list"]).wait(),
-				localPorts: IDictionary<number> = {};
+	public async getMappedAbstractToTcpPorts(deviceIdentifier: string, appIdentifiers: string[], framework: string): Promise<IDictionary<number>> {
+		let adb = this.getAdb(deviceIdentifier),
+			abstractPortsInformation = await this.getAbstractPortsInformation(adb),
+			processIds = await this.getProcessIds(adb, appIdentifiers),
+			adbForwardList = await adb.executeCommand(["forward", "--list"]),
+			localPorts: IDictionary<number> = {};
 
-			_.each(appIdentifiers, appIdentifier => {
+		await Promise.all(
+			_.map(appIdentifiers, async appIdentifier => {
 				localPorts[appIdentifier] = null;
 				let processId = processIds[appIdentifier];
 
@@ -74,124 +71,117 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 					return;
 				}
 
-				let abstractPort = this.getAbstractPortForApplication(adb, processId, appIdentifier, abstractPortsInformation, framework).wait();
+				let abstractPort = await this.getAbstractPortForApplication(adb, processId, appIdentifier, abstractPortsInformation, framework);
 
 				if (!abstractPort) {
 					return;
 				}
 
-				let localPort = this.getAlreadyMappedPort(adb, deviceIdentifier, abstractPort, adbForwardList).wait();
+				let localPort = await this.getAlreadyMappedPort(adb, deviceIdentifier, abstractPort, adbForwardList);
 
 				if (localPort) {
 					localPorts[appIdentifier] = localPort;
 				}
-			});
+			}));
 
-			return localPorts;
-		}).future<IDictionary<number>>()();
+		return localPorts;
 	}
 
-	public getDebuggableApps(deviceIdentifier: string): IFuture<Mobile.IDeviceApplicationInformation[]> {
-		return ((): Mobile.IDeviceApplicationInformation[] => {
-			let adb = this.getAdb(deviceIdentifier);
-			let androidWebViewPortInformation = (<string>this.getAbstractPortsInformation(adb).wait()).split(EOL);
+	public async getDebuggableApps(deviceIdentifier: string): Promise<Mobile.IDeviceApplicationInformation[]> {
+		let adb = this.getAdb(deviceIdentifier);
+		let androidWebViewPortInformation = (await this.getAbstractPortsInformation(adb)).split(EOL);
 
-			// TODO: Add tests and make sure only unique names are returned. Input before groupBy is:
-			// [ { deviceIdentifier: 'SH26BW100473',
-			// 	appIdentifier: 'com.telerik.EmptyNS',
-			// 	framework: 'NativeScript' },
-			// 	{ deviceIdentifier: 'SH26BW100473',
-			// 	appIdentifier: 'com.telerik.EmptyNS',
-			// 	framework: 'Cordova' },
-			// 	{ deviceIdentifier: 'SH26BW100473',
-			// 	appIdentifier: 'chrome',
-			// 	framework: 'Cordova' },
-			// 	{ deviceIdentifier: 'SH26BW100473',
-			// 	appIdentifier: 'chrome',
-			// 	framework: 'Cordova' } ]
-			return _(androidWebViewPortInformation)
-				.map(line => this.getApplicationInfoFromWebViewPortInformation(adb, deviceIdentifier, line).wait()
-					|| this.getNativeScriptApplicationInformation(adb, deviceIdentifier, line).wait()
-				)
-				.filter(deviceAppInfo => !!deviceAppInfo)
-				.groupBy(element => element.framework)
-				.map((group: Mobile.IDeviceApplicationInformation[]) => _.uniqBy(group, g => g.appIdentifier))
-				.flatten<Mobile.IDeviceApplicationInformation>()
-				.value();
-		}).future<Mobile.IDeviceApplicationInformation[]>()();
+		// TODO: Add tests and make sure only unique names are returned. Input before groupBy is:
+		// [ { deviceIdentifier: 'SH26BW100473',
+		// 	appIdentifier: 'com.telerik.EmptyNS',
+		// 	framework: 'NativeScript' },
+		// 	{ deviceIdentifier: 'SH26BW100473',
+		// 	appIdentifier: 'com.telerik.EmptyNS',
+		// 	framework: 'Cordova' },
+		// 	{ deviceIdentifier: 'SH26BW100473',
+		// 	appIdentifier: 'chrome',
+		// 	framework: 'Cordova' },
+		// 	{ deviceIdentifier: 'SH26BW100473',
+		// 	appIdentifier: 'chrome',
+		// 	framework: 'Cordova' } ]
+		let portInformation = await Promise.all(
+			_.map(androidWebViewPortInformation, async line => await this.getApplicationInfoFromWebViewPortInformation(adb, deviceIdentifier, line)
+				|| await this.getNativeScriptApplicationInformation(adb, deviceIdentifier, line)
+			)
+		);
+
+		return _(portInformation)
+			.filter(deviceAppInfo => !!deviceAppInfo)
+			.groupBy(element => element.framework)
+			.map((group: Mobile.IDeviceApplicationInformation[]) => _.uniqBy(group, g => g.appIdentifier))
+			.flatten<Mobile.IDeviceApplicationInformation>()
+			.value();
 	}
 
-	private getApplicationInfoFromWebViewPortInformation(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, information: string): IFuture<Mobile.IDeviceApplicationInformation> {
-		return ((): Mobile.IDeviceApplicationInformation => {
-			// Need to search by processId to check for old Android webviews (@webview_devtools_remote_<processId>).
-			let processIdRegExp = /@webview_devtools_remote_(.+)/g,
-				processIdMatches = processIdRegExp.exec(information),
-				cordovaAppIdentifier: string;
+	private async getApplicationInfoFromWebViewPortInformation(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, information: string): Promise<Mobile.IDeviceApplicationInformation> {
+		// Need to search by processId to check for old Android webviews (@webview_devtools_remote_<processId>).
+		let processIdRegExp = /@webview_devtools_remote_(.+)/g,
+			processIdMatches = processIdRegExp.exec(information),
+			cordovaAppIdentifier: string;
 
-			if (processIdMatches) {
-				let processId = processIdMatches[1];
-				cordovaAppIdentifier = this.getApplicationIdentifierFromPid(adb, processId).wait();
-			} else {
-				// Search for appIdentifier (@<appIdentifier>_devtools_remote).
-				let chromeAppIdentifierRegExp = /@(.+)_devtools_remote\s?/g;
-				let chromeAppIdentifierMatches = chromeAppIdentifierRegExp.exec(information);
+		if (processIdMatches) {
+			let processId = processIdMatches[1];
+			cordovaAppIdentifier = await this.getApplicationIdentifierFromPid(adb, processId);
+		} else {
+			// Search for appIdentifier (@<appIdentifier>_devtools_remote).
+			let chromeAppIdentifierRegExp = /@(.+)_devtools_remote\s?/g;
+			let chromeAppIdentifierMatches = chromeAppIdentifierRegExp.exec(information);
 
-				if (chromeAppIdentifierMatches && chromeAppIdentifierMatches.length > 0) {
-					cordovaAppIdentifier = chromeAppIdentifierMatches[1];
-				}
+			if (chromeAppIdentifierMatches && chromeAppIdentifierMatches.length > 0) {
+				cordovaAppIdentifier = chromeAppIdentifierMatches[1];
 			}
+		}
 
-			if (cordovaAppIdentifier) {
-				return {
-					deviceIdentifier: deviceIdentifier,
-					appIdentifier: cordovaAppIdentifier,
-					framework: TARGET_FRAMEWORK_IDENTIFIERS.Cordova
-				};
-			}
+		if (cordovaAppIdentifier) {
+			return {
+				deviceIdentifier: deviceIdentifier,
+				appIdentifier: cordovaAppIdentifier,
+				framework: TARGET_FRAMEWORK_IDENTIFIERS.Cordova
+			};
+		}
 
-			return null;
-		}).future<Mobile.IDeviceApplicationInformation>()();
+		return null;
 	}
 
-	private getNativeScriptApplicationInformation(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, information: string): IFuture<Mobile.IDeviceApplicationInformation> {
-		return ((): Mobile.IDeviceApplicationInformation => {
-			// Search for appIdentifier (@<appIdentifier-debug>).
-			let nativeScriptAppIdentifierRegExp = /@(.+)-debug/g;
-			let nativeScriptAppIdentifierMatches = nativeScriptAppIdentifierRegExp.exec(information);
+	private async getNativeScriptApplicationInformation(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, information: string): Promise<Mobile.IDeviceApplicationInformation> {
+		// Search for appIdentifier (@<appIdentifier-debug>).
+		let nativeScriptAppIdentifierRegExp = /@(.+)-debug/g;
+		let nativeScriptAppIdentifierMatches = nativeScriptAppIdentifierRegExp.exec(information);
 
-			if (nativeScriptAppIdentifierMatches && nativeScriptAppIdentifierMatches.length > 0) {
-				let appIdentifier = nativeScriptAppIdentifierMatches[1];
-				return {
-					deviceIdentifier: deviceIdentifier,
-					appIdentifier: appIdentifier,
-					framework: TARGET_FRAMEWORK_IDENTIFIERS.NativeScript
-				};
-			}
+		if (nativeScriptAppIdentifierMatches && nativeScriptAppIdentifierMatches.length > 0) {
+			let appIdentifier = nativeScriptAppIdentifierMatches[1];
+			return {
+				deviceIdentifier: deviceIdentifier,
+				appIdentifier: appIdentifier,
+				framework: TARGET_FRAMEWORK_IDENTIFIERS.NativeScript
+			};
+		}
 
-			return null;
-		}).future<Mobile.IDeviceApplicationInformation>()();
+		return null;
 	}
 
-	private getAbstractPortForApplication(adb: Mobile.IDeviceAndroidDebugBridge, processId: string | number, appIdentifier: string, abstractPortsInformation: string, framework: string): IFuture<string> {
-		return (() => {
-			// The result will look like this (without the columns names):
-			// Num       		 RefCount Protocol Flags    Type St Inode  Path
-			// 0000000000000000: 00000002 00000000 00010000 0001 01 189004 @webview_devtools_remote_25512
-			// The Path column is the abstract port.
+	private async getAbstractPortForApplication(adb: Mobile.IDeviceAndroidDebugBridge, processId: string | number, appIdentifier: string, abstractPortsInformation: string, framework: string): Promise<string> {
+		// The result will look like this (without the columns names):
+		// Num       		 RefCount Protocol Flags    Type St Inode  Path
+		// 0000000000000000: 00000002 00000000 00010000 0001 01 189004 @webview_devtools_remote_25512
+		// The Path column is the abstract port.
 
-			framework = framework || "";
+		framework = framework || "";
 
-			switch (framework.toLowerCase()) {
-				case TARGET_FRAMEWORK_IDENTIFIERS.Cordova.toLowerCase():
-					return this.getCordovaPortInformation(abstractPortsInformation, appIdentifier, processId);
-				case TARGET_FRAMEWORK_IDENTIFIERS.NativeScript.toLowerCase():
-					return this.getNativeScriptPortInformation(abstractPortsInformation, appIdentifier);
-				default:
-					return this.getCordovaPortInformation(abstractPortsInformation, appIdentifier, processId) ||
-						this.getNativeScriptPortInformation(abstractPortsInformation, appIdentifier);
-			}
-
-		}).future<string>()();
+		switch (framework.toLowerCase()) {
+			case TARGET_FRAMEWORK_IDENTIFIERS.Cordova.toLowerCase():
+				return this.getCordovaPortInformation(abstractPortsInformation, appIdentifier, processId);
+			case TARGET_FRAMEWORK_IDENTIFIERS.NativeScript.toLowerCase():
+				return this.getNativeScriptPortInformation(abstractPortsInformation, appIdentifier);
+			default:
+				return this.getCordovaPortInformation(abstractPortsInformation, appIdentifier, processId) ||
+					this.getNativeScriptPortInformation(abstractPortsInformation, appIdentifier);
+		}
 	}
 
 	private getCordovaPortInformation(abstractPortsInformation: string, appIdentifier: string, processId: string | number): string {
@@ -202,7 +192,7 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 		return this.getPortInformation(abstractPortsInformation, `${appIdentifier}-debug`);
 	}
 
-	private getAbstractPortsInformation(adb: Mobile.IDeviceAndroidDebugBridge): IFuture<string> {
+	private async getAbstractPortsInformation(adb: Mobile.IDeviceAndroidDebugBridge): Promise<string> {
 		return adb.executeShellCommand(["cat", "/proc/net/unix"]);
 	}
 
@@ -213,35 +203,31 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 		return match && match[1];
 	}
 
-	private getProcessIds(adb: Mobile.IDeviceAndroidDebugBridge, appIdentifiers: string[]): IFuture<IDictionary<number>> {
-		return (() => {
-			// Process information will look like this (without the columns names):
-			// USER     PID   PPID  VSIZE   RSS   WCHAN    PC         NAME
-			// u0_a63   25512 1334  1519560 96040 ffffffff f76a8f75 S com.telerik.appbuildertabstest
-			let result: IDictionary<number> = {};
-			let processIdInformation: string = adb.executeShellCommand(["ps"]).wait();
-			_.each(appIdentifiers, appIdentifier => {
-				let processIdRegExp = new RegExp(`^\\w*\\s*(\\d+).*?${appIdentifier}$`);
-				result[appIdentifier] = this.getFirstMatchingGroupFromMultilineResult<number>(processIdInformation, processIdRegExp);
-			});
+	private async getProcessIds(adb: Mobile.IDeviceAndroidDebugBridge, appIdentifiers: string[]): Promise<IDictionary<number>> {
+		// Process information will look like this (without the columns names):
+		// USER     PID   PPID  VSIZE   RSS   WCHAN    PC         NAME
+		// u0_a63   25512 1334  1519560 96040 ffffffff f76a8f75 S com.telerik.appbuildertabstest
+		let result: IDictionary<number> = {};
+		let processIdInformation: string = await adb.executeShellCommand(["ps"]);
+		_.each(appIdentifiers, appIdentifier => {
+			let processIdRegExp = new RegExp(`^\\w*\\s*(\\d+).*?${appIdentifier}$`);
+			result[appIdentifier] = this.getFirstMatchingGroupFromMultilineResult<number>(processIdInformation, processIdRegExp);
+		});
 
-			return result;
-		}).future<IDictionary<number>>()();
+		return result;
 	}
 
-	private getAlreadyMappedPort(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, abstractPort: string, adbForwardList?: any): IFuture<number> {
-		return ((): number => {
-			let allForwardedPorts: string = adbForwardList || adb.executeCommand(["forward", "--list"]).wait() || "";
+	private async getAlreadyMappedPort(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, abstractPort: string, adbForwardList?: any): Promise<number> {
+		let allForwardedPorts: string = adbForwardList || await adb.executeCommand(["forward", "--list"]) || "";
 
-			// Sample output:
-			// 5e2e580b tcp:62503 localabstract:webview_devtools_remote_7985
-			// 5e2e580b tcp:62524 localabstract:webview_devtools_remote_7986
-			// 5e2e580b tcp:63160 localabstract:webview_devtools_remote_7987
-			// 5e2e580b tcp:57577 localabstract:com.telerik.nrel-debug
-			let regex = new RegExp(`${deviceIdentifier}\\s+?tcp:(\\d+?)\\s+?.*?${abstractPort}$`);
+		// Sample output:
+		// 5e2e580b tcp:62503 localabstract:webview_devtools_remote_7985
+		// 5e2e580b tcp:62524 localabstract:webview_devtools_remote_7986
+		// 5e2e580b tcp:63160 localabstract:webview_devtools_remote_7987
+		// 5e2e580b tcp:57577 localabstract:com.telerik.nrel-debug
+		let regex = new RegExp(`${deviceIdentifier}\\s+?tcp:(\\d+?)\\s+?.*?${abstractPort}$`);
 
-			return this.getFirstMatchingGroupFromMultilineResult<number>(allForwardedPorts, regex);
-		}).future<number>()();
+		return this.getFirstMatchingGroupFromMultilineResult<number>(allForwardedPorts, regex);
 	}
 
 	private getAdb(deviceIdentifier: string): Mobile.IDeviceAndroidDebugBridge {
@@ -252,14 +238,12 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 		return this._devicesAdbs[deviceIdentifier];
 	}
 
-	private getApplicationIdentifierFromPid(adb: Mobile.IDeviceAndroidDebugBridge, pid: string, psData?: string): IFuture<string> {
-		return ((): string => {
-			psData = psData || adb.executeShellCommand(["ps"]).wait();
-			// Process information will look like this (without the columns names):
-			// USER     PID   PPID  VSIZE   RSS   WCHAN    PC         NAME
-			// u0_a63   25512 1334  1519560 96040 ffffffff f76a8f75 S com.telerik.appbuildertabstest
-			return this.getFirstMatchingGroupFromMultilineResult<string>(psData, new RegExp(`\\s+${pid}(?:\\s+\\d+){3}\\s+.*\\s+(.*?)$`));
-		}).future<string>()();
+	private async getApplicationIdentifierFromPid(adb: Mobile.IDeviceAndroidDebugBridge, pid: string, psData?: string): Promise<string> {
+		psData = psData || await adb.executeShellCommand(["ps"]);
+		// Process information will look like this (without the columns names):
+		// USER     PID   PPID  VSIZE   RSS   WCHAN    PC         NAME
+		// u0_a63   25512 1334  1519560 96040 ffffffff f76a8f75 S com.telerik.appbuildertabstest
+		return this.getFirstMatchingGroupFromMultilineResult<string>(psData, new RegExp(`\\s+${pid}(?:\\s+\\d+){3}\\s+.*\\s+(.*?)$`));
 	}
 
 	private getFirstMatchingGroupFromMultilineResult<T>(input: string, regex: RegExp): T {

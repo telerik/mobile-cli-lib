@@ -2,7 +2,6 @@ import { Yok } from "../../../yok";
 import { assert } from "chai";
 import { CommonLoggerStub, HooksServiceStub } from "../stubs";
 import { ApplicationManagerBase } from "../../../mobile/application-manager-base";
-import Future = require("fibers/future");
 
 let currentlyAvailableAppsForDebugging: Mobile.IDeviceApplicationInformation[],
 	currentlyInstalledApps: string[],
@@ -13,44 +12,44 @@ class ApplicationManager extends ApplicationManagerBase {
 		super($logger, $hooksService);
 	}
 
-	public isLiveSyncSupported(appIdentifier: string): IFuture<boolean> {
-		return Future.fromResult(true);
+	public async isLiveSyncSupported(appIdentifier: string): Promise<boolean> {
+		return true;
 	}
 
-	public installApplication(packageFilePath: string): IFuture<void> {
-		return Future.fromResult();
+	public async installApplication(packageFilePath: string): Promise<void> {
+		return;
 	}
 
-	public uninstallApplication(appIdentifier: string): IFuture<void> {
-		return Future.fromResult();
+	public async uninstallApplication(appIdentifier: string): Promise<void> {
+		return;
 	}
 
-	public startApplication(appIdentifier: string, framework?: string): IFuture<void> {
-		return Future.fromResult();
+	public async startApplication(appIdentifier: string, framework?: string): Promise<void> {
+		return;
 	}
 
-	public stopApplication(appIdentifier: string): IFuture<void> {
-		return Future.fromResult();
+	public async stopApplication(appIdentifier: string): Promise<void> {
+		return;
 	}
 
-	public getInstalledApplications(): IFuture<string[]> {
-		return Future.fromResult(_.cloneDeep(currentlyInstalledApps));
+	public async getInstalledApplications(): Promise<string[]> {
+		return _.cloneDeep(currentlyInstalledApps);
 	}
 
-	public getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo> {
-		return Future.fromResult(null);
+	public async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
+		return null;
 	}
 
 	public canStartApplication(): boolean {
 		return true;
 	}
 
-	public getDebuggableApps(): IFuture<Mobile.IDeviceApplicationInformation[]> {
-		return Future.fromResult(currentlyAvailableAppsForDebugging);
+	public async getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]> {
+		return currentlyAvailableAppsForDebugging;
 	}
 
-	public getDebuggableAppViews(appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>> {
-		return Future.fromResult(_.cloneDeep(currentlyAvailableAppWebViewsForDebugging));
+	public async getDebuggableAppViews(appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> {
+		return _.cloneDeep(currentlyAvailableAppWebViewsForDebugging);
 	}
 }
 
@@ -104,7 +103,7 @@ describe("ApplicationManagerBase", () => {
 
 	describe("checkForApplicationUpdates", () => {
 		describe("debuggableApps", () => {
-			it("emits debuggableAppFound when new application is available for debugging", (done) => {
+			it("emits debuggableAppFound when new application is available for debugging", async () => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(2);
 				let foundAppsForDebug: Mobile.IDeviceApplicationInformation[] = [];
 
@@ -114,14 +113,13 @@ describe("ApplicationManagerBase", () => {
 						_.each(foundAppsForDebug, (f: Mobile.IDeviceApplicationInformation, index: number) => {
 							assert.deepEqual(f, currentlyAvailableAppsForDebugging[index]);
 						});
-						done();
 					}
 				});
 
-				applicationManager.checkForApplicationUpdates().wait();
+				await applicationManager.checkForApplicationUpdates();
 			});
 
-			it("emits debuggableAppFound when new application is available for debugging (several calls)", (done) => {
+			it("emits debuggableAppFound when new application is available for debugging (several calls)", async () => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(1);
 				let foundAppsForDebug: Mobile.IDeviceApplicationInformation[] = [],
 					isFinalCheck = false;
@@ -134,20 +132,20 @@ describe("ApplicationManagerBase", () => {
 						});
 
 						if (isFinalCheck) {
-							done();
+							return;
 						}
 					}
 				});
 
-				applicationManager.checkForApplicationUpdates().wait();
+				await applicationManager.checkForApplicationUpdates();
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(2);
-				applicationManager.checkForApplicationUpdates().wait();
+				await applicationManager.checkForApplicationUpdates();
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(4);
 				isFinalCheck = true;
-				applicationManager.checkForApplicationUpdates().wait();
+				await applicationManager.checkForApplicationUpdates();
 			});
 
-			it("emits debuggableAppLost when application cannot be debugged anymore", (done) => {
+			it("emits debuggableAppLost when application cannot be debugged anymore", async () => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(2);
 				let expectedAppsToBeLost = currentlyAvailableAppsForDebugging,
 					lostAppsForDebug: Mobile.IDeviceApplicationInformation[] = [];
@@ -159,19 +157,17 @@ describe("ApplicationManagerBase", () => {
 						_.each(lostAppsForDebug, (f: Mobile.IDeviceApplicationInformation, index: number) => {
 							assert.deepEqual(f, expectedAppsToBeLost[index]);
 						});
-
-						done();
 					}
 				});
 
 				// First call will raise debuggableAppFound two times.
-				applicationManager.checkForApplicationUpdates().wait();
+				await applicationManager.checkForApplicationUpdates();
 				currentlyAvailableAppsForDebugging = [];
 				// This call should raise debuggableAppLost two times.
-				applicationManager.checkForApplicationUpdates().wait();
+				await applicationManager.checkForApplicationUpdates();
 			});
 
-			it("emits debuggableAppLost when application cannot be debugged anymore (several calls)", (done) => {
+			it("emits debuggableAppLost when application cannot be debugged anymore (several calls)", async () => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(4);
 				let lostAppsForDebug: Mobile.IDeviceApplicationInformation[] = [],
 					isFinalCheck = false,
@@ -184,57 +180,54 @@ describe("ApplicationManagerBase", () => {
 					});
 
 					if (lostAppsForDebug.length === initialAppsAvailableForDebug.length && isFinalCheck) {
-						done();
+						return;
 					}
 				});
 
-				applicationManager.checkForApplicationUpdates().wait();
+				await applicationManager.checkForApplicationUpdates();
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(2);
-				applicationManager.checkForApplicationUpdates().wait();
+				await applicationManager.checkForApplicationUpdates();
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(0);
 				isFinalCheck = true;
-				applicationManager.checkForApplicationUpdates().wait();
+				await applicationManager.checkForApplicationUpdates();
 			});
 
-			it("emits debuggableAppFound and debuggableAppLost when applications are changed", () => {
+			it("emits debuggableAppFound and debuggableAppLost when applications are changed", async () => {
 				let allAppsForDebug = createAppsAvailableForDebugging(4);
 				currentlyAvailableAppsForDebugging = _.take(allAppsForDebug, 2);
 				let remainingAppsForDebugging = _.difference(allAppsForDebug, currentlyAvailableAppsForDebugging);
 
-				let foundAppsForDebug: Mobile.IDeviceApplicationInformation[] = [],
-					futures: IFuture<void>[] = [];
+				let foundAppsForDebug: Mobile.IDeviceApplicationInformation[] = [];
 
 				// This will raise debuggableAppFound 2 times.
-				applicationManager.checkForApplicationUpdates().wait();
+				await applicationManager.checkForApplicationUpdates();
 
-				let foundAppsFuture = new Future<void>();
-				futures.push(foundAppsFuture);
+				let foundAppsPromise = new Promise<void>((resolve, reject) => {
+					applicationManager.on("debuggableAppFound", (d: Mobile.IDeviceApplicationInformation) => {
+						foundAppsForDebug.push(d);
+						if (foundAppsForDebug.length === remainingAppsForDebugging.length) {
+							_.each(foundAppsForDebug, (f: Mobile.IDeviceApplicationInformation, index: number) => {
+								assert.deepEqual(f, remainingAppsForDebugging[index]);
+							});
 
-				applicationManager.on("debuggableAppFound", (d: Mobile.IDeviceApplicationInformation) => {
-					foundAppsForDebug.push(d);
-					if (foundAppsForDebug.length === remainingAppsForDebugging.length) {
-						_.each(foundAppsForDebug, (f: Mobile.IDeviceApplicationInformation, index: number) => {
-							assert.deepEqual(f, remainingAppsForDebugging[index]);
-						});
-
-						foundAppsFuture.return();
-					}
+							resolve();
+						}
+					});
 				});
 
-				let lostAppsFuture = new Future<void>();
-				futures.push(lostAppsFuture);
-
-				applicationManager.on("debuggableAppLost", (d: Mobile.IDeviceApplicationInformation) => {
-					assert.deepEqual(d, allAppsForDebug[0], "Debuggable app lost does not match.");
-					lostAppsFuture.return();
+				let lostAppsPromise = new Promise<void>((resolve, reject) => {
+					applicationManager.on("debuggableAppLost", (d: Mobile.IDeviceApplicationInformation) => {
+						assert.deepEqual(d, allAppsForDebug[0], "Debuggable app lost does not match.");
+						resolve();
+					});
 				});
 
 				currentlyAvailableAppsForDebugging = _.drop(allAppsForDebug, 1);
-				applicationManager.checkForApplicationUpdates().wait();
-				Future.wait(futures);
+				await applicationManager.checkForApplicationUpdates();
+				await Promise.all([foundAppsPromise, lostAppsPromise]);
 			});
 
-			it("emits debuggableViewFound when new views are available for debug", (done) => {
+			it("emits debuggableViewFound when new views are available for debug", (done: mocha.Done) => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(2);
 				let numberOfViewsPerApp = 2;
 				currentlyAvailableAppWebViewsForDebugging = createDebuggableWebViews(currentlyAvailableAppsForDebugging, numberOfViewsPerApp);
@@ -256,108 +249,105 @@ describe("ApplicationManagerBase", () => {
 					}
 				});
 
-				applicationManager.checkForApplicationUpdates().wait();
+				applicationManager.checkForApplicationUpdates();
 			});
 
-			it("emits debuggableViewLost when views for debug are removed", (done) => {
+			it("emits debuggableViewLost when views for debug are removed", (done: mocha.Done) => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(2);
 				let numberOfViewsPerApp = 2;
 				currentlyAvailableAppWebViewsForDebugging = createDebuggableWebViews(currentlyAvailableAppsForDebugging, numberOfViewsPerApp);
 				let expectedResults = _.cloneDeep(currentlyAvailableAppWebViewsForDebugging);
 				let currentDebuggableViews: IDictionary<Mobile.IDebugWebViewInfo[]> = {};
 
-				applicationManager.checkForApplicationUpdates().wait();
-
-				applicationManager.on("debuggableViewLost", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
-					currentDebuggableViews[appIdentifier] = currentDebuggableViews[appIdentifier] || [];
-					currentDebuggableViews[appIdentifier].push(d);
-					let numberOfFoundViewsPerApp = _.uniq(_.values(currentDebuggableViews).map(arr => arr.length));
-					if (_.keys(currentDebuggableViews).length === currentlyAvailableAppsForDebugging.length
-						&& numberOfFoundViewsPerApp.length === 1 // for all apps we've found exactly two apps.
-						&& numberOfFoundViewsPerApp[0] === numberOfViewsPerApp) {
-						_.each(currentDebuggableViews, (webViews, appId) => {
-							_.each(webViews, webView => {
-								let expectedWebView = _.find(expectedResults[appId], c => c.id === webView.id);
-								assert.isTrue(_.isEqual(webView, expectedWebView));
+				applicationManager.checkForApplicationUpdates().then(() => {
+					applicationManager.on("debuggableViewLost", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
+						currentDebuggableViews[appIdentifier] = currentDebuggableViews[appIdentifier] || [];
+						currentDebuggableViews[appIdentifier].push(d);
+						let numberOfFoundViewsPerApp = _.uniq(_.values(currentDebuggableViews).map(arr => arr.length));
+						if (_.keys(currentDebuggableViews).length === currentlyAvailableAppsForDebugging.length
+							&& numberOfFoundViewsPerApp.length === 1 // for all apps we've found exactly two apps.
+							&& numberOfFoundViewsPerApp[0] === numberOfViewsPerApp) {
+							_.each(currentDebuggableViews, (webViews, appId) => {
+								_.each(webViews, webView => {
+									let expectedWebView = _.find(expectedResults[appId], c => c.id === webView.id);
+									assert.isTrue(_.isEqual(webView, expectedWebView));
+								});
 							});
-						});
-						setTimeout(done, 0);
-					}
+							setTimeout(done, 0);
+						}
+					});
+
+					currentlyAvailableAppWebViewsForDebugging = _.mapValues(currentlyAvailableAppWebViewsForDebugging, (a) => []);
+					return applicationManager.checkForApplicationUpdates();
 				});
-
-				currentlyAvailableAppWebViewsForDebugging = _.mapValues(currentlyAvailableAppWebViewsForDebugging, (a) => []);
-
-				applicationManager.checkForApplicationUpdates().wait();
 			});
 
-			it("emits debuggableViewFound when new views are available for debug", (done) => {
+			it("emits debuggableViewFound when new views are available for debug", (done: mocha.Done) => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(2);
 				let numberOfViewsPerApp = 2;
 				currentlyAvailableAppWebViewsForDebugging = createDebuggableWebViews(currentlyAvailableAppsForDebugging, numberOfViewsPerApp);
-
-				applicationManager.checkForApplicationUpdates().wait();
-
 				let expectedViewToBeFound = createDebuggableWebView("uniqueId"),
 					expectedAppIdentifier = currentlyAvailableAppsForDebugging[0].appIdentifier,
 					isLastCheck = false;
 
-				applicationManager.on("debuggableViewFound", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
-					assert.deepEqual(appIdentifier, expectedAppIdentifier);
-					assert.isTrue(_.isEqual(d, expectedViewToBeFound));
+				applicationManager.checkForApplicationUpdates().then(() => {
+					applicationManager.on("debuggableViewFound", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
+						assert.deepEqual(appIdentifier, expectedAppIdentifier);
+						assert.isTrue(_.isEqual(d, expectedViewToBeFound));
 
-					if (isLastCheck) {
-						setTimeout(done, 0);
-					}
+						if (isLastCheck) {
+							setTimeout(done, 0);
+						}
+					});
+
+					currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].push(_.cloneDeep(expectedViewToBeFound));
+					return applicationManager.checkForApplicationUpdates();
+				}).then(() => {
+					expectedViewToBeFound = createDebuggableWebView("uniqueId1");
+					currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].push(_.cloneDeep(expectedViewToBeFound));
+					return applicationManager.checkForApplicationUpdates();
+				}).then(() => {
+					expectedViewToBeFound = createDebuggableWebView("uniqueId2");
+					expectedAppIdentifier = currentlyAvailableAppsForDebugging[1].appIdentifier;
+					isLastCheck = true;
+
+					currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].push(_.cloneDeep(expectedViewToBeFound));
+					return applicationManager.checkForApplicationUpdates();
 				});
-
-				currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].push(_.cloneDeep(expectedViewToBeFound));
-				applicationManager.checkForApplicationUpdates().wait();
-
-				expectedViewToBeFound = createDebuggableWebView("uniqueId1");
-				currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].push(_.cloneDeep(expectedViewToBeFound));
-				applicationManager.checkForApplicationUpdates().wait();
-
-				expectedViewToBeFound = createDebuggableWebView("uniqueId2");
-				expectedAppIdentifier = currentlyAvailableAppsForDebugging[1].appIdentifier;
-				isLastCheck = true;
-
-				currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].push(_.cloneDeep(expectedViewToBeFound));
-				applicationManager.checkForApplicationUpdates().wait();
 			});
 
-			it("emits debuggableViewLost when views for debug are not available anymore", (done) => {
+			it("emits debuggableViewLost when views for debug are not available anymore", (done: mocha.Done) => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(2);
 				let numberOfViewsPerApp = 2;
 				currentlyAvailableAppWebViewsForDebugging = createDebuggableWebViews(currentlyAvailableAppsForDebugging, numberOfViewsPerApp);
-
-				applicationManager.checkForApplicationUpdates().wait();
-
 				let expectedAppIdentifier = currentlyAvailableAppsForDebugging[0].appIdentifier,
 					expectedViewToBeLost = currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].splice(0, 1)[0],
 					isLastCheck = false;
 
-				applicationManager.on("debuggableViewLost", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
-					assert.deepEqual(appIdentifier, expectedAppIdentifier);
-					assert.isTrue(_.isEqual(d, expectedViewToBeLost));
+				applicationManager.checkForApplicationUpdates().then(() => {
+					applicationManager.on("debuggableViewLost", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
+						assert.deepEqual(appIdentifier, expectedAppIdentifier);
+						assert.isTrue(_.isEqual(d, expectedViewToBeLost));
 
-					if (isLastCheck) {
-						setTimeout(done, 0);
-					}
+						if (isLastCheck) {
+							setTimeout(done, 0);
+						}
+					});
+
+					return applicationManager.checkForApplicationUpdates();
+				}).then(() => {
+					expectedViewToBeLost = currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].splice(0, 1)[0];
+					return applicationManager.checkForApplicationUpdates();
+				}).then(() => {
+					expectedAppIdentifier = currentlyAvailableAppsForDebugging[1].appIdentifier;
+					expectedViewToBeLost = currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].splice(0, 1)[0];
+
+					isLastCheck = true;
+					return applicationManager.checkForApplicationUpdates();
 				});
-
-				applicationManager.checkForApplicationUpdates().wait();
-
-				expectedViewToBeLost = currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].splice(0, 1)[0];
-				applicationManager.checkForApplicationUpdates().wait();
-
-				expectedAppIdentifier = currentlyAvailableAppsForDebugging[1].appIdentifier;
-				expectedViewToBeLost = currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].splice(0, 1)[0];
-
-				isLastCheck = true;
-				applicationManager.checkForApplicationUpdates().wait();
 			});
 
-			it("emits debuggableViewChanged when view's property is modified (each one except id)", (done) => {
+			it("emits debuggableViewChanged when view's property is modified (each one except id)", (done: mocha.Done) => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(1);
 				currentlyAvailableAppWebViewsForDebugging = createDebuggableWebViews(currentlyAvailableAppsForDebugging, 2);
 				let viewToChange = currentlyAvailableAppWebViewsForDebugging[currentlyAvailableAppsForDebugging[0].appIdentifier][0];
@@ -369,53 +359,54 @@ describe("ApplicationManagerBase", () => {
 					setTimeout(done, 0);
 				});
 
-				applicationManager.checkForApplicationUpdates().wait();
-				viewToChange.title = "new title";
-				applicationManager.checkForApplicationUpdates().wait();
+				applicationManager.checkForApplicationUpdates().then(() => {
+					viewToChange.title = "new title";
+					return applicationManager.checkForApplicationUpdates();
+				});
 			});
 
-			it("does not emit debuggableViewChanged when id is modified", (done) => {
+			it("does not emit debuggableViewChanged when id is modified", (done: mocha.Done) => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(1);
 				currentlyAvailableAppWebViewsForDebugging = createDebuggableWebViews(currentlyAvailableAppsForDebugging, 2);
 				let viewToChange = currentlyAvailableAppWebViewsForDebugging[currentlyAvailableAppsForDebugging[0].appIdentifier][0];
 				let expectedView = _.cloneDeep(viewToChange);
 
-				applicationManager.checkForApplicationUpdates().wait();
-				applicationManager.on("debuggableViewChanged", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
-					setTimeout(() => done(new Error("When id is changed, debuggableViewChanged must not be emitted.")), 0);
-				});
+				applicationManager.checkForApplicationUpdates().then(() => {
+					applicationManager.on("debuggableViewChanged", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
+						setTimeout(() => done(new Error("When id is changed, debuggableViewChanged must not be emitted.")), 0);
+					});
 
-				applicationManager.on("debuggableViewLost", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
-					assert.isTrue(_.isEqual(d, expectedView));
-				});
+					applicationManager.on("debuggableViewLost", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
+						assert.isTrue(_.isEqual(d, expectedView));
+					});
 
-				applicationManager.on("debuggableViewFound", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
-					expectedView.id = "new id";
-					assert.isTrue(_.isEqual(d, expectedView));
-					setTimeout(done, 0);
-				});
+					applicationManager.on("debuggableViewFound", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
+						expectedView.id = "new id";
+						assert.isTrue(_.isEqual(d, expectedView));
+						setTimeout(done, 0);
+					});
 
-				viewToChange.id = "new id";
-				applicationManager.checkForApplicationUpdates().wait();
+					viewToChange.id = "new id";
+				}).then(() => applicationManager.checkForApplicationUpdates());
 			});
 		});
 
 		describe("installed and uninstalled apps", () => {
-			it("reports installed applications when initially there are apps", () => {
+			it("reports installed applications when initially there are apps", async () => {
 				currentlyInstalledApps = ["app1", "app2", "app3"];
 
 				let reportedInstalledApps: string[] = [],
-					future = new Future<void>();
+					promise = new Promise<void>((resolve, reject) => {
+						applicationManager.on("applicationInstalled", (app: string) => {
+							reportedInstalledApps.push(app);
+							if (reportedInstalledApps.length === currentlyInstalledApps.length) {
+								resolve();
+							}
+						});
+					});
 
-				applicationManager.on("applicationInstalled", (app: string) => {
-					reportedInstalledApps.push(app);
-					if (reportedInstalledApps.length === currentlyInstalledApps.length) {
-						future.return();
-					}
-				});
-
-				applicationManager.checkForApplicationUpdates().wait();
-				future.wait();
+				await applicationManager.checkForApplicationUpdates();
+				await promise;
 
 				_.each(currentlyInstalledApps, (c: string, index: number) => {
 					assert.deepEqual(c, reportedInstalledApps[index]);
@@ -424,23 +415,24 @@ describe("ApplicationManagerBase", () => {
 				assert.deepEqual(reportedInstalledApps.length, currentlyInstalledApps.length);
 			});
 
-			it("reports installed applications when apps are changed between executions", () => {
+			it("reports installed applications when apps are changed between executions", async () => {
 				currentlyInstalledApps = ["app1", "app2", "app3"];
 
 				let reportedInstalledApps: string[] = [],
-					future: IFuture<void>;
+					promise: Promise<void>;
 
-				applicationManager.on("applicationInstalled", (app: string) => {
-					reportedInstalledApps.push(app);
-					if (reportedInstalledApps.length === currentlyInstalledApps.length) {
-						future.return();
-					}
-				});
-
-				let testInstalledAppsResults = () => {
-					future = new Future<void>();
-					applicationManager.checkForApplicationUpdates().wait();
-					future.wait();
+				let testInstalledAppsResults = async () => {
+					promise = new Promise<void>((resolve, reject) => {
+						applicationManager.on("applicationInstalled", (app: string) => {
+							reportedInstalledApps.push(app);
+							if (reportedInstalledApps.length === currentlyInstalledApps.length) {
+								applicationManager.removeAllListeners("applicationInstalled");
+								resolve();
+							}
+						});
+					});
+					await applicationManager.checkForApplicationUpdates();
+					await promise;
 
 					_.each(currentlyInstalledApps, (c: string, index: number) => {
 						assert.deepEqual(c, reportedInstalledApps[index]);
@@ -448,33 +440,35 @@ describe("ApplicationManagerBase", () => {
 
 					assert.deepEqual(reportedInstalledApps.length, currentlyInstalledApps.length);
 				};
-				testInstalledAppsResults();
+
+				await testInstalledAppsResults();
 
 				currentlyInstalledApps.push("app4", "app5");
-				testInstalledAppsResults();
+				await testInstalledAppsResults();
 
 				currentlyInstalledApps.push("app6", "app7");
-				testInstalledAppsResults();
+				await testInstalledAppsResults();
 			});
 
-			it("reports uninstalled applications when initially there are apps and all are uninstalled", () => {
+			it("reports uninstalled applications when initially there are apps and all are uninstalled", async () => {
 				currentlyInstalledApps = ["app1", "app2", "app3"];
+				await applicationManager.checkForApplicationUpdates();
 
 				let reportedUninstalledApps: string[] = [],
 					initiallyInstalledApps = _.cloneDeep(currentlyInstalledApps),
-					future = new Future<void>();
-				applicationManager.checkForApplicationUpdates().wait();
-				currentlyInstalledApps = [];
+					promise = new Promise<void>((resolve, reject) => {
+						currentlyInstalledApps = [];
 
-				applicationManager.on("applicationUninstalled", (app: string) => {
-					reportedUninstalledApps.push(app);
-					if (reportedUninstalledApps.length === initiallyInstalledApps.length) {
-						future.return();
-					}
-				});
+						applicationManager.on("applicationUninstalled", (app: string) => {
+							reportedUninstalledApps.push(app);
+							if (reportedUninstalledApps.length === initiallyInstalledApps.length) {
+								resolve();
+							}
+						});
+					});
 
-				applicationManager.checkForApplicationUpdates().wait();
-				future.wait();
+				await applicationManager.checkForApplicationUpdates();
+				await promise;
 
 				_.each(initiallyInstalledApps, (c: string, index: number) => {
 					assert.deepEqual(c, reportedUninstalledApps[index]);
@@ -483,26 +477,28 @@ describe("ApplicationManagerBase", () => {
 				assert.deepEqual(reportedUninstalledApps.length, initiallyInstalledApps.length);
 			});
 
-			it("reports uninstalled applications when apps are changed between executions", () => {
+			it("reports uninstalled applications when apps are changed between executions", async () => {
 				currentlyInstalledApps = ["app1", "app2", "app3", "app4", "app5", "app6"];
+				// Initialize - all apps are marked as installed.
+				await applicationManager.checkForApplicationUpdates();
 
 				let reportedUninstalledApps: string[] = [],
 					removedApps: string[] = [],
-					future: IFuture<void>;
+					promise: Promise<void>;
 
-				// Initialize - all apps are marked as installed.
-				applicationManager.checkForApplicationUpdates().wait();
-				applicationManager.on("applicationUninstalled", (app: string) => {
-					reportedUninstalledApps.push(app);
-					if (reportedUninstalledApps.length === removedApps.length) {
-						future.return();
-					}
-				});
+				let testInstalledAppsResults = async () => {
+					promise = new Promise<void>((resolve, reject) => {
+						applicationManager.on("applicationUninstalled", (app: string) => {
+							reportedUninstalledApps.push(app);
+							if (reportedUninstalledApps.length === removedApps.length) {
+								applicationManager.removeAllListeners("applicationUninstalled");
+								resolve();
+							}
+						});
+					});
 
-				let testInstalledAppsResults = () => {
-					future = new Future<void>();
-					applicationManager.checkForApplicationUpdates().wait();
-					future.wait();
+					await applicationManager.checkForApplicationUpdates();
+					await promise;
 
 					_.each(removedApps, (c: string, index: number) => {
 						assert.deepEqual(c, reportedUninstalledApps[index]);
@@ -514,47 +510,45 @@ describe("ApplicationManagerBase", () => {
 				while (currentlyInstalledApps.length) {
 					let currentlyRemovedApps = currentlyInstalledApps.splice(0, 2);
 					removedApps = removedApps.concat(currentlyRemovedApps);
-					testInstalledAppsResults();
+					await testInstalledAppsResults();
 				}
 			});
 
-			it("reports installed and uninstalled apps when apps are changed between executions", () => {
+			it("reports installed and uninstalled apps when apps are changed between executions", async () => {
 				currentlyInstalledApps = ["app1", "app2", "app3", "app4", "app5", "app6"];
+				await applicationManager.checkForApplicationUpdates();
 
 				let reportedUninstalledApps: string[] = [],
 					reportedInstalledApps: string[] = [],
 					installedApps: string[] = [],
 					removedApps: string[] = [],
-					appUninstalledFuture: IFuture<void>,
-					appInstalledFuture: IFuture<void>,
-					waitForAppInstalledFuture = true;
+					appUninstalledPromise: Promise<void>,
+					appInstalledPromise: Promise<void>;
 
-				// Initialize - all apps are marked as installed.
-				applicationManager.checkForApplicationUpdates().wait();
-				applicationManager.on("applicationUninstalled", (app: string) => {
-					reportedUninstalledApps.push(app);
-					if (reportedUninstalledApps.length === removedApps.length) {
-						appUninstalledFuture.return();
-					}
-				});
+				let testInstalledAppsResults = async () => {
+					appInstalledPromise = new Promise<void>((resolve, reject) => {
+						applicationManager.on("applicationInstalled", (app: string) => {
+							reportedInstalledApps.push(app);
+							if (reportedInstalledApps.length === installedApps.length) {
+								applicationManager.removeAllListeners("applicationInstalled");
+								resolve();
+							}
+						});
+					});
 
-				applicationManager.on("applicationInstalled", (app: string) => {
-					reportedInstalledApps.push(app);
-					if (reportedInstalledApps.length === installedApps.length) {
-						appInstalledFuture.return();
-					}
-				});
+					appUninstalledPromise = new Promise<void>((resolve, reject) => {
+						applicationManager.on("applicationUninstalled", (app: string) => {
+							reportedUninstalledApps.push(app);
+							if (reportedUninstalledApps.length === removedApps.length) {
+								applicationManager.removeAllListeners("applicationUninstalled");
+								resolve();
+							}
+						});
+					});
 
-				let testInstalledAppsResults = () => {
-					appInstalledFuture = new Future<void>();
-					appUninstalledFuture = new Future<void>();
-					applicationManager.checkForApplicationUpdates().wait();
+					await applicationManager.checkForApplicationUpdates();
 
-					if (!waitForAppInstalledFuture) {
-						appInstalledFuture.return();
-					}
-
-					Future.wait([appInstalledFuture, appUninstalledFuture]);
+					await Promise.all([appInstalledPromise, appUninstalledPromise]);
 
 					_.each(removedApps, (c: string, index: number) => {
 						assert.deepEqual(c, reportedUninstalledApps[index]);
@@ -577,82 +571,82 @@ describe("ApplicationManagerBase", () => {
 					currentlyInstalledApps = currentlyInstalledApps.concat(currentlyAddedApps);
 					installedApps = installedApps.concat(currentlyAddedApps);
 
-					testInstalledAppsResults();
+					await testInstalledAppsResults();
 				}
 			});
 		});
 	});
 
 	describe("isApplicationInstalled", () => {
-		it("returns true when app is installed", () => {
+		it("returns true when app is installed", async () => {
 			currentlyInstalledApps = ["app1", "app2"];
-			assert.isTrue(applicationManager.isApplicationInstalled("app1").wait(), "app1 is installed, so result of isAppInstalled must be true.");
-			assert.isTrue(applicationManager.isApplicationInstalled("app2").wait(), "app2 is installed, so result of isAppInstalled must be true.");
+			assert.isTrue(await applicationManager.isApplicationInstalled("app1"), "app1 is installed, so result of isAppInstalled must be true.");
+			assert.isTrue(await applicationManager.isApplicationInstalled("app2"), "app2 is installed, so result of isAppInstalled must be true.");
 		});
 
-		it("returns false when app is NOT installed", () => {
+		it("returns false when app is NOT installed", async () => {
 			currentlyInstalledApps = ["app1", "app2"];
-			assert.isFalse(applicationManager.isApplicationInstalled("app3").wait(), "app3 is NOT installed, so result of isAppInstalled must be false.");
-			assert.isFalse(applicationManager.isApplicationInstalled("app4").wait(), "app4 is NOT installed, so result of isAppInstalled must be false.");
+			assert.isFalse(await applicationManager.isApplicationInstalled("app3"), "app3 is NOT installed, so result of isAppInstalled must be false.");
+			assert.isFalse(await applicationManager.isApplicationInstalled("app4"), "app4 is NOT installed, so result of isAppInstalled must be false.");
 		});
 	});
 
 	describe("restartApplication", () => {
-		it("calls stopApplication with correct arguments", () => {
+		it("calls stopApplication with correct arguments", async () => {
 			let stopApplicationParam: string;
 			applicationManager.stopApplication = (appId: string) => {
 				stopApplicationParam = appId;
-				return Future.fromResult();
+				return Promise.resolve();
 			};
 
-			applicationManager.restartApplication("appId").wait();
+			await applicationManager.restartApplication("appId");
 			assert.deepEqual(stopApplicationParam, "appId", "When bundleIdentifier is not passed to restartApplication, stopApplication must be called with application identifier.");
 
-			applicationManager.restartApplication("appId", "bundleIdentifier").wait();
+			await applicationManager.restartApplication("appId", "bundleIdentifier");
 			assert.deepEqual(stopApplicationParam, "bundleIdentifier", "When bundleIdentifier is passed to restartApplication, stopApplication must be called with bundleIdentifier.");
 		});
 
-		it("calls startApplication with correct arguments", () => {
+		it("calls startApplication with correct arguments", async () => {
 			let startApplicationAppIdParam: string,
 				startApplicationFrameworkParam: string;
 			applicationManager.startApplication = (appId: string, framework: string) => {
 				startApplicationAppIdParam = appId;
 				startApplicationFrameworkParam = framework;
-				return Future.fromResult();
+				return Promise.resolve();
 			};
 
-			applicationManager.restartApplication("appId").wait();
+			await applicationManager.restartApplication("appId");
 			assert.deepEqual(startApplicationAppIdParam, "appId", "startApplication must be called with application identifier.");
 			assert.deepEqual(startApplicationFrameworkParam, undefined, "When framework is not passed to restartApplication, startApplication must be called with undefined framework.");
 
-			applicationManager.restartApplication("appId", null, "cordova").wait();
+			await applicationManager.restartApplication("appId", null, "cordova");
 			assert.deepEqual(startApplicationAppIdParam, "appId", "startApplication must be called with application identifier.");
 			assert.deepEqual(startApplicationFrameworkParam, "cordova", "When framework is passed to restartApplication, startApplication must be called with this framework.");
 		});
 
-		it("calls stopApplication and startApplication in correct order", () => {
+		it("calls stopApplication and startApplication in correct order", async () => {
 			let isStartApplicationCalled = false,
 				isStopApplicationCalled = false;
 
 			applicationManager.stopApplication = (appId: string) => {
 				isStopApplicationCalled = true;
-				return Future.fromResult();
+				return Promise.resolve();
 			};
 
 			applicationManager.startApplication = (appId: string, framework: string) => {
 				assert.isTrue(isStopApplicationCalled, "When startApplication is called, stopApplication must have been resolved.");
 				isStartApplicationCalled = true;
-				return Future.fromResult();
+				return Promise.resolve();
 			};
 
-			applicationManager.restartApplication("appId").wait();
+			await applicationManager.restartApplication("appId");
 			assert.isTrue(isStopApplicationCalled, "stopApplication must be called.");
 			assert.isTrue(isStartApplicationCalled, "startApplication must be called.");
 		});
 	});
 
 	describe("tryStartApplication", () => {
-		it("calls startApplication, when canStartApplication returns true", () => {
+		it("calls startApplication, when canStartApplication returns true", async () => {
 			let startApplicationAppIdParam: string,
 				startApplicationFrameworkParam: string;
 
@@ -660,27 +654,27 @@ describe("ApplicationManagerBase", () => {
 			applicationManager.startApplication = (appId: string, framework: string) => {
 				startApplicationAppIdParam = appId;
 				startApplicationFrameworkParam = framework;
-				return Future.fromResult();
+				return Promise.resolve();
 			};
 
-			applicationManager.tryStartApplication("appId").wait();
+			await applicationManager.tryStartApplication("appId");
 			assert.deepEqual(startApplicationAppIdParam, "appId");
 			assert.deepEqual(startApplicationFrameworkParam, undefined);
 
-			applicationManager.tryStartApplication("appId2", "framework").wait();
+			await applicationManager.tryStartApplication("appId2", "framework");
 			assert.deepEqual(startApplicationAppIdParam, "appId2");
 			assert.deepEqual(startApplicationFrameworkParam, "framework");
 		});
 
-		it("does not call startApplication, when canStartApplication returns false", () => {
+		it("does not call startApplication, when canStartApplication returns false", async () => {
 			let isStartApplicationCalled = false;
 			applicationManager.canStartApplication = () => false;
 			applicationManager.startApplication = (appId: string, framework: string) => {
 				isStartApplicationCalled = true;
-				return Future.fromResult();
+				return Promise.resolve();
 			};
 
-			applicationManager.tryStartApplication("appId").wait();
+			await applicationManager.tryStartApplication("appId");
 			assert.isFalse(isStartApplicationCalled, "startApplication must not be called when canStartApplication returns false.");
 		});
 
@@ -694,81 +688,79 @@ describe("ApplicationManagerBase", () => {
 				logger = testInjector.resolve("logger");
 			});
 
-			let assertDoesNotThrow = (opts?: { shouldStartApplicatinThrow: boolean }) => {
+			let assertDoesNotThrow = async (opts?: { shouldStartApplicatinThrow: boolean }) => {
 				assert.deepEqual(logger.traceOutput, "");
-				applicationManager.startApplication = (appId: string, framework: string) => {
-					return (() => {
-						if (opts && opts.shouldStartApplicatinThrow) {
-							throw error;
-						}
+				applicationManager.startApplication = async (appId: string, framework: string) => {
+					if (opts && opts.shouldStartApplicatinThrow) {
+						throw error;
+					}
 
-						isStartApplicationCalled = true;
-					}).future<void>()();
+					isStartApplicationCalled = true;
 				};
 
-				applicationManager.tryStartApplication("appId").wait();
+				await applicationManager.tryStartApplication("appId");
 				assert.isFalse(isStartApplicationCalled, "startApplication must not be called when there's an error.");
 				assert.isTrue(logger.traceOutput.indexOf("Throw!") !== -1, "Error message must be shown in trace output.");
 				assert.isTrue(logger.traceOutput.indexOf("Unable to start application") !== -1, "'Unable to start application' must be shown in trace output.");
 			};
 
-			it("when canStartApplication throws error", () => {
+			it("when canStartApplication throws error", async () => {
 				applicationManager.canStartApplication = (): boolean => {
 					throw error;
 				};
-				applicationManager.isApplicationInstalled = (appId: string) => Future.fromResult(true);
-				assertDoesNotThrow();
+				applicationManager.isApplicationInstalled = (appId: string) => Promise.resolve(true);
+				await assertDoesNotThrow();
 			});
 
-			it("when startApplications throws", () => {
+			it("when startApplications throws", async () => {
 				applicationManager.canStartApplication = () => true;
-				applicationManager.isApplicationInstalled = (appId: string) => Future.fromResult(true);
-				assertDoesNotThrow({ shouldStartApplicatinThrow: true });
+				applicationManager.isApplicationInstalled = (appId: string) => Promise.resolve(true);
+				await assertDoesNotThrow({ shouldStartApplicatinThrow: true });
 			});
 		});
 
 	});
 
 	describe("reinstallApplication", () => {
-		it("calls uninstallApplication with correct arguments", () => {
+		it("calls uninstallApplication with correct arguments", async () => {
 			let uninstallApplicationAppIdParam: string;
 			applicationManager.uninstallApplication = (appId: string) => {
 				uninstallApplicationAppIdParam = appId;
-				return Future.fromResult();
+				return Promise.resolve();
 			};
 
-			applicationManager.reinstallApplication("appId", "packageFilePath").wait();
+			await applicationManager.reinstallApplication("appId", "packageFilePath");
 			assert.deepEqual(uninstallApplicationAppIdParam, "appId");
 		});
 
-		it("calls installApplication with correct arguments", () => {
+		it("calls installApplication with correct arguments", async () => {
 			let installApplicationPackageFilePathParam: string;
 			applicationManager.installApplication = (packageFilePath: string) => {
 				installApplicationPackageFilePathParam = packageFilePath;
-				return Future.fromResult();
+				return Promise.resolve();
 			};
 
-			applicationManager.reinstallApplication("appId", "packageFilePath").wait();
+			await applicationManager.reinstallApplication("appId", "packageFilePath");
 			assert.deepEqual(installApplicationPackageFilePathParam, "packageFilePath");
 		});
 
-		it("calls uninstallApplication and installApplication in correct order", () => {
+		it("calls uninstallApplication and installApplication in correct order", async () => {
 			let isInstallApplicationCalled = false,
 				isUninstallApplicationCalled = false;
 
 			applicationManager.uninstallApplication = (appId: string) => {
 				assert.isFalse(isInstallApplicationCalled, "When uninstallApplication is called, installApplication should not have been called.");
 				isUninstallApplicationCalled = true;
-				return Future.fromResult();
+				return Promise.resolve();
 			};
 
 			applicationManager.installApplication = (packageFilePath: string) => {
 				assert.isTrue(isUninstallApplicationCalled, "When installApplication is called, uninstallApplication should have been called.");
 				isInstallApplicationCalled = true;
-				return Future.fromResult();
+				return Promise.resolve();
 			};
 
-			applicationManager.reinstallApplication("appId", "packageFilePath").wait();
+			await applicationManager.reinstallApplication("appId", "packageFilePath");
 
 			assert.isTrue(isUninstallApplicationCalled, "uninstallApplication should have been called.");
 			assert.isTrue(isInstallApplicationCalled, "installApplication should have been called.");

@@ -1,4 +1,4 @@
-import {AndroidDebugBridge} from "./android-debug-bridge";
+import { AndroidDebugBridge } from "./android-debug-bridge";
 
 interface IComposeCommandResult {
 	command: string;
@@ -15,30 +15,28 @@ export class DeviceAndroidDebugBridge extends AndroidDebugBridge implements Mobi
 		super($childProcess, $errors, $logger, $staticConfig, $androidDebugBridgeResultHandler);
 	}
 
-	public executeShellCommand(args: string[], options?: Mobile.IAndroidDebugBridgeCommandOptions): IFuture<any> {
+	public async executeShellCommand(args: string[], options?: Mobile.IAndroidDebugBridgeCommandOptions): Promise<any> {
 		args.unshift("shell");
 		return super.executeCommand(args, options);
 	}
 
-	public sendBroadcastToDevice(action: string, extras?: IStringDictionary): IFuture<number> {
-		return (() => {
-			extras = extras || {};
-			let broadcastCommand = ["am", "broadcast", "-a", `${action}`];
-			_.each(extras, (value, key) => broadcastCommand.push("-e", key, value));
+	public async sendBroadcastToDevice(action: string, extras?: IStringDictionary): Promise<number> {
+		extras = extras || {};
+		let broadcastCommand = ["am", "broadcast", "-a", `${action}`];
+		_.each(extras, (value, key) => broadcastCommand.push("-e", key, value));
 
-			let result = this.executeShellCommand(broadcastCommand).wait();
-			this.$logger.trace(`Broadcast result ${result} from ${broadcastCommand}`);
+		let result = await this.executeShellCommand(broadcastCommand);
+		this.$logger.trace(`Broadcast result ${result} from ${broadcastCommand}`);
 
-			let match = result.match(/Broadcast completed: result=(\d+)/);
-			if (match) {
-				return +match[1];
-			}
+		let match = result.match(/Broadcast completed: result=(\d+)/);
+		if (match) {
+			return +match[1];
+		}
 
-			this.$errors.failWithoutHelp("Unable to broadcast to android device:\n%s", result);
-		}).future<number>()();
+		this.$errors.failWithoutHelp("Unable to broadcast to android device:\n%s", result);
 	}
 
-	protected composeCommand(params: string[]): IFuture<IComposeCommandResult> {
+	protected async composeCommand(params: string[]): Promise<IComposeCommandResult> {
 		return super.composeCommand(params, this.identifier);
 	}
 }

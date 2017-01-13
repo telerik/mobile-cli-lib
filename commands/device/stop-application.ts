@@ -1,20 +1,17 @@
 export class StopApplicationOnDeviceCommand implements ICommand {
 
 	constructor(private $devicesService: Mobile.IDevicesService,
-		private $errors: IErrors,
 		private $stringParameter: ICommandParameter,
-		private $staticConfig: Config.IStaticConfig,
 		private $options: ICommonOptions) { }
 
 	allowedParameters: ICommandParameter[] = [this.$stringParameter, this.$stringParameter];
 
-	public execute(args: string[]): IFuture<void> {
-		return (() => {
-			this.$devicesService.initialize({ deviceId: this.$options.device, skipInferPlatform: true, platform: args[1] }).wait();
+	public async execute(args: string[]): Promise<void> {
+		await this.$devicesService.initialize({ deviceId: this.$options.device, skipInferPlatform: true, platform: args[1] });
 
-			let action = (device: Mobile.IDevice) => device.applicationManager.stopApplication(args[0]);
-			this.$devicesService.execute(action).wait();
-		}).future<void>()();
+		let action = (device: Mobile.IDevice) => device.applicationManager.stopApplication(args[0]);
+		await this.$devicesService.execute(action);
 	}
 }
+
 $injector.registerCommand("device|stop", StopApplicationOnDeviceCommand);

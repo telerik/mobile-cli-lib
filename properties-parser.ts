@@ -1,5 +1,4 @@
 import * as propertiesParser from "properties-parser";
-import Future = require("fibers/future");
 import * as assert from "assert";
 
 export class PropertiesParser implements IPropertiesParser {
@@ -9,47 +8,47 @@ export class PropertiesParser implements IPropertiesParser {
 		return propertiesParser.parse(text);
 	}
 
-	public read(filePath: string): IFuture<IStringDictionary> {
-		let future = new Future<IStringDictionary>();
-		propertiesParser.read(filePath, (err, data) => {
-			if(err) {
-				future.throw(err);
-			} else {
-				future.return(data);
-			}
-		});
+	public async read(filePath: string): Promise<IStringDictionary> {
+		return new Promise<IStringDictionary>((resolve, reject) => {
+			propertiesParser.read(filePath, (err, data) => {
+				if (err) {
+					reject(err);
+				} else {
+					resolve(data);
+				}
+			});
 
-		return future;
+		});
 	}
 
 	public createEditor(filePath: string) {
-		let future = new Future<any>();
-		propertiesParser.createEditor(filePath,  (err, data) => {
-			if(err) {
-				future.throw(err);
-			} else {
-				this._editor = data;
-				future.return(this._editor);
-			}
-		});
+		return new Promise<any>((resolve, reject) => {
+			propertiesParser.createEditor(filePath, (err, data) => {
+				if (err) {
+					reject(err);
+				} else {
+					this._editor = data;
+					resolve(this._editor);
+				}
+			});
 
-		return future;
+		});
 	}
 
-	public saveEditor(): IFuture<void> {
+	public async saveEditor(): Promise<void> {
 		assert.ok(this._editor, "Editor is undefied. Ensure that createEditor is called.");
 
-		let future = new Future<void>();
+		return new Promise<void>((resolve, reject) => {
 
-		this._editor.save((err:any) => {
-			if (err) {
-				future.throw(err);
-			} else {
-				future.return();
-			}
+			this._editor.save((err: any) => {
+				if (err) {
+					reject(err);
+				} else {
+					resolve();
+				}
+			});
+
 		});
-
-		return future;
 	}
 }
 $injector.register("propertiesParser", PropertiesParser);

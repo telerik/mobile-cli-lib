@@ -1,5 +1,4 @@
-import {ApplicationManagerBase} from "../../application-manager-base";
-import Future = require("fibers/future");
+import { ApplicationManagerBase } from "../../application-manager-base";
 import * as path from "path";
 import * as temp from "temp";
 import { hook } from "../../../helpers";
@@ -17,46 +16,41 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		super($logger, $hooksService);
 	}
 
-	public getInstalledApplications(): IFuture<string[]> {
-		return Future.fromResult(this.iosSim.getInstalledApplications(this.identifier));
+	public async getInstalledApplications(): Promise<string[]> {
+		return this.iosSim.getInstalledApplications(this.identifier);
 	}
 
-	// TODO: Remove IFuture, reason: readDirectory - cannot until android and iOS implementatios have async calls.
+	// TODO: Remove Promise, reason: readDirectory - cannot until android and iOS implementatios have async calls.
 	@hook('install')
-	public installApplication(packageFilePath: string): IFuture<void> {
-		return (() => {
-			if (this.$fs.exists(packageFilePath) && path.extname(packageFilePath) === ".zip") {
-				temp.track();
-				let dir = temp.mkdirSync("simulatorPackage");
-				this.$fs.unzip(packageFilePath, dir).wait();
-				let app = _.find(this.$fs.readDirectory(dir), directory => path.extname(directory) === ".app");
-				if (app) {
-					packageFilePath = path.join(dir, app);
-				}
+	public async installApplication(packageFilePath: string): Promise<void> {
+		if (this.$fs.exists(packageFilePath) && path.extname(packageFilePath) === ".zip") {
+			temp.track();
+			let dir = temp.mkdirSync("simulatorPackage");
+			await this.$fs.unzip(packageFilePath, dir);
+			let app = _.find(this.$fs.readDirectory(dir), directory => path.extname(directory) === ".app");
+			if (app) {
+				packageFilePath = path.join(dir, app);
 			}
+		}
 
-			this.iosSim.installApplication(this.identifier, packageFilePath).wait();
-		}).future<void>()();
+		this.iosSim.installApplication(this.identifier, packageFilePath);
 	}
 
-	public uninstallApplication(appIdentifier: string): IFuture<void> {
+	public async uninstallApplication(appIdentifier: string): Promise<void> {
 		return this.iosSim.uninstallApplication(this.identifier, appIdentifier);
 	}
 
-	public startApplication(appIdentifier: string): IFuture<void> {
-		return (() => {
-			let launchResult = this.iosSim.startApplication(this.identifier, appIdentifier).wait();
+	public async startApplication(appIdentifier: string): Promise<void> {
+		let launchResult = this.iosSim.startApplication(this.identifier, appIdentifier);
 
-			if (!this.$options.justlaunch) {
-				let pid = launchResult.split(":")[1].trim();
-				this.$deviceLogProvider.setApplictionPidForDevice(this.identifier, pid);
-				this.$iOSSimulatorLogProvider.startLogProcess(this.identifier);
-			}
-
-		}).future<void>()();
+		if (!this.$options.justlaunch) {
+			let pid = launchResult.split(":")[1].trim();
+			this.$deviceLogProvider.setApplictionPidForDevice(this.identifier, pid);
+			this.$iOSSimulatorLogProvider.startLogProcess(this.identifier);
+		}
 	}
 
-	public stopApplication(cfBundleExecutable: string): IFuture<void> {
+	public async stopApplication(cfBundleExecutable: string): Promise<void> {
 		return this.iosSim.stopApplication(this.identifier, cfBundleExecutable);
 	}
 
@@ -64,53 +58,47 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		return true;
 	}
 
-	public getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo> {
-		return ((): Mobile.IApplicationInfo => {
-			let result: Mobile.IApplicationInfo = null,
-				plistContent = this.getParsedPlistContent(applicationIdentifier).wait();
+	public async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
+		let result: Mobile.IApplicationInfo = null,
+			plistContent = await this.getParsedPlistContent(applicationIdentifier);
 
-			if (plistContent) {
-				result = {
-					applicationIdentifier,
-					deviceIdentifier: this.identifier,
-					configuration: plistContent && plistContent.configuration
-				};
-			}
+		if (plistContent) {
+			result = {
+				applicationIdentifier,
+				deviceIdentifier: this.identifier,
+				configuration: plistContent && plistContent.configuration
+			};
+		}
 
-			return result;
-		}).future<Mobile.IApplicationInfo>()();
+		return result;
 	}
 
-	public isLiveSyncSupported(appIdentifier: string): IFuture<boolean> {
-		return ((): boolean => {
-			let plistContent = this.getParsedPlistContent(appIdentifier).wait();
-			if (plistContent) {
-				return !!plistContent && !!plistContent.IceniumLiveSyncEnabled;
-			}
+	public async isLiveSyncSupported(appIdentifier: string): Promise<boolean> {
+		let plistContent = await this.getParsedPlistContent(appIdentifier);
+		if (plistContent) {
+			return !!plistContent && !!plistContent.IceniumLiveSyncEnabled;
+		}
 
-			return false;
-		}).future<boolean>()();
+		return false;
 	}
 
-	private getParsedPlistContent(appIdentifier: string): any {
-		return ((): any => {
-			if (!this.isApplicationInstalled(appIdentifier).wait()) {
-				return null;
-			}
+	private async getParsedPlistContent(appIdentifier: string): Promise<any> {
+		if (! await this.isApplicationInstalled(appIdentifier)) {
+			return null;
+		}
 
-			let applicationPath = this.iosSim.getApplicationPath(this.identifier, appIdentifier),
-				pathToInfoPlist = path.join(applicationPath, "Info.plist");
+		let applicationPath = this.iosSim.getApplicationPath(this.identifier, appIdentifier),
+			pathToInfoPlist = path.join(applicationPath, "Info.plist");
 
-			return this.$fs.exists(pathToInfoPlist) ? this.$bplistParser.parseFile(pathToInfoPlist).wait()[0] : null;
-		}).future<any>()();
+		return this.$fs.exists(pathToInfoPlist) ? (await this.$bplistParser.parseFile(pathToInfoPlist))[0] : null;
 	}
 
-	public getDebuggableApps(): IFuture<Mobile.IDeviceApplicationInformation[]> {
-		return Future.fromResult([]);
+	public async getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]> {
+		return [];
 	}
 
-	public getDebuggableAppViews(appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>> {
+	public async getDebuggableAppViews(appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> {
 		// Implement when we can find debuggable applications for iOS.
-		return Future.fromResult(null);
+		return Promise.resolve(null);
 	}
 }

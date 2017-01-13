@@ -1,5 +1,5 @@
 import * as parse5 from "parse5";
-import {PluginsSourceBase} from "./plugins-source-base";
+import { PluginsSourceBase } from "./plugins-source-base";
 
 export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSource {
 	private static NPMJS_ADDRESS = "http://npmjs.org";
@@ -7,12 +7,9 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 	private _keywords: string[];
 	private _pages: IBasicPluginInformation[][];
 
-	constructor($progressIndicator: IProgressIndicator,
-		$logger: ILogger,
-		private $httpClient: Server.IHttpClient,
-		private $childProcess: IChildProcess,
-		private $hostInfo: IHostInfo,
-		private $errors: IErrors) {
+	constructor(protected $progressIndicator: IProgressIndicator,
+		protected $logger: ILogger,
+		private $httpClient: Server.IHttpClient) {
 		super($progressIndicator, $logger);
 		this._pages = [];
 	}
@@ -21,83 +18,69 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 		return "Searching for plugins in http://npmjs.org.";
 	}
 
-	public getPlugins(page: number, count: number): IFuture<IBasicPluginInformation[]> {
-		return ((): IBasicPluginInformation[] => {
-			let loadedPlugins = this._pages[page];
-			if (loadedPlugins) {
-				return loadedPlugins;
+	public async getPlugins(page: number, count: number): Promise<IBasicPluginInformation[]> {
+		let loadedPlugins = this._pages[page];
+		if (loadedPlugins) {
+			return loadedPlugins;
+		}
+
+		let result = await this.getPluginsFromNpmjs(this._keywords, page);
+
+		this._pages[page] = result;
+
+		this.plugins = this.plugins.concat(result);
+
+		return result;
+	}
+
+	public async getAllPlugins(): Promise<IBasicPluginInformation[]> {
+		this.$logger.printInfoMessageOnSameLine("Getting all results, please wait.");
+		return await this.$progressIndicator.showProgressIndicator(this.getAllPluginsCore(), 2000);
+	}
+
+	protected async initializeCore(projectDir: string, keywords: string[]): Promise<void> {
+		this._keywords = keywords;
+
+		this.plugins = await this.getPluginsFromNpmjs(keywords, 1);
+	}
+
+	private async getAllPluginsCore(): Promise<IBasicPluginInformation[]> {
+		let result: IBasicPluginInformation[] = [];
+
+		let currentPluginsFound: IBasicPluginInformation[] = [];
+		let page = 1;
+
+		do {
+			currentPluginsFound = await this.getPluginsFromNpmjs(this._keywords, page++);
+			if (currentPluginsFound && currentPluginsFound.length) {
+				result = result.concat(currentPluginsFound);
 			}
+		} while (currentPluginsFound && currentPluginsFound.length);
 
-			let result = this.getPluginsFromNpmjs(this._keywords, page).wait();
-
-			this._pages[page] = result;
-
-			this.plugins = this.plugins.concat(result);
-
-			return result;
-		}).future<IBasicPluginInformation[]>()();
+		return result;
 	}
 
-	public getAllPlugins(): IFuture<IBasicPluginInformation[]> {
-		return ((): IBasicPluginInformation[] => {
-			let getAllPluginsFuture = this.getAllPluginsCore();
+	private async getPluginsFromNpmjs(keywords: string[], page: number): Promise<IBasicPluginInformation[]> {
+		let pluginName = encodeURIComponent(keywords.join(" "));
+		let url = `${NpmjsPluginsSource.NPMJS_ADDRESS}/search?q=${pluginName}&page=${page}`;
 
-			this.$logger.printInfoMessageOnSameLine("Getting all results, please wait.");
-			this.$progressIndicator.showProgressIndicator(getAllPluginsFuture, 2000).wait();
+		try {
+			let responseBody: string = (await this.$httpClient.httpRequest(url)).body;
 
-			return getAllPluginsFuture.get();
-		}).future<IBasicPluginInformation[]>()();
-	}
+			let document = parse5.parse(responseBody);
+			let html = _.find(document.childNodes, (node: parse5.ASTNode) => node.nodeName === "html");
 
-	protected initializeCore(projectDir: string, keywords: string[]): IFuture<void> {
-		return (() => {
-			this._keywords = keywords;
-
-			this.plugins = this.getPluginsFromNpmjs(keywords, 1).wait();
-		}).future<void>()();
-	}
-
-	private getAllPluginsCore(): IFuture<IBasicPluginInformation[]> {
-		return ((): IBasicPluginInformation[] => {
-			let result: IBasicPluginInformation[] = [];
-
-			let currentPluginsFound: IBasicPluginInformation[] = [];
-			let page = 1;
-
-			do {
-				currentPluginsFound = this.getPluginsFromNpmjs(this._keywords, page++).wait();
-				if (currentPluginsFound && currentPluginsFound.length) {
-					result = result.concat(currentPluginsFound);
-				}
-			} while (currentPluginsFound && currentPluginsFound.length);
-
-			return result;
-		}).future<IBasicPluginInformation[]>()();
-	}
-
-	private getPluginsFromNpmjs(keywords: string[], page: number): IFuture<IBasicPluginInformation[]> {
-		return ((): IBasicPluginInformation[] => {
-			let pluginName = encodeURIComponent(keywords.join(" "));
-			let url = `${NpmjsPluginsSource.NPMJS_ADDRESS}/search?q=${pluginName}&page=${page}`;
-
-			try {
-				let responseBody: string = this.$httpClient.httpRequest(url).wait().body;
-
-				let document = parse5.parse(responseBody);
-				let html = _.find(document.childNodes, (node: parse5.ASTNode) => node.nodeName === "html");
-
-				let resultsContainer = this.findNodeByClass(html, "search-results");
-				if (!resultsContainer || !resultsContainer.childNodes) {
-					return null;
-				}
-
-				let resultsElements = _.filter(resultsContainer.childNodes, (node: parse5.ASTNode) => node.nodeName === "li");
-				return _.map(resultsElements, (node: parse5.ASTNode) => this.getPluginInfo(node));
-			} catch (err) {
-				this.$logger.trace(`Error while getting information for ${keywords} from http://npmjs.org - ${err}`);
+			let resultsContainer = this.findNodeByClass(html, "search-results");
+			if (!resultsContainer || !resultsContainer.childNodes) {
 				return null;
 			}
-		}).future<IBasicPluginInformation[]>()();
+
+			let resultsElements = _.filter(resultsContainer.childNodes, (node: parse5.ASTNode) => node.nodeName === "li");
+			return _.map(resultsElements, (node: parse5.ASTNode) => this.getPluginInfo(node));
+		} catch (err) {
+			this.$logger.trace(`Error while getting information for ${keywords} from http://npmjs.org - ${err}`);
+			return null;
+		}
 	}
 
 	private getPluginInfo(node: parse5.ASTNode): IBasicPluginInformation {

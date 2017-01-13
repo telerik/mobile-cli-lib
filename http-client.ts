@@ -1,5 +1,4 @@
 import * as url from "url";
-import Future = require("fibers/future");
 import * as helpers from "./helpers";
 import * as zlib from "zlib";
 import * as util from "util";
@@ -13,81 +12,86 @@ export class HttpClient implements Server.IHttpClient {
 		private $staticConfig: Config.IStaticConfig,
 		private $config: Config.IConfig) { }
 
-	httpRequest(options: any, proxySettings?: IProxySettings): IFuture<Server.IResponse> {
-		return (() => {
-			if (_.isString(options)) {
-				options = {
-					url: options,
-					method: "GET"
-				};
+	async httpRequest(options: any, proxySettings?: IProxySettings): Promise<Server.IResponse> {
+		if (_.isString(options)) {
+			options = {
+				url: options,
+				method: "GET"
+			};
+		}
+
+		let unmodifiedOptions = _.clone(options);
+
+		if (options.url) {
+			let urlParts = url.parse(options.url);
+			if (urlParts.protocol) {
+				options.proto = urlParts.protocol.slice(0, -1);
+			}
+			options.host = urlParts.hostname;
+			options.port = urlParts.port;
+			options.path = urlParts.path;
+			delete options.url;
+		}
+
+		let requestProto = options.proto || "http";
+		delete options.proto;
+		let body = options.body;
+		delete options.body;
+		let pipeTo = options.pipeTo;
+		delete options.pipeTo;
+
+		let proto = this.$config.USE_PROXY ? "http" : requestProto;
+		let http = require(proto);
+
+		options.headers = options.headers || {};
+		let headers = options.headers;
+
+		if (proxySettings || this.$config.USE_PROXY) {
+			options.path = requestProto + "://" + options.host + options.path;
+			headers.Host = options.host;
+			options.host = (proxySettings && proxySettings.hostname) || this.$config.PROXY_HOSTNAME;
+			options.port = (proxySettings && proxySettings.port) || this.$config.PROXY_PORT;
+			this.$logger.trace("Using proxy with host: %s, port: %d, path is: %s", options.host, options.port, options.path);
+		}
+
+		if (!headers.Accept || headers.Accept.indexOf("application/json") < 0) {
+			if (headers.Accept) {
+				headers.Accept += ", ";
+			} else {
+				headers.Accept = "";
+			}
+			headers.Accept += "application/json; charset=UTF-8, */*;q=0.8";
+		}
+
+		if (!headers["User-Agent"]) {
+			if (!this.defaultUserAgent) {
+				//TODO: the user agent client name is also passed explicitly during login and should be kept in sync
+				this.defaultUserAgent = util.format("%sCLI/%s (Node.js %s; %s; %s)",
+					this.$staticConfig.CLIENT_NAME,
+					this.$staticConfig.version,
+					process.versions.node, process.platform, process.arch);
+				this.$logger.debug("User-Agent: %s", this.defaultUserAgent);
 			}
 
-			let unmodifiedOptions = _.clone(options);
+			headers["User-Agent"] = this.defaultUserAgent;
+		}
 
-			if (options.url) {
-				let urlParts = url.parse(options.url);
-				if (urlParts.protocol) {
-					options.proto = urlParts.protocol.slice(0, -1);
-				}
-				options.host = urlParts.hostname;
-				options.port = urlParts.port;
-				options.path = urlParts.path;
-				delete options.url;
-			}
+		if (!headers["Accept-Encoding"]) {
+			headers["Accept-Encoding"] = "gzip,deflate";
+		}
 
-			let requestProto = options.proto || "http";
-			delete options.proto;
-			let body = options.body;
-			delete options.body;
-			let pipeTo = options.pipeTo;
-			delete options.pipeTo;
+		let result = new Promise<Server.IResponse>((resolve, reject) => {
+			let timerId: number;
 
-			let proto = this.$config.USE_PROXY ? "http" : requestProto;
-			let http = require(proto);
-
-			options.headers = options.headers || {};
-			let headers = options.headers;
-
-			if (proxySettings || this.$config.USE_PROXY) {
-				options.path = requestProto + "://" + options.host + options.path;
-				headers.Host = options.host;
-				options.host = (proxySettings && proxySettings.hostname) || this.$config.PROXY_HOSTNAME;
-				options.port = (proxySettings && proxySettings.port) || this.$config.PROXY_PORT;
-				this.$logger.trace("Using proxy with host: %s, port: %d, path is: %s", options.host, options.port, options.path);
-			}
-
-			if (!headers.Accept || headers.Accept.indexOf("application/json") < 0) {
-				if (headers.Accept) {
-					headers.Accept += ", ";
-				} else {
-					headers.Accept = "";
-				}
-				headers.Accept += "application/json; charset=UTF-8, */*;q=0.8";
-			}
-
-			if (!headers["User-Agent"]) {
-				if (!this.defaultUserAgent) {
-					//TODO: the user agent client name is also passed explicitly during login and should be kept in sync
-					this.defaultUserAgent = util.format("%sCLI/%s (Node.js %s; %s; %s)",
-						this.$staticConfig.CLIENT_NAME,
-						this.$staticConfig.version,
-						process.versions.node, process.platform, process.arch);
-					this.$logger.debug("User-Agent: %s", this.defaultUserAgent);
-				}
-
-				headers["User-Agent"] = this.defaultUserAgent;
-			}
-
-			if (!headers["Accept-Encoding"]) {
-				headers["Accept-Encoding"] = "gzip,deflate";
-			}
-
-			let result = new Future<Server.IResponse>(),
-				timerId: number;
+			let promiseActions: IPromiseActions<Server.IResponse> = {
+				resolve,
+				reject,
+				isResolved: () => false
+			};
 
 			if (options.timeout) {
 				timerId = setTimeout(() => {
-					this.setResponseResult(result, timerId, { err: new Error(`Request to ${unmodifiedOptions.url} timed out.`) });
+					this.setResponseResult(promiseActions, timerId, { err: new Error(`Request to ${unmodifiedOptions.url} timed out.`) }, );
 				}, options.timeout);
 
 				delete options.timeout;
@@ -116,7 +120,7 @@ export class HttpClient implements Server.IHttpClient {
 				if (pipeTo) {
 					pipeTo.on("finish", () => {
 						this.$logger.trace("httpRequest: Piping done. code = %d", response.statusCode.toString());
-						this.setResponseResult(result, timerId, { response });
+						this.setResponseResult(promiseActions, timerId, { response });
 					});
 
 					pipeTo = this.trackDownloadProgress(pipeTo);
@@ -132,20 +136,20 @@ export class HttpClient implements Server.IHttpClient {
 						let responseBody = data.join("");
 
 						if (successful || isRedirect) {
-							this.setResponseResult(result, timerId, { body: responseBody, response });
+							this.setResponseResult(promiseActions, timerId, { body: responseBody, response });
 						} else {
 							let errorMessage = this.getErrorMessage(response, responseBody);
 							let err: any = new Error(errorMessage);
 							err.response = response;
 							err.body = responseBody;
-							this.setResponseResult(result, timerId, { err });
+							this.setResponseResult(promiseActions, timerId, { err });
 						}
 					});
 				}
 			});
 
 			request.on("error", (err: Error) => {
-				this.setResponseResult(result, timerId, { err });
+				this.setResponseResult(promiseActions, timerId, { err });
 			});
 
 			this.$logger.trace("httpRequest: Sending:\n%s", this.$logger.prepare(body));
@@ -155,37 +159,39 @@ export class HttpClient implements Server.IHttpClient {
 			} else {
 				body.pipe(request);
 			}
+		});
 
-			let response = result.wait();
-			if (helpers.isResponseRedirect(response.response)) {
-				if (response.response.statusCode === 303) {
-					unmodifiedOptions.method = "GET";
-				}
+		let response = await result;
 
-				this.$logger.trace("Begin redirected to %s", response.headers.location);
-				unmodifiedOptions.url = response.headers.location;
-				return this.httpRequest(unmodifiedOptions).wait();
+		if (helpers.isResponseRedirect(response.response)) {
+			if (response.response.statusCode === 303) {
+				unmodifiedOptions.method = "GET";
 			}
 
-			return response;
-		}).future<Server.IResponse>()();
+			this.$logger.trace("Begin redirected to %s", response.headers.location);
+			unmodifiedOptions.url = response.headers.location;
+			return await this.httpRequest(unmodifiedOptions);
+		}
+
+		return response;
 	}
 
-	private setResponseResult(result: IFuture<Server.IResponse>, timerId: number, resultData: { response?: Server.IRequestResponseData, body?: string, err?: Error }): void {
+	private async setResponseResult(result: IPromiseActions<Server.IResponse>, timerId: number, resultData: { response?: Server.IRequestResponseData, body?: string, err?: Error,  }): Promise<void> {
 		if (timerId) {
 			clearTimeout(timerId);
 			timerId = null;
 		}
 
 		if (!result.isResolved()) {
+			result.isResolved = () => true;
 			if (resultData.err) {
-				return result.throw(resultData.err);
+				return result.reject(resultData.err);
 			}
 
 			let finalResult: any = resultData;
 			finalResult.headers = resultData.response.headers;
 
-			result.return(finalResult);
+			result.resolve(finalResult);
 		}
 	}
 

@@ -1,6 +1,6 @@
-import {Yok} from "../../yok";
-import {ProcessService} from "../../services/process-service";
-import {assert} from "chai";
+import { Yok } from "../../yok";
+import { ProcessService } from "../../services/process-service";
+import { assert } from "chai";
 
 let processExitSignals = ["exit", "SIGINT", "SIGTERM"];
 let emptyFunction = () => { /* no implementation required */ };

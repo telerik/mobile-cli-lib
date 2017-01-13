@@ -1,12 +1,10 @@
 import byline = require("byline");
-import {DeviceAndroidDebugBridge} from "./device-android-debug-bridge";
-import * as fiberBootstrap from "../../fiber-bootstrap";
+import { DeviceAndroidDebugBridge } from "./device-android-debug-bridge";
 
 export class LogcatHelper implements Mobile.ILogcatHelper {
 	private mapDeviceToLoggingStarted: IDictionary<boolean>;
 
-	constructor(private $childProcess: IChildProcess,
-		private $deviceLogProvider: Mobile.IDeviceLogProvider,
+	constructor(private $deviceLogProvider: Mobile.IDeviceLogProvider,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $logger: ILogger,
 		private $injector: IInjector,
@@ -14,14 +12,14 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 		this.mapDeviceToLoggingStarted = Object.create(null);
 	}
 
-	public start(deviceIdentifier: string): void {
+	public async start(deviceIdentifier: string): Promise<void> {
 		if (deviceIdentifier && !this.mapDeviceToLoggingStarted[deviceIdentifier]) {
 			let adb: Mobile.IDeviceAndroidDebugBridge = this.$injector.resolve(DeviceAndroidDebugBridge, { identifier: deviceIdentifier });
 
 			// remove cached logs:
-			adb.executeCommand(["logcat", "-c"]).wait();
+			await adb.executeCommand(["logcat", "-c"]);
 
-			let adbLogcat = adb.executeCommand(["logcat"], { returnChildProcess: true }).wait();
+			let adbLogcat = await adb.executeCommand(["logcat"], { returnChildProcess: true });
 			let lineStream = byline(adbLogcat.stdout);
 
 			adbLogcat.stderr.on("data", (data: NodeBuffer) => {
@@ -41,9 +39,7 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 
 			lineStream.on('data', (line: NodeBuffer) => {
 				let lineText = line.toString();
-				fiberBootstrap.run(() =>
-					this.$deviceLogProvider.logData(lineText, this.$devicePlatformsConstants.Android, deviceIdentifier)
-				);
+				this.$deviceLogProvider.logData(lineText, this.$devicePlatformsConstants.Android, deviceIdentifier);
 			});
 
 			this.$processService.attachToProcessExitSignals(this, adbLogcat.kill);

@@ -7,7 +7,7 @@ export class DeviceAppDataBase {
 		return this._appIdentifier;
 	}
 
-	protected getDeviceProjectRootPath(projectRoot: string): string {
+	protected _getDeviceProjectRootPath(projectRoot: string): string {
 		return helpers.fromWindowsRelativePathToUnix(projectRoot);
 	}
 }

@@ -1,4 +1,3 @@
-import Future = require("fibers/future");
 import * as prompt from "inquirer";
 import * as helpers from "./helpers";
 import * as readline from "readline";
@@ -14,15 +13,14 @@ export class Prompter implements IPrompter {
 		}
 	}
 
-	public get(schemas: IPromptSchema[]): IFuture<any> {
-		return (() => {
+	public async get(schemas: IPromptSchema[]): Promise<any> {
+		return new Promise((resolve, reject) => {
 			try {
 				this.muteStdout();
 
-				let future = new Future;
 				if (!helpers.isInteractive()) {
 					if (_.some(schemas, s => !s.default)) {
-						future.throw(new Error("Console is not interactive and no default action specified."));
+						reject(new Error("Console is not interactive and no default action specified."));
 					} else {
 						let result: any = {};
 
@@ -31,85 +29,76 @@ export class Prompter implements IPrompter {
 							result[s.name] = s.default();
 						});
 
-						future.return(result);
+						resolve(result);
 					}
 				} else {
 					prompt.prompt(schemas, (result: any) => {
 						if (result) {
-							future.return(result);
+							resolve(result);
 						} else {
-							future.throw(new Error(`Unable to get result from prompt: ${result}`));
+							reject(new Error(`Unable to get result from prompt: ${result}`));
 						}
 					});
 				}
-				return future.wait();
 			} finally {
 				this.unmuteStdout();
 			}
-		}).future<any>()();
+		});
 	}
 
-	public getPassword(prompt: string, options?: IAllowEmpty): IFuture<string> {
-		return (() => {
-			let schema: IPromptSchema = {
-				message: prompt,
-				type: "password",
-				name: "password",
-				validate: (value: any) => {
-					let allowEmpty = options && options.allowEmpty;
-					return (!allowEmpty && !value) ? "Password must be non-empty" : true;
-				}
-			};
+	public async getPassword(prompt: string, options?: IAllowEmpty): Promise<string> {
+		let schema: IPromptSchema = {
+			message: prompt,
+			type: "password",
+			name: "password",
+			validate: (value: any) => {
+				let allowEmpty = options && options.allowEmpty;
+				return (!allowEmpty && !value) ? "Password must be non-empty" : true;
+			}
+		};
 
-			let result = this.get([schema]).wait();
-			return result.password;
-		}).future<string>()();
+		let result = await this.get([schema]);
+		return result.password;
 	}
 
-	public getString(prompt: string, options?: IPrompterOptions): IFuture<string> {
-		return (() => {
-			let schema: IPromptSchema = {
-				message: prompt,
-				type: "input",
-				name: "inputString",
-				validate: (value: any) => {
-					let doesNotAllowEmpty = options && _.has(options, "allowEmpty") && !options.allowEmpty;
-					return (doesNotAllowEmpty && !value) ? `${prompt} must be non-empty` : true;
-				},
-				default: options && options.defaultAction
-			};
+	public async getString(prompt: string, options?: IPrompterOptions): Promise<string> {
+		let schema: IPromptSchema = {
+			message: prompt,
+			type: "input",
+			name: "inputString",
+			validate: (value: any) => {
+				let doesNotAllowEmpty = options && _.has(options, "allowEmpty") && !options.allowEmpty;
+				return (doesNotAllowEmpty && !value) ? `${prompt} must be non-empty` : true;
+			},
+			default: options && options.defaultAction
+		};
 
-			let result = this.get([schema]).wait();
-			return result.inputString;
-		}).future<string>()();
+		let result = await this.get([schema]);
+		return result.inputString;
 	}
 
-	public promptForChoice(promptMessage: string, choices: any[]): IFuture<string> {
-		return (() => {
-			let schema: IPromptSchema = {
-				message: promptMessage,
-				type: "list",
-				name: "userAnswer",
-				choices: choices
-			};
+	public async promptForChoice(promptMessage: string, choices: any[]): Promise<string> {
+		let schema: IPromptSchema = {
+			message: promptMessage,
+			type: "list",
+			name: "userAnswer",
+			choices: choices
+		};
 
-			let result = this.get([schema]).wait();
-			return result.userAnswer;
-		}).future<string>()();
+		let result = await this.get([schema]);
+		return result.userAnswer;
 	}
 
-	public confirm(prompt: string, defaultAction?: () => boolean): IFuture<boolean> {
-		return ((): boolean => {
-			let schema = {
-				type: "confirm",
-				name: "prompt",
-				default: defaultAction,
-				message: prompt
-			};
+	public async confirm(prompt: string, defaultAction?: () => boolean): Promise<boolean> {
+		let schema = {
+			type: "confirm",
+			name: "prompt",
+			default: defaultAction,
+			message: prompt
+		};
 
-			let result = this.get([schema]).wait();
-			return result.prompt;
-		}).future<boolean>()();
+		let result = await this.get([schema]);
+		return result.prompt;
 	}
 
 	private muteStdout(): void {

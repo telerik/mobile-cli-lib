@@ -4,9 +4,9 @@ export class Utils implements IUtils {
 
 	public getParsedTimeout(defaultTimeout: number): number {
 		let timeout = defaultTimeout;
-		if(this.$options.timeout) {
+		if (this.$options.timeout) {
 			let parsedValue = parseInt(this.$options.timeout);
-			if(!isNaN(parsedValue) && parsedValue >= 0) {
+			if (!isNaN(parsedValue) && parsedValue >= 0) {
 				timeout = parsedValue;
 			} else {
 				this.$logger.warn("Specify timeout in a number of seconds to wait. Default value: " + timeout + " seconds will be used.");

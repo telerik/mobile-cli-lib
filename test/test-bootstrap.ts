@@ -1,5 +1,3 @@
-import Future = require("fibers/future");
-
 global._ = require("lodash");
 global.$injector = require("../yok").injector;
 // $injector.require("config", "../lib/config");
@@ -9,19 +7,15 @@ $injector.register("config", {});
 
 // Our help reporting requires analyticsService. Give it this mock so that errors during test executions can be printed out
 $injector.register("analyticsService", {
-	checkConsent(): IFuture<void> { return Future.fromResult(); },
-	trackFeature(featureName: string): IFuture<void>{ return Future.fromResult(); },
-	trackException(exception: any, message: string): IFuture<void> { return Future.fromResult(); },
-	setStatus(settingName: string, enabled: boolean): IFuture<void>{ return Future.fromResult(); },
-	getStatusMessage(settingName: string, jsonFormat: boolean, readableSettingName: string): IFuture<string>{ return Future.fromResult("Fake message"); },
-	isEnabled(settingName: string): IFuture<boolean>{ return Future.fromResult(false); },
-	track(featureName: string, featureValue: string): IFuture<void>{ return Future.fromResult(); }
+	async checkConsent(): Promise<void> { return ; },
+	async trackFeature(featureName: string): Promise<void> { return ; },
+	async trackException(exception: any, message: string): Promise<void> { return ; },
+	async setStatus(settingName: string, enabled: boolean): Promise<void> { return ; },
+	async getStatusMessage(settingName: string, jsonFormat: boolean, readableSettingName: string): Promise<string> { return "Fake message"; },
+	async isEnabled(settingName: string): Promise<boolean> { return false; },
+	async track(featureName: string, featureValue: string): Promise<void> { return ; }
 });
 
 // Converts the js callstack to typescript
 import errors = require("../errors");
 errors.installUncaughtExceptionListener();
-
-process.on('exit', (code: number) => {
-	require("fibers/future").assertNoFutureLeftBehind();
-});

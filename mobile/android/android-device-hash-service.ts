@@ -22,75 +22,71 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 		return this._hashFileDevicePath;
 	}
 
-	public doesShasumFileExistsOnDevice(): IFuture<boolean> {
-		return ((): boolean => {
-			let lsResult = this.adb.executeShellCommand(["ls", this.hashFileDevicePath]).wait();
-			return !!(lsResult && lsResult.trim() === this.hashFileDevicePath);
-		}).future<boolean>()();
+	public async doesShasumFileExistsOnDevice(): Promise<boolean> {
+		let lsResult = await this.adb.executeShellCommand(["ls", this.hashFileDevicePath]);
+		return !!(lsResult && lsResult.trim() === this.hashFileDevicePath);
 	}
 
-	public getShasumsFromDevice(): IFuture<IStringDictionary> {
-		return (() => {
-			let hashFileLocalPath = this.downloadHashFileFromDevice().wait();
+	public async getShasumsFromDevice(): Promise<IStringDictionary> {
+		let hashFileLocalPath = await this.downloadHashFileFromDevice();
 
-			if (this.$fs.exists(hashFileLocalPath)) {
-				return this.$fs.readJson(hashFileLocalPath);
-			}
+		if (this.$fs.exists(hashFileLocalPath)) {
+			return this.$fs.readJson(hashFileLocalPath);
+		}
 
-			return null;
-		}).future<IStringDictionary>()();
+		return null;
 	}
 
-	public uploadHashFileToDevice(data: IStringDictionary|Mobile.ILocalToDevicePathData[]): IFuture<void> {
-		return (() => {
-			let shasums: IStringDictionary = {};
-			if (_.isArray(data)) {
-				(<Mobile.ILocalToDevicePathData[]>data).forEach(localToDevicePathData => {
+	public async uploadHashFileToDevice(data: IStringDictionary | Mobile.ILocalToDevicePathData[]): Promise<void> {
+		let shasums: IStringDictionary = {};
+		if (_.isArray(data)) {
+			await Promise.all(
+				(<Mobile.ILocalToDevicePathData[]>data).map(async localToDevicePathData => {
 					let localPath = localToDevicePathData.getLocalPath();
 					let stats = this.$fs.getFsStats(localPath);
 					if (stats.isFile()) {
-						let fileShasum = this.$fs.getFileShasum(localPath).wait();
+						let fileShasum = await this.$fs.getFileShasum(localPath);
 						shasums[localPath] = fileShasum;
 					}
-				});
-			} else {
-				shasums = <IStringDictionary>data;
-			}
+				})
+			);
+		} else {
+			shasums = <IStringDictionary>data;
+		}
 
-			this.$fs.writeJson(this.hashFileLocalPath, shasums);
-			this.adb.executeCommand(["push", this.hashFileLocalPath, this.hashFileDevicePath]).wait();
-		}).future<void>()();
+		this.$fs.writeJson(this.hashFileLocalPath, shasums);
+		await this.adb.executeCommand(["push", this.hashFileLocalPath, this.hashFileDevicePath]);
 	}
 
-	public updateHashes(localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<boolean> {
-		return (() => {
-			let oldShasums = this.getShasumsFromDevice().wait();
-			if (oldShasums) {
-				_.each(localToDevicePaths, ldp => {
+	public async updateHashes(localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<boolean> {
+		let oldShasums = await this.getShasumsFromDevice();
+		if (oldShasums) {
+			await Promise.all(
+				_.map(localToDevicePaths, async ldp => {
 					let localPath = ldp.getLocalPath();
 					if (this.$fs.getFsStats(localPath).isFile()) {
-						oldShasums[localPath] = this.$fs.getFileShasum(localPath).wait();
+						oldShasums[localPath] = await this.$fs.getFileShasum(localPath);
 					}
-				});
-				this.uploadHashFileToDevice(oldShasums).wait();
-				return true;
-			}
+				})
+			);
 
-			return false;
-		}).future<boolean>()();
+			await this.uploadHashFileToDevice(oldShasums);
+
+			return true;
+		}
+
+		return false;
 	}
 
-	public removeHashes(localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<boolean> {
-		return (() => {
-			let oldShasums = this.getShasumsFromDevice().wait();
-			if (oldShasums) {
-				let fileToShasumDictionary = <IStringDictionary>(_.omit(oldShasums, localToDevicePaths.map(ldp => ldp.getLocalPath())));
-				this.uploadHashFileToDevice(fileToShasumDictionary).wait();
-				return true;
-			}
+	public async removeHashes(localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<boolean> {
+		let oldShasums = await this.getShasumsFromDevice();
+		if (oldShasums) {
+			let fileToShasumDictionary = <IStringDictionary>(_.omit(oldShasums, localToDevicePaths.map(ldp => ldp.getLocalPath())));
+			await this.uploadHashFileToDevice(fileToShasumDictionary);
+			return true;
+		}
 
-			return false;
-		}).future<boolean>()();
+		return false;
 	}
 
 	private get hashFileLocalPath(): string {
@@ -110,12 +106,10 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 		return this._tempDir;
 	}
 
-	private downloadHashFileFromDevice(): IFuture<string> {
-		return (() => {
-			if (!this.$fs.exists(this.hashFileLocalPath)) {
-				this.adb.executeCommand(["pull", this.hashFileDevicePath, this.tempDir]).wait();
-			}
-			return this.hashFileLocalPath;
-		}).future<string>()();
+	private async downloadHashFileFromDevice(): Promise<string> {
+		if (!this.$fs.exists(this.hashFileLocalPath)) {
+			await this.adb.executeCommand(["pull", this.hashFileDevicePath, this.tempDir]);
+		}
+		return this.hashFileLocalPath;
 	}
 }

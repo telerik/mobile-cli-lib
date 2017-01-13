@@ -15,5 +15,5 @@ interface ILogger {
 
 	prepare(item: any): string;
 	printInfoMessageOnSameLine(message: string): void;
-	printMsgWithTimeout(message: string, timeout: number): IFuture <void>;
+	printMsgWithTimeout(message: string, timeout: number): Promise<void>;
 }

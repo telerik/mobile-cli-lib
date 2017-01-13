@@ -1,5 +1,3 @@
-import Future = require("fibers/future");
-
 class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 	constructor(private $logger: ILogger,
 		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
@@ -10,12 +8,12 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		private $options: ICommonOptions,
 		private $iOSSimResolver: Mobile.IiOSSimResolver) { }
 
-	public getEmulatorId(): IFuture<string> {
-		return Future.fromResult("");
+	public async getEmulatorId(): Promise<string> {
+		return "";
 	}
 
-	public checkDependencies(): IFuture<void> {
-		return Future.fromResult();
+	public async checkDependencies(): Promise<void> {
+		return;
 	}
 
 	public checkAvailability(dependsOnProject?: boolean): void {
@@ -31,17 +29,15 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		}
 	}
 
-	public startEmulator(): IFuture<string> {
+	public async startEmulator(): Promise<string> {
 		return this.$iOSSimResolver.iOSSim.startSimulator();
 	}
 
-	public runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): IFuture<any> {
-		return (() => {
-			return this.runApplicationOnEmulatorCore(app, emulatorOptions);
-		}).future<any>()();
+	public runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): Promise<any> {
+		return this.runApplicationOnEmulatorCore(app, emulatorOptions);
 	}
 
-	public postDarwinNotification(notification: string): IFuture<void> {
+	public postDarwinNotification(notification: string): Promise<void> {
 		let iosSimPath = this.$iOSSimResolver.iOSSimPath;
 		let nodeCommandName = process.argv[0];
 
@@ -54,13 +50,13 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		return this.$childProcess.exec(`${nodeCommandName} ${iosSimPath} ${opts.join(' ')}`);
 	}
 
-	private runApplicationOnEmulatorCore(app: string, emulatorOptions?: Mobile.IEmulatorOptions): any {
+	private async runApplicationOnEmulatorCore(app: string, emulatorOptions?: Mobile.IEmulatorOptions): Promise<any> {
 		this.$logger.info("Starting iOS Simulator");
 		let iosSimPath = this.$iOSSimResolver.iOSSimPath;
 		let nodeCommandName = process.argv[0];
 
 		if (this.$options.availableDevices) {
-			this.$childProcess.spawnFromEvent(nodeCommandName, [iosSimPath, "device-types"], "close", { stdio: "inherit" }).wait();
+			await this.$childProcess.spawnFromEvent(nodeCommandName, [iosSimPath, "device-types"], "close", { stdio: "inherit" });
 			return;
 		}
 

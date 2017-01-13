@@ -3,8 +3,6 @@ import * as path from "path";
 import * as iOSCore from "./ios-core";
 import * as helpers from "../../../helpers";
 import * as plistlib from "plistlib";
-import Future = require("fibers/future");
-import * as fiberBootstrap from "../../../fiber-bootstrap";
 
 export class MobileServices {
 	public static APPLE_FILE_CONNECTION: string = "com.apple.afc";
@@ -52,6 +50,7 @@ export class AfcFile extends AfcBase implements Mobile.IAfcFile {
 		protected $logger: ILogger) {
 
 		super($logger);
+
 		let modeValue = 0;
 		if (mode.indexOf("r") > -1) {
 			modeValue = 0x1;
@@ -78,7 +77,11 @@ export class AfcFile extends AfcBase implements Mobile.IAfcFile {
 	public read(len: number): any {
 		let readLengthRef = ref.alloc(iOSCore.CoreTypes.uintType, len);
 		let data = new Buffer(len * iOSCore.CoreTypes.pointerSize);
-		let result = this.tryExecuteAfcAction(() =>	this.$mobileDevice.afcFileRefRead(this.afcConnection, this.afcFile, data, readLengthRef));
+
+		let result = this.tryExecuteAfcAction(() => {
+			this.$mobileDevice.afcFileRefRead(this.afcConnection, this.afcFile, data, readLengthRef);
+		});
+
 		if (result !== 0) {
 			this.$errors.fail("Unable to read data from file '%s'. Result is: '%s'", this.afcFile, result);
 		}
@@ -117,7 +120,6 @@ export class AfcClient extends AfcBase implements Mobile.IAfcClient {
 
 	constructor(private service: number,
 		private $mobileDevice: Mobile.IMobileDevice,
-		private $coreFoundation: Mobile.ICoreFoundation,
 		private $fs: IFileSystem,
 		private $errors: IErrors,
 		private $injector: IInjector,
@@ -134,7 +136,7 @@ export class AfcClient extends AfcBase implements Mobile.IAfcClient {
 	}
 
 	public open(path: string, mode: string): Mobile.IAfcFile {
-		return this.$injector.resolve(AfcFile, {path: path, mode: mode, afcConnection: this.afcConnection});
+		return this.$injector.resolve(AfcFile, { path: path, mode: mode, afcConnection: this.afcConnection });
 	}
 
 	public mkdir(path: string) {
@@ -179,10 +181,8 @@ export class AfcClient extends AfcBase implements Mobile.IAfcClient {
 		}
 	}
 
-	public transferPackage(localFilePath: string, devicePath: string): IFuture<void> {
-		return (() => {
-			this.transfer(localFilePath, devicePath).wait();
-		}).future<void>()();
+	public async transferPackage(localFilePath: string, devicePath: string): Promise<void> {
+		await this.transfer(localFilePath, devicePath);
 	}
 
 	public deleteFile(devicePath: string): void {
@@ -190,12 +190,12 @@ export class AfcClient extends AfcBase implements Mobile.IAfcClient {
 		this.$logger.trace("Removing device file '%s', result: %s", devicePath, removeResult.toString());
 	}
 
-	public transfer(localFilePath: string, devicePath: string): IFuture<void> {
-		return(() => {
-			let future = new Future<void>();
+	public transfer(localFilePath: string, devicePath: string): Promise<void> {
+		return new Promise<void>((resolve, reject) => {
+			let isResolved = false;
 			try {
 				this.ensureDevicePathExist(path.dirname(devicePath));
-				let reader = this.$fs.createReadStream(localFilePath, { bufferSize: 1024*1024*15, highWaterMark: 1024*1024*15 });
+				let reader = this.$fs.createReadStream(localFilePath, { bufferSize: 1024 * 1024 * 15, highWaterMark: 1024 * 1024 * 15 });
 				devicePath = helpers.fromWindowsRelativePathToUnix(devicePath);
 
 				this.deleteFile(devicePath);
@@ -203,8 +203,9 @@ export class AfcClient extends AfcBase implements Mobile.IAfcClient {
 				let target = this.open(devicePath, "w");
 				let localFilePathSize = this.$fs.getFileSize(localFilePath),
 					futureThrow = (err: Error) => {
-						if (!future.isResolved()) {
-							future.throw(err);
+						if (!isResolved) {
+							isResolved = true;
+							reject(err);
 						}
 					};
 
@@ -213,8 +214,8 @@ export class AfcClient extends AfcBase implements Mobile.IAfcClient {
 						target.write(data, data.length);
 						this.$logger.trace("transfer-> localFilePath: '%s', devicePath: '%s', localFilePathSize: '%s', transferred bytes: '%s'",
 							localFilePath, devicePath, localFilePathSize.toString(), data.length.toString());
-					} catch(err) {
-						if(err.message.indexOf("Result is: '21'") !== -1) {
+					} catch (err) {
+						if (err.message.indexOf("Result is: '21'") !== -1) {
 							// Error code 21 is kAFCInterruptedError. It looks like in most cases it is raised during package transfer.
 							// However ignoring this error, does not prevent the application from installing and working correctly.
 							this.$logger.warn(err.message);
@@ -231,18 +232,19 @@ export class AfcClient extends AfcBase implements Mobile.IAfcClient {
 				reader.on("end", () => target.close());
 
 				reader.on("close", () => {
-					if(!future.isResolved()) {
-						future.return();
+					if (!isResolved) {
+						isResolved = true;
+						resolve();
 					}
 				});
 			} catch (err) {
 				this.$logger.trace("Error while transferring files. Error is: ", err);
-				if(!future.isResolved()) {
-					future.throw(err);
+				if (!isResolved) {
+					isResolved = true;
+					reject(err);
 				}
 			}
-			future.wait();
-		}).future<void>()();
+		});
 	}
 
 	private ensureDevicePathExist(deviceDirPath: string): void {
@@ -266,35 +268,31 @@ export class InstallationProxyClient {
 		private $injector: IInjector,
 		private $errors: IErrors) { }
 
-	public deployApplication(packageFile: string) : IFuture<void>  {
-		return(() => {
-			let service = this.device.startService(MobileServices.APPLE_FILE_CONNECTION);
-			let afcClient = this.$injector.resolve(AfcClient, {service: service});
-			let devicePath = path.join("PublicStaging", path.basename(packageFile));
+	public async deployApplication(packageFile: string): Promise<void> {
+		let service = this.device.startService(MobileServices.APPLE_FILE_CONNECTION);
+		let afcClient = this.$injector.resolve(AfcClient, { service: service });
+		let devicePath = path.join("PublicStaging", path.basename(packageFile));
 
-			afcClient.transferPackage(packageFile, devicePath).wait();
-			this.plistService = this.getPlistService();
+		await afcClient.transferPackage(packageFile, devicePath);
+		this.plistService = this.getPlistService();
 
-			this.plistService.sendMessage({
-				Command: "Install",
-				PackagePath: helpers.fromWindowsRelativePathToUnix(devicePath)
-			});
-			this.plistService.receiveMessage().wait();
-		}).future<void>()();
+		this.plistService.sendMessage({
+			Command: "Install",
+			PackagePath: helpers.fromWindowsRelativePathToUnix(devicePath)
+		});
+		await this.plistService.receiveMessage();
 	}
 
-	public sendMessage(message: any): IFuture<any> {
-		return (() => {
-			this.plistService = this.getPlistService();
-			this.plistService.sendMessage(message);
+	public async sendMessage(message: any): Promise<any> {
+		this.plistService = this.getPlistService();
+		this.plistService.sendMessage(message);
 
-			let response = this.plistService.receiveMessage().wait();
-			if(response.Error) {
-				this.$errors.failWithoutHelp(response.Error);
-			}
+		let response = await this.plistService.receiveMessage();
+		if (response.Error) {
+			this.$errors.failWithoutHelp(response.Error);
+		}
 
-			return response;
-		}).future<any>()();
+		return response;
 	}
 
 	public closeSocket() {
@@ -305,7 +303,7 @@ export class InstallationProxyClient {
 
 	private getPlistService(): Mobile.IiOSDeviceSocket {
 		let service = this.getInstallationService();
-		return this.$injector.resolve(iOSCore.PlistService, { service: service,  format: iOSCore.CoreTypes.kCFPropertyListBinaryFormat_v1_0 });
+		return this.$injector.resolve(iOSCore.PlistService, { service: service, format: iOSCore.CoreTypes.kCFPropertyListBinaryFormat_v1_0 });
 	}
 
 	private getInstallationService(): number {
@@ -375,7 +373,7 @@ export class NotificationProxyClient implements Mobile.INotificationProxyClient 
 		}
 	}
 
-	private openSocket() {
+	private openSocket(): void {
 		if (!this.plistService) {
 			this.plistService = this.$injector.resolve(iOSCore.PlistService, { service: this.device.startService(MobileServices.NOTIFICATION_PROXY), format: iOSCore.CoreTypes.kCFPropertyListBinaryFormat_v1_0 });
 			if (this.plistService.receiveAll) {
@@ -397,9 +395,9 @@ export class NotificationProxyClient implements Mobile.INotificationProxyClient 
 			let plist = this.buffer.substr(start, end + PLIST_TAIL.length);
 			this.buffer = this.buffer.substr(end + PLIST_TAIL.length);
 
-			plistlib.loadString(plist, (err: any, plist: any) => {
-				if (!err && plist) {
-					this.handlePlistNotification(plist);
+			plistlib.loadString(plist, (err: any, propertyList: any) => {
+				if (!err && propertyList) {
+					this.handlePlistNotification(propertyList);
 				}
 			});
 
@@ -454,28 +452,28 @@ export class HouseArrestClient implements Mobile.IHouseArrestClient {
 		private $errors: IErrors) {
 	}
 
-	private getAfcClientCore(command: string, applicationIdentifier: string): Mobile.IAfcClient {
+	private async getAfcClientCore(command: string, applicationIdentifier: string): Promise<Mobile.IAfcClient> {
 		let service = this.device.startService(MobileServices.HOUSE_ARREST);
-		this.plistService = this.$injector.resolve(iOSCore.PlistService, {service: service, format: iOSCore.CoreTypes.kCFPropertyListXMLFormat_v1_0});
+		this.plistService = this.$injector.resolve(iOSCore.PlistService, { service: service, format: iOSCore.CoreTypes.kCFPropertyListXMLFormat_v1_0 });
 
 		this.plistService.sendMessage({
 			"Command": command,
 			"Identifier": applicationIdentifier
 		});
 
-		let response = this.plistService.receiveMessage().wait();
-		if(response.Error) {
+		let response = await this.plistService.receiveMessage();
+		if (response.Error) {
 			this.$errors.failWithoutHelp(HouseArrestClient.PREDEFINED_ERRORS[response.Error] || response.Error);
 		}
 
-		return this.$injector.resolve(AfcClient, {service: service});
+		return this.$injector.resolve(AfcClient, { service: service });
 	}
 
-	public getAfcClientForAppContainer(applicationIdentifier: string): Mobile.IAfcClient {
+	public getAfcClientForAppContainer(applicationIdentifier: string): Promise<Mobile.IAfcClient> {
 		return this.getAfcClientCore("VendContainer", applicationIdentifier);
 	}
 
-	public getAfcClientForAppDocuments(applicationIdentifier: string): Mobile.IAfcClient {
+	public getAfcClientForAppDocuments(applicationIdentifier: string): Promise<Mobile.IAfcClient> {
 		return this.getAfcClientCore("VendDocuments", applicationIdentifier);
 	}
 
@@ -488,18 +486,15 @@ export class IOSSyslog {
 	private plistService: Mobile.IiOSDeviceSocket;
 
 	constructor(private device: Mobile.IiOSDevice,
-		private $logger: ILogger,
 		private $injector: IInjector,
 		private $deviceLogProvider: Mobile.IDeviceLogProvider,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
-		this.plistService = this.$injector.resolve(iOSCore.PlistService, {service: this.device.startService(MobileServices.SYSLOG), format: undefined});
+		this.plistService = this.$injector.resolve(iOSCore.PlistService, { service: this.device.startService(MobileServices.SYSLOG), format: undefined });
 	}
 
 	public read(): void {
 		let printData = (data: string) => {
-			fiberBootstrap.run(() =>
-				this.$deviceLogProvider.logData(data, this.$devicePlatformsConstants.iOS, this.device.deviceInfo.identifier)
-			);
+			this.$deviceLogProvider.logData(data, this.$devicePlatformsConstants.iOS, this.device.deviceInfo.identifier);
 		};
 		this.plistService.readSystemLog(printData);
 	}

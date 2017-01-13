@@ -6,7 +6,6 @@ export class ProjectFilesManager implements IProjectFilesManager {
 	constructor(private $fs: IFileSystem,
 		private $localToDevicePathDataFactory: Mobile.ILocalToDevicePathDataFactory,
 		private $logger: ILogger,
-		private $mobileHelper: Mobile.IMobileHelper,
 		private $projectFilesProvider: IProjectFilesProvider) { }
 
 	public getProjectFiles(projectFilesPath: string, excludedProjectDirsAndFiles?: string[], filter?: (filePath: string, stat: IFsStats) => boolean, opts?: any): string[] {
@@ -26,12 +25,12 @@ export class ProjectFilesManager implements IProjectFilesManager {
 		return isInExcludedList || this.$projectFilesProvider.isFileExcluded(filePath);
 	}
 
-	public createLocalToDevicePaths(deviceAppData: Mobile.IDeviceAppData, projectFilesPath: string, files: string[], excludedProjectDirsAndFiles: string[], projectFilesConfig?: IProjectFilesConfig): Mobile.ILocalToDevicePathData[] {
+	public createLocalToDevicePaths(deviceAppData: Mobile.IDeviceAppData, projectFilesPath: string, files: string[], excludedProjectDirsAndFiles: string[], projectFilesConfig?: IProjectFilesConfig): Promise<Mobile.ILocalToDevicePathData[]> {
 		files = files || this.getProjectFiles(projectFilesPath, excludedProjectDirsAndFiles, null, { enumerateDirectories: true });
-		let localToDevicePaths = files
+		let localToDevicePaths = Promise.all(files
 			.map(projectFile => this.$projectFilesProvider.getProjectFileInfo(projectFile, deviceAppData.platform, projectFilesConfig))
 			.filter(projectFileInfo => projectFileInfo.shouldIncludeFile)
-			.map(projectFileInfo => this.$localToDevicePathDataFactory.create(projectFileInfo.filePath, projectFilesPath, projectFileInfo.onDeviceFileName, deviceAppData.deviceProjectRootPath));
+			.map(async projectFileInfo => this.$localToDevicePathDataFactory.create(projectFileInfo.filePath, projectFilesPath, projectFileInfo.onDeviceFileName, await deviceAppData.getDeviceProjectRootPath())));
 
 		return localToDevicePaths;
 	}

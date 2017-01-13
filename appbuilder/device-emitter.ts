@@ -7,7 +7,6 @@ export class DeviceEmitter extends EventEmitter {
 		private $devicesService: Mobile.IDevicesService,
 		private $deviceLogProvider: EventEmitter,
 		private $companionAppsService: ICompanionAppsService,
-		private $projectConstants: Project.IConstants,
 		private $logger: ILogger) {
 		super();
 	}
@@ -21,50 +20,49 @@ export class DeviceEmitter extends EventEmitter {
 		return this._companionAppIdentifiers;
 	}
 
-	public initialize(): IFuture<void> {
-		return (() => {
-			try {
-				this.$androidDeviceDiscovery.ensureAdbServerStarted().wait();
-			} catch(err) {
-				this.$logger.warn(`Unable to start adb server. Error message is: ${err.message}`);
-			}
+	public async initialize(): Promise<void> {
+		try {
+			await this.$androidDeviceDiscovery.ensureAdbServerStarted();
+		} catch (err) {
+			this.$logger.warn(`Unable to start adb server. Error message is: ${err.message}`);
+		}
 
-			this.$androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
-				this.emit("deviceFound", device.deviceInfo);
-				this.attachApplicationChangedHandlers(device);
-				device.openDeviceLogStream();
-			});
+		this.$androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
+			this.emit("deviceFound", device.deviceInfo);
+			this.attachApplicationChangedHandlers(device);
+			// await: Do not await as this will require to mark the lambda with async keyword, but there's no way to await the lambda itself.
+			device.openDeviceLogStream();
+		});
 
-			this.$androidDeviceDiscovery.on("deviceLost", (device: Mobile.IDevice) => {
-				this.emit("deviceLost", device.deviceInfo);
-			});
+		this.$androidDeviceDiscovery.on("deviceLost", (device: Mobile.IDevice) => {
+			this.emit("deviceLost", device.deviceInfo);
+		});
 
-			this.$iOSDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
-				this.emit("deviceFound", device.deviceInfo);
-				this.attachApplicationChangedHandlers(device);
-				device.openDeviceLogStream();
-			});
+		this.$iOSDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
+			this.emit("deviceFound", device.deviceInfo);
+			this.attachApplicationChangedHandlers(device);
+			device.openDeviceLogStream();
+		});
 
-			this.$iOSDeviceDiscovery.on("deviceLost", (device: Mobile.IDevice) => {
-				this.emit("deviceLost", device.deviceInfo);
-			});
+		this.$iOSDeviceDiscovery.on("deviceLost", (device: Mobile.IDevice) => {
+			this.emit("deviceLost", device.deviceInfo);
+		});
 
-			this.$iOSSimulatorDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
-				this.emit("deviceFound", device.deviceInfo);
-				device.openDeviceLogStream();
-				this.attachApplicationChangedHandlers(device);
-			});
+		this.$iOSSimulatorDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
+			this.emit("deviceFound", device.deviceInfo);
+			device.openDeviceLogStream();
+			this.attachApplicationChangedHandlers(device);
+		});
 
-			this.$iOSSimulatorDiscovery.on("deviceLost", (device: Mobile.IDevice) => {
-				this.emit("deviceLost", device.deviceInfo);
-			});
+		this.$iOSSimulatorDiscovery.on("deviceLost", (device: Mobile.IDevice) => {
+			this.emit("deviceLost", device.deviceInfo);
+		});
 
-			this.$devicesService.initialize({ skipInferPlatform: true }).wait();
+		await this.$devicesService.initialize({ skipInferPlatform: true });
 
-			this.$deviceLogProvider.on("data", (identifier: string, data: any) => {
-				this.emit('deviceLogData', identifier, data.toString());
-			});
-		}).future<void>()();
+		this.$deviceLogProvider.on("data", (identifier: string, data: any) => {
+			this.emit('deviceLogData', identifier, data.toString());
+		});
 	}
 
 	private attachApplicationChangedHandlers(device: Mobile.IDevice): void {

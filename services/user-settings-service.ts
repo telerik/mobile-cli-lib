@@ -7,54 +7,46 @@ export class UserSettingsServiceBase implements IUserSettingsService {
 		this.userSettingsFilePath = userSettingsFilePath;
 	}
 
-	public getSettingValue<T>(settingName: string): IFuture<T> {
-		return(() => {
-			this.loadUserSettingsFile().wait();
-			return this.userSettingsData ? this.userSettingsData[settingName] : null;
-		}).future<T>()();
+	public async getSettingValue<T>(settingName: string): Promise<T> {
+		await this.loadUserSettingsFile();
+		return this.userSettingsData ? this.userSettingsData[settingName] : null;
 	}
 
-	public saveSetting<T>(key: string, value: T): IFuture<void> {
+	public async saveSetting<T>(key: string, value: T): Promise<void> {
 		let settingObject: any = {};
 		settingObject[key] = value;
 
 		return this.saveSettings(settingObject);
 	}
 
-	public removeSetting(key: string): IFuture<void> {
-		return (() => {
-			this.loadUserSettingsFile().wait();
+	public async removeSetting(key: string): Promise<void> {
+		await this.loadUserSettingsFile();
 
-			delete this.userSettingsData[key];
-			this.saveSettings().wait();
-		}).future<void>()();
+		delete this.userSettingsData[key];
+		await this.saveSettings();
 	}
 
-	public saveSettings(data?: any): IFuture<void> {
-		return(() => {
-			this.loadUserSettingsFile().wait();
-			this.userSettingsData = this.userSettingsData || {};
+	public async saveSettings(data?: any): Promise<void> {
+		await this.loadUserSettingsFile();
+		this.userSettingsData = this.userSettingsData || {};
 
-			_(data)
-				.keys()
-				.each(propertyName => {
-					this.userSettingsData[propertyName] = data[propertyName];
-				});
+		_(data)
+			.keys()
+			.each(propertyName => {
+				this.userSettingsData[propertyName] = data[propertyName];
+			});
 
-			this.$fs.writeJson(this.userSettingsFilePath, this.userSettingsData);
-		}).future<void>()();
+		this.$fs.writeJson(this.userSettingsFilePath, this.userSettingsData);
 	}
 
-	// TODO: Remove IFuture, reason: writeFile - blocked as other implementation of the interface has async operation.
-	public loadUserSettingsFile(): IFuture<void> {
-		return (() => {
-			if(!this.userSettingsData) {
-				if(!this.$fs.exists(this.userSettingsFilePath)) {
-					this.$fs.writeFile(this.userSettingsFilePath, null);
-				}
-
-				this.userSettingsData = this.$fs.readJson(this.userSettingsFilePath);
+	// TODO: Remove Promise, reason: writeFile - blocked as other implementation of the interface has async operation.
+	public async loadUserSettingsFile(): Promise<void> {
+		if (!this.userSettingsData) {
+			if (!this.$fs.exists(this.userSettingsFilePath)) {
+				this.$fs.writeFile(this.userSettingsFilePath, null);
 			}
-		}).future<void>()();
+
+			this.userSettingsData = this.$fs.readJson(this.userSettingsFilePath);
+		}
 	}
 }

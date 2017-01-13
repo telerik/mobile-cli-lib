@@ -112,8 +112,8 @@ declare module Server {
 	}
 
 	interface IHttpClient {
-		httpRequest(url: string): IFuture<IResponse>;
-		httpRequest(options: any, proxySettings?: IProxySettings): IFuture<IResponse>;
+		httpRequest(url: string): Promise<IResponse>;
+		httpRequest(options: any, proxySettings?: IProxySettings): Promise<IResponse>;
 	}
 
 	interface IRequestResponseData {
@@ -144,8 +144,8 @@ interface IReadFileOptions {
 }
 
 interface IFileSystem {
-	zipFiles(zipFile: string, files: string[], zipPathCallback: (path: string) => string): IFuture<void>;
-	unzip(zipFile: string, destinationDir: string, options?: { overwriteExisitingFiles?: boolean; caseSensitive?: boolean }, fileFilters?: string[]): IFuture<void>;
+	zipFiles(zipFile: string, files: string[], zipPathCallback: (path: string) => string): Promise<void>;
+	unzip(zipFile: string, destinationDir: string, options?: { overwriteExisitingFiles?: boolean; caseSensitive?: boolean }, fileFilters?: string[]): Promise<void>;
 
 	/**
 	 * Test whether or not the given path exists by checking with the file system.
@@ -175,7 +175,7 @@ interface IFileSystem {
 	 */
 	getFileSize(path: string): number;
 
-	futureFromEvent(eventEmitter: NodeJS.EventEmitter, event: string): IFuture<any>;
+	futureFromEvent(eventEmitter: NodeJS.EventEmitter, event: string): Promise<any>;
 
 	/**
 	 * Create a new directory and any necessary subdirectories at specified location.
@@ -197,7 +197,7 @@ interface IFileSystem {
 	 * @param {string} @optional options Options used for reading the file - encoding and flags.
 	 * @returns {string|NodeBuffer} Content of the file as buffer. In case encoding is specified, the content is returned as string.
 	 */
-	readFile(filename: string, options?: IReadFileOptions): string|NodeBuffer;
+	readFile(filename: string, options?: IReadFileOptions): string | NodeBuffer;
 
 	/**
 	 * Reads the entire contents of a file and returns the result as string.
@@ -215,7 +215,7 @@ interface IFileSystem {
 	 */
 	readJson(filename: string, encoding?: string): any;
 
-	readStdin(): IFuture<string>;
+	readStdin(): Promise<string>;
 
 	/**
 	 * Writes data to a file, replacing the file if it already exists. data can be a string or a buffer.
@@ -352,15 +352,15 @@ interface IFileSystem {
 	 */
 	chmod(path: string, mode: number | string): void;
 
-	setCurrentUserAsOwner(path: string, owner: string): IFuture<void>;
+	setCurrentUserAsOwner(path: string, owner: string): Promise<void>;
 	enumerateFilesInDirectorySync(directoryPath: string, filterCallback?: (file: string, stat: IFsStats) => boolean, opts?: { enumerateDirectories?: boolean, includeEmptyDirectories?: boolean }): string[];
 	/**
 	 * Hashes a file's contents.
 	 * @param {string} fileName Path to file
 	 * @param {Object} options algorithm and digest encoding. Default values are sha1 for algorithm and hex for encoding
-	 * @return {IFuture<string>} The computed shasum
+	 * @return {Promise<string>} The computed shasum
 	 */
-	getFileShasum(fileName: string, options?: { algorithm?: string, encoding?: string }): IFuture<string>;
+	getFileShasum(fileName: string, options?: { algorithm?: string, encoding?: string }): Promise<string>;
 
 	// shell.js wrappers
 	/**
@@ -409,7 +409,7 @@ interface IErrors {
 	fail(formatStr: string, ...args: any[]): void;
 	fail(opts: { formatStr?: string; errorCode?: number; suppressCommandHelp?: boolean }, ...args: any[]): void;
 	failWithoutHelp(message: string, ...args: any[]): void;
-	beginCommand(action: () => IFuture<boolean>, printCommandHelp: () => IFuture<boolean>): IFuture<boolean>;
+	beginCommand(action: () => Promise<boolean>, printCommandHelp: () => Promise<boolean>): Promise<boolean>;
 	verifyHeap(message: string): void;
 	printCallStack: boolean;
 }
@@ -423,35 +423,36 @@ interface ICommandOptions {
 declare const enum ErrorCodes {
 	UNKNOWN = 127,
 	INVALID_ARGUMENT = 128,
-	RESOURCE_PROBLEM = 129
+	RESOURCE_PROBLEM = 129,
+	KARMA_FAIL = 130
 }
 
 interface IFutureDispatcher {
 	run(): void;
-	dispatch(action: () => IFuture<void>): void;
+	dispatch(action: () => Promise<void>): void;
 }
 
 interface ICommandDispatcher {
-	dispatchCommand(): IFuture<void>;
-	completeCommand(): IFuture<boolean>;
+	dispatchCommand(): Promise<void>;
+	completeCommand(): Promise<boolean>;
 }
 
 interface ICancellationService extends IDisposable {
-	begin(name: string): IFuture<void>;
+	begin(name: string): Promise<void>;
 	end(name: string): void;
 }
 
 interface IQueue<T> {
 	enqueue(item: T): void;
-	dequeue(): IFuture<T>;
+	dequeue(): Promise<T>;
 }
 
 interface IChildProcess {
-	exec(command: string, options?: any, execOptions?: IExecOptions): IFuture<any>;
-	execFile(command: string, args: string[]): IFuture<any>;
+	exec(command: string, options?: any, execOptions?: IExecOptions): Promise<any>;
+	execFile(command: string, args: string[]): Promise<any>;
 	spawn(command: string, args?: string[], options?: any): any; // it returns child_process.ChildProcess you can safely cast to it
-	spawnFromEvent(command: string, args: string[], event: string, options?: any, spawnFromEventOptions?: ISpawnFromEventOptions): IFuture<ISpawnResult>;
-	tryExecuteApplication(command: string, args: string[], event: string, errorMessage: string, condition?: (childProcess: any) => boolean): IFuture<any>;
+	spawnFromEvent(command: string, args: string[], event: string, options?: any, spawnFromEventOptions?: ISpawnFromEventOptions): Promise<ISpawnResult>;
+	tryExecuteApplication(command: string, args: string[], event: string, errorMessage: string, condition?: (childProcess: any) => boolean): Promise<any>;
 	/**
 	 * This is a special case of the child_process.spawn() functionality for spawning Node.js processes.
 	 * In addition to having all the methods in a normal ChildProcess instance, the returned object has a communication channel built-in.
@@ -486,9 +487,9 @@ interface IProjectHelper {
 
 interface IPropertiesParser {
 	parse(text: string): any;
-	createEditor(filePath: string): IFuture<any>;
-	saveEditor(): IFuture<void>;
-	read(filePath: string): IFuture<any>;
+	createEditor(filePath: string): Promise<any>;
+	saveEditor(): Promise<void>;
+	read(filePath: string): Promise<any>;
 }
 
 interface IDictionary<T> {
@@ -496,13 +497,13 @@ interface IDictionary<T> {
 }
 
 interface IAnalyticsService {
-	checkConsent(): IFuture<void>;
-	trackFeature(featureName: string): IFuture<void>;
-	trackException(exception: any, message: string): IFuture<void>;
-	setStatus(settingName: string, enabled: boolean, doNotTrackSetting?: boolean): IFuture<void>;
-	getStatusMessage(settingName: string, jsonFormat: boolean, readableSettingName: string): IFuture<string>;
-	isEnabled(settingName: string): IFuture<boolean>;
-	track(featureName: string, featureValue: string): IFuture<void>;
+	checkConsent(): Promise<void>;
+	trackFeature(featureName: string): Promise<void>;
+	trackException(exception: any, message: string): Promise<void>;
+	setStatus(settingName: string, enabled: boolean, doNotTrackSetting?: boolean): Promise<void>;
+	getStatusMessage(settingName: string, jsonFormat: boolean, readableSettingName: string): Promise<string>;
+	isEnabled(settingName: string): Promise<boolean>;
+	track(featureName: string, featureValue: string): Promise<void>;
 	/**
 	 * Tries to stop current eqatec monitor, clean it's state and remove the process.exit event handler.
 	 * @param {string|number} code - Exit code as the method is used for process.exit event handler.
@@ -520,16 +521,16 @@ interface IPrompterOptions extends IAllowEmpty {
 }
 
 interface IPrompter extends IDisposable {
-	get(schemas: IPromptSchema[]): IFuture<any>;
-	getPassword(prompt: string, options?: IAllowEmpty): IFuture<string>;
-	getString(prompt: string, options?: IPrompterOptions): IFuture<string>;
-	promptForChoice(promptMessage: string, choices: any[]): IFuture<string>;
-	confirm(prompt: string, defaultAction?: () => boolean): IFuture<boolean>;
+	get(schemas: IPromptSchema[]): Promise<any>;
+	getPassword(prompt: string, options?: IAllowEmpty): Promise<string>;
+	getString(prompt: string, options?: IPrompterOptions): Promise<string>;
+	promptForChoice(promptMessage: string, choices: any[]): Promise<string>;
+	confirm(prompt: string, defaultAction?: () => boolean): Promise<boolean>;
 }
 
 interface IAnalyticsSettingsService {
-	canDoRequest(): IFuture<boolean>;
-	getUserId(): IFuture<string>;
+	canDoRequest(): Promise<boolean>;
+	getUserId(): Promise<string>;
 	getClientName(): string;
 	getPrivacyPolicyLink(): string;
 	/**
@@ -537,15 +538,15 @@ interface IAnalyticsSettingsService {
 	 * @param {string} projectName The analytics project id for which the counter should be taken.
 	 * @return {number} Number of user sessions.
 	 */
-	getUserSessionsCount(projectName: string): IFuture<number>;
+	getUserSessionsCount(projectName: string): Promise<number>;
 
 	/**
 	 * Set the number of user sessions.
 	 * @param {number} count The number that will be set for user sessions.
 	 * @param {string} projectName The analytics project id for which the counter should be set.
-	 * @return {IFuture<void>}
+	 * @return {Promise<void>}
 	 */
-	setUserSessionsCount(count: number, projectName: string): IFuture<void>;
+	setUserSessionsCount(count: number, projectName: string): Promise<void>;
 }
 
 interface IHostCapabilities {
@@ -560,9 +561,9 @@ interface IAutoCompletionService {
 
 	/**
 	 * Enables command line autocompletion by creating a `.<cliname>rc` file and sourcing it in all profiles (.bash_profile, .bashrc, etc.).
-	 * @returns {IFuture<void>}
+	 * @returns {Promise<void>}
 	 */
-	enableAutoCompletion(): IFuture<void>;
+	enableAutoCompletion(): Promise<void>;
 
 	/**
 	 * Disables auto completion by removing the entries from all profiles.
@@ -585,8 +586,8 @@ interface IAutoCompletionService {
 
 interface IHooksService {
 	hookArgsName: string;
-	executeBeforeHooks(commandName: string, hookArguments?: IDictionary<any>): IFuture<void>;
-	executeAfterHooks(commandName: string, hookArguments?: IDictionary<any>): IFuture<void>;
+	executeBeforeHooks(commandName: string, hookArguments?: IDictionary<any>): Promise<void>;
+	executeAfterHooks(commandName: string, hookArguments?: IDictionary<any>): Promise<void>;
 }
 
 interface IHook {
@@ -604,23 +605,23 @@ interface ITypeScriptService {
 	 * @param {string[]} typeScriptFiles @optional The files that will be compiled.
 	 * @param {string[]} definitionFiles @optional The definition files used for compilation.
 	 * @param {ITypeScriptTranspileOptions} options @optional The transpilation options.
-	 * @return {IFuture<string>} The result from the TypeScript transpilation.
+	 * @return {Promise<string>} The result from the TypeScript transpilation.
 	 */
-	transpile(projectDir: string, typeScriptFiles?: string[], definitionFiles?: string[], options?: ITypeScriptTranspileOptions): IFuture<string>;
+	transpile(projectDir: string, typeScriptFiles?: string[], definitionFiles?: string[], options?: ITypeScriptTranspileOptions): Promise<string>;
 
 	/**
 	 * Returns new object, containing all TypeScript and all TypeScript definition files.
 	 * @param {string} projectDir The directory of the project which contains TypeScript files.
-	 * @return {IFuture<ITypeScriptFiles>} all TypeScript and all TypeScript definition files.
+	 * @return {ITypeScriptFiles} all TypeScript and all TypeScript definition files.
 	 */
-	getTypeScriptFilesData(projectDir: string): IFuture<ITypeScriptFiles>
+	getTypeScriptFilesData(projectDir: string): ITypeScriptFiles
 
 	/**
 	 * Checks if the project language is TypeScript by enumerating all files and checking if there are at least one TypeScript file (.ts), that is not definition file(.d.ts)
 	 * @param {string} projectDir The directory of the project.
-	 * @return {IFuture<boolean>} true when the project contains .ts files and false otherwise.
+	 * @return {boolean} true when the project contains .ts files and false otherwise.
 	 */
-	isTypeScriptProject(projectDir: string): IFuture<boolean>;
+	isTypeScriptProject(projectDir: string): boolean;
 
 	/**
 	 * Checks if the file is TypeScript file.
@@ -665,20 +666,20 @@ interface IDynamicHelpProvider {
 }
 
 interface IMicroTemplateService {
-	parseContent(data: string, options: { isHtml: boolean }): string;
+	parseContent(data: string, options: { isHtml: boolean }): Promise<string>;
 }
 
 interface IHtmlHelpService {
-	generateHtmlPages(): IFuture<void>;
+	generateHtmlPages(): Promise<void>;
 
 	/**
 	 * Gets the help content for a specific command that should be shown on the terminal.
 	 * @param {string} commandName Name of the command for which to read the help.
-	 * @returns {string} Help content of the command parsed with all terminal rules applied (stripped content that should be shown only for html help).
+	 * @returns {Promise<string>} Help content of the command parsed with all terminal rules applied (stripped content that should be shown only for html help).
 	 */
-	getCommandLineHelpForCommand(commandName: string): string;
+	getCommandLineHelpForCommand(commandName: string): Promise<string>;
 
-	openHelpForCommandInBrowser(commandName: string): IFuture<void>;
+	openHelpForCommandInBrowser(commandName: string): Promise<void>;
 }
 
 /**
@@ -688,20 +689,20 @@ interface IXcodeSelectService {
 	/**
 	 * Get the path to Contents directory inside Xcode.app.
 	 * With a default installation this path is /Applications/Xcode.app/Contents
-	 * @return {IFuture<string>}
+	 * @return {Promise<string>}
 	 */
-	getContentsDirectoryPath(): IFuture<string>;
+	getContentsDirectoryPath(): Promise<string>;
 	/**
 	 * Get the path to Developer directory inside Xcode.app.
 	 * With a default installation this path is /Applications/Xcode.app/Contents/Developer/
-	 * @return {IFuture<string>}
+	 * @return {Promise<string>}
 	 */
-	getDeveloperDirectoryPath(): IFuture<string>;
+	getDeveloperDirectoryPath(): Promise<string>;
 	/**
 	 * Get version of the currently used Xcode.
-	 * @return {IFuture<IVersionData>}
+	 * @return {Promise<IVersionData>}
 	 */
-	getXcodeVersion(): IFuture<IVersionData>;
+	getXcodeVersion(): Promise<IVersionData>;
 }
 
 interface ILiveSyncServiceBase {
@@ -709,16 +710,16 @@ interface ILiveSyncServiceBase {
 	 * If watch option is not specified executes full sync
 	 * If watch option is specified executes partial sync
 	 */
-	sync(data: ILiveSyncData[], filePaths?: string[]): IFuture<void>;
+	sync(data: ILiveSyncData[], filePaths?: string[]): Promise<void>;
 
 	/**
 	 * Returns the `canExecute` method which defines if LiveSync operation can be executed on specified device.
 	 * @param {string} platform Platform for which the LiveSync operation should be executed.
 	 * @param {string} appIdentifier Application identifier.
-	 * @param {Function} [canExecute] Base canExecute function that will be added to the predefined checks.
-	 * @return {Function} Function that returns boolean.
+	 * @param {(dev: Mobile.IDevice) => boolean} canExecute Base canExecute function that will be added to the predefined checks.
+	 * @return {Promise<(dev: Mobile.IDevice) => boolean>} Function that returns boolean.
 	 */
-	getCanExecuteAction(platform: string, appIdentifier: string, canExecute?: (dev: Mobile.IDevice) => boolean): (dev: Mobile.IDevice) => boolean;
+	getCanExecuteAction(platform: string, appIdentifier: string, canExecute?: (dev: Mobile.IDevice) => boolean): Promise<(dev: Mobile.IDevice) => boolean>;
 
 	/**
 	 * Gets LiveSync action that should be executed per device.
@@ -726,16 +727,16 @@ interface ILiveSyncServiceBase {
 	 * @param {string[]} filesToSync Files that have to be synced.
 	 * @param {Function} deviceFilesAction Custom action that has to be executed instead of just copying the files.
 	 * @param {ILiveSyncOptions} liveSyncOptions Additional options for LiveSyncing
-	 * @return {Function} Function that returns IFuture<void>.
+	 * @return {Function} Function that returns Promise<void>.
 	 */
-	getSyncAction(data: ILiveSyncData, filesToSync: string[], deviceFilesAction: (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>, liveSyncOptions: ILiveSyncOptions): (device: Mobile.IDevice) => IFuture<void>;
+	getSyncAction(data: ILiveSyncData, filesToSync: string[], deviceFilesAction: (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => Promise<void>, liveSyncOptions: ILiveSyncOptions): (device: Mobile.IDevice) => Promise<void>;
 
 	/**
 	 * Gets LiveSync action that should be executed per device when files should be deleted.
 	 * @param {ILiveSyncData} data LiveSync data describing the LiveSync operation.
-	 * @return {Function} Function that returns IFuture<void>.
+	 * @return {Function} Function that returns Promise<void>.
 	 */
-	getSyncRemovedFilesAction(data: ILiveSyncData): (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => IFuture<void>;
+	getSyncRemovedFilesAction(data: ILiveSyncData): (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => Promise<void>;
 }
 
 /**
@@ -769,7 +770,7 @@ interface ISyncBatch {
 	 * Adds the file to the sync queue. All files from the queue will be pushed on the device after 250ms.
 	 */
 	addFile(file: string): void;
-	syncFiles(syncAction: (filesToSync: string[]) => IFuture<void>): IFuture<void>;
+	syncFiles(syncAction: (filesToSync: string[]) => Promise<void>): Promise<void>;
 }
 
 interface ILiveSyncData {
@@ -797,16 +798,16 @@ interface IDeviceLiveSyncService {
 	/**
 	 * Refreshes the application's content on a device
 	 */
-	refreshApplication(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], forceExecuteFullSync: boolean): IFuture<void>;
+	refreshApplication(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], forceExecuteFullSync: boolean): Promise<void>;
 	/**
 	 * Removes specified files from a connected device
 	 */
-	removeFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void>;
+	removeFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void>;
 	/**
 	 * Specifies some action that will be executed before every sync operation
 	 */
-	beforeLiveSyncAction?(deviceAppData: Mobile.IDeviceAppData): IFuture<void>;
-	afterInstallApplicationAction?(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<boolean>;
+	beforeLiveSyncAction?(deviceAppData: Mobile.IDeviceAppData): Promise<void>;
+	afterInstallApplicationAction?(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<boolean>;
 
 	debugService?: any;
 }
@@ -865,33 +866,33 @@ interface ISysInfo {
 	 * Returns information for the current system.
 	 * @param {string} pathToPackageJson Path to package.json of the CLI.
 	 * @param {any} androidToolsInfo Defines paths to adb and android executables.
-	 * @return {IFuture<ISysInfoData>} Object containing information for current system.
+	 * @return {Promise<ISysInfoData>} Object containing information for current system.
 	 */
-	getSysInfo(pathToPackageJson: string, androidToolsInfo?: { pathToAdb: string, pathToAndroid: string }): IFuture<ISysInfoData>;
+	getSysInfo(pathToPackageJson: string, androidToolsInfo?: { pathToAdb: string, pathToAndroid: string }): Promise<ISysInfoData>;
 
 	/** Returns Java version. **/
-	getJavaVersion(): IFuture<string>;
+	getJavaVersion(): Promise<string>;
 
 	/** Returns Java compiler version. **/
-	getJavaCompilerVersion(): IFuture<string>;
+	getJavaCompilerVersion(): Promise<string>;
 
 	/** Returns XCode version. **/
-	getXCodeVersion(): IFuture<string>;
+	getXCodeVersion(): Promise<string>;
 
 	/** Returns node-gyp version. **/
-	getNodeGypVersion(): IFuture<string>;
+	getNodeGypVersion(): Promise<string>;
 
 	/** Returns XCode project gem location. **/
-	getXCodeProjGemLocation(): IFuture<string>;
+	getXCodeProjGemLocation(): Promise<string>;
 
 	/** Returns if ITunes is installed or not. **/
 	getITunesInstalled(): boolean;
 
 	/** Returns Cocoapod version. **/
-	getCocoapodVersion(): IFuture<string>;
+	getCocoapodVersion(): Promise<string>;
 
 	/** Returns npm version. */
-	getNpmVersion(): string;
+	getNpmVersion(): Promise<string>;
 }
 
 interface IHostInfo {
@@ -901,8 +902,12 @@ interface IHostInfo {
 	isDarwin: boolean;
 	isLinux: boolean;
 	isLinux64: boolean;
-	dotNetVersion(): IFuture<string>;
-	isDotNet40Installed(message: string): IFuture<boolean>;
+	dotNetVersion(): Promise<string>;
+	isDotNet40Installed(message: string): Promise<boolean>;
+}
+
+interface GenericFunction<T> extends Function {
+	(...args: any[]): T;
 }
 
 interface Function {
@@ -1051,9 +1056,9 @@ interface IDoctorService {
 	/**
 	 * Verifies the host OS configuration and prints warnings to the users
 	 * @param configOptions: defines if the result should be tracked by Analytics
-	 * @returns {IFuture<boolean>} true if at least one warning was printed
+	 * @returns {Promise<boolean>} true if at least one warning was printed
 	 */
-	printWarnings(configOptions?: { trackResult: boolean }): IFuture<boolean>;
+	printWarnings(configOptions?: { trackResult: boolean }): Promise<boolean>;
 }
 
 interface IUtils {
@@ -1062,12 +1067,12 @@ interface IUtils {
 }
 
 interface IBinaryPlistParser {
-	parseFile(plistFilePath: string): IFuture<any>;
+	parseFile(plistFilePath: string): Promise<any>;
 }
 
 interface IUserSettingsService extends UserSettings.IUserSettingsService {
-	loadUserSettingsFile(): IFuture<void>;
-	saveSettings(data: IDictionary<{}>): IFuture<void>;
+	loadUserSettingsFile(): Promise<void>;
+	saveSettings(data: IDictionary<{}>): Promise<void>;
 }
 
 /**
@@ -1143,9 +1148,9 @@ interface IServiceContractGenerator {
 	/**
 	 * Generate code implementation along with interface
 	 * @param  {string}                              definitionsPath The path to the desired parent .d.ts file
-	 * @return {IFuture<IServiceContractClientCode>}                 The generated code parts
+	 * @return {Promise<IServiceContractClientCode>}                 The generated code parts
 	 */
-	generate(definitionsPath?: string): IFuture<IServiceContractClientCode>;
+	generate(definitionsPath?: string): Promise<IServiceContractClientCode>;
 }
 
 /**
@@ -1241,7 +1246,7 @@ interface IWinReg {
 	 * @param {string} key The optional key, the default is the root key
 	 * @param {string} host The optional hostname, must start with the '\\' sequence
 	 */
-	getRegistryValue(valueName: string, hive?: IHiveId, key?: string, host?: string): IFuture<IWinRegResult>;
+	getRegistryValue(valueName: string, hive?: IHiveId, key?: string, host?: string): Promise<IWinRegResult>;
 
 	/**
 	 * Gets object containing available registries for search.
@@ -1255,12 +1260,12 @@ interface IWinReg {
 interface IProgressIndicator {
 	/**
 	 * Prints indication that a process is running
-	 * @param  {IFuture<any>}	future		process
+	 * @param  {Promise<T>}	promise		process
 	 * @param  {number}			timeout		time interval for printing indication
 	 * @param  {boolean}		options		whether to surpress the trailing new line printed after the process ends
-	 * @return {IFuture<void>}
+	 * @return {Promise<T>}
 	 */
-	showProgressIndicator(future: IFuture<any>, timeout: number, options?: { surpressTrailingNewLine?: boolean }): IFuture<void>;
+	showProgressIndicator<T>(promise: Promise<T>, timeout: number, options?: { surpressTrailingNewLine?: boolean }): Promise<T>;
 }
 
 /**
@@ -1296,7 +1301,7 @@ interface IProjectFilesManager {
 	 * Returns an object that maps every local file path to device file path
 	 * If projectFiles parameter is not specified enumerates the files from the specified projectFilesPath
 	 */
-	createLocalToDevicePaths(deviceAppData: Mobile.IDeviceAppData, projectFilesPath: string, files: string[], excludedProjectDirsAndFiles: string[], projectFilesConfig?: IProjectFilesConfig): Mobile.ILocalToDevicePathData[];
+	createLocalToDevicePaths(deviceAppData: Mobile.IDeviceAppData, projectFilesPath: string, files: string[], excludedProjectDirsAndFiles: string[], projectFilesConfig?: IProjectFilesConfig): Promise<Mobile.ILocalToDevicePathData[]>;
 
 	/**
 	 * Handle platform specific files.
@@ -1358,18 +1363,18 @@ interface ILiveSyncProvider {
 	/**
 	 * Builds the application and returns the package file path
 	 */
-	buildForDevice(device: Mobile.IDevice): IFuture<string>;
+	buildForDevice(device: Mobile.IDevice): Promise<string>;
 	/**
 	 * Prepares the platform for sync
 	 */
-	preparePlatformForSync(platform: string): IFuture<void>;
+	preparePlatformForSync(platform: string): Promise<void>;
 
 	/**
 	 * Checks if the specified file can be fast synced.
 	 */
 	canExecuteFastSync(filePath: string, platform?: string): boolean;
 
-	transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string, isFullSync: boolean): IFuture<void>;
+	transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string, isFullSync: boolean): Promise<void>;
 
 	/**
 	 * Returns a dictionary that map platform to platform specific livesync service.
@@ -1408,9 +1413,9 @@ interface INet {
 
 	/**
 	 * Get free port on your local machine.
-	 * @return {IFuture<number>} The port.
+	 * @return {Promise<number>} The port.
 	 */
-	getFreePort(): IFuture<number>;
+	getFreePort(): Promise<number>;
 }
 
 interface IProcessService {
@@ -1424,13 +1429,13 @@ interface IPrintPluginsOptions {
 }
 
 interface IPrintPluginsService {
-	printPlugins(pluginsSource: IPluginsSource, options: IPrintPluginsOptions): IFuture<void>;
+	printPlugins(pluginsSource: IPluginsSource, options: IPrintPluginsOptions): Promise<void>;
 }
 
 interface IPluginsSource {
-	initialize(projectDir: string, keywords: string[]): IFuture<void>;
-	getPlugins(page: number, count: number): IFuture<IBasicPluginInformation[]>;
-	getAllPlugins(): IFuture<IBasicPluginInformation[]>;
+	initialize(projectDir: string, keywords: string[]): Promise<void>;
+	getPlugins(page: number, count: number): Promise<IBasicPluginInformation[]>;
+	getAllPlugins(): Promise<IBasicPluginInformation[]>;
 	hasPlugins(): boolean;
 }
 
@@ -1609,4 +1614,16 @@ interface IOsInfo {
 	 * @return {string} A string identifying the operating system release.
 	 */
 	release(): string;
+}
+
+interface IPromiseActions<T> {
+	resolve(value?: T | PromiseLike<T>): void;
+	reject(reason?: any): void;
+	isResolved(): boolean;
+}
+
+interface IDeferPromise<T> extends IPromiseActions<T> {
+	isRejected(): boolean;
+	isPending(): boolean;
+	promise: Promise<T>;
 }

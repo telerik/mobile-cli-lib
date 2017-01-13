@@ -25,14 +25,12 @@ export class StaticConfigBase implements Config.IStaticConfig {
 		return null;
 	}
 
-	public getAdbFilePath(): IFuture<string> {
-		return (() => {
-			if (!this._adbFilePath) {
-				this._adbFilePath = this.getAdbFilePathCore().wait();
-			}
+	public async getAdbFilePath(): Promise<string> {
+		if (!this._adbFilePath) {
+			this._adbFilePath = await this.getAdbFilePathCore();
+		}
 
-			return this._adbFilePath;
-		}).future<string>()();
+		return this._adbFilePath;
 	}
 
 	public get MAN_PAGES_DIR(): string {
@@ -47,25 +45,23 @@ export class StaticConfigBase implements Config.IStaticConfig {
 		return path.join(__dirname, "docs", "helpers");
 	}
 
-	private getAdbFilePathCore(): IFuture<string> {
-		return ((): string => {
-			let $childProcess: IChildProcess = this.$injector.resolve("$childProcess");
+	private async getAdbFilePathCore(): Promise<string> {
+		let $childProcess: IChildProcess = this.$injector.resolve("$childProcess");
 
-			try {
-				// Do NOT use the adb wrapper because it will end blow up with Segmentation fault because the wrapper uses this method!!!
-				let proc = $childProcess.spawnFromEvent("adb", ["version"], "exit", undefined, { throwError: false }).wait();
+		try {
+			// Do NOT use the adb wrapper because it will end blow up with Segmentation fault because the wrapper uses this method!!!
+			let proc = await $childProcess.spawnFromEvent("adb", ["version"], "exit", undefined, { throwError: false });
 
-				if (proc.stderr) {
-					return this.spawnPrivateAdb().wait();
-				}
-			} catch (e) {
-				if (e.code === "ENOENT") {
-					return this.spawnPrivateAdb().wait();
-				}
+			if (proc.stderr) {
+				return await this.spawnPrivateAdb();
 			}
+		} catch (e) {
+			if (e.code === "ENOENT") {
+				return await this.spawnPrivateAdb();
+			}
+		}
 
-			return "adb";
-		}).future<string>()();
+		return "adb";
 	}
 
 	/*
@@ -79,35 +75,33 @@ export class StaticConfigBase implements Config.IStaticConfig {
 		- Tie common lib version to updates of adb, so that when we integrate a newer adb we can use it
 		- Adb is named differently on OSes and may have additional files. The code is hairy to accommodate these differences
 	 */
-	private spawnPrivateAdb(): IFuture<string> {
-		return ((): string => {
-			let $fs: IFileSystem = this.$injector.resolve("$fs"),
-				$childProcess: IChildProcess = this.$injector.resolve("$childProcess"),
-				$hostInfo: IHostInfo = this.$injector.resolve("$hostInfo");
+	private async spawnPrivateAdb(): Promise<string> {
+		let $fs: IFileSystem = this.$injector.resolve("$fs"),
+			$childProcess: IChildProcess = this.$injector.resolve("$childProcess"),
+			$hostInfo: IHostInfo = this.$injector.resolve("$hostInfo");
 
-			// prepare the directory to host our copy of adb
-			let defaultAdbDirPath = path.join(__dirname, `resources/platform-tools/android/${process.platform}`);
-			let commonLibVersion = require(path.join(__dirname, "package.json")).version;
-			let tmpDir = path.join(os.tmpdir(), `telerik-common-lib-${commonLibVersion}`);
-			$fs.createDirectory(tmpDir);
+		// prepare the directory to host our copy of adb
+		let defaultAdbDirPath = path.join(__dirname, `resources/platform-tools/android/${process.platform}`);
+		let commonLibVersion = require(path.join(__dirname, "package.json")).version;
+		let tmpDir = path.join(os.tmpdir(), `telerik-common-lib-${commonLibVersion}`);
+		$fs.createDirectory(tmpDir);
 
-			// copy the adb and associated files
-			let targetAdb = path.join(tmpDir, "adb");
+		// copy the adb and associated files
+		let targetAdb = path.join(tmpDir, "adb");
 
-			// In case directory is missing or it's empty, copy the new adb
-			if(!$fs.exists(tmpDir) || !$fs.readDirectory(tmpDir).length) {
-				shelljs.cp(path.join(defaultAdbDirPath, "*"), tmpDir); // deliberately ignore copy errors
-				// adb loses its executable bit when packed inside electron asar file. Manually fix the issue
-				if(!$hostInfo.isWindows) {
-					shelljs.chmod("+x", targetAdb);
-				}
+		// In case directory is missing or it's empty, copy the new adb
+		if (!$fs.exists(tmpDir) || !$fs.readDirectory(tmpDir).length) {
+			shelljs.cp(path.join(defaultAdbDirPath, "*"), tmpDir); // deliberately ignore copy errors
+			// adb loses its executable bit when packed inside electron asar file. Manually fix the issue
+			if (!$hostInfo.isWindows) {
+				shelljs.chmod("+x", targetAdb);
 			}
+		}
 
-			// let adb start its global server
-			$childProcess.spawnFromEvent(targetAdb, ["start-server"], "exit").wait();
+		// let adb start its global server
+		await $childProcess.spawnFromEvent(targetAdb, ["start-server"], "exit");
 
-			return targetAdb;
-		}).future<string>()();
+		return targetAdb;
 	}
 
 	public PATH_TO_BOOTSTRAP: string;

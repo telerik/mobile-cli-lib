@@ -10,39 +10,37 @@ export class CommandDispatcher implements ICommandDispatcher {
 		private $options: ICommonOptions,
 		private $fs: IFileSystem) { }
 
-	public dispatchCommand(): IFuture<void> {
-		return(() => {
-			if (this.$options.version) {
-				return this.printVersion();
-			}
+	public async dispatchCommand(): Promise<void> {
+		if (this.$options.version) {
+			return this.printVersion();
+		}
 
-			if (this.$logger.getLevel() === "TRACE") {
-				// CommandDispatcher is called from external CLI's only, so pass the path to their package.json
-				let sysInfo = this.$sysInfo.getSysInfo(path.join(__dirname, "..", "..", "package.json")).wait();
-				this.$logger.trace("System information:");
-				this.$logger.trace(sysInfo);
-			}
+		if (this.$logger.getLevel() === "TRACE") {
+			// CommandDispatcher is called from external CLI's only, so pass the path to their package.json
+			let sysInfo = await this.$sysInfo.getSysInfo(path.join(__dirname, "..", "..", "package.json"));
+			this.$logger.trace("System information:");
+			this.$logger.trace(sysInfo);
+		}
 
-			let commandName = this.getCommandName();
-			let commandArguments = this.$options.argv._.slice(1);
-			let lastArgument: string = _.last(commandArguments);
+		let commandName = this.getCommandName();
+		let commandArguments = this.$options.argv._.slice(1);
+		let lastArgument: string = _.last(commandArguments);
 
-			if(this.$options.help) {
-				commandArguments.unshift(commandName);
-				commandName = "help";
-			} else if(lastArgument === "/?" || lastArgument === "?") {
-				commandArguments.pop();
-				commandArguments.unshift(commandName);
-				commandName = "help";
-			}
+		if (this.$options.help) {
+			commandArguments.unshift(commandName);
+			commandName = "help";
+		} else if (lastArgument === "/?" || lastArgument === "?") {
+			commandArguments.pop();
+			commandArguments.unshift(commandName);
+			commandName = "help";
+		}
 
-			this.$cancellation.begin("cli").wait();
+		await this.$cancellation.begin("cli");
 
-			this.$commandsService.tryExecuteCommand(commandName, commandArguments).wait();
-		}).future<void>()();
+		await this.$commandsService.tryExecuteCommand(commandName, commandArguments);
 	}
 
-	public completeCommand(): IFuture<boolean> {
+	public async completeCommand(): Promise<boolean> {
 		return this.$commandsService.completeCommand();
 	}
 
@@ -60,7 +58,7 @@ export class CommandDispatcher implements ICommandDispatcher {
 		let version = this.$staticConfig.version;
 
 		let json = this.$fs.readJson(this.$staticConfig.pathToPackageJson);
-		if(json && json.buildVersion) {
+		if (json && json.buildVersion) {
 			version = `${version}-${json.buildVersion}`;
 		}
 		this.$logger.out(version);
@@ -73,19 +71,19 @@ class FutureDispatcher implements IFutureDispatcher {
 
 	public constructor(private $errors: IErrors) { }
 
-	public run(): void {
+	public async run(): Promise<void> {
 		if (this.actions) {
 			this.$errors.fail("You cannot run a running future dispatcher.");
 		}
 		this.actions = new queue.Queue<any>();
 
-		while(true) {
-			let action = this.actions.dequeue().wait();
-			action().wait();
+		while (true) {
+			let action = await this.actions.dequeue();
+			await action();
 		}
 	}
 
-	public dispatch(action: () => IFuture<void>) {
+	public dispatch(action: () => Promise<void>) {
 		this.actions.enqueue(action);
 	}
 }

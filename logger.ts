@@ -1,7 +1,6 @@
 import * as log4js from "log4js";
 import * as util from "util";
 import * as stream from "stream";
-import Future = require("fibers/future");
 import * as marked from "marked";
 let TerminalRenderer = require("marked-terminal");
 let chalk = require("chalk");
@@ -27,7 +26,7 @@ export class Logger implements ILogger {
 			});
 		}
 
-		log4js.configure({appenders: appenders});
+		log4js.configure({ appenders: appenders });
 
 		this.log4jsLogger = log4js.getLogger();
 
@@ -95,7 +94,7 @@ export class Logger implements ILogger {
 		if (typeof item === "undefined" || item === null) {
 			return "[no content]";
 		}
-		if (typeof item  === "string") {
+		if (typeof item === "string") {
 			return item;
 		}
 		// do not try to read streams, because they may not be rewindable
@@ -107,19 +106,19 @@ export class Logger implements ILogger {
 	}
 
 	public printInfoMessageOnSameLine(message: string): void {
-		if(!this.$options.log || this.$options.log === "info") {
+		if (!this.$options.log || this.$options.log === "info") {
 			this.write(message);
 		}
 	}
 
-	public printMsgWithTimeout(message: string, timeout: number): IFuture <void> {
-		let printMsgFuture = new Future<void>();
-		setTimeout(() => {
-			this.printInfoMessageOnSameLine(message);
-			printMsgFuture.return();
-		}, timeout);
+	public printMsgWithTimeout(message: string, timeout: number): Promise<void> {
+		return new Promise<void>((resolve, reject) => {
+			setTimeout(() => {
+				this.printInfoMessageOnSameLine(message);
+				resolve();
+			}, timeout);
 
-		return printMsgFuture;
+		});
 	}
 
 	public printMarkdown(...args: string[]): void {
@@ -163,11 +162,11 @@ export class Logger implements ILogger {
 			}
 
 			_.each(this.encodeRequestPaths, path => {
-					if (argument.indexOf('path') > -1) {
-						this.encodeBody = argument.indexOf(path) > -1;
-						return false;
-					}
-				});
+				if (argument.indexOf('path') > -1) {
+					this.encodeBody = argument.indexOf(path) > -1;
+					return false;
+				}
+			});
 
 			return argument;
 		});

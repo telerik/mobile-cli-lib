@@ -1,5 +1,4 @@
 export class PostInstallCommand implements ICommand {
-
 	constructor(private $fs: IFileSystem,
 		private $staticConfig: Config.IStaticConfig,
 		private $commandsService: ICommandsService,
@@ -13,32 +12,30 @@ export class PostInstallCommand implements ICommand {
 	public disableAnalytics = true;
 	public allowedParameters: ICommandParameter[] = [];
 
-	public execute(args: string[]): IFuture<void> {
-		return (() => {
-			if(process.platform !== "win32") {
-				// when running under 'sudo' we create a working dir with wrong owner (root) and
-				// it is no longer accessible for the user initiating the installation
-				// patch the owner here
-				if (process.env.SUDO_USER) {
-					this.$fs.setCurrentUserAsOwner(this.$options.profileDir, process.env.SUDO_USER).wait();
-				}
+	public async execute(args: string[]): Promise<void> {
+		if (process.platform !== "win32") {
+			// when running under 'sudo' we create a working dir with wrong owner (root) and
+			// it is no longer accessible for the user initiating the installation
+			// patch the owner here
+			if (process.env.SUDO_USER) {
+				await this.$fs.setCurrentUserAsOwner(this.$options.profileDir, process.env.SUDO_USER);
 			}
+		}
 
-			this.$htmlHelpService.generateHtmlPages().wait();
+		await this.$htmlHelpService.generateHtmlPages();
 
-			let doctorResult = this.$doctorService.printWarnings({ trackResult: false }).wait();
-			// Explicitly ask for confirmation of usage-reporting:
-			this.$analyticsService.checkConsent().wait();
+		let doctorResult = await this.$doctorService.printWarnings({ trackResult: false });
+		// Explicitly ask for confirmation of usage-reporting:
+		await this.$analyticsService.checkConsent();
 
-			this.$commandsService.tryExecuteCommand("autocomplete", []).wait();
-			this.$analyticsService.track("InstallEnvironmentSetup", doctorResult ? "incorrect" : "correct").wait();
+		await this.$commandsService.tryExecuteCommand("autocomplete", []);
+		await this.$analyticsService.track("InstallEnvironmentSetup", doctorResult ? "incorrect" : "correct");
 
-			if(this.$staticConfig.INSTALLATION_SUCCESS_MESSAGE) {
-				// Make sure the success message is separated with at least one line from all other messages.
-				this.$logger.out();
-				this.$logger.printMarkdown(this.$staticConfig.INSTALLATION_SUCCESS_MESSAGE);
-			}
-		}).future<void>()();
+		if (this.$staticConfig.INSTALLATION_SUCCESS_MESSAGE) {
+			// Make sure the success message is separated with at least one line from all other messages.
+			this.$logger.out();
+			this.$logger.printMarkdown(this.$staticConfig.INSTALLATION_SUCCESS_MESSAGE);
+		}
 	}
 }
 $injector.registerCommand("dev-post-install", PostInstallCommand);

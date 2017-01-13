@@ -1,7 +1,5 @@
-import Future = require("fibers/future");
-
 export class Queue<T> implements IQueue<T> {
-	private future: IFuture<void>;
+	private promiseResolve: (value?: void | PromiseLike<void>) => void;
 
 	public constructor(private items?: T[]) {
 		this.items = this.items === undefined ? [] : this.items;
@@ -10,20 +8,22 @@ export class Queue<T> implements IQueue<T> {
 	public enqueue(item: T): void {
 		this.items.unshift(item);
 
-		if (this.future) {
-			this.future.return();
+		if (this.promiseResolve) {
+			this.promiseResolve();
 		}
 	}
 
-	public dequeue(): IFuture<T> {
-		return (() => {
-			if (!this.items.length) {
-				this.future = new Future<void>();
-				this.future.wait();
-				this.future = null;
-			}
+	public async dequeue(): Promise<T> {
+		if (!this.items.length) {
+			const promise = new Promise<void>((resolve, reject) => {
+				this.promiseResolve = resolve;
+			});
 
-			return this.items.pop();
-		}).future<T>()();
+			await promise;
+
+			this.promiseResolve = null;
+		}
+
+		return this.items.pop();
 	}
 }

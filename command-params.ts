@@ -4,18 +4,16 @@ export class StringCommandParameter implements ICommandParameter {
 
 	constructor(private $injector: IInjector) { }
 
-	public validate(validationValue: string): IFuture<boolean> {
-		return (() => {
-			if(!validationValue) {
-				if(this.errorMessage) {
-					this.$injector.resolve("errors").fail(this.errorMessage);
-				}
-
-				return false;
+	public async validate(validationValue: string): Promise<boolean> {
+		if (!validationValue) {
+			if (this.errorMessage) {
+				this.$injector.resolve("errors").fail(this.errorMessage);
 			}
 
-			return true;
-		}).future<boolean>()();
+			return false;
+		}
+
+		return true;
 	}
 }
 $injector.register("stringParameter", StringCommandParameter);
@@ -23,7 +21,7 @@ $injector.register("stringParameter", StringCommandParameter);
 export class StringParameterBuilder implements IStringParameterBuilder {
 	constructor(private $injector: IInjector) { }
 
-	public createMandatoryParameter(errorMsg: string) : ICommandParameter {
+	public createMandatoryParameter(errorMsg: string): ICommandParameter {
 		let commandParameter = new StringCommandParameter(this.$injector);
 		commandParameter.mandatory = true;
 		commandParameter.errorMessage = errorMsg;

@@ -1,5 +1,5 @@
 import * as path from "path";
-import {annotate, isFuture} from "./helpers";
+import { annotate, isPromise } from "./helpers";
 
 let indent = "";
 function trace(formatStr: string, ...args: any[]) {
@@ -55,7 +55,7 @@ export class Yok implements IInjector {
 	private resolutionProgress: any = {};
 	private hierarchicalCommands: IDictionary<string[]> = {};
 
-	public requireCommand(names: any, file: string) {
+	public requireCommand(names: any, file: string): void {
 		forEachName(names, (commandName) => {
 			let commands = commandName.split("|");
 
@@ -127,15 +127,12 @@ export class Yok implements IInjector {
 		let classInstance = this.modules[name].instance;
 		if (!classInstance) {
 			classInstance = this.resolve(name);
-			// This is in order to remove .wait() from constructors
+			// This is in order to remove  from constructors
 			// as we cannot wait without fiber.
 			if (classInstance.initialize) {
 				let result = classInstance.initialize.apply(classInstance);
-				if (isFuture(result)) {
-					let fiberBootstrap = require("./fiber-bootstrap");
-					fiberBootstrap.run(() => {
-						result.wait();
-					});
+				if (isPromise(result)) {
+					(async () => await result)();
 				}
 			}
 		}
@@ -201,43 +198,41 @@ export class Yok implements IInjector {
 	private createHierarchicalCommand(name: string) {
 		let factory = () => {
 			return {
-				execute: (args: string[]): IFuture<void> => {
-					return (() => {
-						let commandsService = $injector.resolve("commandsService");
-						let commandName: string = null;
-						let defaultCommand = this.getDefaultCommand(name);
-						let commandArguments: ICommandArgument[] = [];
+				execute: async (args: string[]): Promise<void> => {
+					let commandsService = $injector.resolve("commandsService");
+					let commandName: string = null;
+					let defaultCommand = this.getDefaultCommand(name);
+					let commandArguments: ICommandArgument[] = [];
 
-						if (args.length > 0) {
-							let hierarchicalCommand = this.buildHierarchicalCommand(name, args);
-							if (hierarchicalCommand) {
-								commandName = hierarchicalCommand.commandName;
-								commandArguments = hierarchicalCommand.remainingArguments;
-							} else {
-								commandName = defaultCommand ? this.getHierarchicalCommandName(name, defaultCommand) : "help";
-								// If we'll execute the default command, but it's full name had been written by the user
-								// for example "appbuilder cloud list", we have to remove the "list" option from the arguments that we'll pass to the command.
-								if (_.includes(this.hierarchicalCommands[name], "*" + args[0])) {
-									commandArguments = _.tail(args);
-								} else {
-									commandArguments = args;
-								}
-							}
+					if (args.length > 0) {
+						let hierarchicalCommand = this.buildHierarchicalCommand(name, args);
+						if (hierarchicalCommand) {
+							commandName = hierarchicalCommand.commandName;
+							commandArguments = hierarchicalCommand.remainingArguments;
 						} else {
-							//Execute only default command without arguments
-							if (defaultCommand) {
-								commandName = this.getHierarchicalCommandName(name, defaultCommand);
+							commandName = defaultCommand ? this.getHierarchicalCommandName(name, defaultCommand) : "help";
+							// If we'll execute the default command, but it's full name had been written by the user
+							// for example "appbuilder cloud list", we have to remove the "list" option from the arguments that we'll pass to the command.
+							if (_.includes(this.hierarchicalCommands[name], "*" + args[0])) {
+								commandArguments = _.tail(args);
 							} else {
-								commandName = "help";
-
-								// Show command-line help
-								let options = this.resolve("options");
-								options.help = true;
+								commandArguments = args;
 							}
 						}
+					} else {
+						//Execute only default command without arguments
+						if (defaultCommand) {
+							commandName = this.getHierarchicalCommandName(name, defaultCommand);
+						} else {
+							commandName = "help";
 
-						commandsService.tryExecuteCommand(commandName, commandName === "help" ? [name] : commandArguments).wait();
-					}).future<void>()();
+							// Show command-line help
+							let options = this.resolve("options");
+							options.help = true;
+						}
+					}
+
+					await commandsService.tryExecuteCommand(commandName, commandName === "help" ? [name] : commandArguments);
 				}
 			};
 		};
@@ -249,7 +244,7 @@ export class Yok implements IInjector {
 		return [parentCommandName, subCommandName].join("|");
 	}
 
-	public isValidHierarchicalCommand(commandName: string, commandArguments: string[]): boolean {
+	public async isValidHierarchicalCommand(commandName: string, commandArguments: string[]): Promise<boolean> {
 		if (_.includes(Object.keys(this.hierarchicalCommands), commandName)) {
 			let defaultCommandName = this.getDefaultCommand(commandName);
 			if (defaultCommandName && (!commandArguments || commandArguments.length === 0)) {
@@ -267,7 +262,7 @@ export class Yok implements IInjector {
 					let defaultCommand = this.resolveCommand(`${commandName}|${defaultCommandName}`);
 					if (defaultCommand) {
 						if (defaultCommand.canExecute) {
-							return defaultCommand.canExecute(commandArguments).wait();
+							return await defaultCommand.canExecute(commandArguments);
 						}
 
 						if (defaultCommand.allowedParameters.length > 0) {
@@ -335,20 +330,24 @@ export class Yok implements IInjector {
 		return /#{([^.]+)\.([^}]+?)(\((.+)\))*}/;
 	}
 
-	public dynamicCall(call: string, args?: any[]): IFuture<any> {
-		return (() => {
-			let parsed = call.match(this.dynamicCallRegex);
-			let module = this.resolve(parsed[1]);
-			if (!args && parsed[3]) {
-				args = _.map(parsed[4].split(","), arg => arg.trim());
-			}
+	public getDynamicCallData(call: string, args?: any[]): any {
+		let parsed = call.match(this.dynamicCallRegex);
+		let module = this.resolve(parsed[1]);
+		if (!args && parsed[3]) {
+			args = _.map(parsed[4].split(","), arg => arg.trim());
+		}
 
-			let data = module[parsed[2]].apply(module, args);
-			if (isFuture(data)) {
-				return data.wait();
-			}
-			return data;
-		}).future<any>()();
+		return module[parsed[2]].apply(module, args);
+	}
+
+	public async dynamicCall(call: string, args?: any[]): Promise<any> {
+		const data = this.getDynamicCallData(call, args);
+
+		if (isPromise(data)) {
+			return await data;
+		}
+
+		return data;
 	}
 
 	private resolveConstructor(ctor: Function, ctorArguments?: { [key: string]: any }): any {
@@ -398,8 +397,7 @@ export class Yok implements IInjector {
 
 				dependency.instance = this.resolveConstructor(dependency.resolver, ctorArguments);
 			}
-		}
-		finally {
+		} finally {
 			popIndent();
 			delete this.resolutionProgress[name];
 		}

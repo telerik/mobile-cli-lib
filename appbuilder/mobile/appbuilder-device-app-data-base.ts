@@ -1,15 +1,16 @@
 import * as querystring from "querystring";
-import {DeviceAppDataBase} from "./../../mobile/device-app-data/device-app-data-base";
+import { DeviceAppDataBase } from "./../../mobile/device-app-data/device-app-data-base";
 
 export class AppBuilderDeviceAppDataBase extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
-	public deviceProjectRootPath: string;
-
 	constructor(_appIdentifier: string,
 		public device: Mobile.IDevice,
 		public platform: string,
-		private $deployHelper: IDeployHelper,
-		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) {
+		private $deployHelper: IDeployHelper) {
 		super(_appIdentifier);
+	}
+
+	public getDeviceProjectRootPath(): Promise<string> {
+		return Promise.resolve("");
 	}
 
 	public get liveSyncFormat(): string {
@@ -24,17 +25,15 @@ export class AppBuilderDeviceAppDataBase extends DeviceAppDataBase implements IL
 		return `You can't LiveSync on device with id ${this.device.deviceInfo.identifier}! Deploy the app with LiveSync enabled and wait for the initial start up before LiveSyncing.`;
 	}
 
-	public isLiveSyncSupported(): IFuture<boolean> {
-		return (() => {
-			let isApplicationInstalled = this.device.applicationManager.isApplicationInstalled(this.appIdentifier).wait();
+	public async isLiveSyncSupported(): Promise<boolean> {
+		let isApplicationInstalled = await this.device.applicationManager.isApplicationInstalled(this.appIdentifier);
 
-			if (!isApplicationInstalled) {
-				this.$deployHelper.deploy(this.platform.toString()).wait();
-				// Update cache of installed apps
-				this.device.applicationManager.checkForApplicationUpdates().wait();
-			}
+		if (!isApplicationInstalled) {
+			await this.$deployHelper.deploy(this.platform.toString());
+			// Update cache of installed apps
+			await this.device.applicationManager.checkForApplicationUpdates();
+		}
 
-			return this.device.applicationManager.isLiveSyncSupported(this.appIdentifier).wait();
-		}).future<boolean>()();
+		return await this.device.applicationManager.isLiveSyncSupported(this.appIdentifier);
 	}
 }

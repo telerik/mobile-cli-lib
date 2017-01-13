@@ -27,11 +27,11 @@ export class IOSSimulator implements Mobile.IiOSSimulator {
 		};
 	}
 
-	public get isEmulator(): boolean {
+	public async isEmulator(): Promise<boolean> {
 		return true;
 	}
 
-	public getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo> {
+	public async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
 		return this.applicationManager.getApplicationInfo(applicationIdentifier);
 	}
 
@@ -45,13 +45,13 @@ export class IOSSimulator implements Mobile.IiOSSimulator {
 
 	public get fileSystem(): Mobile.IDeviceFileSystem {
 		if (!this._fileSystem) {
-			this._fileSystem = this.$injector.resolve(fileSystemPath.IOSSimulatorFileSystem, { iosSim: this.$iOSSimResolver.iOSSim, identifier: this.simulator.id });
+			this._fileSystem = this.$injector.resolve(fileSystemPath.IOSSimulatorFileSystem, { iosSim: this.$iOSSimResolver.iOSSim });
 		}
 
 		return this._fileSystem;
 	}
 
-	public openDeviceLogStream(): void {
+	public async openDeviceLogStream(): Promise<void> {
 		this.$iOSSimulatorLogProvider.startLogProcess(this.simulator.id);
 	}
 }

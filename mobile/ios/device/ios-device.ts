@@ -2,7 +2,7 @@ import * as net from "net";
 import * as ref from "ref";
 import * as path from "path";
 import * as util from "util";
-import {CoreTypes, PlistService} from "./ios-core";
+import { CoreTypes, PlistService } from "./ios-core";
 import * as iOSProxyServices from "./ios-proxy-services";
 import * as applicationManagerPath from "./ios-application-manager";
 import * as fileSystemPath from "./ios-device-file-system";
@@ -37,34 +37,34 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		private $iOSDeviceProductNameMapper: Mobile.IiOSDeviceProductNameMapper,
 		private $processService: IProcessService,
 		private $xcodeSelectService: IXcodeSelectService) {
-			this.mountImageCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSDevice.mountImageCallback);
+		this.mountImageCallbackPtr = CoreTypes.am_device_mount_image_callback.toPointer(IOSDevice.mountImageCallback);
 
-			this.applicationManager = this.$injector.resolve(applicationManagerPath.IOSApplicationManager, { device: this, devicePointer: this.devicePointer });
-			this.fileSystem = this.$injector.resolve(fileSystemPath.IOSDeviceFileSystem, { device: this,  devicePointer: this.devicePointer });
-			this.deviceInfo = <any>{
-				identifier: this.$coreFoundation.convertCFStringToCString(this.$mobileDevice.deviceCopyDeviceIdentifier(this.devicePointer)),
-				vendor: "Apple",
-				platform: this.$devicePlatformsConstants.iOS,
-				status: constants.CONNECTED_STATUS,
-				errorHelp: null,
-				type: "Device"
-			};
+		this.applicationManager = this.$injector.resolve(applicationManagerPath.IOSApplicationManager, { device: this, devicePointer: this.devicePointer });
+		this.fileSystem = this.$injector.resolve(fileSystemPath.IOSDeviceFileSystem, { device: this, devicePointer: this.devicePointer });
+		this.deviceInfo = <any>{
+			identifier: this.$coreFoundation.convertCFStringToCString(this.$mobileDevice.deviceCopyDeviceIdentifier(this.devicePointer)),
+			vendor: "Apple",
+			platform: this.$devicePlatformsConstants.iOS,
+			status: constants.CONNECTED_STATUS,
+			errorHelp: null,
+			type: "Device"
+		};
 
-			let productType = this.getValue("ProductType");
-			let deviceName = this.getValue("DeviceName") || productType;
-			let displayName = this.$iOSDeviceProductNameMapper.resolveProductName(deviceName) || deviceName;
-			this.deviceInfo.displayName = displayName;
-			this.deviceInfo.model = this.$iOSDeviceProductNameMapper.resolveProductName(productType);
-			this.deviceInfo.version = this.getValue("ProductVersion");
-			this.deviceInfo.color = this.getValue("DeviceColor");
-			this.deviceInfo.isTablet = productType && productType.toLowerCase().indexOf("ipad") !== -1;
-			this.deviceInfo.activeArchitecture = this.getActiveArchitecture(productType);
+		let productType = this.getValue("ProductType");
+		let deviceName = this.getValue("DeviceName") || productType;
+		let displayName = this.$iOSDeviceProductNameMapper.resolveProductName(deviceName) || deviceName;
+		this.deviceInfo.displayName = displayName;
+		this.deviceInfo.model = this.$iOSDeviceProductNameMapper.resolveProductName(productType);
+		this.deviceInfo.version = this.getValue("ProductVersion");
+		this.deviceInfo.color = this.getValue("DeviceColor");
+		this.deviceInfo.isTablet = productType && productType.toLowerCase().indexOf("ipad") !== -1;
+		this.deviceInfo.activeArchitecture = this.getActiveArchitecture(productType);
 
-			// In case any of the operations had failed, the device status should be Unreachable.
-			if (this.deviceInfo.errorHelp) {
-				this.deviceInfo.status = constants.UNREACHABLE_STATUS;
-			}
+		// In case any of the operations had failed, the device status should be Unreachable.
+		if (this.deviceInfo.errorHelp) {
+			this.deviceInfo.status = constants.UNREACHABLE_STATUS;
 		}
+	}
 
 	private getActiveArchitecture(productType: string): string {
 		let activeArchitecture = "";
@@ -88,11 +88,11 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		return activeArchitecture;
 	}
 
-	public get isEmulator(): boolean {
+	public async isEmulator(): Promise<boolean> {
 		return false;
 	}
 
-	public getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo> {
+	public getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
 		return this.applicationManager.getApplicationInfo(applicationIdentifier);
 	}
 
@@ -108,7 +108,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		try {
 			this.connect();
 			this.startSession();
-			let cfValue =  this.$coreFoundation.createCFString(value);
+			let cfValue = this.$coreFoundation.createCFString(value);
 			return this.$coreFoundation.convertCFStringToCString(this.$mobileDevice.deviceCopyValue(this.devicePointer, null, cfValue));
 		} catch (err) {
 			this.deviceInfo.errorHelp = this.deviceInfo.errorHelp || err.message.replace(/ Result code is: \d+$/, "");
@@ -139,13 +139,13 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		return result;
 	}
 
-	private validatePairing() : number{
+	private validatePairing(): number {
 		let result = this.$mobileDevice.deviceValidatePairing(this.devicePointer);
 		this.validateResult(result, "Unable to validate pairing");
 		return result;
 	}
 
-	private connect() : number {
+	private connect(): number {
 		let result = this.$mobileDevice.deviceConnect(this.devicePointer);
 		this.validateResult(result, "Unable to connect to device");
 
@@ -158,7 +158,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 
 	private disconnect() {
 		let result = this.$mobileDevice.deviceDisconnect(this.devicePointer);
-		if(result > 0) {
+		if (result > 0) {
 			this.$logger.warn(`Unable to disconnect. Result is: ${result}`);
 		}
 	}
@@ -170,7 +170,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 
 	private stopSession() {
 		let result = this.$mobileDevice.deviceStopSession(this.devicePointer);
-		if(result > 0) {
+		if (result > 0) {
 			this.$logger.warn(`Unable to stop session. Result is: ${result}`);
 		}
 	}
@@ -194,136 +194,132 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		}
 	}
 
-	private findDeveloperDiskImageDirectoryPath(): IFuture<string> {
-		return (() => {
-			let developerDirectory = this.$xcodeSelectService.getDeveloperDirectoryPath().wait();
-			let buildVersion = this.getDeviceValue("BuildVersion");
-			let productVersion = this.getDeviceValue("ProductVersion");
-			let productVersionParts = productVersion.split(".");
-			let productMajorVersion = productVersionParts[0];
-			let productMinorVersion = productVersionParts[1];
+	private async findDeveloperDiskImageDirectoryPath(): Promise<string> {
+		let developerDirectory = await this.$xcodeSelectService.getDeveloperDirectoryPath();
+		let buildVersion = this.getDeviceValue("BuildVersion");
+		let productVersion = this.getDeviceValue("ProductVersion");
+		let productVersionParts = productVersion.split(".");
+		let productMajorVersion = productVersionParts[0];
+		let productMinorVersion = productVersionParts[1];
 
-			let developerDiskImagePath = path.join(developerDirectory, "Platforms", "iPhoneOS.platform", "DeviceSupport");
-			let supportPaths = this.$fs.readDirectory(developerDiskImagePath);
+		let developerDiskImagePath = path.join(developerDirectory, "Platforms", "iPhoneOS.platform", "DeviceSupport");
+		let supportPaths = this.$fs.readDirectory(developerDiskImagePath);
 
-			let supportPath: any = null;
+		let supportPath: any = null;
 
-			_.each(supportPaths, (sp: string) => {
-				let parts = sp.split(' ');
-				let version = parts[0];
-				let versionParts = version.split(".");
+		_.each(supportPaths, (sp: string) => {
+			let parts = sp.split(' ');
+			let version = parts[0];
+			let versionParts = version.split(".");
 
-				let supportPathData = {
-					version: version,
-					majorVersion: versionParts[0],
-					minorVersion: versionParts[1],
-					build: parts.length > 1 ? parts[1].replace(/[()]/, () => "") : null,
-					path: path.join(developerDiskImagePath, sp)
-				};
+			let supportPathData = {
+				version: version,
+				majorVersion: versionParts[0],
+				minorVersion: versionParts[1],
+				build: parts.length > 1 ? parts[1].replace(/[()]/, () => "") : null,
+				path: path.join(developerDiskImagePath, sp)
+			};
 
-				if(supportPathData.majorVersion === productMajorVersion) {
-					if(!supportPath) {
-						supportPath = supportPathData;
-					} else {
-						// is this better than the last match?
-						if(supportPathData.minorVersion === productMinorVersion) {
-							if(supportPathData.build === buildVersion) {
-								// perfect match
+			if (supportPathData.majorVersion === productMajorVersion) {
+				if (!supportPath) {
+					supportPath = supportPathData;
+				} else {
+					// is this better than the last match?
+					if (supportPathData.minorVersion === productMinorVersion) {
+						if (supportPathData.build === buildVersion) {
+							// perfect match
+							supportPath = supportPathData;
+						} else {
+							// we're still better than existing match
+							if (supportPath.build !== supportPathData.build || supportPath.build === null) {
 								supportPath = supportPathData;
-							} else {
-								// we're still better than existing match
-								if(supportPath.build !== supportPathData.build || supportPath.build === null) {
-									supportPath = supportPathData;
-								}
 							}
 						}
 					}
 				}
-			});
-
-			if(!supportPath) {
-				this.$errors.fail("Unable to find device support path. Verify that you have installed sdk compatible with your device version.");
 			}
+		});
 
-			return supportPath.path;
-		}).future<string>()();
+		if (!supportPath) {
+			this.$errors.fail("Unable to find device support path. Verify that you have installed sdk compatible with your device version.");
+		}
+
+		return supportPath.path;
 	}
 
-	public mountImage(): IFuture<void> {
-		return (() => {
-			let imagePath = this.$options.ddi;
+	public async mountImage(): Promise<void> {
+		let imagePath = this.$options.ddi;
 
-			if(this.$hostInfo.isWindows) {
-				if(!imagePath) {
-					this.$errors.fail("On windows operating system you must specify the path to developer disk image using --ddi option");
-				}
-
-				let imageSignature = this.$fs.readFile(util.format("%s.signature", imagePath));
-				let imageSize = this.$fs.getFsStats(imagePath).size;
-
-				let imageMounterService = this.startService(iOSProxyServices.MobileServices.MOBILE_IMAGE_MOUNTER);
-				let plistService: Mobile.IiOSDeviceSocket = this.$injector.resolve(PlistService, { service: imageMounterService, format: CoreTypes.kCFPropertyListXMLFormat_v1_0 });
-				let result = plistService.exchange({
-					Command: "ReceiveBytes",
-					ImageSize: imageSize,
-					ImageType: "Developer",
-					ImageSignature: imageSignature
-				}).wait();
-
-				if(result.Status === "ReceiveBytesAck") {
-					let fileData = <NodeBuffer>this.$fs.readFile(imagePath);
-					plistService.sendAll(fileData);
-				} else {
-					let afcService = this.startService(iOSProxyServices.MobileServices.APPLE_FILE_CONNECTION);
-					let afcClient = this.$injector.resolve(iOSProxyServices.AfcClient, {service: afcService});
-					afcClient.transfer(imagePath, "PublicStaging/staging.dimage").wait();
-				}
-
-				try {
-					result = plistService.exchange({
-						Command: "MountImage",
-						ImageType: "Developer",
-						ImageSignature: imageSignature,
-						ImagePath: "/let/mobile/Media/PublicStaging/staging.dimage"
-					}).wait();
-
-					if(result.Error) {
-						this.$errors.fail("Unable to mount image. %s", result.Error);
-					}
-					if(result.Status) {
-						this.$logger.info("Mount image: %s", result.Status);
-					}
-				} finally {
-					plistService.close();
-				}
-			} else {
-				let func = () => {
-					let developerDiskImageDirectoryPath = this.findDeveloperDiskImageDirectoryPath().wait();
-					imagePath = path.join(developerDiskImageDirectoryPath, "DeveloperDiskImage.dmg");
-					this.$logger.info("Mounting %s", imagePath);
-
-					let signature = this.$fs.readFile(util.format("%s.signature", imagePath));
-					let cfImagePath = this.$coreFoundation.createCFString(imagePath);
-
-					let cfOptions = this.$coreFoundation.cfTypeFrom({
-						ImageType: "Developer",
-						ImageSignature: signature
-					});
-
-					let result = this.$mobileDevice.deviceMountImage(this.devicePointer, cfImagePath, cfOptions, this.mountImageCallbackPtr);
-
-					if (result !== 0 && result !== IOSDevice.IMAGE_ALREADY_MOUNTED_ERROR_CODE) { // 3892314230 - already mounted
-						if(result === IOSDevice.INCOMPATIBLE_IMAGE_SIGNATURE_ERROR_CODE) { // 3892314163
-							this.$logger.warn("Unable to mount image %s on device %s.", imagePath, this.deviceInfo.identifier);
-						} else {
-							this.$errors.fail("Unable to mount image on device.");
-						}
-					}
-				};
-
-				this.tryExecuteFunction<void>(func);
+		if (this.$hostInfo.isWindows) {
+			if (!imagePath) {
+				this.$errors.fail("On windows operating system you must specify the path to developer disk image using --ddi option");
 			}
-		}).future<void>()();
+
+			let imageSignature = this.$fs.readFile(util.format("%s.signature", imagePath));
+			let imageSize = this.$fs.getFsStats(imagePath).size;
+
+			let imageMounterService = this.startService(iOSProxyServices.MobileServices.MOBILE_IMAGE_MOUNTER);
+			let plistService: Mobile.IiOSDeviceSocket = this.$injector.resolve(PlistService, { service: imageMounterService, format: CoreTypes.kCFPropertyListXMLFormat_v1_0 });
+			let result = await plistService.exchange({
+				Command: "ReceiveBytes",
+				ImageSize: imageSize,
+				ImageType: "Developer",
+				ImageSignature: imageSignature
+			});
+
+			if (result.Status === "ReceiveBytesAck") {
+				let fileData = <NodeBuffer>this.$fs.readFile(imagePath);
+				plistService.sendAll(fileData);
+			} else {
+				let afcService = this.startService(iOSProxyServices.MobileServices.APPLE_FILE_CONNECTION);
+				let afcClient = this.$injector.resolve(iOSProxyServices.AfcClient, { service: afcService });
+				await afcClient.transfer(imagePath, "PublicStaging/staging.dimage");
+			}
+
+			try {
+				result = await plistService.exchange({
+					Command: "MountImage",
+					ImageType: "Developer",
+					ImageSignature: imageSignature,
+					ImagePath: "/let/mobile/Media/PublicStaging/staging.dimage"
+				});
+
+				if (result.Error) {
+					this.$errors.fail("Unable to mount image. %s", result.Error);
+				}
+				if (result.Status) {
+					this.$logger.info("Mount image: %s", result.Status);
+				}
+			} finally {
+				plistService.close();
+			}
+		} else {
+			let developerDiskImageDirectoryPath = await this.findDeveloperDiskImageDirectoryPath();
+			let func = () => {
+				imagePath = path.join(developerDiskImageDirectoryPath, "DeveloperDiskImage.dmg");
+				this.$logger.info("Mounting %s", imagePath);
+
+				let signature = this.$fs.readFile(util.format("%s.signature", imagePath));
+				let cfImagePath = this.$coreFoundation.createCFString(imagePath);
+
+				let cfOptions = this.$coreFoundation.cfTypeFrom({
+					ImageType: "Developer",
+					ImageSignature: signature
+				});
+
+				let result = this.$mobileDevice.deviceMountImage(this.devicePointer, cfImagePath, cfOptions, this.mountImageCallbackPtr);
+
+				if (result !== 0 && result !== IOSDevice.IMAGE_ALREADY_MOUNTED_ERROR_CODE) { // 3892314230 - already mounted
+					if (result === IOSDevice.INCOMPATIBLE_IMAGE_SIGNATURE_ERROR_CODE) { // 3892314163
+						this.$logger.warn("Unable to mount image %s on device %s.", imagePath, this.deviceInfo.identifier);
+					} else {
+						this.$errors.fail("Unable to mount image on device.");
+					}
+				}
+			};
+
+			this.tryExecuteFunction<void>(func);
+		}
 	}
 
 	private getInterfaceType(): number {
@@ -341,9 +337,9 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		return this.tryExecuteFunction<number>(func);
 	}
 
-	public openDeviceLogStream() {
-		if(this.deviceInfo.status !== constants.UNREACHABLE_STATUS) {
-			let iOSSystemLog = this.$injector.resolve(iOSProxyServices.IOSSyslog, {device: this});
+	public async openDeviceLogStream(): Promise<void> {
+		if (this.deviceInfo.status !== constants.UNREACHABLE_STATUS) {
+			let iOSSystemLog = this.$injector.resolve(iOSProxyServices.IOSSyslog, { device: this });
 			iOSSystemLog.read();
 		}
 	}
@@ -351,7 +347,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 	// This function works only on OSX
 	public connectToPort(port: number): net.Socket {
 		let interfaceType = this.getInterfaceType();
-		if(interfaceType === IOSDevice.INTERFACE_USB) {
+		if (interfaceType === IOSDevice.INTERFACE_USB) {
 			let connectionId = this.$mobileDevice.deviceGetConnectionId(this.devicePointer);
 			let socketRef = ref.alloc(CoreTypes.intType);
 
@@ -387,7 +383,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 	 * Converts a little endian 16 bit int number to 16 bit int big endian number.
 	 */
 	private htons(port: number): number {
-		let result =  (port & 0xff00) >> 8 | (port & 0x00ff) << 8;
+		let result = (port & 0xff00) >> 8 | (port & 0x00ff) << 8;
 		return result;
 	}
 }

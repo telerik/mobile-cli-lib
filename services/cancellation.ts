@@ -1,7 +1,6 @@
 let gaze = require("gaze");
 import * as path from "path";
 import * as os from "os";
-import Future = require("fibers/future");
 let hostInfo: IHostInfo = $injector.resolve("hostInfo");
 
 class CancellationService implements ICancellationService {
@@ -13,36 +12,34 @@ class CancellationService implements ICancellationService {
 		this.$fs.chmod(CancellationService.killSwitchDir, "0777");
 	}
 
-	public begin(name: string): IFuture<void> {
-		return (() => {
-			let triggerFile = CancellationService.makeKillSwitchFileName(name);
-			if (!this.$fs.exists(triggerFile)) {
+	public async begin(name: string): Promise<void> {
+		let triggerFile = CancellationService.makeKillSwitchFileName(name);
+		if (!this.$fs.exists(triggerFile)) {
 				this.$fs.writeFile(triggerFile, "");
 
 				if (!hostInfo.isWindows) {
-					this.$fs.chmod(triggerFile, "0777");
-				}
+			this.$fs.chmod(triggerFile, "0777");
+		}
 			}
 
-			this.$logger.trace("Starting watch on killswitch %s", triggerFile);
+		this.$logger.trace("Starting watch on killswitch %s", triggerFile);
 
-			let watcherInitialized = new Future<IWatcherInstance>();
-
+		let watcherInitialized = new Promise<IWatcherInstance>((resolve, reject) => {
 			gaze(triggerFile, function (err: any, watcher: any) {
 				this.on("deleted", (filePath: string) => process.exit());
 				if (err) {
-					watcherInitialized.throw(err);
+					reject(err);
 				} else {
-					watcherInitialized.return(watcher);
+					resolve(watcher);
 				}
 			});
+		});
 
-			let watcher = watcherInitialized.wait();
+		let watcher = await watcherInitialized;
 
-			if (watcher) {
-				this.watches[name] = watcher;
-			}
-		}).future<void>()();
+		if (watcher) {
+			this.watches[name] = watcher;
+		}
 	}
 
 	public end(name: string): void {
@@ -69,8 +66,8 @@ class CancellationServiceDummy implements ICancellationService {
 		/* intentionally left blank */
 	}
 
-	begin(name: string): IFuture<void> {
-		return Future.fromResult();
+	async begin(name: string): Promise<void> {
+		return;
 	}
 
 	end(name: string): void {

@@ -1,5 +1,4 @@
 import * as path from "path";
-import future = require("fibers/future");
 
 class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 	private static WP8_LAUNCHER = "XapDeployCmd.exe";
@@ -17,12 +16,12 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 		private $hostInfo: IHostInfo,
 		private $fs: IFileSystem) { }
 
-	public getEmulatorId(): IFuture<string> {
-		return future.fromResult("");
+	public async getEmulatorId(): Promise<string> {
+		return "";
 	}
 
-	public checkDependencies(): IFuture<void> {
-		return future.fromResult();
+	public async checkDependencies(): Promise<void> {
+		return;
 	}
 
 	public checkAvailability(): void {
@@ -40,16 +39,14 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 		}
 	}
 
-	public startEmulator(): IFuture<string> {
-		return future.fromResult("Not implemented.");
+	public async startEmulator(): Promise<string> {
+		return "Not implemented.";
 	}
 
-	public runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): IFuture<void> {
-		return (() => {
-			this.$logger.info("Starting Windows Phone Emulator");
-			let emulatorStarter = this.getPathToEmulatorStarter();
-			this.$childProcess.spawn(emulatorStarter, ["/installlaunch", app, "/targetdevice:xd"], { stdio: "ignore", detached: true }).unref();
-		}).future<void>()();
+	public async runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): Promise<void> {
+		this.$logger.info("Starting Windows Phone Emulator");
+		let emulatorStarter = this.getPathToEmulatorStarter();
+		this.$childProcess.spawn(emulatorStarter, ["/installlaunch", app, "/targetdevice:xd"], { stdio: "ignore", detached: true }).unref();
 	}
 
 	private getPathToEmulatorStarter(): string {

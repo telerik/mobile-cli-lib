@@ -1,7 +1,8 @@
-import {DeviceAndroidDebugBridge} from "./device-android-debug-bridge";
+import { DeviceAndroidDebugBridge } from "./device-android-debug-bridge";
 import * as applicationManagerPath from "./android-application-manager";
 import * as fileSystemPath from "./android-device-file-system";
 import * as constants from "../../constants";
+import { invokeInit } from "../../decorators";
 
 interface IAndroidDeviceDetails {
 	model: string;
@@ -49,35 +50,29 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		private status: string,
 		private $androidEmulatorServices: Mobile.IAndroidEmulatorServices,
 		private $logger: ILogger,
-		private $fs: IFileSystem,
-		private $childProcess: IChildProcess,
-		private $errors: IErrors,
-		private $staticConfig: Config.IStaticConfig,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
-		private $options: ICommonOptions,
 		private $logcatHelper: Mobile.ILogcatHelper,
-		private $hostInfo: IHostInfo,
-		private $mobileHelper: Mobile.IMobileHelper,
-		private $injector: IInjector) {
+		private $injector: IInjector) { }
 
+	public async init(): Promise<void> {
 		this.adb = this.$injector.resolve(DeviceAndroidDebugBridge, { identifier: this.identifier });
 		this.applicationManager = this.$injector.resolve(applicationManagerPath.AndroidApplicationManager, { adb: this.adb, identifier: this.identifier });
-		this.fileSystem = this.$injector.resolve(fileSystemPath.AndroidDeviceFileSystem, { adb: this.adb, identifier: this.identifier });
+		this.fileSystem = this.$injector.resolve(fileSystemPath.AndroidDeviceFileSystem, { adb: this.adb });
 		let details: IAndroidDeviceDetails;
 		try {
-			details = this.getDeviceDetails(["getprop"]).wait();
-		} catch(err) {
+			details = await this.getDeviceDetails(["getprop"]);
+		} catch (err) {
 			this.$logger.trace(`Error while calling getprop: ${err.message}`);
 		}
 
-		if(!details || !details.name) {
+		if (!details || !details.name) {
 			// In older CLI versions we are calling cat /system/build.prop to get details.
 			// Keep this logic for compatibility and possibly for devices for which getprop is not working
-			details = this.getDeviceDetails(["cat", "/system/build.prop"]).wait();
+			details = await this.getDeviceDetails(["cat", "/system/build.prop"]);
 		}
 
 		this.$logger.trace(details);
-		let adbStatusInfo = AndroidDevice.ADB_DEVICE_STATUS_INFO[status];
+		let adbStatusInfo = AndroidDevice.ADB_DEVICE_STATUS_INFO[this.status];
 
 		this.deviceInfo = {
 			identifier: this.identifier,
@@ -86,76 +81,73 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 			version: details.release,
 			vendor: details.brand,
 			platform: this.$devicePlatformsConstants.Android,
-			status: adbStatusInfo ? adbStatusInfo.deviceStatus : status,
+			status: adbStatusInfo ? adbStatusInfo.deviceStatus : this.status,
 			errorHelp: adbStatusInfo ? adbStatusInfo.errorHelp : "Unknown status",
 			isTablet: this.getIsTablet(details),
-			type: this.getType().wait()
+			type: await this.getType()
 		};
 
 		this.$logger.trace(this.deviceInfo);
 	}
 
-	public get isEmulator(): boolean {
+	@invokeInit()
+	public async isEmulator(): Promise<boolean> {
 		return this.deviceInfo.type === "Emulator";
 	}
 
-	public getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo> {
-		return ((): Mobile.IApplicationInfo => {
-			let files = this.fileSystem.listFiles(constants.LiveSyncConstants.ANDROID_FILES_PATH, applicationIdentifier).wait(),
-				androidFilesMatch = files.match(/(\S+)\.abproject/),
-				result: Mobile.IApplicationInfo = null;
+	@invokeInit()
+	public async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
+		let files = await this.fileSystem.listFiles(constants.LiveSyncConstants.ANDROID_FILES_PATH, applicationIdentifier),
+			androidFilesMatch = files.match(/(\S+)\.abproject/),
+			result: Mobile.IApplicationInfo = null;
 
-			if (androidFilesMatch && androidFilesMatch[1]) {
-				result = {
-					deviceIdentifier: this.deviceInfo.identifier,
-					configuration: androidFilesMatch[1],
-					applicationIdentifier
-				};
-			}
+		if (androidFilesMatch && androidFilesMatch[1]) {
+			result = {
+				deviceIdentifier: this.deviceInfo.identifier,
+				configuration: androidFilesMatch[1],
+				applicationIdentifier
+			};
+		}
 
-			return result;
-		}).future<Mobile.IApplicationInfo>()();
+		return result;
 	}
 
-	public openDeviceLogStream(): void {
-		if(this.deviceInfo.status === constants.CONNECTED_STATUS) {
-			this.$logcatHelper.start(this.identifier);
+	@invokeInit()
+	public async openDeviceLogStream(): Promise<void> {
+		if (this.deviceInfo.status === constants.CONNECTED_STATUS) {
+			await this.$logcatHelper.start(this.identifier);
 		}
 	}
 
-	private getDeviceDetails(shellCommandArgs: string[]): IFuture<IAndroidDeviceDetails> {
-		return (() => {
-			let details = this.adb.executeShellCommand(shellCommandArgs).wait();
+	private async getDeviceDetails(shellCommandArgs: string[]): Promise<IAndroidDeviceDetails> {
+		let details = await this.adb.executeShellCommand(shellCommandArgs);
 
-			let parsedDetails: any = {};
-			details.split(/\r?\n|\r/).forEach((value: any) => {
-				// sample line is "ro.build.version.release=4.4" in /system/build.prop
-				// sample line from getprop is:  [ro.build.version.release]: [6.0]
-				// NOTE: some props do not have value: [ro.build.version.base_os]: []
-				let match = /(?:\[?ro\.build\.version|ro\.product|ro\.build)\.(.+?)]?(?:\:|=)(?:\s*?\[)?(.*?)]?$/.exec(value);
-				if (match) {
-					parsedDetails[match[1]] = match[2];
-				}
-			});
+		let parsedDetails: any = {};
+		details.split(/\r?\n|\r/).forEach((value: any) => {
+			// sample line is "ro.build.version.release=4.4" in /system/build.prop
+			// sample line from getprop is:  [ro.build.version.release]: [6.0]
+			// NOTE: some props do not have value: [ro.build.version.base_os]: []
+			let match = /(?:\[?ro\.build\.version|ro\.product|ro\.build)\.(.+?)]?(?:\:|=)(?:\s*?\[)?(.*?)]?$/.exec(value);
+			if (match) {
+				parsedDetails[match[1]] = match[2];
+			}
+		});
 
-			this.$logger.trace(parsedDetails);
-			return parsedDetails;
-		}).future<IAndroidDeviceDetails>()();
+		this.$logger.trace(parsedDetails);
+		return parsedDetails;
 	}
 
 	private getIsTablet(details: any): boolean {
 		//version 3.x.x (also known as Honeycomb) is a tablet only version
-		return details && ( _.startsWith(details.release, "3.") || _.includes((details.characteristics || '').toLowerCase(), "tablet") );
+		return details && (_.startsWith(details.release, "3.") || _.includes((details.characteristics || '').toLowerCase(), "tablet"));
 	}
 
-	private getType(): IFuture<string> {
-		return (() => {
-			let runningEmulators = this.$androidEmulatorServices.getAllRunningEmulators().wait();
-			if (_.includes(runningEmulators, this.identifier)) {
-				return "Emulator";
-			}
+	private async getType(): Promise<string> {
+		let runningEmulators = await this.$androidEmulatorServices.getAllRunningEmulators();
+		if (_.includes(runningEmulators, this.identifier)) {
+			return "Emulator";
+		}
 
-			return "Device";
-		}).future<string>()();
+		return "Device";
 	}
 }

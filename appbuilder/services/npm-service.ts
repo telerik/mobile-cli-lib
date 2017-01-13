@@ -38,132 +38,124 @@ export class NpmService implements INpmService {
 	}
 
 	@exportedPromise("npmService")
-	public install(projectDir: string, dependencyToInstall?: INpmDependency): IFuture<INpmInstallResult> {
-		return (() => {
-			let npmInstallResult: INpmInstallResult = {};
+	public async install(projectDir: string, dependencyToInstall?: INpmDependency): Promise<INpmInstallResult> {
+		let npmInstallResult: INpmInstallResult = {};
 
-			if (dependencyToInstall) {
-				npmInstallResult.result = {
-					isInstalled: false,
-					isTypesInstalled: false
-				};
+		if (dependencyToInstall) {
+			npmInstallResult.result = {
+				isInstalled: false,
+				isTypesInstalled: false
+			};
 
+			try {
+				await this.npmInstall(projectDir, dependencyToInstall.name, dependencyToInstall.version, ["--save", "--save-exact"]);
+				npmInstallResult.result.isInstalled = true;
+			} catch (err) {
+				npmInstallResult.error = err;
+			}
+
+			if (dependencyToInstall.installTypes && await npmInstallResult.result.isInstalled && this.hasTypesForDependency(dependencyToInstall.name)) {
 				try {
-					this.npmInstall(projectDir, dependencyToInstall.name, dependencyToInstall.version, ["--save", "--save-exact"]).wait();
-					npmInstallResult.result.isInstalled = true;
-				} catch (err) {
-					npmInstallResult.error = err;
-				}
-
-				if (dependencyToInstall.installTypes && npmInstallResult.result.isInstalled && this.hasTypesForDependency(dependencyToInstall.name).wait()) {
-					try {
-						this.installTypingsForDependency(projectDir, dependencyToInstall.name).wait();
-						npmInstallResult.result.isTypesInstalled = true;
-					} catch (err) {
-						npmInstallResult.error = err;
-					}
-				}
-			} else {
-				try {
-					this.npmPrune(projectDir).wait();
-					this.npmInstall(projectDir).wait();
+					await this.installTypingsForDependency(projectDir, dependencyToInstall.name);
+					npmInstallResult.result.isTypesInstalled = true;
 				} catch (err) {
 					npmInstallResult.error = err;
 				}
 			}
+		} else {
+			try {
+				await this.npmPrune(projectDir);
+				await this.npmInstall(projectDir);
+			} catch (err) {
+				npmInstallResult.error = err;
+			}
+		}
 
-			this.generateReferencesFile(projectDir);
+		this.generateReferencesFile(projectDir);
 
-			return npmInstallResult;
-		}).future<INpmInstallResult>()();
+		return npmInstallResult;
 	}
 
 	@exportedPromise("npmService")
-	public uninstall(projectDir: string, dependency: string): IFuture<void> {
-		return (() => {
-			let packageJsonContent = this.getPackageJsonContent(projectDir);
+	public async uninstall(projectDir: string, dependency: string): Promise<void> {
+		let packageJsonContent = this.getPackageJsonContent(projectDir);
 
-			if (packageJsonContent && packageJsonContent.dependencies && packageJsonContent.dependencies[dependency]) {
-				this.npmUninstall(projectDir, dependency, ["--save"]).wait();
-			}
+		if (packageJsonContent && packageJsonContent.dependencies && packageJsonContent.dependencies[dependency]) {
+			await this.npmUninstall(projectDir, dependency, ["--save"]);
+		}
 
-			if (packageJsonContent && packageJsonContent.devDependencies && packageJsonContent.devDependencies[`${NpmService.TYPES_DIRECTORY}${dependency}`]) {
-				this.npmUninstall(projectDir, `${NpmService.TYPES_DIRECTORY}${dependency}`, ["--save-dev"]).wait();
-			}
+		if (packageJsonContent && packageJsonContent.devDependencies && packageJsonContent.devDependencies[`${NpmService.TYPES_DIRECTORY}${dependency}`]) {
+			await this.npmUninstall(projectDir, `${NpmService.TYPES_DIRECTORY}${dependency}`, ["--save-dev"]);
+		}
 
-			this.generateReferencesFile(projectDir);
-		}).future<void>()();
+		this.generateReferencesFile(projectDir);
 	}
 
-	public search(projectDir: string, keywords: string[], args?: string[]): IFuture<IBasicPluginInformation[]> {
-		return ((): IBasicPluginInformation[] => {
-			args = args === undefined ? [] : args;
-			let result: IBasicPluginInformation[] = [];
-			let commandArguments = _.concat(["search"], args, keywords);
-			let spawnResult = this.executeNpmCommandCore(projectDir, commandArguments).wait();
-			if (spawnResult.stderr) {
-				// npm will write "npm WARN Building the local index for the first time, please be patient" to the stderr and if it is the only message on the stderr we should ignore it.
-				let splitError = spawnResult.stderr.trim().split("\n");
-				if (splitError.length > 1 || splitError[0].indexOf("Building the local index for the first time") === -1) {
-					this.$errors.failWithoutHelp(spawnResult.stderr);
-				}
+	public async search(projectDir: string, keywords: string[], args?: string[]): Promise<IBasicPluginInformation[]> {
+		args = args === undefined ? [] : args;
+		let result: IBasicPluginInformation[] = [];
+		let commandArguments = _.concat(["search"], args, keywords);
+		let spawnResult = await this.executeNpmCommandCore(projectDir, commandArguments);
+		if (spawnResult.stderr) {
+			// npm will write "npm WARN Building the local index for the first time, please be patient" to the stderr and if it is the only message on the stderr we should ignore it.
+			let splitError = spawnResult.stderr.trim().split("\n");
+			if (splitError.length > 1 || splitError[0].indexOf("Building the local index for the first time") === -1) {
+				this.$errors.failWithoutHelp(spawnResult.stderr);
+			}
+		}
+
+		// Need to split the result only by \n because the npm result contains only \n and on Windows it will not split correctly when using EOL.
+		// Sample output:
+		// NAME                    DESCRIPTION             AUTHOR        DATE       VERSION  KEYWORDS
+		// cordova-plugin-console  Cordova Console Plugin  =csantanapr…  2016-04-20 1.0.3    cordova console ecosystem:cordova cordova-ios
+		let pluginsRows: string[] = spawnResult.stdout.split("\n");
+
+		// Remove the table headers row.
+		pluginsRows.shift();
+
+		let npmNameGroup = "(\\S+)";
+		let npmDateGroup = "(\\d+-\\d+-\\d+)\\s";
+		let npmFreeTextGroup = "([^=]+)";
+		let npmAuthorsGroup = "((?:=\\S+\\s?)+)\\s+";
+
+		// Should look like this /(\S+)\s+([^=]+)((?:=\S+\s?)+)\s+(\d+-\d+-\d+)\s(\S+)(\s+([^=]+))?/
+		let pluginRowRegExp = new RegExp(`${npmNameGroup}\\s+${npmFreeTextGroup}${npmAuthorsGroup}${npmDateGroup}${npmNameGroup}(\\s+${npmFreeTextGroup})?`);
+
+		_.each(pluginsRows, (pluginRow: string) => {
+			let matches = pluginRowRegExp.exec(pluginRow.trim());
+
+			if (!matches || !matches[0]) {
+				return;
 			}
 
-			// Need to split the result only by \n because the npm result contains only \n and on Windows it will not split correctly when using EOL.
-			// Sample output:
-			// NAME                    DESCRIPTION             AUTHOR        DATE       VERSION  KEYWORDS
-			// cordova-plugin-console  Cordova Console Plugin  =csantanapr…  2016-04-20 1.0.3    cordova console ecosystem:cordova cordova-ios
-			let pluginsRows: string[] = spawnResult.stdout.split("\n");
-
-			// Remove the table headers row.
-			pluginsRows.shift();
-
-			let npmNameGroup = "(\\S+)";
-			let npmDateGroup = "(\\d+-\\d+-\\d+)\\s";
-			let npmFreeTextGroup = "([^=]+)";
-			let npmAuthorsGroup = "((?:=\\S+\\s?)+)\\s+";
-
-			// Should look like this /(\S+)\s+([^=]+)((?:=\S+\s?)+)\s+(\d+-\d+-\d+)\s(\S+)(\s+([^=]+))?/
-			let pluginRowRegExp = new RegExp(`${npmNameGroup}\\s+${npmFreeTextGroup}${npmAuthorsGroup}${npmDateGroup}${npmNameGroup}(\\s+${npmFreeTextGroup})?`);
-
-			_.each(pluginsRows, (pluginRow: string) => {
-				let matches = pluginRowRegExp.exec(pluginRow.trim());
-
-				if (!matches || !matches[0]) {
-					return;
-				}
-
-				result.push({
-					name: matches[1],
-					description: matches[2],
-					author: matches[3],
-					version: matches[5]
-				});
+			result.push({
+				name: matches[1],
+				description: matches[2],
+				author: matches[3],
+				version: matches[5]
 			});
+		});
 
-			return result;
-		}).future<IBasicPluginInformation[]>()();
+		return result;
 	}
 
-	public getPackageJsonFromNpmRegistry(packageName: string, version?: string): IFuture<any> {
-		return (() => {
-			const timeout = 6000;
-			let packageJsonContent: any;
-			version = version || "latest";
-			try {
-				let url = this.buildNpmRegistryUrl(packageName, version).wait(),
-					proxySettings = this.getNpmProxySettings().wait();
+	public async getPackageJsonFromNpmRegistry(packageName: string, version?: string): Promise<any> {
+		const timeout = 6000;
+		let packageJsonContent: any;
+		version = version || "latest";
+		try {
+			let url = await this.buildNpmRegistryUrl(packageName, version),
+				proxySettings = await this.getNpmProxySettings();
 
-				// This call will return error with message '{}' in case there's no such package.
-				let result = this.$httpClient.httpRequest({ url, timeout }, proxySettings).wait().body;
-				packageJsonContent = JSON.parse(result);
-			} catch (err) {
-				this.$logger.trace("Error caught while checking the NPM Registry for plugin with id: %s", packageName);
-				this.$logger.trace(err.message);
-			}
+			// This call will return error with message '{}' in case there's no such package.
+			let result = (await this.$httpClient.httpRequest({ url, timeout }, proxySettings)).body;
+			packageJsonContent = JSON.parse(result);
+		} catch (err) {
+			this.$logger.trace("Error caught while checking the NPM Registry for plugin with id: %s", packageName);
+			this.$logger.trace(err.message);
+		}
 
-			return packageJsonContent;
-		}).future<any>()();
+		return packageJsonContent;
 	}
 
 	public isScopedDependency(dependency: string): boolean {
@@ -182,41 +174,35 @@ export class NpmService implements INpmService {
 		};
 	}
 
-	private hasTypesForDependency(packageName: string): IFuture<boolean> {
-		return (() => {
-			return !!this.getPackageJsonFromNpmRegistry(`${NpmService.TYPES_DIRECTORY}${packageName}`).wait();
-		}).future<boolean>()();
+	private async hasTypesForDependency(packageName: string): Promise<boolean> {
+		return !(await this.getPackageJsonFromNpmRegistry(`${NpmService.TYPES_DIRECTORY}${packageName}`));
 	}
 
-	private buildNpmRegistryUrl(packageName: string, version: string): IFuture<string> {
-		return (() => {
-			let registryUrl = this.getNpmRegistryUrl().wait();
-			if (!_.endsWith(registryUrl, "/")) {
-				registryUrl += "/";
-			}
+	private async buildNpmRegistryUrl(packageName: string, version: string): Promise<string> {
+		let registryUrl = await this.getNpmRegistryUrl();
+		if (!_.endsWith(registryUrl, "/")) {
+			registryUrl += "/";
+		}
 
-			return `${registryUrl}${packageName.replace("/", "%2F")}?version=${encodeURIComponent(version)}`;
-		}).future<string>()();
+		return `${registryUrl}${packageName.replace("/", "%2F")}?version=${encodeURIComponent(version)}`;
 	}
 
-	private getNpmRegistryUrl(): IFuture<string> {
-		return ((): string => {
-			if (!this._npmRegistryUrl) {
-				let currentNpmRegistry: string;
+	private async getNpmRegistryUrl(): Promise<string> {
+		if (!this._npmRegistryUrl) {
+			let currentNpmRegistry: string;
 
-				try {
-					currentNpmRegistry = (this.$childProcess.exec("npm config get registry").wait() || "").toString().trim();
-				} catch (err) {
-					this.$logger.trace(`Unable to get registry from npm config. Error is ${err.message}.`);
-				}
-
-				this._npmRegistryUrl = currentNpmRegistry || NpmService.NPM_REGISTRY_URL;
-
-				this.$logger.trace(`Npm registry is: ${this._npmRegistryUrl}.`);
+			try {
+				currentNpmRegistry = (await this.$childProcess.exec("npm config get registry") || "").toString().trim();
+			} catch (err) {
+				this.$logger.trace(`Unable to get registry from npm config. Error is ${err.message}.`);
 			}
 
-			return this._npmRegistryUrl;
-		}).future<string>()();
+			this._npmRegistryUrl = currentNpmRegistry || NpmService.NPM_REGISTRY_URL;
+
+			this.$logger.trace(`Npm registry is: ${this._npmRegistryUrl}.`);
+		}
+
+		return this._npmRegistryUrl;
 	}
 
 	private getPackageJsonContent(projectDir: string): any {
@@ -241,7 +227,7 @@ export class NpmService implements INpmService {
 		return path.join(projectDir, this.$projectConstants.REFERENCES_FILE_NAME);
 	}
 
-	private installTypingsForDependency(projectDir: string, dependency: string): IFuture<ISpawnResult> {
+	private async installTypingsForDependency(projectDir: string, dependency: string): Promise<ISpawnResult> {
 		return this.npmInstall(projectDir, `${NpmService.TYPES_DIRECTORY}${dependency}`, null, ["--save-dev", "--save-exact"]);
 	}
 
@@ -310,62 +296,58 @@ export class NpmService implements INpmService {
 		return npmArguments.concat([command]);
 	}
 
-	private npmInstall(projectDir: string, dependency?: string, version?: string, npmArguments?: string[]): IFuture<ISpawnResult> {
+	private async npmInstall(projectDir: string, dependency?: string, version?: string, npmArguments?: string[]): Promise<ISpawnResult> {
 		return this.executeNpmCommand(projectDir, this.getNpmArguments("install", npmArguments), dependency, version);
 	}
 
-	private npmUninstall(projectDir: string, dependency?: string, npmArguments?: string[]): IFuture<ISpawnResult> {
+	private async npmUninstall(projectDir: string, dependency?: string, npmArguments?: string[]): Promise<ISpawnResult> {
 		return this.executeNpmCommand(projectDir, this.getNpmArguments("uninstall", npmArguments), dependency, null);
 	}
 
-	private npmPrune(projectDir: string, dependency?: string, version?: string): IFuture<ISpawnResult> {
+	private async npmPrune(projectDir: string, dependency?: string, version?: string): Promise<ISpawnResult> {
 		return this.executeNpmCommand(projectDir, this.getNpmArguments("prune"), dependency, version);
 	}
 
-	private executeNpmCommand(projectDir: string, npmArguments: string[], dependency: string, version?: string): IFuture<ISpawnResult> {
-		return ((): ISpawnResult => {
-			if (dependency) {
-				let dependencyToInstall = dependency;
-				if (version) {
-					dependencyToInstall += `@${version}`;
-				}
-
-				npmArguments.push(dependencyToInstall);
+	private async executeNpmCommand(projectDir: string, npmArguments: string[], dependency: string, version?: string): Promise<ISpawnResult> {
+		if (dependency) {
+			let dependencyToInstall = dependency;
+			if (version) {
+				dependencyToInstall += `@${version}`;
 			}
 
-			return this.executeNpmCommandCore(projectDir, npmArguments).wait();
-		}).future<ISpawnResult>()();
+			npmArguments.push(dependencyToInstall);
+		}
+
+		return await this.executeNpmCommandCore(projectDir, npmArguments);
 	}
 
-	private executeNpmCommandCore(projectDir: string, npmArguments: string[]): IFuture<ISpawnResult> {
+	private async executeNpmCommandCore(projectDir: string, npmArguments: string[]): Promise<ISpawnResult> {
 		return this.$childProcess.spawnFromEvent(this.npmExecutableName, npmArguments, "close", { cwd: projectDir, stdio: "inherit" });
 	}
 
-	private getNpmProxySettings(): IFuture<IProxySettings> {
-		return ((): IProxySettings => {
-			if (!this._hasCheckedNpmProxy) {
-				try {
-					let npmProxy = (this.$childProcess.exec("npm config get proxy").wait() || "").toString().trim();
+	private async getNpmProxySettings(): Promise<IProxySettings> {
+		if (!this._hasCheckedNpmProxy) {
+			try {
+				let npmProxy = (await this.$childProcess.exec("npm config get proxy") || "").toString().trim();
 
-					// npm will return null as string in case there's no proxy set.
-					if (npmProxy && npmProxy !== "null") {
-						let uri = url.parse(npmProxy);
-						this._proxySettings = {
-							hostname: uri.hostname,
-							port: uri.port
-						};
-					}
-				} catch (err) {
-					this.$logger.trace(`Unable to get npm proxy configuration. Error is: ${err.message}.`);
+				// npm will return null as string in case there's no proxy set.
+				if (npmProxy && npmProxy !== "null") {
+					let uri = url.parse(npmProxy);
+					this._proxySettings = {
+						hostname: uri.hostname,
+						port: uri.port
+					};
 				}
-
-				this.$logger.trace("Npm proxy is: ", this._proxySettings);
-
-				this._hasCheckedNpmProxy = true;
+			} catch (err) {
+				this.$logger.trace(`Unable to get npm proxy configuration. Error is: ${err.message}.`);
 			}
 
-			return this._proxySettings;
-		}).future<IProxySettings>()();
+			this.$logger.trace("Npm proxy is: ", this._proxySettings);
+
+			this._hasCheckedNpmProxy = true;
+		}
+
+		return this._proxySettings;
 	}
 }
 $injector.register("npmService", NpmService);

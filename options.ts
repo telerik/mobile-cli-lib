@@ -181,7 +181,7 @@ export class OptionsBase {
 	}
 
 	private setArgv(): void {
-		let opts:  IDictionary<IDashedOption> = <IDictionary<IDashedOption>> {};
+		let opts: IDictionary<IDashedOption> = <IDictionary<IDashedOption>>{};
 		_.each(this.options, (value: IDashedOption, key: string) => {
 			opts[this.getDashedOptionName(key)] = value;
 		});

@@ -5,48 +5,45 @@ export class PrintPluginsService implements IPrintPluginsService {
 
 	private _page: number;
 
-	constructor(private $errors: IErrors,
-		private $logger: ILogger,
+	constructor(private $logger: ILogger,
 		private $prompter: IPrompter) {
 		this._page = 1;
 	}
 
-	public printPlugins(pluginsSource: IPluginsSource, options: IPrintPluginsOptions): IFuture<void> {
-		return (() => {
-			if (!pluginsSource.hasPlugins()) {
-				this.$logger.warn("No plugins found.");
+	public async printPlugins(pluginsSource: IPluginsSource, options: IPrintPluginsOptions): Promise<void> {
+		if (!pluginsSource.hasPlugins()) {
+			this.$logger.warn("No plugins found.");
+			return;
+		}
+
+		let count: number = options.count || PrintPluginsService.COUNT_OF_PLUGINS_TO_DISPLAY;
+
+		if (!isInteractive() || options.showAllPlugins) {
+			let allPlugins = await pluginsSource.getAllPlugins();
+			this.displayTableWithPlugins(allPlugins);
+			return;
+		}
+
+		let pluginsToDisplay: IBasicPluginInformation[] = await pluginsSource.getPlugins(this._page++, count);
+		let shouldDisplayMorePlugins = true;
+
+		this.$logger.out("Available plugins:");
+
+		do {
+			this.displayTableWithPlugins(pluginsToDisplay);
+
+			if (pluginsToDisplay.length < count) {
 				return;
 			}
 
-			let count: number = options.count || PrintPluginsService.COUNT_OF_PLUGINS_TO_DISPLAY;
+			shouldDisplayMorePlugins = await this.$prompter.confirm("Load more plugins?");
 
-			if (!isInteractive() || options.showAllPlugins) {
-				let allPlugins = pluginsSource.getAllPlugins().wait();
-				this.displayTableWithPlugins(allPlugins);
+			pluginsToDisplay = await pluginsSource.getPlugins(this._page++, count);
+
+			if (!pluginsToDisplay || pluginsToDisplay.length < 1) {
 				return;
 			}
-
-			let pluginsToDisplay: IBasicPluginInformation[] = pluginsSource.getPlugins(this._page++, count).wait();
-			let shouldDisplayMorePlugins = true;
-
-			this.$logger.out("Available plugins:");
-
-			do {
-				this.displayTableWithPlugins(pluginsToDisplay);
-
-				if (pluginsToDisplay.length < count) {
-					return;
-				}
-
-				shouldDisplayMorePlugins = this.$prompter.confirm("Load more plugins?").wait();
-
-				pluginsToDisplay = pluginsSource.getPlugins(this._page++, count).wait();
-
-				if (!pluginsToDisplay || pluginsToDisplay.length < 1) {
-					return;
-				}
-			} while (shouldDisplayMorePlugins);
-		}).future<void>()();
+		} while (shouldDisplayMorePlugins);
 	}
 
 	private displayTableWithPlugins(plugins: IBasicPluginInformation[]): void {

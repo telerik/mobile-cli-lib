@@ -24,7 +24,7 @@ export class DeviceLogProvider extends DeviceLogProviderBase {
 			this.$logFilter.loggingLevel = logLevel.toUpperCase();
 
 			_.keys(this.devicesLogOptions).forEach(deviceId => {
-				this.devicesLogOptions[deviceId] = this.devicesLogOptions[deviceId] || <Mobile.IDeviceLogOptions> { };
+				this.devicesLogOptions[deviceId] = this.devicesLogOptions[deviceId] || <Mobile.IDeviceLogOptions>{};
 				this.devicesLogOptions[deviceId].logLevel = this.$logFilter.loggingLevel;
 			});
 		}

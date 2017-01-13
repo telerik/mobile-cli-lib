@@ -17,27 +17,27 @@ export class PluginVariablesHelper implements IPluginVariablesHelper {
 		let varOption = this.$options.var;
 		configuration = configuration ? configuration.toLowerCase() : undefined;
 		let lowerCasedVariableName = variableName.toLowerCase();
-		if(varOption) {
+		if (varOption) {
 			let configVariableValue: string;
 			let generalVariableValue: string;
-			 if(variableName.indexOf(".") !== -1) {
+			if (variableName.indexOf(".") !== -1) {
 				varOption = this.simplifyYargsObject(varOption, configuration);
-			 }
+			}
 			_.each(varOption, (propValue: any, propKey: string) => {
-				if(propKey.toLowerCase() === configuration) {
+				if (propKey.toLowerCase() === configuration) {
 					_.each(propValue, (configPropValue: string, configPropKey: string) => {
-						if(configPropKey.toLowerCase() === lowerCasedVariableName) {
+						if (configPropKey.toLowerCase() === lowerCasedVariableName) {
 							configVariableValue = configPropValue;
 							return false;
 						}
 					});
-				} else if(propKey.toLowerCase() === lowerCasedVariableName) {
+				} else if (propKey.toLowerCase() === lowerCasedVariableName) {
 					generalVariableValue = propValue;
 				}
 			});
 
 			let value = configVariableValue || generalVariableValue;
-			if(value) {
+			if (value) {
 				let obj = Object.create(null);
 				obj[variableName] = value.toString();
 				return obj;
@@ -57,11 +57,11 @@ export class PluginVariablesHelper implements IPluginVariablesHelper {
 	 * @return {any} Converted object if the obj paramater is of type object, otherwise - the object itself.
 	 */
 	public simplifyYargsObject(obj: any, configuration?: string): any {
-		if(obj && typeof(obj) === "object") {
-			let convertedObject:any = Object.create({});
+		if (obj && typeof (obj) === "object") {
+			let convertedObject: any = Object.create({});
 
 			_.each(obj, (propValue: any, propKey: string) => {
-				if(typeof(propValue) !== "object") {
+				if (typeof (propValue) !== "object") {
 					convertedObject[propKey] = propValue;
 					return false;
 				}
@@ -69,7 +69,7 @@ export class PluginVariablesHelper implements IPluginVariablesHelper {
 				configuration = configuration ? configuration.toLowerCase() : undefined;
 				let innerObj = this.simplifyYargsObject(propValue, configuration);
 
-				if(propKey.toLowerCase() === configuration) {
+				if (propKey.toLowerCase() === configuration) {
 					// for --var.debug.DATA.APP.ID testId
 					convertedObject[propKey] = innerObj;
 				} else {

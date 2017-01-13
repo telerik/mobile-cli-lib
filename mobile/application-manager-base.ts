@@ -11,138 +11,125 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 		super();
 	}
 
-	public reinstallApplication(appIdentifier: string, packageFilePath: string): IFuture<void> {
-		return (() => {
-			this.uninstallApplication(appIdentifier).wait();
-			this.installApplication(packageFilePath).wait();
-		}).future<void>()();
+	public async reinstallApplication(appIdentifier: string, packageFilePath: string): Promise<void> {
+		await this.uninstallApplication(appIdentifier);
+		await this.installApplication(packageFilePath);
 	}
 
-	public restartApplication(appIdentifier: string, bundleExecutable?: string, framework?: string): IFuture<void> {
-		return (() => {
-			this.stopApplication(bundleExecutable || appIdentifier).wait();
-			this.startApplication(appIdentifier, framework).wait();
-		}).future<void>()();
+	public async restartApplication(appIdentifier: string, bundleExecutable?: string, framework?: string): Promise<void> {
+		this.stopApplication(bundleExecutable || await appIdentifier);
+		await this.startApplication(appIdentifier, framework);
 	}
 
-	public isApplicationInstalled(appIdentifier: string): IFuture<boolean> {
-		return (() => {
-			if (!this.lastInstalledAppIdentifiers || !this.lastInstalledAppIdentifiers.length) {
-				this.checkForApplicationUpdates().wait();
-			}
+	public async isApplicationInstalled(appIdentifier: string): Promise<boolean> {
+		if (!this.lastInstalledAppIdentifiers || !this.lastInstalledAppIdentifiers.length) {
+			await this.checkForApplicationUpdates();
+		}
 
-			return _.includes(this.lastInstalledAppIdentifiers, appIdentifier);
-		}).future<boolean>()();
+		return _.includes(this.lastInstalledAppIdentifiers, appIdentifier);
 	}
 
 	private isChecking = false;
-	public checkForApplicationUpdates(): IFuture<void> {
-		return (() => {
-			// As this method is called on 500ms, but it's execution may last much longer
-			// use locking, so the next executions will not get into the body, while the first one is still working.
-			// In case we do not break the next executions, we'll report each app as newly installed several times.
-			if (!this.isChecking) {
-				try {
-					this.isChecking = true;
-					let currentlyInstalledAppIdentifiers = this.getInstalledApplications().wait();
-					let previouslyInstalledAppIdentifiers = this.lastInstalledAppIdentifiers || [];
-
-					let newAppIdentifiers = _.difference(currentlyInstalledAppIdentifiers, previouslyInstalledAppIdentifiers);
-					let removedAppIdentifiers = _.difference(previouslyInstalledAppIdentifiers, currentlyInstalledAppIdentifiers);
-
-					this.lastInstalledAppIdentifiers = currentlyInstalledAppIdentifiers;
-
-					_.each(newAppIdentifiers, appIdentifier => this.emit("applicationInstalled", appIdentifier));
-					_.each(removedAppIdentifiers, appIdentifier => this.emit("applicationUninstalled", appIdentifier));
-
-					this.checkForAvailableDebuggableAppsChanges().wait();
-				} finally {
-					this.isChecking = false;
-				}
-			}
-		}).future<void>()();
-	}
-
-	public tryStartApplication(appIdentifier: string, framework?: string): IFuture<void> {
-		return (() => {
+	public async checkForApplicationUpdates(): Promise<void> {
+		// As this method is called on 500ms, but it's execution may last much longer
+		// use locking, so the next executions will not get into the body, while the first one is still working.
+		// In case we do not break the next executions, we'll report each app as newly installed several times.
+		if (!this.isChecking) {
 			try {
-				if (this.canStartApplication()) {
-					this.startApplication(appIdentifier, framework).wait();
-				}
-			} catch (err) {
-				this.$logger.trace(`Unable to start application ${appIdentifier}. Error is: ${err.message}`);
+				this.isChecking = true;
+				let currentlyInstalledAppIdentifiers = await this.getInstalledApplications();
+				let previouslyInstalledAppIdentifiers = this.lastInstalledAppIdentifiers || [];
+
+				let newAppIdentifiers = _.difference(currentlyInstalledAppIdentifiers, previouslyInstalledAppIdentifiers);
+				let removedAppIdentifiers = _.difference(previouslyInstalledAppIdentifiers, currentlyInstalledAppIdentifiers);
+
+				this.lastInstalledAppIdentifiers = currentlyInstalledAppIdentifiers;
+
+				_.each(newAppIdentifiers, appIdentifier => this.emit("applicationInstalled", appIdentifier));
+				_.each(removedAppIdentifiers, appIdentifier => this.emit("applicationUninstalled", appIdentifier));
+
+				await this.checkForAvailableDebuggableAppsChanges();
+			} finally {
+				this.isChecking = false;
 			}
-		}).future<void>()();
+		}
 	}
 
-	public abstract isLiveSyncSupported(appIdentifier: string): IFuture<boolean>;
+	public async tryStartApplication(appIdentifier: string, framework?: string): Promise<void> {
+		try {
+			if (this.canStartApplication()) {
+				await this.startApplication(appIdentifier, framework);
+			}
+		} catch (err) {
+			this.$logger.trace(`Unable to start application ${appIdentifier}. Error is: ${err.message}`);
+		}
+	}
 
-	public abstract installApplication(packageFilePath: string): IFuture<void>;
-	public abstract uninstallApplication(appIdentifier: string): IFuture<void>;
-	public abstract startApplication(appIdentifier: string, framework?: string): IFuture<void>;
-	public abstract stopApplication(appIdentifier: string): IFuture<void>;
-	public abstract getInstalledApplications(): IFuture<string[]>;
-	public abstract getApplicationInfo(applicationIdentifier: string): IFuture<Mobile.IApplicationInfo>;
+	public abstract async isLiveSyncSupported(appIdentifier: string): Promise<boolean>;
+
+	public abstract async installApplication(packageFilePath: string): Promise<void>;
+	public abstract async uninstallApplication(appIdentifier: string): Promise<void>;
+	public abstract async startApplication(appIdentifier: string, framework?: string): Promise<void>;
+	public abstract async stopApplication(appIdentifier: string): Promise<void>;
+	public abstract async getInstalledApplications(): Promise<string[]>;
+	public abstract async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo>;
 	public abstract canStartApplication(): boolean;
-	public abstract getDebuggableApps(): IFuture<Mobile.IDeviceApplicationInformation[]>;
-	public abstract getDebuggableAppViews(appIdentifiers: string[]): IFuture<IDictionary<Mobile.IDebugWebViewInfo[]>>;
+	public abstract async getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]>;
+	public abstract async getDebuggableAppViews(appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>>;
 
-	private checkForAvailableDebuggableAppsChanges(): IFuture<void> {
-		return (() => {
-			let currentlyAvailableDebuggableApps = this.getDebuggableApps().wait();
-			let previouslyAvailableDebuggableApps = this.lastAvailableDebuggableApps || [];
+	private async checkForAvailableDebuggableAppsChanges(): Promise<void> {
+		let currentlyAvailableDebuggableApps = await this.getDebuggableApps();
+		let previouslyAvailableDebuggableApps = this.lastAvailableDebuggableApps || [];
 
-			let newAvailableDebuggableApps = _.differenceBy(currentlyAvailableDebuggableApps, previouslyAvailableDebuggableApps, "appIdentifier");
-			let notAvailableAppsForDebugging = _.differenceBy(previouslyAvailableDebuggableApps, currentlyAvailableDebuggableApps, "appIdentifier");
+		let newAvailableDebuggableApps = _.differenceBy(currentlyAvailableDebuggableApps, previouslyAvailableDebuggableApps, "appIdentifier");
+		let notAvailableAppsForDebugging = _.differenceBy(previouslyAvailableDebuggableApps, currentlyAvailableDebuggableApps, "appIdentifier");
 
-			this.lastAvailableDebuggableApps = currentlyAvailableDebuggableApps;
+		this.lastAvailableDebuggableApps = currentlyAvailableDebuggableApps;
 
-			_.each(newAvailableDebuggableApps, (appInfo: Mobile.IDeviceApplicationInformation) => {
-				this.emit("debuggableAppFound", appInfo);
+		_.each(newAvailableDebuggableApps, (appInfo: Mobile.IDeviceApplicationInformation) => {
+			this.emit("debuggableAppFound", appInfo);
+		});
+
+		_.each(notAvailableAppsForDebugging, (appInfo: Mobile.IDeviceApplicationInformation) => {
+			this.emit("debuggableAppLost", appInfo);
+
+			if (_.has(this.lastAvailableDebuggableAppViews, appInfo.appIdentifier)) {
+				// Prevent emitting debuggableViewLost when application cannot be debugged anymore.
+				delete this.lastAvailableDebuggableAppViews[appInfo.appIdentifier];
+			}
+		});
+
+		let cordovaDebuggableAppIdentifiers = _(currentlyAvailableDebuggableApps)
+			.filter(c => c.framework === TARGET_FRAMEWORK_IDENTIFIERS.Cordova)
+			.map(c => c.appIdentifier)
+			.value();
+
+		let currentlyAvailableAppViews = await this.getDebuggableAppViews(cordovaDebuggableAppIdentifiers);
+
+		_.each(currentlyAvailableAppViews, (currentlyAvailableViews, appIdentifier) => {
+			let previouslyAvailableViews = this.lastAvailableDebuggableAppViews[appIdentifier];
+
+			let newAvailableViews = _.differenceBy(currentlyAvailableViews, previouslyAvailableViews, "id");
+			let notAvailableViews = _.differenceBy(previouslyAvailableViews, currentlyAvailableViews, "id");
+
+			_.each(notAvailableViews, debugWebViewInfo => {
+				this.emit("debuggableViewLost", appIdentifier, debugWebViewInfo);
 			});
 
-			_.each(notAvailableAppsForDebugging, (appInfo: Mobile.IDeviceApplicationInformation) => {
-				this.emit("debuggableAppLost", appInfo);
+			_.each(newAvailableViews, debugWebViewInfo => {
+				this.emit("debuggableViewFound", appIdentifier, debugWebViewInfo);
+			});
 
-				if (_.has(this.lastAvailableDebuggableAppViews, appInfo.appIdentifier)) {
-					// Prevent emitting debuggableViewLost when application cannot be debugged anymore.
-					delete this.lastAvailableDebuggableAppViews[appInfo.appIdentifier];
+			// Determine which of the views had changed since last check and raise debuggableViewChanged event for them:
+			let keptViews = _.differenceBy(currentlyAvailableViews, newAvailableViews, "id");
+			_.each(keptViews, view => {
+				let previousTimeViewInfo = _.find(previouslyAvailableViews, previousView => previousView.id === view.id);
+				if (!_.isEqual(view, previousTimeViewInfo)) {
+					this.emit("debuggableViewChanged", appIdentifier, view);
 				}
 			});
 
-			let cordovaDebuggableAppIdentifiers = _(currentlyAvailableDebuggableApps)
-				.filter(c => c.framework === TARGET_FRAMEWORK_IDENTIFIERS.Cordova)
-				.map(c => c.appIdentifier)
-				.value();
-
-			let currentlyAvailableAppViews = this.getDebuggableAppViews(cordovaDebuggableAppIdentifiers).wait();
-
-			_.each(currentlyAvailableAppViews, (currentlyAvailableViews, appIdentifier) => {
-				let previouslyAvailableViews = this.lastAvailableDebuggableAppViews[appIdentifier];
-
-				let newAvailableViews = _.differenceBy(currentlyAvailableViews, previouslyAvailableViews, "id");
-				let notAvailableViews = _.differenceBy(previouslyAvailableViews, currentlyAvailableViews, "id");
-
-				_.each(notAvailableViews, debugWebViewInfo => {
-					this.emit("debuggableViewLost", appIdentifier, debugWebViewInfo);
-				});
-
-				_.each(newAvailableViews, debugWebViewInfo => {
-					this.emit("debuggableViewFound", appIdentifier, debugWebViewInfo);
-				});
-
-				// Determine which of the views had changed since last check and raise debuggableViewChanged event for them:
-				let keptViews = _.differenceBy(currentlyAvailableViews, newAvailableViews, "id");
-				_.each(keptViews, view => {
-					let previousTimeViewInfo = _.find(previouslyAvailableViews, previousView => previousView.id === view.id);
-					if (!_.isEqual(view, previousTimeViewInfo)) {
-						this.emit("debuggableViewChanged", appIdentifier, view);
-					}
-				});
-
-				this.lastAvailableDebuggableAppViews[appIdentifier] = currentlyAvailableViews;
-			});
-
-		}).future<void>()();
+			this.lastAvailableDebuggableAppViews[appIdentifier] = currentlyAvailableViews;
+		});
 	}
 }

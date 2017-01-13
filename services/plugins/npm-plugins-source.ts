@@ -1,13 +1,9 @@
-import {PluginsSourceBase} from "./plugins-source-base";
-import Future = require("fibers/future");
+import { PluginsSourceBase } from "./plugins-source-base";
 
 export class NpmPluginsSource extends PluginsSourceBase implements IPluginsSource {
-	constructor($progressIndicator: IProgressIndicator,
-		$logger: ILogger,
-		private $childProcess: IChildProcess,
-		private $hostInfo: IHostInfo,
-		private $npmService: INpmService,
-		private $errors: IErrors) {
+	constructor(protected $progressIndicator: IProgressIndicator,
+		protected $logger: ILogger,
+		private $npmService: INpmService) {
 		super($progressIndicator, $logger);
 	}
 
@@ -15,15 +11,13 @@ export class NpmPluginsSource extends PluginsSourceBase implements IPluginsSourc
 		return "Searching for plugins with npm search command.";
 	}
 
-	public getPlugins(page: number, count: number): IFuture<IBasicPluginInformation[]> {
+	public async getPlugins(page: number, count: number): Promise<IBasicPluginInformation[]> {
 		let skip = page * count;
 
-		return Future.fromResult(_.slice(this.plugins, skip, skip + count));
+		return _.slice(this.plugins, skip, skip + count);
 	}
 
-	protected initializeCore(projectDir: string, keywords: string[]): IFuture<void> {
-		return (() => {
-			this.plugins = this.$npmService.search(this.projectDir, keywords).wait();
-		}).future<void>()();
+	protected async initializeCore(projectDir: string, keywords: string[]): Promise<void> {
+		this.plugins = await this.$npmService.search(this.projectDir, keywords);
 	}
 }

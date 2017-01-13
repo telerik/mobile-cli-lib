@@ -1,5 +1,3 @@
-import * as fiberBootstrap from "../../fiber-bootstrap";
-
 // https://github.com/Microsoft/TypeScript/blob/master/src/compiler/tsc.ts#L487-L489
 export const SYNC_WAIT_THRESHOLD = 250; //milliseconds
 
@@ -10,7 +8,7 @@ export class SyncBatch {
 
 	constructor(private $logger: ILogger,
 		private $projectFilesManager: IProjectFilesManager,
-		private done: () => IFuture<void>) { }
+		private done: () => Promise<void>) { }
 
 	private get filesToSync(): string[] {
 		let filteredFiles = _.remove(this.syncQueue, syncFile => this.$projectFilesManager.isFileExcluded(syncFile));
@@ -22,13 +20,11 @@ export class SyncBatch {
 		return this.syncQueue.length > 0;
 	}
 
-	public syncFiles(syncAction: (filesToSync: string[]) => IFuture<void>): IFuture<void> {
-		return (() => {
-			if (this.filesToSync.length > 0) {
-				syncAction(this.filesToSync).wait();
-				this.reset();
-			}
-		}).future<void>()();
+	public async syncFiles(syncAction: (filesToSync: string[]) => Promise<void>): Promise<void> {
+		if (this.filesToSync.length > 0) {
+			await syncAction(this.filesToSync);
+			this.reset();
+		}
 	}
 
 	public addFile(file: string): void {
@@ -43,14 +39,12 @@ export class SyncBatch {
 			this.timer = setTimeout(() => {
 				if (this.syncQueue.length > 0) {
 					this.$logger.trace("Syncing %s", this.syncQueue.join(", "));
-					fiberBootstrap.run(() => {
-						try {
-							this.syncInProgress = true;
-							this.done().wait();
-						} finally {
-							this.syncInProgress = false;
-						}
-					});
+					try {
+						this.syncInProgress = true;
+						this.done();
+					} finally {
+						this.syncInProgress = false;
+					}
 				}
 				this.timer = null;
 			}, SYNC_WAIT_THRESHOLD);
@@ -60,5 +54,4 @@ export class SyncBatch {
 	private reset(): void {
 		this.syncQueue = [];
 	}
-
 }

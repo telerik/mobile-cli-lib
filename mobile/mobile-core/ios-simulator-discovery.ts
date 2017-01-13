@@ -1,6 +1,5 @@
-import {DeviceDiscovery} from "./device-discovery";
-import Future = require("fibers/future");
-import {IOSSimulator} from "./../ios/simulator/ios-simulator-device";
+import { DeviceDiscovery } from "./device-discovery";
+import { IOSSimulator } from "./../ios/simulator/ios-simulator-device";
 
 export class IOSSimulatorDiscovery extends DeviceDiscovery {
 	private cachedSimulator: Mobile.IiSimDevice;
@@ -12,15 +11,17 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 		super();
 	}
 
-	public startLookingForDevices(): IFuture<void> {
-		return this.checkForDevices(new Future<void>());
+	public async startLookingForDevices(): Promise<void> {
+		return new Promise<void>((resolve, reject) => {
+			return this.checkForDevices(resolve, reject);
+		});
 	}
 
-	public checkForDevices(future?: IFuture<void>): IFuture<void> {
+	public async checkForDevices(resolve?: (value?: void | PromiseLike<void>) => void, reject?: (reason?: any) => void): Promise<void> {
 		if (this.$hostInfo.isDarwin) {
-			let currentSimulator:any = null;
-			if (this.isSimulatorRunning().wait()) {
-				currentSimulator = this.$iOSSimResolver.iOSSim.getRunningSimulator();
+			let currentSimulator: any = null;
+			if (await this.isSimulatorRunning()) {
+				currentSimulator = await this.$iOSSimResolver.iOSSim.getRunningSimulator();
 			}
 
 			if (currentSimulator) {
@@ -37,22 +38,18 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 			}
 		}
 
-		if (future) {
-			future.return();
+		if (resolve) {
+			resolve();
 		}
-
-		return future || Future.fromResult();
 	}
 
-	private isSimulatorRunning(): IFuture<boolean> {
-		return (() => {
-			try {
-				let output = this.$childProcess.exec("ps cax | grep launchd_sim").wait();
-				return output.indexOf('launchd_sim') !== -1;
-			} catch(e) {
-				return false;
-			}
-		}).future<boolean>()();
+	private async isSimulatorRunning(): Promise<boolean> {
+		try {
+			let output = await this.$childProcess.exec("ps cax | grep launchd_sim");
+			return output.indexOf('launchd_sim') !== -1;
+		} catch (e) {
+			return false;
+		}
 	}
 
 	private createAndAddDevice(simulator: Mobile.IiSimDevice): void {

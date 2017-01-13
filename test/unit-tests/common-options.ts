@@ -7,7 +7,7 @@ let isExecutionStopped = false;
 
 let knownOpts = {
 	"path1": { type: OptionType.String },
-	"help": { type: OptionType.Boolean } ,
+	"help": { type: OptionType.Boolean },
 	"verbose": { type: OptionType.Boolean, alias: "v" },
 	"profileDir": { type: OptionType.String },
 	"someDashedValue": { type: OptionType.String },
@@ -163,7 +163,7 @@ describe("common options", () => {
 			let options: any = createOptions(testInjector);
 			process.argv.push("--test1");
 			process.argv.push("value");
-			options.validateOptions({test1: {type: OptionType.Array}});
+			options.validateOptions({ test1: { type: OptionType.Array } });
 			process.argv.pop();
 			process.argv.pop();
 			assert.isFalse(isExecutionStopped);
@@ -174,7 +174,7 @@ describe("common options", () => {
 			process.argv.push("--test1");
 			process.argv.push("value");
 			let options = createOptions(testInjector);
-			options.validateOptions({test1: {type: OptionType.String}});
+			options.validateOptions({ test1: { type: OptionType.String } });
 			process.argv.pop();
 			process.argv.pop();
 			assert.isFalse(isExecutionStopped);
@@ -183,12 +183,12 @@ describe("common options", () => {
 		it("does not break execution when valid commandSpecificOptions are passed and user specifies globally valid option", () => {
 			let options = createOptions(testInjector);
 			process.argv.push("--version");
-			options.validateOptions({test1: {type: OptionType.String}});
+			options.validateOptions({ test1: { type: OptionType.String } });
 			process.argv.pop();
 			assert.isFalse(isExecutionStopped);
 		});
 
-		it("breaks execution when valid array option has value with length 0", () =>{
+		it("breaks execution when valid array option has value with length 0", () => {
 			process.argv.push('--arr');
 			let options = createOptions(testInjector);
 			options.validateOptions();
@@ -200,7 +200,7 @@ describe("common options", () => {
 			it("breaks execution when commandSpecificOptions are passed and user tries to use invalid option", () => {
 				process.argv.push("--invalidOption");
 				let options = testInjector.resolve(OptionsBase, { options: knownOpts, defaultProfileDir: "1" });
-				options.validateOptions({test1: {type: OptionType.String}});
+				options.validateOptions({ test1: { type: OptionType.String } });
 				process.argv.pop();
 				assert.isTrue(isExecutionStopped);
 			});
@@ -208,7 +208,7 @@ describe("common options", () => {
 			it("breaks execution when commandSpecificOptions are passed and user tries to use option valid for CLI, but not for this command", () => {
 				process.argv.push("--json");
 				let options = testInjector.resolve(OptionsBase, { options: knownOpts, defaultProfileDir: "1" });
-				options.validateOptions({test1: {type: OptionType.String}});
+				options.validateOptions({ test1: { type: OptionType.String } });
 				process.argv.pop();
 				assert.isTrue(isExecutionStopped);
 			});
@@ -218,7 +218,7 @@ describe("common options", () => {
 				process.argv.push("--profile-dir");
 				process.argv.push(expectedProfileDir);
 				let options = testInjector.resolve(OptionsBase, { options: knownOpts, defaultProfileDir: "1" });
-				options.validateOptions({test1: {type: OptionType.String}});
+				options.validateOptions({ test1: { type: OptionType.String } });
 				assert.equal(options.profileDir, expectedProfileDir);
 				process.argv.pop();
 				process.argv.pop();
@@ -228,8 +228,8 @@ describe("common options", () => {
 
 		// when you pass --option with dash, yargs adds it to yargs.argv in two ways:
 		// for ex. '$ appbuilder login --profile-dir "some dir"' will add profile dir to yargs.argv as: profileDir and profile-dir
-		describe("validates dashed options correctly",() => {
-			it("does not break execution when dashed option with single dash is passed",() => {
+		describe("validates dashed options correctly", () => {
+			it("does not break execution when dashed option with single dash is passed", () => {
 				process.argv.push("profile-dir");
 				process.argv.push("some dir");
 				let options = createOptions(testInjector);
@@ -240,7 +240,7 @@ describe("common options", () => {
 					"Dashed options (profile-dir) are added to yargs.argv in two ways: profile-dir and profileDir");
 			});
 
-			it("does not break execution when dashed option with two dashes is passed",() => {
+			it("does not break execution when dashed option with two dashes is passed", () => {
 				process.argv.push("some-dashed-value");
 				process.argv.push("some dir");
 				let options = createOptions(testInjector);
@@ -251,7 +251,7 @@ describe("common options", () => {
 					"Dashed options (some-dashed-value) are added to yargs.argv in two ways: some-dashed-value and someDashedValue");
 			});
 
-			it("does not break execution when dashed option with a lot of dashes is passed",() => {
+			it("does not break execution when dashed option with a lot of dashes is passed", () => {
 				process.argv.push("a-b-c-d-e-f-g");
 				process.argv.push("some dir");
 				let options = createOptions(testInjector);
@@ -263,7 +263,7 @@ describe("common options", () => {
 					"Dashed options (a-b-c-d-e-f-g) are added to yargs.argv in two ways: a-b-c-d-e-f-g and aBCDEFG.");
 			});
 
-			it("does not break execution when dashed option with two dashes is passed",() => {
+			it("does not break execution when dashed option with two dashes is passed", () => {
 				process.argv.push("--special-dashed-v");
 				let options = createOptions(testInjector);
 				options.validateOptions();

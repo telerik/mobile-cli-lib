@@ -2,7 +2,6 @@ import {assert} from "chai";
 import {Yok} from "../../yok";
 import * as path from "path";
 import * as fs from "fs";
-import * as shelljs from "shelljs";
 import * as classesWithInitMethod from "./mocks/mockClassesWithInitializeMethod";
 
 class MyClass {
@@ -600,15 +599,6 @@ describe("yok", () => {
 		});
 	});
 
-	function deleteDirectory(directory: string): boolean {
-		try {
-			shelljs.rm("-rf", directory);
-		} catch(e) {
-			return false;
-		}
-		return shelljs.error() === null;
-	}
-
 	it("adds whole class to public api when requirePublicClass is used", () => {
 		let injector = new Yok();
 		let dataObject =  {
@@ -627,14 +617,11 @@ describe("yok", () => {
 		// Get the real instance here, so we can delete the file before asserts.
 		// This way we'll keep the directory clean, even if assert fails.
 		let resultFooObject = injector.publicApi.foo;
-		if (!deleteDirectory(filepath)) {
-			console.log(`Unable to delete file used for tests: ${filepath}.`);
-		}
 		assert.isTrue(_.includes(Object.getOwnPropertyNames(injector.publicApi), "foo"));
 		assert.deepEqual(resultFooObject, dataObject);
 	});
 
-	it("automatically calls initialize method of a class when initialize returns IFuture", () => {
+	it("automatically calls initialize method of a class when initialize returns Promise", () => {
 		let injector = new Yok();
 		// Call to requirePublicClass will add the class to publicApi object.
 		injector.requirePublicClass("classWithInitMethod", "./test/unit-tests/mocks/mockClassesWithInitializeMethod");
@@ -644,7 +631,7 @@ describe("yok", () => {
 		assert.isTrue(resultClassWithInitMethod.isInitializedCalled, "isInitalizedCalled is not set to true, so method had not been called");
 	});
 
-	it("automatically calls initialize method of a class when initialize does NOT return IFuture", () => {
+	it("automatically calls initialize method of a class when initialize does NOT return Promise", () => {
 		let injector = new Yok();
 		// Call to requirePublicClass will add the class to publicApi object.
 		injector.requirePublicClass("classWithInitMethod", "./test/unit-tests/mocks/mockClassesWithInitializeMethod");

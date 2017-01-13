@@ -1,5 +1,4 @@
 import { EventEmitter } from "events";
-import Future = require("fibers/future");
 
 export class DeviceDiscovery extends EventEmitter implements Mobile.IDeviceDiscovery {
 	private devices: IDictionary<Mobile.IDevice> = {};
@@ -11,19 +10,19 @@ export class DeviceDiscovery extends EventEmitter implements Mobile.IDeviceDisco
 
 	public removeDevice(deviceIdentifier: string) {
 		let device = this.devices[deviceIdentifier];
-		if(!device) {
+		if (!device) {
 			return;
 		}
 		delete this.devices[deviceIdentifier];
 		this.raiseOnDeviceLost(device);
 	}
 
-	public startLookingForDevices(): IFuture<void> {
-		return Future.fromResult();
+	public async startLookingForDevices(): Promise<void> {
+		return;
 	}
 
-	public checkForDevices(): IFuture<void> {
-		return Future.fromResult();
+	public async checkForDevices(): Promise<void> {
+		return;
 	}
 
 	private raiseOnDeviceFound(device: Mobile.IDevice) {

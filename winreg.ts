@@ -1,4 +1,3 @@
-import Future = require("fibers/future");
 let Registry = require("winreg");
 
 export class WinReg implements IWinReg {
@@ -10,27 +9,27 @@ export class WinReg implements IWinReg {
 		HKU: { registry: Registry.HKU }
 	};
 
-	public getRegistryValue(valueName: string, hive?: IHiveId, key?: string, host?: string): IFuture<IWinRegResult> {
-		let future = new Future<IWinRegResult>();
-		try {
-			let regKey = new Registry({
-				hive: (hive && hive.registry) ? hive.registry : null,
-				key:  key,
-				host: host
-			});
+	public async getRegistryValue(valueName: string, hive?: IHiveId, key?: string, host?: string): Promise<IWinRegResult> {
+		return new Promise<IWinRegResult>((resolve, reject) => {
+			try {
+				let regKey = new Registry({
+					hive: (hive && hive.registry) ? hive.registry : null,
+					key: key,
+					host: host
+				});
 
-			regKey.get(valueName, (err: Error, value: IWinRegResult) => {
-				if (err) {
-					future.throw(err);
-				} else {
-					future.return(value);
-				}
-			});
-		} catch(err) {
-			future.throw(err);
-		}
+				regKey.get(valueName, (err: Error, value: IWinRegResult) => {
+					if (err) {
+						reject(err);
+					} else {
+						resolve(value);
+					}
+				});
+			} catch (err) {
+				reject(err);
+			}
 
-		return future;
+		});
 	}
 }
 $injector.register("winreg", WinReg);
