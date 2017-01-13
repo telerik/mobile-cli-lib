@@ -192,7 +192,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 					if (deviceFilesAction) {
 						await deviceFilesAction(deviceAppData, device, localToDevicePaths);
 					} else {
-						this.transferFiles(deviceAppData, localToDevicePaths, projectFilesPath, ! await filesToSync);
+						await this.transferFiles(deviceAppData, localToDevicePaths, projectFilesPath, !filesToSync);
 					}
 
 					this.$logger.info("Applying changes...");
