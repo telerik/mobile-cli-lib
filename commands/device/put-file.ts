@@ -8,8 +8,7 @@ export class PutFileCommand implements ICommand {
 	public execute(args: string[]): IFuture<void> {
 		return (() => {
 			this.$devicesService.initialize({ deviceId: this.$options.device, skipInferPlatform: true }).wait();
-
-			let action = (device: Mobile.IDevice) =>  { return (() => device.fileSystem.putFile(args[0], args[1]).wait()).future<void>()(); };
+			let action = (device: Mobile.IDevice) =>  { return (() => device.fileSystem.putFile(args[0], args[2], args[1]).wait()).future<void>()(); };
 			this.$devicesService.execute(action).wait();
 		}).future<void>()();
 	}

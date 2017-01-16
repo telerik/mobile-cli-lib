@@ -23,7 +23,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		return this.adb.executeShellCommand(listCommandArgs);
 	}
 
-	public getFile(deviceFilePath: string, outputPath?: string): IFuture<void> {
+	public getFile(deviceFilePath: string, appIdentifier: string, outputPath?: string): IFuture<void> {
 		return (() => {
 			let stdout = !outputPath;
 			if (stdout) {
@@ -46,7 +46,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		}).future<void>()();
  	}
 
-	public putFile(localFilePath: string, deviceFilePath: string): IFuture<void> {
+	public putFile(localFilePath: string, deviceFilePath: string, appIdentifier: string): IFuture<void> {
 		return this.adb.executeCommand(["push", localFilePath, deviceFilePath]);
 	}
 

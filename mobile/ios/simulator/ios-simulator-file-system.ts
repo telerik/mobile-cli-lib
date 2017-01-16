@@ -12,7 +12,7 @@ export class IOSSimulatorFileSystem implements Mobile.IDeviceFileSystem {
 		return this.iosSim.listFiles(devicePath);
 	}
 
-	public getFile(deviceFilePath: string, outputFilePath?: string): IFuture<void> {
+	public getFile(deviceFilePath: string, appIdentifier: string, outputFilePath?: string): IFuture<void> {
 		return (() => {
 			if (outputFilePath) {
 				shelljs.cp("-f", deviceFilePath, outputFilePath);
@@ -20,7 +20,7 @@ export class IOSSimulatorFileSystem implements Mobile.IDeviceFileSystem {
 		}).future<void>()();
 	}
 
-	public putFile(localFilePath: string, deviceFilePath: string): IFuture<void> {
+	public putFile(localFilePath: string, deviceFilePath: string, appIdentifier: string): IFuture<void> {
 		return (() => {
 			shelljs.cp("-f", localFilePath, deviceFilePath);
 		}).future<void>()();
