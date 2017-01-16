@@ -101,7 +101,7 @@ export class IOSAppIdentifier extends AppBuilderDeviceAppDataBase implements ILi
 
 	@cache()
 	public async deviceProjectRootPath(): Promise<string> {
-		if (this.device.isEmulator()) {
+		if (this.device.isEmulator) {
 			let applicationPath = this.$iOSSimResolver.iOSSim.getApplicationPath(this.device.deviceInfo.identifier, this.appIdentifier);
 			return path.join(applicationPath, "www");
 		}
@@ -126,7 +126,7 @@ export class IOSNativeScriptAppIdentifier extends AppBuilderDeviceAppDataBase im
 
 	@cache()
 	public async deviceProjectRootPath(): Promise<string> {
-		if (this.device.isEmulator()) {
+		if (this.device.isEmulator) {
 			let applicationPath = this.$iOSSimResolver.iOSSim.getApplicationPath(this.device.deviceInfo.identifier, this.appIdentifier);
 			return applicationPath;
 		}
