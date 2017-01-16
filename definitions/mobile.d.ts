@@ -89,7 +89,7 @@ declare module Mobile {
 		deviceInfo: Mobile.IDeviceInfo;
 		applicationManager: Mobile.IDeviceApplicationManager;
 		fileSystem: Mobile.IDeviceFileSystem;
-		isEmulator(): Promise<boolean>;
+		isEmulator: boolean;
 		openDeviceLogStream(): Promise<void>;
 		getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo>;
 	}

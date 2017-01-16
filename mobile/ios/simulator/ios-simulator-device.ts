@@ -27,7 +27,7 @@ export class IOSSimulator implements Mobile.IiOSSimulator {
 		};
 	}
 
-	public async isEmulator(): Promise<boolean> {
+	public get isEmulator(): boolean {
 		return true;
 	}
 

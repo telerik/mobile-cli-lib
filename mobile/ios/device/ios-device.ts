@@ -88,7 +88,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		return activeArchitecture;
 	}
 
-	public async isEmulator(): Promise<boolean> {
+	public get isEmulator(): boolean {
 		return false;
 	}
 

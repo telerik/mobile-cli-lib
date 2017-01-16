@@ -21,7 +21,7 @@ export class IOSLiveSyncService implements IDeviceLiveSyncService {
 	}
 
 	public async refreshApplication(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
-		if (this.device.isEmulator()) {
+		if (this.device.isEmulator) {
 			let simulatorLogFilePath = path.join(osenv.home(), `/Library/Developer/CoreSimulator/Devices/${this.device.deviceInfo.identifier}/data/Library/Logs/system.log`);
 			let simulatorLogFileContent = this.$fs.readText(simulatorLogFilePath) || "";
 
