@@ -286,8 +286,8 @@ declare module Mobile {
 
 	interface IDeviceFileSystem {
 		listFiles(devicePath: string, appIdentifier?: string): IFuture<any>;
-		getFile(deviceFilePath: string, outputFilePath?: string): IFuture<void>;
-		putFile(localFilePath: string, deviceFilePath: string): IFuture<void>;
+		getFile(deviceFilePath: string, appIdentifier: string, outputFilePath?: string): IFuture<void>;
+		putFile(localFilePath: string, deviceFilePath: string, appIdentifier: string): IFuture<void>;
 		deleteFile?(deviceFilePath: string, appIdentifier: string): void;
 		transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): IFuture<void>;
 		transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): IFuture<void>;

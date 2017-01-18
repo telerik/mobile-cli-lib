@@ -43,14 +43,17 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		}).future<any>()();
 	}
 
-	public getFile(deviceFilePath: string, outputFilePath?: string): IFuture<void> {
+	public getFile(deviceFilePath: string, appIdentifier: string, outputFilePath?: string,): IFuture<void> {
 		let future = new Future<void>();
+		let houseArrestClient: Mobile.IHouseArrestClient;
 		try {
-			let afcClient = this.resolveAfc();
+			houseArrestClient = this.$injector.resolve(iOSProxyServices.HouseArrestClient, {device: this.device});
+			let afcClient = this.getAfcClient(houseArrestClient, deviceFilePath, appIdentifier);
 			let fileToRead = afcClient.open(deviceFilePath, "r");
 			let fileToWrite = outputFilePath ? this.$fs.createWriteStream(outputFilePath) : process.stdout;
 			if (outputFilePath) {
 				fileToWrite.on("close", () => {
+					houseArrestClient.closeSocket();
 					future.return();
 				});
 			}
@@ -70,15 +73,22 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 			}
 			this.$logger.trace("%s bytes read from %s", size.toString(), deviceFilePath);
 		} catch(err) {
+			if (houseArrestClient) {
+				houseArrestClient.closeSocket();
+			}
 			this.$logger.trace("Error while getting file from device", err);
 			future.throw(err);
 		}
 		return future;
 	}
 
-	public putFile(localFilePath: string, deviceFilePath: string): IFuture<void> {
-		let afcClient = this.resolveAfc();
-		return afcClient.transfer(path.resolve(localFilePath), deviceFilePath);
+	public putFile(localFilePath: string, deviceFilePath: string, appIdentifier: string): IFuture<void> {
+		return (() => {
+			let houseArrestClient: Mobile.IHouseArrestClient = this.$injector.resolve(iOSProxyServices.HouseArrestClient, {device: this.device});
+			let afcClient = this.getAfcClient(houseArrestClient, deviceFilePath, appIdentifier);
+			afcClient.transfer(path.resolve(localFilePath), deviceFilePath).wait();
+			houseArrestClient.closeSocket();
+		}).future<void>()();
 	}
 
 	public deleteFile(deviceFilePath: string, appIdentifier: string): void {
