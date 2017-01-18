@@ -14,8 +14,10 @@ export class Prompter implements IPrompter {
 	}
 
 	public async get(schemas: IPromptSchema[]): Promise<any> {
-		return new Promise((resolve, reject) => {
-			try {
+		let promptResult: any;
+
+		try {
+			promptResult = await new Promise<any>((resolve, reject) => {
 				this.muteStdout();
 
 				if (!helpers.isInteractive()) {
@@ -40,10 +42,12 @@ export class Prompter implements IPrompter {
 						}
 					});
 				}
-			} finally {
-				this.unmuteStdout();
-			}
-		});
+			});
+		} finally {
+			this.unmuteStdout();
+		}
+
+		return promptResult;
 	}
 
 	public async getPassword(prompt: string, options?: IAllowEmpty): Promise<string> {
