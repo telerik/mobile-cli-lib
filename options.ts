@@ -61,7 +61,6 @@ export class OptionsBase {
 			geny: { type: OptionType.String },
 			debugBrk: { type: OptionType.Boolean },
 			debugPort: { type: OptionType.Number },
-			getPort: { type: OptionType.Boolean },
 			start: { type: OptionType.Boolean },
 			stop: { type: OptionType.Boolean },
 			ddi: { type: OptionType.String }, // the path to developer  disk image
