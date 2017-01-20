@@ -38,7 +38,7 @@ export class AndroidLiveSyncService implements Mobile.IAndroidLiveSyncService {
 		await this.device.adb.sendBroadcastToDevice(AndroidLiveSyncService.LIVESYNC_BROADCAST_NAME, { "app-id": appIdentifier });
 	}
 
-	public async createCommandsFileOnDevice(commandsFileDevicePath: string, commands: string[]): Promise<void> {
+	public createCommandsFileOnDevice(commandsFileDevicePath: string, commands: string[]): Promise<void> {
 		return this.device.fileSystem.createFileOnDevice(commandsFileDevicePath, commands.join("\n"));
 	}
 }

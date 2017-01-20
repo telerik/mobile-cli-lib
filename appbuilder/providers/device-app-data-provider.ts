@@ -16,7 +16,7 @@ export class AndroidAppIdentifier extends AppBuilderDeviceAppDataBase implements
 	}
 
 	@cache()
-	public async deviceProjectRootPath(): Promise<string> {
+	public async getDeviceProjectRootPath(): Promise<string> {
 		let deviceTmpDirFormat = "";
 
 		let version = await this.getLiveSyncVersion();
@@ -54,7 +54,7 @@ export class AndroidCompanionAppIdentifier extends AppBuilderCompanionDeviceAppD
 		super($companionAppsService.getCompanionAppIdentifier(TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform), device, platform, $deployHelper);
 	}
 
-	public async deviceProjectRootPath(): Promise<string> {
+	public async getDeviceProjectRootPath(): Promise<string> {
 		return this._getDeviceProjectRootPath(util.format(LiveSyncConstants.DEVICE_TMP_DIR_FORMAT_V3, this.appIdentifier));
 	}
 
@@ -76,7 +76,7 @@ export class AndroidNativeScriptCompanionAppIdentifier extends AppBuilderCompani
 		super($companionAppsService.getCompanionAppIdentifier(TARGET_FRAMEWORK_IDENTIFIERS.NativeScript, platform), device, platform, $deployHelper);
 	}
 
-	public async deviceProjectRootPath(): Promise<string> {
+	public async getDeviceProjectRootPath(): Promise<string> {
 		return util.format(LiveSyncConstants.DEVICE_TMP_DIR_FORMAT_V3, this.appIdentifier);
 	}
 
@@ -100,7 +100,7 @@ export class IOSAppIdentifier extends AppBuilderDeviceAppDataBase implements ILi
 	}
 
 	@cache()
-	public async deviceProjectRootPath(): Promise<string> {
+	public async getDeviceProjectRootPath(): Promise<string> {
 		if (this.device.isEmulator) {
 			let applicationPath = this.$iOSSimResolver.iOSSim.getApplicationPath(this.device.deviceInfo.identifier, this.appIdentifier);
 			return path.join(applicationPath, "www");
@@ -125,7 +125,7 @@ export class IOSNativeScriptAppIdentifier extends AppBuilderDeviceAppDataBase im
 	}
 
 	@cache()
-	public async deviceProjectRootPath(): Promise<string> {
+	public async getDeviceProjectRootPath(): Promise<string> {
 		if (this.device.isEmulator) {
 			let applicationPath = this.$iOSSimResolver.iOSSim.getApplicationPath(this.device.deviceInfo.identifier, this.appIdentifier);
 			return applicationPath;
@@ -144,7 +144,7 @@ export class IOSCompanionAppIdentifier extends AppBuilderCompanionDeviceAppDataB
 		super($companionAppsService.getCompanionAppIdentifier(TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform), device, platform, $deployHelper);
 	}
 
-	public async deviceProjectRootPath(): Promise<string> {
+	public async getDeviceProjectRootPath(): Promise<string> {
 		return LiveSyncConstants.IOS_PROJECT_PATH;
 	}
 
@@ -166,7 +166,7 @@ export class IOSNativeScriptCompanionAppIdentifier extends AppBuilderCompanionDe
 		super($companionAppsService.getCompanionAppIdentifier(TARGET_FRAMEWORK_IDENTIFIERS.NativeScript, platform), device, platform, $deployHelper);
 	}
 
-	public async deviceProjectRootPath(): Promise<string> {
+	public async getDeviceProjectRootPath(): Promise<string> {
 		return LiveSyncConstants.IOS_PROJECT_PATH;
 	}
 
@@ -188,7 +188,7 @@ export class WP8CompanionAppIdentifier extends AppBuilderCompanionDeviceAppDataB
 		super($companionAppsService.getCompanionAppIdentifier(TARGET_FRAMEWORK_IDENTIFIERS.Cordova, platform), device, platform, $deployHelper);
 	}
 
-	public async deviceProjectRootPath(): Promise<string> {
+	public async getDeviceProjectRootPath(): Promise<string> {
 		return ""; // this is used only on Android for Lollipop
 	}
 

@@ -1,7 +1,7 @@
 import * as querystring from "querystring";
 import { DeviceAppDataBase } from "./../../mobile/device-app-data/device-app-data-base";
 
-export class AppBuilderDeviceAppDataBase extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
+export abstract class AppBuilderDeviceAppDataBase extends DeviceAppDataBase implements ILiveSyncDeviceAppData {
 	constructor(_appIdentifier: string,
 		public device: Mobile.IDevice,
 		public platform: string,
@@ -9,9 +9,7 @@ export class AppBuilderDeviceAppDataBase extends DeviceAppDataBase implements IL
 		super(_appIdentifier);
 	}
 
-	public getDeviceProjectRootPath(): Promise<string> {
-		return Promise.resolve("");
-	}
+	public abstract getDeviceProjectRootPath(): Promise<string>;
 
 	public get liveSyncFormat(): string {
 		return null;
