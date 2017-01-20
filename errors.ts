@@ -1,5 +1,6 @@
 import * as util from "util";
 import * as path from "path";
+import { SourceMapConsumer } from "source-map";
 
 // we need this to overwrite .stack property (read-only in Error)
 function Exception() {
@@ -24,7 +25,6 @@ function resolveCallStack(error: Error): string {
 		return line;
 	});
 
-	let SourceMapConsumer = require("./vendor/source-map").sourceMap.SourceMapConsumer;
 	let fs = require("fs");
 
 	let remapped = _.map(parsed, (parsedLine) => {
@@ -47,12 +47,16 @@ function resolveCallStack(error: Error): string {
 		let consumer = new SourceMapConsumer(mapData);
 		let sourcePos = consumer.originalPositionFor({ line: line, column: column });
 
-		let source = path.join(path.dirname(fileName), sourcePos.source);
+		if (sourcePos && sourcePos.source) {
+			let source = path.join(path.dirname(fileName), sourcePos.source);
+			return util.format("    at %s (%s:%s:%s)", functionName, source, sourcePos.line, sourcePos.column);
+		}
 
-		return util.format("    at %s (%s:%s:%s)", functionName, source, sourcePos.line, sourcePos.column);
+		return util.format("    at %s (%s:%s:%s)", functionName, fileName, line, column);
 	});
 
 	let outputMessage = remapped.join("\n");
+
 	if (outputMessage.indexOf(error.message) === -1) {
 		// when fibers throw error in node 0.12.x, the stack does NOT contain the message
 		outputMessage = outputMessage.replace(/Error/, "Error: " + error.message);
