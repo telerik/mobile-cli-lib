@@ -40,19 +40,29 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		walk(devicePath, 0);
 	}
 
-	public getFile(deviceFilePath: string, outputFilePath?: string): Promise<void> {
-		return new Promise<void>((resolve, reject) => {
+	public getFile(deviceFilePath: string, appIdentifier: string, outputFilePath?: string): Promise<void> {
+		return new Promise<void>(async (resolve, reject) => {
+			let houseArrestClient: Mobile.IHouseArrestClient;
+
 			try {
-				let afcClient = this.resolveAfc();
+				houseArrestClient = this.$injector.resolve(iOSProxyServices.HouseArrestClient, { device: this.device });
+
+				let afcClient = await this.getAfcClient(houseArrestClient, deviceFilePath, appIdentifier);
+
 				let fileToRead = afcClient.open(deviceFilePath, "r");
+
 				let fileToWrite = outputFilePath ? this.$fs.createWriteStream(outputFilePath) : process.stdout;
+
 				if (outputFilePath) {
 					fileToWrite.on("close", () => {
+						houseArrestClient.closeSocket();
 						resolve();
 					});
 				}
+
 				let dataSizeToRead = 8192;
 				let size = 0;
+
 				while (true) {
 					let data = fileToRead.read(dataSizeToRead);
 					if (!data || data.length === 0) {
@@ -61,21 +71,30 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 					fileToWrite.write(data);
 					size += data.length;
 				}
+
 				fileToRead.close();
+
 				if (outputFilePath) {
 					fileToWrite.end();
 				}
+
 				this.$logger.trace("%s bytes read from %s", size.toString(), deviceFilePath);
 			} catch (err) {
+				if (houseArrestClient) {
+					houseArrestClient.closeSocket();
+				}
+
 				this.$logger.trace("Error while getting file from device", err);
 				reject(err);
 			}
 		});
 	}
 
-	public putFile(localFilePath: string, deviceFilePath: string): Promise<void> {
-		let afcClient = this.resolveAfc();
-		return afcClient.transfer(path.resolve(localFilePath), deviceFilePath);
+	public async putFile(localFilePath: string, deviceFilePath: string, appIdentifier: string): Promise<void> {
+		let houseArrestClient: Mobile.IHouseArrestClient = this.$injector.resolve(iOSProxyServices.HouseArrestClient, { device: this.device });
+		let afcClient = await this.getAfcClient(houseArrestClient, deviceFilePath, appIdentifier);
+		await afcClient.transfer(path.resolve(localFilePath), deviceFilePath);
+		houseArrestClient.closeSocket();
 	}
 
 	public async deleteFile(deviceFilePath: string, appIdentifier: string): Promise<void> {

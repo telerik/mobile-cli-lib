@@ -21,7 +21,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		return this.adb.executeShellCommand(listCommandArgs);
 	}
 
-	public async getFile(deviceFilePath: string, outputPath?: string): Promise<void> {
+	public async getFile(deviceFilePath: string, appIdentifier: string, outputPath?: string): Promise<void> {
 		let stdout = !outputPath;
 
 		if (stdout) {
@@ -38,6 +38,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 				readStream.on("end", () => {
 					resolve();
 				});
+
 				readStream.on("error", (err: Error) => {
 					reject(err);
 				});
@@ -45,7 +46,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		}
 	}
 
-	public async putFile(localFilePath: string, deviceFilePath: string): Promise<void> {
+	public async putFile(localFilePath: string, deviceFilePath: string, appIdentifier: string): Promise<void> {
 		return this.adb.executeCommand(["push", localFilePath, deviceFilePath]);
 	}
 

@@ -961,7 +961,6 @@ interface ICommonOptions {
 	geny: string;
 	debugBrk: boolean;
 	debugPort: number;
-	getPort: boolean;
 	start: boolean;
 	stop: boolean;
 	ddi: string; // the path to developer  disk image

@@ -10,13 +10,13 @@ export class IOSSimulatorFileSystem implements Mobile.IDeviceFileSystem {
 		return this.iosSim.listFiles(devicePath);
 	}
 
-	public async getFile(deviceFilePath: string, outputFilePath?: string): Promise<void> {
+	public async getFile(deviceFilePath: string, appIdentifier: string, outputFilePath?: string): Promise<void> {
 		if (outputFilePath) {
 			shelljs.cp("-f", deviceFilePath, outputFilePath);
 		}
 	}
 
-	public async putFile(localFilePath: string, deviceFilePath: string): Promise<void> {
+	public async putFile(localFilePath: string, deviceFilePath: string, appIdentifier: string): Promise<void> {
 		shelljs.cp("-f", localFilePath, deviceFilePath);
 	}
 
