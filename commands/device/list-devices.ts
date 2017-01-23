@@ -6,7 +6,7 @@ export class ListDevicesCommand implements ICommand {
 		private $stringParameter: ICommandParameter,
 		private $options: ICommonOptions) { }
 
-	allowedParameters = [this.$stringParameter];
+	public allowedParameters = [this.$stringParameter];
 
 	public async execute(args: string[]): Promise<void> {
 		let index = 1;
@@ -34,13 +34,14 @@ export class ListDevicesCommand implements ICommand {
 		}
 	}
 }
+
 $injector.registerCommand("device|*list", ListDevicesCommand);
 
 class ListAndroidDevicesCommand implements ICommand {
 	constructor(private $injector: IInjector,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) { }
 
-	allowedParameters: ICommandParameter[] = [];
+	public allowedParameters: ICommandParameter[] = [];
 
 	public async execute(args: string[]): Promise<void> {
 		let listDevicesCommand: ICommand = this.$injector.resolve(ListDevicesCommand);
@@ -48,13 +49,14 @@ class ListAndroidDevicesCommand implements ICommand {
 		await listDevicesCommand.execute([platform]);
 	}
 }
+
 $injector.registerCommand("device|android", ListAndroidDevicesCommand);
 
 class ListiOSDevicesCommand implements ICommand {
 	constructor(private $injector: IInjector,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants) { }
 
-	allowedParameters: ICommandParameter[] = [];
+	public allowedParameters: ICommandParameter[] = [];
 
 	public async execute(args: string[]): Promise<void> {
 		let listDevicesCommand: ICommand = this.$injector.resolve(ListDevicesCommand);
@@ -62,4 +64,5 @@ class ListiOSDevicesCommand implements ICommand {
 		await listDevicesCommand.execute([platform]);
 	}
 }
+
 $injector.registerCommand("device|ios", ListiOSDevicesCommand);

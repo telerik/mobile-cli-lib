@@ -1,22 +1,25 @@
-import iOSProxyServices = require("../../../mobile/ios/device/ios-proxy-services");
 import * as path from "path";
 import * as shell from "shelljs";
 let osenv = require("osenv");
-import { LiveSyncConstants } from "../../../constants";
-import { TARGET_FRAMEWORK_IDENTIFIERS } from "../../../constants";
+import * as constants from "../../../constants";
 
 export class IOSLiveSyncService implements IDeviceLiveSyncService {
 	private get $project(): any {
 		return this.$injector.resolve("project");
 	}
 
-	constructor(private _device: Mobile.IiOSDevice,
+	constructor(private _device: Mobile.IDevice,
 		private $fs: IFileSystem,
 		private $injector: IInjector,
 		private $logger: ILogger,
-		private $errors: IErrors) { }
+		private $errors: IErrors,
+		private $options: ICommonOptions,
+		private $iosDeviceOperations: IIOSDeviceOperations) {
+		// If we execute livesync with --watch we do not want to dispose the $iosDeviceOperations.
+		this.$iosDeviceOperations.setShouldDispose(!this.$options.watch);
+	}
 
-	private get device(): Mobile.IiOSDevice {
+	private get device(): Mobile.IDevice {
 		return this._device;
 	}
 
@@ -34,6 +37,7 @@ export class IOSLiveSyncService implements IDeviceLiveSyncService {
 				if (!parsed) {
 					break;
 				}
+
 				guid = parsed[1];
 			}
 
@@ -42,26 +46,32 @@ export class IOSLiveSyncService implements IDeviceLiveSyncService {
 			}
 
 			let sourcePath = await deviceAppData.getDeviceProjectRootPath();
-			let destinationPath = path.join(simulatorCachePath, guid, LiveSyncConstants.IOS_PROJECT_PATH);
+			let destinationPath = path.join(simulatorCachePath, guid, constants.LiveSyncConstants.IOS_PROJECT_PATH);
 
 			this.$logger.trace(`Transferring from ${sourcePath} to ${destinationPath}`);
 			shell.cp("-Rf", path.join(sourcePath, "*"), destinationPath);
 
-			let cfBundleExecutable = `${this.$project.projectData.Framework}${this.$project.projectData.FrameworkVersion.split(".").join("")}`;
-			await this.device.applicationManager.restartApplication(deviceAppData.appIdentifier, cfBundleExecutable);
+			await this.device.applicationManager.restartApplication(deviceAppData.appIdentifier);
 		} else {
-			this.device.fileSystem.deleteFile("/Documents/AppBuilder/ServerInfo.plist", deviceAppData.appIdentifier);
-			let notificationProxyClient = this.$injector.resolve(iOSProxyServices.NotificationProxyClient, { device: this.device });
-			let notification = this.$project.projectData.Framework === TARGET_FRAMEWORK_IDENTIFIERS.NativeScript ? "com.telerik.app.refreshApp" : "com.telerik.app.refreshWebView";
-			notificationProxyClient.postNotification(notification);
-			notificationProxyClient.closeSocket();
+			await this.device.fileSystem.deleteFile("/Documents/AppBuilder/ServerInfo.plist", deviceAppData.appIdentifier);
+			let notification = this.$project.projectData.Framework === constants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript ? "com.telerik.app.refreshApp" : "com.telerik.app.refreshWebView";
+			const notificationData = {
+				deviceId: this.device.deviceInfo.identifier,
+				notificationName: notification,
+				commandType: constants.IOS_POST_NOTIFICATION_COMMAND_TYPE,
+				shouldWaitForResponse: false
+			};
+			await this.$iosDeviceOperations.notify([notificationData]);
 		}
 	}
 
 	public async removeFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
-		localToDevicePaths
-			.map(localToDevicePath => localToDevicePath.getDevicePath())
-			.forEach(deviceFilePath => this.device.fileSystem.deleteFile(deviceFilePath, appIdentifier));
+		const devicePaths = localToDevicePaths.map(localToDevicePath => localToDevicePath.getDevicePath());
+
+		for (let deviceFilePath of devicePaths) {
+			await this.device.fileSystem.deleteFile(deviceFilePath, appIdentifier);
+		}
 	}
 }
+
 $injector.register("iosLiveSyncServiceLocator", { factory: IOSLiveSyncService });

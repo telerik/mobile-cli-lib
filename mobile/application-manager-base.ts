@@ -16,9 +16,9 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 		await this.installApplication(packageFilePath);
 	}
 
-	public async restartApplication(appIdentifier: string, bundleExecutable?: string, framework?: string): Promise<void> {
-		this.stopApplication(bundleExecutable || await appIdentifier);
-		await this.startApplication(appIdentifier, framework);
+	public async restartApplication(appIdentifier: string): Promise<void> {
+		await this.stopApplication(appIdentifier);
+		await this.startApplication(appIdentifier);
 	}
 
 	public async isApplicationInstalled(appIdentifier: string): Promise<boolean> {
@@ -55,10 +55,10 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 		}
 	}
 
-	public async tryStartApplication(appIdentifier: string, framework?: string): Promise<void> {
+	public async tryStartApplication(appIdentifier: string): Promise<void> {
 		try {
 			if (this.canStartApplication()) {
-				await this.startApplication(appIdentifier, framework);
+				await this.startApplication(appIdentifier);
 			}
 		} catch (err) {
 			this.$logger.trace(`Unable to start application ${appIdentifier}. Error is: ${err.message}`);
@@ -69,7 +69,7 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 
 	public abstract async installApplication(packageFilePath: string): Promise<void>;
 	public abstract async uninstallApplication(appIdentifier: string): Promise<void>;
-	public abstract async startApplication(appIdentifier: string, framework?: string): Promise<void>;
+	public abstract async startApplication(appIdentifier: string): Promise<void>;
 	public abstract async stopApplication(appIdentifier: string): Promise<void>;
 	public abstract async getInstalledApplications(): Promise<string[]>;
 	public abstract async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo>;

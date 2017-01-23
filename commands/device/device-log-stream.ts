@@ -24,4 +24,5 @@ export class OpenDeviceLogStreamCommand implements ICommand {
 		await this.$devicesService.execute(action);
 	}
 }
+
 $injector.registerCommand("device|log", OpenDeviceLogStreamCommand);

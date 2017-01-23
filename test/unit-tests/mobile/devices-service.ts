@@ -1143,7 +1143,7 @@ describe("devicesService", () => {
 			it("should check for ios devices.", async () => {
 				let hasCheckedForIosDevices = false;
 
-				$iOSDeviceDiscovery.checkForDevices = async (): Promise<void> => {
+				$iOSDeviceDiscovery.startLookingForDevices = async (): Promise<void> => {
 					hasCheckedForIosDevices = true;
 				};
 
@@ -1383,11 +1383,11 @@ describe("devicesService", () => {
 				deviceDiscovery.startLookingForDevices = async (): Promise<void> => {
 					workingDeviceDiscoveriesCalled.push(true);
 				};
-			});
+		});
 
 			_.each(deviceDiscoveries.deviceDiscoveriesThatThrow, (deviceDiscovery) => {
 				deviceDiscovery.startLookingForDevices = throwErrorFunction;
-			});
+	});
 
 			await devicesService.detectCurrentlyAttachedDevices();
 

@@ -6,6 +6,7 @@ import { SourceMapConsumer } from "source-map";
 function Exception() {
 	/* intentionally left blank */
 }
+
 Exception.prototype = new Error();
 
 function resolveCallStack(error: Error): string {
@@ -46,7 +47,6 @@ function resolveCallStack(error: Error): string {
 
 		let consumer = new SourceMapConsumer(mapData);
 		let sourcePos = consumer.originalPositionFor({ line: line, column: column });
-
 		if (sourcePos && sourcePos.source) {
 			let source = path.join(path.dirname(fileName), sourcePos.source);
 			return util.format("    at %s (%s:%s:%s)", functionName, source, sourcePos.line, sourcePos.column);
