@@ -1,6 +1,7 @@
 let gaze = require("gaze");
 import * as path from "path";
 import * as os from "os";
+
 let hostInfo: IHostInfo = $injector.resolve("hostInfo");
 
 class CancellationService implements ICancellationService {
@@ -14,19 +15,21 @@ class CancellationService implements ICancellationService {
 
 	public async begin(name: string): Promise<void> {
 		let triggerFile = CancellationService.makeKillSwitchFileName(name);
-		if (!this.$fs.exists(triggerFile)) {
-				this.$fs.writeFile(triggerFile, "");
 
-				if (!hostInfo.isWindows) {
-			this.$fs.chmod(triggerFile, "0777");
-		}
+		if (!this.$fs.exists(triggerFile)) {
+			this.$fs.writeFile(triggerFile, "");
+
+			if (!hostInfo.isWindows) {
+				this.$fs.chmod(triggerFile, "0777");
 			}
+		}
 
 		this.$logger.trace("Starting watch on killswitch %s", triggerFile);
 
 		let watcherInitialized = new Promise<IWatcherInstance>((resolve, reject) => {
 			gaze(triggerFile, function (err: any, watcher: any) {
 				this.on("deleted", (filePath: string) => process.exit());
+
 				if (err) {
 					reject(err);
 				} else {
