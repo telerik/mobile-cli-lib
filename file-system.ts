@@ -223,7 +223,7 @@ export class FileSystem implements IFileSystem {
 	public createReadStream(path: string, options?: {
 		flags?: string;
 		encoding?: string;
-		fd?: string;
+		fd?: number;
 		mode?: number;
 		bufferSize?: number;
 	}): NodeJS.ReadableStream {
@@ -349,7 +349,7 @@ export class FileSystem implements IFileSystem {
 		return foundFiles;
 	}
 
-	public async getFileShasum(fileName: string, options?: { algorithm?: string, encoding?: string }): Promise<string> {
+	public async getFileShasum(fileName: string, options?: { algorithm?: string, encoding?: crypto.HexBase64Latin1Encoding }): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
 			let algorithm = (options && options.algorithm) || "sha1";
 			let encoding = (options && options.encoding) || "hex";

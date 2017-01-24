@@ -13,12 +13,14 @@ let lastTrackedExceptionMsg = "";
 let lastUsedEqatecSettings: any;
 let isEqatecStopCalled = false;
 require("../../vendor/EqatecMonitor.min"); // note - it modifies global scope!
-let originalEqatec = global._eqatec;
+
+const cliGlobal = <ICliGlobal>global;
+let originalEqatec = cliGlobal._eqatec;
 
 function setGlobalEqatec(shouldSetUserThrowException: boolean, shouldStartThrow: boolean): void {
-	global._eqatec = {
+	cliGlobal._eqatec = {
 		createSettings: (apiKey: string) => {
-			return {};
+			return <any>{};
 		},
 		createMonitor: (settings: any) => {
 			lastUsedEqatecSettings = settings;
@@ -165,7 +167,7 @@ describe("analytics-service", () => {
 	});
 
 	after(() => {
-		global._eqatec = originalEqatec;
+		cliGlobal._eqatec = originalEqatec;
 	});
 
 	describe("trackFeature", () => {

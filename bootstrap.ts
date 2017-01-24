@@ -1,5 +1,5 @@
-global._ = require("lodash");
-global.$injector = require("./yok").injector;
+(<ICliGlobal>global)._ = require("lodash");
+(<ICliGlobal>global).$injector = require("./yok").injector;
 
 require("colors");
 $injector.require("errors", "./errors");

@@ -1,7 +1,5 @@
-global._ = require("lodash");
-global.$injector = require("../yok").injector;
-// $injector.require("config", "../lib/config");
-// $injector.require("resources", "../lib/resource-loader");
+(<ICliGlobal>global)._ = require("lodash");
+(<ICliGlobal>global).$injector = require("../yok").injector;
 $injector.require("hostInfo", "../host-info");
 $injector.register("config", {});
 

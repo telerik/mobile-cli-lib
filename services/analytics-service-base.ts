@@ -1,7 +1,8 @@
 import * as helpers from "../helpers";
+const cliGlobal = <ICliGlobal>global;
 // HACK
-global.XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
-global.XMLHttpRequest.prototype.withCredentials = false;
+cliGlobal.XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+cliGlobal.XMLHttpRequest.prototype.withCredentials = false;
 // HACK -end
 
 export class AnalyticsServiceBase implements IAnalyticsService {
@@ -172,7 +173,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 
 		require("../vendor/EqatecMonitor.min");
 		analyticsProjectKey = analyticsProjectKey || this.$staticConfig.ANALYTICS_API_KEY;
-		let settings = global._eqatec.createSettings(analyticsProjectKey);
+		let settings = cliGlobal._eqatec.createSettings(analyticsProjectKey);
 		settings.useHttps = false;
 		settings.userAgent = this.getUserAgentString();
 		settings.version = this.$staticConfig.version;
@@ -182,7 +183,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 			logError: this.$logger.debug.bind(this.$logger)
 		};
 
-		this._eqatecMonitor = global._eqatec.createMonitor(settings);
+		this._eqatecMonitor = cliGlobal._eqatec.createMonitor(settings);
 
 		let guid = await this.$userSettingsService.getSettingValue(this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME);
 		if (!guid) {

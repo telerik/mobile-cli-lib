@@ -1,6 +1,7 @@
 import * as prompt from "inquirer";
 import * as helpers from "./helpers";
 import * as readline from "readline";
+import { ReadStream } from "tty";
 let MuteStream = require("mute-stream");
 
 export class Prompter implements IPrompter {
@@ -107,7 +108,7 @@ export class Prompter implements IPrompter {
 
 	private muteStdout(): void {
 		if (helpers.isInteractive()) {
-			process.stdin.setRawMode(true); // After setting rawMode to true, Ctrl+C doesn't work for non node.js events loop i.e device log command
+			(<ReadStream>process.stdin).setRawMode(true); // After setting rawMode to true, Ctrl+C doesn't work for non node.js events loop i.e device log command
 
 			// We need to create mute-stream and to pass it as output to ctrlcReader
 			// This will prevent the prompter to show the user's text twice on the console
@@ -127,7 +128,7 @@ export class Prompter implements IPrompter {
 
 	private unmuteStdout(): void {
 		if (helpers.isInteractive()) {
-			process.stdin.setRawMode(false);
+			(<ReadStream>process.stdin).setRawMode(false);
 			if (this.muteStreamInstance) {
 				// We need to clean the event listeners from the process.stdout because the MuteStream.pipe function calls the pipe function of the Node js Stream which adds event listeners and this can cause memory leak if we display more than ~10 prompts.
 				this.cleanEventListeners(process.stdout);

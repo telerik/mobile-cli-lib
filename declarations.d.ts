@@ -331,7 +331,7 @@ interface IFileSystem {
 	createReadStream(path: string, options?: {
 		flags?: string;
 		encoding?: string;
-		fd?: string;
+		fd?: number;
 		mode?: number;
 		bufferSize?: number;
 		start?: number;
@@ -354,13 +354,14 @@ interface IFileSystem {
 
 	setCurrentUserAsOwner(path: string, owner: string): Promise<void>;
 	enumerateFilesInDirectorySync(directoryPath: string, filterCallback?: (file: string, stat: IFsStats) => boolean, opts?: { enumerateDirectories?: boolean, includeEmptyDirectories?: boolean }): string[];
+
 	/**
 	 * Hashes a file's contents.
 	 * @param {string} fileName Path to file
 	 * @param {Object} options algorithm and digest encoding. Default values are sha1 for algorithm and hex for encoding
 	 * @return {Promise<string>} The computed shasum
 	 */
-	getFileShasum(fileName: string, options?: { algorithm?: string, encoding?: string }): Promise<string>;
+	getFileShasum(fileName: string, options?: { algorithm?: string, encoding?: "latin1" | "hex" | "base64" }): Promise<string>;
 
 	// shell.js wrappers
 	/**

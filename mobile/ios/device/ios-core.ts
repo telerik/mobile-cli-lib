@@ -872,7 +872,7 @@ class PosixSocket implements Mobile.IiOSDeviceSocket {
 		private $coreFoundation: Mobile.ICoreFoundation,
 		private $logger: ILogger,
 		private $errors: IErrors) {
-		this.socket = new net.Socket({ fd: service });
+		this.socket = new net.Socket({ fd: service.toString() });
 	}
 
 	public receiveMessage(): Promise<Mobile.IiOSSocketResponseData | Mobile.IiOSSocketResponseData[]> {
