@@ -1,5 +1,3 @@
-///<reference path="./node.d.ts"/>
-
 declare module minimatch {
 	export interface Options {
 		debug?: boolean;

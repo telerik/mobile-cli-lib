@@ -259,7 +259,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	private createGdbServer(deviceIdentifier: string): Mobile.IGDBServer {
 		if (!this._gdbServer) {
 			let service = this.device.startService(iOSProxyServices.MobileServices.DEBUG_SERVER);
-			let socket = this.$hostInfo.isWindows ? service : new net.Socket({ fd: service });
+			let socket = this.$hostInfo.isWindows ? service : new net.Socket({ fd: service.toString() });
 			this._gdbServer = this.$injector.resolve(GDBServer, { socket: socket, deviceIdentifier: deviceIdentifier });
 			this.$processService.attachToProcessExitSignals(this, this.destroyGdbServer);
 		}

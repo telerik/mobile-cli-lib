@@ -2,6 +2,7 @@ import * as uuid from "uuid";
 import * as net from "net";
 let Table = require("cli-table");
 import { platform, EOL } from "os";
+import { ReadStream } from "tty";
 
 export function deferPromise<T>(): IDeferPromise<T> {
 	let resolve: (value?: T | PromiseLike<T>) => void;
@@ -190,11 +191,11 @@ export function toBoolean(str: any): boolean {
 
 export function block(operation: () => void): void {
 	if (isInteractive()) {
-		process.stdin.setRawMode(false);
+		(<ReadStream>process.stdin).setRawMode(false);
 	}
 	operation();
 	if (isInteractive()) {
-		process.stdin.setRawMode(true);
+		(<ReadStream>process.stdin).setRawMode(true);
 	}
 }
 

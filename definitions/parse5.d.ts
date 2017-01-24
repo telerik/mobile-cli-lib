@@ -3,8 +3,6 @@
 // Definitions by: Nico Jansen <https://github.com/nicojs>, Meirion Hughes <https://github.com/MeirionHughes>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 
-/// <reference path="./node.d.ts" />
-
 declare module 'parse5' {
 	import * as stream from "stream";
 	import * as events from "events";
