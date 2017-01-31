@@ -32,7 +32,6 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 	public async startLookingForDevices(): Promise<void> {
 		await this.ensureAdbServerStarted();
 		await this.checkForDevices();
-
 	}
 
 	public async checkForDevices(): Promise<void> {

@@ -335,6 +335,11 @@ declare module Mobile {
 		hasDevices: boolean;
 		deviceCount: number;
 		execute(action: (device: Mobile.IDevice) => Promise<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: { allowNoDevices?: boolean }): Promise<void>;
+		/**
+		 * Initializes DevicesService, so after that device operations could be executed.
+		 * @param {IDevicesServicesInitializationOptions} data Defines the options which will be used for whole devicesService.
+		 * @return {Promise<void>}
+		 */
 		initialize(data?: IDevicesServicesInitializationOptions): Promise<void>;
 		platform: string;
 		getDevices(): Mobile.IDeviceInfo[];

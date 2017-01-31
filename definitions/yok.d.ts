@@ -27,6 +27,13 @@ interface IInjector extends IDisposable {
 	getChildrenCommandsNames(commandName: string): string[];
 	buildHierarchicalCommand(parentCommandName: string, commandLineArguments: string[]): any;
 	publicApi: any;
+
+	/**
+	 * Defines if it's allowed to override already required module.
+	 * This can be used in order to allow redefinition of modules, for example $logger can be replaced by a plugin.
+	 * Default value is false.
+	 */
+	overrideAlreadyRequiredModule: boolean;
 }
 
 declare var $injector: IInjector;

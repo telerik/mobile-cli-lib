@@ -1,16 +1,8 @@
 import { Yok } from "../../../yok";
 import { assert } from "chai";
-import { CommonLoggerStub } from "../stubs";
-
 import { EventEmitter } from "events";
 import { ProjectConstants } from "../../../appbuilder/project-constants";
 import { DeviceEmitter } from "../../../appbuilder/device-emitter";
-
-class AndroidDeviceDiscoveryMock extends EventEmitter {
-	public async ensureAdbServerStarted(): Promise<void> {
-		return;
-	}
-}
 
 // Injector dependencies must be classes.
 // EventEmitter is function, so our annotate method will fail.
@@ -33,19 +25,15 @@ let companionAppIdentifiers = {
 
 function createTestInjector(): IInjector {
 	let testInjector = new Yok();
-	testInjector.register("androidDeviceDiscovery", AndroidDeviceDiscoveryMock);
+	testInjector.register("androidDeviceDiscovery", CustomEventEmitter);
 	testInjector.register("iOSDeviceDiscovery", CustomEventEmitter);
 	testInjector.register("iOSSimulatorDiscovery", CustomEventEmitter);
-	testInjector.register("devicesService", {
-		initialize: (opts: { skipInferPlatform: boolean }) => Promise.resolve()
-	});
 	testInjector.register("deviceLogProvider", CustomEventEmitter);
 	testInjector.register("companionAppsService", {
 		getAllCompanionAppIdentifiers: () => companionAppIdentifiers
 	});
 
 	testInjector.register("projectConstants", ProjectConstants);
-	testInjector.register("logger", CommonLoggerStub);
 
 	testInjector.register("deviceEmitter", DeviceEmitter);
 
@@ -63,24 +51,6 @@ describe("deviceEmitter", () => {
 		isOpenDeviceLogStreamCalled = false;
 	});
 
-	describe("initialize", () => {
-		it("does not throw when ensureAdbServerStarted throws", async () => {
-			let androidDeviceDiscovery = testInjector.resolve("androidDeviceDiscovery"),
-				logger: CommonLoggerStub = testInjector.resolve("logger");
-
-			androidDeviceDiscovery.ensureAdbServerStarted = async () => {
-				throw new Error("error1");
-			};
-
-			let warnOutput = "";
-			logger.warn = (warnMsg: string) => { warnOutput += warnMsg; };
-
-			await deviceEmitter.initialize();
-			assert.isTrue(warnOutput.indexOf("Unable to start adb server") !== -1, "When ensureAdbServerStarted throws, the string 'Unable to start adb server' must be shown as warning.");
-			assert.isTrue(warnOutput.indexOf("error1") !== -1, "When ensureAdbServerStarted throws, the error message must be shown as warning.");
-		});
-	});
-
 	describe("raises correct events after initialize is called:", () => {
 		let androidDeviceDiscovery: EventEmitter,
 			iOSDeviceDiscovery: EventEmitter,
@@ -90,7 +60,6 @@ describe("deviceEmitter", () => {
 			iOSSimulator: any;
 
 		beforeEach(async () => {
-			await deviceEmitter.initialize();
 			androidDeviceDiscovery = testInjector.resolve("androidDeviceDiscovery");
 			iOSDeviceDiscovery = testInjector.resolve("iOSDeviceDiscovery");
 			iOSSimulatorDiscovery = testInjector.resolve("iOSSimulatorDiscovery");

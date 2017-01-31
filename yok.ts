@@ -43,6 +43,8 @@ export interface IDependency {
 }
 
 export class Yok implements IInjector {
+	public overrideAlreadyRequiredModule: boolean = false;
+
 	constructor() {
 		this.register("injector", this);
 	}
@@ -109,7 +111,12 @@ export class Yok implements IInjector {
 	private addClassToPublicApi(name: string, file: string): void {
 		Object.defineProperty(this.publicApi, name, {
 			get: () => {
-				return this.tryCallInitializeMethod(name);
+				let classInstance = this.modules[name].instance;
+				if (!classInstance) {
+					classInstance = this.resolve(name);
+				}
+
+				return classInstance;
 			}
 		});
 	}
@@ -117,27 +124,9 @@ export class Yok implements IInjector {
 	private resolvePublicApi(name: string, file: string): void {
 		Object.defineProperty(this.publicApi, name, {
 			get: () => {
-				this.tryCallInitializeMethod(name);
 				return this.publicApi.__modules__[name];
 			}
 		});
-	}
-
-	private tryCallInitializeMethod(name: string): any {
-		let classInstance = this.modules[name].instance;
-		if (!classInstance) {
-			classInstance = this.resolve(name);
-			// This is in order to remove  from constructors
-			// as we cannot wait without fiber.
-			if (classInstance.initialize) {
-				let result = classInstance.initialize.apply(classInstance);
-				if (isPromise(result)) {
-					(async () => await result)();
-				}
-			}
-		}
-
-		return classInstance;
 	}
 
 	private requireOne(name: string, file: string): void {
@@ -147,7 +136,7 @@ export class Yok implements IInjector {
 			shared: true
 		};
 
-		if (!this.modules[name]) {
+		if (!this.modules[name] || this.overrideAlreadyRequiredModule) {
 			this.modules[name] = dependency;
 		} else {
 			throw new Error(`module '${name}' require'd twice.`);
