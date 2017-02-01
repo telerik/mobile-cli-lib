@@ -40,4 +40,6 @@ export let TNS_CORE_MODULES = "tns-core-modules";
 export class FileExtensions {
 	static TYPESCRIPT_DEFINITION_FILE = ".d.ts";
 	static TYPESCRIPT_FILE = ".ts";
+	static PNG_FILE = ".png";
+	static NINE_PATCH_PNG_FILE = ".9.png";
 }
