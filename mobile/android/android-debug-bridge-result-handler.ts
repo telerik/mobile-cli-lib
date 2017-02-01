@@ -7,6 +7,10 @@ export class AndroidDebugBridgeResultHandler implements Mobile.IAndroidDebugBrid
 			description: "The device is not authorized.",
 			resultCode: 1
 		}, {
+			name: "No space left on device",
+			description: "No space left on device.",
+			resultCode: 1
+		}, {
 			name: "INSTALL_FAILED_ALREADY_EXISTS",
 			description: "The package is already installed.",
 			resultCode: -1
