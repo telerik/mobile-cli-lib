@@ -16,7 +16,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	private _data: Mobile.IDevicesServicesInitializationOptions;
 	private deviceDetectionInterval: any;
 	private deviceDetectionIntervalPromise: Promise<void>;
-	private isDeviceDetectionIntervalPromiseIsInProgress: boolean;
+	private isDeviceDetectionIntervalInProgress: boolean;
 
 	private get $companionAppsService(): ICompanionAppsService {
 		return this.$injector.resolve("companionAppsService");
@@ -135,12 +135,22 @@ export class DevicesService implements Mobile.IDevicesService {
 	public async detectCurrentlyAttachedDevices(): Promise<void> {
 		try {
 			await this.$iOSDeviceDiscovery.startLookingForDevices();
+		} catch (err) {
+			this.$logger.trace("Error while checking for iOS devices.", err);
+		}
+
+		try {
 			await this.$androidDeviceDiscovery.startLookingForDevices();
+		} catch (err) {
+			this.$logger.trace("Error while checking for Android devices.", err);
+		}
+
+		try {
 			if (this.$hostInfo.isDarwin) {
 				await this.$iOSSimulatorDiscovery.startLookingForDevices();
 			}
 		} catch (err) {
-			this.$logger.trace("Error while detecting devices.", err);
+			this.$logger.trace("Error while checking for iOS Simulators.", err);
 		}
 	}
 
@@ -152,11 +162,11 @@ export class DevicesService implements Mobile.IDevicesService {
 		} else {
 			this.deviceDetectionIntervalPromise = new Promise<void>(async (resolve, reject) => {
 				this.deviceDetectionInterval = setInterval(async () => {
-					if (this.isDeviceDetectionIntervalPromiseIsInProgress) {
+					if (this.isDeviceDetectionIntervalInProgress) {
 						return;
 					}
 
-					this.isDeviceDetectionIntervalPromiseIsInProgress = true;
+					this.isDeviceDetectionIntervalInProgress = true;
 
 					try {
 						await this.$iOSDeviceDiscovery.checkForDevices();
@@ -186,7 +196,7 @@ export class DevicesService implements Mobile.IDevicesService {
 
 					resolve();
 
-					this.isDeviceDetectionIntervalPromiseIsInProgress = false;
+					this.isDeviceDetectionIntervalInProgress = false;
 
 				}, DevicesService.DEVICE_LOOKING_INTERVAL).unref();
 			});
@@ -315,10 +325,12 @@ export class DevicesService implements Mobile.IDevicesService {
 		}
 	}
 
+	@exportedPromise("devicesService")
 	public async initialize(data?: Mobile.IDevicesServicesInitializationOptions): Promise<void> {
 		if (this._isInitialized) {
 			return;
 		}
+
 		data = data || {};
 		this._data = data;
 		let platform = data.platform;
@@ -344,6 +356,7 @@ export class DevicesService implements Mobile.IDevicesService {
 				await this.startLookingForDevices();
 			} else {
 				await this.detectCurrentlyAttachedDevices();
+
 				let devices = this.getDeviceInstances();
 				let platforms = _(devices)
 					.map(device => device.deviceInfo.platform)

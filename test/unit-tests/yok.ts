@@ -1,14 +1,15 @@
-import {assert} from "chai";
-import {Yok} from "../../yok";
+import { assert } from "chai";
+import { Yok } from "../../yok";
 import * as path from "path";
 import * as fs from "fs";
-import * as classesWithInitMethod from "./mocks/mockClassesWithInitializeMethod";
+import * as temp from "temp";
+temp.track();
 
 class MyClass {
-	constructor(private x:string, public y:any) {
+	constructor(private x: string, public y: any) {
 	}
 
-	public checkX():void {
+	public checkX(): void {
 		assert.strictEqual(this.x, "foo");
 	}
 }
@@ -27,9 +28,9 @@ describe("yok", () => {
 
 		it("resolves given constructor", () => {
 			let injector = new Yok();
-			let obj:any;
+			let obj: any;
 			injector.register("foo", () => {
-				obj = {foo:"foo"};
+				obj = { foo: "foo" };
 				return obj;
 			});
 
@@ -40,7 +41,7 @@ describe("yok", () => {
 
 		it("resolves constructed singleton", () => {
 			let injector = new Yok();
-			injector.register("foo", {foo:"foo"});
+			injector.register("foo", { foo: "foo" });
 
 			let r1 = injector.resolve("foo");
 			let r2 = injector.resolve("foo");
@@ -53,7 +54,7 @@ describe("yok", () => {
 			let obj = {};
 			injector.register("foo", obj);
 
-			function Test(foo:any) {
+			function Test(foo: any) {
 				this.foo = foo;
 			}
 
@@ -69,7 +70,7 @@ describe("yok", () => {
 
 			injector.register("foo", obj);
 
-			let Test = (foo:any) => {
+			let Test = (foo: any) => {
 				resultFoo = foo;
 			};
 
@@ -88,7 +89,7 @@ describe("yok", () => {
 
 			injector.register("foo", obj);
 
-			let Test = (foo:any, bar: any) => {
+			let Test = (foo: any, bar: any) => {
 				resultFoo = foo;
 				resultBar = bar;
 			};
@@ -104,7 +105,7 @@ describe("yok", () => {
 			let obj = {};
 			injector.register("foo", obj);
 
-			function Test(foo:any) {
+			function Test(foo: any) {
 				this.foo = foo;
 			}
 
@@ -122,7 +123,7 @@ describe("yok", () => {
 
 			injector.register("foo", obj);
 
-			let Test = (foo:any) => {
+			let Test = (foo: any) => {
 				resultFoo = foo;
 			};
 
@@ -161,7 +162,7 @@ describe("yok", () => {
 			let obj = {};
 			injector.register("foo", obj);
 
-			function Test($foo:any) {
+			function Test($foo: any) {
 				this.foo = $foo;
 			}
 
@@ -176,7 +177,7 @@ describe("yok", () => {
 			injector.register("x", "foo");
 			injector.register("y", 123);
 
-			let result = <MyClass> injector.resolve(MyClass);
+			let result = <MyClass>injector.resolve(MyClass);
 
 			assert.strictEqual(result.y, 123);
 			result.checkX();
@@ -203,7 +204,7 @@ describe("yok", () => {
 		it("throws when it can't resolve a registered command", () => {
 			let injector = new Yok();
 
-			function Command(whatever:any) { /* intentionally left blank */ }
+			function Command(whatever: any) { /* intentionally left blank */ }
 
 			injector.registerCommand("command", Command);
 
@@ -215,7 +216,7 @@ describe("yok", () => {
 
 			function Thing() { /* intentionally left blank */ }
 
-			Thing.prototype.dispose = function() {
+			Thing.prototype.dispose = function () {
 				this.disposed = true;
 			};
 
@@ -241,9 +242,9 @@ describe("yok", () => {
 
 		it("resolves given constructor", () => {
 			let injector = new Yok();
-			let obj:any;
+			let obj: any;
 			injector.register("foo", () => {
-				obj = {foo:"foo"};
+				obj = { foo: "foo" };
 				return obj;
 			});
 
@@ -254,7 +255,7 @@ describe("yok", () => {
 
 		it("resolves constructed singleton", () => {
 			let injector = new Yok();
-			injector.register("foo", {foo:"foo"});
+			injector.register("foo", { foo: "foo" });
 
 			let r1 = injector.resolve("foo");
 			let r2 = injector.resolve("foo");
@@ -370,7 +371,7 @@ describe("yok", () => {
 			injector.register("x", "foo");
 			injector.register("y", 123);
 
-			let result = <MyClass> injector.resolve(MyClass);
+			let result = <MyClass>injector.resolve(MyClass);
 
 			assert.strictEqual(result.y, 123);
 			result.checkX();
@@ -401,7 +402,7 @@ describe("yok", () => {
 			let injector = new Yok();
 
 			class Command {
-				constructor(whatever:any) { /* intentionally left blank */ }
+				constructor(whatever: any) { /* intentionally left blank */ }
 			}
 
 			injector.registerCommand("command", Command);
@@ -428,16 +429,90 @@ describe("yok", () => {
 		});
 	});
 
-	it("throws error when module is required more than once", () => {
+	it("throws error when module is required more than once and overrideAlreadyRequiredModule is false", () => {
 		let injector = new Yok();
 		injector.require("foo", "test");
+		injector.overrideAlreadyRequiredModule = false;
 		assert.throws(() => injector.require("foo", "test2"));
 	});
 
-	it("adds module to public api when requirePublic is used", () => {
-		let injector = new Yok();
-		injector.requirePublic("foo", "test");
-		assert.isTrue(_.includes(Object.getOwnPropertyNames(injector.publicApi), "foo"));
+	it("overrides module when it is required more than once and overrideAlreadyRequiredModule is true", () => {
+		const injector = new Yok();
+		const cliGlobal = <ICliGlobal>global;
+		const injectorCache = cliGlobal.$injector;
+		cliGlobal.$injector = injector;
+		const tmpPathA = temp.path({ prefix: "overrideAlreadyRequiredModule_fileA" });
+		fs.writeFileSync(tmpPathA, `
+"use strict";
+
+class A {
+	constructor() {
+			this.test = 1;
+	}
+}
+$injector.register("a", A);
+			`);
+
+		injector.require("a", tmpPathA);
+
+		const tmpPathB = temp.path({ prefix: "overrideAlreadyRequiredModule_fileB" });
+		fs.writeFileSync(tmpPathB, `
+"use strict";
+
+class A {
+	constructor() {
+			this.test = 2;
+	}
+}
+$injector.register("a", A);
+			`);
+
+		injector.overrideAlreadyRequiredModule = true;
+
+		assert.doesNotThrow(() => injector.require("a", tmpPathB));
+
+		const result: any = injector.resolve("a");
+		assert.deepEqual(result.test, 2);
+		cliGlobal.$injector = injectorCache;
+	});
+
+	describe("requirePublic", () => {
+		it("adds module to public api when requirePublic is used", () => {
+			let injector = new Yok();
+			injector.requirePublic("foo", "test");
+			assert.isTrue(_.includes(Object.getOwnPropertyNames(injector.publicApi), "foo"));
+		});
+
+		it("resolves correct module, when publicApi is accessed", async () => {
+			// The test have to verify that when $injector.requirePublic is used, the $injector will require the file when you try to access the module from publicApi
+			// However there are several problems with testing this functionality (it is used when you require this package, so there should be some integration tests).
+			// We cannot use `$injector.requirePublic("testPublicApi", pathToMock)` directly as the file is already required by mocha,
+			// so when $injector tries to resolve it, it will fail, as cannot require the module twice.
+			// So we have to create a new file, as all files inside test dir are required by mocha before starting the tests.
+			// The file is created in temp dir, but this requires modification of the import statements in it.
+			// Also we have to modify the global $injector, so when the file is required, the $injector.register... will be the same injector that we are testing.
+			const injector = new Yok();
+			const cliGlobal = <ICliGlobal>global;
+			const injectorCache = cliGlobal.$injector;
+			cliGlobal.$injector = injector;
+
+			const testPublicApiFilePath = temp.path({ prefix: "overrideAlreadyRequiredModule_fileA" });
+			const pathToMock = path.join(__dirname, "mocks", "public-api-mocks.js");
+			const originalContent = fs.readFileSync(pathToMock).toString();
+
+			// On Windows we are unable to require paths with single backslash, so replace them with double backslashes.
+			const correctPathToRequireDecorators = "'" + path.join(__dirname, "..", "..", "decorators").replace(/\\/g, "\\\\") + "'";
+			const fixedContent = originalContent.replace(/\".+?decorators\"/, correctPathToRequireDecorators);
+			fs.writeFileSync(testPublicApiFilePath, fixedContent);
+
+			injector.requirePublic("testPublicApi", testPublicApiFilePath);
+
+			const result = 1;
+			assert.ok(injector.publicApi.testPublicApi, "The module testPublicApi must be resolved in its getter and the returned value should not be falsey.");
+			assert.deepEqual(await injector.publicApi.testPublicApi.myMethod(result), result);
+
+			cliGlobal.$injector = injectorCache;
+		});
 	});
 
 	describe("buildHierarchicalCommand", () => {
@@ -601,7 +676,7 @@ describe("yok", () => {
 
 	it("adds whole class to public api when requirePublicClass is used", () => {
 		let injector = new Yok();
-		let dataObject =  {
+		let dataObject = {
 			a: "testA",
 			b: {
 				c: "testC"
@@ -617,27 +692,8 @@ describe("yok", () => {
 		// Get the real instance here, so we can delete the file before asserts.
 		// This way we'll keep the directory clean, even if assert fails.
 		let resultFooObject = injector.publicApi.foo;
+		fs.unlinkSync(filepath);
 		assert.isTrue(_.includes(Object.getOwnPropertyNames(injector.publicApi), "foo"));
 		assert.deepEqual(resultFooObject, dataObject);
-	});
-
-	it("automatically calls initialize method of a class when initialize returns Promise", () => {
-		let injector = new Yok();
-		// Call to requirePublicClass will add the class to publicApi object.
-		injector.requirePublicClass("classWithInitMethod", "./test/unit-tests/mocks/mockClassesWithInitializeMethod");
-		injector.register("classWithInitMethod", classesWithInitMethod.ClassWithFuturizedInitializeMethod);
-		let resultClassWithInitMethod = injector.publicApi.classWithInitMethod;
-		assert.isTrue(_.includes(Object.getOwnPropertyNames(injector.publicApi), "classWithInitMethod"));
-		assert.isTrue(resultClassWithInitMethod.isInitializedCalled, "isInitalizedCalled is not set to true, so method had not been called");
-	});
-
-	it("automatically calls initialize method of a class when initialize does NOT return Promise", () => {
-		let injector = new Yok();
-		// Call to requirePublicClass will add the class to publicApi object.
-		injector.requirePublicClass("classWithInitMethod", "./test/unit-tests/mocks/mockClassesWithInitializeMethod");
-		injector.register("classWithInitMethod", classesWithInitMethod.ClassWithInitializeMethod);
-		let resultClassWithInitMethod = injector.publicApi.classWithInitMethod;
-		assert.isTrue(_.includes(Object.getOwnPropertyNames(injector.publicApi), "classWithInitMethod"));
-		assert.isTrue(resultClassWithInitMethod.isInitializedCalled, "isInitalizedCalled is not set to true, so method had not been called");
 	});
 });
