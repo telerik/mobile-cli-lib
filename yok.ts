@@ -111,12 +111,7 @@ export class Yok implements IInjector {
 	private addClassToPublicApi(name: string, file: string): void {
 		Object.defineProperty(this.publicApi, name, {
 			get: () => {
-				let classInstance = this.modules[name].instance;
-				if (!classInstance) {
-					classInstance = this.resolve(name);
-				}
-
-				return classInstance;
+				return this.resolveInstance(name);
 			}
 		});
 	}
@@ -124,9 +119,19 @@ export class Yok implements IInjector {
 	private resolvePublicApi(name: string, file: string): void {
 		Object.defineProperty(this.publicApi, name, {
 			get: () => {
+				this.resolveInstance(name);
 				return this.publicApi.__modules__[name];
 			}
 		});
+	}
+
+	private resolveInstance(name: string): any {
+		let classInstance = this.modules[name].instance;
+		if (!classInstance) {
+			classInstance = this.resolve(name);
+		}
+
+		return classInstance;
 	}
 
 	private requireOne(name: string, file: string): void {

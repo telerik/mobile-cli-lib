@@ -476,10 +476,43 @@ $injector.register("a", A);
 		cliGlobal.$injector = injectorCache;
 	});
 
-	it("adds module to public api when requirePublic is used", () => {
-		let injector = new Yok();
-		injector.requirePublic("foo", "test");
-		assert.isTrue(_.includes(Object.getOwnPropertyNames(injector.publicApi), "foo"));
+	describe("requirePublic", () => {
+		it("adds module to public api when requirePublic is used", () => {
+			let injector = new Yok();
+			injector.requirePublic("foo", "test");
+			assert.isTrue(_.includes(Object.getOwnPropertyNames(injector.publicApi), "foo"));
+		});
+
+		it("resolves correct module, when publicApi is accessed", async () => {
+			// The test have to verify that when $injector.requirePublic is used, the $injector will require the file when you try to access the module from publicApi
+			// However there are several problems with testing this functionality (it is used when you require this package, so there should be some integration tests).
+			// We cannot use `$injector.requirePublic("testPublicApi", pathToMock)` directly as the file is already required by mocha,
+			// so when $injector tries to resolve it, it will fail, as cannot require the module twice.
+			// So we have to create a new file, as all files inside test dir are required by mocha before starting the tests.
+			// The file is created in temp dir, but this requires modification of the import statements in it.
+			// Also we have to modify the global $injector, so when the file is required, the $injector.register... will be the same injector that we are testing.
+			const injector = new Yok();
+			const cliGlobal = <ICliGlobal>global;
+			const injectorCache = cliGlobal.$injector;
+			cliGlobal.$injector = injector;
+
+			const testPublicApiFilePath = temp.path({ prefix: "overrideAlreadyRequiredModule_fileA" });
+			const pathToMock = path.join(__dirname, "mocks", "public-api-mocks.js");
+			const originalContent = fs.readFileSync(pathToMock).toString();
+
+			// On Windows we are unable to require paths with single backslash, so replace them with double backslashes.
+			const correctPathToRequireDecorators = "'" + path.join(__dirname, "..", "..", "decorators").replace(/\\/g, "\\\\") + "'";
+			const fixedContent = originalContent.replace(/\".+?decorators\"/, correctPathToRequireDecorators);
+			fs.writeFileSync(testPublicApiFilePath, fixedContent);
+
+			injector.requirePublic("testPublicApi", testPublicApiFilePath);
+
+			const result = 1;
+			assert.ok(injector.publicApi.testPublicApi, "The module testPublicApi must be resolved in its getter and the returned value should not be falsey.");
+			assert.deepEqual(await injector.publicApi.testPublicApi.myMethod(result), result);
+
+			cliGlobal.$injector = injectorCache;
+		});
 	});
 
 	describe("buildHierarchicalCommand", () => {
