@@ -1,6 +1,32 @@
 import * as assert from "assert";
 import { isPromise } from "./helpers";
 
+/**
+ * Caches the result of the first execution of the method and returns it whenever it is called instead of executing it again.
+ * Works with methods and getters.
+ * @example
+ * ```
+ * class CacheDecoratorsTest {
+ *
+ * 	@cache()
+ * 	public method(num: number): number {
+ * 		return num;
+ * 	}
+ *
+ * 	@cache()
+ * 	public get property(): any {
+ * 		// execute some heavy operation.
+ * 		return result;
+ * 	}
+ * }
+ *
+ * const instance = new CacheDecoratorsTest();
+ * const result = instance.method(1); // returns 1;
+ *
+ * // all consecutive calls to instance.method will return 1.
+ * const result2 = instance.method(2); // returns 1;
+ * ```
+ */
 export function cache(): any {
 	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> => {
 		let result: any;
@@ -22,6 +48,14 @@ export function cache(): any {
 	};
 }
 
+/**
+ * Calls specific method of the instance before executing the decorated method.
+ * This is usable when some of your methods depend on initialize async method, that cannot be invoked in constructor of the class.
+ * IMPORTANT: The decorated method must be async.
+ * @param {string} methodName The name of the method that will be invoked before calling the decorated method.
+ * @param {any[]} methodArgs Args that will be passed to the method that will be invoked before calling the decorated one.
+ * @return {any} Result of the decorated method.
+ */
 export function invokeBefore(methodName: string, methodArgs?: any[]): any {
 	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> => {
 		const originalValue = descriptor.value;

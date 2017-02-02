@@ -106,6 +106,7 @@ function createTestInjector(): IInjector {
 	testInjector.register("processService", {
 		attachToProcessExitSignals: (context: any, callback: () => Promise<any>) => { /* no implementation required */ }
 	});
+
 	testInjector.register("mobileHelper", {
 		platformNames: ["ios", "android"],
 		validatePlatformName: (platform: string) => platform.toLowerCase(),
@@ -113,18 +114,23 @@ function createTestInjector(): IInjector {
 		isiOSPlatform: (platform: string) => !!(platform && platform.toLowerCase() === "ios"),
 		isAndroidPlatform: (platform: string) => !!(platform && platform.toLowerCase() === "android")
 	});
+
 	testInjector.register("deviceLogProvider", {
 		setLogLevel: (logLevel: string, deviceIdentifier: string) => { /* no implementation required */ }
 	});
 
 	testInjector.register("devicesService", DevicesService);
+
 	testInjector.register("hostInfo", {
 		isDarwin: false
 	});
+
 	testInjector.register("options", {
 		emulator: false
 	});
+
 	testInjector.register("androidProcessService", { /* no implementation required */ });
+
 	return testInjector;
 }
 
@@ -132,7 +138,7 @@ function mockIsAppInstalled(devices: { applicationManager: { isApplicationInstal
 	_.each(devices, (device, index) => device.applicationManager.isApplicationInstalled = (packageName: string) => Promise.resolve(expectedResult[index]));
 }
 
-async function throwErrorFuture(): Promise<void> {
+async function throwErrorFunction(): Promise<void> {
 	throw new Error("error");
 }
 
@@ -1137,7 +1143,7 @@ describe("devicesService", () => {
 			});
 
 			it("should not throw if ios device check fails throws an exception.", async () => {
-				$iOSDeviceDiscovery.checkForDevices = throwErrorFuture;
+				$iOSDeviceDiscovery.checkForDevices = throwErrorFunction;
 
 				await assert.isFulfilled(devicesService.startDeviceDetectionInterval());
 			});
@@ -1163,7 +1169,7 @@ describe("devicesService", () => {
 			});
 
 			it("should not throw if android device check fails throws an exception.", async () => {
-				$androidDeviceDiscovery.startLookingForDevices = throwErrorFuture;
+				$androidDeviceDiscovery.startLookingForDevices = throwErrorFunction;
 
 				await assert.isFulfilled(devicesService.startDeviceDetectionInterval());
 			});
@@ -1200,7 +1206,7 @@ describe("devicesService", () => {
 			});
 
 			it("should not throw if ios simulator check fails throws an exception.", async () => {
-				$iOSSimulatorDiscovery.checkForDevices = throwErrorFuture;
+				$iOSSimulatorDiscovery.checkForDevices = throwErrorFunction;
 
 				await assert.isFulfilled(devicesService.startDeviceDetectionInterval());
 			});
@@ -1238,7 +1244,7 @@ describe("devicesService", () => {
 			});
 
 			it("should check for application updates if the check on one device throws an exception.", async () => {
-				iOSDevice.applicationManager.checkForApplicationUpdates = throwErrorFuture;
+				iOSDevice.applicationManager.checkForApplicationUpdates = throwErrorFunction;
 
 				await devicesService.startDeviceDetectionInterval();
 
@@ -1246,8 +1252,8 @@ describe("devicesService", () => {
 			});
 
 			it("should not throw if all checks for application updates on all devices throw exceptions.", () => {
-				iOSDevice.applicationManager.checkForApplicationUpdates = throwErrorFuture;
-				androidDevice.applicationManager.checkForApplicationUpdates = throwErrorFuture;
+				iOSDevice.applicationManager.checkForApplicationUpdates = throwErrorFunction;
+				androidDevice.applicationManager.checkForApplicationUpdates = throwErrorFunction;
 
 				let callback = () => {
 					devicesService.startDeviceDetectionInterval.call(devicesService);
@@ -1358,12 +1364,45 @@ describe("devicesService", () => {
 			assert.isFalse(hasStartedLookingForIosSimulator);
 		});
 
-		it("should not throw if any of the device discovery services throws an exception.", async () => {
-			$iOSDeviceDiscovery.startLookingForDevices = throwErrorFuture;
+		const assertNotThrowing = async (deviceDiscoveries: { deviceDiscoveriesThatWork: Mobile.IDeviceDiscovery[], deviceDiscoveriesThatThrow: Mobile.IDeviceDiscovery[] }) => {
+			$hostInfo.isDarwin = true;
 
-			const promise = devicesService.detectCurrentlyAttachedDevices();
+			const workingDeviceDiscoveriesCalled: boolean[] = [];
 
-			await assert.isFulfilled(promise);
+			_.each(deviceDiscoveries.deviceDiscoveriesThatWork, (deviceDiscovery) => {
+				deviceDiscovery.startLookingForDevices = async (): Promise<void> => {
+					workingDeviceDiscoveriesCalled.push(true);
+				};
+			});
+
+			_.each(deviceDiscoveries.deviceDiscoveriesThatThrow, (deviceDiscovery) => {
+				deviceDiscovery.startLookingForDevices = throwErrorFunction;
+			});
+
+			await devicesService.detectCurrentlyAttachedDevices();
+
+			assert.deepEqual(workingDeviceDiscoveriesCalled.length, deviceDiscoveries.deviceDiscoveriesThatWork.length,
+				"We should have called startLookingForDevices for each of the device discoveries that work.");
+		};
+
+		it("should not throw if all device discovery services throw exceptions.", async () => {
+			const testData: any = { deviceDiscoveriesThatWork: [], deviceDiscoveriesThatThrow: [$iOSDeviceDiscovery, $androidDeviceDiscovery, $iOSSimulatorDiscovery] };
+			await assertNotThrowing(testData);
+		});
+
+		it("should not throw if iOS device discovery throws an exception and should detect android devices and iOS Simulator.", async () => {
+			const testData: any = { deviceDiscoveriesThatWork: [$iOSDeviceDiscovery], deviceDiscoveriesThatThrow: [$androidDeviceDiscovery, $iOSSimulatorDiscovery] };
+			await assertNotThrowing(testData);
+		});
+
+		it("should not throw if Android device discovery throws an exception and should detect iOS devices and iOS Simulator.", async () => {
+			const testData: any = { deviceDiscoveriesThatWork: [$androidDeviceDiscovery], deviceDiscoveriesThatThrow: [$iOSDeviceDiscovery, $iOSSimulatorDiscovery] };
+			await assertNotThrowing(testData);
+		});
+
+		it("should not throw if iOS Simulator device discovery throws an exception and should detect iOS devices and Android devices.", async () => {
+			const testData: any = { deviceDiscoveriesThatWork: [$iOSSimulatorDiscovery], deviceDiscoveriesThatThrow: [$iOSDeviceDiscovery, $androidDeviceDiscovery] };
+			await assertNotThrowing(testData);
 		});
 	});
 
