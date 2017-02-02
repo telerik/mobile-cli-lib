@@ -1,6 +1,9 @@
 import * as decoratorsLib from "../../decorators";
 import { Yok } from "../../yok";
 import { assert } from "chai";
+import { CacheDecoratorsTest } from "./mocks/decorators-cache";
+import { InvokeBeforeDecoratorsTest } from "./mocks/decorators-invoke-before";
+import { isPromise } from "../../helpers";
 
 describe("decorators", () => {
 	let moduleName = "moduleName", // This is the name of the injected dependency that will be resolved, for example fs, devicesService, etc.
@@ -116,7 +119,6 @@ describe("decorators", () => {
 			promise.then((result: any) => {
 				throw new Error("Then method MUST not be called when promise is rejected!");
 			}, (err: Error) => {
-				// We cannot compare promise.reason() with error directly as node-fibers modify the error.stack property, so deepEqual method fails.
 				assert.deepEqual(err.message, expectedError.message);
 			}).then(done).catch(done);
 		});
@@ -147,7 +149,6 @@ describe("decorators", () => {
 				_.each(promises, (promise, index) => promise.then((result: any) => {
 					onRejected(new Error(`Then method MUST not be called when promise is rejected!. Result of promise is: ${result}`));
 				}, (err: Error) => {
-					// We cannot compare promise.reason() with error directly as node-fibers modify the error.stack property, so deepEqual method fails.
 					if (err.message !== expectedErrors[index].message) {
 						onRejected(new Error(`Error message of rejected promise is not the expected one: expected: "${expectedErrors[index].message}", but was: "${err.message}".`));
 					}
@@ -172,7 +173,6 @@ describe("decorators", () => {
 						onFulfilled();
 					}
 				}, (err: Error) => {
-					// We cannot compare promise.reason() with error directly as node-fibers modify the error.stack property, so deepEqual method fails.
 					assert.deepEqual(err.message, expectedResults[index].message);
 					if (index + 1 === expectedResults.length) {
 						onFulfilled();
@@ -415,6 +415,165 @@ describe("decorators", () => {
 			$injector.register(moduleName, { propertyName: () => Promise.resolve(expectedResults) });
 			generatePublicApiFromExportedDecorator();
 			assert.throws(() => $injector.publicApi.__modules__[moduleName][propertyName](), "Cannot use exported decorator with function returning Promise<T>.");
+		});
+	});
+
+	describe("cache", () => {
+		it("executes implementation of method only once and returns the same result each time whent it is called (number return type)", () => {
+			let count = 0;
+			const descriptor: TypedPropertyDescriptor<any> = {
+				value: (num: string) => { count++; return num; },
+			};
+
+			// cache calling of propertyName as if it's been method.
+			const declaredMethod = decoratorsLib.cache()({}, propertyName, descriptor);
+			const expectedResult = 5;
+			const actualResult = declaredMethod.value(expectedResult);
+			assert.deepEqual(actualResult, expectedResult);
+
+			_.range(10).forEach(iteration => {
+				const currentResult = declaredMethod.value(iteration);
+				assert.deepEqual(currentResult, expectedResult);
+			});
+
+			assert.deepEqual(count, 1);
+		});
+
+		it("works per instance", () => {
+			const instance1 = new CacheDecoratorsTest();
+			const expectedResultForInstance1 = 1;
+			assert.deepEqual(instance1.method(expectedResultForInstance1), expectedResultForInstance1); // the first call should give us the expected result. all consecutive calls must return the same result.
+
+			_.range(10).forEach(iteration => {
+				const currentResult = instance1.method(iteration);
+				assert.deepEqual(currentResult, expectedResultForInstance1);
+			});
+
+			assert.deepEqual(instance1.counter, 1);
+
+			const instance2 = new CacheDecoratorsTest();
+			const expectedResultForInstance2 = 2;
+			assert.deepEqual(instance2.method(expectedResultForInstance2), expectedResultForInstance2, "Instance 2 should return new result."); // the first call should give us the expected result. all consecutive calls must return the same result.
+
+			_.range(10).forEach(iteration => {
+				const currentResult = instance2.method(iteration);
+				assert.deepEqual(currentResult, expectedResultForInstance2);
+			});
+
+			assert.deepEqual(instance2.counter, 1);
+		});
+
+		it("works with method returning promise", async () => {
+			const instance1 = new CacheDecoratorsTest();
+			const expectedResultForInstance1 = 1;
+			assert.deepEqual(await instance1.promisifiedMethod(expectedResultForInstance1), expectedResultForInstance1); // the first call should give us the expected result. all consecutive calls must return the same result.
+
+			for (let iteration = 0; iteration < 10; iteration++) {
+				const promise = instance1.promisifiedMethod(iteration);
+				assert.isTrue(isPromise(promise), "Returned result from the decorator should be promise.");
+				const currentResult = await promise;
+				assert.deepEqual(currentResult, expectedResultForInstance1);
+			}
+
+			assert.deepEqual(instance1.counter, 1);
+		});
+
+		it("works with getters", () => {
+			const instance1 = new CacheDecoratorsTest();
+			const expectedResultForInstance1 = 1;
+			instance1._property = expectedResultForInstance1;
+			assert.deepEqual(instance1.property, expectedResultForInstance1); // the first call should give us the expected result. all consecutive calls must return the same result.
+
+			for (let iteration = 0; iteration < 10; iteration++) {
+				instance1._property = iteration;
+				assert.deepEqual(instance1.property, expectedResultForInstance1);
+			}
+
+			assert.deepEqual(instance1.counter, 1);
+		});
+	});
+
+	describe("invokeBefore", () => {
+		describe("calls method before calling decorated method", () => {
+			const assertIsCalled = async (methodName: string): Promise<void> => {
+				const instance: any = new InvokeBeforeDecoratorsTest();
+				assert.isFalse(instance.isInvokeBeforeMethodCalled);
+				const expectedResult = 1;
+				assert.deepEqual(await instance[methodName](expectedResult), expectedResult);
+				assert.isTrue(instance.isInvokeBeforeMethodCalled);
+			};
+
+			it("when invokeBefore method is sync", async () => {
+				await assertIsCalled("method");
+			});
+
+			it("when invokeBefore method returns Promise", async () => {
+				await assertIsCalled("methodPromisifiedInvokeBefore");
+			});
+		});
+
+		describe("calls method each time before calling decorated method", () => {
+			const assertIsCalled = async (methodName: string): Promise<void> => {
+				const instance: any = new InvokeBeforeDecoratorsTest();
+				assert.isFalse(instance.isInvokeBeforeMethodCalled);
+				const expectedResult = 1;
+				assert.deepEqual(await instance[methodName](expectedResult), expectedResult);
+				assert.isTrue(instance.isInvokeBeforeMethodCalled);
+
+				instance.invokedBeforeCount = 0;
+
+				for (let iteration = 0; iteration < 10; iteration++) {
+					instance.isInvokeBeforeMethodCalled = false;
+					assert.deepEqual(await instance[methodName](iteration), iteration);
+					assert.isTrue(instance.isInvokeBeforeMethodCalled);
+					assert.deepEqual(instance.invokedBeforeCount, iteration + 1);
+				}
+			};
+
+			it("when invokeBefore method is sync", async () => {
+				await assertIsCalled("method");
+			});
+
+			it("when invokeBefore method returns Promise", async () => {
+				await assertIsCalled("methodPromisifiedInvokeBefore");
+			});
+		});
+
+		describe("throws error in case the invokeBefore method throws", () => {
+			const assertThrows = async (methodName: string): Promise<void> => {
+				const instance: any = new InvokeBeforeDecoratorsTest();
+				assert.isFalse(instance.isInvokeBeforeMethodCalled);
+				const expectedResult = 1;
+				await assert.isRejected(instance[methodName](expectedResult), expectedResult);
+				assert.isTrue(instance.isInvokeBeforeMethodCalled);
+			};
+
+			it("when invokeBefore method is sync", async () => {
+				await assertThrows("methodInvokeBeforeThrowing");
+			});
+
+			it("when invokeBefore method is sync", async () => {
+				await assertThrows("methodPromisifiedInvokeBeforeThrowing");
+			});
+		});
+
+		describe("passes correct args to invokeBefore method", () => {
+			const assertIsCalled = async (methodName: string): Promise<void> => {
+				const instance: any = new InvokeBeforeDecoratorsTest();
+				assert.isFalse(instance.isInvokeBeforeMethodCalled);
+				const expectedResult = 1;
+				assert.deepEqual(await instance[methodName](expectedResult), expectedResult);
+				assert.isTrue(instance.isInvokeBeforeMethodCalled);
+				assert.deepEqual(instance.invokedBeforeArgument, "arg1");
+			};
+
+			it("when invokeBefore method is sync", async () => {
+				await assertIsCalled("methodCallingInvokeBeforeWithArgs");
+			});
+
+			it("when invokeBefore method is sync", async () => {
+				await assertIsCalled("methodPromisifiedInvokeBeforeWithArgs");
+			});
 		});
 	});
 });
