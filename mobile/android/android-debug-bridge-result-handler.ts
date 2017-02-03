@@ -3,6 +3,14 @@ import { EOL } from "os";
 export class AndroidDebugBridgeResultHandler implements Mobile.IAndroidDebugBridgeResultHandler {
 	private static ANDROID_DEBUG_BRIDGE_ERRORS: Mobile.IAndroidDebugBridgeError[] = [
 		{
+			name: "device unauthorized",
+			description: "The device is not authorized.",
+			resultCode: 1
+		}, {
+			name: "No space left on device",
+			description: "No space left on device.",
+			resultCode: 1
+		}, {
 			name: "INSTALL_FAILED_ALREADY_EXISTS",
 			description: "The package is already installed.",
 			resultCode: -1
