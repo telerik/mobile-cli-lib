@@ -160,7 +160,9 @@ export class DevicesService implements Mobile.IDevicesService {
 		if (this.deviceDetectionInterval) {
 			this.$logger.trace("Device detection interval is already started. New Interval will not be started.");
 		} else {
-			this.deviceDetectionIntervalPromise = new Promise<void>(async (resolve, reject) => {
+			let isFirstExecution = true;
+
+			this.deviceDetectionIntervalPromise = new Promise<void>((resolve, reject) => {
 				this.deviceDetectionInterval = setInterval(async () => {
 					if (this.isDeviceDetectionIntervalInProgress) {
 						return;
@@ -194,11 +196,15 @@ export class DevicesService implements Mobile.IDevicesService {
 						this.$logger.trace("Error checking for application updates on devices.", err);
 					}
 
-					resolve();
+					if (isFirstExecution) {
+						isFirstExecution = false;
+						resolve();
+						this.deviceDetectionInterval.unref();
+					}
 
 					this.isDeviceDetectionIntervalInProgress = false;
 
-				}, DevicesService.DEVICE_LOOKING_INTERVAL).unref();
+				}, DevicesService.DEVICE_LOOKING_INTERVAL);
 			});
 
 			return this.deviceDetectionIntervalPromise;
