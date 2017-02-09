@@ -27,8 +27,8 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 
 	@hook('install')
 	public async installApplication(packageFilePath: string): Promise<void> {
-		await this.$iosDeviceOperations.install(packageFilePath, [this.device.deviceInfo.identifier], (err: IDeviceOperationError) => {
-			this.$logger.warn(`Failed to install ${packageFilePath} on device with identifier ${err.deviceIdentifier}`);
+		await this.$iosDeviceOperations.install(packageFilePath, [this.device.deviceInfo.identifier], (err: IOSDeviceLib.IDeviceError) => {
+			this.$logger.warn(`Failed to install ${packageFilePath} on device with identifier ${err.deviceId}`);
 		});
 	}
 
@@ -45,18 +45,13 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		const applicationsOnDeviceInfo = _.first((await this.$iosDeviceOperations.apps([deviceIdentifier]))[deviceIdentifier]);
 		const applicationsOnDevice = applicationsOnDeviceInfo ? applicationsOnDeviceInfo.response : [];
 		this.$logger.trace("Result when getting applications for which LiveSync is enabled: ", JSON.stringify(applicationsOnDevice, null, 2));
-		this.applicationsLiveSyncInfos = [];
 
-		const mappedApps = _.map(applicationsOnDevice, app => {
-			return {
-				applicationIdentifier: app.CFBundleIdentifier,
-				isLiveSyncSupported: app.IceniumLiveSyncEnabled,
-				configuration: app.configuration,
-				deviceIdentifier: this.device.deviceInfo.identifier
-			};
-		});
-
-		this.applicationsLiveSyncInfos = this.applicationsLiveSyncInfos.concat(mappedApps);
+		this.applicationsLiveSyncInfos = _.map(applicationsOnDevice, app => ({
+			applicationIdentifier: app.CFBundleIdentifier,
+			isLiveSyncSupported: app.IceniumLiveSyncEnabled,
+			configuration: app.configuration,
+			deviceIdentifier: this.device.deviceInfo.identifier
+		}));
 
 		return this.applicationsLiveSyncInfos;
 	}
@@ -71,8 +66,8 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async uninstallApplication(appIdentifier: string): Promise<void> {
-		await this.$iosDeviceOperations.uninstall(appIdentifier, [this.device.deviceInfo.identifier], (err: IDeviceOperationError) => {
-			this.$logger.warn(`Failed to uninstall install ${appIdentifier} on device with identifier ${err.deviceIdentifier}`);
+		await this.$iosDeviceOperations.uninstall(appIdentifier, [this.device.deviceInfo.identifier], (err: IOSDeviceLib.IDeviceError) => {
+			this.$logger.warn(`Failed to uninstall ${appIdentifier} on device with identifier ${err.deviceId}`);
 		});
 
 		this.$logger.trace("Application %s has been uninstalled successfully.", appIdentifier);
@@ -80,7 +75,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 
 	public async startApplication(appIdentifier: string): Promise<void> {
 		if (this.$hostInfo.isWindows && !this.$staticConfig.enableDeviceRunCommandOnWindows) {
-			// this.$errors.fail("$%s device run command is not supported on Windows for iOS devices.", this.$staticConfig.CLIENT_NAME.toLowerCase());
+			this.$errors.fail("$%s device run command is not supported on Windows for iOS devices.", this.$staticConfig.CLIENT_NAME.toLowerCase());
 		}
 
 		if (!await this.isApplicationInstalled(appIdentifier)) {

@@ -706,7 +706,7 @@ interface IIOSDeviceOperations extends IDisposable {
 
 	downloadFiles(deviceFilePaths: IOSDeviceLib.IFileOperationData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
 
-	uploadFiles(files: IOSDeviceLib.IUploadFilesData[]): Promise<IOSDeviceLib.IDeviceResponse>[];
+	uploadFiles(files: IOSDeviceLib.IUploadFilesData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
 
 	deleteFiles(deleteArray: IOSDeviceLib.IDeleteFileData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
 
@@ -721,12 +721,7 @@ interface IIOSDeviceOperations extends IDisposable {
 	setShouldDispose(shouldDispose: boolean): void;
 }
 
-interface IDeviceOperationError {
-	error: Error;
-	deviceIdentifier: string;
-}
-
-type DeviceOperationErrorHandler = (err: IDeviceOperationError) => void;
+type DeviceOperationErrorHandler = (err: IOSDeviceLib.IDeviceError) => void;
 
 type DeviceInfoCallback = (deviceInfo: IOSDeviceLib.IDeviceActionInfo) => void;
 

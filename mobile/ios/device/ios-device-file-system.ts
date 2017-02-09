@@ -1,5 +1,4 @@
 import { EOL } from "os";
-import { settlePromises } from "../../../helpers";
 
 export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	private static AFC_DELETE_FILE_NOT_FOUND_ERROR = 8;
@@ -40,12 +39,11 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	}
 
 	public async deleteFile(deviceFilePath: string, appIdentifier: string): Promise<void> {
-		await this.$iosDeviceOperations.deleteFiles([{ appId: appIdentifier, destination: deviceFilePath, deviceId: this.device.deviceInfo.identifier }], err => {
-			const error = err.error;
-			this.$logger.trace(`Error while deleting file: ${deviceFilePath}: ${error.message} with code: ${error.code}`);
+		await this.$iosDeviceOperations.deleteFiles([{ appId: appIdentifier, destination: deviceFilePath, deviceId: this.device.deviceInfo.identifier }], (err: IOSDeviceLib.IDeviceError) => {
+			this.$logger.trace(`Error while deleting file: ${deviceFilePath}: ${err.message} with code: ${err.code}`);
 
-			if (error.code !== IOSDeviceFileSystem.AFC_DELETE_FILE_NOT_FOUND_ERROR) {
-				this.$logger.warn(`Cannot delete file: ${deviceFilePath}. Reason: ${error.message}`);
+			if (err.code !== IOSDeviceFileSystem.AFC_DELETE_FILE_NOT_FOUND_ERROR) {
+				this.$logger.warn(`Cannot delete file: ${deviceFilePath}. Reason: ${err.message}`);
 			}
 		});
 	}
@@ -68,12 +66,10 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	}
 
 	private async uploadFilesCore(filesToUpload: IOSDeviceLib.IUploadFilesData[]): Promise<void> {
-		try {
-			await settlePromises(await this.$iosDeviceOperations.uploadFiles(filesToUpload));
-		} catch (err) {
+		await this.$iosDeviceOperations.uploadFiles(filesToUpload, (err: IOSDeviceLib.IDeviceError) => {
 			if (err.deviceId === this.device.deviceInfo.identifier) {
 				throw err;
 			}
-		}
+		});
 	}
 }

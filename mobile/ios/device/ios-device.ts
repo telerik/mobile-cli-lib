@@ -4,10 +4,6 @@ import * as constants from "../../../constants";
 import * as net from "net";
 
 export class IOSDevice implements Mobile.IiOSDevice {
-	// iOS errors are described here with HEX representation
-	// https://github.com/samdmarshall/SDMMobileDevice/blob/763fa8d5a3b72eea86bf854894f8c8bcf5676877/Framework/MobileDevice/Error/SDMMD_Error.h
-	// We receive them as decimal values.
-
 	public applicationManager: Mobile.IDeviceApplicationManager;
 	public fileSystem: Mobile.IDeviceFileSystem;
 	public deviceInfo: Mobile.IDeviceInfo;
@@ -53,7 +49,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 
 	public async openDeviceLogStream(): Promise<void> {
 		if (this.deviceInfo.status !== constants.UNREACHABLE_STATUS) {
-			await this.$iosDeviceOperations.startDeviceLog(this.deviceInfo.identifier, (data: string) => {
+			this.$iosDeviceOperations.startDeviceLog(this.deviceInfo.identifier, (data: string) => {
 				this.$deviceLogProvider.logData(data, this.$devicePlatformsConstants.iOS, this.deviceInfo.identifier);
 			});
 		}
