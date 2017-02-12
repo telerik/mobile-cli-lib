@@ -180,6 +180,46 @@ describe("androidDeviceDiscovery", () => {
 			assert.isTrue(devicesFound.length === 0, "We should have NOT found devices.");
 		});
 
+		const validateDeviceFoundWhenAdbReportsAdditionalMessages = async (adbMessage: string) => {
+			let promise: Promise<void>;
+			androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
+				promise = new Promise<void>((resolve, reject) => {
+					devicesFound.push(device);
+					resolve();
+				});
+			});
+
+			setTimeout(() => {
+				let output = `List of devices attached ${EOL}${adbMessage}${EOL}${androidDeviceIdentifier}	${androidDeviceStatus}${EOL}${EOL}`;
+				mockStdoutEmitter.emit('data', output);
+				mockChildProcess.emit('close', 0);
+			}, 0);
+
+			await androidDeviceDiscovery.checkForDevices();
+			await promise;
+			assert.isTrue(devicesFound.length === 1, "We should have found ONE device.");
+			assert.deepEqual(devicesFound[0].deviceInfo.identifier, androidDeviceIdentifier);
+			assert.deepEqual(devicesFound[0].status, androidDeviceStatus);
+		};
+
+		describe("does not report adb messages as new devices", () => {
+			const adbAdditionalMessages = [
+				`adb server is out of date.  killing...${EOL}* daemon started successfully *`,
+				`adb server version (31) doesn't match this client (36); killing...${EOL}* daemon started successfully *`,
+				"* daemon started successfully *",
+				`* daemon not running. starting it now on port 5037 *${EOL}* daemon started successfully *`
+			];
+
+			for (let index = 0; index < adbAdditionalMessages.length; index++) {
+				const msg = adbAdditionalMessages[index];
+
+				it(`msg: ${msg}`, async () => {
+					await validateDeviceFoundWhenAdbReportsAdditionalMessages(msg);
+				});
+
+			};
+		});
+
 		describe("when device is already found", () => {
 			let defaultAdbOutput = `List of devices attached ${EOL}${androidDeviceIdentifier}	${androidDeviceStatus}${EOL}${EOL}`;
 			beforeEach(async () => {
@@ -312,15 +352,39 @@ describe("androidDeviceDiscovery", () => {
 			androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
 				throw new Error("Devices should not be found.");
 			});
-			let error = new Error("ADB Error");
+
+			const error = new Error("ADB Error");
+
 			try {
 				setTimeout(() => {
 					mockStderrEmitter.emit('data', error);
+					mockChildProcess.emit('close', 1);
 				}, 0);
+
 				await androidDeviceDiscovery.checkForDevices();
 			} catch (err) {
-				assert.deepEqual(err, error);
+				assert.deepEqual(err, error.toString());
 			}
+
+		});
+
+		it("throws error when adb writes on stderr multiple times", async () => {
+			const error1 = new Error("ADB Error");
+			const error2 = new Error("ADB Error 2");
+
+			try {
+				setTimeout(() => {
+					mockStderrEmitter.emit('data', error1);
+					mockStderrEmitter.emit('data', error2);
+					mockChildProcess.emit("close", 1);
+				}, 0);
+
+				await androidDeviceDiscovery.checkForDevices();
+
+			} catch (err) {
+				assert.deepEqual(err, error1.toString() + error2.toString());
+			}
+
 		});
 
 		it("throws error when adb's child process throws error", async () => {

@@ -38,45 +38,48 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 		let result = await this.$adb.executeCommand(["devices"], { returnChildProcess: true });
 		return new Promise<void>((resolve, reject) => {
 			let adbData = "";
-			let isResolved = false;
+			let errorData = "";
+			let isSettled = false;
 
 			result.stdout.on("data", (data: NodeBuffer) => {
 				adbData += data.toString();
 			});
 
 			result.stderr.on("data", (data: NodeBuffer) => {
-				let error = new Error(data.toString());
-				if (reject && !isResolved) {
-					isResolved = true;
-					return reject(error);
-				} else {
-					throw (error);
-				}
+				errorData += (data || "").toString();
 			});
 
 			result.on("error", (error: Error) => {
-				if (reject && !isResolved) {
-					isResolved = true;
-					return reject(error);
-				} else {
-					throw (error);
+				if (reject && !isSettled) {
+					isSettled = true;
+					reject(error);
 				}
 			});
 
 			result.on("close", async (exitCode: any) => {
+				if (errorData && !isSettled) {
+					isSettled = true;
+					reject(errorData);
+					return;
+				}
+
 				await this.checkCurrentData(adbData);
 
-				if (resolve && !isResolved) {
-					isResolved = true;
-					return resolve();
+				if (!isSettled) {
+					isSettled = true;
+					resolve();
 				}
 			});
 		});
 	}
 
 	private async checkCurrentData(result: any): Promise<void> {
-		let currentDevices: IAdbAndroidDeviceInfo[] = result.toString().split(EOL).slice(1)
-			.filter((element: string) => !helpers.isNullOrWhitespace(element))
+		const currentData = result.toString();
+
+		let currentDevices: IAdbAndroidDeviceInfo[] = currentData
+			.split(EOL)
+			.slice(1)
+			.filter((element: string) => !helpers.isNullOrWhitespace(element) && element.indexOf("* daemon ") === -1 && element.indexOf("adb server") === -1)
 			.map((element: string) => {
 				// http://developer.android.com/tools/help/adb.html#devicestatus
 				let data = element.split('\t'),
