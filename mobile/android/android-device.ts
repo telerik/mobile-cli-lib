@@ -59,12 +59,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		this.adb = this.$injector.resolve(DeviceAndroidDebugBridge, { identifier: this.identifier });
 		this.applicationManager = this.$injector.resolve(applicationManagerPath.AndroidApplicationManager, { adb: this.adb, identifier: this.identifier });
 		this.fileSystem = this.$injector.resolve(fileSystemPath.AndroidDeviceFileSystem, { adb: this.adb });
-		let details: IAndroidDeviceDetails;
-		try {
-			details = await this.getDeviceDetails(["getprop"]);
-		} catch (err) {
-			this.$logger.trace(`Error while calling getprop: ${err.message}`);
-		}
+		let details = await this.getDeviceDetails(["getprop"]);
 
 		if (!details || !details.name) {
 			// In older CLI versions we are calling cat /system/build.prop to get details.
@@ -118,20 +113,28 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 	}
 
 	private async getDeviceDetails(shellCommandArgs: string[]): Promise<IAndroidDeviceDetails> {
-		let details = await this.adb.executeShellCommand(shellCommandArgs);
-
 		let parsedDetails: any = {};
-		details.split(/\r?\n|\r/).forEach((value: any) => {
-			// sample line is "ro.build.version.release=4.4" in /system/build.prop
-			// sample line from getprop is:  [ro.build.version.release]: [6.0]
-			// NOTE: some props do not have value: [ro.build.version.base_os]: []
-			let match = /(?:\[?ro\.build\.version|ro\.product|ro\.build)\.(.+?)]?(?:\:|=)(?:\s*?\[)?(.*?)]?$/.exec(value);
-			if (match) {
-				parsedDetails[match[1]] = match[2];
-			}
-		});
+
+		this.$logger.trace(`Trying to get information for Android device. Command is: ${shellCommandArgs}`);
+
+		try {
+			const details = await this.adb.executeShellCommand(shellCommandArgs);
+
+			details.split(/\r?\n|\r/).forEach((value: any) => {
+				// sample line is "ro.build.version.release=4.4" in /system/build.prop
+				// sample line from getprop is:  [ro.build.version.release]: [6.0]
+				// NOTE: some props do not have value: [ro.build.version.base_os]: []
+				const match = /(?:\[?ro\.build\.version|ro\.product|ro\.build)\.(.+?)]?(?:\:|=)(?:\s*?\[)?(.*?)]?$/.exec(value);
+				if (match) {
+					parsedDetails[match[1]] = match[2];
+				}
+			});
+		} catch (err) {
+			this.$logger.trace(`Error while getting details from Android device. Command is: ${shellCommandArgs}. Error is: ${err}`);
+		}
 
 		this.$logger.trace(parsedDetails);
+
 		return parsedDetails;
 	}
 
