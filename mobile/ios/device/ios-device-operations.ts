@@ -180,7 +180,11 @@ export class IOSDeviceOperations implements IIOSDeviceOperations, IDisposable {
 			}
 		}
 
-		return _.groupBy(result, r => (<any>r).deviceId);
+		const groupedResults = _.groupBy(result, r => (<any>r).deviceId);
+		this.$logger.trace("Received multiple results:");
+		this.$logger.trace(groupedResults);
+
+		return groupedResults;
 	}
 
 	private assertIsInitialized(): void {
