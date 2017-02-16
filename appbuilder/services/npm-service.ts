@@ -175,7 +175,7 @@ export class NpmService implements INpmService {
 	}
 
 	private async hasTypesForDependency(packageName: string): Promise<boolean> {
-		return !(await this.getPackageJsonFromNpmRegistry(`${NpmService.TYPES_DIRECTORY}${packageName}`));
+		return !!(await this.getPackageJsonFromNpmRegistry(`${NpmService.TYPES_DIRECTORY}${packageName}`));
 	}
 
 	private async buildNpmRegistryUrl(packageName: string, version: string): Promise<string> {
