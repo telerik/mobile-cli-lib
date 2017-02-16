@@ -48,6 +48,7 @@ export class IOSSimulatorFileSystem implements Mobile.IDeviceFileSystem {
 			if (this.$fs.getFsStats(localFilePath).isDirectory()) {
 				shelljs.mkdir(deviceFilePath);
 			} else {
+				this.$fs.ensureDirectoryExists(path.dirname(deviceFilePath));
 				shelljs.cp("-f", localFilePath, deviceFilePath);
 			}
 		}).future<void>()();
