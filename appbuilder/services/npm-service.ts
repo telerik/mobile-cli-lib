@@ -184,7 +184,7 @@ export class NpmService implements INpmService {
 			registryUrl += "/";
 		}
 
-		return `${registryUrl}${packageName.replace("/", "%2F")}?version=${encodeURIComponent(version)}`;
+		return `${registryUrl}${packageName.replace("/", "%2F")}/${encodeURIComponent(version)}`;
 	}
 
 	private async getNpmRegistryUrl(): Promise<string> {
