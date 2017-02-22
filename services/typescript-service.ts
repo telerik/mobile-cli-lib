@@ -6,13 +6,6 @@ import { NODE_MODULES_DIR_NAME, FileExtensions } from "../constants";
 import { ChildProcess } from "child_process";
 temp.track();
 
-interface ITypeScriptCompilerMessages {
-	level1ErrorCount: number;
-	level5ErrorCount: number;
-	nonEmitPreventingWarningCount: number;
-	hasPreventEmitErrors: boolean;
-}
-
 interface ITypeScriptCompilerSettings {
 	pathToCompiler: string;
 	version: string;
@@ -43,7 +36,7 @@ export class TypeScriptService implements ITypeScriptService {
 		private $errors: IErrors) { }
 
 	@exportedPromise("typeScriptService")
-	public async transpile(projectDir: string, typeScriptFiles?: string[], definitionFiles?: string[], options?: ITypeScriptTranspileOptions): Promise<string> {
+	public async transpile(projectDir: string, typeScriptFiles?: string[], definitionFiles?: string[], options?: ITypeScriptTranspileOptions): Promise<void> {
 		options = options || {};
 		let compilerOptions = this.getCompilerOptions(projectDir, options);
 		let typeScriptCompilerSettings = await this.getTypeScriptCompilerSettings({ useLocalTypeScriptCompiler: options.useLocalTypeScriptCompiler });
@@ -73,7 +66,7 @@ export class TypeScriptService implements ITypeScriptService {
 
 		this.$logger.out(`Using tsc version ${typeScriptCompilerSettings.version}`.cyan);
 		// Core compilation
-		return await this.runTranspilation(projectDir, typeScriptCompilerSettings.pathToCompiler, runTranspilationOptions);
+		await this.runTranspilation(projectDir, typeScriptCompilerSettings.pathToCompiler, runTranspilationOptions);
 	}
 
 	public getTypeScriptFilesData(projectDir: string): ITypeScriptFiles {
@@ -167,7 +160,7 @@ export class TypeScriptService implements ITypeScriptService {
 		return { pathToCompiler: typeScriptCompilerPath, version: typeScriptCompilerVersion };
 	}
 
-	private async runTranspilation(projectDir: string, typeScriptCompilerPath: string, options?: IRunTranspilationOptions): Promise<string> {
+	private async runTranspilation(projectDir: string, typeScriptCompilerPath: string, options?: IRunTranspilationOptions): Promise<void> {
 		options = options || {};
 		let startTime = new Date().getTime();
 		let params = _([])
@@ -176,21 +169,18 @@ export class TypeScriptService implements ITypeScriptService {
 			.concat(this.getTypeScriptCompilerOptionsAsArguments(options.compilerOptions) || [])
 			.value();
 
-		let output = await this.$childProcess.spawnFromEvent(process.argv[0], params, "close", { cwd: projectDir }, { throwError: false });
-		let compilerOutput = output.stderr || output.stdout;
+		let output = await this.$childProcess.spawnFromEvent(process.argv[0], params, "close", { cwd: projectDir, stdio: "inherit" }, { throwError: false });
 
-		// EmitReturnStatus enum in https://github.com/Microsoft/TypeScript/blob/8947757d096338532f1844d55788df87fb5a39ed/src/compiler/types.ts#L605
-		let compilerMessages = this.getCompilerMessages(compilerOutput);
-		// This call will fail in case noEmitOnError on error is true and there are errors.
-		this.logCompilerMessages(compilerMessages, compilerOutput);
+		// https://github.com/Microsoft/TypeScript/blob/8947757d096338532f1844d55788df87fb5a39ed/src/compiler/types.ts#L605
+		if (output.exitCode === 1 || output.exitCode === 5) {
+			this.$errors.failWithoutHelp(`TypeScript compiler failed with exit code ${output.exitCode}.`);
+		}
 
 		let endTime = new Date().getTime();
 		let time = (endTime - startTime) / 1000;
 		this.$logger.out(`${os.EOL}Success: ${time.toFixed(2)}s${os.EOL}.`.green);
 
 		this.startWatchProcess(params, projectDir);
-
-		return compilerOutput;
 	}
 
 	private startWatchProcess(params: string[], projectDir: string): void {
@@ -199,75 +189,6 @@ export class TypeScriptService implements ITypeScriptService {
 			this._watchProcess = this.$childProcess.spawn(process.argv[0], params, { cwd: projectDir });
 			this.$processService.attachToProcessExitSignals(null, this._watchProcess.kill);
 		}
-	}
-
-	private getCompilerMessages(compilerOutput: string): ITypeScriptCompilerMessages {
-		// Assumptions:
-		//   Level 1 errors = syntax errors - prevent JS emit.
-		//   Level 2 errors = semantic errors - *not* prevents JS emit.
-		//   Level 5 errors = compiler flag misuse - prevents JS emit.
-
-		let level1ErrorCount = 0,
-			level5ErrorCount = 0,
-			nonEmitPreventingWarningCount = 0;
-
-		let hasPreventEmitErrors = _.reduce(compilerOutput.split("\n"), (memo: boolean, errorMsg: string) => {
-			let isPreventEmitError = !!this.noEmitOnError;
-			if (errorMsg.search(/error TS1\d+:/) >= 0) {
-				level1ErrorCount += 1;
-			} else if (errorMsg.search(/error TS5\d+:/) >= 0) {
-				level5ErrorCount += 1;
-			} else if (errorMsg.search(/error TS\d+:/) >= 0) {
-				nonEmitPreventingWarningCount += 1;
-			}
-			return memo || isPreventEmitError;
-		}, false) || false;
-
-		return {
-			level1ErrorCount,
-			level5ErrorCount,
-			nonEmitPreventingWarningCount,
-			hasPreventEmitErrors
-		};
-	}
-
-	private logCompilerMessages(compilerMessages: ITypeScriptCompilerMessages, errorMessage: string): void {
-		let level1ErrorCount = compilerMessages.level1ErrorCount,
-			level5ErrorCount = compilerMessages.level5ErrorCount,
-			nonEmitPreventingWarningCount = compilerMessages.nonEmitPreventingWarningCount,
-			hasPreventEmitErrors = compilerMessages.hasPreventEmitErrors;
-
-		if (level1ErrorCount + level5ErrorCount + nonEmitPreventingWarningCount > 0) {
-			let colorizedMessage = (level1ErrorCount + level5ErrorCount > 0) ? ">>>".red : ">>>".green;
-			this.$logger.out(colorizedMessage);
-
-			let errorTitle = "";
-			if (level5ErrorCount > 0) {
-				errorTitle += this.composeErrorTitle(level5ErrorCount, "compiler flag error");
-			}
-			if (level1ErrorCount > 0) {
-				errorTitle += this.composeErrorTitle(level1ErrorCount, "syntax error");
-			}
-			if (nonEmitPreventingWarningCount > 0) {
-				if (!level1ErrorCount && !level5ErrorCount && this.noEmitOnError) {
-					errorTitle += this.composeErrorTitle(nonEmitPreventingWarningCount, "non-emit-preventing type errors, but output is not generated as noEmitOnError option is true.");
-				} else {
-					errorTitle += this.composeErrorTitle(nonEmitPreventingWarningCount, "non-emit-preventing type warning");
-				}
-			}
-
-			if (hasPreventEmitErrors) {
-				this.$errors.failWithoutHelp(`${os.EOL}${errorTitle}${os.EOL}${errorMessage.red}${os.EOL}${">>> ".red}`);
-			} else {
-				this.$logger.out(errorTitle);
-				this.$logger.warn(errorMessage);
-				this.$logger.out(">>>".green);
-			}
-		}
-	}
-
-	private composeErrorTitle(count: number, title: string) {
-		return `${count} ${title}${(count === 1) ? '' : 's'} ${os.EOL}`;
 	}
 
 	private getTypeScriptCompilerOptionsAsArguments(options: ITypeScriptCompilerOptions): string[] {
@@ -279,6 +200,8 @@ export class TypeScriptService implements ITypeScriptService {
 
 				if (typeof (value) === "string") {
 					return [`--${option}`, value];
+				} else if (_.isArray(value)) {
+					return [`--${option}`, value.join(",")];
 				} else if (value) {
 					return [`--${option}`];
 				} else {
