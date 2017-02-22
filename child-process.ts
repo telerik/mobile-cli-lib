@@ -1,8 +1,11 @@
 import * as child_process from "child_process";
+import { EventEmitter } from "events";
 
-export class ChildProcess implements IChildProcess {
+export class ChildProcess extends EventEmitter implements IChildProcess {
 	constructor(private $logger: ILogger,
-		private $errors: IErrors) { }
+		private $errors: IErrors) {
+		super();
+	}
 
 	public async exec(command: string, options?: any, execOptions?: IExecOptions): Promise<any> {
 		return new Promise<any>((resolve, reject) => {
@@ -62,12 +65,20 @@ export class ChildProcess implements IChildProcess {
 
 			if (childProcess.stdout) {
 				childProcess.stdout.on("data", (data: string) => {
+					if (spawnFromEventOptions && spawnFromEventOptions.emitOptions && spawnFromEventOptions.emitOptions.eventName) {
+						this.emit(spawnFromEventOptions.emitOptions.eventName, { data, pipe: 'stdout' });
+					}
+
 					capturedOut += data;
 				});
 			}
 
 			if (childProcess.stderr) {
 				childProcess.stderr.on("data", (data: string) => {
+					if (spawnFromEventOptions && spawnFromEventOptions.emitOptions && spawnFromEventOptions.emitOptions.eventName) {
+						this.emit(spawnFromEventOptions.emitOptions.eventName, { data, pipe: 'stdout' });
+					}
+
 					capturedErr += data;
 				});
 			}

@@ -28,11 +28,11 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		this.fileHashes = Object.create(null);
 	}
 
-	public async sync(data: ILiveSyncData[], filePaths?: string[]): Promise<void> {
+	public async sync(data: ILiveSyncData[], projectId: string, filePaths?: string[]): Promise<void> {
 		await this.syncCore(data, filePaths);
 		if (this.$options.watch) {
 			await this.$hooksService.executeBeforeHooks('watch');
-			this.partialSync(data, data[0].syncWorkingDirectory);
+			this.partialSync(data, data[0].syncWorkingDirectory, projectId);
 		}
 	}
 
@@ -48,7 +48,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		return isFileExcluded;
 	}
 
-	private partialSync(data: ILiveSyncData[], syncWorkingDirectory: string): void {
+	private partialSync(data: ILiveSyncData[], syncWorkingDirectory: string, projectId: string): void {
 		let that = this;
 		this.showFullLiveSyncInformation = true;
 		const gazeInstance = gaze(["**/*", "!node_modules/**/*", "!platforms/**/*"], { cwd: syncWorkingDirectory }, function (err: any, watcher: any) {
@@ -76,7 +76,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 								that.$logger.trace(`Skipping livesync for changed file ${filePath} as it is excluded in the patterns: ${dataItem.excludedProjectDirsAndFiles.join(", ")}`);
 								continue;
 							}
-							let mappedFilePath = that.$projectFilesProvider.mapFilePath(filePath, dataItem.platform);
+							let mappedFilePath = that.$projectFilesProvider.mapFilePath(filePath, dataItem.platform, projectId);
 							that.$logger.trace(`Syncing filePath ${filePath}, mappedFilePath is ${mappedFilePath}`);
 							if (!mappedFilePath) {
 								that.$logger.warn(`Unable to sync ${filePath}.`);
@@ -84,7 +84,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 							}
 
 							if (event === "added" || event === "changed" || event === "renamed") {
-								that.batchSync(dataItem, mappedFilePath);
+								that.batchSync(dataItem, mappedFilePath, projectId);
 							} else if (event === "deleted") {
 								that.fileHashes = <any>(_.omit(that.fileHashes, filePath));
 								await that.syncRemovedFile(dataItem, mappedFilePath);
@@ -105,7 +105,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 	private batch: IDictionary<ISyncBatch> = Object.create(null);
 	private livesyncData: IDictionary<ILiveSyncData> = Object.create(null);
 
-	private batchSync(data: ILiveSyncData, filePath: string): void {
+	private batchSync(data: ILiveSyncData, filePath: string, projectId: string): void {
 		let platformBatch: ISyncBatch = this.batch[data.platform];
 		if (!platformBatch || !platformBatch.syncPending) {
 			let done = () => {
@@ -116,7 +116,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 								let batch = this.batch[platformName];
 								let livesyncData = this.livesyncData[platformName];
 								await batch.syncFiles(async (filesToSync: string[]) => {
-									await this.$liveSyncProvider.preparePlatformForSync(platformName);
+									await this.$liveSyncProvider.preparePlatformForSync(platformName, projectId);
 									this.syncCore([livesyncData], filesToSync);
 								});
 							}

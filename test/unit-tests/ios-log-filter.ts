@@ -113,7 +113,7 @@ describe("iOSLogFilter", () => {
 		let testInjector = new Yok();
 		testInjector.register("loggingLevels", LoggingLevels);
 		let iOSLogFilter = testInjector.resolve(IOSLogFilter);
-		let filteredData = iOSLogFilter.filterData(inputData, logLevel, pid);
+		let filteredData = iOSLogFilter.filterData(inputData, logLevel, "", pid);
 		assert.deepEqual(filteredData, expectedOutput, `The actual result '${filteredData}' did NOT match expected output '${expectedOutput}'.`);
 	};
 
