@@ -187,7 +187,7 @@ export class TypeScriptService implements ITypeScriptService {
 		if (!this._watchProcess && this.$options.watch) {
 			params.push("--watch");
 			this._watchProcess = this.$childProcess.spawn(process.argv[0], params, { cwd: projectDir });
-			this.$processService.attachToProcessExitSignals(null, this._watchProcess.kill);
+			this.$processService.attachToProcessExitSignals(this, () => this._watchProcess.kill());
 		}
 	}
 
