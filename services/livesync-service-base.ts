@@ -23,7 +23,8 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		private $projectFilesManager: IProjectFilesManager,
 		private $projectFilesProvider: IProjectFilesProvider,
 		private $liveSyncProvider: ILiveSyncProvider,
-		private $dispatcher: IFutureDispatcher) {
+		private $dispatcher: IFutureDispatcher,
+		private $processService: IProcessService) {
 		this.fileHashes = Object.create(null);
 	}
 
@@ -50,8 +51,10 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 	private partialSync(data: ILiveSyncData[], syncWorkingDirectory: string): void {
 		let that = this;
 		this.showFullLiveSyncInformation = true;
-		gaze("**/*", { cwd: syncWorkingDirectory }, function (err: any, watcher: any) {
+		const gazeInstance = gaze(["**/*", "!node_modules/**/*", "!platforms/**/*"], { cwd: syncWorkingDirectory }, function (err: any, watcher: any) {
 			this.on('all', (event: string, filePath: string) => {
+				that.$logger.trace(`Received event  ${event} for filePath: ${filePath}. Add it to queue.`);
+
 				that.$dispatcher.dispatch(async () => {
 					try {
 						if (filePath.indexOf(constants.APP_RESOURCES_FOLDER_NAME) !== -1) {
@@ -59,7 +62,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 							return;
 						}
 
-						let fileHash = await that.$fs.exists(filePath) && that.$fs.getFsStats(filePath).isFile() ? that.$fs.getFileShasum(filePath) : "";
+						let fileHash = that.$fs.exists(filePath) && that.$fs.getFsStats(filePath).isFile() ? await that.$fs.getFileShasum(filePath) : "";
 						if (fileHash === that.fileHashes[filePath]) {
 							that.$logger.trace(`Skipping livesync for ${filePath} file with ${fileHash} hash.`);
 							return;
@@ -95,6 +98,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 			});
 		});
 
+		this.$processService.attachToProcessExitSignals(this, () => gazeInstance.close());
 		this.$dispatcher.run();
 	}
 
@@ -196,7 +200,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 					}
 
 					this.$logger.info("Applying changes...");
-					platformLiveSyncService.refreshApplication(deviceAppData, localToDevicePaths, data.forceExecuteFullSync || !(await wasInstalled));
+					await platformLiveSyncService.refreshApplication(deviceAppData, localToDevicePaths, data.forceExecuteFullSync || !wasInstalled);
 					this.$logger.info(`Successfully synced application ${data.appIdentifier} on device ${device.deviceInfo.identifier}.`);
 				}
 			} else {
