@@ -26,7 +26,11 @@ export class ProcessService implements IProcessService {
 
 	private executeAllCallbacks(): void {
 		_.each(this._listeners, (listener: IListener) => {
-			listener.callback.apply(listener.context);
+			try {
+				listener.callback.apply(listener.context);
+			} catch (err) {
+				// ignore the error and let other handlers to be called.
+			}
 		});
 	}
 }
