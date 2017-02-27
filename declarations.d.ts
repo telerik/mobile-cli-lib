@@ -606,9 +606,9 @@ interface ITypeScriptService {
 	 * @param {string[]} typeScriptFiles @optional The files that will be compiled.
 	 * @param {string[]} definitionFiles @optional The definition files used for compilation.
 	 * @param {ITypeScriptTranspileOptions} options @optional The transpilation options.
-	 * @return {Promise<string>} The result from the TypeScript transpilation.
+	 * @return {Promise<void>}
 	 */
-	transpile(projectDir: string, typeScriptFiles?: string[], definitionFiles?: string[], options?: ITypeScriptTranspileOptions): Promise<string>;
+	transpile(projectDir: string, typeScriptFiles?: string[], definitionFiles?: string[], options?: ITypeScriptTranspileOptions): Promise<void>;
 
 	/**
 	 * Returns new object, containing all TypeScript and all TypeScript definition files.

@@ -54,7 +54,7 @@ export class NpmService implements INpmService {
 				npmInstallResult.error = err;
 			}
 
-			if (dependencyToInstall.installTypes && await npmInstallResult.result.isInstalled && this.hasTypesForDependency(dependencyToInstall.name)) {
+			if (dependencyToInstall.installTypes && npmInstallResult.result.isInstalled && await this.hasTypesForDependency(dependencyToInstall.name)) {
 				try {
 					await this.installTypingsForDependency(projectDir, dependencyToInstall.name);
 					npmInstallResult.result.isTypesInstalled = true;
@@ -144,12 +144,25 @@ export class NpmService implements INpmService {
 		let packageJsonContent: any;
 		version = version || "latest";
 		try {
-			let url = await this.buildNpmRegistryUrl(packageName, version),
+			const url = await this.buildNpmRegistryUrl(packageName),
 				proxySettings = await this.getNpmProxySettings();
 
 			// This call will return error with message '{}' in case there's no such package.
-			let result = (await this.$httpClient.httpRequest({ url, timeout }, proxySettings)).body;
-			packageJsonContent = JSON.parse(result);
+			const result = (await this.$httpClient.httpRequest({ url, timeout }, proxySettings)).body;
+
+			const fullData = JSON.parse(result);
+			const distTags = fullData["dist-tags"];
+			const versions = fullData.versions;
+
+			// check if passed version is in fact tag (for example latest, next, etc.) In this case - get the real version.
+			_.each(distTags, (ver, tagName) => {
+				if (tagName === version) {
+					version = ver;
+					return false;
+				}
+			});
+
+			packageJsonContent = versions[version];
 		} catch (err) {
 			this.$logger.trace("Error caught while checking the NPM Registry for plugin with id: %s", packageName);
 			this.$logger.trace(err.message);
@@ -175,16 +188,16 @@ export class NpmService implements INpmService {
 	}
 
 	private async hasTypesForDependency(packageName: string): Promise<boolean> {
-		return !(await this.getPackageJsonFromNpmRegistry(`${NpmService.TYPES_DIRECTORY}${packageName}`));
+		return !!(await this.getPackageJsonFromNpmRegistry(`${NpmService.TYPES_DIRECTORY}${packageName}`));
 	}
 
-	private async buildNpmRegistryUrl(packageName: string, version: string): Promise<string> {
+	private async buildNpmRegistryUrl(packageName: string): Promise<string> {
 		let registryUrl = await this.getNpmRegistryUrl();
 		if (!_.endsWith(registryUrl, "/")) {
 			registryUrl += "/";
 		}
 
-		return `${registryUrl}${packageName.replace("/", "%2F")}?version=${encodeURIComponent(version)}`;
+		return `${registryUrl}${packageName.replace("/", "%2F")}`;
 	}
 
 	private async getNpmRegistryUrl(): Promise<string> {
