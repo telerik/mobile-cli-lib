@@ -1182,7 +1182,7 @@ export class GDBServer implements Mobile.IGDBServer {
 
 	@cache()
 	public async init(argv: string[]): Promise<void> {
-		this.awaitResponse("QStartNoAckMode", "+ await ");
+		await this.awaitResponse("QStartNoAckMode", "+");
 		this.sendCore("+");
 		await this.awaitResponse("QEnvironmentHexEncoded:");
 		await this.awaitResponse("QSetDisableASLR:1");
