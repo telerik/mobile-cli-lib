@@ -184,7 +184,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 
 		// if we get here, there's at least one running emulator
 		let getNameFunction = this.$options.geny ? this.getNameFromGenymotionEmulatorId : this.getNameFromSDKEmulatorId;
-		let emulatorId = await _(runningEmulators).find(emulator => getNameFunction.apply(this, [emulator]) === image);
+		let emulatorId = await _(runningEmulators).find(async emulator => await getNameFunction.apply(this, [emulator]) === image);
 
 		return emulatorId;
 	}
