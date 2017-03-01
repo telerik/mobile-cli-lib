@@ -190,7 +190,6 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 				return emulatorId;
 			}
 		}
-		this.$errors.failWithoutHelp("Couldn't find emulator id");
 	}
 
 	@invokeInit()
