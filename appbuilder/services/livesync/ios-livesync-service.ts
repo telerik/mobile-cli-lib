@@ -58,10 +58,9 @@ export class IOSLiveSyncService implements IDeviceLiveSyncService {
 			const notificationData = {
 				deviceId: this.device.deviceInfo.identifier,
 				notificationName: notification,
-				commandType: constants.IOS_POST_NOTIFICATION_COMMAND_TYPE,
-				shouldWaitForResponse: false
+				commandType: constants.IOS_POST_NOTIFICATION_COMMAND_TYPE
 			};
-			await this.$iosDeviceOperations.notify([notificationData]);
+			await this.$iosDeviceOperations.postNotification([notificationData]);
 		}
 	}
 

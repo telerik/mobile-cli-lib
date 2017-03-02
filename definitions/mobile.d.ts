@@ -714,7 +714,11 @@ interface IIOSDeviceOperations extends IDisposable {
 
 	stop(stopArray: IOSDeviceLib.IDdiApplicationData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
 
-	notify(notifyArray: IOSDeviceLib.INotifyData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
+	postNotification(postNotificatioNArray: IOSDeviceLib.IPostNotificationData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
+
+	awaitNotificationResponse(awaitNotificationResponseArray: IOSDeviceLib.IAwaitNotificatioNResponseData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
+
+	sendMessageToSocket(sendMessageToSocketArray: IOSDeviceLib.ISendMessageToSocketData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
 
 	connectToPort(connectToPortArray: IOSDeviceLib.IConnectToPortData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
 

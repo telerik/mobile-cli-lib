@@ -61,7 +61,6 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		const deviceResponse = (await this.$iosDeviceOperations.connectToPort([{ deviceId: deviceId, port: port }]))[deviceId];
 
 		this._socket = new net.Socket({ fd: deviceResponse[0].response });
-		process.nextTick(() => this._socket.emit("connect"));
 
 		this.$processService.attachToProcessExitSignals(this, this.destroySocket);
 		return this._socket;

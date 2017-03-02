@@ -139,14 +139,34 @@ export class IOSDeviceOperations implements IIOSDeviceOperations, IDisposable {
 		}
 	}
 
-	public async notify(notifyArray: IOSDeviceLib.INotifyData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse> {
+	public async postNotification(postNotificatioNArray: IOSDeviceLib.IPostNotificationData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse> {
 		this.assertIsInitialized();
 
-		_.each(notifyArray, n => {
+		_.each(postNotificatioNArray, n => {
 			this.$logger.trace(`Sending notification ${n.notificationName} to device with identifier: ${n.deviceId}`);
 		});
 
-		return this.getMultipleResults<IOSDeviceLib.IDeviceResponse>(() => this.deviceLib.notify(notifyArray), errorHandler);
+		return this.getMultipleResults<IOSDeviceLib.IDeviceResponse>(() => this.deviceLib.postNotification(postNotificatioNArray), errorHandler);
+	}
+
+	public async awaitNotificationResponse(awaitNotificationResponseArray: IOSDeviceLib.IAwaitNotificatioNResponseData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse> {
+		this.assertIsInitialized();
+
+		_.each(awaitNotificationResponseArray, n => {
+			this.$logger.trace(`Awaiting notification response from socket: ${n.socket} with timeout: ${n.timeout}`);
+		});
+
+		return this.getMultipleResults<IOSDeviceLib.IDeviceResponse>(() => this.deviceLib.awaitNotificationResponse(awaitNotificationResponseArray), errorHandler);
+	}
+
+	public async sendMessageToSocket(sendMessageToSocketArray: IOSDeviceLib.ISendMessageToSocketData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse> {
+		this.assertIsInitialized();
+
+		_.each(sendMessageToSocketArray, s => {
+			this.$logger.trace(`Sending message: ${s.message} to socket: ${s.socket}`);
+		});
+
+		return this.getMultipleResults<IOSDeviceLib.IDeviceResponse>(() => this.deviceLib.sendMessageToSocket(sendMessageToSocketArray), errorHandler);
 	}
 
 	public async connectToPort(connectToPortArray: IOSDeviceLib.IConnectToPortData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse> {
