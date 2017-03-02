@@ -2,6 +2,7 @@ import * as applicationManagerPath from "./ios-application-manager";
 import * as fileSystemPath from "./ios-device-file-system";
 import * as constants from "../../../constants";
 import * as net from "net";
+import { IOSDeviceSocket } from "./ios-device-socket";
 
 export class IOSDevice implements Mobile.IiOSDevice {
 	public applicationManager: Mobile.IDeviceApplicationManager;
@@ -60,7 +61,11 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		const deviceId = this.deviceInfo.identifier;
 		const deviceResponse = (await this.$iosDeviceOperations.connectToPort([{ deviceId: deviceId, port: port }]))[deviceId];
 
-		this._socket = new net.Socket({ fd: deviceResponse[0].response });
+		// HACK to override the write method of net.Socket
+		const fd = deviceResponse[0].response;
+		const socket = new IOSDeviceSocket({ fd: fd });
+		socket.initialize(fd, deviceId, this.$iosDeviceOperations);
+		this._socket = <any>socket;
 
 		this.$processService.attachToProcessExitSignals(this, this.destroySocket);
 		return this._socket;
