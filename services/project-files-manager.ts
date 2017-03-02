@@ -10,7 +10,7 @@ export class ProjectFilesManager implements IProjectFilesManager {
 
 	public getProjectFiles(projectFilesPath: string, excludedProjectDirsAndFiles?: string[], filter?: (filePath: string, stat: IFsStats) => boolean, opts?: any): string[] {
 		let projectFiles = this.$fs.enumerateFilesInDirectorySync(projectFilesPath, (filePath, stat) => {
-			let isFileExcluded = this.isFileExcluded(path.relative(projectFilesPath, filePath));
+			let isFileExcluded = this.isFileExcluded(path.relative(projectFilesPath, filePath), excludedProjectDirsAndFiles);
 			let isFileFiltered = filter ? filter(filePath, stat) : false;
 			return !isFileExcluded && !isFileFiltered;
 		}, opts);
