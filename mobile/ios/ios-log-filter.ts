@@ -3,7 +3,7 @@ export class IOSLogFilter implements Mobile.IPlatformLogFilter {
 
 	constructor(private $loggingLevels: Mobile.ILoggingLevels) { }
 
-	public filterData(data: string, logLevel: string, pid?: string): string {
+	public filterData(data: string, logLevel: string, projectDir: string, pid?: string): string {
 		let specifiedLogLevel = (logLevel || '').toUpperCase();
 
 		if (specifiedLogLevel === this.$loggingLevels.info) {

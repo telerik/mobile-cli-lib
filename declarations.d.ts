@@ -448,7 +448,7 @@ interface IQueue<T> {
 	dequeue(): Promise<T>;
 }
 
-interface IChildProcess {
+interface IChildProcess extends NodeJS.EventEmitter {
 	exec(command: string, options?: any, execOptions?: IExecOptions): Promise<any>;
 	execFile(command: string, args: string[]): Promise<any>;
 	spawn(command: string, args?: string[], options?: any): any; // it returns child_process.ChildProcess you can safely cast to it
@@ -478,6 +478,9 @@ interface ISpawnResult {
 
 interface ISpawnFromEventOptions {
 	throwError: boolean;
+	emitOptions?: {
+		eventName: string;
+	}
 }
 
 interface IProjectHelper {
@@ -711,7 +714,7 @@ interface ILiveSyncServiceBase {
 	 * If watch option is not specified executes full sync
 	 * If watch option is specified executes partial sync
 	 */
-	sync(data: ILiveSyncData[], filePaths?: string[]): Promise<void>;
+	sync(data: ILiveSyncData[], projectId: string, filePaths?: string[]): Promise<void>;
 
 	/**
 	 * Returns the `canExecute` method which defines if LiveSync operation can be executed on specified device.
@@ -795,7 +798,16 @@ interface ILiveSyncData {
 	canExecute?(device: Mobile.IDevice): boolean;
 }
 
-interface IDeviceLiveSyncService {
+interface IDeviceLiveSyncServiceBase {
+	/**
+	 * Specifies some action that will be executed before every sync operation
+	 */
+	beforeLiveSyncAction?(deviceAppData: Mobile.IDeviceAppData): Promise<void>;
+
+	debugService?: any;
+}
+
+interface IDeviceLiveSyncService extends IDeviceLiveSyncServiceBase {
 	/**
 	 * Refreshes the application's content on a device
 	 */
@@ -804,13 +816,7 @@ interface IDeviceLiveSyncService {
 	 * Removes specified files from a connected device
 	 */
 	removeFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void>;
-	/**
-	 * Specifies some action that will be executed before every sync operation
-	 */
-	beforeLiveSyncAction?(deviceAppData: Mobile.IDeviceAppData): Promise<void>;
 	afterInstallApplicationAction?(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<boolean>;
-
-	debugService?: any;
 }
 
 interface ISysInfoData {
@@ -935,7 +941,27 @@ interface Error {
 	code?: string | number;
 }
 
-interface ICommonOptions {
+interface IRelease {
+	release: boolean;
+}
+
+interface IDeviceIdentifier {
+	device: string;
+}
+
+interface IJustLaunch {
+	justlaunch: boolean;
+}
+
+interface IAvd {
+	avd: string;
+}
+
+interface IAvailableDevices {
+	availableDevices: boolean;
+}
+
+interface ICommonOptions extends IRelease, IDeviceIdentifier, IJustLaunch, IAvd, IAvailableDevices {
 	argv: IYargArgv;
 	validateOptions(commandSpecificDashedOptions?: IDictionary<IDashedOption>): void;
 	options: IDictionary<any>;
@@ -953,11 +979,8 @@ interface ICommonOptions {
 	help: boolean;
 	json: boolean;
 	watch: boolean;
-	avd: string;
 	profileDir: string;
 	timeout: string;
-	device: string;
-	availableDevices: boolean;
 	appid: string;
 	geny: string;
 	debugBrk: boolean;
@@ -965,7 +988,6 @@ interface ICommonOptions {
 	start: boolean;
 	stop: boolean;
 	ddi: string; // the path to developer  disk image
-	justlaunch: boolean;
 	skipRefresh: boolean;
 	app: string;
 	file: string;
@@ -977,7 +999,6 @@ interface ICommonOptions {
 	template: string;
 	var: Object;
 	default: Boolean;
-	release: boolean;
 	count: number;
 	hooks: boolean;
 	debug: boolean;
@@ -1321,7 +1342,7 @@ interface IProjectFilesProvider {
 	/**
 	 * Performs local file path mapping
 	 */
-	mapFilePath(filePath: string, platform: string): string;
+	mapFilePath(filePath: string, platform: string, projectData?: any): string;
 
 	/**
 	 * Returns information about file in the project, that includes file's name on device after removing platform or configuration from the name.
@@ -1363,16 +1384,16 @@ interface ILiveSyncProvider {
 	/**
 	 * Builds the application and returns the package file path
 	 */
-	buildForDevice(device: Mobile.IDevice): Promise<string>;
+	buildForDevice(device: Mobile.IDevice, projectData?: any): Promise<string>;
 	/**
 	 * Prepares the platform for sync
 	 */
-	preparePlatformForSync(platform: string): Promise<void>;
+	preparePlatformForSync(platform: string, provision: any, projectData?: any): Promise<void>;
 
 	/**
 	 * Checks if the specified file can be fast synced.
 	 */
-	canExecuteFastSync(filePath: string, platform?: string): boolean;
+	canExecuteFastSync(filePath: string, projectData?: any, platform?: string): boolean;
 
 	transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string, isFullSync: boolean): Promise<void>;
 

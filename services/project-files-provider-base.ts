@@ -4,7 +4,7 @@ import { Configurations } from "../constants";
 
 export abstract class ProjectFilesProviderBase implements IProjectFilesProvider {
 	abstract isFileExcluded(filePath: string): boolean;
-	abstract mapFilePath(filePath: string, platform: string): string;
+	abstract mapFilePath(filePath: string, platform: string, projectData: any): string;
 
 	constructor(private $mobileHelper: Mobile.IMobileHelper,
 		protected $options: ICommonOptions) { }
