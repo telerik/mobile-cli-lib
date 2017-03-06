@@ -720,6 +720,8 @@ interface IIOSDeviceOperations extends IDisposable {
 
 	sendMessageToSocket(sendMessageToSocketArray: IOSDeviceLib.ISendMessageToSocketData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
 
+	readMessageFromSocket(readMessageFromSocketArray: IOSDeviceLib.IReceiveMessagesFromSocketData[]): void;
+
 	connectToPort(connectToPortArray: IOSDeviceLib.IConnectToPortData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
 
 	setShouldDispose(shouldDispose: boolean): void;

@@ -169,6 +169,10 @@ export class IOSDeviceOperations implements IIOSDeviceOperations, IDisposable {
 		return this.getMultipleResults<IOSDeviceLib.IDeviceResponse>(() => this.deviceLib.sendMessageToSocket(sendMessageToSocketArray), errorHandler);
 	}
 
+	public readMessageFromSocket(readMessageFromSocketArray: IOSDeviceLib.IReceiveMessagesFromSocketData[]): void {
+		this.deviceLib.readMessagesFromSocket(readMessageFromSocketArray);
+	}
+
 	public async connectToPort(connectToPortArray: IOSDeviceLib.IConnectToPortData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse> {
 		this.assertIsInitialized();
 
