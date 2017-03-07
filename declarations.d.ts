@@ -996,6 +996,8 @@ interface ICommonOptions extends IRelease, IDeviceIdentifier, IJustLaunch, IAvd,
 	emulator: boolean;
 	sdk: string;
 	template: string;
+	certificate: string;
+	certificatePassword: string;
 	var: Object;
 	default: Boolean;
 	count: number;
