@@ -352,22 +352,6 @@ export function connectEventually(factory: () => net.Socket, handler: (_socket: 
 	tryConnect();
 }
 
-export async function connectEventuallyAsync(factory: () => Promise<net.Socket>, handler: (_socket: net.Socket) => void): Promise<void> {
-	async function tryConnect() {
-		let tryConnectAfterTimeout = setTimeout.bind(undefined, tryConnect, 1000);
-
-		let socket = await factory();
-		socket.on("connect", () => {
-			socket.removeListener("error", tryConnectAfterTimeout);
-			handler(socket);
-		});
-		socket.on("error", tryConnectAfterTimeout);
-	}
-
-	await tryConnect();
-}
-
-
 export async function connectEventuallyUntilTimeout(factory: () => net.Socket, timeout: number): Promise<net.Socket> {
 	return new Promise<net.Socket>((resolve, reject) => {
 		let lastKnownError: Error;

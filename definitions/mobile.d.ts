@@ -718,11 +718,7 @@ interface IIOSDeviceOperations extends IDisposable {
 
 	awaitNotificationResponse(awaitNotificationResponseArray: IOSDeviceLib.IAwaitNotificatioNResponseData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
 
-	sendMessageToSocket(sendMessageToSocketArray: IOSDeviceLib.ISendMessageToSocketData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
-
-	readMessageFromSocket(readMessageFromSocketArray: IOSDeviceLib.IReceiveMessagesFromSocketData[]): void;
-
-	connectToPort(connectToPortArray: IOSDeviceLib.IConnectToPortData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
+	connectToPort(connectToPortArray: IOSDeviceLib.IConnectToPortData[], errorHandler?: DeviceOperationErrorHandler): Promise<IDictionary<IOSDeviceLib.IConnectToPortResponse[]>>;
 
 	setShouldDispose(shouldDispose: boolean): void;
 }

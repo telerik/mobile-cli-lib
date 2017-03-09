@@ -159,28 +159,14 @@ export class IOSDeviceOperations implements IIOSDeviceOperations, IDisposable {
 		return this.getMultipleResults<IOSDeviceLib.IDeviceResponse>(() => this.deviceLib.awaitNotificationResponse(awaitNotificationResponseArray), errorHandler);
 	}
 
-	public async sendMessageToSocket(sendMessageToSocketArray: IOSDeviceLib.ISendMessageToSocketData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse> {
-		this.assertIsInitialized();
-
-		_.each(sendMessageToSocketArray, s => {
-			this.$logger.trace(`Sending message: ${s.message} to socket: ${s.socket}`);
-		});
-
-		return this.getMultipleResults<IOSDeviceLib.IDeviceResponse>(() => this.deviceLib.sendMessageToSocket(sendMessageToSocketArray), errorHandler);
-	}
-
-	public readMessageFromSocket(readMessageFromSocketArray: IOSDeviceLib.IReceiveMessagesFromSocketData[]): void {
-		this.deviceLib.readMessagesFromSocket(readMessageFromSocketArray);
-	}
-
-	public async connectToPort(connectToPortArray: IOSDeviceLib.IConnectToPortData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse> {
+	public async connectToPort(connectToPortArray: IOSDeviceLib.IConnectToPortData[], errorHandler?: DeviceOperationErrorHandler): Promise<IDictionary<IOSDeviceLib.IConnectToPortResponse[]>> {
 		this.assertIsInitialized();
 
 		_.each(connectToPortArray, c => {
 			this.$logger.trace(`Connecting to port ${c.port} on device with identifier: ${c.deviceId}`);
 		});
 
-		return this.getMultipleResults<IOSDeviceLib.IDeviceResponse>(() => this.deviceLib.connectToPort(connectToPortArray), errorHandler);
+		return this.getMultipleResults<IOSDeviceLib.IConnectToPortResponse>(() => this.deviceLib.connectToPort(connectToPortArray), errorHandler);
 	}
 
 	public setShouldDispose(shouldDispose: boolean): void {

@@ -2,7 +2,6 @@ import * as applicationManagerPath from "./ios-application-manager";
 import * as fileSystemPath from "./ios-device-file-system";
 import * as constants from "../../../constants";
 import * as net from "net";
-import { IOSDeviceSocket } from "./ios-device-socket";
 
 export class IOSDevice implements Mobile.IiOSDevice {
 	public applicationManager: Mobile.IDeviceApplicationManager;
@@ -24,12 +23,13 @@ export class IOSDevice implements Mobile.IiOSDevice {
 
 		const productType = deviceActionInfo.productType;
 		const isTablet = productType && productType.toLowerCase().indexOf("ipad") !== -1;
+		const deviceStatus = deviceActionInfo.status || constants.UNREACHABLE_STATUS;
 		this.deviceInfo = {
 			identifier: deviceActionInfo.deviceId,
 			vendor: "Apple",
 			platform: this.$devicePlatformsConstants.iOS,
-			status: constants.CONNECTED_STATUS,
-			errorHelp: null,
+			status: deviceStatus,
+			errorHelp: deviceStatus === constants.UNREACHABLE_STATUS ? `Device ${deviceActionInfo.deviceId} is ${constants.UNREACHABLE_STATUS}` : null,
 			type: "Device",
 			isTablet: isTablet,
 			displayName: this.$iOSDeviceProductNameMapper.resolveProductName(deviceActionInfo.deviceName) || deviceActionInfo.deviceName,
@@ -59,13 +59,11 @@ export class IOSDevice implements Mobile.IiOSDevice {
 	// This function works only on OSX
 	public async connectToPort(port: number): Promise<net.Socket> {
 		const deviceId = this.deviceInfo.identifier;
-		const deviceResponse = (await this.$iosDeviceOperations.connectToPort([{ deviceId: deviceId, port: port }]))[deviceId];
+		const deviceResponse = _.first((await this.$iosDeviceOperations.connectToPort([{ deviceId: deviceId, port: port }]))[deviceId]);
 
-		// HACK to override the write method of net.Socket
-		const fd = deviceResponse[0].response;
-		const socket = new IOSDeviceSocket({ fd: fd });
-		socket.initialize(fd, deviceId, this.$iosDeviceOperations);
-		this._socket = <any>socket;
+		const socket = new net.Socket();
+		socket.connect(deviceResponse.port, deviceResponse.host);
+		this._socket = socket;
 
 		this.$processService.attachToProcessExitSignals(this, this.destroySocket);
 		return this._socket;
