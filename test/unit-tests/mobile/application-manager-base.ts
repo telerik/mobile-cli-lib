@@ -24,7 +24,7 @@ class ApplicationManager extends ApplicationManagerBase {
 		return;
 	}
 
-	public async startApplication(appIdentifier: string, framework?: string): Promise<void> {
+	public async startApplication(appIdentifier: string): Promise<void> {
 		return;
 	}
 
@@ -601,27 +601,20 @@ describe("ApplicationManagerBase", () => {
 
 			await applicationManager.restartApplication("appId");
 			assert.deepEqual(stopApplicationParam, "appId", "When bundleIdentifier is not passed to restartApplication, stopApplication must be called with application identifier.");
-
-			await applicationManager.restartApplication("appId", "bundleIdentifier");
-			assert.deepEqual(stopApplicationParam, "bundleIdentifier", "When bundleIdentifier is passed to restartApplication, stopApplication must be called with bundleIdentifier.");
 		});
 
 		it("calls startApplication with correct arguments", async () => {
-			let startApplicationAppIdParam: string,
-				startApplicationFrameworkParam: string;
-			applicationManager.startApplication = (appId: string, framework: string) => {
+			let startApplicationAppIdParam: string;
+			applicationManager.startApplication = (appId: string) => {
 				startApplicationAppIdParam = appId;
-				startApplicationFrameworkParam = framework;
 				return Promise.resolve();
 			};
 
 			await applicationManager.restartApplication("appId");
 			assert.deepEqual(startApplicationAppIdParam, "appId", "startApplication must be called with application identifier.");
-			assert.deepEqual(startApplicationFrameworkParam, undefined, "When framework is not passed to restartApplication, startApplication must be called with undefined framework.");
 
-			await applicationManager.restartApplication("appId", null, "cordova");
+			await applicationManager.restartApplication("appId");
 			assert.deepEqual(startApplicationAppIdParam, "appId", "startApplication must be called with application identifier.");
-			assert.deepEqual(startApplicationFrameworkParam, "cordova", "When framework is passed to restartApplication, startApplication must be called with this framework.");
 		});
 
 		it("calls stopApplication and startApplication in correct order", async () => {
@@ -633,7 +626,7 @@ describe("ApplicationManagerBase", () => {
 				return Promise.resolve();
 			};
 
-			applicationManager.startApplication = (appId: string, framework: string) => {
+			applicationManager.startApplication = (appId: string) => {
 				assert.isTrue(isStopApplicationCalled, "When startApplication is called, stopApplication must have been resolved.");
 				isStartApplicationCalled = true;
 				return Promise.resolve();
@@ -647,29 +640,25 @@ describe("ApplicationManagerBase", () => {
 
 	describe("tryStartApplication", () => {
 		it("calls startApplication, when canStartApplication returns true", async () => {
-			let startApplicationAppIdParam: string,
-				startApplicationFrameworkParam: string;
+			let startApplicationAppIdParam: string;
 
 			applicationManager.canStartApplication = () => true;
-			applicationManager.startApplication = (appId: string, framework: string) => {
+			applicationManager.startApplication = (appId: string) => {
 				startApplicationAppIdParam = appId;
-				startApplicationFrameworkParam = framework;
 				return Promise.resolve();
 			};
 
 			await applicationManager.tryStartApplication("appId");
 			assert.deepEqual(startApplicationAppIdParam, "appId");
-			assert.deepEqual(startApplicationFrameworkParam, undefined);
 
-			await applicationManager.tryStartApplication("appId2", "framework");
+			await applicationManager.tryStartApplication("appId2");
 			assert.deepEqual(startApplicationAppIdParam, "appId2");
-			assert.deepEqual(startApplicationFrameworkParam, "framework");
 		});
 
 		it("does not call startApplication, when canStartApplication returns false", async () => {
 			let isStartApplicationCalled = false;
 			applicationManager.canStartApplication = () => false;
-			applicationManager.startApplication = (appId: string, framework: string) => {
+			applicationManager.startApplication = (appId: string) => {
 				isStartApplicationCalled = true;
 				return Promise.resolve();
 			};
@@ -690,7 +679,7 @@ describe("ApplicationManagerBase", () => {
 
 			let assertDoesNotThrow = async (opts?: { shouldStartApplicatinThrow: boolean }) => {
 				assert.deepEqual(logger.traceOutput, "");
-				applicationManager.startApplication = async (appId: string, framework: string) => {
+				applicationManager.startApplication = async (appId: string) => {
 					if (opts && opts.shouldStartApplicatinThrow) {
 						throw error;
 					}

@@ -6,12 +6,12 @@ export class ProvisionType {
 	static Enterprise = "Enterprise";
 }
 
-export let APP_RESOURCES_FOLDER_NAME = "App_Resources";
+export const APP_RESOURCES_FOLDER_NAME = "App_Resources";
 
-export let ERROR_NO_DEVICES = "Cannot find connected devices. Reconnect any connected devices, verify that your system recognizes them, and run this command again.";
+export const ERROR_NO_DEVICES = "Cannot find connected devices. Reconnect any connected devices, verify that your system recognizes them, and run this command again.";
 
-export let UNREACHABLE_STATUS = "Unreachable";
-export let CONNECTED_STATUS = "Connected";
+export const UNREACHABLE_STATUS = "Unreachable";
+export const CONNECTED_STATUS = "Connected";
 
 export class LiveSyncConstants {
 	static VERSION_2 = 2;
@@ -24,7 +24,7 @@ export class LiveSyncConstants {
 	static IOS_PROJECT_PATH = "/Documents/AppBuilder/LiveSync";
 }
 
-export let TARGET_FRAMEWORK_IDENTIFIERS = {
+export const TARGET_FRAMEWORK_IDENTIFIERS = {
 	Cordova: "Cordova",
 	NativeScript: "NativeScript"
 };
@@ -34,8 +34,8 @@ export class Configurations {
 	static Release = "Release";
 }
 
-export let NODE_MODULES_DIR_NAME = "node_modules";
-export let TNS_CORE_MODULES = "tns-core-modules";
+export const NODE_MODULES_DIR_NAME = "node_modules";
+export const TNS_CORE_MODULES = "tns-core-modules";
 
 export class FileExtensions {
 	static TYPESCRIPT_DEFINITION_FILE = ".d.ts";
@@ -43,3 +43,7 @@ export class FileExtensions {
 	static PNG_FILE = ".png";
 	static NINE_PATCH_PNG_FILE = ".9.png";
 }
+
+export const IOS_POST_NOTIFICATION_COMMAND_TYPE = "PostNotification";
+export const IOS_OBSERVE_NOTIFICATION_COMMAND_TYPE = "ObserveNotification";
+export const IOS_RELAY_NOTIFICATION_COMMAND_TYPE = "RelayNotification";

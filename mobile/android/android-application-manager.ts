@@ -37,7 +37,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		return this.adb.executeShellCommand(["pm", "uninstall", `${appIdentifier}`], { treatErrorsAsWarnings: true });
 	}
 
-	public async startApplication(appIdentifier: string, framework?: string): Promise<void> {
+	public async startApplication(appIdentifier: string): Promise<void> {
 		await this.adb.executeShellCommand(["monkey",
 			"-p", appIdentifier,
 			"-c", "android.intent.category.LAUNCHER",

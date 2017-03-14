@@ -33,4 +33,5 @@ export class DeviceDiscovery extends EventEmitter implements Mobile.IDeviceDisco
 		this.emit("deviceLost", device);
 	}
 }
+
 $injector.register("deviceDiscovery", DeviceDiscovery);

@@ -989,7 +989,6 @@ interface ICommonOptions extends IRelease, IDeviceIdentifier, IJustLaunch, IAvd,
 	stop: boolean;
 	ddi: string; // the path to developer  disk image
 	skipRefresh: boolean;
-	app: string;
 	file: string;
 	analyticsClient: string;
 	force: boolean;

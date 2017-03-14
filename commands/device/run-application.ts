@@ -6,7 +6,7 @@ export class RunApplicationOnDeviceCommand implements ICommand {
 		private $staticConfig: Config.IStaticConfig,
 		private $options: ICommonOptions) { }
 
-	allowedParameters: ICommandParameter[] = [this.$stringParameter];
+	public allowedParameters: ICommandParameter[] = [this.$stringParameter];
 
 	public async execute(args: string[]): Promise<void> {
 		await this.$devicesService.initialize({ deviceId: this.$options.device, skipInferPlatform: true });
@@ -15,7 +15,7 @@ export class RunApplicationOnDeviceCommand implements ICommand {
 			this.$errors.failWithoutHelp("More than one device found. Specify device explicitly with --device option. To discover device ID, use $%s device command.", this.$staticConfig.CLIENT_NAME.toLowerCase());
 		}
 
-		this.$devicesService.execute(async (device: Mobile.IDevice) => await device.applicationManager.startApplication(args[0]));
+		await this.$devicesService.execute(async (device: Mobile.IDevice) => await device.applicationManager.startApplication(args[0]));
 	}
 }
 

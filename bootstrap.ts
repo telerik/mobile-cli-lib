@@ -54,15 +54,7 @@ $injector.requireCommand("device|list-files", "./commands/device/list-files");
 $injector.requireCommand("device|get-file", "./commands/device/get-file");
 $injector.requireCommand("device|put-file", "./commands/device/put-file");
 
-$injector.require("iOSCore", "./mobile/ios/device/ios-core");
-$injector.require("coreFoundation", "./mobile/ios/device/ios-core");
-$injector.require("mobileDevice", "./mobile/ios/device/ios-core");
-$injector.require("plistService", "./mobile/ios/device/ios-core");
-
-$injector.require("installationProxyClient", "./mobile/ios/device/ios-proxy-services");
-$injector.require("notificationProxyClient", "./mobile/ios/device/ios-proxy-services");
-$injector.require("houseArrestClient", "./mobile/ios/device/ios-proxy-services");
-$injector.require("gdbServer", "./mobile/ios/device/ios-core");
+$injector.require("iosDeviceOperations", "./mobile/ios/device/ios-device-operations");
 
 $injector.require("deviceFound", "./mobile/mobile-core/device-discovery");
 $injector.require("deviceLost", "./mobile/mobile-core/device-discovery");
