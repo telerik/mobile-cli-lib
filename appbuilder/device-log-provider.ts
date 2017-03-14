@@ -30,4 +30,5 @@ export class DeviceLogProvider extends DeviceLogProviderBase {
 		}
 	}
 }
+
 $injector.register("deviceLogProvider", DeviceLogProvider);
