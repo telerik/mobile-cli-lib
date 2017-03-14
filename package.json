@@ -37,7 +37,7 @@
     "gaze": "1.0.0",
     "iconv-lite": "0.4.3",
     "inquirer": "0.8.2",
-    "ios-device-lib": "0.2.0",
+    "ios-device-lib": "~0.3.0",
     "ios-sim-portable": "~2.0.0",
     "lodash": "4.13.1",
     "log4js": "0.6.9",
