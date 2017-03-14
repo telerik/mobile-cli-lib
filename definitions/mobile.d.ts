@@ -623,6 +623,7 @@ declare module Mobile {
 
 	interface IAndroidEmulatorServices extends IEmulatorPlatformServices {
 		getAllRunningEmulators(): IFuture<string[]>;
+		pathToEmulatorExecutable: string;
 	}
 
 	interface IiSimDevice {

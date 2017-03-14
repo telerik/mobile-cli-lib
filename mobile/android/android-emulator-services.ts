@@ -45,11 +45,25 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		this.adbFilePath = this.$staticConfig.getAdbFilePath().wait();
 	}
 
-	private get pathToEmulatorExecutable(): string {
+	public get pathToEmulatorExecutable(): string {
 		if (!this._pathToEmulatorExecutable) {
-			let androidHome = process.env.ANDROID_HOME;
-			let emulatorExecutableName = "emulator";
-			this._pathToEmulatorExecutable = androidHome ? path.join(androidHome, "tools", emulatorExecutableName) : emulatorExecutableName;
+			const androidHome = process.env.ANDROID_HOME;
+			const emulatorExecutableName = "emulator";
+
+			this._pathToEmulatorExecutable = emulatorExecutableName;
+
+			if (androidHome) {
+				// Check https://developer.android.com/studio/releases/sdk-tools.html (25.3.0)
+				// Since this version of SDK tools, the emulator is a separate package.
+				// However the emulator executable still exists in the "tools" dir.
+				const pathToEmulatorFromAndroidStudio =  path.join(androidHome, emulatorExecutableName, emulatorExecutableName);
+
+				if (this.$fs.exists(pathToEmulatorFromAndroidStudio)) {
+					this._pathToEmulatorExecutable = pathToEmulatorFromAndroidStudio;
+				} else {
+					this._pathToEmulatorExecutable = path.join(androidHome, "tools", emulatorExecutableName);
+				}
+			}
 		}
 
 		return this._pathToEmulatorExecutable;
