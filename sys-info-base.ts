@@ -8,7 +8,8 @@ export class SysInfoBase implements ISysInfo {
 		protected $hostInfo: IHostInfo,
 		protected $iTunesValidator: Mobile.IiTunesValidator,
 		protected $logger: ILogger,
-		protected $winreg: IWinReg) { }
+		protected $winreg: IWinReg,
+		protected $androidEmulatorServices: Mobile.IAndroidEmulatorServices) { }
 
 	private monoVerRegExp = /version (\d+[.]\d+[.]\d+) /gm;
 	private sysInfoCache: ISysInfoData = undefined;
@@ -134,7 +135,7 @@ export class SysInfoBase implements ISysInfo {
 		return this.cocoapodVersionCache;
 	}
 
-	public async getSysInfo(pathToPackageJson: string, androidToolsInfo?: { pathToAdb: string, pathToAndroid: string }): Promise<ISysInfoData> {
+	public async getSysInfo(pathToPackageJson: string, androidToolsInfo?: { pathToAdb: string }): Promise<ISysInfoData> {
 		if (!this.sysInfoCache) {
 			let res: ISysInfoData = Object.create(null);
 			let procOutput: string;
@@ -167,7 +168,6 @@ export class SysInfoBase implements ISysInfo {
 
 			res.cocoapodVer = await this.getCocoapodVersion();
 			let pathToAdb = androidToolsInfo ? androidToolsInfo.pathToAdb : "adb";
-			let pathToAndroid = androidToolsInfo ? androidToolsInfo.pathToAndroid : "android";
 
 			if (!androidToolsInfo) {
 				this.$logger.trace("'adb' and 'android' will be checked from PATH environment variable.");
@@ -176,7 +176,7 @@ export class SysInfoBase implements ISysInfo {
 			procOutput = await this.exec(`${quoteString(pathToAdb)} version`);
 			res.adbVer = procOutput ? procOutput.split(os.EOL)[0] : null;
 
-			res.androidInstalled = await this.checkAndroid(pathToAndroid);
+			res.emulatorInstalled = await this.checkEmulator();
 
 			procOutput = await this.exec("mono --version");
 			if (!!procOutput) {
@@ -212,16 +212,16 @@ export class SysInfoBase implements ISysInfo {
 		return null;
 	}
 
-	// `android -h` returns exit code 1 on successful invocation (Mac OS X for now, possibly Linux). Therefore, we cannot use $childProcess
-	private async checkAndroid(pathToAndroid: string): Promise<boolean> {
+	private async checkEmulator(): Promise<boolean> {
 		let result = false;
 		try {
-			if (pathToAndroid) {
-				let androidChildProcess = await this.$childProcess.spawnFromEvent(pathToAndroid, ["-h"], "close", {}, { throwError: false });
-				result = androidChildProcess && androidChildProcess.stdout && _.includes(androidChildProcess.stdout, "android");
-			}
+			// emulator -help exits with code 1 on Windows, so we should parse the output.
+			// First line of it should be:
+			// Android Emulator usage: emulator [options] [-qemu args]
+			const emulatorHelp = await this.$childProcess.spawnFromEvent(this.$androidEmulatorServices.pathToEmulatorExecutable, ["-help"], "close", {}, { throwError: false });
+			result = emulatorHelp.stdout.indexOf("usage: emulator") !== -1;
 		} catch (err) {
-			this.$logger.trace(`Error while checking is ${pathToAndroid} installed. Error is: ${err.messge}`);
+			this.$logger.trace(`Error while checking is emulator installed. Error is: ${err.messge}`);
 		}
 
 		return result;
