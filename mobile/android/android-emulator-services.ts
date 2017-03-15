@@ -1,12 +1,12 @@
 import * as Fiber from "fibers";
 import Future = require("fibers/future");
 import * as iconv from "iconv-lite";
-import {EOL} from "os";
+import { EOL } from "os";
 import * as osenv from "osenv";
 import * as path from "path";
 import * as helpers from "../../helpers";
 import * as net from "net";
-import {DeviceAndroidDebugBridge} from "./device-android-debug-bridge";
+import { DeviceAndroidDebugBridge } from "./device-android-debug-bridge";
 
 class VirtualMachine {
 	constructor(public name: string, public identifier: string) { }
@@ -40,7 +40,8 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		private $logcatHelper: Mobile.ILogcatHelper,
 		private $options: ICommonOptions,
 		private $utils: IUtils,
-		private $injector: IInjector) {
+		private $injector: IInjector,
+		private $hostInfo: IHostInfo) {
 		iconv.extendNodeEncodings();
 		this.adbFilePath = this.$staticConfig.getAdbFilePath().wait();
 	}
@@ -56,9 +57,11 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 				// Check https://developer.android.com/studio/releases/sdk-tools.html (25.3.0)
 				// Since this version of SDK tools, the emulator is a separate package.
 				// However the emulator executable still exists in the "tools" dir.
-				const pathToEmulatorFromAndroidStudio =  path.join(androidHome, emulatorExecutableName, emulatorExecutableName);
+				const pathToEmulatorFromAndroidStudio = path.join(androidHome, emulatorExecutableName, emulatorExecutableName);
 
-				if (this.$fs.exists(pathToEmulatorFromAndroidStudio)) {
+				const realFilePath = this.$hostInfo.isWindows ? `${pathToEmulatorFromAndroidStudio}.exe` : pathToEmulatorFromAndroidStudio;
+
+				if (this.$fs.exists(realFilePath)) {
 					this._pathToEmulatorExecutable = pathToEmulatorFromAndroidStudio;
 				} else {
 					this._pathToEmulatorExecutable = path.join(androidHome, "tools", emulatorExecutableName);
@@ -394,6 +397,28 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		}).future<string[]>()();
 	}
 
+	public getInfoFromAvd(avdName: string): Mobile.IAvdInfo {
+		let iniFile = path.join(this.avdDir, avdName + ".ini"),
+			avdInfo: Mobile.IAvdInfo = this.parseAvdFile(avdName, iniFile);
+
+		if (avdInfo.path && this.$fs.exists(avdInfo.path)) {
+			iniFile = path.join(avdInfo.path, "config.ini");
+			avdInfo = this.parseAvdFile(avdName, iniFile, avdInfo);
+		}
+
+		return avdInfo;
+	}
+
+	public getAvds(): string[] {
+		let result: string[] = [];
+		if (this.$fs.exists(this.avdDir)) {
+			let entries = this.$fs.readDirectory(this.avdDir);
+			result = _.filter(entries, (e: string) => e.match(AndroidEmulatorServices.INI_FILES_MASK) !== null)
+				.map((e) => e.match(AndroidEmulatorServices.INI_FILES_MASK)[1]);
+		}
+		return result;
+	}
+
 	private getRunningEmulators(): IFuture<string[]> {
 		return (() => {
 			let outputRaw: string[] = this.$childProcess.execFile(this.adbFilePath, ['devices']).wait().split(EOL);
@@ -410,19 +435,10 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 
 		let best = _(this.getAvds())
 			.map(avd => this.getInfoFromAvd(avd))
+			.filter(avd => !!avd)
 			.maxBy(avd => avd.targetNum);
 
 		return (best && best.targetNum >= minVersion) ? best.name : null;
-	}
-
-	private getInfoFromAvd(avdName: string): Mobile.IAvdInfo {
-		let iniFile = path.join(this.avdDir, avdName + ".ini");
-		let avdInfo: Mobile.IAvdInfo = this.parseAvdFile(avdName, iniFile);
-		if (avdInfo.path && this.$fs.exists(avdInfo.path)) {
-			iniFile = path.join(avdInfo.path, "config.ini");
-			avdInfo = this.parseAvdFile(avdName, iniFile, avdInfo);
-		}
-		return avdInfo;
 	}
 
 	private parseAvdFile(avdName: string, avdFileName: string, avdInfo?: Mobile.IAvdInfo): Mobile.IAvdInfo {
@@ -497,16 +513,6 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 
 	private get avdDir(): string {
 		return path.join(this.androidHomeDir, AndroidEmulatorServices.AVD_DIR_NAME);
-	}
-
-	private getAvds(): string[] {
-		let result: string[] = [];
-		if (this.$fs.exists(this.avdDir)) {
-			let entries = this.$fs.readDirectory(this.avdDir);
-			result = _.filter(entries, (e: string) => e.match(AndroidEmulatorServices.INI_FILES_MASK) !== null)
-				.map((e) => e.match(AndroidEmulatorServices.INI_FILES_MASK)[1]);
-		}
-		return result;
 	}
 
 	private waitForEmulatorBootToComplete(emulatorId: string): IFuture<void> {

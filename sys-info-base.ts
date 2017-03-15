@@ -226,7 +226,8 @@ export class SysInfoBase implements ISysInfo {
 				// First line of it should be:
 				// Android Emulator usage: emulator [options] [-qemu args]
 				const emulatorHelp = this.$childProcess.spawnFromEvent(this.$androidEmulatorServices.pathToEmulatorExecutable, ["-help"], "close", {}, { throwError: false }).wait();
-				result = emulatorHelp.stdout.indexOf("usage: emulator") !== -1;
+				result = !!(emulatorHelp && emulatorHelp.stdout && emulatorHelp.stdout.indexOf("usage: emulator") !== -1);
+				this.$logger.trace(`The result of checking is Android Emulator installed is:${os.EOL}- stdout: ${emulatorHelp.stdout}${os.EOL}- stderr: ${emulatorHelp.stderr}`);
 			} catch (err) {
 				this.$logger.trace(`Error while checking is emulator installed. Error is: ${err.messge}`);
 			}

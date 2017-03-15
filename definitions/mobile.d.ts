@@ -624,6 +624,8 @@ declare module Mobile {
 	interface IAndroidEmulatorServices extends IEmulatorPlatformServices {
 		getAllRunningEmulators(): IFuture<string[]>;
 		pathToEmulatorExecutable: string;
+		getInfoFromAvd(avdName: string): Mobile.IAvdInfo;
+		getAvds(): string[];
 	}
 
 	interface IiSimDevice {
