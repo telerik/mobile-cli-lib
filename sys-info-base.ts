@@ -213,16 +213,12 @@ export class SysInfoBase implements ISysInfo {
 	}
 
 	private async checkEmulator(): Promise<boolean> {
-		let result = false;
-		try {
-			// emulator -help exits with code 1 on Windows, so we should parse the output.
-			// First line of it should be:
-			// Android Emulator usage: emulator [options] [-qemu args]
-			const emulatorHelp = await this.$childProcess.spawnFromEvent(this.$androidEmulatorServices.pathToEmulatorExecutable, ["-help"], "close", {}, { throwError: false });
-			result = emulatorHelp.stdout.indexOf("usage: emulator") !== -1;
-		} catch (err) {
-			this.$logger.trace(`Error while checking is emulator installed. Error is: ${err.messge}`);
-		}
+		// emulator -help exits with code 1 on Windows, so we should parse the output.
+		// First line of it should be:
+		// Android Emulator usage: emulator [options] [-qemu args]
+		const emulatorHelp = await this.$childProcess.spawnFromEvent(this.$androidEmulatorServices.pathToEmulatorExecutable, ["-help"], "close", {}, { throwError: false });
+		const result = !!(emulatorHelp && emulatorHelp.stdout && emulatorHelp.stdout.indexOf("usage: emulator") !== -1);
+		this.$logger.trace(`The result of checking is Android Emulator installed is:${os.EOL}- stdout: ${emulatorHelp && emulatorHelp.stdout}${os.EOL}- stderr: ${emulatorHelp && emulatorHelp.stderr}`);
 
 		return result;
 	}

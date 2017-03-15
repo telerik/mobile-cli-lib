@@ -31,9 +31,17 @@ interface IChildProcessResults {
 	podVersion: IChildProcessResultDescription;
 }
 
-function getResultFromChildProcess(childProcessResultDescription: IChildProcessResultDescription): any {
+function getResultFromChildProcess(childProcessResultDescription: IChildProcessResultDescription, spawnFromEventOpts?: { throwError: boolean }): any {
 	if (childProcessResultDescription.shouldThrowError) {
-		throw new Error("This one throws error.");
+		if (spawnFromEventOpts && !spawnFromEventOpts.throwError) {
+			return {
+				stderr: "This one throws error.",
+				code: 1,
+				stdout: null
+			};
+		} else {
+			throw new Error("This one throws error.");
+		}
 	}
 
 	return childProcessResultDescription.result;
@@ -65,8 +73,8 @@ function createTestInjector(childProcessResult: IChildProcessResults, hostInfoDa
 			return getResultFromChildProcess(childProcessResultDictionary[command]);
 		},
 
-		spawnFromEvent: (command: string, args: string[], event: string) => {
-			return getResultFromChildProcess(childProcessResultDictionary[command]);
+		spawnFromEvent: (command: string, args: string[], event: string, opts: any, spawnFromEventOpts?: { throwError: boolean }) => {
+			return getResultFromChildProcess(childProcessResultDictionary[command], spawnFromEventOpts);
 		}
 	});
 
