@@ -24,16 +24,24 @@ interface IChildProcessResults {
 	nodeGypVersion: IChildProcessResultDescription;
 	xCodeVersion: IChildProcessResultDescription;
 	adbVersion: IChildProcessResultDescription;
-	androidInstalled: IChildProcessResultDescription;
+	emulatorInstalled: IChildProcessResultDescription;
 	monoVersion: IChildProcessResultDescription;
 	gradleVersion: IChildProcessResultDescription;
 	gitVersion: IChildProcessResultDescription;
 	podVersion: IChildProcessResultDescription;
 }
 
-function getResultFromChildProcess(childProcessResultDescription: IChildProcessResultDescription): any {
+function getResultFromChildProcess(childProcessResultDescription: IChildProcessResultDescription, spawnFromEventOpts?: { throwError: boolean }): any {
 	if (childProcessResultDescription.shouldThrowError) {
-		throw new Error("This one throws error.");
+		if (spawnFromEventOpts && !spawnFromEventOpts.throwError) {
+			return {
+				stderr: "This one throws error.",
+				code: 1,
+				stdout: null
+			};
+		} else {
+			throw new Error("This one throws error.");
+		}
 	}
 
 	return childProcessResultDescription.result;
@@ -50,7 +58,7 @@ function createChildProcessResults(childProcessResult: IChildProcessResults): ID
 		"pod --version": childProcessResult.podVersion,
 		'"adb" version': childProcessResult.adbVersion,
 		"'adb' version": childProcessResult.adbVersion, // for Mac and Linux
-		'android': childProcessResult.androidInstalled,
+		'emulator': childProcessResult.emulatorInstalled,
 		"mono --version": childProcessResult.monoVersion,
 		"git --version": childProcessResult.gitVersion,
 		"gradle -v": childProcessResult.gradleVersion
@@ -65,8 +73,8 @@ function createTestInjector(childProcessResult: IChildProcessResults, hostInfoDa
 			return getResultFromChildProcess(childProcessResultDictionary[command]);
 		},
 
-		spawnFromEvent: (command: string, args: string[], event: string) => {
-			return getResultFromChildProcess(childProcessResultDictionary[command]);
+		spawnFromEvent: (command: string, args: string[], event: string, opts: any, spawnFromEventOpts?: { throwError: boolean }) => {
+			return getResultFromChildProcess(childProcessResultDictionary[command], spawnFromEventOpts);
 		}
 	});
 
@@ -93,6 +101,10 @@ function createTestInjector(childProcessResult: IChildProcessResults, hostInfoDa
 
 	injector.register("sysInfoBase", SysInfoBase);
 
+	injector.register("androidEmulatorServices", {
+		pathToEmulatorExecutable: "emulator"
+	});
+
 	return injector;
 }
 
@@ -116,7 +128,7 @@ describe("sysInfoBase", () => {
 			nodeGypVersion: { result: "2.0.0" },
 			xCodeVersion: { result: "6.4.0" },
 			adbVersion: { result: "Android Debug Bridge version 1.0.32" },
-			androidInstalled: { result: { stdout: "android" } },
+			emulatorInstalled: { result: { stdout: "Android Emulator usage: emulator [options] [-qemu args]" } },
 			monoVersion: { result: "version 1.0.6 " },
 			gradleVersion: { result: "Gradle 2.8" },
 			gitVersion: { result: "git version 1.9.5" },
@@ -134,7 +146,7 @@ describe("sysInfoBase", () => {
 				assert.deepEqual(result.javacVersion, "1.8.0_60");
 				assert.deepEqual(result.nodeGypVer, childProcessResult.nodeGypVersion.result);
 				assert.deepEqual(result.adbVer, childProcessResult.adbVersion.result);
-				assert.deepEqual(result.androidInstalled, true);
+				assert.deepEqual(result.emulatorInstalled, true);
 				assert.deepEqual(result.monoVer, "1.0.6");
 				assert.deepEqual(result.gradleVer, "2.8");
 				assert.deepEqual(result.gitVer, "1.9.5");
@@ -212,7 +224,7 @@ describe("sysInfoBase", () => {
 					nodeGypVersion: { shouldThrowError: true },
 					xCodeVersion: { shouldThrowError: true },
 					adbVersion: { shouldThrowError: true },
-					androidInstalled: { shouldThrowError: true },
+					emulatorInstalled: { shouldThrowError: true },
 					monoVersion: { shouldThrowError: true },
 					gradleVersion: { shouldThrowError: true },
 					gitVersion: { shouldThrowError: true },
@@ -221,18 +233,18 @@ describe("sysInfoBase", () => {
 			});
 
 			describe("when android info is incorrect", () => {
-				it("pathToAdb and pathToAndroid are null", async () => {
+				it("pathToAdb is null", async () => {
 					childProcessResult.adbVersion = {
 						result: null
 					};
-					childProcessResult.androidInstalled = {
-						result: false
+					childProcessResult.emulatorInstalled = {
+						result: null
 					};
 					testInjector = createTestInjector(childProcessResult, { isWindows: false, isDarwin: false, dotNetVersion: "4.5.1" }, null);
 					sysInfoBase = testInjector.resolve("sysInfoBase");
-					let result = await sysInfoBase.getSysInfo(toolsPackageJson, { pathToAdb: null, pathToAndroid: null });
+					let result = await sysInfoBase.getSysInfo(toolsPackageJson, { pathToAdb: null });
 					assert.deepEqual(result.adbVer, null);
-					assert.deepEqual(result.androidInstalled, false);
+					assert.deepEqual(result.emulatorInstalled, false);
 				});
 			});
 
@@ -246,7 +258,7 @@ describe("sysInfoBase", () => {
 					assert.deepEqual(result.nodeGypVer, null);
 					assert.deepEqual(result.xcodeVer, null);
 					assert.deepEqual(result.adbVer, null);
-					assert.deepEqual(result.androidInstalled, false);
+					assert.deepEqual(result.emulatorInstalled, false);
 					assert.deepEqual(result.monoVer, null);
 					assert.deepEqual(result.gradleVer, null);
 					assert.deepEqual(result.gitVer, null);
