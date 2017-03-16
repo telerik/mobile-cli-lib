@@ -28,7 +28,7 @@ export class HooksService implements IHooksService {
 		return "hookArgs";
 	}
 
-	private initialize(): void {
+	private initialize(projectDir: string): void {
 		this.cachedHooks = {};
 
 		let relativeToLibPath = path.join(__dirname, "../../");
@@ -37,8 +37,10 @@ export class HooksService implements IHooksService {
 			path.join(relativeToLibPath, "common", HooksService.HOOKS_DIRECTORY_NAME)
 		];
 
-		if (this.$projectHelper.projectDir) {
-			this.hooksDirectories.push(path.join(this.$projectHelper.projectDir, HooksService.HOOKS_DIRECTORY_NAME));
+		projectDir = projectDir || this.$projectHelper.projectDir;
+
+		if (projectDir) {
+			this.hooksDirectories.push(path.join(projectDir, HooksService.HOOKS_DIRECTORY_NAME));
 		}
 
 		this.$logger.trace("Hooks directories: " + util.inspect(this.hooksDirectories));
@@ -66,9 +68,11 @@ export class HooksService implements IHooksService {
 			return;
 		}
 
-		if (!this.hooksDirectories) {
-			this.initialize();
-		}
+		const hookArgs: any = hookArguments && hookArguments[this.hookArgsName];
+		const projectDir = hookArgs && (hookArgs.projectDir || (hookArgs.projectData && hookArgs.projectData.projectDir));
+		this.$logger.trace(`Project dir from hooksArgs is: ${projectDir}.`);
+
+		this.initialize(projectDir);
 
 		this.$logger.trace(traceMessage);
 
