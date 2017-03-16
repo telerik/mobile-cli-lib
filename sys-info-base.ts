@@ -1,14 +1,15 @@
 import * as os from "os";
 import * as osenv from "osenv";
 import * as path from "path";
-import {quoteString} from "./helpers";
+import { quoteString } from "./helpers";
 
 export class SysInfoBase implements ISysInfo {
 	constructor(protected $childProcess: IChildProcess,
-				protected $hostInfo: IHostInfo,
-				protected $iTunesValidator: Mobile.IiTunesValidator,
-				protected $logger: ILogger,
-				protected $winreg: IWinReg) { }
+		protected $hostInfo: IHostInfo,
+		protected $iTunesValidator: Mobile.IiTunesValidator,
+		protected $logger: ILogger,
+		protected $winreg: IWinReg,
+		protected $androidEmulatorServices: Mobile.IAndroidEmulatorServices) { }
 
 	private monoVerRegExp = /version (\d+[.]\d+[.]\d+) /gm;
 	private sysInfoCache: ISysInfoData = undefined;
@@ -75,14 +76,14 @@ export class SysInfoBase implements ISysInfo {
 	private nodeGypVerCache: string = null;
 	public getNodeGypVersion(): IFuture<string> {
 		return ((): string => {
-				if (!this.nodeGypVerCache) {
-					try {
-						this.nodeGypVerCache = this.exec("node-gyp -v");
-					 } catch (e) {
-						this.nodeGypVerCache = null;
-					}
+			if (!this.nodeGypVerCache) {
+				try {
+					this.nodeGypVerCache = this.exec("node-gyp -v");
+				} catch (e) {
+					this.nodeGypVerCache = null;
 				}
-				return this.nodeGypVerCache;
+			}
+			return this.nodeGypVerCache;
 		}).future<string>()();
 	}
 
@@ -138,8 +139,8 @@ export class SysInfoBase implements ISysInfo {
 		}).future<string>()();
 	}
 
-	public getSysInfo(pathToPackageJson: string, androidToolsInfo?: {pathToAdb: string, pathToAndroid: string}): IFuture<ISysInfoData> {
-		return((): ISysInfoData => {
+	public getSysInfo(pathToPackageJson: string, androidToolsInfo?: { pathToAdb: string }): IFuture<ISysInfoData> {
+		return ((): ISysInfoData => {
 			if (!this.sysInfoCache) {
 				let res: ISysInfoData = Object.create(null);
 				let procOutput: string;
@@ -153,7 +154,7 @@ export class SysInfoBase implements ISysInfo {
 				res.shell = osenv.shell();
 				try {
 					res.dotNetVer = this.$hostInfo.dotNetVersion().wait();
-				} catch(err) {
+				} catch (err) {
 					res.dotNetVer = ".Net is not installed.";
 				}
 
@@ -172,16 +173,15 @@ export class SysInfoBase implements ISysInfo {
 
 				res.cocoapodVer = this.getCocoapodVersion().wait();
 				let pathToAdb = androidToolsInfo ? androidToolsInfo.pathToAdb : "adb";
-				let pathToAndroid = androidToolsInfo ? androidToolsInfo.pathToAndroid : "android";
 
-				if(!androidToolsInfo) {
+				if (!androidToolsInfo) {
 					this.$logger.trace("'adb' and 'android' will be checked from PATH environment variable.");
 				}
 
 				procOutput = this.exec(`${quoteString(pathToAdb)} version`);
 				res.adbVer = procOutput ? procOutput.split(os.EOL)[0] : null;
 
-				res.androidInstalled = this.checkAndroid(pathToAndroid).wait();
+				res.emulatorInstalled = this.checkEmulator().wait();
 
 				procOutput = this.exec("mono --version");
 				if (!!procOutput) {
@@ -192,7 +192,7 @@ export class SysInfoBase implements ISysInfo {
 				}
 
 				procOutput = this.exec("git --version");
-				res.gitVer = procOutput ? /^git version (.*)/.exec(procOutput)[1]  : null;
+				res.gitVer = procOutput ? /^git version (.*)/.exec(procOutput)[1] : null;
 
 				procOutput = this.exec("gradle -v");
 				res.gradleVer = procOutput ? /Gradle (.*)/i.exec(procOutput)[1] : null;
@@ -208,29 +208,29 @@ export class SysInfoBase implements ISysInfo {
 
 	private exec(cmd: string, execOptions?: IExecOptions): string | any {
 		try {
-			if(cmd) {
+			if (cmd) {
 				return this.$childProcess.exec(cmd, null, execOptions).wait();
 			}
-		} catch(e) {
+		} catch (e) {
 			// if we got an error, assume not working
 		}
 
 		return null;
 	}
 
-	// `android -h` returns exit code 1 on successful invocation (Mac OS X for now, possibly Linux). Therefore, we cannot use $childProcess
-	private checkAndroid(pathToAndroid: string): IFuture<boolean> {
-		return ((): boolean => {
+	private checkEmulator(): IFuture<boolean> {
+		return (() => {
 			let result = false;
 			try {
-				if(pathToAndroid) {
-					let androidChildProcess = this.$childProcess.spawnFromEvent(pathToAndroid, ["-h"], "close", {}, {throwError: false}).wait();
-					result = androidChildProcess && androidChildProcess.stdout && _.includes(androidChildProcess.stdout, "android");
-				}
-			} catch(err) {
-				this.$logger.trace(`Error while checking is ${pathToAndroid} installed. Error is: ${err.messge}`);
+				// emulator -help exits with code 1 on Windows, so we should parse the output.
+				// First line of it should be:
+				// Android Emulator usage: emulator [options] [-qemu args]
+				const emulatorHelp = this.$childProcess.spawnFromEvent(this.$androidEmulatorServices.pathToEmulatorExecutable, ["-help"], "close", {}, { throwError: false }).wait();
+				result = !!(emulatorHelp && emulatorHelp.stdout && emulatorHelp.stdout.indexOf("usage: emulator") !== -1);
+				this.$logger.trace(`The result of checking is Android Emulator installed is:${os.EOL}- stdout: ${emulatorHelp.stdout}${os.EOL}- stderr: ${emulatorHelp.stderr}`);
+			} catch (err) {
+				this.$logger.trace(`Error while checking is emulator installed. Error is: ${err.messge}`);
 			}
-
 			return result;
 		}).future<boolean>()();
 	}
@@ -238,8 +238,8 @@ export class SysInfoBase implements ISysInfo {
 	private winVer(): string {
 		try {
 			return this.readRegistryValue("ProductName").wait() + " " +
-					this.readRegistryValue("CurrentVersion").wait() + "." +
-					this.readRegistryValue("CurrentBuild").wait();
+				this.readRegistryValue("CurrentVersion").wait() + "." +
+				this.readRegistryValue("CurrentBuild").wait();
 		} catch (err) {
 			this.$logger.trace(err);
 		}

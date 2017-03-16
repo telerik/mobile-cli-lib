@@ -844,8 +844,8 @@ interface ISysInfoData {
 	adbVer: string;
 	/** Whether iTunes is installed on the machine */
 	itunesInstalled: boolean;
-	/** Whether `android` executable can be run */
-	androidInstalled: boolean;
+	/** Whether `emulator` executable can be run */
+	emulatorInstalled: boolean;
 	/** mono version, relevant on Mac only **/
 	monoVer: string;
 	/** git version string, as returned by `git --version` **/
@@ -867,7 +867,7 @@ interface ISysInfo {
 	 * @param {any} androidToolsInfo Defines paths to adb and android executables.
 	 * @return {IFuture<ISysInfoData>} Object containing information for current system.
 	 */
-	getSysInfo(pathToPackageJson: string, androidToolsInfo?: { pathToAdb: string, pathToAndroid: string }): IFuture<ISysInfoData>;
+	getSysInfo(pathToPackageJson: string, androidToolsInfo?: { pathToAdb: string }): IFuture<ISysInfoData>;
 
 	/** Returns Java version. **/
 	getJavaVersion(): IFuture<string>;
