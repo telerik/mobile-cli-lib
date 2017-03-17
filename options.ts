@@ -71,6 +71,8 @@ export class OptionsBase {
 			emulator: { type: OptionType.Boolean },
 			sdk: { type: OptionType.String },
 			template: { type: OptionType.String },
+			certificate: { type: OptionType.String },
+			certificatePassword: { type: OptionType.String },
 			release: { type: OptionType.Boolean, alias: "r" },
 			var: { type: OptionType.Object },
 			default: { type: OptionType.Boolean },

@@ -961,7 +961,11 @@ interface IAvailableDevices {
 	availableDevices: boolean;
 }
 
-interface ICommonOptions extends IRelease, IDeviceIdentifier, IJustLaunch, IAvd, IAvailableDevices {
+interface IProfileDir {
+	profileDir: string;
+}
+
+interface ICommonOptions extends IRelease, IDeviceIdentifier, IJustLaunch, IAvd, IAvailableDevices, IProfileDir {
 	argv: IYargArgv;
 	validateOptions(commandSpecificDashedOptions?: IDictionary<IDashedOption>): void;
 	options: IDictionary<any>;
@@ -979,7 +983,6 @@ interface ICommonOptions extends IRelease, IDeviceIdentifier, IJustLaunch, IAvd,
 	help: boolean;
 	json: boolean;
 	watch: boolean;
-	profileDir: string;
 	timeout: string;
 	appid: string;
 	geny: string;
@@ -996,6 +999,8 @@ interface ICommonOptions extends IRelease, IDeviceIdentifier, IJustLaunch, IAvd,
 	emulator: boolean;
 	sdk: string;
 	template: string;
+	certificate: string;
+	certificatePassword: string;
 	var: Object;
 	default: Boolean;
 	count: number;
