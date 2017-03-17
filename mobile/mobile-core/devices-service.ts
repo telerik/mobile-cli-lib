@@ -191,7 +191,8 @@ export class DevicesService implements Mobile.IDevicesService {
 					}
 
 					try {
-						await settlePromises(_.map(this._devices, device => device.applicationManager.checkForApplicationUpdates()));
+						const trustedDevices = _.filter(this._devices, device => device.deviceInfo.status === constants.CONNECTED_STATUS);
+						await settlePromises(_.map(trustedDevices, device => device.applicationManager.checkForApplicationUpdates()));
 					} catch (err) {
 						this.$logger.trace("Error checking for application updates on devices.", err);
 					}

@@ -190,7 +190,8 @@ describe("devicesService", () => {
 		iOSDevice = {
 			deviceInfo: {
 				identifier: "ios-device",
-				platform: "ios"
+				platform: "ios",
+				status: constants.CONNECTED_STATUS
 			},
 			applicationManager: {
 				getInstalledApplications: () => Promise.resolve(["com.telerik.unitTest1", "com.telerik.unitTest2"]),
@@ -209,7 +210,8 @@ describe("devicesService", () => {
 		androidDevice = {
 			deviceInfo: {
 				identifier: "android-device",
-				platform: "android"
+				platform: "android",
+				status: constants.CONNECTED_STATUS
 			},
 			applicationManager: {
 				getInstalledApplications: () => Promise.resolve(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"]),
@@ -1259,6 +1261,14 @@ describe("devicesService", () => {
 				await devicesService.startDeviceDetectionInterval();
 
 				assert.isTrue(hasCheckedForAndroidAppUpdates);
+			});
+
+			it("should check for application updates only on devices with status Connected", async () => {
+				androidDevice.deviceInfo.status = constants.UNREACHABLE_STATUS;
+				await devicesService.startDeviceDetectionInterval();
+
+				assert.isFalse(hasCheckedForAndroidAppUpdates);
+				assert.isTrue(hasCheckedForIosAppUpdates);
 			});
 
 			it("should not throw if all checks for application updates on all devices throw exceptions.", () => {
