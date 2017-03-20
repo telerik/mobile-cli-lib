@@ -211,7 +211,9 @@ export class FileSystem implements IFileSystem {
 
 		this.createDirectory(path.dirname(destinationFileName));
 
-		shelljs.cp("-f", sourceFileName, destinationFileName);
+		// MobileApplication.app is resolved as a directory on Mac,
+		// therefore we need to copy it recursively as it's not a single file.
+		shelljs.cp("-rf", sourceFileName, destinationFileName);
 
 		const err = shelljs.error();
 
