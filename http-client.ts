@@ -1,4 +1,5 @@
 import * as url from "url";
+import { EOL } from "os";
 import * as helpers from "./helpers";
 import * as zlib from "zlib";
 import * as util from "util";
@@ -8,9 +9,10 @@ import filesize = require("filesize");
 export class HttpClient implements Server.IHttpClient {
 	private defaultUserAgent: string;
 
-	constructor(private $logger: ILogger,
-		private $staticConfig: Config.IStaticConfig,
-		private $config: Config.IConfig) { }
+	constructor(private $config: Config.IConfig,
+		private $logger: ILogger,
+		private $proxyService: IProxyService,
+		private $staticConfig: Config.IStaticConfig) { }
 
 	async httpRequest(options: any, proxySettings?: IProxySettings): Promise<Server.IResponse> {
 		if (_.isString(options)) {
@@ -40,17 +42,23 @@ export class HttpClient implements Server.IHttpClient {
 		let pipeTo = options.pipeTo;
 		delete options.pipeTo;
 
-		let proto = this.$config.USE_PROXY ? "http" : requestProto;
+		const proxyCache = this.$proxyService.getCache();
+		let proto = proxyCache && proxyCache.USE_PROXY ? "http" : requestProto;
 		let http = require(proto);
 
 		options.headers = options.headers || {};
 		let headers = options.headers;
 
-		if (proxySettings || this.$config.USE_PROXY) {
+		if (proxySettings || (proxyCache && proxyCache.USE_PROXY)) {
+			const proxyCredentials = await this.$proxyService.getCredentials();
 			options.path = requestProto + "://" + options.host + options.path;
 			headers.Host = options.host;
-			options.host = (proxySettings && proxySettings.hostname) || this.$config.PROXY_HOSTNAME;
-			options.port = (proxySettings && proxySettings.port) || this.$config.PROXY_PORT;
+			options.host = (proxySettings && proxySettings.hostname) || proxyCache.PROXY_HOSTNAME;
+			options.port = (proxySettings && proxySettings.port) || proxyCache.PROXY_PORT;
+			if (proxyCredentials && proxyCredentials.username && proxyCredentials.password) {
+				headers["Proxy-Authorization"] = "Basic " + new Buffer(`${proxyCredentials.username}:${proxyCredentials.password}`).toString('base64');
+			}
+
 			this.$logger.trace("Using proxy with host: %s, port: %d, path is: %s", options.host, options.port, options.path);
 		}
 
@@ -176,7 +184,7 @@ export class HttpClient implements Server.IHttpClient {
 		return response;
 	}
 
-	private async setResponseResult(result: IPromiseActions<Server.IResponse>, timerId: number, resultData: { response?: Server.IRequestResponseData, body?: string, err?: Error,  }): Promise<void> {
+	private async setResponseResult(result: IPromiseActions<Server.IResponse>, timerId: number, resultData: { response?: Server.IRequestResponseData, body?: string, err?: Error }): Promise<void> {
 		if (timerId) {
 			clearTimeout(timerId);
 			timerId = null;
@@ -229,7 +237,10 @@ export class HttpClient implements Server.IHttpClient {
 	}
 
 	private getErrorMessage(response: Server.IRequestResponseData, body: string): string {
-		if (response.statusCode === 402) {
+		if (response.statusCode === 407) {
+			const clientNameLowerCase = this.$staticConfig.CLIENT_NAME.toLowerCase();
+			return `Your proxy requires a username and password. You can run ${EOL}\t${clientNameLowerCase} proxy set <hostname> <port> <username> <password>.${EOL}In order to supply ${clientNameLowerCase} with the credentials needed.`;
+		} else if (response.statusCode === 402) {
 			let subscriptionUrl = util.format("%s://%s/appbuilder/account/subscription", this.$config.AB_SERVER_PROTO, this.$config.AB_SERVER);
 			return util.format("Your subscription has expired. Go to %s to manage your subscription. Note: After you renew your subscription, " +
 				"log out and log back in for the changes to take effect.", subscriptionUrl);
