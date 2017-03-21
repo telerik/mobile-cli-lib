@@ -76,7 +76,7 @@ export class ChildProcess extends EventEmitter implements IChildProcess {
 			if (childProcess.stderr) {
 				childProcess.stderr.on("data", (data: string) => {
 					if (spawnFromEventOptions && spawnFromEventOptions.emitOptions && spawnFromEventOptions.emitOptions.eventName) {
-						this.emit(spawnFromEventOptions.emitOptions.eventName, { data, pipe: 'stdout' });
+						this.emit(spawnFromEventOptions.emitOptions.eventName, { data, pipe: 'stderr' });
 					}
 
 					capturedErr += data;
