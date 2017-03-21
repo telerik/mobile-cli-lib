@@ -9,7 +9,7 @@ export class ProxySetCommand implements ICommand {
 	constructor(private $injector: IInjector,
 		private $logger: ILogger,
 		private $prompter: IPrompter,
-		private $proxyCacheService: IProxyService) {
+		private $proxyService: IProxyService) {
 	}
 
 	public async execute(args: string[]): Promise<void> {
@@ -35,7 +35,7 @@ export class ProxySetCommand implements ICommand {
 		}
 
 		if (username && password) {
-			await this.$proxyCacheService.setCredentials({
+			await this.$proxyService.setCredentials({
 				password,
 				username
 			});
@@ -47,7 +47,7 @@ export class ProxySetCommand implements ICommand {
 			USE_PROXY: true
 		};
 
-		this.$proxyCacheService.setCache(proxyCache);
+		this.$proxyService.setCache(proxyCache);
 		this.$logger.out("Sucessfully setup proxy.");
 	}
 }
@@ -60,14 +60,14 @@ export class ProxyGetCommand implements ICommand {
 	public allowedParameters: ICommandParameter[] = [];
 
 	constructor(private $logger: ILogger,
-		private $proxyCacheService: IProxyService) {
+		private $proxyService: IProxyService) {
 	}
 
 	public async execute(args: string[]): Promise<void> {
 		let message = "";
-		const proxyCache: IProxyCache = this.$proxyCacheService.getCache();
+		const proxyCache: IProxyCache = this.$proxyService.getCache();
 		if (proxyCache) {
-			const proxyCredentials = await this.$proxyCacheService.getCredentials();
+			const proxyCredentials = await this.$proxyService.getCredentials();
 			message = `Hostname: ${proxyCache.PROXY_HOSTNAME}${EOL}Port: ${proxyCache.PROXY_PORT}`;
 			if (proxyCredentials && proxyCredentials.username) {
 				message += `${EOL}Username: ${proxyCredentials.username}`;
@@ -90,12 +90,12 @@ export class ProxyClearCommand implements ICommand {
 	public allowedParameters: ICommandParameter[] = [];
 
 	constructor(private $logger: ILogger,
-		private $proxyCacheService: IProxyService) {
+		private $proxyService: IProxyService) {
 	}
 
 	public async execute(args: string[]): Promise<void> {
 		// TODO: Clear credentials from vault
-		this.$proxyCacheService.clearCache();
+		this.$proxyService.clearCache();
 		this.$logger.out("Sucessfully cleared proxy.");
 	}
 }

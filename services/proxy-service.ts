@@ -36,4 +36,4 @@ export class ProxyService implements IProxyService {
 	}
 }
 
-$injector.register("proxyCacheService", ProxyService);
+$injector.register("proxyService", ProxyService);

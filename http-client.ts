@@ -10,7 +10,7 @@ export class HttpClient implements Server.IHttpClient {
 
 	constructor(private $config: Config.IConfig,
 		private $logger: ILogger,
-		private $proxyCacheService: IProxyService,
+		private $proxyService: IProxyService,
 		private $staticConfig: Config.IStaticConfig) { }
 
 	async httpRequest(options: any, proxySettings?: IProxySettings): Promise<Server.IResponse> {
@@ -41,7 +41,7 @@ export class HttpClient implements Server.IHttpClient {
 		let pipeTo = options.pipeTo;
 		delete options.pipeTo;
 
-		const proxyCache = this.$proxyCacheService.getCache();
+		const proxyCache = this.$proxyService.getCache();
 		let proto = proxyCache && proxyCache.USE_PROXY ? "http" : requestProto;
 		let http = require(proto);
 
@@ -49,7 +49,7 @@ export class HttpClient implements Server.IHttpClient {
 		let headers = options.headers;
 
 		if (proxySettings || (proxyCache && proxyCache.USE_PROXY)) {
-			const proxyCredentials = await this.$proxyCacheService.getCredentials();
+			const proxyCredentials = await this.$proxyService.getCredentials();
 			options.path = requestProto + "://" + options.host + options.path;
 			headers.Host = options.host;
 			options.host = (proxySettings && proxySettings.hostname) || proxyCache.PROXY_HOSTNAME;
