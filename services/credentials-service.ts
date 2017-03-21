@@ -1,5 +1,6 @@
 import * as path from "path";
 import * as crypto from "crypto";
+import { platform } from "os";
 
 export class CredentialsService implements ICredentialsService {
 	private static USERNAME_REGEX = /username\s+:\s(.*)/i;
@@ -18,7 +19,7 @@ export class CredentialsService implements ICredentialsService {
 			await this.$childProcess.spawnFromEvent("powershell.exe", [this.pathToWindowsHelperScript, "-AddCred", "-Target", key, "-User", credentials.username, "-Pass", this.encrypt(credentials.password)], "close");
 			return credentials;
 		} else {
-			throw new Error("Not implemented");
+			throw new Error(`Storing credentials is not supported on ${platform()} yet.`);
 		}
 	}
 
@@ -32,7 +33,7 @@ export class CredentialsService implements ICredentialsService {
 				password: passwordGroup && passwordGroup[1] && this.decrypt(passwordGroup[1])
 			};
 		} else {
-			throw new Error("Not implemented");
+			throw new Error(`Storing credentials is not supported on ${platform()} yet.`);
 		}
 	}
 
@@ -40,7 +41,7 @@ export class CredentialsService implements ICredentialsService {
 		if (this.$hostInfo.isWindows) {
 			await this.$childProcess.spawnFromEvent("powershell.exe", [this.pathToWindowsHelperScript, "-DelCred", "-Target", key], "close");
 		} else {
-			throw new Error("Not implemented");
+			throw new Error(`Storing credentials is not supported on ${platform()} yet.`);
 		}
 	}
 

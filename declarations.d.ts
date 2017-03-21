@@ -697,8 +697,8 @@ interface ICredentialsService {
 	 */
 	getCredentials(key: string): Promise<ICredentials>;
 	/**
-	 * Retrieves credentials from the OS' secure storage with the given key.
-	 * @param key {string} A key based on which to retrieve the credentials.
+	 * Clears credentials from the OS' secure storage with the given key.
+	 * @param key {string} A key based on which to clear the credentials.
 	 * @returns {Promise<void>}
 	 */
 	clearCredentials(key: string): Promise<void>;

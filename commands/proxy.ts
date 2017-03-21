@@ -1,4 +1,5 @@
 import * as commandParams from "../command-params";
+import { EOL } from "os";
 
 export class ProxySetCommand implements ICommand {
 	public disableAnalytics = true;
@@ -67,12 +68,12 @@ export class ProxyGetCommand implements ICommand {
 		const proxyCache: IProxyCache = this.$proxyCacheService.getCache();
 		if (proxyCache) {
 			const proxyCredentials = await this.$proxyCacheService.getCredentials();
-			message = `Hostname: ${proxyCache.PROXY_HOSTNAME}\nPort: ${proxyCache.PROXY_PORT}`;
+			message = `Hostname: ${proxyCache.PROXY_HOSTNAME}${EOL}Port: ${proxyCache.PROXY_PORT}`;
 			if (proxyCredentials && proxyCredentials.username) {
-				message += `\nUsername: ${proxyCredentials.username}`;
+				message += `${EOL}Username: ${proxyCredentials.username}`;
 			}
 
-			message += `\nPROXY IS ${proxyCache.USE_PROXY ? "ENABLED" : "DISABLED"}`;
+			message += `${EOL}PROXY IS ${proxyCache.USE_PROXY ? "ENABLED" : "DISABLED"}`;
 		} else {
 			message = "No proxy set";
 		}
