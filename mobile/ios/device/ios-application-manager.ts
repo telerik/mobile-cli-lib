@@ -28,7 +28,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	@hook('install')
 	public async installApplication(packageFilePath: string): Promise<void> {
 		await this.$iosDeviceOperations.install(packageFilePath, [this.device.deviceInfo.identifier], (err: IOSDeviceLib.IDeviceError) => {
-			this.$logger.warn(`Failed to install ${packageFilePath} on device with identifier ${err.deviceId}`);
+			this.$errors.failWithoutHelp(`Failed to install ${packageFilePath} on device with identifier ${err.deviceId}. Error is: ${err.message}`);
 		});
 	}
 
