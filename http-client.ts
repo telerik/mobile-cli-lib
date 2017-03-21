@@ -10,7 +10,7 @@ export class HttpClient implements Server.IHttpClient {
 
 	constructor(private $config: Config.IConfig,
 		private $logger: ILogger,
-		private $proxyCacheService: IProxyCacheService,
+		private $proxyCacheService: IProxyService,
 		private $staticConfig: Config.IStaticConfig) { }
 
 	async httpRequest(options: any, proxySettings?: IProxySettings): Promise<Server.IResponse> {

@@ -9,7 +9,7 @@ export class ProxySetCommand implements ICommand {
 	constructor(private $injector: IInjector,
 		private $logger: ILogger,
 		private $prompter: IPrompter,
-		private $proxyCacheService: IProxyCacheService) {
+		private $proxyCacheService: IProxyService) {
 	}
 
 	public async execute(args: string[]): Promise<void> {
@@ -60,7 +60,7 @@ export class ProxyGetCommand implements ICommand {
 	public allowedParameters: ICommandParameter[] = [];
 
 	constructor(private $logger: ILogger,
-		private $proxyCacheService: IProxyCacheService) {
+		private $proxyCacheService: IProxyService) {
 	}
 
 	public async execute(args: string[]): Promise<void> {
@@ -90,7 +90,7 @@ export class ProxyClearCommand implements ICommand {
 	public allowedParameters: ICommandParameter[] = [];
 
 	constructor(private $logger: ILogger,
-		private $proxyCacheService: IProxyCacheService) {
+		private $proxyCacheService: IProxyService) {
 	}
 
 	public async execute(args: string[]): Promise<void> {

@@ -1,7 +1,7 @@
 import * as path from "path";
 import { Proxy } from "../constants";
 
-export class ProxyCacheService implements IProxyCacheService {
+export class ProxyService implements IProxyService {
 	private proxyCacheFilePath: string;
 	private credentialsKey: string;
 
@@ -36,4 +36,4 @@ export class ProxyCacheService implements IProxyCacheService {
 	}
 }
 
-$injector.register("proxyCacheService", ProxyCacheService);
+$injector.register("proxyCacheService", ProxyService);

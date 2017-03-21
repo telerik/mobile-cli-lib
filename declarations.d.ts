@@ -707,7 +707,7 @@ interface ICredentialsService {
 /**
  * Describes Service used for interaction with the proxy cache.
  */
-interface IProxyCacheService {
+interface IProxyService {
 	/**
 	 * Caches proxy data.
 	 * @param cacheData {IProxyCache} Data to be cached.
