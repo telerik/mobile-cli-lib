@@ -186,7 +186,7 @@ describe("decorators", () => {
 			let isActionExecuted = false;
 			let expectedResults: any;
 
-			let postAction = () => {
+			let postAction = async (): Promise<void> => {
 				assert.isTrue(isActionExecuted, "Post Action MUST be executed AFTER all actions are executed.");
 				isPostActionExecuted = true;
 			};

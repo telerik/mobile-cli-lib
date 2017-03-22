@@ -72,7 +72,7 @@ export function invokeInit(): any {
 	return invokeBefore("init");
 }
 
-export function exportedPromise(moduleName: string, postAction?: () => void): any {
+export function exportedPromise(moduleName: string, postAction?: () => Promise<void>): any {
 	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> => {
 		$injector.publicApi.__modules__[moduleName] = $injector.publicApi.__modules__[moduleName] || {};
 		$injector.publicApi.__modules__[moduleName][propertyKey] = (...args: any[]): Promise<any>[] | Promise<any> => {
@@ -115,10 +115,10 @@ export function exportedPromise(moduleName: string, postAction?: () => void): an
 	};
 }
 
-function getPromise(originalValue: any, config?: { postActionMethod: () => void, shouldExecutePostAction?: boolean }): Promise<any> {
-	let postAction = (data: any) => {
+function getPromise(originalValue: any, config?: { postActionMethod: () => Promise<void>, shouldExecutePostAction?: boolean }): Promise<any> {
+	let postAction = async (data: any) => {
 		if (config && config.postActionMethod && config.shouldExecutePostAction) {
-			config.postActionMethod();
+			await config.postActionMethod();
 		}
 
 		if (data instanceof Error) {
