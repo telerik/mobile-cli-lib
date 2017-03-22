@@ -4,7 +4,7 @@ export class AndroidDebugBridgeResultHandler implements Mobile.IAndroidDebugBrid
 	private static ANDROID_DEBUG_BRIDGE_ERRORS: Mobile.IAndroidDebugBridgeError[] = [
 		{
 			name: "device unauthorized",
-			description: "The device is not authorized.",
+			description: "The device is not authorized. Please use the --emulator flag to run the application on on an emulator",
 			resultCode: 1
 		}, {
 			name: "No space left on device",
