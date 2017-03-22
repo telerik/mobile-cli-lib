@@ -20,4 +20,4 @@ export class PutFileCommand implements ICommand {
 		await this.$devicesService.execute(action);
 	}
 }
-$injector.registerCommand("device|put-file", PutFileCommand);
+$injector.registerCommand(["device|put-file", "devices|put-file"], PutFileCommand);

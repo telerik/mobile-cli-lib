@@ -351,7 +351,16 @@ declare module Mobile {
 	interface IDevicesService {
 		hasDevices: boolean;
 		deviceCount: number;
+
+		/**
+		 * Optionally starts emulator depending on the passed options.
+		 * @param {IDevicesServicesInitializationOptions} data Defines wheather to start default or specific emulator.
+		 * @return {Promise<void>}
+		 */
+		startEmulatorIfNecessary(data?: Mobile.IDevicesServicesInitializationOptions): Promise<void>;
+
 		execute(action: (device: Mobile.IDevice) => Promise<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: { allowNoDevices?: boolean }): Promise<void>;
+
 		/**
 		 * Initializes DevicesService, so after that device operations could be executed.
 		 * @param {IDevicesServicesInitializationOptions} data Defines the options which will be used for whole devicesService.
@@ -363,7 +372,6 @@ declare module Mobile {
 		getDevicesForPlatform(platform: string): Mobile.IDevice[];
 		getDeviceInstances(): Mobile.IDevice[];
 		getDeviceByDeviceOption(): Mobile.IDevice;
-		getDeviceByName(name: string): Mobile.IDevice;
 		isAndroidDevice(device: Mobile.IDevice): boolean;
 		isiOSDevice(device: Mobile.IDevice): boolean;
 		isiOSSimulator(device: Mobile.IDevice): boolean;
@@ -375,7 +383,7 @@ declare module Mobile {
 		getDeviceByIdentifier(identifier: string): Mobile.IDevice;
 		mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string, framework: string): Promise<string>;
 		detectCurrentlyAttachedDevices(): Promise<void>;
-		startEmulator(platform?: string): Promise<void>;
+		startEmulator(platform?: string, emulatorImage?: string): Promise<void>;
 		isCompanionAppInstalledOnDevices(deviceIdentifiers: string[], framework: string): Promise<IAppInstalledInfo>[];
 		getDebuggableApps(deviceIdentifiers: string[]): Promise<Mobile.IDeviceApplicationInformation[]>[];
 		getDebuggableViews(deviceIdentifier: string, appIdentifier: string): Promise<Mobile.IDebugWebViewInfo[]>;
@@ -500,9 +508,10 @@ declare module Mobile {
 		 */
 		checkAvailability(dependsOnProject?: boolean): void;
 
-		startEmulator(): Promise<string>;
+		startEmulator(emulatorImage?: string): Promise<string>
 		runApplicationOnEmulator(app: string, emulatorOptions?: IEmulatorOptions): Promise<any>;
 		getEmulatorId(): Promise<string>;
+		getRunningEmulatorId(image: string): Promise<string>;
 	}
 
 	interface IAndroidEmulatorServices extends IEmulatorPlatformServices {

@@ -23,4 +23,4 @@ export class ListFilesCommand implements ICommand {
 	}
 }
 
-$injector.registerCommand("device|list-files", ListFilesCommand);
+$injector.registerCommand(["device|list-files", "devices|list-files"], ListFilesCommand);

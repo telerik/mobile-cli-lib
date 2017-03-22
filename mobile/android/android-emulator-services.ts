@@ -99,14 +99,14 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		}
 	}
 
-	public async startEmulator(): Promise<string> {
+	public async startEmulator(emulatorImage?: string): Promise<string> {
 		if (this.$options.avd && this.$options.geny) {
 			this.$errors.fail("You cannot specify both --avd and --geny options. Please use only one of them.");
 		}
 
 		let emulatorId: string = null;
 
-		let image = this.getEmulatorImage();
+		let image = this.getEmulatorImage(emulatorImage);
 		if (image) {
 			// start the emulator, if needed
 			emulatorId = await this.startEmulatorInstance(image);
@@ -117,7 +117,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 			// unlock screen
 			await this.unlockScreen(emulatorId);
 		} else {
-			this.$errors.fail("Could not find an emulator image to run your project.");
+			this.$errors.fail(`Could not find an emulator image or identifier to run your project. Please run: "tns device <platform> --available-devices"`);
 		}
 
 		return emulatorId;
@@ -151,8 +151,8 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		}
 	}
 
-	private getEmulatorImage(): string {
-		let image = this.$options.avd || this.$options.geny || this.getBestFit();
+	private getEmulatorImage(suggestedImage?: string): string {
+		let image = this.$options.avd || this.$options.geny || this.getBestFit(suggestedImage);
 		return image;
 	}
 
@@ -193,7 +193,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		});
 	}
 
-	private async getRunningEmulatorId(image: string): Promise<string> {
+	public async getRunningEmulatorId(image: string): Promise<string> {
 		let runningEmulators = await this.getRunningEmulators();
 		if (runningEmulators.length === 0) {
 			return "";
@@ -287,7 +287,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		let emulatorId = await this.getRunningEmulatorId(image);
 		this.endTimeEpoch = helpers.getCurrentEpochTime() + this.$utils.getMilliSecondsTimeout(AndroidEmulatorServices.TIMEOUT_SECONDS);
 		if (emulatorId) {
-			// If there's already a running instance of this image, we'll just deploy the app to it.
+			// If there's already a running instance of this image, we'll just return the emulatorId.
 			return emulatorId;
 		}
 
@@ -410,10 +410,15 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		return result;
 	}
 
-	private getBestFit(): string {
+	private getBestFit(suggestedImage?: string): string {
 		let minVersion = this.$emulatorSettingsService.minVersion;
 
-		let best = _(this.getAvds())
+		let avdResults = this.getAvds();
+		if(suggestedImage) {
+			avdResults = avdResults.filter(avd => avd === suggestedImage);
+		}
+
+		let best = _(avdResults)
 			.map(avd => this.getInfoFromAvd(avd))
 			.filter(avd => !!avd)
 			.maxBy(avd => avd.targetNum);

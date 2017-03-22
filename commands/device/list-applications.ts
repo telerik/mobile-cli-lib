@@ -22,4 +22,4 @@ export class ListApplicationsCommand implements ICommand {
 		this.$logger.out(output.join(EOL));
 	}
 }
-$injector.registerCommand("device|list-applications", ListApplicationsCommand);
+$injector.registerCommand(["device|list-applications", "devices|list-applications"], ListApplicationsCommand);

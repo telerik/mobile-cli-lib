@@ -19,4 +19,4 @@ export class RunApplicationOnDeviceCommand implements ICommand {
 	}
 }
 
-$injector.registerCommand("device|run", RunApplicationOnDeviceCommand);
+$injector.registerCommand(["device|run", "devices|run"], RunApplicationOnDeviceCommand);
