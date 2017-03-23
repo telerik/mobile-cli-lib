@@ -16,8 +16,8 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 		await this.installApplication(packageFilePath);
 	}
 
-	public async restartApplication(appIdentifier: string): Promise<void> {
-		await this.stopApplication(appIdentifier);
+	public async restartApplication(appIdentifier: string, appName?: string): Promise<void> {
+		await this.stopApplication(appName || appIdentifier);
 		await this.startApplication(appIdentifier);
 	}
 

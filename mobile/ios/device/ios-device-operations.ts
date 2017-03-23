@@ -126,7 +126,7 @@ export class IOSDeviceOperations implements IIOSDeviceOperations, IDisposable {
 			this.$logger.trace(`Stopping application ${s.appId} on device with identifier: ${s.deviceId}.`);
 		});
 
-		return this.getMultipleResults<IOSDeviceLib.IDeviceResponse>(() => this.deviceLib.start(stopArray), errorHandler);
+		return this.getMultipleResults<IOSDeviceLib.IDeviceResponse>(() => this.deviceLib.stop(stopArray), errorHandler);
 	}
 
 	public dispose(signal?: string): void {
