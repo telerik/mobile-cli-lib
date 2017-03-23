@@ -322,11 +322,30 @@ declare module Mobile {
 		ensureAdbServerStarted(): Promise<any>;
 	}
 
+	/**
+	 * Describes options that can be passed to devices service's initialization method.
+	 */
 	interface IDevicesServicesInitializationOptions {
+		/**
+		 * The platform for which to initialize. If passed will detect only devices belonging to said platform.
+		 */
 		platform?: string;
+		/**
+		 * Currently unused.
+		 */
 		emulator?: boolean;
+		/**
+		 * Specifies a device with which to work with.
+		 */
 		deviceId?: string;
+		/**
+		 * Specifies that platform should not be infered. That is to say that all devices will be detected regardless of platform and no errors will be thrown.
+		 */
 		skipInferPlatform?: boolean;
+		/**
+		 * If passed along with skipInferPlatform then the device detection interval will not be started but instead the currently attached devices will be detected.
+		 */
+		skipDeviceDetectionInterval?: boolean;
 	}
 
 	interface IDevicesService {
@@ -353,7 +372,6 @@ declare module Mobile {
 		setLogLevel(logLevel: string, deviceIdentifier?: string): void;
 		deployOnDevices(deviceIdentifiers: string[], packageFile: string, packageName: string, framework: string): Promise<void>[];
 		startDeviceDetectionInterval(): Promise<void>;
-		stopDeviceDetectionInterval(): Promise<void>;
 		getDeviceByIdentifier(identifier: string): Mobile.IDevice;
 		mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string, framework: string): Promise<string>;
 		detectCurrentlyAttachedDevices(): Promise<void>;

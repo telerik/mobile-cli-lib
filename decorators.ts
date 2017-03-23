@@ -1,6 +1,3 @@
-import * as assert from "assert";
-import { isPromise } from "./helpers";
-
 /**
  * Caches the result of the first execution of the method and returns it whenever it is called instead of executing it again.
  * Works with methods and getters.
@@ -72,76 +69,6 @@ export function invokeInit(): any {
 	return invokeBefore("init");
 }
 
-export function exportedPromise(moduleName: string, postAction?: () => Promise<void>): any {
-	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> => {
-		$injector.publicApi.__modules__[moduleName] = $injector.publicApi.__modules__[moduleName] || {};
-		$injector.publicApi.__modules__[moduleName][propertyKey] = (...args: any[]): Promise<any>[] | Promise<any> => {
-			let originalModule = $injector.resolve(moduleName);
-			let originalMethod: Function = originalModule[propertyKey];
-			let result: any;
-			try {
-				result = originalMethod.apply(originalModule, args);
-			} catch (err) {
-				let promise = new Promise((onFulfilled: Function, onRejected: Function) => {
-					onRejected(err);
-				});
-
-				return promise;
-			}
-
-			let types = _(result)
-				.groupBy((f: any) => typeof f)
-				.keys()
-				.value(),
-				postActionMethod = postAction && postAction.bind(originalModule);
-
-			// Check if method returns Promise<T>[]. In this case we will return Promise<T>[]
-			if (_.isArray(result) && types.length === 1 && isPromise(_.first<any>(result))) {
-				return _.map(result, (future: Promise<any>, index: number) => getPromise(future,
-					{
-						postActionMethod,
-						shouldExecutePostAction: (index + 1) === result.length
-					}));
-			} else {
-				return getPromise(result,
-					{
-						postActionMethod,
-						shouldExecutePostAction: !!postAction
-					});
-			}
-		};
-
-		return descriptor;
-	};
-}
-
-function getPromise(originalValue: any, config?: { postActionMethod: () => Promise<void>, shouldExecutePostAction?: boolean }): Promise<any> {
-	let postAction = async (data: any) => {
-		if (config && config.postActionMethod && config.shouldExecutePostAction) {
-			await config.postActionMethod();
-		}
-
-		if (data instanceof Error) {
-			throw data;
-		}
-
-		return data;
-	};
-
-	return new Promise(async (onFulfilled: Function, onRejected: Function) => {
-		if (isPromise(originalValue)) {
-			try {
-				let realResult = await originalValue;
-				onFulfilled(realResult);
-			} catch (err) {
-				onRejected(err);
-			}
-		} else {
-			onFulfilled(originalValue);
-		}
-	}).then(postAction, postAction);
-}
-
 export function exported(moduleName: string): any {
 	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> => {
 		$injector.publicApi.__modules__[moduleName] = $injector.publicApi.__modules__[moduleName] || {};
@@ -150,7 +77,6 @@ export function exported(moduleName: string): any {
 				originalMethod: any = originalModule[propertyKey],
 				result = originalMethod.apply(originalModule, args);
 
-			assert.strictEqual(isPromise(result), false, "Cannot use exported decorator with function returning Promise<T>.");
 			return result;
 		};
 

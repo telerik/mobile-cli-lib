@@ -1,7 +1,7 @@
-import { exportedPromise } from "../../../decorators";
+import { exported } from "../../../decorators";
 
 export class TestPublicAPI {
-	@exportedPromise("testPublicApi")
+	@exported("testPublicApi")
 	public async myMethod(expectedResult: any): Promise<any> {
 		return expectedResult;
 	}

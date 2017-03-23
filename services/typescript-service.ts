@@ -1,7 +1,7 @@
 import * as path from "path";
 import * as os from "os";
 import temp = require("temp");
-import { exportedPromise } from "../decorators";
+import { exported } from "../decorators";
 import { NODE_MODULES_DIR_NAME, FileExtensions } from "../constants";
 import { ChildProcess } from "child_process";
 temp.track();
@@ -35,7 +35,7 @@ export class TypeScriptService implements ITypeScriptService {
 		private $processService: IProcessService,
 		private $errors: IErrors) { }
 
-	@exportedPromise("typeScriptService")
+	@exported("typeScriptService")
 	public async transpile(projectDir: string, typeScriptFiles?: string[], definitionFiles?: string[], options?: ITypeScriptTranspileOptions): Promise<void> {
 		options = options || {};
 		let compilerOptions = this.getCompilerOptions(projectDir, options);
