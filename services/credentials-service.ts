@@ -25,9 +25,9 @@ export class CredentialsService implements ICredentialsService {
 
 	public async getCredentials(key: string): Promise<ICredentials> {
 		if (this.$hostInfo.isWindows) {
-			let credentialsSpawnResult = await this.$childProcess.spawnFromEvent("powershell.exe", [this.pathToWindowsHelperScript, "-GetCred", "-Target", key], "close");
-			let usernameGroup = CredentialsService.USERNAME_REGEX.exec(credentialsSpawnResult.stdout);
-			let passwordGroup = CredentialsService.PASSWORD_REGEX.exec(credentialsSpawnResult.stdout);
+			const credentialsSpawnResult = await this.$childProcess.spawnFromEvent("powershell.exe", [this.pathToWindowsHelperScript, "-GetCred", "-Target", key], "close");
+			const usernameGroup = CredentialsService.USERNAME_REGEX.exec(credentialsSpawnResult.stdout);
+			const passwordGroup = CredentialsService.PASSWORD_REGEX.exec(credentialsSpawnResult.stdout);
 			return {
 				username: usernameGroup && usernameGroup[1],
 				password: passwordGroup && passwordGroup[1] && this.decrypt(passwordGroup[1])

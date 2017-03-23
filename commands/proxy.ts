@@ -1,15 +1,45 @@
 import * as commandParams from "../command-params";
+import { isInteractive } from "../helpers";
 import { EOL } from "os";
 
-export class ProxySetCommand implements ICommand {
+const proxyGetCommandName = "proxy|*get";
+const proxySetCommandName = "proxy|set";
+const proxyClearCommandName = "proxy|clear";
+
+export abstract class ProxyCommandBase implements ICommand {
+	public disableAnalytics = true;
+
+	constructor(protected $analyticsService: IAnalyticsService,
+		protected $logger: ILogger,
+		protected $proxyService: IProxyService,
+		private commandName: string) {
+	}
+
+	public abstract allowedParameters: ICommandParameter[];
+
+	public abstract execute(args: string[]): Promise<void>;
+
+	protected async tryTrackUsage() {
+		try {
+			await this.$analyticsService.trackFeature(this.commandName);
+		} catch (ex) {
+			// Swallow exception - there might be something wrong with the proxy or its credentials
+		}
+	}
+}
+
+export class ProxySetCommand extends ProxyCommandBase {
 	public disableAnalytics = true;
 
 	public allowedParameters = [new commandParams.StringCommandParameter(this.$injector), new commandParams.StringCommandParameter(this.$injector), new commandParams.StringCommandParameter(this.$injector), new commandParams.StringCommandParameter(this.$injector)];
 
-	constructor(private $injector: IInjector,
-		private $logger: ILogger,
+	constructor(private $errors: IErrors,
+		private $injector: IInjector,
 		private $prompter: IPrompter,
-		private $proxyService: IProxyService) {
+		protected $analyticsService: IAnalyticsService,
+		protected $logger: ILogger,
+		protected $proxyService: IProxyService) {
+		super($analyticsService, $logger, $proxyService, proxySetCommandName);
 	}
 
 	public async execute(args: string[]): Promise<void> {
@@ -18,19 +48,27 @@ export class ProxySetCommand implements ICommand {
 			username = args[2],
 			password = args[3];
 
-		if (!hostname) {
+		const noHostName = !hostname;
+		const noPort = !port;
+		const credentialsRequired = username && !password;
+
+		if (!isInteractive() && (noHostName || noPort || credentialsRequired)) {
+			this.$errors.fail("Console is not interactive - you need to supply all command parameters.");
+		}
+
+		if (noHostName) {
 			hostname = await this.$prompter.getString("Hostname", { allowEmpty: false });
 		}
 
-		if (!port) {
+		if (noPort) {
 			port = await this.$prompter.getString("Port", { allowEmpty: false });
 		}
 
 		if (!username) {
-			username = await this.$prompter.getString("Username", { defaultAction: () => "" });
+			username = await this.$prompter.getString("Username (Leave empty to omit.)", { defaultAction: () => "" });
 		}
 
-		if (username && !password) {
+		if (credentialsRequired) {
 			password = await this.$prompter.getPassword("Password");
 		}
 
@@ -49,18 +87,19 @@ export class ProxySetCommand implements ICommand {
 
 		this.$proxyService.setCache(proxyCache);
 		this.$logger.out("Sucessfully setup proxy.");
+		await this.tryTrackUsage();
 	}
 }
 
-$injector.registerCommand("proxy|set", ProxySetCommand);
+$injector.registerCommand(proxySetCommandName, ProxySetCommand);
 
-export class ProxyGetCommand implements ICommand {
-	public disableAnalytics = true;
-
+export class ProxyGetCommand extends ProxyCommandBase {
 	public allowedParameters: ICommandParameter[] = [];
 
-	constructor(private $logger: ILogger,
-		private $proxyService: IProxyService) {
+	constructor(protected $analyticsService: IAnalyticsService,
+		protected $logger: ILogger,
+		protected $proxyService: IProxyService) {
+		super($analyticsService, $logger, $proxyService, proxyGetCommandName);
 	}
 
 	public async execute(args: string[]): Promise<void> {
@@ -73,31 +112,34 @@ export class ProxyGetCommand implements ICommand {
 				message += `${EOL}Username: ${proxyCredentials.username}`;
 			}
 
-			message += `${EOL}PROXY IS ${proxyCache.USE_PROXY ? "ENABLED" : "DISABLED"}`;
+			message += `${EOL}Proxy is ${proxyCache.USE_PROXY ? "Enabled" : "Disabled"}`;
 		} else {
 			message = "No proxy set";
 		}
 
 		this.$logger.out(message);
+		await this.tryTrackUsage();
 	}
 }
 
-$injector.registerCommand("proxy|*get", ProxyGetCommand);
+$injector.registerCommand(proxyGetCommandName, ProxyGetCommand);
 
-export class ProxyClearCommand implements ICommand {
+export class ProxyClearCommand extends ProxyCommandBase {
 	public disableAnalytics = true;
 
 	public allowedParameters: ICommandParameter[] = [];
 
-	constructor(private $logger: ILogger,
-		private $proxyService: IProxyService) {
+	constructor(protected $analyticsService: IAnalyticsService,
+		protected $logger: ILogger,
+		protected $proxyService: IProxyService) {
+		super($analyticsService, $logger, $proxyService, proxyClearCommandName);
 	}
 
 	public async execute(args: string[]): Promise<void> {
-		// TODO: Clear credentials from vault
 		this.$proxyService.clearCache();
 		this.$logger.out("Sucessfully cleared proxy.");
+		await this.tryTrackUsage();
 	}
 }
 
-$injector.registerCommand("proxy|clear", ProxyClearCommand);
+$injector.registerCommand(proxyClearCommandName, ProxyClearCommand);

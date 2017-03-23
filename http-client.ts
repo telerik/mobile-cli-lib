@@ -1,4 +1,5 @@
 import * as url from "url";
+import { EOL } from "os";
 import * as helpers from "./helpers";
 import * as zlib from "zlib";
 import * as util from "util";
@@ -238,7 +239,7 @@ export class HttpClient implements Server.IHttpClient {
 	private getErrorMessage(response: Server.IRequestResponseData, body: string): string {
 		if (response.statusCode === 407) {
 			const clientNameLowerCase = this.$staticConfig.CLIENT_NAME.toLowerCase();
-			return `Your proxy requires a username and password. You can run \n\t${clientNameLowerCase} proxy set <hostname> <port> <username> <password>.\nIn order to supply ${clientNameLowerCase} with the credentials needed.`;
+			return `Your proxy requires a username and password. You can run ${EOL}\t${clientNameLowerCase} proxy set <hostname> <port> <username> <password>.${EOL}In order to supply ${clientNameLowerCase} with the credentials needed.`;
 		} else if (response.statusCode === 402) {
 			let subscriptionUrl = util.format("%s://%s/appbuilder/account/subscription", this.$config.AB_SERVER_PROTO, this.$config.AB_SERVER);
 			return util.format("Your subscription has expired. Go to %s to manage your subscription. Note: After you renew your subscription, " +
