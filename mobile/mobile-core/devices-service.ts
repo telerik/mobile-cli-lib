@@ -213,9 +213,9 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	public async stopDeviceDetectionInterval(): Promise<void> {
+		await this.getDeviceDetectionIntervalPromise();
 		this.clearDeviceDetectionInterval();
 		this.deviceDetectionInterval = null;
-		await this.getDeviceDetectionIntervalFuture();
 	}
 
 	public getDeviceByIdentifier(identifier: string): Mobile.IDevice {
@@ -551,7 +551,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		};
 	}
 
-	private async getDeviceDetectionIntervalFuture(): Promise<void> {
+	private async getDeviceDetectionIntervalPromise(): Promise<void> {
 		return this.deviceDetectionIntervalPromise || Promise.resolve();
 	}
 }
