@@ -2,12 +2,12 @@ import * as util from "util";
 import * as helpers from "../../helpers";
 import * as assert from "assert";
 import * as constants from "../../constants";
-import { exportedPromise, exported } from "../../decorators";
+import { exported } from "../../decorators";
 import { settlePromises } from "../../helpers";
 import { EOL } from "os";
 
 export class DevicesService implements Mobile.IDevicesService {
-	private static DEVICE_LOOKING_INTERVAL = 2200;
+	private static DEVICE_LOOKING_INTERVAL = 200;
 	private _devices: IDictionary<Mobile.IDevice> = {};
 	private platforms: string[] = [];
 	private _platform: string;
@@ -15,7 +15,6 @@ export class DevicesService implements Mobile.IDevicesService {
 	private _isInitialized = false;
 	private _data: Mobile.IDevicesServicesInitializationOptions;
 	private deviceDetectionInterval: any;
-	private deviceDetectionIntervalPromise: Promise<void>;
 	private isDeviceDetectionIntervalInProgress: boolean;
 
 	private get $companionAppsService(): ICompanionAppsService {
@@ -75,13 +74,13 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 	/* tslint:enable:no-unused-variable */
 
-	@exportedPromise("devicesService")
+	@exported("devicesService")
 	public isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string): Promise<IAppInstalledInfo>[] {
 		this.$logger.trace(`Called isInstalledOnDevices for identifiers ${deviceIdentifiers}. AppIdentifier is ${appIdentifier}.`);
 		return _.map(deviceIdentifiers, deviceIdentifier => this.isApplicationInstalledOnDevice(deviceIdentifier, appIdentifier));
 	}
 
-	@exportedPromise("devicesService")
+	@exported("devicesService")
 	public isCompanionAppInstalledOnDevices(deviceIdentifiers: string[], framework: string): Promise<IAppInstalledInfo>[] {
 		this.$logger.trace(`Called isCompanionAppInstalledOnDevices for identifiers ${deviceIdentifiers}. Framework is ${framework}.`);
 		return _.map(deviceIdentifiers, deviceIdentifier => this.isCompanionAppInstalledOnDevice(deviceIdentifier, framework));
@@ -162,7 +161,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		} else {
 			let isFirstExecution = true;
 
-			this.deviceDetectionIntervalPromise = new Promise<void>((resolve, reject) => {
+			return new Promise<void>((resolve, reject) => {
 				this.deviceDetectionInterval = setInterval(async () => {
 					if (this.isDeviceDetectionIntervalInProgress) {
 						return;
@@ -207,15 +206,7 @@ export class DevicesService implements Mobile.IDevicesService {
 
 				}, DevicesService.DEVICE_LOOKING_INTERVAL);
 			});
-
-			return this.deviceDetectionIntervalPromise;
 		}
-	}
-
-	public async stopDeviceDetectionInterval(): Promise<void> {
-		await this.getDeviceDetectionIntervalPromise();
-		this.clearDeviceDetectionInterval();
-		this.deviceDetectionInterval = null;
 	}
 
 	public getDeviceByIdentifier(identifier: string): Mobile.IDevice {
@@ -296,9 +287,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		}
 	}
 
-	@exportedPromise("devicesService", async function () {
-		await this.startDeviceDetectionInterval();
-	})
+	@exported("devicesService")
 	public deployOnDevices(deviceIdentifiers: string[], packageFile: string, packageName: string): Promise<void>[] {
 		this.$logger.trace(`Called deployOnDevices for identifiers ${deviceIdentifiers} for packageFile: ${packageFile}. packageName is ${packageName}.`);
 		return _.map(deviceIdentifiers, deviceIdentifier => this.deployOnDevice(deviceIdentifier, packageFile, packageName));
@@ -332,7 +321,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		}
 	}
 
-	@exportedPromise("devicesService")
+	@exported("devicesService")
 	public async initialize(data?: Mobile.IDevicesServicesInitializationOptions): Promise<void> {
 		if (this._isInitialized) {
 			return;
@@ -360,7 +349,11 @@ export class DevicesService implements Mobile.IDevicesService {
 		} else {
 			// platform and deviceId are not specified
 			if (data.skipInferPlatform) {
-				await this.startLookingForDevices();
+				if (data.skipDeviceDetectionInterval) {
+					await this.detectCurrentlyAttachedDevices();
+				} else {
+					await this.startLookingForDevices();
+				}
 			} else {
 				await this.detectCurrentlyAttachedDevices();
 
@@ -412,17 +405,17 @@ export class DevicesService implements Mobile.IDevicesService {
 		return this._device;
 	}
 
-	@exportedPromise("devicesService")
+	@exported("devicesService")
 	public async mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string, framework: string): Promise<string> {
 		return this.$androidProcessService.mapAbstractToTcpPort(deviceIdentifier, appIdentifier, framework);
 	}
 
-	@exportedPromise("devicesService")
+	@exported("devicesService")
 	public getDebuggableApps(deviceIdentifiers: string[]): Promise<Mobile.IDeviceApplicationInformation[]>[] {
 		return _.map(deviceIdentifiers, (deviceIdentifier: string) => this.getDebuggableAppsCore(deviceIdentifier));
 	}
 
-	@exportedPromise("devicesService")
+	@exported("devicesService")
 	public async getDebuggableViews(deviceIdentifier: string, appIdentifier: string): Promise<Mobile.IDebugWebViewInfo[]> {
 		let device = this.getDeviceByIdentifier(deviceIdentifier),
 			debuggableViewsPerApp = await device.applicationManager.getDebuggableAppViews([appIdentifier]);
@@ -444,7 +437,6 @@ export class DevicesService implements Mobile.IDevicesService {
 	}
 
 	private async deployOnDevice(deviceIdentifier: string, packageFile: string, packageName: string): Promise<void> {
-		await this.stopDeviceDetectionInterval();
 		let device = this.getDeviceByIdentifier(deviceIdentifier);
 		await device.applicationManager.reinstallApplication(packageName, packageFile);
 		this.$logger.info(`Successfully deployed on device with identifier '${device.deviceInfo.identifier}'.`);
@@ -549,10 +541,6 @@ export class DevicesService implements Mobile.IDevicesService {
 			isInstalled,
 			isLiveSyncSupported
 		};
-	}
-
-	private async getDeviceDetectionIntervalPromise(): Promise<void> {
-		return this.deviceDetectionIntervalPromise || Promise.resolve();
 	}
 }
 

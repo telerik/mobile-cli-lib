@@ -1093,7 +1093,6 @@ describe("devicesService", () => {
 		});
 
 		afterEach(async () => {
-			await devicesService.stopDeviceDetectionInterval();
 			resetDefaultSetInterval();
 		});
 
@@ -1281,45 +1280,6 @@ describe("devicesService", () => {
 
 				assert.doesNotThrow(callback);
 			});
-		});
-	});
-
-	describe("stopDeviceDetectionInterval", () => {
-		beforeEach(() => {
-			mockSetInterval();
-		});
-
-		afterEach(async () => {
-			await devicesService.stopDeviceDetectionInterval();
-			resetDefaultSetInterval();
-		});
-
-		it("should stop the device detection interval.", async () => {
-			let setIntervalStartedCount = 0;
-
-			mockSetInterval(() => {
-				setIntervalStartedCount++;
-			});
-
-			await devicesService.startDeviceDetectionInterval();
-			await devicesService.stopDeviceDetectionInterval();
-			await devicesService.startDeviceDetectionInterval();
-
-			assert.deepEqual(setIntervalStartedCount, 2);
-		});
-
-		it("should not stop the device detection interval if there is not interval running.", async () => {
-			let clearIntervalCount = 0;
-
-			global.clearInterval = () => {
-				clearIntervalCount++;
-			};
-
-			await devicesService.startDeviceDetectionInterval();
-			await devicesService.stopDeviceDetectionInterval();
-			await devicesService.stopDeviceDetectionInterval();
-
-			assert.deepEqual(clearIntervalCount, 1);
 		});
 	});
 

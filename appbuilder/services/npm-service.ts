@@ -2,7 +2,7 @@ import * as path from "path";
 import * as os from "os";
 import * as constants from "../../constants";
 import { fromWindowsRelativePathToUnix } from "../../helpers";
-import { exportedPromise } from "../../decorators";
+import { exported } from "../../decorators";
 import * as url from "url";
 
 export class NpmService implements INpmService {
@@ -37,7 +37,7 @@ export class NpmService implements INpmService {
 		return this._npmExecutableName;
 	}
 
-	@exportedPromise("npmService")
+	@exported("npmService")
 	public async install(projectDir: string, dependencyToInstall?: INpmDependency): Promise<INpmInstallResult> {
 		let npmInstallResult: INpmInstallResult = {};
 
@@ -76,7 +76,7 @@ export class NpmService implements INpmService {
 		return npmInstallResult;
 	}
 
-	@exportedPromise("npmService")
+	@exported("npmService")
 	public async uninstall(projectDir: string, dependency: string): Promise<void> {
 		let packageJsonContent = this.getPackageJsonContent(projectDir);
 
