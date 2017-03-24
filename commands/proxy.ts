@@ -8,6 +8,7 @@ const proxyClearCommandName = "proxy|clear";
 
 export abstract class ProxyCommandBase implements ICommand {
 	public disableAnalytics = true;
+	public allowedParameters: ICommandParameter[] = [];
 
 	constructor(protected $analyticsService: IAnalyticsService,
 		protected $logger: ILogger,
@@ -15,22 +16,19 @@ export abstract class ProxyCommandBase implements ICommand {
 		private commandName: string) {
 	}
 
-	public abstract allowedParameters: ICommandParameter[];
-
 	public abstract execute(args: string[]): Promise<void>;
 
 	protected async tryTrackUsage() {
 		try {
 			await this.$analyticsService.trackFeature(this.commandName);
 		} catch (ex) {
-			// Swallow exception - there might be something wrong with the proxy or its credentials
+			this.$logger.trace("Error in trying to track proxy command usage:");
+			this.$logger.trace(ex);
 		}
 	}
 }
 
 export class ProxySetCommand extends ProxyCommandBase {
-	public disableAnalytics = true;
-
 	public allowedParameters = [new commandParams.StringCommandParameter(this.$injector), new commandParams.StringCommandParameter(this.$injector), new commandParams.StringCommandParameter(this.$injector), new commandParams.StringCommandParameter(this.$injector)];
 
 	constructor(private $errors: IErrors,
@@ -94,8 +92,6 @@ export class ProxySetCommand extends ProxyCommandBase {
 $injector.registerCommand(proxySetCommandName, ProxySetCommand);
 
 export class ProxyGetCommand extends ProxyCommandBase {
-	public allowedParameters: ICommandParameter[] = [];
-
 	constructor(protected $analyticsService: IAnalyticsService,
 		protected $logger: ILogger,
 		protected $proxyService: IProxyService) {
@@ -125,10 +121,6 @@ export class ProxyGetCommand extends ProxyCommandBase {
 $injector.registerCommand(proxyGetCommandName, ProxyGetCommand);
 
 export class ProxyClearCommand extends ProxyCommandBase {
-	public disableAnalytics = true;
-
-	public allowedParameters: ICommandParameter[] = [];
-
 	constructor(protected $analyticsService: IAnalyticsService,
 		protected $logger: ILogger,
 		protected $proxyService: IProxyService) {
