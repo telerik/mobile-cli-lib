@@ -1,22 +1,20 @@
 import * as path from "path";
 import * as crypto from "crypto";
-import { platform } from "os";
+import { platform, EOL } from "os";
 
 export class CredentialsService implements ICredentialsService {
-	private static USERNAME_REGEX = /username\s+:\s(.*)/i;
-	private static PASSWORD_REGEX = /password\s+:\s(.*)/i;
 	private static ENCRYPTION_ALGORITHM = "aes-256-ctr";
 	private static ENCRYPTION_KEY = "6Gsz97KBp293Q0r0ei4pix98V4PIhm2D";
-	private pathToWindowsHelperScript: string;
+	private pathToWindowsCredentialsManager: string;
 
 	constructor(private $childProcess: IChildProcess,
 		private $hostInfo: IHostInfo) {
-		this.pathToWindowsHelperScript = path.join(__dirname, "..", "vendor", "WinCredentialsHelper.ps1");
+		this.pathToWindowsCredentialsManager = path.join(__dirname, "..", "vendor", platform(), "CredentialsManager.exe");
 	}
 
 	public async setCredentials(key: string, credentials: ICredentials): Promise<ICredentials> {
 		if (this.$hostInfo.isWindows) {
-			await this.$childProcess.spawnFromEvent("powershell.exe", [this.pathToWindowsHelperScript, "-AddCred", "-Target", key, "-User", credentials.username, "-Pass", this.encrypt(credentials.password)], "close");
+			await this.$childProcess.spawnFromEvent(this.pathToWindowsCredentialsManager, ["set", key, credentials.username, this.encrypt(credentials.password)], "close");
 			return credentials;
 		} else {
 			throw new Error(`Storing credentials is not supported on ${platform()} yet.`);
@@ -25,12 +23,11 @@ export class CredentialsService implements ICredentialsService {
 
 	public async getCredentials(key: string): Promise<ICredentials> {
 		if (this.$hostInfo.isWindows) {
-			const credentialsSpawnResult = await this.$childProcess.spawnFromEvent("powershell.exe", [this.pathToWindowsHelperScript, "-GetCred", "-Target", key], "close");
-			const usernameGroup = CredentialsService.USERNAME_REGEX.exec(credentialsSpawnResult.stdout);
-			const passwordGroup = CredentialsService.PASSWORD_REGEX.exec(credentialsSpawnResult.stdout);
+			const credentialsSpawnResult = await this.$childProcess.spawnFromEvent(this.pathToWindowsCredentialsManager, ["get", key], "close", {}, { throwError: false });
+			const credentialsSplit = credentialsSpawnResult && credentialsSpawnResult.stdout && credentialsSpawnResult.stdout.split(EOL);
 			return {
-				username: usernameGroup && usernameGroup[1],
-				password: passwordGroup && passwordGroup[1] && this.decrypt(passwordGroup[1])
+				username: credentialsSplit && credentialsSplit[0],
+				password: credentialsSplit && this.decrypt(credentialsSplit[1])
 			};
 		} else {
 			throw new Error(`Storing credentials is not supported on ${platform()} yet.`);
@@ -39,7 +36,7 @@ export class CredentialsService implements ICredentialsService {
 
 	public async clearCredentials(key: string): Promise<void> {
 		if (this.$hostInfo.isWindows) {
-			await this.$childProcess.spawnFromEvent("powershell.exe", [this.pathToWindowsHelperScript, "-DelCred", "-Target", key], "close");
+			await this.$childProcess.spawnFromEvent(this.pathToWindowsCredentialsManager, ["clear", key], "close");
 		} else {
 			throw new Error(`Storing credentials is not supported on ${platform()} yet.`);
 		}
