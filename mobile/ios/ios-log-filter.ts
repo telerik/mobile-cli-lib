@@ -1,5 +1,5 @@
 export class IOSLogFilter implements Mobile.IPlatformLogFilter {
-	private static INFO_FILTER_REGEX = /^.*?(AppBuilder|Cordova|NativeScript).*?(<Notice>:.*?|<Warning>:.*?|<Error>:.*?)$/im;
+	protected infoFilterRegex = /^.*?(AppBuilder|Cordova|NativeScript).*?(<Notice>:.*?|<Warning>:.*?|<Error>:.*?)$/im;
 
 	constructor(private $loggingLevels: Mobile.ILoggingLevels) { }
 
@@ -11,11 +11,12 @@ export class IOSLogFilter implements Mobile.IPlatformLogFilter {
 				return data && data.indexOf(`[${pid}]`) !== -1 ? data.trim() : null;
 			}
 
-			let matchingInfoMessage = data.match(IOSLogFilter.INFO_FILTER_REGEX);
+			let matchingInfoMessage = data.match(this.infoFilterRegex);
 			return matchingInfoMessage ? matchingInfoMessage[2] : null;
 		}
 
 		return data;
 	}
 }
+
 $injector.register("iOSLogFilter", IOSLogFilter);
