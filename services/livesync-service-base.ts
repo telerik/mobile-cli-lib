@@ -45,7 +45,17 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 			}
 		});
 
+		// skip hidden files, to prevent reload of the app for hidden files
+		// created temporarily by the IDEs
+		if (this.isUnixHiddenPath(filePath)) {
+			isFileExcluded = true;
+		}
+
 		return isFileExcluded;
+	}
+
+	private isUnixHiddenPath(filePath: string): boolean {
+		return (/(^|\/)\.[^\/\.]/g).test(filePath);
 	}
 
 	private partialSync(data: ILiveSyncData[], syncWorkingDirectory: string, projectId: string): void {
