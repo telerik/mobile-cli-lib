@@ -98,6 +98,9 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 
 	private async runApplicationCore(appIdentifier: string): Promise<void> {
 		await this.$iosDeviceOperations.start([{ deviceId: this.device.deviceInfo.identifier, appId: appIdentifier, ddi: this.$options.ddi }]);
+		if (!this.$options.justlaunch) {
+			await this.device.openDeviceLogStream();
+		}
 	}
 
 	public canStartApplication(): boolean {

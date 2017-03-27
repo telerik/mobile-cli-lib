@@ -7,9 +7,14 @@ export class IOSDeviceOperations implements IIOSDeviceOperations, IDisposable {
 	public shouldDispose: boolean;
 	private deviceLib: IOSDeviceLib.IOSDeviceLib;
 
-	constructor(private $logger: ILogger) {
+	constructor(private $logger: ILogger,
+		private $processService: IProcessService) {
 		this.isInitialized = false;
 		this.shouldDispose = true;
+		this.$processService.attachToProcessExitSignals(this, () => {
+			this.setShouldDispose(true);
+			this.dispose();
+		});
 	}
 
 	public async install(ipaPath: string, deviceIdentifiers: string[], errorHandler: DeviceOperationErrorHandler): Promise<IOSDeviceResponse> {
