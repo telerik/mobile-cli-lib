@@ -47,3 +47,10 @@ export class FileExtensions {
 export const IOS_POST_NOTIFICATION_COMMAND_TYPE = "PostNotification";
 export const IOS_OBSERVE_NOTIFICATION_COMMAND_TYPE = "ObserveNotification";
 export const IOS_RELAY_NOTIFICATION_COMMAND_TYPE = "RelayNotification";
+
+export class Proxy {
+	static CACHE_FILE_NAME = "proxy-cache.json";
+	static USE_PROXY = "USE_PROXY";
+	static PROXY_PORT = "PROXY_PORT";
+	static PROXY_HOSTNAME = "PROXY_HOSTNAME";
+}

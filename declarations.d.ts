@@ -653,6 +653,90 @@ interface IDynamicHelpService {
 	getLocalVariables(options: { isHtml: boolean }): IDictionary<any>;
 }
 
+/**
+ * Describes cache information about proxy settings.
+ */
+interface IProxyCache {
+	/**
+	 * Whether to use proxy or not
+	 */
+	USE_PROXY: boolean;
+	/**
+	 * Hostname of the proxy
+	 */
+	PROXY_HOSTNAME: string;
+	/**
+	 * Port of the proxy
+	 */
+	PROXY_PORT: number
+}
+
+/**
+ * Describes standard username/password type credentials.
+ */
+interface ICredentials {
+	username: string;
+	password: string;
+}
+
+/**
+ * Describes Service used for interaction with the OS' secure storage (Windows Credentials manager for example).
+ */
+interface ICredentialsService {
+	/**
+	 * Sets the provided credentials in the OS' secure storage.
+	 * @param key {string} A key which can later be used to retrieve the credentials.
+	 * @param credentials {ICredentials} Credentials to be stored.
+	 * @returns {Promise<ICredentials>} The stored credentials.
+	 */
+	setCredentials(key: string, credentials: ICredentials): Promise<ICredentials>;
+	/**
+	 * Retrieves credentials from the OS' secure storage with the given key.
+	 * @param key {string} A key based on which to retrieve the credentials.
+	 * @returns {Promise<ICredentials>} The stored credentials.
+	 */
+	getCredentials(key: string): Promise<ICredentials>;
+	/**
+	 * Clears credentials from the OS' secure storage with the given key.
+	 * @param key {string} A key based on which to clear the credentials.
+	 * @returns {Promise<void>}
+	 */
+	clearCredentials(key: string): Promise<void>;
+}
+
+/**
+ * Describes Service used for interaction with the proxy cache.
+ */
+interface IProxyService {
+	/**
+	 * Caches proxy data.
+	 * @param cacheData {IProxyCache} Data to be cached.
+	 * @returns {Promise<ICredentials>} The cache.
+	 */
+	setCache(cacheData: IProxyCache): IProxyCache;
+	/**
+	 * Retrieves proxy cache data.
+	 * @returns {IProxyCache} The cache.
+	 */
+	getCache(): IProxyCache;
+	/**
+	 * Clears proxy cache data.
+	 * @returns {void}
+	 */
+	clearCache(): void;
+	/**
+	 * Sets the provided proxy credentials in the OS' secure storage.
+	 * @param credentials {ICredentials} Proxy credentials to be stored.
+	 * @returns {Promise<ICredentials>} The stored proxy credentials.
+	 */
+	setCredentials(credentials: ICredentials): Promise<ICredentials>;
+	/**
+	 * Retrieves proxy credentials from the OS' secure storage with the given key.
+	 * @returns {Promise<ICredentials>} The stored proxy credentials.
+	 */
+	getCredentials(): Promise<ICredentials>;
+}
+
 interface IDynamicHelpProvider {
 	/**
 	 * Checks if current project's framework is one of the specified as arguments.
