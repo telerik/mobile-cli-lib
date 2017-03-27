@@ -40,7 +40,7 @@ export class IOSSimulatorFileSystem implements Mobile.IDeviceFileSystem {
 	public async transferFile(localFilePath: string, deviceFilePath: string): Promise<void> {
 		this.$logger.trace(`Transferring from ${localFilePath} to ${deviceFilePath}`);
 		if (this.$fs.getFsStats(localFilePath).isDirectory()) {
-			shelljs.mkdir(deviceFilePath);
+			this.$fs.ensureDirectoryExists(deviceFilePath);
 		} else {
 			this.$fs.ensureDirectoryExists(path.dirname(deviceFilePath));
 			shelljs.cp("-f", localFilePath, deviceFilePath);
