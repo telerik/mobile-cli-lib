@@ -103,9 +103,15 @@ $injector.require("mobileHelper", "./mobile/mobile-helper");
 $injector.require("devicePlatformsConstants", "./mobile/device-platforms-constants");
 $injector.require("htmlHelpService", "./services/html-help-service");
 $injector.require("messageContractGenerator", "./services/message-contract-generator");
+$injector.require("proxyService", "./services/proxy-service");
+$injector.require("credentialsService", "./services/credentials-service");
 $injector.requireCommand("dev-preuninstall", "./commands/preuninstall");
 $injector.requireCommand("dev-generate-messages", "./commands/generate-messages");
 $injector.requireCommand("doctor", "./commands/doctor");
+
+$injector.requireCommand("proxy|*get", "./commands/proxy/proxy-get-command");
+$injector.requireCommand("proxy|set", "./commands/proxy/proxy-set-command");
+$injector.requireCommand("proxy|clear", "./commands/proxy/proxy-clear-command");
 
 $injector.require("utils", "./utils");
 $injector.require("bplistParser", "./bplist-parser");

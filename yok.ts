@@ -192,6 +192,7 @@ export class Yok implements IInjector {
 	private createHierarchicalCommand(name: string) {
 		let factory = () => {
 			return {
+				disableAnalytics: true,
 				execute: async (args: string[]): Promise<void> => {
 					let commandsService = $injector.resolve("commandsService");
 					let commandName: string = null;
