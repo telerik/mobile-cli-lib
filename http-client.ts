@@ -5,6 +5,7 @@ import * as zlib from "zlib";
 import * as util from "util";
 import progress = require("progress-stream");
 import filesize = require("filesize");
+import { HttpStatusCodes } from "./constants";
 
 export class HttpClient implements Server.IHttpClient {
 	private defaultUserAgent: string;
@@ -43,24 +44,13 @@ export class HttpClient implements Server.IHttpClient {
 		delete options.pipeTo;
 
 		const proxyCache = this.$proxyService.getCache();
-		let proto = proxyCache && proxyCache.USE_PROXY ? "http" : requestProto;
+		let proto = proxyCache ? "http" : requestProto;
 		let http = require(proto);
 
 		options.headers = options.headers || {};
 		let headers = options.headers;
 
-		if (proxySettings || (proxyCache && proxyCache.USE_PROXY)) {
-			const proxyCredentials = await this.$proxyService.getCredentials();
-			options.path = requestProto + "://" + options.host + options.path;
-			headers.Host = options.host;
-			options.host = (proxySettings && proxySettings.hostname) || proxyCache.PROXY_HOSTNAME;
-			options.port = (proxySettings && proxySettings.port) || proxyCache.PROXY_PORT;
-			if (proxyCredentials && proxyCredentials.username && proxyCredentials.password) {
-				headers["Proxy-Authorization"] = "Basic " + new Buffer(`${proxyCredentials.username}:${proxyCredentials.password}`).toString('base64');
-			}
-
-			this.$logger.trace("Using proxy with host: %s, port: %d, path is: %s", options.host, options.port, options.path);
-		}
+		await this.useProxySettings(proxySettings, proxyCache, options, headers, requestProto);
 
 		if (!headers.Accept || headers.Accept.indexOf("application/json") < 0) {
 			if (headers.Accept) {
@@ -172,7 +162,7 @@ export class HttpClient implements Server.IHttpClient {
 		let response = await result;
 
 		if (helpers.isResponseRedirect(response.response)) {
-			if (response.response.statusCode === 303) {
+			if (response.response.statusCode === HttpStatusCodes.SEE_OTHER) {
 				unmodifiedOptions.method = "GET";
 			}
 
@@ -237,10 +227,10 @@ export class HttpClient implements Server.IHttpClient {
 	}
 
 	private getErrorMessage(response: Server.IRequestResponseData, body: string): string {
-		if (response.statusCode === 407) {
+		if (response.statusCode === HttpStatusCodes.PROXY_AUTHENTICATION_REQUIRED) {
 			const clientNameLowerCase = this.$staticConfig.CLIENT_NAME.toLowerCase();
-			return `Your proxy requires a username and password. You can run ${EOL}\t${clientNameLowerCase} proxy set <hostname> <port> <username> <password>.${EOL}In order to supply ${clientNameLowerCase} with the credentials needed.`;
-		} else if (response.statusCode === 402) {
+			return `Your proxy requires authentication. You can run ${EOL}\t${clientNameLowerCase} proxy set <hostname> <port> <username> <password>.${EOL}In order to supply ${clientNameLowerCase} with the credentials needed.`;
+		} else if (response.statusCode === HttpStatusCodes.PAYMENT_REQUIRED) {
 			let subscriptionUrl = util.format("%s://%s/appbuilder/account/subscription", this.$config.AB_SERVER_PROTO, this.$config.AB_SERVER);
 			return util.format("Your subscription has expired. Go to %s to manage your subscription. Note: After you renew your subscription, " +
 				"log out and log back in for the changes to take effect.", subscriptionUrl);
@@ -263,6 +253,30 @@ export class HttpClient implements Server.IHttpClient {
 			}
 
 			return body;
+		}
+	}
+
+	/**
+	 * This method respects the proxySettings (or proxyCache) by modifying headers and options passed to http(s) module.
+	 * @param {IProxySettings} proxySettings The settings passed for this specific call.
+	 * @param {IProxyCache} proxyCache The globally set proxy for this CLI.
+	 * @param {any}options The object that will be passed to http(s) module.
+	 * @param {any} headers Headers of the current request.
+	 * @param {string} requestProto The protocol used for the current request - http or https.
+	 */
+	private async useProxySettings(proxySettings: IProxySettings, proxyCache: IProxyCache, options: any, headers: any, requestProto: string): Promise<void> {
+		if (proxySettings || proxyCache) {
+			options.path = requestProto + "://" + options.host + options.path;
+			headers.Host = options.host;
+			options.host = (proxySettings && proxySettings.hostname) || proxyCache.PROXY_HOSTNAME;
+			options.port = (proxySettings && proxySettings.port) || proxyCache.PROXY_PORT;
+
+			const proxyCredentials = await this.$proxyService.getCredentials();
+			if (proxyCredentials && proxyCredentials.username && proxyCredentials.password) {
+				headers["Proxy-Authorization"] = "Basic " + new Buffer(`${proxyCredentials.username}:${proxyCredentials.password}`).toString('base64');
+			}
+
+			this.$logger.trace("Using proxy with host: %s, port: %d, path is: %s", options.host, options.port, options.path);
 		}
 	}
 }

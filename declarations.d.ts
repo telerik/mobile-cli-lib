@@ -655,10 +655,6 @@ interface IDynamicHelpService {
  */
 interface IProxyCache {
 	/**
-	 * Whether to use proxy or not
-	 */
-	USE_PROXY: boolean;
-	/**
 	 * Hostname of the proxy
 	 */
 	PROXY_HOSTNAME: string;
