@@ -104,6 +104,10 @@ $injector.requireCommand("proxy|*get", "./commands/proxy");
 $injector.requireCommand("proxy|set", "./commands/proxy");
 $injector.requireCommand("proxy|clear", "./commands/proxy");
 
+$injector.requireCommand("proxy|*get", "./commands/proxy/proxy-get-command");
+$injector.requireCommand("proxy|set", "./commands/proxy/proxy-set-command");
+$injector.requireCommand("proxy|clear", "./commands/proxy/proxy-clear-command");
+
 $injector.require("utils", "./utils");
 $injector.require("bplistParser", "./bplist-parser");
 $injector.require("winreg", "./winreg");
