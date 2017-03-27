@@ -6,6 +6,12 @@
 using namespace std;
 int wmain(int argc, wchar_t *argv[])
 {
+	if (argc < 2)
+	{
+		// No command specified
+		return ERROR_INVALID_COMMAND_LINE;
+	}
+
 	if (wcscmp(argv[1], L"get") == 0) {
 		PCREDENTIALW p;
 		if (!CredRead(argv[2], 1, 0, &p))
@@ -34,7 +40,12 @@ int wmain(int argc, wchar_t *argv[])
 	else if (wcscmp(argv[1], L"clear") == 0) {
 		if (!CredDelete(argv[2], 1, 0))
 		{
-			return GetLastError();
+			DWORD lastError = GetLastError();
+
+			if (lastError != ERROR_NOT_FOUND)
+			{
+				return lastError;
+			}
 		}
 	}
 
