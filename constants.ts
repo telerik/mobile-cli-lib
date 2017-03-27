@@ -54,3 +54,12 @@ export class Proxy {
 	static PROXY_PORT = "PROXY_PORT";
 	static PROXY_HOSTNAME = "PROXY_HOSTNAME";
 }
+
+/**
+ * Http status codes available from `require("http").STATUS_CODES`.
+ */
+export class HttpStatusCodes {
+	static SEE_OTHER = 303;
+	static PAYMENT_REQUIRED = 402;
+	static PROXY_AUTHENTICATION_REQUIRED = 407;
+}
