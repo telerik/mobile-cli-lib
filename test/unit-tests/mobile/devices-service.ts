@@ -258,6 +258,60 @@ describe("devicesService", () => {
 		assert.deepEqual(devices[1], androidDevice);
 	});
 
+	describe("startEmulatorIfNecessary behaves as expected:", () => {
+		it("throws error if --device and --emulator flags are passed simultaniously", () => {
+			assert.isRejected(devicesService.startEmulatorIfNecessary({emulator: true, deviceId: "emulator_image_name"}), "--device and --emulator are incompatible options.\n\t\t\tIf you are trying to run on specific emulator, use \"unit-tests run --device <DeviceID>");
+		});
+		describe("platform is passed and", () => {
+			it("deviceId is NOT passed and NO devices are found, an emulator is started", async () => {
+				assert.deepEqual(devicesService.getDeviceInstances(), [], "Initially getDevicesInstances must return empty array.");
+				await devicesService.startEmulatorIfNecessary({platform: "android"});
+				assert.deepEqual(devicesService.getDeviceInstances(), [androidEmulatorDevice]);
+				assert.deepEqual(devicesService.getDevices(), [androidEmulatorDevice.deviceInfo]);
+			});
+			it("deviceId is NOT passed, but devices are found, assert no emulators are started",  async () => {
+				assert.deepEqual(devicesService.getDeviceInstances(), [], "Initially getDevicesInstances must return empty array.");
+				androidDeviceDiscovery.emit("deviceFound", androidEmulatorDevice);
+				await devicesService.startEmulatorIfNecessary({platform: "android" });
+				assert.deepEqual(devicesService.getDeviceInstances(), [androidEmulatorDevice]);
+				assert.equal(devicesService.getDeviceInstances().length, 1);
+			});
+			it("deviceId is passed and devices are found, assert if deviceId of the running device is the same as the passed deviceId no emulators are started", async () => {
+				assert.deepEqual(devicesService.getDeviceInstances(), [], "Initially getDevicesInstances must return empty array.");
+				androidDeviceDiscovery.emit("deviceFound", androidEmulatorDevice);
+				await devicesService.startEmulatorIfNecessary({platform: "android", deviceId: androidEmulatorDevice.deviceInfo.identifier});
+				assert.deepEqual(devicesService.getDeviceInstances(), [androidEmulatorDevice]);
+				assert.equal(devicesService.getDeviceInstances().length, 1);
+			});
+			it("deviceId is passed and devices are found, assert if deviceId of the running device is different than the passed deviceId a new emulator is started", async () => {
+				assert.deepEqual(devicesService.getDeviceInstances(), [], "Initially getDevicesInstances must return empty array.");
+				androidDeviceDiscovery.emit("deviceFound", androidDevice);
+				await devicesService.startEmulatorIfNecessary({platform: "android", deviceId: "different_image_name"});
+				assert.equal(devicesService.getDeviceInstances().length, 2);
+			});
+			it("emulator is passed and NO devices are found, assert an emulator is started", async () => {
+				assert.deepEqual(devicesService.getDeviceInstances(), [], "Initially getDevicesInstances must return empty array.");
+				await devicesService.startEmulatorIfNecessary({platform: "android", emulator: true});
+				assert.deepEqual(devicesService.getDeviceInstances(), [androidEmulatorDevice]);
+				assert.equal(devicesService.getDeviceInstances().length, 1);
+			});
+			it("emulator is passed and devices are found, assert no more emulators are started", async () => {
+				assert.deepEqual(devicesService.getDeviceInstances(), [], "Initially getDevicesInstances must return empty array.");
+				androidDeviceDiscovery.emit("deviceFound", androidEmulatorDevice);
+				await devicesService.startEmulatorIfNecessary({platform: "android", emulator: true});
+				assert.deepEqual(devicesService.getDeviceInstances(), [androidEmulatorDevice]);
+				assert.equal(devicesService.getDeviceInstances().length, 1);
+			});
+			it("emulator is passed and devices are found, but the found devices are not emulators, assert an emulator is started", async () => {
+				assert.deepEqual(devicesService.getDeviceInstances(), [], "Initially getDevicesInstances must return empty array.");
+				androidDeviceDiscovery.emit("deviceFound", androidDevice);
+				await devicesService.startEmulatorIfNecessary({platform: "android", emulator: true});
+				assert.deepEqual(devicesService.getDeviceInstances(), [androidDevice, androidEmulatorDevice]);
+				assert.equal(devicesService.getDeviceInstances().length, 2);
+			});
+		});
+	});
+
 	describe("hasDevices", () => {
 		it("is true when device is found", () => {
 			assert.isFalse(devicesService.hasDevices, "Initially devicesService hasDevices must be false.");
