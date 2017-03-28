@@ -1,7 +1,7 @@
 import { createTable } from "../helpers";
 
 //todo: plamen5kov: moved most of emulator-service here as a temporary solution untill after 3.0-RC
-export class ImageService implements Mobile.IImageService {
+export class EmulatorImageService implements Mobile.IEmulatorImageService {
 
 	constructor(
 		private $mobileHelper: Mobile.IMobileHelper,
@@ -132,4 +132,4 @@ export class ImageService implements Mobile.IImageService {
 	}
 }
 
-$injector.register("imageService", ImageService);
+$injector.register("emulatorImageService", EmulatorImageService);

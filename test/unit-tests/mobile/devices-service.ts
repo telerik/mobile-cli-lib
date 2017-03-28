@@ -476,9 +476,7 @@ describe("devicesService", () => {
 			assert.isFalse(devicesService.hasDevices, "Initially devicesService hasDevices must be false.");
 			iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
 			androidDeviceDiscovery.emit("deviceFound", androidDevice);
-			let hostInfo = testInjector.resolve("hostInfo");
-			hostInfo.isDarwin = true;
-			await assert.isRejected(devicesService.initialize({ platform: "ios", deviceId: androidDevice.deviceInfo.identifier }), "Cannot resolve the specified connected device. The provided platform does not match the provided index or identifier.To list currently connected devices and verify that the specified pair of platform and index or identifier exists, run \'device\'.");
+			await assert.isRejected(devicesService.initialize({ platform: "ios", deviceId: androidDevice.deviceInfo.identifier }), "You can use iOS simulator only on OS X.");
 		});
 
 		describe("when only deviceIdentifier is passed", () => {

@@ -366,8 +366,8 @@ export class DevicesService implements Mobile.IDevicesService {
 	 */
 	public async startEmulatorIfNecessary(data?: Mobile.IDevicesServicesInitializationOptions): Promise<void> {
 		if (data && data.deviceId && data.emulator) {
-			this.$errors.failWithoutHelp(`--device and –emulator are incompatible options.
-If you are trying to run on specific emulator, use tns run –device <DeviceID>.`);
+			this.$errors.failWithoutHelp(`--device and --emulator are incompatible options.
+			If you are trying to run on specific emulator, use "${this.$staticConfig.CLIENT_NAME} run --device <DeviceID>`);
 		}
 
 		if (data && data.platform) {
@@ -392,7 +392,7 @@ If you are trying to run on specific emulator, use tns run –device <DeviceID>.
 
 			// if only emulator flag is passed and no other emulators are running, start default emulator
 			if (data.emulator && deviceInstances.length) {
-				let runningDeviceInstance = _.some(deviceInstances, (value) => {return value.isEmulator; });
+				let runningDeviceInstance = _.some(deviceInstances, (value) => value.isEmulator);
 				if (!runningDeviceInstance) {
 					return await this.startEmulator(data.platform);
 				}

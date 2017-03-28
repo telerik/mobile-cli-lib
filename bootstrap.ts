@@ -22,7 +22,7 @@ $injector.require("messagesService", "./services/messages-service");
 
 $injector.require("cancellation", "./services/cancellation");
 $injector.require("hooksService", "./services/hooks-service");
-$injector.require("imageService", "./services/image-service");
+$injector.require("emulatorImageService", "./services/emulator-image-service");
 
 $injector.require("httpClient", "./http-client");
 $injector.require("childProcess", "./child-process");

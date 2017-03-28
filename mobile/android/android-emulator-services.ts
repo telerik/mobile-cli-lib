@@ -117,7 +117,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 			// unlock screen
 			await this.unlockScreen(emulatorId);
 		} else {
-			this.$errors.fail(`Could not find an emulator image or identifier to run your project. Please run: "tns device <platform> --available-devices"`);
+			this.$errors.fail(`Could not find an emulator image or identifier to run your project. Please run: "${this.$staticConfig.CLIENT_NAME} device <platform> --available-devices"`);
 		}
 
 		return emulatorId;

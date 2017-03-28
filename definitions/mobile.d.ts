@@ -565,7 +565,7 @@ declare module Mobile {
 	}
 
 	//todo: plamen5kov: this is a duplicate of an interface (IEmulatorPlatformService) fix after 3.0-RC. nativescript-cli/lib/definitions/emulator-platform-service.d.ts
-	interface IImageService {
+	interface IEmulatorImageService {
 		listAvailableEmulators(platform: string): Promise<void>;
 		getEmulatorInfo(platform: string, nameOfId: string): Promise<IEmulatorInfo>;
 		getiOSEmulators(): Promise<IEmulatorInfo[]>;
