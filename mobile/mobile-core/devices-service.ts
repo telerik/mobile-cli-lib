@@ -373,7 +373,11 @@ export class DevicesService implements Mobile.IDevicesService {
 		if (data && data.platform) {
 			// are there any running devices
 			this._platform = data.platform;
-			await this.startLookingForDevices();
+			try {
+				await this.startLookingForDevices();
+			} catch (err) {
+				this.$logger.trace("Error while checking for devices.", err);
+			}
 			let deviceInstances = this.getDeviceInstances();
 
 			//if no --device is passed and no devices are found, the default emulator is started
