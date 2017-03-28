@@ -236,14 +236,7 @@ describe("devicesService", () => {
 		testInjector: IInjector,
 		devicesService: Mobile.IDevicesService,
 		androidEmulatorServices: any,
-		logger: CommonLoggerStub,
-		assertAndroidEmulatorIsStarted = async (options: any) => {
-			assert.isFalse(androidEmulatorServices.isStartEmulatorCalled);
-			await devicesService.initialize({ platform: "android" });
-			assert.isTrue(androidEmulatorServices.isStartEmulatorCalled);
-			androidDeviceDiscovery.emit("deviceLost", androidEmulatorDevice);
-			androidEmulatorServices.isStartEmulatorCalled = false;
-		};
+		logger: CommonLoggerStub;
 
 	beforeEach(() => {
 		testInjector = createTestInjector();
@@ -607,7 +600,6 @@ describe("devicesService", () => {
 				assert.deepEqual(counter, 1, "The action must be executed on only one device.");
 				counter = 0;
 				androidDeviceDiscovery.emit("deviceLost", tempDevice);
-				await assertAndroidEmulatorIsStarted({ platform: "android" });
 				await devicesService.execute(() => { counter++; return Promise.resolve(); }, () => true, { allowNoDevices: true });
 				assert.deepEqual(counter, 0, "The action must not be executed when there are no devices.");
 				assert.isTrue(logger.output.indexOf(constants.ERROR_NO_DEVICES) !== -1);
