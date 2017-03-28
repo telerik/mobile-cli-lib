@@ -370,11 +370,11 @@ export class DevicesService implements Mobile.IDevicesService {
 If you are trying to run on specific emulator, use tns run –device <DeviceID>.`);
 		}
 
-		// are there any running devices
-		await this.detectCurrentlyAttachedDevices();
-		let deviceInstances = this.getDeviceInstances();
+		if (data && data.platform) {
+			// are there any running devices
+			await this.detectCurrentlyAttachedDevices();
+			let deviceInstances = this.getDeviceInstances();
 
-		if(data && data.platform) {
 			//if no --device is passed and no devices are found, the default emulator is started
 			if (!data.deviceId && _.isEmpty(deviceInstances)) {
 				return await this.startEmulator(data.platform);

@@ -5,14 +5,14 @@ export class ListDevicesCommand implements ICommand {
 		private $logger: ILogger,
 		private $stringParameter: ICommandParameter,
 		private $mobileHelper: Mobile.IMobileHelper,
-		private $emulatorPlatformService: IEmulatorPlatformService,
+		private $imageService: Mobile.IImageService,
 		private $options: ICommonOptions) { }
 
 	public allowedParameters = [this.$stringParameter];
 
 	public async execute(args: string[]): Promise<void> {
 		if (this.$options.availableDevices) {
-			await this.$emulatorPlatformService.listAvailableEmulators(this.$mobileHelper.validatePlatformName(args[0]));
+			await this.$imageService.listAvailableEmulators(this.$mobileHelper.validatePlatformName(args[0]));
 		}
 
 		this.$logger.out("\nConnected devices & emulators");

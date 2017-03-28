@@ -414,7 +414,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		let minVersion = this.$emulatorSettingsService.minVersion;
 
 		let avdResults = this.getAvds();
-		if(suggestedImage) {
+		if (suggestedImage) {
 			avdResults = avdResults.filter(avd => avd === suggestedImage);
 		}
 

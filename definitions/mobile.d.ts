@@ -564,6 +564,24 @@ declare module Mobile {
 		getAllCapabilities(): IDictionary<Mobile.IPlatformCapabilities>;
 	}
 
+	//todo: plamen5kov: this is a duplicate of an interface (IEmulatorPlatformService) fix after 3.0-RC. nativescript-cli/lib/definitions/emulator-platform-service.d.ts
+	interface IImageService {
+		listAvailableEmulators(platform: string): Promise<void>;
+		getEmulatorInfo(platform: string, nameOfId: string): Promise<IEmulatorInfo>;
+		getiOSEmulators(): Promise<IEmulatorInfo[]>;
+		getAndroidEmulators(): IEmulatorInfo[];
+	}
+
+	//todo: plamen5kov: this is a duplicate of an interface (IEmulatorInfo) fix after 3.0-RC nativescript-cli/lib/definitions/emulator-platform-service.d.ts
+	interface IEmulatorInfo {
+		name: string;
+		version: string;
+		platform: string;
+		id: string;
+		type: string;
+		isRunning?: boolean;
+	}
+
 	interface IMobileHelper {
 		platformNames: string[];
 		isAndroidPlatform(platform: string): boolean;
