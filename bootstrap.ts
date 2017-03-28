@@ -42,7 +42,7 @@ $injector.requireCommand("autocomplete|enable", "./commands/autocompletion");
 $injector.requireCommand("autocomplete|disable", "./commands/autocompletion");
 $injector.requireCommand("autocomplete|status", "./commands/autocompletion");
 
-$injector.requireCommand("device|*list", "./commands/device/list-devices");
+$injector.requireCommand(["device|*list", "devices|*list"], "./commands/device/list-devices");
 $injector.requireCommand(["device|android", "devices|android"], "./commands/device/list-devices");
 $injector.requireCommand(["device|ios", "devices|ios"], "./commands/device/list-devices");
 
