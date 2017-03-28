@@ -12,6 +12,11 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		return "";
 	}
 
+	public async getRunningEmulatorId(image: string): Promise<string> {
+		//todo: plamen5kov: fix later if necessary
+		return "";
+	}
+
 	public async checkDependencies(): Promise<void> {
 		return;
 	}
@@ -29,8 +34,11 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		}
 	}
 
-	public async startEmulator(): Promise<string> {
-		return this.$iOSSimResolver.iOSSim.startSimulator();
+	public async startEmulator(emulatorImage?: string): Promise<string> {
+		return this.$iOSSimResolver.iOSSim.startSimulator({
+			id: emulatorImage,
+			state: "None"
+		});
 	}
 
 	public runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): Promise<any> {

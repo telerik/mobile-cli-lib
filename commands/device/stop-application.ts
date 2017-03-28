@@ -14,4 +14,4 @@ export class StopApplicationOnDeviceCommand implements ICommand {
 	}
 }
 
-$injector.registerCommand("device|stop", StopApplicationOnDeviceCommand);
+$injector.registerCommand(["device|stop", "devices|stop"], StopApplicationOnDeviceCommand);

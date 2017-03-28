@@ -4,11 +4,18 @@ export class ListDevicesCommand implements ICommand {
 	constructor(private $devicesService: Mobile.IDevicesService,
 		private $logger: ILogger,
 		private $stringParameter: ICommandParameter,
+		private $mobileHelper: Mobile.IMobileHelper,
+		private $emulatorImageService: Mobile.IEmulatorImageService,
 		private $options: ICommonOptions) { }
 
 	public allowedParameters = [this.$stringParameter];
 
 	public async execute(args: string[]): Promise<void> {
+		if (this.$options.availableDevices) {
+			await this.$emulatorImageService.listAvailableEmulators(this.$mobileHelper.validatePlatformName(args[0]));
+		}
+
+		this.$logger.out("\nConnected devices & emulators");
 		let index = 1;
 		await this.$devicesService.initialize({ platform: args[0], deviceId: null, skipInferPlatform: true });
 
@@ -35,7 +42,7 @@ export class ListDevicesCommand implements ICommand {
 	}
 }
 
-$injector.registerCommand("device|*list", ListDevicesCommand);
+$injector.registerCommand(["device|*list", "devices|*list"], ListDevicesCommand);
 
 class ListAndroidDevicesCommand implements ICommand {
 	constructor(private $injector: IInjector,
@@ -50,7 +57,7 @@ class ListAndroidDevicesCommand implements ICommand {
 	}
 }
 
-$injector.registerCommand("device|android", ListAndroidDevicesCommand);
+$injector.registerCommand(["device|android", "devices|android"], ListAndroidDevicesCommand);
 
 class ListiOSDevicesCommand implements ICommand {
 	constructor(private $injector: IInjector,
@@ -65,4 +72,4 @@ class ListiOSDevicesCommand implements ICommand {
 	}
 }
 
-$injector.registerCommand("device|ios", ListiOSDevicesCommand);
+$injector.registerCommand(["device|ios", "devices|ios"], ListiOSDevicesCommand);

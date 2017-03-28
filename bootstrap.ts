@@ -22,6 +22,7 @@ $injector.require("messagesService", "./services/messages-service");
 
 $injector.require("cancellation", "./services/cancellation");
 $injector.require("hooksService", "./services/hooks-service");
+$injector.require("emulatorImageService", "./services/emulator-image-service");
 
 $injector.require("httpClient", "./http-client");
 $injector.require("childProcess", "./child-process");
@@ -42,8 +43,8 @@ $injector.requireCommand("autocomplete|disable", "./commands/autocompletion");
 $injector.requireCommand("autocomplete|status", "./commands/autocompletion");
 
 $injector.requireCommand("device|*list", "./commands/device/list-devices");
-$injector.requireCommand("device|android", "./commands/device/list-devices");
-$injector.requireCommand("device|ios", "./commands/device/list-devices");
+$injector.requireCommand(["device|android", "devices|android"], "./commands/device/list-devices");
+$injector.requireCommand(["device|ios", "devices|ios"], "./commands/device/list-devices");
 
 $injector.requireCommand("device|log", "./commands/device/device-log-stream");
 $injector.requireCommand("device|run", "./commands/device/run-application");

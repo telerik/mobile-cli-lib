@@ -22,4 +22,4 @@ export class GetFileCommand implements ICommand {
 	}
 }
 
-$injector.registerCommand("device|get-file", GetFileCommand);
+$injector.registerCommand(["device|get-file", "devices|get-file"], GetFileCommand);

@@ -25,4 +25,4 @@ export class OpenDeviceLogStreamCommand implements ICommand {
 	}
 }
 
-$injector.registerCommand("device|log", OpenDeviceLogStreamCommand);
+$injector.registerCommand(["device|log", "devices|log"], OpenDeviceLogStreamCommand);

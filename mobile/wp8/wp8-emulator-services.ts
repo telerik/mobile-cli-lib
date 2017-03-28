@@ -20,6 +20,11 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformServices {
 		return "";
 	}
 
+	public async getRunningEmulatorId(image: string): Promise<string> {
+		//todo: plamen5kov: fix later if necessary
+		return "";
+	}
+
 	public async checkDependencies(): Promise<void> {
 		return;
 	}

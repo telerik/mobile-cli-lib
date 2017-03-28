@@ -77,6 +77,9 @@ class AndroidEmulatorServices {
 		androidDeviceDiscovery.emit("deviceFound", androidEmulatorDevice);
 		return Promise.resolve();
 	}
+	public async getRunningEmulatorId(identifier: string): Promise<string> {
+		return Promise.resolve(identifier);
+	}
 }
 
 class IOSEmulatorServices {
@@ -87,6 +90,9 @@ class IOSEmulatorServices {
 			iOSSimulatorDiscovery.emit("deviceFound", iOSSimulator);
 		}
 		return Promise.resolve();
+	}
+	public async getRunningEmulatorId(identifier: string): Promise<string> {
+		return Promise.resolve(identifier);
 	}
 }
 
@@ -231,10 +237,9 @@ describe("devicesService", () => {
 		devicesService: Mobile.IDevicesService,
 		androidEmulatorServices: any,
 		logger: CommonLoggerStub,
-		assertAndroidEmulatorIsStarted = async () => {
+		assertAndroidEmulatorIsStarted = async (options: any) => {
 			assert.isFalse(androidEmulatorServices.isStartEmulatorCalled);
-			await devicesService.execute(() => { counter++; return Promise.resolve(); }, () => true);
-			assert.deepEqual(counter, 1, "The action must be executed on only one device.");
+			await devicesService.initialize({ platform: "android" });
 			assert.isTrue(androidEmulatorServices.isStartEmulatorCalled);
 			androidDeviceDiscovery.emit("deviceLost", androidEmulatorDevice);
 			androidEmulatorServices.isStartEmulatorCalled = false;
@@ -405,8 +410,6 @@ describe("devicesService", () => {
 				androidDeviceDiscovery.emit("deviceLost", androidDevice);
 				androidDeviceDiscovery.emit("deviceLost", tempDevice);
 				counter = 0;
-				await assertAndroidEmulatorIsStarted();
-				counter = 0;
 				await devicesService.execute(() => { counter++; return Promise.resolve(); }, () => true, { allowNoDevices: true });
 				assert.deepEqual(counter, 0, "The action must not be executed when there are no devices.");
 				assert.isTrue(logger.output.indexOf(constants.ERROR_NO_DEVICES) !== -1);
@@ -439,6 +442,8 @@ describe("devicesService", () => {
 			it("does not fail when androidDeviceDiscovery startLookingForDevices fails", async () => {
 				(<any>androidDeviceDiscovery).startLookingForDevices = (): Promise<void> => { throw new Error("my error"); };
 				iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
+				let hostInfo = testInjector.resolve("hostInfo");
+				hostInfo.isDarwin = true;
 				await devicesService.initialize({ platform: "ios", deviceId: iOSDevice.deviceInfo.identifier });
 				assert.isTrue(logger.traceOutput.indexOf("my error") !== -1);
 			});
@@ -456,7 +461,7 @@ describe("devicesService", () => {
 		it("when initialize is called with platform and deviceId and such device cannot be found", async () => {
 			assert.isFalse(devicesService.hasDevices, "Initially devicesService hasDevices must be false.");
 
-			let expectedErrorMessage = getErrorMessage(testInjector, "NotFoundDeviceByIdentifierErrorMessage");
+			let expectedErrorMessage = getErrorMessage(testInjector, "NotFoundDeviceByIdentifierErrorMessageWithIdentifier", androidDevice.deviceInfo.identifier);
 			await assert.isRejected(devicesService.initialize({ platform: "android", deviceId: androidDevice.deviceInfo.identifier }), expectedErrorMessage);
 		});
 
@@ -471,7 +476,7 @@ describe("devicesService", () => {
 			assert.isFalse(devicesService.hasDevices, "Initially devicesService hasDevices must be false.");
 			iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
 			androidDeviceDiscovery.emit("deviceFound", androidDevice);
-			await assert.isRejected(devicesService.initialize({ platform: "ios", deviceId: androidDevice.deviceInfo.identifier }), "Cannot resolve the specified connected device. The provided platform does not match the provided index or identifier.To list currently connected devices and verify that the specified pair of platform and index or identifier exists, run \'device\'.");
+			await assert.isRejected(devicesService.initialize({ platform: "ios", deviceId: androidDevice.deviceInfo.identifier }), "You can use iOS simulator only on OS X.");
 		});
 
 		describe("when only deviceIdentifier is passed", () => {
@@ -500,8 +505,6 @@ describe("devicesService", () => {
 				androidDeviceDiscovery.emit("deviceLost", androidDevice);
 				androidDeviceDiscovery.emit("deviceLost", tempDevice);
 				iOSDeviceDiscovery.emit("deviceLost", iOSDevice);
-				counter = 0;
-				await assertAndroidEmulatorIsStarted();
 				counter = 0;
 				await devicesService.execute(() => { counter++; return Promise.resolve(); }, () => true, { allowNoDevices: true });
 				assert.deepEqual(counter, 0, "The action must not be executed when there are no devices.");
@@ -541,25 +544,22 @@ describe("devicesService", () => {
 		});
 
 		describe("when only platform is passed", () => {
-			it("execute fails when platform is iOS on non-Darwin platform and there are no devices attached when --emulator is passed", async () => {
+			it("initialize fails when platform is iOS on non-Darwin platform and there are no devices attached when --emulator is passed", async () => {
 				testInjector.resolve("hostInfo").isDarwin = false;
-				await devicesService.initialize({ platform: "ios" });
-				testInjector.resolve("options").emulator = true;
-				await assert.isRejected(devicesService.execute(() => { counter++; return Promise.resolve(); }), "Cannot find connected devices. Reconnect any connected devices");
+				await assert.isRejected(devicesService.initialize({ platform: "ios" }), "You can use iOS simulator only on OS X.");
 			});
 
-			it("execute fails when platform is iOS on non-Darwin platform and there are no devices attached", async () => {
+			it("initialize fails when platform is iOS on non-Darwin platform and there are no devices attached", async () => {
 				testInjector.resolve("hostInfo").isDarwin = false;
-				await devicesService.initialize({ platform: "ios" });
+				await assert.isRejected(devicesService.initialize({ platform: "ios" }), "You can use iOS simulator only on OS X.");
 				assert.isFalse(devicesService.hasDevices, "MUST BE FALSE!!!");
-				await assert.isRejected(devicesService.execute(() => { counter++; return Promise.resolve(); }), "Cannot find connected devices. Reconnect any connected devices");
 			});
 
 			it("executes action only on iOS Simulator when iOS device is found and --emulator is passed", async () => {
 				testInjector.resolve("options").emulator = true;
 				testInjector.resolve("hostInfo").isDarwin = true;
 				iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
-				await devicesService.initialize({ platform: "ios" });
+				await devicesService.initialize({ platform: "ios", emulator: true});
 				let deviceIdentifier: string;
 				counter = 0;
 				await devicesService.execute((d: Mobile.IDevice) => { deviceIdentifier = d.deviceInfo.identifier; counter++; return Promise.resolve(); });
@@ -605,10 +605,9 @@ describe("devicesService", () => {
 				counter = 0;
 				await devicesService.execute(() => { counter++; return Promise.resolve(); }, () => true);
 				assert.deepEqual(counter, 1, "The action must be executed on only one device.");
+				counter = 0;
 				androidDeviceDiscovery.emit("deviceLost", tempDevice);
-				counter = 0;
-				await assertAndroidEmulatorIsStarted();
-				counter = 0;
+				await assertAndroidEmulatorIsStarted({ platform: "android" });
 				await devicesService.execute(() => { counter++; return Promise.resolve(); }, () => true, { allowNoDevices: true });
 				assert.deepEqual(counter, 0, "The action must not be executed when there are no devices.");
 				assert.isTrue(logger.output.indexOf(constants.ERROR_NO_DEVICES) !== -1);
@@ -645,8 +644,6 @@ describe("devicesService", () => {
 			androidDeviceDiscovery.emit("deviceLost", tempDevice);
 			iOSDeviceDiscovery.emit("deviceLost", iOSDevice);
 			counter = 0;
-			await assert.isRejected(devicesService.execute(() => { counter++; return Promise.resolve(); }, () => true), "Unable to detect platform for which to start emulator.");
-			counter = 0;
 			devicesService.execute(() => { counter++; return Promise.resolve(); }, () => true, { allowNoDevices: true });
 			assert.deepEqual(counter, 0, "The action must not be executed when there are no devices.");
 			assert.isTrue(logger.output.indexOf(constants.ERROR_NO_DEVICES) !== -1);
@@ -677,8 +674,6 @@ describe("devicesService", () => {
 			await devicesService.execute(() => { counter++; return Promise.resolve(); }, () => true);
 			assert.deepEqual(counter, 1, "The action must be executed on only one device.");
 			androidDeviceDiscovery.emit("deviceLost", tempDevice);
-			counter = 0;
-			await assertAndroidEmulatorIsStarted();
 			counter = 0;
 			await devicesService.execute(() => { counter++; return Promise.resolve(); }, () => true, { allowNoDevices: true });
 			assert.deepEqual(counter, 0, "The action must not be executed when there are no devices.");

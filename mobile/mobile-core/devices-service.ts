@@ -131,6 +131,9 @@ export class DevicesService implements Mobile.IDevicesService {
 		delete this._devices[device.deviceInfo.identifier];
 	}
 
+	/**
+	 * Starts looking for devices. Any found devices are pushed to "_devices" variable.
+	 */
 	public async detectCurrentlyAttachedDevices(): Promise<void> {
 		try {
 			await this.$iOSDeviceDiscovery.startLookingForDevices();
@@ -209,6 +212,11 @@ export class DevicesService implements Mobile.IDevicesService {
 		}
 	}
 
+	/**
+	 * Returns device that matches an identifier.
+	 * The identifier is expected to be the same as the running device declares it (emulator-5554 for android or GUID for ios).
+	 * @param identifier running emulator or device identifier
+	 */
 	public getDeviceByIdentifier(identifier: string): Mobile.IDevice {
 		let searchedDevice = _.find(this.getDeviceInstances(), (device: Mobile.IDevice) => { return device.deviceInfo.identifier === identifier; });
 		if (!searchedDevice) {
@@ -218,10 +226,9 @@ export class DevicesService implements Mobile.IDevicesService {
 		return searchedDevice;
 	}
 
-	public getDeviceByName(name: string): Mobile.IDevice {
-		return _.find(this.getDeviceInstances(), (device: Mobile.IDevice) => { return device.deviceInfo.displayName === name; });
-	}
-
+	/**
+	 * Starts looking for running devices. All found devices are pushed to _devices variable.
+	 */
 	private async startLookingForDevices(): Promise<void> {
 		this.$logger.trace("startLookingForDevices; platform is %s", this._platform);
 		if (!this._platform) {
@@ -237,21 +244,37 @@ export class DevicesService implements Mobile.IDevicesService {
 		}
 	}
 
+	/**
+	 * Returns device depending on the passed index.
+	 * The index refers to assigned number to listed devices by tns device command.
+	 * @param index assigned device number
+	 */
 	private getDeviceByIndex(index: number): Mobile.IDevice {
 		this.validateIndex(index - 1);
 		return this.getDeviceInstances()[index - 1];
 	}
 
+	/**
+	 * Returns running device for specified --device <DeviceId>.
+	 * Method expects running devices.
+	 * @param identifier parameter passed by the user to --device flag
+	 */
 	private async getDevice(deviceOption: string): Promise<Mobile.IDevice> {
 		await this.detectCurrentlyAttachedDevices();
 		let device: Mobile.IDevice = null;
 
-		if (this.hasDevice(deviceOption)) {
-			device = this.getDeviceByIdentifier(deviceOption);
+		let emulatorIdentifier = null;
+		if (this._platform) {
+			let emulatorService = this.resolveEmulatorServices();
+			emulatorIdentifier = await emulatorService.getRunningEmulatorId(deviceOption);
+		}
+
+		if (this.hasRunningDevice(emulatorIdentifier)) {
+			device = this.getDeviceByIdentifier(emulatorIdentifier);
 		} else if (helpers.isNumber(deviceOption)) {
 			device = this.getDeviceByIndex(parseInt(deviceOption, 10));
 		} else {
-			device = this.getDeviceByName(deviceOption);
+			device = this.getDeviceByIdentifier(deviceOption);
 		}
 
 		if (!device) {
@@ -261,12 +284,22 @@ export class DevicesService implements Mobile.IDevicesService {
 		return device;
 	}
 
+	/**
+	 * Method runs action for a --device (value), specified by the user.
+	 * @param action action to be executed if canExecute returns true
+	 * @param canExecute predicate to decide whether the command can be ran
+	 */
 	private async executeOnDevice(action: (dev: Mobile.IDevice) => Promise<void>, canExecute?: (_dev: Mobile.IDevice) => boolean): Promise<void> {
 		if (!canExecute || canExecute(this._device)) {
 			await action(this._device);
 		}
 	}
 
+	/**
+	 * Executes passed action for each found device.
+	 * @param action action to be executed if canExecute returns true
+	 * @param canExecute predicate to decide whether the command can be ran
+	 */
 	private async executeOnAllConnectedDevices(action: (dev: Mobile.IDevice) => Promise<void>, canExecute?: (_dev: Mobile.IDevice) => boolean): Promise<void> {
 		let devices = this.filterDevicesByPlatform();
 		let sortedDevices = _.sortBy(devices, device => device.deviceInfo.platform);
@@ -293,13 +326,19 @@ export class DevicesService implements Mobile.IDevicesService {
 		return _.map(deviceIdentifiers, deviceIdentifier => this.deployOnDevice(deviceIdentifier, packageFile, packageName));
 	}
 
+	/**
+	 * Runs the passed action if the predicate "canExecute" returns true
+	 * @param action action to be executed if canExecute returns true.
+	 * @param canExecute predicate to decide whether the command can be ran
+	 * @param options all possible options that can be passed to the command.
+	 */
 	public async execute(action: (device: Mobile.IDevice) => Promise<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: { allowNoDevices?: boolean }): Promise<void> {
 		assert.ok(this._isInitialized, "Devices services not initialized!");
 
 		if (this.hasDevices) {
-			if (this.$hostInfo.isDarwin && this._platform && this.$mobileHelper.isiOSPlatform(this._platform) &&
-				this.$options.emulator && !this.isOnlyiOSSimultorRunning()) {
-				await this.startEmulator();
+			if (this.$hostInfo.isDarwin && this._platform
+					&& this.$mobileHelper.isiOSPlatform(this._platform)
+					&& this.$options.emulator && !this.isOnlyiOSSimultorRunning()) {
 				// Executes the command only on iOS simulator
 				let originalCanExecute = canExecute;
 				canExecute = (dev: Mobile.IDevice): boolean => this.isiOSSimulator(dev) && (!originalCanExecute || !!(originalCanExecute(dev)));
@@ -314,15 +353,64 @@ export class DevicesService implements Mobile.IDevicesService {
 				if (!this.$hostInfo.isDarwin && this._platform && this.$mobileHelper.isiOSPlatform(this._platform)) {
 					this.$errors.failWithoutHelp(message);
 				} else {
-					await this.startEmulator();
 					await this.executeCore(action, canExecute);
 				}
 			}
 		}
 	}
 
+	/**
+	 * Starts emulator or simulator if necessary depending on --device or --emulator flags.
+	 * If no options are passed runs default emulator/simulator if no devices are connected.
+	 * @param data mainly contains information about --emulator and --deviceId flags.
+	 */
+	public async startEmulatorIfNecessary(data?: Mobile.IDevicesServicesInitializationOptions): Promise<void> {
+		if (data && data.deviceId && data.emulator) {
+			this.$errors.failWithoutHelp(`--device and --emulator are incompatible options.
+			If you are trying to run on specific emulator, use "${this.$staticConfig.CLIENT_NAME} run --device <DeviceID>`);
+		}
+
+		if (data && data.platform) {
+			// are there any running devices
+			await this.detectCurrentlyAttachedDevices();
+			let deviceInstances = this.getDeviceInstances();
+
+			//if no --device is passed and no devices are found, the default emulator is started
+			if (!data.deviceId && _.isEmpty(deviceInstances)) {
+				return await this.startEmulator(data.platform);
+			}
+
+			//check if --device(value) is running, if it's not or it's not the same as is specified, start with name from --device(value)
+			if (data.deviceId) {
+				if (!helpers.isNumber(data.deviceId))  {
+					let activeDeviceInstance = _.find(this.getDeviceInstances(), (device: Mobile.IDevice) => { return device.deviceInfo.identifier === data.deviceId; });
+					if (!activeDeviceInstance) {
+						return await this.startEmulator(data.platform, data.deviceId);
+					}
+				}
+			}
+
+			// if only emulator flag is passed and no other emulators are running, start default emulator
+			if (data.emulator && deviceInstances.length) {
+				let runningDeviceInstance = _.some(deviceInstances, (value) => value.isEmulator);
+				if (!runningDeviceInstance) {
+					return await this.startEmulator(data.platform);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Takes care of gathering information about all running devices.
+	 * Sets "_isInitialized" to true after infomation is present.
+	 * Method expects running devices.
+	 * @param data mainly contains information about --emulator and --deviceId flags.
+	 */
 	@exported("devicesService")
 	public async initialize(data?: Mobile.IDevicesServicesInitializationOptions): Promise<void> {
+		this.$logger.out("Searching for devices...");
+		await this.startEmulatorIfNecessary(data);
+
 		if (this._isInitialized) {
 			return;
 		}
@@ -333,9 +421,9 @@ export class DevicesService implements Mobile.IDevicesService {
 		let deviceOption = data.deviceId;
 
 		if (platform && deviceOption) {
+			this._platform = this.getPlatform(data.platform);
 			this._device = await this.getDevice(deviceOption);
-			this._platform = this._device.deviceInfo.platform;
-			if (this._platform !== this.getPlatform(platform)) {
+			if (this._device.deviceInfo.platform !== this._platform) {
 				this.$errors.fail("Cannot resolve the specified connected device. The provided platform does not match the provided index or identifier." +
 					"To list currently connected devices and verify that the specified pair of platform and index or identifier exists, run 'device'.");
 			}
@@ -443,8 +531,14 @@ export class DevicesService implements Mobile.IDevicesService {
 		await device.applicationManager.tryStartApplication(packageName);
 	}
 
-	private hasDevice(identifier: string): boolean {
-		return _.some(this.getDeviceInstances(), (device: Mobile.IDevice) => { return device.deviceInfo.identifier === identifier; });
+	/**
+	 * Returns true if there's a running device with specified identifier.
+	 * @param identifier parameter passed by the user to --device flag
+	 */
+	private hasRunningDevice(identifier: string): boolean {
+		return _.some(this.getDeviceInstances(), (device: Mobile.IDevice) => {
+			return device.deviceInfo.identifier === identifier;
+		});
 	}
 
 	private filterDevicesByPlatform(): Mobile.IDevice[] {
@@ -467,8 +561,12 @@ export class DevicesService implements Mobile.IDevicesService {
 
 	private resolveEmulatorServices(platform?: string): Mobile.IEmulatorPlatformServices {
 		platform = platform || this._platform;
-		if (this.$mobileHelper.isiOSPlatform(platform) && this.$hostInfo.isDarwin) {
-			return this.$injector.resolve("iOSEmulatorServices");
+		if (this.$mobileHelper.isiOSPlatform(platform)) {
+			if (this.$hostInfo.isDarwin) {
+				return this.$injector.resolve("iOSEmulatorServices");
+			} else {
+				this.$errors.failWithoutHelp("You can use iOS simulator only on OS X.");
+			}
 		} else if (this.$mobileHelper.isAndroidPlatform(platform)) {
 			return this.$injector.resolve("androidEmulatorServices");
 		}
@@ -476,7 +574,12 @@ export class DevicesService implements Mobile.IDevicesService {
 		return null;
 	}
 
-	public async startEmulator(platform?: string): Promise<void> {
+	/**
+	 * Starts emulator for platform and makes sure started devices/emulators/simulators are in _devices array before finishing.
+	 * @param platform (optional) platform to start emulator/simulator for
+	 * @param emulatorImage (optional) emulator/simulator image identifier
+	 */
+	public async startEmulator(platform?: string, emulatorImage?: string): Promise<void> {
 
 		platform = platform || this._platform;
 
@@ -485,7 +588,7 @@ export class DevicesService implements Mobile.IDevicesService {
 			this.$errors.failWithoutHelp("Unable to detect platform for which to start emulator.");
 		}
 
-		await emulatorServices.startEmulator();
+		await emulatorServices.startEmulator(emulatorImage);
 
 		if (this.$mobileHelper.isAndroidPlatform(platform)) {
 			await this.$androidDeviceDiscovery.startLookingForDevices();

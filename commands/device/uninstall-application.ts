@@ -12,4 +12,4 @@ export class UninstallApplicationCommand implements ICommand {
 		await this.$devicesService.execute(action);
 	}
 }
-$injector.registerCommand("device|uninstall", UninstallApplicationCommand);
+$injector.registerCommand(["device|uninstall", "devices|uninstall"], UninstallApplicationCommand);
