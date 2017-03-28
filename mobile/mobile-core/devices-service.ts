@@ -372,7 +372,8 @@ export class DevicesService implements Mobile.IDevicesService {
 
 		if (data && data.platform) {
 			// are there any running devices
-			await this.detectCurrentlyAttachedDevices();
+			this._platform = data.platform;
+			await this.startLookingForDevices();
 			let deviceInstances = this.getDeviceInstances();
 
 			//if no --device is passed and no devices are found, the default emulator is started
@@ -408,12 +409,12 @@ export class DevicesService implements Mobile.IDevicesService {
 	 */
 	@exported("devicesService")
 	public async initialize(data?: Mobile.IDevicesServicesInitializationOptions): Promise<void> {
-		this.$logger.out("Searching for devices...");
-		await this.startEmulatorIfNecessary(data);
-
 		if (this._isInitialized) {
 			return;
 		}
+
+		this.$logger.out("Searching for devices...");
+		await this.startEmulatorIfNecessary(data);
 
 		data = data || {};
 		this._data = data;
