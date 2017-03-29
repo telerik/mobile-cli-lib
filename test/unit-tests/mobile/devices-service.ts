@@ -14,7 +14,9 @@ import * as constants from "../../../constants";
 import { DevicePlatformsConstants } from "../../../mobile/device-platforms-constants";
 
 class IOSDeviceDiscoveryStub extends EventEmitter {
+	public count: number = 0;
 	public async startLookingForDevices(): Promise<void> {
+		this.count++;
 		return;
 	}
 
@@ -24,7 +26,9 @@ class IOSDeviceDiscoveryStub extends EventEmitter {
 }
 
 class AndroidDeviceDiscoveryStub extends EventEmitter {
+	public count: number = 0;
 	public async startLookingForDevices(): Promise<void> {
+		this.count++;
 		return;
 	}
 
@@ -34,7 +38,9 @@ class AndroidDeviceDiscoveryStub extends EventEmitter {
 }
 
 class IOSSimulatorDiscoveryStub extends EventEmitter {
+	public count: number = 0;
 	public async startLookingForDevices(): Promise<void> {
+		this.count++;
 		return;
 	}
 
@@ -308,6 +314,13 @@ describe("devicesService", () => {
 				await devicesService.startEmulatorIfNecessary({platform: "android", emulator: true});
 				assert.deepEqual(devicesService.getDeviceInstances(), [androidDevice, androidEmulatorDevice]);
 				assert.equal(devicesService.getDeviceInstances().length, 2);
+			});
+			it("deviceid and emulator are not passed there are devices but not for the specified platform, assert NO devices are found", async () => {
+				assert.deepEqual(devicesService.getDeviceInstances(), [], "Initially getDevicesInstances must return empty array.");
+				await devicesService.startEmulatorIfNecessary({platform: "android"});
+				assert.equal((<AndroidDeviceDiscoveryStub>androidDeviceDiscovery).count, 2);
+				assert.equal((<IOSDeviceDiscoveryStub>iOSDeviceDiscovery).count, 0);
+				assert.equal((<IOSSimulatorDiscoveryStub>iOSSimulatorDiscovery).count, 0);
 			});
 		});
 	});
