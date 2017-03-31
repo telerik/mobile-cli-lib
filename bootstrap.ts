@@ -102,9 +102,9 @@ $injector.requireCommand("dev-preuninstall", "./commands/preuninstall");
 $injector.requireCommand("dev-generate-messages", "./commands/generate-messages");
 $injector.requireCommand("doctor", "./commands/doctor");
 
-$injector.requireCommand("proxy|*get", "./commands/proxy/proxy-get-command");
-$injector.requireCommand("proxy|set", "./commands/proxy/proxy-set-command");
-$injector.requireCommand("proxy|clear", "./commands/proxy/proxy-clear-command");
+$injector.requireCommand("proxy|*get", "./commands/proxy/proxy-get");
+$injector.requireCommand("proxy|set", "./commands/proxy/proxy-set");
+$injector.requireCommand("proxy|clear", "./commands/proxy/proxy-clear");
 
 $injector.require("utils", "./utils");
 $injector.require("bplistParser", "./bplist-parser");

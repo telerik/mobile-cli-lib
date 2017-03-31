@@ -103,6 +103,7 @@ export class HttpClient implements Server.IHttpClient {
 
 			requestObj
 				.on("error", (err: Error) => {
+					this.$logger.trace("An error occurred while sending the request:", err);
 					const errorMessageMatch = err.message.match(HttpClient.STATUS_CODE_REGEX);
 					const errorMessageStatusCode = errorMessageMatch && errorMessageMatch[1] && +errorMessageMatch[1];
 					let errorMessage = this.getErrorMessage(errorMessageStatusCode, null);
@@ -114,7 +115,6 @@ export class HttpClient implements Server.IHttpClient {
 					if (!successful) {
 						pipeTo = undefined;
 					}
-
 
 					let responseStream = response;
 					switch (response.headers["content-encoding"]) {
@@ -277,8 +277,7 @@ export class HttpClient implements Server.IHttpClient {
 	 */
 	private async useProxySettings(proxySettings: IProxySettings, proxyCache: IProxyCache, options: any, headers: any, requestProto: string): Promise<void> {
 		if (proxySettings || proxyCache) {
-			// TODO: Get this from the user somehow
-			const proto = "http";
+			const proto = (proxySettings && proxySettings.protocol) || proxyCache.PROXY_PROTOCOL || "http:";
 			const host = (proxySettings && proxySettings.hostname) || proxyCache.PROXY_HOSTNAME;
 			const port = (proxySettings && proxySettings.port) || proxyCache.PROXY_PORT;
 			let credentialsPart = "";
@@ -287,7 +286,8 @@ export class HttpClient implements Server.IHttpClient {
 				credentialsPart = `${proxyCredentials.username}:${proxyCredentials.password}@`;
 			}
 
-			options.proxy = `${proto}://${credentialsPart}${host}:${port}`;
+			// Note that proto ends with :
+			options.proxy = `${proto}//${credentialsPart}${host}:${port}`;
 			options.rejectUnauthorized = false;
 
 			this.$logger.trace("Using proxy with host: %s, port: %d, path is: %s", options.host, options.port, options.path);
