@@ -657,11 +657,17 @@ interface IProxyCache {
 	/**
 	 * Hostname of the proxy
 	 */
+
 	PROXY_HOSTNAME: string;
 	/**
 	 * Port of the proxy
 	 */
-	PROXY_PORT: number
+	PROXY_PORT: number;
+
+	/**
+	 * Protocol of the proxy - http or https
+	 */
+	PROXY_PROTOCOL: string;
 }
 
 /**
@@ -1677,6 +1683,11 @@ interface IProxySettings {
 	 * Port of the machine used for proxy that allows connections.
 	 */
 	port: string;
+
+	/**
+	 * Protocol of the proxy - http or https
+	 */
+	protocol?: string;
 }
 
 /**

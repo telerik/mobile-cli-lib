@@ -63,3 +63,8 @@ export class HttpStatusCodes {
 	static PAYMENT_REQUIRED = 402;
 	static PROXY_AUTHENTICATION_REQUIRED = 407;
 }
+
+export const HttpProtocolToPort: IDictionary<number> = {
+	'http:': 80,
+	'https:': 443
+};

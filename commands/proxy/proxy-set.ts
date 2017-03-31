@@ -1,12 +1,13 @@
 import * as commandParams from "../../command-params";
 import { isInteractive } from "../../helpers";
-import { ProxyCommandBase } from "./proxy-base-command";
+import { ProxyCommandBase } from "./proxy-base";
+import { HttpProtocolToPort } from "../../constants";
+import { parse } from "url";
 
 const proxySetCommandName = "proxy|set";
 
 export class ProxySetCommand extends ProxyCommandBase {
 	public allowedParameters = [
-		new commandParams.StringCommandParameter(this.$injector),
 		new commandParams.StringCommandParameter(this.$injector),
 		new commandParams.StringCommandParameter(this.$injector),
 		new commandParams.StringCommandParameter(this.$injector)
@@ -22,20 +23,28 @@ export class ProxySetCommand extends ProxyCommandBase {
 	}
 
 	public async execute(args: string[]): Promise<void> {
-		let hostname = args[0],
-			port = args[1],
-			username = args[2],
-			password = args[3];
+		let urlString = args[0],
+			username = args[1],
+			password = args[2];
 
-		const noHostName = !hostname;
-		const noPort = !port || !this.isValidPort(port);
-
-		if (!isInteractive() && (noHostName || noPort || this.isPasswordRequired(username, password))) {
-			this.$errors.fail("Console is not interactive - you need to supply all command parameters.");
+		const noUrl = !urlString;
+		if (noUrl) {
+			if (!isInteractive()) {
+				this.$errors.fail("Console is not interactive - you need to supply all command parameters.");
+			} else {
+				urlString = await this.$prompter.getString("Url", { allowEmpty: false });
+			}
 		}
 
-		if (noHostName) {
-			hostname = await this.$prompter.getString("Hostname", { allowEmpty: false });
+		const urlObj = parse(urlString);
+		let port = urlObj.port && +urlObj.port || HttpProtocolToPort[urlObj.protocol];
+		const noPort = !port || !this.isValidPort(port);
+		const authCredentials = this.getCredentialsFromAuth(urlObj.auth || "");
+		username = username || authCredentials.username;
+		password = password || authCredentials.password;
+
+		if (!isInteractive() && (noPort || this.isPasswordRequired(username, password))) {
+			this.$errors.fail("Console is not interactive - you need to supply all command parameters.");
 		}
 
 		if (noPort) {
@@ -63,8 +72,9 @@ export class ProxySetCommand extends ProxyCommandBase {
 		}
 
 		const proxyCache: IProxyCache = {
-			PROXY_HOSTNAME: hostname,
-			PROXY_PORT: +port
+			PROXY_HOSTNAME: urlObj.hostname,
+			PROXY_PORT: port,
+			PROXY_PROTOCOL: urlObj.protocol
 		};
 
 		this.$proxyService.setCache(proxyCache);
@@ -73,16 +83,27 @@ export class ProxySetCommand extends ProxyCommandBase {
 		await this.tryTrackUsage();
 	}
 
+	private getCredentialsFromAuth(auth: string): ICredentials {
+		const colonIndex = auth.indexOf(":");
+		let username = "";
+		let password = "";
+		if (colonIndex > -1) {
+			username = auth.substring(0, colonIndex);
+			password = auth.substring(colonIndex + 1);
+		}
+
+		return { username, password };
+	}
+
 	private isPasswordRequired(username: string, password: string): boolean {
 		return !!(username && !password);
 	}
 
-	private isValidPort(port: string): boolean {
-		const parsedPortNumber = parseInt(port);
-		return !isNaN(parsedPortNumber) && parsedPortNumber > 0 && parsedPortNumber < 65536;
+	private isValidPort(port: number): boolean {
+		return !isNaN(port) && port > 0 && port < 65536;
 	}
 
-	private async getPortFromUserInput(): Promise<string> {
+	private async getPortFromUserInput(): Promise<number> {
 		const schemaName = "port";
 		const schema: IPromptSchema = {
 			message: "Port",
@@ -94,10 +115,10 @@ export class ProxySetCommand extends ProxyCommandBase {
 		};
 
 		const prompterResult = await this.$prompter.get([schema]);
-		return prompterResult[schemaName];
+		return parseInt(prompterResult[schemaName]);
 	}
 
-	private getInvalidPortMessage(port: string): string {
+	private getInvalidPortMessage(port: number): string {
 		return `Specified port ${port} is not valid. Please enter a value between 1 and 65535.`;
 	}
 }
