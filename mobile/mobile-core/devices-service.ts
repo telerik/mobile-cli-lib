@@ -3,7 +3,7 @@ import * as helpers from "../../helpers";
 import * as assert from "assert";
 import * as constants from "../../constants";
 import { exported } from "../../decorators";
-import { settlePromises } from "../../helpers";
+// import { settlePromises } from "../../helpers";
 import { EOL } from "os";
 
 export class DevicesService implements Mobile.IDevicesService {
@@ -189,12 +189,12 @@ export class DevicesService implements Mobile.IDevicesService {
 						this.$logger.trace("Error while checking for new iOS Simulators.", err);
 					}
 
-					try {
-						const trustedDevices = _.filter(this._devices, device => device.deviceInfo.status === constants.CONNECTED_STATUS);
-						await settlePromises(_.map(trustedDevices, device => device.applicationManager.checkForApplicationUpdates()));
-					} catch (err) {
-						this.$logger.trace("Error checking for application updates on devices.", err);
-					}
+					// try {
+					// 	const trustedDevices = _.filter(this._devices, device => device.deviceInfo.status === constants.CONNECTED_STATUS);
+					// 	await settlePromises(_.map(trustedDevices, device => device.applicationManager.checkForApplicationUpdates()));
+					// } catch (err) {
+					// 	this.$logger.trace("Error checking for application updates on devices.", err);
+					// }
 
 					if (isFirstExecution) {
 						isFirstExecution = false;

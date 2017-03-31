@@ -1223,64 +1223,64 @@ describe("devicesService", () => {
 			});
 		});
 
-		describe("check for application updates", () => {
-			let $iOSDeviceDiscovery: Mobile.IDeviceDiscovery;
-			let $androidDeviceDiscovery: Mobile.IAndroidDeviceDiscovery;
-			let hasCheckedForAndroidAppUpdates: boolean;
-			let hasCheckedForIosAppUpdates: boolean;
+		// describe("check for application updates", () => {
+		// 	let $iOSDeviceDiscovery: Mobile.IDeviceDiscovery;
+		// 	let $androidDeviceDiscovery: Mobile.IAndroidDeviceDiscovery;
+		// 	let hasCheckedForAndroidAppUpdates: boolean;
+		// 	let hasCheckedForIosAppUpdates: boolean;
 
-			beforeEach(() => {
-				hasCheckedForAndroidAppUpdates = false;
-				hasCheckedForIosAppUpdates = false;
-				$iOSDeviceDiscovery = testInjector.resolve("iOSDeviceDiscovery");
-				$androidDeviceDiscovery = testInjector.resolve("androidDeviceDiscovery");
+		// 	beforeEach(() => {
+		// 		hasCheckedForAndroidAppUpdates = false;
+		// 		hasCheckedForIosAppUpdates = false;
+		// 		$iOSDeviceDiscovery = testInjector.resolve("iOSDeviceDiscovery");
+		// 		$androidDeviceDiscovery = testInjector.resolve("androidDeviceDiscovery");
 
-				androidDevice.applicationManager.checkForApplicationUpdates = async (): Promise<void> => {
-					hasCheckedForAndroidAppUpdates = true;
-				};
+		// 		androidDevice.applicationManager.checkForApplicationUpdates = async (): Promise<void> => {
+		// 			hasCheckedForAndroidAppUpdates = true;
+		// 		};
 
-				iOSDevice.applicationManager.checkForApplicationUpdates = async (): Promise<void> => {
-					hasCheckedForIosAppUpdates = true;
-				};
+		// 		iOSDevice.applicationManager.checkForApplicationUpdates = async (): Promise<void> => {
+		// 			hasCheckedForIosAppUpdates = true;
+		// 		};
 
-				$androidDeviceDiscovery.emit("deviceFound", androidDevice);
-				$iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
-			});
+		// 		$androidDeviceDiscovery.emit("deviceFound", androidDevice);
+		// 		$iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
+		// 	});
 
-			it("should check for application updates for all connected devices.", async () => {
-				await devicesService.startDeviceDetectionInterval();
+		// 	it("should check for application updates for all connected devices.", async () => {
+		// 		await devicesService.startDeviceDetectionInterval();
 
-				assert.isTrue(hasCheckedForAndroidAppUpdates);
-				assert.isTrue(hasCheckedForIosAppUpdates);
-			});
+		// 		assert.isTrue(hasCheckedForAndroidAppUpdates);
+		// 		assert.isTrue(hasCheckedForIosAppUpdates);
+		// 	});
 
-			it("should check for application updates if the check on one device throws an exception.", async () => {
-				iOSDevice.applicationManager.checkForApplicationUpdates = throwErrorFunction;
+		// 	it("should check for application updates if the check on one device throws an exception.", async () => {
+		// 		iOSDevice.applicationManager.checkForApplicationUpdates = throwErrorFunction;
 
-				await devicesService.startDeviceDetectionInterval();
+		// 		await devicesService.startDeviceDetectionInterval();
 
-				assert.isTrue(hasCheckedForAndroidAppUpdates);
-			});
+		// 		assert.isTrue(hasCheckedForAndroidAppUpdates);
+		// 	});
 
-			it("should check for application updates only on devices with status Connected", async () => {
-				androidDevice.deviceInfo.status = constants.UNREACHABLE_STATUS;
-				await devicesService.startDeviceDetectionInterval();
+		// 	it("should check for application updates only on devices with status Connected", async () => {
+		// 		androidDevice.deviceInfo.status = constants.UNREACHABLE_STATUS;
+		// 		await devicesService.startDeviceDetectionInterval();
 
-				assert.isFalse(hasCheckedForAndroidAppUpdates);
-				assert.isTrue(hasCheckedForIosAppUpdates);
-			});
+		// 		assert.isFalse(hasCheckedForAndroidAppUpdates);
+		// 		assert.isTrue(hasCheckedForIosAppUpdates);
+		// 	});
 
-			it("should not throw if all checks for application updates on all devices throw exceptions.", () => {
-				iOSDevice.applicationManager.checkForApplicationUpdates = throwErrorFunction;
-				androidDevice.applicationManager.checkForApplicationUpdates = throwErrorFunction;
+		// 	it("should not throw if all checks for application updates on all devices throw exceptions.", () => {
+		// 		iOSDevice.applicationManager.checkForApplicationUpdates = throwErrorFunction;
+		// 		androidDevice.applicationManager.checkForApplicationUpdates = throwErrorFunction;
 
-				let callback = () => {
-					devicesService.startDeviceDetectionInterval.call(devicesService);
-				};
+		// 		let callback = () => {
+		// 			devicesService.startDeviceDetectionInterval.call(devicesService);
+		// 		};
 
-				assert.doesNotThrow(callback);
-			});
-		});
+		// 		assert.doesNotThrow(callback);
+		// 	});
+		// });
 	});
 
 	describe("detectCurrentlyAttachedDevices", () => {
