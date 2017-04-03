@@ -356,8 +356,7 @@ export class Yok implements IInjector {
 			}
 		});
 
-		let name = ctor.$inject.name;
-		if (name && name[0] === name[0].toUpperCase()) {
+		if (ctor.constructor && ctor.prototype && ctor.prototype.constructor) {
 			return new (<any>ctor)(...resolvedArgs);
 		} else {
 			return ctor.apply(null, resolvedArgs);
