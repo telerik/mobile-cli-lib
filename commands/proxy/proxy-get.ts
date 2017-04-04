@@ -1,5 +1,5 @@
 import { EOL } from "os";
-import { ProxyCommandBase } from "./proxy-base-command";
+import { ProxyCommandBase } from "./proxy-base";
 
 const proxyGetCommandName = "proxy|*get";
 
@@ -15,7 +15,7 @@ export class ProxyGetCommand extends ProxyCommandBase {
 		const proxyCache: IProxyCache = this.$proxyService.getCache();
 		if (proxyCache) {
 			const proxyCredentials = await this.$proxyService.getCredentials();
-			message = `Hostname: ${proxyCache.PROXY_HOSTNAME}${EOL}Port: ${proxyCache.PROXY_PORT}`;
+			message = `Proxy Url: ${proxyCache.PROXY_PROTOCOL}://${proxyCache.PROXY_HOSTNAME}:${proxyCache.PROXY_PORT}`;
 			if (proxyCredentials && proxyCredentials.username) {
 				message += `${EOL}Username: ${proxyCredentials.username}`;
 			}

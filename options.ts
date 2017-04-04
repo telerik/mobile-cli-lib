@@ -53,6 +53,7 @@ export class OptionsBase {
 			watch: { type: OptionType.Boolean },
 			avd: { type: OptionType.String },
 			config: { type: OptionType.Array },
+			insecure: { type: OptionType.Boolean, alias: "k" },
 			debug: { type: OptionType.Boolean, alias: "d" },
 			timeout: { type: OptionType.String },
 			device: { type: OptionType.String },
