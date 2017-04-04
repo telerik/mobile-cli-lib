@@ -35,10 +35,10 @@ export class IOSDeviceOperations implements IIOSDeviceOperations, IDisposable {
 		this.isInitialized = true;
 		if (!this.deviceLib) {
 			let foundDevice = false;
-			let wrappedDeviceFoundCallback = (deviceInfoCallback: DeviceInfoCallback) => {
+			let wrappedDeviceFoundCallback = (deviceInfo: IOSDeviceLib.IDeviceActionInfo) => {
 				foundDevice = true;
 
-				return deviceFoundCallback(deviceInfoCallback);
+				return deviceFoundCallback(deviceInfo);
 			};
 
 			this.deviceLib = new IOSDeviceLibModule(wrappedDeviceFoundCallback, deviceLostCallback);
@@ -48,7 +48,7 @@ export class IOSDeviceOperations implements IIOSDeviceOperations, IDisposable {
 				let iterationsCount = 0,
 					maxIterationsCount = 10;
 
-				let intervalHandle: number = setInterval(() => {
+				let intervalHandle: NodeJS.Timer = setInterval(() => {
 					if (foundDevice) {
 						resolve();
 						return clearInterval(intervalHandle);
