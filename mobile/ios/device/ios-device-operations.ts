@@ -34,11 +34,32 @@ export class IOSDeviceOperations implements IIOSDeviceOperations, IDisposable {
 		this.$logger.trace("Starting to look for iOS devices.");
 		this.isInitialized = true;
 		if (!this.deviceLib) {
-			this.deviceLib = new IOSDeviceLibModule(deviceFoundCallback, deviceLostCallback);
+			let foundDevice = false;
+			let wrappedDeviceFoundCallback = (deviceInfoCallback: DeviceInfoCallback) => {
+				foundDevice = true;
+
+				return deviceFoundCallback(deviceInfoCallback);
+			};
+
+			this.deviceLib = new IOSDeviceLibModule(wrappedDeviceFoundCallback, deviceLostCallback);
 
 			// We need this because we need to make sure that we have devices.
 			await new Promise((resolve, reject) => {
-				setTimeout(resolve, 3000);
+				let iterationsCount = 0,
+					maxIterationsCount = 10;
+
+				let intervalHandle: number = setInterval(() => {
+					if(foundDevice) {
+						resolve();
+						return clearInterval(intervalHandle);
+					}
+
+					iterationsCount++;
+					if(iterationsCount >= maxIterationsCount) {
+						clearInterval(intervalHandle);
+						return resolve();
+					}
+				}, 500);
 			});
 		}
 	}
