@@ -1704,6 +1704,11 @@ interface IProxySettings {
 	 * Protocol of the proxy - http or https
 	 */
 	protocol?: string;
+
+	/**
+	 * Defines if NODE_TLS_REJECT_UNAUTHORIZED should be set to true or false. Default value is true.
+	 */
+	rejectUnauthorized: boolean;
 }
 
 /**

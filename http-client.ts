@@ -291,7 +291,7 @@ export class HttpClient implements Server.IHttpClient {
 
 			// Note that proto ends with :
 			options.proxy = `${proto}//${credentialsPart}${host}:${port}`;
-			options.rejectUnauthorized = proxyCache ? !proxyCache.ALLOW_INSECURE : true;
+			options.rejectUnauthorized = proxySettings ? proxySettings.rejectUnauthorized : (proxyCache ? !proxyCache.ALLOW_INSECURE : true);
 
 			this.$logger.trace("Using proxy: %s", options.proxy);
 		}
