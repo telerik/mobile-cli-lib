@@ -668,6 +668,11 @@ interface IProxyCache {
 	 * Protocol of the proxy - http or https
 	 */
 	PROXY_PROTOCOL: string;
+
+	/**
+	 * Protocol of the proxy - http or https
+	 */
+	ALLOW_INSECURE: boolean;
 }
 
 /**
@@ -1051,6 +1056,7 @@ interface ICommonOptions {
 	start: boolean;
 	stop: boolean;
 	ddi: string; // the path to developer  disk image
+	insecure: boolean;
 	justlaunch: boolean;
 	skipRefresh: boolean;
 	app: string;

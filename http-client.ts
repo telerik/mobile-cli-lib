@@ -93,17 +93,20 @@ export class HttpClient implements Server.IHttpClient {
 				delete options.timeout;
 			}
 
-			this.$logger.trace("httpRequest: %s", util.inspect(options));
-
 			options.url = options.url || `${options.proto}://${options.host}${options.path}`;
 			options.encoding = null;
 			options.followAllRedirects = true;
 
-			let requestObj = request(options);
+			this.$logger.trace("httpRequest: %s", util.inspect(options));
+			const requestObj = request(options);
 
 			requestObj
 				.on("error", (err: Error) => {
 					this.$logger.trace("An error occurred while sending the request:", err);
+					// In case we get a 4xx error code there seems to be no better way than this regex to get the error code
+					// the tunnel-agent module that request is using is obscuring the response and hence the statusCode by throwing an error message
+					// https://github.com/request/tunnel-agent/blob/eb2b1b19e09ee0e6a2b54eb2612755731b7301dc/index.js#L166
+					// in case there is a better way to obtain status code in future version do not hesitate to remove this code
 					const errorMessageMatch = err.message.match(HttpClient.STATUS_CODE_REGEX);
 					const errorMessageStatusCode = errorMessageMatch && errorMessageMatch[1] && +errorMessageMatch[1];
 					let errorMessage = this.getErrorMessage(errorMessageStatusCode, null);
@@ -144,12 +147,12 @@ export class HttpClient implements Server.IHttpClient {
 
 						responseStream.on("end", () => {
 							this.$logger.trace("httpRequest: Done. code = %d", response.statusCode.toString());
-							let responseBody = data.join("");
+							const responseBody = data.join("");
 
 							if (successful) {
 								this.setResponseResult(promiseActions, timerId, { body: responseBody, response });
 							} else {
-								let errorMessage = this.getErrorMessage(response.statusCode, responseBody);
+								const errorMessage = this.getErrorMessage(response.statusCode, responseBody);
 								let err: any = new Error(errorMessage);
 								err.response = response;
 								err.body = responseBody;
@@ -288,9 +291,9 @@ export class HttpClient implements Server.IHttpClient {
 
 			// Note that proto ends with :
 			options.proxy = `${proto}//${credentialsPart}${host}:${port}`;
-			options.rejectUnauthorized = false;
+			options.rejectUnauthorized = proxyCache ? !proxyCache.ALLOW_INSECURE : true;
 
-			this.$logger.trace("Using proxy with host: %s, port: %d, path is: %s", options.host, options.port, options.path);
+			this.$logger.trace("Using proxy: %s", options.proxy);
 		}
 	}
 }
