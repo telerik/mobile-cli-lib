@@ -718,27 +718,37 @@ interface IProxyService {
 	 * @returns {Promise<ICredentials>} The cache.
 	 */
 	setCache(cacheData: IProxyCache): IProxyCache;
+
 	/**
 	 * Retrieves proxy cache data.
 	 * @returns {IProxyCache} The cache.
 	 */
 	getCache(): IProxyCache;
+
 	/**
 	 * Clears proxy cache data.
 	 * @returns {void}
 	 */
 	clearCache(): void;
+
 	/**
 	 * Sets the provided proxy credentials in the OS' secure storage.
 	 * @param credentials {ICredentials} Proxy credentials to be stored.
 	 * @returns {Promise<ICredentials>} The stored proxy credentials.
 	 */
 	setCredentials(credentials: ICredentials): Promise<ICredentials>;
+
 	/**
 	 * Retrieves proxy credentials from the OS' secure storage with the given key.
 	 * @returns {Promise<ICredentials>} The stored proxy credentials.
 	 */
 	getCredentials(): Promise<ICredentials>;
+
+	/**
+	 * Gets info about the proxy that can be printed and shown to the user.
+	 * @returns {Promise<string>} Info about the proxy.
+	 */
+	getInfo(): Promise<string>
 }
 
 interface IDynamicHelpProvider {

@@ -3,6 +3,7 @@ import { isInteractive } from "../../helpers";
 import { ProxyCommandBase } from "./proxy-base";
 import { HttpProtocolToPort } from "../../constants";
 import { parse } from "url";
+import { EOL } from "os";
 
 const proxySetCommandName = "proxy|set";
 
@@ -37,13 +38,23 @@ export class ProxySetCommand extends ProxyCommandBase {
 			}
 		}
 
-		const urlObj = parse(urlString);
+		let urlObj = parse(urlString);
+		if ((!urlObj.protocol || !urlObj.hostname) && !isInteractive()) {
+			this.$errors.fail("The url you have entered is invalid please enter a valid url containing a valid protocol and hostname.");
+		}
+
+		while (!urlObj.protocol || !urlObj.hostname) {
+			this.$logger.warn("The url you have entered is invalid please enter a valid url containing a valid protocol and hostname.");
+			urlString = await this.$prompter.getString("Url", { allowEmpty: false });
+			urlObj = parse(urlString);
+		}
+
 		let port = urlObj.port && +urlObj.port || HttpProtocolToPort[urlObj.protocol];
 		const noPort = !port || !this.isValidPort(port);
 		const authCredentials = this.getCredentialsFromAuth(urlObj.auth || "");
 		if ((username && authCredentials.username && username !== authCredentials.username) ||
 			password && authCredentials.password && password !== authCredentials.password) {
-				this.$errors.fail("The credentials you have provided in the url address mismatch those passed as command line arguments.");
+			this.$errors.fail("The credentials you have provided in the url address mismatch those passed as command line arguments.");
 		}
 		username = username || authCredentials.username;
 		password = password || authCredentials.password;
@@ -88,8 +99,8 @@ export class ProxySetCommand extends ProxyCommandBase {
 		};
 
 		this.$proxyService.setCache(proxyCache);
-		this.$logger.out("Successfully setup proxy.");
-
+		this.$logger.out(`Successfully setup proxy.${EOL}`);
+		this.$logger.out(await this.$proxyService.getInfo());
 		await this.tryTrackUsage();
 	}
 
