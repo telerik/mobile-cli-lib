@@ -49,13 +49,13 @@ export class IOSDeviceOperations implements IIOSDeviceOperations, IDisposable {
 					maxIterationsCount = 10;
 
 				let intervalHandle: number = setInterval(() => {
-					if(foundDevice) {
+					if (foundDevice) {
 						resolve();
 						return clearInterval(intervalHandle);
 					}
 
 					iterationsCount++;
-					if(iterationsCount >= maxIterationsCount) {
+					if (iterationsCount >= maxIterationsCount) {
 						clearInterval(intervalHandle);
 						return resolve();
 					}
