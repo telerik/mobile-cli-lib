@@ -1547,6 +1547,21 @@ interface INet {
 	 * @return {Promise<number>} The port.
 	 */
 	getFreePort(): Promise<number>;
+
+	/**
+	 * Returns the first available port in the provided range.
+	 * @param {number} startPort the first port to check.
+	 * @param {number} @optional endPort the last port to check. The default value is 65534.
+	 * @return {Promise<number>} returns the first available prot in the given range.
+	 */
+	getAvailablePortInRange(startPort: number, endPort?: number): Promise<number>;
+
+	/**
+	 * Checks if the candidate port is available.
+	 * @param {number} port the candidate port.
+	 * @return {Promise<boolean>} true if the port is available.
+	 */
+	isPortAvailable(port: number): Promise<boolean>;
 }
 
 interface IProcessService {

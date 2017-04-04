@@ -388,49 +388,6 @@ export async function connectEventuallyUntilTimeout(factory: () => net.Socket, t
 	});
 }
 
-export function isPortAvailable(candidatePort: number): Promise<boolean> {
-	return new Promise<boolean>((resolve, reject) => {
-		let isResolved = false;
-		let server = net.createServer();
-
-		server.on("error", (err: Error) => {
-			if (!isResolved) {
-				isResolved = true;
-				resolve(false);
-			}
-		});
-
-		server.once("close", () => {
-			if (!isResolved) { // "close" will be emitted right after "error"
-				isResolved = true;
-				resolve(true);
-			}
-		});
-
-		server.on("listening", (err: Error) => {
-			if (err && !isResolved) {
-				isResolved = true;
-				resolve(false);
-			}
-
-			server.close();
-		});
-
-		server.listen(candidatePort, "localhost");
-	});
-}
-
-export async function getAvailablePort(port: number): Promise<number> {
-	while (!(await isPortAvailable(port))) {
-		port++;
-		if (port > 65534) {
-			this.$errors.failWithoutHelp("Unable to find free local port.");
-		}
-	}
-
-	return port;
-}
-
 //--- begin part copied from AngularJS
 
 //The MIT License
