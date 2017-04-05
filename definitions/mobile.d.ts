@@ -331,7 +331,7 @@ declare module Mobile {
 		 */
 		platform?: string;
 		/**
-		 * Currently unused.
+		 * If passed will start an emulator if necesasry.
 		 */
 		emulator?: boolean;
 		/**

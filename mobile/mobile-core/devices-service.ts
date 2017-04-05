@@ -337,8 +337,8 @@ export class DevicesService implements Mobile.IDevicesService {
 
 		if (this.hasDevices) {
 			if (this.$hostInfo.isDarwin && this._platform
-					&& this.$mobileHelper.isiOSPlatform(this._platform)
-					&& this.$options.emulator && !this.isOnlyiOSSimultorRunning()) {
+				&& this.$mobileHelper.isiOSPlatform(this._platform)
+				&& this.$options.emulator && !this.isOnlyiOSSimultorRunning()) {
 				// Executes the command only on iOS simulator
 				let originalCanExecute = canExecute;
 				canExecute = (dev: Mobile.IDevice): boolean => this.isiOSSimulator(dev) && (!originalCanExecute || !!(originalCanExecute(dev)));
@@ -382,12 +382,16 @@ export class DevicesService implements Mobile.IDevicesService {
 
 			//if no --device is passed and no devices are found, the default emulator is started
 			if (!data.deviceId && _.isEmpty(deviceInstances)) {
+				if (!this.$hostInfo.isDarwin && this.$mobileHelper.isiOSPlatform(data.platform)) {
+					this.$errors.failWithoutHelp(constants.ERROR_NO_DEVICES_CANT_USE_IOS_SIMULATOR);
+				}
+
 				return await this.startEmulator(data.platform);
 			}
 
 			//check if --device(value) is running, if it's not or it's not the same as is specified, start with name from --device(value)
 			if (data.deviceId) {
-				if (!helpers.isNumber(data.deviceId))  {
+				if (!helpers.isNumber(data.deviceId)) {
 					let activeDeviceInstance = _.find(this.getDeviceInstances(), (device: Mobile.IDevice) => { return device.deviceInfo.identifier === data.deviceId; });
 					if (!activeDeviceInstance) {
 						return await this.startEmulator(data.platform, data.deviceId);
@@ -429,8 +433,7 @@ export class DevicesService implements Mobile.IDevicesService {
 			this._platform = this.getPlatform(data.platform);
 			this._device = await this.getDevice(deviceOption);
 			if (this._device.deviceInfo.platform !== this._platform) {
-				this.$errors.fail("Cannot resolve the specified connected device. The provided platform does not match the provided index or identifier." +
-					"To list currently connected devices and verify that the specified pair of platform and index or identifier exists, run 'device'.");
+				this.$errors.fail(constants.ERROR_CANNOT_RESOLVE_DEVICE);
 			}
 			this.$logger.warn("Your application will be deployed only on the device specified by the provided index or identifier.");
 		} else if (!platform && deviceOption) {
@@ -476,7 +479,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		}
 
 		if (!this.$hostInfo.isDarwin && this._platform && this.$mobileHelper.isiOSPlatform(this._platform) && this.$options.emulator) {
-			this.$errors.failWithoutHelp("You can use iOS simulator only on OS X.");
+			this.$errors.failWithoutHelp(constants.ERROR_CANT_USE_SIMULATOR);
 		}
 		this._isInitialized = true;
 	}
@@ -567,11 +570,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	private resolveEmulatorServices(platform?: string): Mobile.IEmulatorPlatformServices {
 		platform = platform || this._platform;
 		if (this.$mobileHelper.isiOSPlatform(platform)) {
-			if (this.$hostInfo.isDarwin) {
-				return this.$injector.resolve("iOSEmulatorServices");
-			} else {
-				this.$errors.failWithoutHelp("You can use iOS simulator only on OS X.");
-			}
+			return this.$injector.resolve("iOSEmulatorServices");
 		} else if (this.$mobileHelper.isAndroidPlatform(platform)) {
 			return this.$injector.resolve("androidEmulatorServices");
 		}

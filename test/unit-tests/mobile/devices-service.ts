@@ -266,58 +266,58 @@ describe("devicesService", () => {
 
 	describe("startEmulatorIfNecessary behaves as expected:", () => {
 		it("throws error if --device and --emulator flags are passed simultaniously", () => {
-			assert.isRejected(devicesService.startEmulatorIfNecessary({emulator: true, deviceId: "emulator_image_name"}), "--device and --emulator are incompatible options.\n\t\t\tIf you are trying to run on specific emulator, use \"unit-tests run --device <DeviceID>");
+			assert.isRejected(devicesService.startEmulatorIfNecessary({ emulator: true, deviceId: "emulator_image_name" }), "--device and --emulator are incompatible options.\n\t\t\tIf you are trying to run on specific emulator, use \"unit-tests run --device <DeviceID>");
 		});
 		describe("platform is passed and", () => {
 			it("deviceId is NOT passed and NO devices are found, an emulator is started", async () => {
 				assert.deepEqual(devicesService.getDeviceInstances(), [], "Initially getDevicesInstances must return empty array.");
-				await devicesService.startEmulatorIfNecessary({platform: "android"});
+				await devicesService.startEmulatorIfNecessary({ platform: "android" });
 				assert.deepEqual(devicesService.getDeviceInstances(), [androidEmulatorDevice]);
 				assert.deepEqual(devicesService.getDevices(), [androidEmulatorDevice.deviceInfo]);
 			});
-			it("deviceId is NOT passed, but devices are found, assert no emulators are started",  async () => {
+			it("deviceId is NOT passed, but devices are found, assert no emulators are started", async () => {
 				assert.deepEqual(devicesService.getDeviceInstances(), [], "Initially getDevicesInstances must return empty array.");
 				androidDeviceDiscovery.emit("deviceFound", androidEmulatorDevice);
-				await devicesService.startEmulatorIfNecessary({platform: "android" });
+				await devicesService.startEmulatorIfNecessary({ platform: "android" });
 				assert.deepEqual(devicesService.getDeviceInstances(), [androidEmulatorDevice]);
 				assert.equal(devicesService.getDeviceInstances().length, 1);
 			});
 			it("deviceId is passed and devices are found, assert if deviceId of the running device is the same as the passed deviceId no emulators are started", async () => {
 				assert.deepEqual(devicesService.getDeviceInstances(), [], "Initially getDevicesInstances must return empty array.");
 				androidDeviceDiscovery.emit("deviceFound", androidEmulatorDevice);
-				await devicesService.startEmulatorIfNecessary({platform: "android", deviceId: androidEmulatorDevice.deviceInfo.identifier});
+				await devicesService.startEmulatorIfNecessary({ platform: "android", deviceId: androidEmulatorDevice.deviceInfo.identifier });
 				assert.deepEqual(devicesService.getDeviceInstances(), [androidEmulatorDevice]);
 				assert.equal(devicesService.getDeviceInstances().length, 1);
 			});
 			it("deviceId is passed and devices are found, assert if deviceId of the running device is different than the passed deviceId a new emulator is started", async () => {
 				assert.deepEqual(devicesService.getDeviceInstances(), [], "Initially getDevicesInstances must return empty array.");
 				androidDeviceDiscovery.emit("deviceFound", androidDevice);
-				await devicesService.startEmulatorIfNecessary({platform: "android", deviceId: "different_image_name"});
+				await devicesService.startEmulatorIfNecessary({ platform: "android", deviceId: "different_image_name" });
 				assert.equal(devicesService.getDeviceInstances().length, 2);
 			});
 			it("emulator is passed and NO devices are found, assert an emulator is started", async () => {
 				assert.deepEqual(devicesService.getDeviceInstances(), [], "Initially getDevicesInstances must return empty array.");
-				await devicesService.startEmulatorIfNecessary({platform: "android", emulator: true});
+				await devicesService.startEmulatorIfNecessary({ platform: "android", emulator: true });
 				assert.deepEqual(devicesService.getDeviceInstances(), [androidEmulatorDevice]);
 				assert.equal(devicesService.getDeviceInstances().length, 1);
 			});
 			it("emulator is passed and devices are found, assert no more emulators are started", async () => {
 				assert.deepEqual(devicesService.getDeviceInstances(), [], "Initially getDevicesInstances must return empty array.");
 				androidDeviceDiscovery.emit("deviceFound", androidEmulatorDevice);
-				await devicesService.startEmulatorIfNecessary({platform: "android", emulator: true});
+				await devicesService.startEmulatorIfNecessary({ platform: "android", emulator: true });
 				assert.deepEqual(devicesService.getDeviceInstances(), [androidEmulatorDevice]);
 				assert.equal(devicesService.getDeviceInstances().length, 1);
 			});
 			it("emulator is passed and devices are found, but the found devices are not emulators, assert an emulator is started", async () => {
 				assert.deepEqual(devicesService.getDeviceInstances(), [], "Initially getDevicesInstances must return empty array.");
 				androidDeviceDiscovery.emit("deviceFound", androidDevice);
-				await devicesService.startEmulatorIfNecessary({platform: "android", emulator: true});
+				await devicesService.startEmulatorIfNecessary({ platform: "android", emulator: true });
 				assert.deepEqual(devicesService.getDeviceInstances(), [androidDevice, androidEmulatorDevice]);
 				assert.equal(devicesService.getDeviceInstances().length, 2);
 			});
 			it("deviceid and emulator are not passed there are devices but not for the specified platform, assert NO devices are found", async () => {
 				assert.deepEqual(devicesService.getDeviceInstances(), [], "Initially getDevicesInstances must return empty array.");
-				await devicesService.startEmulatorIfNecessary({platform: "android"});
+				await devicesService.startEmulatorIfNecessary({ platform: "android" });
 				assert.equal((<AndroidDeviceDiscoveryStub>androidDeviceDiscovery).count, 2);
 				assert.equal((<IOSDeviceDiscoveryStub>iOSDeviceDiscovery).count, 0);
 				assert.equal((<IOSSimulatorDiscoveryStub>iOSSimulatorDiscovery).count, 0);
@@ -536,7 +536,7 @@ describe("devicesService", () => {
 			assert.isFalse(devicesService.hasDevices, "Initially devicesService hasDevices must be false.");
 			iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
 			androidDeviceDiscovery.emit("deviceFound", androidDevice);
-			await assert.isRejected(devicesService.initialize({ platform: "ios", deviceId: androidDevice.deviceInfo.identifier }), "You can use iOS simulator only on OS X.");
+			await assert.isRejected(devicesService.initialize({ platform: "ios", deviceId: androidDevice.deviceInfo.identifier }), constants.ERROR_CANNOT_RESOLVE_DEVICE);
 		});
 
 		describe("when only deviceIdentifier is passed", () => {
@@ -606,12 +606,12 @@ describe("devicesService", () => {
 		describe("when only platform is passed", () => {
 			it("initialize fails when platform is iOS on non-Darwin platform and there are no devices attached when --emulator is passed", async () => {
 				testInjector.resolve("hostInfo").isDarwin = false;
-				await assert.isRejected(devicesService.initialize({ platform: "ios" }), "You can use iOS simulator only on OS X.");
+				await assert.isRejected(devicesService.initialize({ platform: "ios" }), constants.ERROR_NO_DEVICES_CANT_USE_IOS_SIMULATOR);
 			});
 
 			it("initialize fails when platform is iOS on non-Darwin platform and there are no devices attached", async () => {
 				testInjector.resolve("hostInfo").isDarwin = false;
-				await assert.isRejected(devicesService.initialize({ platform: "ios" }), "You can use iOS simulator only on OS X.");
+				await assert.isRejected(devicesService.initialize({ platform: "ios" }), constants.ERROR_NO_DEVICES_CANT_USE_IOS_SIMULATOR);
 				assert.isFalse(devicesService.hasDevices, "MUST BE FALSE!!!");
 			});
 
@@ -619,7 +619,7 @@ describe("devicesService", () => {
 				testInjector.resolve("options").emulator = true;
 				testInjector.resolve("hostInfo").isDarwin = true;
 				iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
-				await devicesService.initialize({ platform: "ios", emulator: true});
+				await devicesService.initialize({ platform: "ios", emulator: true });
 				let deviceIdentifier: string;
 				counter = 0;
 				await devicesService.execute((d: Mobile.IDevice) => { deviceIdentifier = d.deviceInfo.identifier; counter++; return Promise.resolve(); });
@@ -792,21 +792,21 @@ describe("devicesService", () => {
 
 			it("throws when iOS platform is specified and iOS device identifier is passed", async () => {
 				iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
-				await assert.isRejected(devicesService.initialize({ platform: "ios", deviceId: iOSDevice.deviceInfo.identifier }), "You can use iOS simulator only on OS X.");
+				await assert.isRejected(devicesService.initialize({ platform: "ios", deviceId: iOSDevice.deviceInfo.identifier }), constants.ERROR_CANT_USE_SIMULATOR);
 			});
 
 			it("throws when iOS device identifier is passed", async () => {
 				iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
-				await assert.isRejected(devicesService.initialize({ deviceId: iOSDevice.deviceInfo.identifier }), "You can use iOS simulator only on OS X.");
+				await assert.isRejected(devicesService.initialize({ deviceId: iOSDevice.deviceInfo.identifier }), constants.ERROR_CANT_USE_SIMULATOR);
 			});
 
 			it("throws when iOS platform is specified", async () => {
-				await assert.isRejected(devicesService.initialize({ platform: "ios" }), "You can use iOS simulator only on OS X.");
+				await assert.isRejected(devicesService.initialize({ platform: "ios" }), constants.ERROR_NO_DEVICES_CANT_USE_IOS_SIMULATOR);
 			});
 
 			it("throws when paramaters are not passed, but iOS device is detected", async () => {
 				iOSDeviceDiscovery.emit("deviceFound", iOSDevice);
-				await assert.isRejected(devicesService.initialize(), "You can use iOS simulator only on OS X.");
+				await assert.isRejected(devicesService.initialize(), constants.ERROR_CANT_USE_SIMULATOR);
 			});
 
 			it("does not throw when only skipInferPlatform is passed", async () => {
@@ -1407,11 +1407,11 @@ describe("devicesService", () => {
 				deviceDiscovery.startLookingForDevices = async (): Promise<void> => {
 					workingDeviceDiscoveriesCalled.push(true);
 				};
-		});
+			});
 
 			_.each(deviceDiscoveries.deviceDiscoveriesThatThrow, (deviceDiscovery) => {
 				deviceDiscovery.startLookingForDevices = throwErrorFunction;
-	});
+			});
 
 			await devicesService.detectCurrentlyAttachedDevices();
 
