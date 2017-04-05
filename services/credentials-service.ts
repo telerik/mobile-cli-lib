@@ -8,7 +8,8 @@ export class CredentialsService implements ICredentialsService {
 	private pathToWindowsCredentialsManager: string;
 
 	constructor(private $childProcess: IChildProcess,
-		private $hostInfo: IHostInfo) {
+		private $hostInfo: IHostInfo,
+		private $logger: ILogger) {
 		this.pathToWindowsCredentialsManager = path.join(__dirname, "..", "vendor", platform(), "CredentialsManager.exe");
 	}
 
@@ -30,7 +31,7 @@ export class CredentialsService implements ICredentialsService {
 				password: credentialsSplit && this.decrypt(credentialsSplit[1])
 			};
 		} else {
-			throw new Error(`Storing credentials is not supported on ${platform()} yet.`);
+			this.$logger.trace(`Storing credentials is not supported on ${platform()} yet.`);
 		}
 	}
 

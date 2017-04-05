@@ -1,4 +1,4 @@
-import { ProxyCommandBase } from "./proxy-base-command";
+import { ProxyCommandBase } from "./proxy-base";
 const proxyClearCommandName = "proxy|clear";
 
 export class ProxyClearCommand extends ProxyCommandBase {

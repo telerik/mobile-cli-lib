@@ -1,4 +1,5 @@
 import * as path from "path";
+import { EOL } from "os";
 import { Proxy } from "../constants";
 
 export class ProxyService implements IProxyService {
@@ -25,6 +26,24 @@ export class ProxyService implements IProxyService {
 	public clearCache(): void {
 		this.$fs.deleteFile(this.proxyCacheFilePath);
 		this.$credentialsService.clearCredentials(this.credentialsKey);
+	}
+
+	public async getInfo(): Promise<string> {
+		let message = "";
+		const proxyCache: IProxyCache = this.getCache();
+		if (proxyCache) {
+			const proxyCredentials = await this.getCredentials();
+			message = `Proxy Url: ${proxyCache.PROXY_PROTOCOL}//${proxyCache.PROXY_HOSTNAME}:${proxyCache.PROXY_PORT}`;
+			if (proxyCredentials && proxyCredentials.username) {
+				message += `${EOL}Username: ${proxyCredentials.username}`;
+			}
+
+			message += `${EOL}Proxy is Enabled`;
+		} else {
+			message = "No proxy set";
+		}
+
+		return message;
 	}
 
 	public async getCredentials(): Promise<ICredentials> {

@@ -660,11 +660,22 @@ interface IProxyCache {
 	/**
 	 * Hostname of the proxy
 	 */
+
 	PROXY_HOSTNAME: string;
 	/**
 	 * Port of the proxy
 	 */
-	PROXY_PORT: number
+	PROXY_PORT: number;
+
+	/**
+	 * Protocol of the proxy - http or https
+	 */
+	PROXY_PROTOCOL: string;
+
+	/**
+	 * Protocol of the proxy - http or https
+	 */
+	ALLOW_INSECURE: boolean;
 }
 
 /**
@@ -710,27 +721,37 @@ interface IProxyService {
 	 * @returns {Promise<ICredentials>} The cache.
 	 */
 	setCache(cacheData: IProxyCache): IProxyCache;
+
 	/**
 	 * Retrieves proxy cache data.
 	 * @returns {IProxyCache} The cache.
 	 */
 	getCache(): IProxyCache;
+
 	/**
 	 * Clears proxy cache data.
 	 * @returns {void}
 	 */
 	clearCache(): void;
+
 	/**
 	 * Sets the provided proxy credentials in the OS' secure storage.
 	 * @param credentials {ICredentials} Proxy credentials to be stored.
 	 * @returns {Promise<ICredentials>} The stored proxy credentials.
 	 */
 	setCredentials(credentials: ICredentials): Promise<ICredentials>;
+
 	/**
 	 * Retrieves proxy credentials from the OS' secure storage with the given key.
 	 * @returns {Promise<ICredentials>} The stored proxy credentials.
 	 */
 	getCredentials(): Promise<ICredentials>;
+
+	/**
+	 * Gets info about the proxy that can be printed and shown to the user.
+	 * @returns {Promise<string>} Info about the proxy.
+	 */
+	getInfo(): Promise<string>
 }
 
 interface IDynamicHelpProvider {
@@ -1071,6 +1092,7 @@ interface ICommonOptions extends IRelease, IDeviceIdentifier, IJustLaunch, IAvd,
 	start: boolean;
 	stop: boolean;
 	ddi: string; // the path to developer  disk image
+	insecure: boolean;
 	skipRefresh: boolean;
 	file: string;
 	analyticsClient: string;
@@ -1702,6 +1724,16 @@ interface IProxySettings {
 	 * Port of the machine used for proxy that allows connections.
 	 */
 	port: string;
+
+	/**
+	 * Protocol of the proxy - http or https
+	 */
+	protocol?: string;
+
+	/**
+	 * Defines if NODE_TLS_REJECT_UNAUTHORIZED should be set to true or false. Default value is true.
+	 */
+	rejectUnauthorized: boolean;
 }
 
 /**
