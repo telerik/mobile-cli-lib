@@ -39,7 +39,7 @@ export class CredentialsService implements ICredentialsService {
 		if (this.$hostInfo.isWindows) {
 			await this.$childProcess.spawnFromEvent(this.pathToWindowsCredentialsManager, ["clear", key], "close");
 		} else {
-			throw new Error(`Storing credentials is not supported on ${platform()} yet.`);
+			this.$logger.trace(`Storing credentials is not supported on ${platform()} yet.`);
 		}
 	}
 
