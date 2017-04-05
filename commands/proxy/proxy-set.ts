@@ -3,7 +3,7 @@ import { isInteractive } from "../../helpers";
 import { ProxyCommandBase } from "./proxy-base";
 import { HttpProtocolToPort } from "../../constants";
 import { parse } from "url";
-import { EOL } from "os";
+import { platform, EOL } from "os";
 
 const proxySetCommandName = "proxy|set";
 
@@ -17,6 +17,7 @@ export class ProxySetCommand extends ProxyCommandBase {
 	constructor(private $errors: IErrors,
 		private $injector: IInjector,
 		private $prompter: IPrompter,
+		private $hostInfo: IHostInfo,
 		protected $analyticsService: IAnalyticsService,
 		protected $logger: ILogger,
 		protected $options: ICommonOptions,
@@ -97,6 +98,10 @@ export class ProxySetCommand extends ProxyCommandBase {
 			PROXY_PROTOCOL: urlObj.protocol,
 			ALLOW_INSECURE: this.$options.insecure
 		};
+
+		if (!this.$hostInfo.isWindows) {
+			this.$logger.warn(`Note that storing credentials is not supported on ${platform()} yet.`);
+		}
 
 		this.$proxyService.setCache(proxyCache);
 		this.$logger.out(`Successfully setup proxy.${EOL}`);
