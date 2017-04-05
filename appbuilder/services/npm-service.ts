@@ -1,7 +1,7 @@
 import * as path from "path";
 import * as os from "os";
 import * as constants from "../../constants";
-import { fromWindowsRelativePathToUnix } from "../../helpers";
+import { fromWindowsRelativePathToUnix, toBoolean } from "../../helpers";
 import { exported } from "../../decorators";
 import * as url from "url";
 
@@ -341,14 +341,16 @@ export class NpmService implements INpmService {
 	private async getNpmProxySettings(): Promise<IProxySettings> {
 		if (!this._hasCheckedNpmProxy) {
 			try {
-				let npmProxy = (await this.$childProcess.exec("npm config get proxy") || "").toString().trim();
+				const npmProxy = (await this.$childProcess.exec("npm config get proxy") || "").toString().trim();
 
 				// npm will return null as string in case there's no proxy set.
 				if (npmProxy && npmProxy !== "null") {
-					let uri = url.parse(npmProxy);
+					const strictSslString = (await this.$childProcess.exec("npm config get strict-ssl") || "").toString().trim();
+					const uri = url.parse(npmProxy);
 					this._proxySettings = {
 						hostname: uri.hostname,
-						port: uri.port
+						port: uri.port,
+						rejectUnauthorized: toBoolean(strictSslString)
 					};
 				}
 			} catch (err) {

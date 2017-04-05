@@ -6,9 +6,11 @@ import * as util from "util";
 import progress = require("progress-stream");
 import filesize = require("filesize");
 import { HttpStatusCodes } from "./constants";
+import * as request from "request";
 
 export class HttpClient implements Server.IHttpClient {
 	private defaultUserAgent: string;
+	private static STATUS_CODE_REGEX = /statuscode=(\d+)/i;
 
 	constructor(private $config: Config.IConfig,
 		private $logger: ILogger,
@@ -33,19 +35,15 @@ export class HttpClient implements Server.IHttpClient {
 			options.host = urlParts.hostname;
 			options.port = urlParts.port;
 			options.path = urlParts.path;
-			delete options.url;
 		}
 
 		let requestProto = options.proto || "http";
-		delete options.proto;
 		let body = options.body;
 		delete options.body;
 		let pipeTo = options.pipeTo;
 		delete options.pipeTo;
 
 		const proxyCache = this.$proxyService.getCache();
-		let proto = proxyCache ? "http" : requestProto;
-		let http = require(proto);
 
 		options.headers = options.headers || {};
 		let headers = options.headers;
@@ -95,67 +93,82 @@ export class HttpClient implements Server.IHttpClient {
 				delete options.timeout;
 			}
 
+			options.url = options.url || `${options.proto}://${options.host}${options.path}`;
+			options.encoding = null;
+			options.followAllRedirects = true;
+
 			this.$logger.trace("httpRequest: %s", util.inspect(options));
+			const requestObj = request(options);
 
-			let request = http.request(options, (response: Server.IRequestResponseData) => {
-				let data: string[] = [];
-				let isRedirect = helpers.isResponseRedirect(response);
-				let successful = helpers.isRequestSuccessful(response);
-				if (!successful) {
-					pipeTo = undefined;
-				}
+			requestObj
+				.on("error", (err: Error) => {
+					this.$logger.trace("An error occurred while sending the request:", err);
+					// In case we get a 4xx error code there seems to be no better way than this regex to get the error code
+					// the tunnel-agent module that request is using is obscuring the response and hence the statusCode by throwing an error message
+					// https://github.com/request/tunnel-agent/blob/eb2b1b19e09ee0e6a2b54eb2612755731b7301dc/index.js#L166
+					// in case there is a better way to obtain status code in future version do not hesitate to remove this code
+					const errorMessageMatch = err.message.match(HttpClient.STATUS_CODE_REGEX);
+					const errorMessageStatusCode = errorMessageMatch && errorMessageMatch[1] && +errorMessageMatch[1];
+					let errorMessage = this.getErrorMessage(errorMessageStatusCode, null);
+					err.message = errorMessage || err.message;
+					this.setResponseResult(promiseActions, timerId, { err });
+				})
+				.on("response", (response: Server.IRequestResponseData) => {
+					let successful = helpers.isRequestSuccessful(response);
+					if (!successful) {
+						pipeTo = undefined;
+					}
 
-				let responseStream = response;
-				switch (response.headers["content-encoding"]) {
-					case "gzip":
-						responseStream = responseStream.pipe(zlib.createGunzip());
-						break;
-					case "deflate":
-						responseStream = responseStream.pipe(zlib.createInflate());
-						break;
-				}
+					let responseStream = response;
+					switch (response.headers["content-encoding"]) {
+						case "gzip":
+							responseStream = responseStream.pipe(zlib.createGunzip());
+							break;
+						case "deflate":
+							responseStream = responseStream.pipe(zlib.createInflate());
+							break;
+					}
 
-				if (pipeTo) {
-					pipeTo.on("finish", () => {
-						this.$logger.trace("httpRequest: Piping done. code = %d", response.statusCode.toString());
-						this.setResponseResult(promiseActions, timerId, { response });
-					});
+					if (pipeTo) {
+						pipeTo.on("finish", () => {
+							this.$logger.trace("httpRequest: Piping done. code = %d", response.statusCode.toString());
+							this.setResponseResult(promiseActions, timerId, { response });
+						});
 
-					pipeTo = this.trackDownloadProgress(pipeTo);
+						pipeTo = this.trackDownloadProgress(pipeTo);
 
-					responseStream.pipe(pipeTo);
-				} else {
-					responseStream.on("data", (chunk: string) => {
-						data.push(chunk);
-					});
+						responseStream.pipe(pipeTo);
+					} else {
+						let data: string[] = [];
 
-					responseStream.on("end", () => {
-						this.$logger.trace("httpRequest: Done. code = %d", response.statusCode.toString());
-						let responseBody = data.join("");
+						responseStream.on("data", (chunk: string) => {
+							data.push(chunk);
+						});
 
-						if (successful || isRedirect) {
-							this.setResponseResult(promiseActions, timerId, { body: responseBody, response });
-						} else {
-							let errorMessage = this.getErrorMessage(response, responseBody);
-							let err: any = new Error(errorMessage);
-							err.response = response;
-							err.body = responseBody;
-							this.setResponseResult(promiseActions, timerId, { err });
-						}
-					});
-				}
-			});
+						responseStream.on("end", () => {
+							this.$logger.trace("httpRequest: Done. code = %d", response.statusCode.toString());
+							const responseBody = data.join("");
 
-			request.on("error", (err: Error) => {
-				this.setResponseResult(promiseActions, timerId, { err });
-			});
+							if (successful) {
+								this.setResponseResult(promiseActions, timerId, { body: responseBody, response });
+							} else {
+								const errorMessage = this.getErrorMessage(response.statusCode, responseBody);
+								let err: any = new Error(errorMessage);
+								err.response = response;
+								err.body = responseBody;
+								this.setResponseResult(promiseActions, timerId, { err });
+							}
+						});
+					}
+
+				});
 
 			this.$logger.trace("httpRequest: Sending:\n%s", this.$logger.prepare(body));
 
 			if (!body || !body.pipe) {
-				request.end(body);
+				requestObj.end(body);
 			} else {
-				body.pipe(request);
+				body.pipe(requestObj);
 			}
 		});
 
@@ -226,15 +239,16 @@ export class HttpClient implements Server.IHttpClient {
 		return progressStream;
 	}
 
-	private getErrorMessage(response: Server.IRequestResponseData, body: string): string {
-		if (response.statusCode === HttpStatusCodes.PROXY_AUTHENTICATION_REQUIRED) {
+	private getErrorMessage(statusCode: number, body: string): string {
+		if (statusCode === HttpStatusCodes.PROXY_AUTHENTICATION_REQUIRED) {
 			const clientNameLowerCase = this.$staticConfig.CLIENT_NAME.toLowerCase();
-			return `Your proxy requires authentication. You can run ${EOL}\t${clientNameLowerCase} proxy set <hostname> <port> <username> <password>.${EOL}In order to supply ${clientNameLowerCase} with the credentials needed.`;
-		} else if (response.statusCode === HttpStatusCodes.PAYMENT_REQUIRED) {
+			return `Your proxy requires authentication. You can run ${EOL}\t${clientNameLowerCase} proxy set <url> <username> <password>.${EOL}In order to supply ${clientNameLowerCase} with the credentials needed.`;
+		} else if (statusCode === HttpStatusCodes.PAYMENT_REQUIRED) {
 			let subscriptionUrl = util.format("%s://%s/appbuilder/account/subscription", this.$config.AB_SERVER_PROTO, this.$config.AB_SERVER);
 			return util.format("Your subscription has expired. Go to %s to manage your subscription. Note: After you renew your subscription, " +
 				"log out and log back in for the changes to take effect.", subscriptionUrl);
 		} else {
+			this.$logger.trace("Request was unsuccessful. Server returned: ", body);
 			try {
 				let err = JSON.parse(body);
 
@@ -266,17 +280,20 @@ export class HttpClient implements Server.IHttpClient {
 	 */
 	private async useProxySettings(proxySettings: IProxySettings, proxyCache: IProxyCache, options: any, headers: any, requestProto: string): Promise<void> {
 		if (proxySettings || proxyCache) {
-			options.path = requestProto + "://" + options.host + options.path;
-			headers.Host = options.host;
-			options.host = (proxySettings && proxySettings.hostname) || proxyCache.PROXY_HOSTNAME;
-			options.port = (proxySettings && proxySettings.port) || proxyCache.PROXY_PORT;
-
+			const proto = (proxySettings && proxySettings.protocol) || proxyCache.PROXY_PROTOCOL || "http:";
+			const host = (proxySettings && proxySettings.hostname) || proxyCache.PROXY_HOSTNAME;
+			const port = (proxySettings && proxySettings.port) || proxyCache.PROXY_PORT;
+			let credentialsPart = "";
 			const proxyCredentials = await this.$proxyService.getCredentials();
 			if (proxyCredentials && proxyCredentials.username && proxyCredentials.password) {
-				headers["Proxy-Authorization"] = "Basic " + new Buffer(`${proxyCredentials.username}:${proxyCredentials.password}`).toString('base64');
+				credentialsPart = `${proxyCredentials.username}:${proxyCredentials.password}@`;
 			}
 
-			this.$logger.trace("Using proxy with host: %s, port: %d, path is: %s", options.host, options.port, options.path);
+			// Note that proto ends with :
+			options.proxy = `${proto}//${credentialsPart}${host}:${port}`;
+			options.rejectUnauthorized = proxySettings ? proxySettings.rejectUnauthorized : (proxyCache ? !proxyCache.ALLOW_INSECURE : true);
+
+			this.$logger.trace("Using proxy: %s", options.proxy);
 		}
 	}
 }
