@@ -754,6 +754,10 @@ interface IProxyService {
 	getInfo(): Promise<string>
 }
 
+interface IQrCodeGenerator {
+	generateDataUri(data: string): Promise<string>;
+}
+
 interface IDynamicHelpProvider {
 	/**
 	 * Checks if current project's framework is one of the specified as arguments.
