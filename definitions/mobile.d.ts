@@ -348,6 +348,11 @@ declare module Mobile {
 		skipDeviceDetectionInterval?: boolean;
 	}
 
+	interface IDeviceActionResult<T> {
+		deviceIdentifier: string;
+		result: T;
+	}
+
 	interface IDevicesService {
 		hasDevices: boolean;
 		deviceCount: number;
@@ -359,7 +364,7 @@ declare module Mobile {
 		 */
 		startEmulatorIfNecessary(data?: Mobile.IDevicesServicesInitializationOptions): Promise<void>;
 
-		execute(action: (device: Mobile.IDevice) => Promise<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: { allowNoDevices?: boolean }): Promise<void>;
+		execute<T>(action: (device: Mobile.IDevice) => Promise<T>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: { allowNoDevices?: boolean }): Promise<IDeviceActionResult<T>[]>;
 
 		/**
 		 * Initializes DevicesService, so after that device operations could be executed.

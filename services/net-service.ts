@@ -1,6 +1,8 @@
 import * as net from "net";
 
 export class Net implements INet {
+	constructor(private $errors: IErrors) { }
+
 	public async getFreePort(): Promise<number> {
 		let server = net.createServer((sock: string) => { /* empty - noone will connect here */ });
 
@@ -24,6 +26,50 @@ export class Net implements INet {
 			});
 
 		});
+	}
+
+	public async isPortAvailable(port: number): Promise<boolean> {
+		return new Promise<boolean>((resolve, reject) => {
+			let isResolved = false;
+			let server = net.createServer();
+
+			server.on("error", (err: Error) => {
+				if (!isResolved) {
+					isResolved = true;
+					resolve(false);
+				}
+			});
+
+			server.once("close", () => {
+				if (!isResolved) { // "close" will be emitted right after "error"
+					isResolved = true;
+					resolve(true);
+				}
+			});
+
+			server.on("listening", (err: Error) => {
+				if (err && !isResolved) {
+					isResolved = true;
+					resolve(true);
+				}
+
+				server.close();
+			});
+
+			server.listen(port, "localhost");
+		});
+	}
+
+	public async getAvailablePortInRange(startPort: number, endPort?: number): Promise<number> {
+		endPort = endPort || 65534;
+		while (!(await this.isPortAvailable(startPort))) {
+			startPort++;
+			if (startPort > endPort) {
+				this.$errors.failWithoutHelp("Unable to find free local port.");
+			}
+		}
+
+		return startPort;
 	}
 }
 

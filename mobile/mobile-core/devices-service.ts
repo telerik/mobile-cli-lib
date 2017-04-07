@@ -289,9 +289,9 @@ export class DevicesService implements Mobile.IDevicesService {
 	 * @param action action to be executed if canExecute returns true
 	 * @param canExecute predicate to decide whether the command can be ran
 	 */
-	private async executeOnDevice(action: (dev: Mobile.IDevice) => Promise<void>, canExecute?: (_dev: Mobile.IDevice) => boolean): Promise<void> {
+	private async executeOnDevice<T>(action: (dev: Mobile.IDevice) => Promise<T>, canExecute?: (_dev: Mobile.IDevice) => boolean): Promise<Mobile.IDeviceActionResult<T>[]> {
 		if (!canExecute || canExecute(this._device)) {
-			await action(this._device);
+			return [{ deviceIdentifier: this._device.deviceInfo.identifier, result: await action(this._device) }];
 		}
 	}
 
@@ -300,15 +300,16 @@ export class DevicesService implements Mobile.IDevicesService {
 	 * @param action action to be executed if canExecute returns true
 	 * @param canExecute predicate to decide whether the command can be ran
 	 */
-	private async executeOnAllConnectedDevices(action: (dev: Mobile.IDevice) => Promise<void>, canExecute?: (_dev: Mobile.IDevice) => boolean): Promise<void> {
+	private async executeOnAllConnectedDevices<T>(action: (dev: Mobile.IDevice) => Promise<T>, canExecute?: (_dev: Mobile.IDevice) => boolean): Promise<Mobile.IDeviceActionResult<T>[]> {
 		let devices = this.filterDevicesByPlatform();
 		let sortedDevices = _.sortBy(devices, device => device.deviceInfo.platform);
+		const result: Mobile.IDeviceActionResult<T>[] = [];
 
 		let errors: Error[] = [];
 		for (let device of sortedDevices) {
 			try {
 				if (!canExecute || canExecute(device)) {
-					await action(device);
+					result.push({ deviceIdentifier: device.deviceInfo.identifier, result: await action(device) });
 				}
 			} catch (err) {
 				errors.push(err);
@@ -318,6 +319,8 @@ export class DevicesService implements Mobile.IDevicesService {
 		if (errors.length) {
 			throw new Error(`Multiple errors were thrown:${EOL}${errors.map(e => e.message || e).join(EOL)}`);
 		}
+
+		return result;
 	}
 
 	@exported("devicesService")
@@ -332,7 +335,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	 * @param canExecute predicate to decide whether the command can be ran
 	 * @param options all possible options that can be passed to the command.
 	 */
-	public async execute(action: (device: Mobile.IDevice) => Promise<void>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: { allowNoDevices?: boolean }): Promise<void> {
+	public async execute<T>(action: (device: Mobile.IDevice) => Promise<T>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: { allowNoDevices?: boolean }): Promise<Mobile.IDeviceActionResult<T>[]> {
 		assert.ok(this._isInitialized, "Devices services not initialized!");
 
 		if (this.hasDevices) {
@@ -344,7 +347,7 @@ export class DevicesService implements Mobile.IDevicesService {
 				canExecute = (dev: Mobile.IDevice): boolean => this.isiOSSimulator(dev) && (!originalCanExecute || !!(originalCanExecute(dev)));
 			}
 
-			await this.executeCore(action, canExecute);
+			return await this.executeCore(action, canExecute);
 		} else {
 			let message = constants.ERROR_NO_DEVICES;
 			if (options && options.allowNoDevices) {
@@ -353,7 +356,7 @@ export class DevicesService implements Mobile.IDevicesService {
 				if (!this.$hostInfo.isDarwin && this._platform && this.$mobileHelper.isiOSPlatform(this._platform)) {
 					this.$errors.failWithoutHelp(message);
 				} else {
-					await this.executeCore(action, canExecute);
+					return await this.executeCore(action, canExecute);
 				}
 			}
 		}
@@ -601,7 +604,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		}
 	}
 
-	private async executeCore(action: (device: Mobile.IDevice) => Promise<void>, canExecute?: (dev: Mobile.IDevice) => boolean): Promise<void> {
+	private async executeCore<T>(action: (device: Mobile.IDevice) => Promise<T>, canExecute?: (dev: Mobile.IDevice) => boolean): Promise<Mobile.IDeviceActionResult<T>[]> {
 		if (this._device) {
 			return this.executeOnDevice(action, canExecute);
 		}
