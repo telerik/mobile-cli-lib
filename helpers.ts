@@ -337,19 +337,20 @@ export function isPromise(candidateFuture: any): boolean {
 	return !!(candidateFuture && typeof (candidateFuture.then) === "function");
 }
 
-export function connectEventually(factory: () => net.Socket, handler: (_socket: net.Socket) => void): void {
-	function tryConnect() {
+export async function connectEventually(factory: () => Promise<net.Socket>, handler: (_socket: net.Socket) => void): Promise<void> {
+	async function tryConnect() {
 		let tryConnectAfterTimeout = setTimeout.bind(undefined, tryConnect, 1000);
 
-		let socket = factory();
+		let socket = await factory();
 		socket.on("connect", () => {
 			socket.removeListener("error", tryConnectAfterTimeout);
 			handler(socket);
 		});
+
 		socket.on("error", tryConnectAfterTimeout);
 	}
 
-	tryConnect();
+	await tryConnect();
 }
 
 export async function connectEventuallyUntilTimeout(factory: () => net.Socket, timeout: number): Promise<net.Socket> {
