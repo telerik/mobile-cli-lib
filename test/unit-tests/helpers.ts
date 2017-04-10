@@ -10,8 +10,8 @@ interface ITestData {
 
 describe("helpers", () => {
 
-	let assertTestData = (testData: ITestData, method: Function) => {
-		let actualResult = method(testData.input);
+	const assertTestData = (testData: ITestData, method: Function) => {
+		const actualResult = method(testData.input);
 		assert.deepEqual(actualResult, testData.expectedResult, `For input ${testData.input}, the expected result is: ${testData.expectedResult}, but actual result is: ${actualResult}.`);
 	};
 
@@ -376,6 +376,85 @@ describe("helpers", () => {
 					done();
 				})
 				.catch(done);
+		});
+	});
+
+	describe("getPidFromiOSSimulatorLogs", () => {
+		interface IiOSSimulatorPidTestData extends ITestData {
+			appId?: string;
+		};
+
+		const appId = "abc.def.ghi";
+		const pid = "12345";
+
+		const assertPidTestData = (testData: IiOSSimulatorPidTestData) => {
+			const actualResult = helpers.getPidFromiOSSimulatorLogs(testData.appId || appId, testData.input);
+			assert.deepEqual(actualResult, testData.expectedResult, `For input ${testData.input}, the expected result is: ${testData.expectedResult}, but actual result is: ${actualResult}.`);
+		};
+
+		const getPidFromiOSSimulatorLogsTestData: IiOSSimulatorPidTestData[] = [
+			{
+				// Real log lines that contain the PID are in this format
+				input: `${appId}: ${appId}: ${pid}`,
+				expectedResult: pid
+			},
+			{
+				input: `${appId}: ${appId}:          ${pid}`,
+				expectedResult: null
+			},
+			{
+				input: `${appId}: ${appId}:${pid}`,
+				expectedResult: pid
+			},
+			{
+				input: `${appId}: ${appId}: ${pid} some other data`,
+				expectedResult: pid
+			},
+			{
+				input: `${appId}: ${appId}: ${pid} some other data ending with numbers 123`,
+				expectedResult: pid
+			},
+			{
+				input: `${appId}: ${pid}`,
+				expectedResult: pid
+			},
+			{
+				input: `some not valid app id with: ${pid}`,
+				expectedResult: null
+			},
+			{
+				input: null,
+				expectedResult: null
+			},
+			{
+				input: undefined,
+				expectedResult: null
+			},
+			{
+				input: '',
+				expectedResult: null
+			},
+			{
+				input: '        ',
+				expectedResult: null
+			},
+			{
+				input: '',
+				expectedResult: null
+			},
+			{
+				input: `${appId}: ${appId}\n: ${pid}`,
+				expectedResult: null
+			},
+			{
+				input: `org.nativescript.app123456: org.nativescript.app123456: ${pid}`,
+				appId: "org.nativescript.app123456",
+				expectedResult: pid
+			}
+		];
+
+		it("returns expected result", () => {
+			_.each(getPidFromiOSSimulatorLogsTestData, testData => assertPidTestData(testData));
 		});
 	});
 });
