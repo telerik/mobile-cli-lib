@@ -11,8 +11,9 @@ export class Logger implements ILogger {
 	private encodeBody: boolean = false;
 	private passwordRegex = /(password=).*?(['&,]|$)|(["']?.*?password["']?\s*:\s*["']).*?(["'])/i;
 	private passwordReplacement = "$1$3*******$2$4";
+	private passwordBodyReplacement = "$1*******$2";
 	private static LABEL = "[WARNING]:";
-	private requestBodyRegex = /^\"(.*?)\"$/;
+	private requestBodyRegex = /(^\").*?(\"$)/;
 
 	constructor($config: Config.IConfig,
 		private $options: ICommonOptions) {
@@ -157,10 +158,7 @@ export class Logger implements ILogger {
 			argument = argument.replace(this.passwordRegex, this.passwordReplacement);
 
 			if (this.encodeBody) {
-				let bodyMatch = this.requestBodyRegex.exec(argument);
-				if (bodyMatch) {
-					return this.getHiddenPassword(bodyMatch[1], argument);
-				}
+				argument = argument.replace(this.requestBodyRegex, this.passwordBodyReplacement);
 			}
 
 			_.each(this.encodeRequestPaths, path => {
@@ -173,10 +171,6 @@ export class Logger implements ILogger {
 			return argument;
 		});
 	}
-
-	private getHiddenPassword(password: string, originalString: string) {
-		password = password || '';
-		return originalString.replace(password, new Array(password.length + 1).join('*'));
-	}
 }
+
 $injector.register("logger", Logger);
