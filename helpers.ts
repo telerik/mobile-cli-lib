@@ -389,6 +389,24 @@ export async function connectEventuallyUntilTimeout(factory: () => net.Socket, t
 	});
 }
 
+/**
+ * Tries to find the process id (PID) of the specified application identifier.
+ * This is specific implementation for iOS Simulator, where the running applications are real processes.
+ * Their PIDs are printed in a specific format in the the logs, once the application is started.
+ * @param {string} applicationIdentifier Application Identifier of the app for which we try to get the PID.
+ * @param {string} logLine Line that may contain the PID of the process.
+ * @returns {string} The PID of the searched application identifier in case it's found in the current line, null otherwise.
+ */
+export function getPidFromiOSSimulatorLogs(applicationIdentifier: string, logLine: string): string {
+	if (logLine) {
+		const pidRegExp = new RegExp(`${applicationIdentifier}:\\s?(\\d+)`);
+		const pidMatch = logLine.match(pidRegExp);
+		return pidMatch ? pidMatch[1] : null;
+	}
+
+	return null;
+}
+
 //--- begin part copied from AngularJS
 
 //The MIT License
