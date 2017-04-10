@@ -338,13 +338,13 @@ export function isPromise(candidateFuture: any): boolean {
 	return !!(candidateFuture && typeof (candidateFuture.then) === "function");
 }
 
-export async function attachAwaitDetach(eventName: string, ee: EventEmitter, cb: Function, operation: Promise<any>) {
-	ee.on(eventName, cb);
+export async function attachAwaitDetach(eventName: string, eventEmitter: EventEmitter, eventHandler: Function, operation: Promise<any>) {
+	eventEmitter.on(eventName, eventHandler);
 
 	try {
 		await operation;
 	} finally {
-		ee.removeListener(eventName, cb);
+		eventEmitter.removeListener(eventName, eventHandler);
 	}
 }
 
