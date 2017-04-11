@@ -3,6 +3,7 @@ import * as net from "net";
 let Table = require("cli-table");
 import { platform, EOL } from "os";
 import { ReadStream } from "tty";
+import { EventEmitter } from "events";
 
 export function deferPromise<T>(): IDeferPromise<T> {
 	let resolve: (value?: T | PromiseLike<T>) => void;
@@ -335,6 +336,16 @@ export function hook(commandName: string) {
 
 export function isPromise(candidateFuture: any): boolean {
 	return !!(candidateFuture && typeof (candidateFuture.then) === "function");
+}
+
+export async function attachAwaitDetach(eventName: string, eventEmitter: EventEmitter, eventHandler: Function, operation: Promise<any>) {
+	eventEmitter.on(eventName, eventHandler);
+
+	try {
+		await operation;
+	} finally {
+		eventEmitter.removeListener(eventName, eventHandler);
+	}
 }
 
 export async function connectEventually(factory: () => Promise<net.Socket>, handler: (_socket: net.Socket) => void): Promise<void> {
