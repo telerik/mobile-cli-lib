@@ -9,9 +9,11 @@ export class Logger implements ILogger {
 	private log4jsLogger: log4js.ILogger = null;
 	private encodeRequestPaths: string[] = ['/appbuilder/api/itmstransporter/applications?username='];
 	private encodeBody: boolean = false;
-	private passwordRegex = /[Pp]assword=(.*?)(['&,]|$)|\"[Pp]assword\":\"(.*?)\"/;
-	private requestBodyRegex = /^\"(.*?)\"$/;
+	private passwordRegex = /(password=).*?(['&,]|$)|(["']?.*?password["']?\s*:\s*["']).*?(["'])/i;
+	private passwordReplacement = "$1$3*******$2$4";
+	private passwordBodyReplacement = "$1*******$2";
 	private static LABEL = "[WARNING]:";
+	private requestBodyRegex = /(^\").*?(\"$)/;
 
 	constructor($config: Config.IConfig,
 		private $options: ICommonOptions) {
@@ -102,6 +104,11 @@ export class Logger implements ILogger {
 			return "[ReadableStream]";
 		}
 
+		// There's no point in printing buffers
+		if (item instanceof Buffer) {
+			return "[Buffer]";
+		}
+
 		return JSON.stringify(item);
 	}
 
@@ -148,17 +155,10 @@ export class Logger implements ILogger {
 				return argument;
 			}
 
-			let passwordMatch = this.passwordRegex.exec(argument);
-			if (passwordMatch) {
-				let password = passwordMatch[1] || passwordMatch[3];
-				return this.getHiddenPassword(password, argument);
-			}
+			argument = argument.replace(this.passwordRegex, this.passwordReplacement);
 
 			if (this.encodeBody) {
-				let bodyMatch = this.requestBodyRegex.exec(argument);
-				if (bodyMatch) {
-					return this.getHiddenPassword(bodyMatch[1], argument);
-				}
+				argument = argument.replace(this.requestBodyRegex, this.passwordBodyReplacement);
 			}
 
 			_.each(this.encodeRequestPaths, path => {
@@ -171,10 +171,6 @@ export class Logger implements ILogger {
 			return argument;
 		});
 	}
-
-	private getHiddenPassword(password: string, originalString: string) {
-		password = password || '';
-		return originalString.replace(password, new Array(password.length + 1).join('*'));
-	}
 }
+
 $injector.register("logger", Logger);
