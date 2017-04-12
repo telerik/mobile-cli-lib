@@ -46,7 +46,7 @@ export class IOSDeviceOperations implements IIOSDeviceOperations, IDisposable {
 			// We need this because we need to make sure that we have devices.
 			await new Promise((resolve, reject) => {
 				let iterationsCount = 0,
-					maxIterationsCount = 10;
+					maxIterationsCount = 3;
 
 				let intervalHandle: NodeJS.Timer = setInterval(() => {
 					if (foundDevice) {
@@ -59,7 +59,7 @@ export class IOSDeviceOperations implements IIOSDeviceOperations, IDisposable {
 						clearInterval(intervalHandle);
 						return resolve();
 					}
-				}, 500);
+				}, 2000);
 			});
 		}
 	}
