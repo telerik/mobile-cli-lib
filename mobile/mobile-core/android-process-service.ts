@@ -150,7 +150,7 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 
 	private async getNativeScriptApplicationInformation(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, information: string): Promise<Mobile.IDeviceApplicationInformation> {
 		// Search for appIdentifier (@<appIdentifier-debug>).
-		let nativeScriptAppIdentifierRegExp = /@(.+)-debug/g;
+		let nativeScriptAppIdentifierRegExp = /@(.+)-(debug|inspectorServer)/g;
 		let nativeScriptAppIdentifierMatches = nativeScriptAppIdentifierRegExp.exec(information);
 
 		if (nativeScriptAppIdentifierMatches && nativeScriptAppIdentifierMatches.length > 0) {
