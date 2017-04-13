@@ -54,8 +54,11 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		await Promise.all(
 			_(localToDevicePaths)
 				.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).isFile())
-				.map(async localToDevicePathData =>
-					await this.adb.executeCommand(["push", localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath()])
+				.map(async localToDevicePathData => {
+					const devicePath = localToDevicePathData.getDevicePath();
+					await this.adb.executeCommand(["push", localToDevicePathData.getLocalPath(), devicePath]);
+					await this.adb.executeShellCommand(["chmod", "0777", path.dirname(devicePath)]);
+				}
 				)
 				.value()
 		);
