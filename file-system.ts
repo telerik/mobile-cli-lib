@@ -55,6 +55,10 @@ export class FileSystem implements IFileSystem {
 		});
 	}
 
+	public utimes(path: string, atime: Date, mtime: Date): void {
+		return fs.utimesSync(path, atime, mtime);
+	}
+
 	public async unzip(zipFile: string, destinationDir: string, options?: { overwriteExisitingFiles?: boolean; caseSensitive?: boolean },
 		fileFilters?: string[]): Promise<void> {
 		let shouldOverwriteFiles = !(options && options.overwriteExisitingFiles === false);
