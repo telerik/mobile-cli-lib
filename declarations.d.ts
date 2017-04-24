@@ -63,6 +63,29 @@ interface IiTunesConnectApplication {
 }
 
 /**
+ * Describes configuration settings that modify the behavior of some methods.
+ */
+interface IConfigurationSettings {
+	/**
+	 * This string will be used when constructing the UserAgent http header.
+	 * @type {string}
+	 */
+	userAgentName: string;
+}
+
+/**
+ * Describes service used to confugure various settings.
+ */
+interface ISettingsService {
+	/**
+	 * Used to set various settings in order to modify the behavior of some methods.
+	 * @param {IConfigurationSettings} settings Settings which will modify the behaviour of some methods.
+	 * @returns {void}
+	 */
+	setSettings(settings: IConfigurationSettings): void;
+}
+
+/**
  * Describes data returned from querying itunes' Content Delivery api
  */
 interface IContentDeliveryBody {

@@ -3,6 +3,7 @@ declare module Config {
 		PROJECT_FILE_NAME: string;
 		CLIENT_NAME_KEY_IN_PROJECT_FILE?: string;
 		CLIENT_NAME: string;
+		USER_AGENT_NAME: string;
 		CLIENT_NAME_ALIAS?: string;
 		FULL_CLIENT_NAME?: string;
 		ANALYTICS_API_KEY: string;
