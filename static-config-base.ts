@@ -17,6 +17,19 @@ export class StaticConfigBase implements Config.IStaticConfig {
 	public HTML_CLI_HELPERS_DIR: string;
 	public version: string = null;
 	public pathToPackageJson: string;
+	private _userAgent: string = null;
+
+	public get USER_AGENT_NAME(): string {
+		if (!this._userAgent) {
+			this._userAgent = `${this.CLIENT_NAME}CLI`;
+		}
+
+		return this._userAgent;
+	}
+
+	public set USER_AGENT_NAME(userAgentName: string) {
+		this._userAgent = userAgentName;
+	}
 
 	protected _adbFilePath: string = null;
 
