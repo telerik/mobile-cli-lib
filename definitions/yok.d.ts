@@ -10,11 +10,14 @@ interface IInjector extends IDisposable {
 	 * The injector will create new instances for every call.
 	 */
 	resolve(ctor: Function, ctorArguments?: { [key: string]: any }): any;
+	resolve<T>(ctor: Function, ctorArguments?: { [key: string]: any }): T;
 	/**
 	 * Resolves an implementation by name.
 	 * The injector will create only one instance per name and return the same instance on subsequent calls.
 	 */
 	resolve(name: string, ctorArguments?: IDictionary<any>): any;
+	resolve<T>(name: string, ctorArguments?: IDictionary<any>): T;
+
 	resolveCommand(name: string): ICommand;
 	register(name: string, resolver: any, shared?: boolean): void;
 	registerCommand(name: string, resolver: any): void;
