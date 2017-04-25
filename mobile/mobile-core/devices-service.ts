@@ -373,7 +373,7 @@ export class DevicesService implements Mobile.IDevicesService {
 			If you are trying to run on specific emulator, use "${this.$staticConfig.CLIENT_NAME} run --device <DeviceID>`);
 		}
 
-		if (data && data.platform) {
+		if (data && data.platform && !data.skipInferPlatform) {
 			// are there any running devices
 			this._platform = data.platform;
 			try {
