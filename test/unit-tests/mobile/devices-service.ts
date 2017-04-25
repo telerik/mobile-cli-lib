@@ -322,6 +322,12 @@ describe("devicesService", () => {
 				assert.equal((<IOSDeviceDiscoveryStub>iOSDeviceDiscovery).count, 0);
 				assert.equal((<IOSSimulatorDiscoveryStub>iOSSimulatorDiscovery).count, 0);
 			});
+			it("deviceId is NOT passed, platform is passed and skipInferPlatform is passed - should not start emulator", async () => {
+				assert.deepEqual(devicesService.getDeviceInstances(), [], "Initially getDevicesInstances must return empty array.");
+				await devicesService.startEmulatorIfNecessary({ platform: "android", skipInferPlatform: true });
+				assert.deepEqual(devicesService.getDeviceInstances(), []);
+				assert.deepEqual(devicesService.getDevices(), []);
+			});
 		});
 	});
 
