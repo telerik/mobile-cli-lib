@@ -198,6 +198,15 @@ interface IFileSystem {
 	 */
 	getFileSize(path: string): number;
 
+	/**
+	 * Change file timestamps of the file referenced by the supplied path.
+	 * @param {string} path  File path
+	 * @param {Date}   atime Access time
+	 * @param {Date}   mtime Modified time
+	 * @returns {void}
+	 */
+	utimes(path: string, atime: Date, mtime: Date): void
+
 	futureFromEvent(eventEmitter: NodeJS.EventEmitter, event: string): Promise<any>;
 
 	/**
