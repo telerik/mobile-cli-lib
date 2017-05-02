@@ -408,6 +408,14 @@ interface IFileSystem {
 	 * @returns {void}
 	 */
 	deleteEmptyParents(directory: string): void;
+
+	/**
+	 * Return the canonicalized absolute pathname.
+	 * NOTE: The method accepts second argument, but it's type and usage is different in Node 4 and Node 6. Once we drop support for Node 4, we can use the second argument as well.
+	 * @param {string} filePath Path to file which should be resolved.
+	 * @returns {string} The canonicalized absolute path to file.
+	 */
+	realpath(filePath: string): string;
 }
 
 // duplicated from fs.Stats, because I cannot import it here

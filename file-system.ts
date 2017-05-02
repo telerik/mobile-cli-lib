@@ -400,6 +400,10 @@ export class FileSystem implements IFileSystem {
 		}
 	}
 
+	public realpath(filePath: string): string {
+		return fs.realpathSync(filePath);
+	}
+
 	private getIndentationCharacter(filePath: string): string {
 		if (!this.exists(filePath)) {
 			return FileSystem.DEFAULT_INDENTATION_CHARACTER;
