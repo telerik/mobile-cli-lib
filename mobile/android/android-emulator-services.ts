@@ -36,7 +36,8 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 		private $options: ICommonOptions,
 		private $utils: IUtils,
 		private $injector: IInjector,
-		private $hostInfo: IHostInfo) {
+		private $hostInfo: IHostInfo,
+		private $messages: IMessages) {
 		iconv.extendNodeEncodings();
 	}
 
@@ -117,7 +118,11 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 			// unlock screen
 			await this.unlockScreen(emulatorId);
 		} else {
-			this.$errors.fail(`Could not find an emulator image or identifier to run your project. Please run: "${this.$staticConfig.CLIENT_NAME} device <platform> --available-devices"`);
+			if (emulatorImage) {
+				this.$errors.fail(this.$messages.Devices.NotFoundDeviceByIdentifierErrorMessageWithIdentifier, emulatorImage, this.$staticConfig.CLIENT_NAME.toLowerCase());
+			} else {
+				this.$errors.fail(this.$messages.Devices.NotFoundDeviceByIdentifierErrorMessage, this.$staticConfig.CLIENT_NAME.toLowerCase());
+			}
 		}
 
 		return emulatorId;
