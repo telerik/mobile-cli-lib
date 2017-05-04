@@ -154,7 +154,11 @@ export class Errors implements IErrors {
 				: "\x1B[31;1m" + ex.message + "\x1B[0m");
 
 			if (!ex.suppressCommandHelp) {
-				await printCommandHelp();
+				try {
+					await printCommandHelp();
+				} catch (printHelpException) {
+					console.error("Failed to display command help", printHelpException);
+				}
 			}
 
 			tryTrackException(ex, this.$injector);

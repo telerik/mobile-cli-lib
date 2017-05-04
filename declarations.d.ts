@@ -422,6 +422,7 @@ interface ICommandOptions {
 }
 
 declare const enum ErrorCodes {
+	UNCAUGHT = 120,
 	UNKNOWN = 127,
 	INVALID_ARGUMENT = 128,
 	RESOURCE_PROBLEM = 129,
