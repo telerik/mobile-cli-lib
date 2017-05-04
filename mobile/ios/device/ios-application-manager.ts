@@ -87,12 +87,12 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		this.$logger.info(`Successfully run application ${appIdentifier} on device with ID ${this.device.deviceInfo.identifier}.`);
 	}
 
-	public async stopApplication(appIdentifier: string): Promise<void> {
+	public async stopApplication(appIdentifier: string, appName?: string): Promise<void> {
 		await this.$iosDeviceOperations.stop([{ deviceId: this.device.deviceInfo.identifier, ddi: this.$options.ddi, appId: appIdentifier }]);
 	}
 
-	public async restartApplication(applicationId: string): Promise<void> {
-		await this.stopApplication(applicationId);
+	public async restartApplication(applicationId: string, appName?: string): Promise<void> {
+		await this.stopApplication(applicationId, appName);
 		await this.runApplicationCore(applicationId);
 	}
 
