@@ -238,7 +238,7 @@ declare module Mobile {
 		uninstallApplication(appIdentifier: string): Promise<void>;
 		reinstallApplication(appIdentifier: string, packageFilePath: string): Promise<void>;
 		startApplication(appIdentifier: string): Promise<void>;
-		stopApplication(appIdentifier: string): Promise<void>;
+		stopApplication(appIdentifier: string, appName?: string): Promise<void>;
 		restartApplication(appIdentifier: string, appName?: string): Promise<void>;
 		canStartApplication(): boolean;
 		checkForApplicationUpdates(): Promise<void>;
