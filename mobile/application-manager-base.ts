@@ -17,7 +17,7 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 	}
 
 	public async restartApplication(appIdentifier: string, appName?: string): Promise<void> {
-		await this.stopApplication(appName || appIdentifier);
+		await this.stopApplication(appIdentifier, appName);
 		await this.startApplication(appIdentifier);
 	}
 
@@ -70,7 +70,7 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 	public abstract async installApplication(packageFilePath: string): Promise<void>;
 	public abstract async uninstallApplication(appIdentifier: string): Promise<void>;
 	public abstract async startApplication(appIdentifier: string): Promise<void>;
-	public abstract async stopApplication(appIdentifier: string): Promise<void>;
+	public abstract async stopApplication(appIdentifier: string, appName?: string): Promise<void>;
 	public abstract async getInstalledApplications(): Promise<string[]>;
 	public abstract async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo>;
 	public abstract canStartApplication(): boolean;

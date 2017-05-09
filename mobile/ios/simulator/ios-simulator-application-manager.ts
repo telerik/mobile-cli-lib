@@ -20,7 +20,6 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		return this.iosSim.getInstalledApplications(this.identifier);
 	}
 
-	// TODO: Remove Promise, reason: readDirectory - cannot until android and iOS implementatios have async calls.
 	@hook('install')
 	public async installApplication(packageFilePath: string): Promise<void> {
 		if (this.$fs.exists(packageFilePath) && path.extname(packageFilePath) === ".zip") {
@@ -50,8 +49,8 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		}
 	}
 
-	public async stopApplication(cfBundleExecutable: string): Promise<void> {
-		return this.iosSim.stopApplication(this.identifier, cfBundleExecutable);
+	public async stopApplication(appIdentifier: string, appName: string): Promise<void> {
+		return this.iosSim.stopApplication(this.identifier, appIdentifier, appName);
 	}
 
 	public canStartApplication(): boolean {
