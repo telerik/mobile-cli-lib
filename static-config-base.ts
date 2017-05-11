@@ -11,7 +11,7 @@ export class StaticConfigBase implements Config.IStaticConfig {
 	public ERROR_REPORT_SETTING_NAME: string = null;
 	public APP_RESOURCES_DIR_NAME = "App_Resources";
 	public COMMAND_HELP_FILE_NAME = 'command-help.json';
-	public QR_SIZE = 300;
+	public QR_SIZE = 5;
 	public RESOURCE_DIR_PATH = __dirname;
 	public SYS_REQUIREMENTS_LINK: string;
 	public HTML_CLI_HELPERS_DIR: string;
