@@ -4,6 +4,7 @@ import temp = require("temp");
 import { exported } from "../decorators";
 import { NODE_MODULES_DIR_NAME, FileExtensions } from "../constants";
 import { ChildProcess } from "child_process";
+import { gte } from "semver";
 temp.track();
 
 interface ITypeScriptCompilerSettings {
@@ -39,7 +40,7 @@ export class TypeScriptService implements ITypeScriptService {
 	public async transpile(projectDir: string, typeScriptFiles?: string[], definitionFiles?: string[], options?: ITypeScriptTranspileOptions): Promise<void> {
 		options = options || {};
 		let compilerOptions = this.getCompilerOptions(projectDir, options);
-		let typeScriptCompilerSettings = await this.getTypeScriptCompilerSettings({ useLocalTypeScriptCompiler: options.useLocalTypeScriptCompiler });
+		let typeScriptCompilerSettings = await this.getTypeScriptCompilerSettings({ useLocalTypeScriptCompiler: options.useLocalTypeScriptCompiler }, projectDir);
 		this.noEmitOnError = compilerOptions.noEmitOnError;
 		this.typeScriptFiles = typeScriptFiles || [];
 		this.definitionFiles = definitionFiles || [];
@@ -134,8 +135,19 @@ export class TypeScriptService implements ITypeScriptService {
 		return defaultOptions[key];
 	}
 
-	private async getTypeScriptCompilerSettings(options: { useLocalTypeScriptCompiler: boolean }): Promise<ITypeScriptCompilerSettings> {
+	private async getTypeScriptCompilerSettings(options: { useLocalTypeScriptCompiler: boolean }, projectDir: string): Promise<ITypeScriptCompilerSettings> {
 		let typeScriptInNodeModulesDir = path.join(NODE_MODULES_DIR_NAME, TypeScriptService.TYPESCRIPT_MODULE_NAME);
+		let typeScriptInProjectsNodeModulesDir = path.join(projectDir, typeScriptInNodeModulesDir);
+		let typeScriptCompilerVersion: string;
+		if (this.$fs.exists(typeScriptInProjectsNodeModulesDir)) {
+			typeScriptCompilerVersion = this.$fs.readJson(path.join(typeScriptInProjectsNodeModulesDir, this.$projectConstants.PACKAGE_JSON_NAME)).version;
+			if (gte(typeScriptCompilerVersion, TypeScriptService.DEFAULT_TSC_VERSION)) {
+				this.typeScriptModuleFilePath = typeScriptInProjectsNodeModulesDir;
+			} else {
+				typeScriptCompilerVersion = null;
+			}
+		}
+
 		if (!this.typeScriptModuleFilePath) {
 			if (options.useLocalTypeScriptCompiler) {
 				let typeScriptJsFilePath = require.resolve(TypeScriptService.TYPESCRIPT_MODULE_NAME);
@@ -155,7 +167,7 @@ export class TypeScriptService implements ITypeScriptService {
 		}
 
 		let typeScriptCompilerPath = path.join(this.typeScriptModuleFilePath, "lib", "tsc");
-		let typeScriptCompilerVersion = this.$fs.readJson(path.join(this.typeScriptModuleFilePath, this.$projectConstants.PACKAGE_JSON_NAME)).version;
+		typeScriptCompilerVersion = typeScriptCompilerVersion || this.$fs.readJson(path.join(this.typeScriptModuleFilePath, this.$projectConstants.PACKAGE_JSON_NAME)).version;
 
 		return { pathToCompiler: typeScriptCompilerPath, version: typeScriptCompilerVersion };
 	}
@@ -168,6 +180,9 @@ export class TypeScriptService implements ITypeScriptService {
 			.concat(options.filesToTranspile || [])
 			.concat(this.getTypeScriptCompilerOptionsAsArguments(options.compilerOptions) || [])
 			.value();
+
+		// HACK: if we're using the project's own typescript module, do not pass any additional arguments
+		params = ~typeScriptCompilerPath.indexOf(projectDir) ? [typeScriptCompilerPath] : params;
 
 		let output = await this.$childProcess.spawnFromEvent(process.argv[0], params, "close", { cwd: projectDir, stdio: "inherit" }, { throwError: false });
 
