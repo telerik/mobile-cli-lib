@@ -194,7 +194,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 		this._eqatecMonitor.setInstallationID(guid);
 
 		try {
-			await this._eqatecMonitor.setUserID(this.$analyticsSettingsService.getUserId());
+			await this._eqatecMonitor.setUserID(await this.$analyticsSettingsService.getUserId());
 			let currentCount = await this.$analyticsSettingsService.getUserSessionsCount(analyticsProjectKey);
 			// increment with 1 every time and persist the new value so next execution will be marked as new session
 			await this.$analyticsSettingsService.setUserSessionsCount(++currentCount, analyticsProjectKey);
