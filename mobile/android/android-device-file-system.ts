@@ -53,11 +53,14 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	public async transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
 		await Promise.all(
 			_(localToDevicePaths)
-				.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).isFile())
 				.map(async localToDevicePathData => {
-					const devicePath = localToDevicePathData.getDevicePath();
-					await this.adb.executeCommand(["push", localToDevicePathData.getLocalPath(), devicePath]);
-					await this.adb.executeShellCommand(["chmod", "0777", path.dirname(devicePath)]);
+					return this.$fs.executeActionIfExists(async () => {
+						if (this.$fs.getFsStats(localToDevicePathData.getLocalPath()).isFile()) {
+							const devicePath = localToDevicePathData.getDevicePath();
+							await this.adb.executeCommand(["push", localToDevicePathData.getLocalPath(), devicePath]);
+							await this.adb.executeShellCommand(["chmod", "0777", path.dirname(devicePath)]);
+						}
+					});
 				}
 				)
 				.value()
@@ -65,10 +68,13 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 
 		await Promise.all(
 			_(localToDevicePaths)
-				.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).isDirectory())
-				.map(async localToDevicePathData =>
-					await this.adb.executeShellCommand(["chmod", "0777", localToDevicePathData.getDevicePath()])
-				)
+				.map(async localToDevicePathData => {
+					return this.$fs.executeActionIfExists(async () => {
+							if (this.$fs.getFsStats(localToDevicePathData.getLocalPath()).isDirectory()) {
+								await this.adb.executeShellCommand(["chmod", "0777", localToDevicePathData.getDevicePath()])
+							}
+						});
+				})
 				.value()
 		);
 
@@ -86,13 +92,15 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		await Promise.all(
 			localToDevicePaths.map(async localToDevicePathData => {
 				let localPath = localToDevicePathData.getLocalPath();
-				let stats = this.$fs.getFsStats(localPath);
-				if (stats.isFile()) {
-					let fileShasum = await this.$fs.getFileShasum(localPath);
-					currentShasums[localPath] = fileShasum;
-				}
+				return this.$fs.executeActionIfExists(async () => {
+					let stats = this.$fs.getFsStats(localPath);
+					if (stats.isFile()) {
+						let fileShasum = await this.$fs.getFileShasum(localPath);
+						currentShasums[localPath] = fileShasum;
+					}
 
-				devicePaths.push(`"${localToDevicePathData.getDevicePath()}"`);
+					devicePaths.push(`"${localToDevicePathData.getDevicePath()}"`);
+				});
 			})
 		);
 

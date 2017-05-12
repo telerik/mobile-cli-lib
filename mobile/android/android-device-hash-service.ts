@@ -43,11 +43,13 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 			await Promise.all(
 				(<Mobile.ILocalToDevicePathData[]>data).map(async localToDevicePathData => {
 					let localPath = localToDevicePathData.getLocalPath();
-					let stats = this.$fs.getFsStats(localPath);
-					if (stats.isFile()) {
-						let fileShasum = await this.$fs.getFileShasum(localPath);
-						shasums[localPath] = fileShasum;
-					}
+					return this.$fs.executeActionIfExists(async () => {
+						let stats = this.$fs.getFsStats(localPath);
+						if (stats.isFile()) {
+							let fileShasum = await this.$fs.getFileShasum(localPath);
+							shasums[localPath] = fileShasum;
+						}
+					});
 				})
 			);
 		} else {
@@ -64,9 +66,11 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 			await Promise.all(
 				_.map(localToDevicePaths, async ldp => {
 					let localPath = ldp.getLocalPath();
-					if (this.$fs.getFsStats(localPath).isFile()) {
-						oldShasums[localPath] = await this.$fs.getFileShasum(localPath);
-					}
+					return this.$fs.executeActionIfExists(async () => {
+						if (this.$fs.getFsStats(localPath).isFile()) {
+							oldShasums[localPath] = await this.$fs.getFileShasum(localPath);
+						}
+					});
 				})
 			);
 

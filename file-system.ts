@@ -13,6 +13,10 @@ export class FileSystem implements IFileSystem {
 	private static DEFAULT_INDENTATION_CHARACTER = "\t";
 	private static JSON_OBJECT_REGEXP = new RegExp(`{\\r*\\n*(\\W*)"`, "m");
 
+	private get $logger(): ILogger {
+		return this.$injector.resolve("$logger");
+	}
+
 	constructor(private $injector: IInjector) { }
 
 	//TODO: try 'archiver' module for zipping
@@ -111,6 +115,22 @@ export class FileSystem implements IFileSystem {
 		} catch (err) {
 			if (err && err.code !== "ENOENT") {  // ignore "file doesn't exist" error
 				throw (err);
+			}
+		}
+	}
+
+	public async executeActionIfExists<T>(action: () => Promise<T>): Promise<T> {
+		try {
+			let result = await action();
+			return result;
+		} catch (err) {
+			if (err && err.code === 'ENOENT') {
+				// stay calm, be silent
+				this.$logger.trace(err.message);
+				this.$logger.trace(err.stack);
+				this.$logger.warn(`Skipping action - unexistent file or directory. '${err.message}'`);
+			} else {
+				throw err;
 			}
 		}
 	}

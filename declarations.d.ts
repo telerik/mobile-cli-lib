@@ -177,6 +177,14 @@ interface IFileSystem {
 	 */
 	exists(path: string): boolean;
 
+
+	/**
+	 * Executes an action and if an error occurs checks:
+	 *  - if error is Not Existing file (ENOENT) doesn't do anything
+	 *  - otherwise re-throws the error.
+	 */
+	executeActionIfExists<T>(action: () => Promise<T>): Promise<T>;
+
 	/**
 	 * Deletes a file.
 	 * @param {string} path Path to be deleted.

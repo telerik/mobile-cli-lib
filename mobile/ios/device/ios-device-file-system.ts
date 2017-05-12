@@ -49,10 +49,17 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	}
 
 	public async transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
-		const files: IOSDeviceLib.IFileData[] = _(localToDevicePaths)
-			.filter(l => this.$fs.getFsStats(l.getLocalPath()).isFile())
-			.map(l => ({ source: l.getLocalPath(), destination: l.getDevicePath() }))
-			.value();
+		const files: IOSDeviceLib.IFileData[] = await Promise.all<IOSDeviceLib.IFileData>(
+			_(localToDevicePaths)
+			.map(async l => {
+				return await this.$fs.executeActionIfExists(async () => {
+					if (this.$fs.getFsStats(l.getLocalPath()).isFile()) {
+						return { source: l.getLocalPath(), destination: l.getDevicePath() };
+					}
+				});
+			} )
+			.value()
+		);
 
 		await this.uploadFilesCore([{
 			deviceId: this.device.deviceInfo.identifier,
