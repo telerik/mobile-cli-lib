@@ -903,13 +903,15 @@ interface INpmInstallResult {
 }
 ```
 
-* `install(projectDir: string, dependencyToInstall?: INpmDependency): Promise<INpmInstallResult>` - Installs everything from package.json or specified dependency.
+* `install(packageName: string, pathToSave: string, config: IDictionary<string | boolean>): Promise<INpmInstallResult>` - Installs everything from package.json or specified dependency.
 In case there's information which dependency to install, the method will check it and install only this dependency and possibly its @types.
+
+Note that the last argument - `config` can be used to pass flags to the `npm install` opration like `save`, `save-dev`, `ignore-scripts` and so on.
 
 Sample usage:
 ```JavaScript
 // Install all dependencies from package.json.
-require("mobile-cli-lib").npmService.install("D:\\test\\project")
+require("mobile-cli-lib").npmService.install("lodash@3.x", "D:\\test\\project", { save: true, "save-exact": true })
 	.then(function(result) {
 			console.log("The npm result is: ", result);
 	}).catch(function(err) {
