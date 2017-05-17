@@ -27,6 +27,11 @@ export class LiveSyncConstants {
 	static IOS_PROJECT_PATH = "/Documents/AppBuilder/LiveSync";
 }
 
+export class DeviceDiscoveryEventNames {
+	static DEVICE_FOUND = "deviceFound";
+	static DEVICE_LOST = "deviceLost";
+}
+
 export const TARGET_FRAMEWORK_IDENTIFIERS = {
 	Cordova: "Cordova",
 	NativeScript: "NativeScript"

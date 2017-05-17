@@ -2,6 +2,7 @@ import { IOSSimulatorDiscovery } from "../../../mobile/mobile-core/ios-simulator
 import { Yok } from "../../../yok";
 
 import { assert } from "chai";
+import { DeviceDiscoveryEventNames } from "../../../constants";
 import { DevicePlatformsConstants } from "../../../mobile/device-platforms-constants";
 
 let currentlyRunningSimulator: any,
@@ -42,7 +43,7 @@ describe("ios-simulator-discovery", () => {
 
 			isCurrentlyRunning = true;
 			currentlyRunningSimulator = _.cloneDeep(runningSimulator);
-			iOSSimulatorDiscovery.once("deviceFound", (device: Mobile.IDevice) => {
+			iOSSimulatorDiscovery.once(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
 				resolve(device);
 			});
 			// no need to await startLookingForDevices, current promise will be resolved after execution of startLookingForDevices is completed.
@@ -54,7 +55,7 @@ describe("ios-simulator-discovery", () => {
 		isCurrentlyRunning = false;
 		currentlyRunningSimulator = null;
 		return new Promise<Mobile.IDevice>((resolve, reject) => {
-			iOSSimulatorDiscovery.once("deviceLost", (device: Mobile.IDevice) => {
+			iOSSimulatorDiscovery.once(DeviceDiscoveryEventNames.DEVICE_LOST, (device: Mobile.IDevice) => {
 				resolve(device);
 			});
 
@@ -68,11 +69,11 @@ describe("ios-simulator-discovery", () => {
 		let lostDevicePromise: Promise<Mobile.IDevice>,
 			foundDevicePromise: Promise<Mobile.IDevice>;
 
-		iOSSimulatorDiscovery.on("deviceLost", (device: Mobile.IDevice) => {
+		iOSSimulatorDiscovery.on(DeviceDiscoveryEventNames.DEVICE_LOST, (device: Mobile.IDevice) => {
 			lostDevicePromise = Promise.resolve(device);
 		});
 
-		iOSSimulatorDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
+		iOSSimulatorDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
 			foundDevicePromise = Promise.resolve(device);
 		});
 
@@ -145,7 +146,7 @@ describe("ios-simulator-discovery", () => {
 	it("finds new device when it is attached and reports it as new only once", async () => {
 		let device = await detectNewSimulatorAttached(defaultRunningSimulator);
 		assert.deepEqual(device.deviceInfo, expectedDeviceInfo);
-		iOSSimulatorDiscovery.on("deviceFound", (d: Mobile.IDevice) => {
+		iOSSimulatorDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (d: Mobile.IDevice) => {
 			throw new Error("Device found should not be raised for the same device.");
 		});
 
@@ -160,7 +161,7 @@ describe("ios-simulator-discovery", () => {
 
 		isCurrentlyRunning = true;
 
-		iOSSimulatorDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
+		iOSSimulatorDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
 			throw new Error("Device found should not be raised when getting running iOS Simulator fails.");
 		});
 
@@ -171,7 +172,7 @@ describe("ios-simulator-discovery", () => {
 		testInjector.resolve("hostInfo").isDarwin = false;
 		isCurrentlyRunning = true;
 
-		iOSSimulatorDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
+		iOSSimulatorDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
 			throw new Error("Device found should not be raised when OS is not OS X.");
 		});
 
@@ -181,7 +182,7 @@ describe("ios-simulator-discovery", () => {
 	it("checkForDevices return future", async () => {
 		testInjector.resolve("hostInfo").isDarwin = false;
 		isCurrentlyRunning = true;
-		iOSSimulatorDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
+		iOSSimulatorDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
 			throw new Error("Device found should not be raised when OS is not OS X.");
 		});
 		await iOSSimulatorDiscovery.checkForDevices();

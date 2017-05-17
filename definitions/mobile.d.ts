@@ -314,7 +314,7 @@ declare module Mobile {
 	}
 
 	interface IDeviceDiscovery extends NodeJS.EventEmitter {
-		startLookingForDevices(): Promise<void>;
+		startLookingForDevices(platform?: string): Promise<void>;
 		checkForDevices(): Promise<void>;
 	}
 
@@ -372,6 +372,13 @@ declare module Mobile {
 		 * @return {Promise<void>}
 		 */
 		initialize(data?: IDevicesServicesInitializationOptions): Promise<void>;
+
+		/**
+		 * Add an IDeviceDiscovery instance which will from now on report devices. The instance should implement IDeviceDiscovery and raise "deviceFound" and "deviceLost" events.
+		 * @param {IDeviceDiscovery} deviceDiscovery Instance, implementing IDeviceDiscovery and raising raise "deviceFound" and "deviceLost" events.
+		 * @return {void}
+		 */
+		addDeviceDiscovery(deviceDiscovery: IDeviceDiscovery): void;
 		platform: string;
 		getDevices(): Mobile.IDeviceInfo[];
 		getDevicesForPlatform(platform: string): Mobile.IDevice[];

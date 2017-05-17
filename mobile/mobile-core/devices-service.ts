@@ -14,6 +14,7 @@ export class DevicesService implements Mobile.IDevicesService {
 	private _device: Mobile.IDevice;
 	private _isInitialized = false;
 	private _data: Mobile.IDevicesServicesInitializationOptions;
+	private _otherDeviceDiscoveries: Mobile.IDeviceDiscovery[] = [];
 	private deviceDetectionInterval: any;
 	private isDeviceDetectionIntervalInProgress: boolean;
 
@@ -35,7 +36,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		private $options: ICommonOptions,
 		private $androidProcessService: Mobile.IAndroidProcessService,
 		private $processService: IProcessService) {
-		this.attachToDeviceDiscoveryEvents();
+		this.attachToKnownDeviceDiscoveryEvents();
 	}
 
 	public get platform(): string {
@@ -110,15 +111,19 @@ export class DevicesService implements Mobile.IDevicesService {
 		return normalizedPlatform;
 	}
 
-	private attachToDeviceDiscoveryEvents(): void {
-		this.$iOSSimulatorDiscovery.on("deviceFound", (device: Mobile.IDevice) => this.onDeviceFound(device));
-		this.$iOSSimulatorDiscovery.on("deviceLost", (device: Mobile.IDevice) => this.onDeviceLost(device));
+	@exported("devicesService")
+	public addDeviceDiscovery(deviceDiscovery: Mobile.IDeviceDiscovery): void {
+		this._otherDeviceDiscoveries.push(deviceDiscovery);
+		this.attachToDeviceDiscoveryEvents(deviceDiscovery);
+	}
 
-		this.$iOSDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => this.onDeviceFound(device));
-		this.$iOSDeviceDiscovery.on("deviceLost", (device: Mobile.IDevice) => this.onDeviceLost(device));
+	private attachToKnownDeviceDiscoveryEvents(): void {
+		[this.$iOSSimulatorDiscovery, this.$iOSDeviceDiscovery, this.$androidDeviceDiscovery].forEach(this.attachToDeviceDiscoveryEvents.bind(this));
+	}
 
-		this.$androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => this.onDeviceFound(device));
-		this.$androidDeviceDiscovery.on("deviceLost", (device: Mobile.IDevice) => this.onDeviceLost(device));
+	private attachToDeviceDiscoveryEvents(deviceDiscovery: Mobile.IDeviceDiscovery): void {
+		deviceDiscovery.on(constants.DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => this.onDeviceFound(device));
+		deviceDiscovery.on(constants.DeviceDiscoveryEventNames.DEVICE_LOST, (device: Mobile.IDevice) => this.onDeviceLost(device));
 	}
 
 	private onDeviceFound(device: Mobile.IDevice): void {
@@ -135,16 +140,12 @@ export class DevicesService implements Mobile.IDevicesService {
 	 * Starts looking for devices. Any found devices are pushed to "_devices" variable.
 	 */
 	public async detectCurrentlyAttachedDevices(): Promise<void> {
-		try {
-			await this.$iOSDeviceDiscovery.startLookingForDevices();
-		} catch (err) {
-			this.$logger.trace("Error while checking for iOS devices.", err);
-		}
-
-		try {
-			await this.$androidDeviceDiscovery.startLookingForDevices();
-		} catch (err) {
-			this.$logger.trace("Error while checking for Android devices.", err);
+		for (const deviceDiscovery of [this.$iOSDeviceDiscovery, this.$androidDeviceDiscovery].concat(this._otherDeviceDiscoveries)) {
+			try {
+				await deviceDiscovery.startLookingForDevices();
+			} catch (err) {
+				this.$logger.trace("Error while checking for devices.", err);
+			}
 		}
 
 		try {
@@ -172,16 +173,12 @@ export class DevicesService implements Mobile.IDevicesService {
 
 					this.isDeviceDetectionIntervalInProgress = true;
 
-					try {
-						await this.$iOSDeviceDiscovery.startLookingForDevices();
-					} catch (err) {
-						this.$logger.trace("Error while checking for new iOS devices.", err);
-					}
-
-					try {
-						await this.$androidDeviceDiscovery.startLookingForDevices();
-					} catch (err) {
-						this.$logger.trace("Error while checking for new Android devices.", err);
+					for (const deviceDiscovery of [this.$iOSDeviceDiscovery, this.$androidDeviceDiscovery].concat(this._otherDeviceDiscoveries)) {
+						try {
+							await deviceDiscovery.startLookingForDevices();
+						} catch (err) {
+							this.$logger.trace("Error while checking for new devices.", err);
+						}
 					}
 
 					try {
@@ -234,13 +231,23 @@ export class DevicesService implements Mobile.IDevicesService {
 		if (!this._platform) {
 			await this.detectCurrentlyAttachedDevices();
 			await this.startDeviceDetectionInterval();
-		} else if (this.$mobileHelper.isiOSPlatform(this._platform)) {
-			await this.$iOSDeviceDiscovery.startLookingForDevices();
-			if (this.$hostInfo.isDarwin) {
-				await this.$iOSSimulatorDiscovery.startLookingForDevices();
+		} else {
+			if (this.$mobileHelper.isiOSPlatform(this._platform)) {
+				await this.$iOSDeviceDiscovery.startLookingForDevices();
+				if (this.$hostInfo.isDarwin) {
+					await this.$iOSSimulatorDiscovery.startLookingForDevices();
+				}
+			} else if (this.$mobileHelper.isAndroidPlatform(this._platform)) {
+				await this.$androidDeviceDiscovery.startLookingForDevices();
 			}
-		} else if (this.$mobileHelper.isAndroidPlatform(this._platform)) {
-			await this.$androidDeviceDiscovery.startLookingForDevices();
+
+			for (const deviceDiscovery of this._otherDeviceDiscoveries) {
+				try {
+					await deviceDiscovery.startLookingForDevices(this._platform);
+				} catch (err) {
+					this.$logger.trace("Error while checking for new devices.", err);
+				}
+			}
 		}
 	}
 
