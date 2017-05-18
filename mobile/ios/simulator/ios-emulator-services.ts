@@ -45,17 +45,17 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		return this.runApplicationOnEmulatorCore(app, emulatorOptions);
 	}
 
-	public postDarwinNotification(notification: string): Promise<void> {
+	public async postDarwinNotification(notification: string): Promise<void> {
 		let iosSimPath = this.$iOSSimResolver.iOSSimPath;
 		let nodeCommandName = process.argv[0];
 
-		let opts = ["notify-post", notification];
+		let iosSimArgs = [iosSimPath, "notify-post", notification];
 
 		if (this.$options.device) {
-			opts.push("--device", this.$options.device);
+			iosSimArgs.push("--device", this.$options.device);
 		}
 
-		return this.$childProcess.exec(`${nodeCommandName} ${iosSimPath} ${opts.join(' ')}`);
+		await this.$childProcess.spawnFromEvent(nodeCommandName, iosSimArgs, "close", { stdio: "inherit" });
 	}
 
 	private async runApplicationOnEmulatorCore(app: string, emulatorOptions?: Mobile.IEmulatorOptions): Promise<any> {
