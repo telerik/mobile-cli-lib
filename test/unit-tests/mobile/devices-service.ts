@@ -144,8 +144,6 @@ function createTestInjector(): IInjector {
 		setLogLevel: (logLevel: string, deviceIdentifier: string) => { /* no implementation required */ }
 	});
 
-	testInjector.register("devicesService", DevicesService);
-
 	testInjector.register("hostInfo", {
 		isDarwin: false
 	});
@@ -259,7 +257,7 @@ describe("devicesService", () => {
 
 	beforeEach(() => {
 		testInjector = createTestInjector();
-		devicesService = testInjector.resolve("devicesService");
+		devicesService = testInjector.resolve(DevicesService);
 		iOSDeviceDiscovery = testInjector.resolve("iOSDeviceDiscovery");
 		iOSSimulatorDiscovery = testInjector.resolve("iOSSimulatorDiscovery");
 		androidDeviceDiscovery = testInjector.resolve("androidDeviceDiscovery");
@@ -280,6 +278,7 @@ describe("devicesService", () => {
 	it("attaches to events when a new custom DevicesService is instantiated", () => {
 		const customDeviceDiscovery = testInjector.resolve(CustomDeviceDiscoveryStub);
 		devicesService.addDeviceDiscovery(customDeviceDiscovery);
+		assert.isFalse(devicesService.hasDevices, "Initially devicesService hasDevices must be false.");
 		customDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, iOSDevice);
 		customDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, androidDevice);
 		let devices = devicesService.getDeviceInstances();
@@ -1286,22 +1285,35 @@ describe("devicesService", () => {
 				hasCheckedForIosSimulator = false;
 			});
 
-			it("should check for ios simulator if the host is Darwin.", async () => {
-				await devicesService.startDeviceDetectionInterval();
-
-				assert.isTrue(hasCheckedForIosSimulator);
-			});
-
-			it("should not check for ios simulator if the host is not Darwin.", async () => {
-				$hostInfo.isDarwin = false;
-
-				await devicesService.startDeviceDetectionInterval();
-
-				assert.isFalse(hasCheckedForIosSimulator);
-			});
-
 			it("should not throw if ios simulator check fails throws an exception.", async () => {
 				$iOSSimulatorDiscovery.checkForDevices = throwErrorFunction;
+
+				await assert.isFulfilled(devicesService.startDeviceDetectionInterval());
+			});
+		});
+
+		describe("custom devices check", () => {
+			let customDeviceDiscovery: Mobile.IDeviceDiscovery;
+
+			beforeEach(() => {
+				customDeviceDiscovery = testInjector.resolve(CustomDeviceDiscoveryStub);
+				devicesService.addDeviceDiscovery(customDeviceDiscovery);
+			});
+
+			it("should check for devices.", async () => {
+				let hasCheckedForDevices = false;
+
+				customDeviceDiscovery.startLookingForDevices = async (): Promise<void> => {
+					hasCheckedForDevices = true;
+				};
+
+				await devicesService.startDeviceDetectionInterval();
+
+				assert.isTrue(hasCheckedForDevices);
+			});
+
+			it("should not throw if device check fails throws an exception.", async () => {
+				customDeviceDiscovery.startLookingForDevices = throwErrorFunction;
 
 				await assert.isFulfilled(devicesService.startDeviceDetectionInterval());
 			});
@@ -1402,30 +1414,6 @@ describe("devicesService", () => {
 			await devicesService.detectCurrentlyAttachedDevices();
 
 			assert.isTrue(hasStartedLookingForIosDevices);
-		});
-
-		it("should start looking for ios simulator if the host is Darwin.", async () => {
-			let hasStartedLookingForIosSimulator = false;
-			$hostInfo.isDarwin = true;
-			$iOSSimulatorDiscovery.startLookingForDevices = async (): Promise<void> => {
-				hasStartedLookingForIosSimulator = true;
-			};
-
-			await devicesService.detectCurrentlyAttachedDevices();
-
-			assert.isTrue(hasStartedLookingForIosSimulator);
-		});
-
-		it("should not start looking for ios simulator if the host is not Darwin.", async () => {
-			let hasStartedLookingForIosSimulator = false;
-			$hostInfo.isDarwin = false;
-			$iOSSimulatorDiscovery.startLookingForDevices = async (): Promise<void> => {
-				hasStartedLookingForIosSimulator = true;
-			};
-
-			await devicesService.detectCurrentlyAttachedDevices();
-
-			assert.isFalse(hasStartedLookingForIosSimulator);
 		});
 
 		const assertNotThrowing = async (deviceDiscoveries: { deviceDiscoveriesThatWork: Mobile.IDeviceDiscovery[], deviceDiscoveriesThatThrow: Mobile.IDeviceDiscovery[] }) => {
