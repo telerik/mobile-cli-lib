@@ -1,4 +1,5 @@
 import { EventEmitter } from "events";
+import { DeviceDiscoveryEventNames } from "../constants";
 
 export class DeviceEmitter extends EventEmitter {
 	constructor(private $androidDeviceDiscovery: Mobile.IAndroidDeviceDiscovery,
@@ -21,8 +22,8 @@ export class DeviceEmitter extends EventEmitter {
 	}
 
 	public initialize(): void {
-		this.$androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
-			this.emit("deviceFound", device.deviceInfo);
+		this.$androidDeviceDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
+			this.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, device.deviceInfo);
 
 			this.attachApplicationChangedHandlers(device);
 
@@ -30,28 +31,28 @@ export class DeviceEmitter extends EventEmitter {
 			device.openDeviceLogStream();
 		});
 
-		this.$androidDeviceDiscovery.on("deviceLost", (device: Mobile.IDevice) => {
-			this.emit("deviceLost", device.deviceInfo);
+		this.$androidDeviceDiscovery.on(DeviceDiscoveryEventNames.DEVICE_LOST, (device: Mobile.IDevice) => {
+			this.emit(DeviceDiscoveryEventNames.DEVICE_LOST, device.deviceInfo);
 		});
 
-		this.$iOSDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
-			this.emit("deviceFound", device.deviceInfo);
+		this.$iOSDeviceDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
+			this.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, device.deviceInfo);
 			this.attachApplicationChangedHandlers(device);
 			device.openDeviceLogStream();
 		});
 
-		this.$iOSDeviceDiscovery.on("deviceLost", (device: Mobile.IDevice) => {
-			this.emit("deviceLost", device.deviceInfo);
+		this.$iOSDeviceDiscovery.on(DeviceDiscoveryEventNames.DEVICE_LOST, (device: Mobile.IDevice) => {
+			this.emit(DeviceDiscoveryEventNames.DEVICE_LOST, device.deviceInfo);
 		});
 
-		this.$iOSSimulatorDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
-			this.emit("deviceFound", device.deviceInfo);
+		this.$iOSSimulatorDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
+			this.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, device.deviceInfo);
 			device.openDeviceLogStream();
 			this.attachApplicationChangedHandlers(device);
 		});
 
-		this.$iOSSimulatorDiscovery.on("deviceLost", (device: Mobile.IDevice) => {
-			this.emit("deviceLost", device.deviceInfo);
+		this.$iOSSimulatorDiscovery.on(DeviceDiscoveryEventNames.DEVICE_LOST, (device: Mobile.IDevice) => {
+			this.emit(DeviceDiscoveryEventNames.DEVICE_LOST, device.deviceInfo);
 		});
 
 		this.$deviceLogProvider.on("data", (identifier: string, data: any) => {

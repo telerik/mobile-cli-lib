@@ -1,4 +1,5 @@
 import { EventEmitter } from "events";
+import { DeviceDiscoveryEventNames } from "../../constants";
 
 export class DeviceDiscovery extends EventEmitter implements Mobile.IDeviceDiscovery {
 	private devices: IDictionary<Mobile.IDevice> = {};
@@ -26,12 +27,11 @@ export class DeviceDiscovery extends EventEmitter implements Mobile.IDeviceDisco
 	}
 
 	private raiseOnDeviceFound(device: Mobile.IDevice) {
-		this.emit("deviceFound", device);
+		this.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, device);
 	}
 
 	private raiseOnDeviceLost(device: Mobile.IDevice) {
-		this.emit("deviceLost", device);
+		this.emit(DeviceDiscoveryEventNames.DEVICE_LOST, device);
 	}
 }
-
 $injector.register("deviceDiscovery", DeviceDiscovery);

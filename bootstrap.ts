@@ -57,9 +57,6 @@ $injector.requireCommand("device|put-file", "./commands/device/put-file");
 
 $injector.require("iosDeviceOperations", "./mobile/ios/device/ios-device-operations");
 
-$injector.require("deviceFound", "./mobile/mobile-core/device-discovery");
-$injector.require("deviceLost", "./mobile/mobile-core/device-discovery");
-
 $injector.require("iTunesValidator", "./validators/iTunes-validator");
 $injector.require("deviceDiscovery", "./mobile/mobile-core/device-discovery");
 $injector.require("iOSDeviceDiscovery", "./mobile/mobile-core/ios-device-discovery");

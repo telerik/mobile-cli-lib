@@ -2,6 +2,7 @@ import { AndroidDeviceDiscovery } from "../../../mobile/mobile-core/android-devi
 import { AndroidDebugBridge } from "../../../mobile/android/android-debug-bridge";
 import { AndroidDebugBridgeResultHandler } from "../../../mobile/android/android-debug-bridge-result-handler";
 import { Yok } from "../../../yok";
+import { DeviceDiscoveryEventNames } from "../../../constants";
 
 import { EventEmitter } from "events";
 import { EOL } from "os";
@@ -91,7 +92,7 @@ describe("androidDeviceDiscovery", () => {
 
 	describe("startLookingForDevices", () => {
 		it("finds correctly one device", async () => {
-			androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
+			androidDeviceDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
 				devicesFound.push(device);
 			});
 
@@ -119,7 +120,7 @@ describe("androidDeviceDiscovery", () => {
 	describe("checkForDevices", () => {
 		it("finds correctly one device", async () => {
 			let promise: Promise<void>;
-			androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
+			androidDeviceDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
 				promise = new Promise<void>((resolve, reject) => {
 					devicesFound.push(device);
 					resolve();
@@ -141,7 +142,7 @@ describe("androidDeviceDiscovery", () => {
 
 		it("finds correctly more than one device", async () => {
 			let promise: Promise<void>;
-			androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
+			androidDeviceDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
 				promise = new Promise<void>((resolve, reject) => {
 					devicesFound.push(device);
 					if (devicesFound.length === 2) {
@@ -166,7 +167,7 @@ describe("androidDeviceDiscovery", () => {
 		});
 
 		it("does not find any devices when there are no devices", async () => {
-			androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
+			androidDeviceDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
 				throw new Error("Devices should not be found.");
 			});
 
@@ -182,7 +183,7 @@ describe("androidDeviceDiscovery", () => {
 
 		const validateDeviceFoundWhenAdbReportsAdditionalMessages = async (adbMessage: string) => {
 			let promise: Promise<void>;
-			androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
+			androidDeviceDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
 				promise = new Promise<void>((resolve, reject) => {
 					devicesFound.push(device);
 					resolve();
@@ -224,7 +225,7 @@ describe("androidDeviceDiscovery", () => {
 			let defaultAdbOutput = `List of devices attached ${EOL}${androidDeviceIdentifier}	${androidDeviceStatus}${EOL}${EOL}`;
 			beforeEach(async () => {
 				let promise: Promise<void>;
-				androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
+				androidDeviceDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
 					promise = new Promise<void>((resolve, reject) => {
 						devicesFound.push(device);
 						resolve();
@@ -238,11 +239,11 @@ describe("androidDeviceDiscovery", () => {
 
 				await androidDeviceDiscovery.checkForDevices();
 				await promise;
-				androidDeviceDiscovery.removeAllListeners("deviceFound");
+				androidDeviceDiscovery.removeAllListeners(DeviceDiscoveryEventNames.DEVICE_FOUND);
 			});
 
 			it("does not report it as found next time when checkForDevices is called and same device is still connected", async () => {
-				androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
+				androidDeviceDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
 					throw new Error("Should not report same device as found");
 				});
 
@@ -260,7 +261,7 @@ describe("androidDeviceDiscovery", () => {
 			it("reports it as removed next time when called and device is removed", async () => {
 				let promise: Promise<Mobile.IDevice>;
 
-				androidDeviceDiscovery.on("deviceLost", (device: Mobile.IDevice) => {
+				androidDeviceDiscovery.on(DeviceDiscoveryEventNames.DEVICE_LOST, (device: Mobile.IDevice) => {
 					promise = Promise.resolve(device);
 				});
 
@@ -278,7 +279,7 @@ describe("androidDeviceDiscovery", () => {
 			it("does not report it as removed two times when called and device is removed", async () => {
 				let promise: Promise<Mobile.IDevice>;
 
-				androidDeviceDiscovery.on("deviceLost", (device: Mobile.IDevice) => {
+				androidDeviceDiscovery.on(DeviceDiscoveryEventNames.DEVICE_LOST, (device: Mobile.IDevice) => {
 					promise = Promise.resolve(device);
 				});
 
@@ -294,7 +295,7 @@ describe("androidDeviceDiscovery", () => {
 				assert.deepEqual(lostDevice.deviceInfo.identifier, androidDeviceIdentifier);
 				assert.deepEqual(lostDevice.deviceInfo.status, androidDeviceStatus);
 
-				androidDeviceDiscovery.on("deviceLost", (device: Mobile.IDevice) => {
+				androidDeviceDiscovery.on(DeviceDiscoveryEventNames.DEVICE_LOST, (device: Mobile.IDevice) => {
 					throw new Error("Should not report device as removed next time after it has been already reported.");
 				});
 
@@ -310,12 +311,12 @@ describe("androidDeviceDiscovery", () => {
 				let deviceLostPromise: Promise<Mobile.IDevice>;
 				let deviceFoundPromise: Promise<Mobile.IDevice>;
 
-				androidDeviceDiscovery.on("deviceLost", (device: Mobile.IDevice) => {
+				androidDeviceDiscovery.on(DeviceDiscoveryEventNames.DEVICE_LOST, (device: Mobile.IDevice) => {
 					_.remove(devicesFound, d => d.deviceInfo.identifier === device.deviceInfo.identifier);
 					deviceLostPromise = Promise.resolve(device);
 				});
 
-				androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
+				androidDeviceDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
 					devicesFound.push(device);
 					deviceFoundPromise = Promise.resolve(device);
 				});
@@ -349,7 +350,7 @@ describe("androidDeviceDiscovery", () => {
 		});
 
 		it("throws error when adb writes on stderr", async () => {
-			androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
+			androidDeviceDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
 				throw new Error("Devices should not be found.");
 			});
 
@@ -388,7 +389,7 @@ describe("androidDeviceDiscovery", () => {
 		});
 
 		it("throws error when adb's child process throws error", async () => {
-			androidDeviceDiscovery.on("deviceFound", (device: Mobile.IDevice) => {
+			androidDeviceDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
 				throw new Error("Devices should not be found.");
 			});
 			let error = new Error("ADB Error");
