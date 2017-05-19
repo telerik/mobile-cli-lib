@@ -353,7 +353,7 @@ declare module Mobile {
 		result: T;
 	}
 
-	interface IDevicesService {
+	interface IDevicesService extends NodeJS.EventEmitter {
 		hasDevices: boolean;
 		deviceCount: number;
 

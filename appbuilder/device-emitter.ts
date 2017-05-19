@@ -2,14 +2,13 @@ import { EventEmitter } from "events";
 import { DeviceDiscoveryEventNames } from "../constants";
 
 export class DeviceEmitter extends EventEmitter {
-	constructor(private $androidDeviceDiscovery: Mobile.IAndroidDeviceDiscovery,
-		private $iOSDeviceDiscovery: Mobile.IDeviceDiscovery,
-		private $iOSSimulatorDiscovery: Mobile.IDeviceDiscovery,
-		private $deviceLogProvider: EventEmitter,
+	constructor(private $deviceLogProvider: EventEmitter,
+		private $devicesService: Mobile.IDevicesService,
 		private $companionAppsService: ICompanionAppsService) {
 		super();
 
 		this.initialize();
+
 	}
 
 	private _companionAppIdentifiers: IDictionary<IStringDictionary>;
@@ -22,36 +21,15 @@ export class DeviceEmitter extends EventEmitter {
 	}
 
 	public initialize(): void {
-		this.$androidDeviceDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
+		this.$devicesService.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
 			this.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, device.deviceInfo);
-
 			this.attachApplicationChangedHandlers(device);
 
 			// await: Do not await as this will require to mark the lambda with async keyword, but there's no way to await the lambda itself.
 			device.openDeviceLogStream();
 		});
 
-		this.$androidDeviceDiscovery.on(DeviceDiscoveryEventNames.DEVICE_LOST, (device: Mobile.IDevice) => {
-			this.emit(DeviceDiscoveryEventNames.DEVICE_LOST, device.deviceInfo);
-		});
-
-		this.$iOSDeviceDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
-			this.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, device.deviceInfo);
-			this.attachApplicationChangedHandlers(device);
-			device.openDeviceLogStream();
-		});
-
-		this.$iOSDeviceDiscovery.on(DeviceDiscoveryEventNames.DEVICE_LOST, (device: Mobile.IDevice) => {
-			this.emit(DeviceDiscoveryEventNames.DEVICE_LOST, device.deviceInfo);
-		});
-
-		this.$iOSSimulatorDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
-			this.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, device.deviceInfo);
-			device.openDeviceLogStream();
-			this.attachApplicationChangedHandlers(device);
-		});
-
-		this.$iOSSimulatorDiscovery.on(DeviceDiscoveryEventNames.DEVICE_LOST, (device: Mobile.IDevice) => {
+		this.$devicesService.on(DeviceDiscoveryEventNames.DEVICE_LOST, (device: Mobile.IDevice) => {
 			this.emit(DeviceDiscoveryEventNames.DEVICE_LOST, device.deviceInfo);
 		});
 
