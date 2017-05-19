@@ -4,9 +4,10 @@ import * as assert from "assert";
 import * as constants from "../../constants";
 import { exported } from "../../decorators";
 import { settlePromises } from "../../helpers";
+import { EventEmitter } from "events";
 import { EOL } from "os";
 
-export class DevicesService implements Mobile.IDevicesService {
+export class DevicesService extends EventEmitter implements Mobile.IDevicesService {
 	private static DEVICE_LOOKING_INTERVAL = 200;
 	private _devices: IDictionary<Mobile.IDevice> = {};
 	private platforms: string[] = [];
@@ -37,6 +38,7 @@ export class DevicesService implements Mobile.IDevicesService {
 		private $options: ICommonOptions,
 		private $androidProcessService: Mobile.IAndroidProcessService,
 		private $processService: IProcessService) {
+		super();
 		this.attachToKnownDeviceDiscoveryEvents();
 		this._allDeviceDiscoveries = [this.$iOSDeviceDiscovery, this.$androidDeviceDiscovery, this.$iOSSimulatorDiscovery];
 	}
@@ -132,11 +134,13 @@ export class DevicesService implements Mobile.IDevicesService {
 	private onDeviceFound(device: Mobile.IDevice): void {
 		this.$logger.trace(`Found device with identifier '${device.deviceInfo.identifier}'`);
 		this._devices[device.deviceInfo.identifier] = device;
+		this.emit(constants.DeviceDiscoveryEventNames.DEVICE_FOUND, device);
 	}
 
 	private onDeviceLost(device: Mobile.IDevice): void {
 		this.$logger.trace(`Lost device with identifier '${device.deviceInfo.identifier}'`);
 		delete this._devices[device.deviceInfo.identifier];
+		this.emit(constants.DeviceDiscoveryEventNames.DEVICE_LOST, device);
 	}
 
 	/**
