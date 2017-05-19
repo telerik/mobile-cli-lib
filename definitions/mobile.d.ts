@@ -346,6 +346,10 @@ declare module Mobile {
 		 * If passed along with skipInferPlatform then the device detection interval will not be started but instead the currently attached devices will be detected.
 		 */
 		skipDeviceDetectionInterval?: boolean;
+		/**
+		 * Specifies whether this is a ForDevice build.
+		 */
+		isBuildForDevice?: boolean;
 	}
 
 	interface IDeviceActionResult<T> {

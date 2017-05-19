@@ -421,9 +421,13 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 		}
 
 		this.$logger.out("Searching for devices...");
-		await this.startEmulatorIfNecessary(data);
 
 		data = data || {};
+
+		if (!data.isBuildForDevice) {
+			await this.startEmulatorIfNecessary(data);
+		}
+
 		this._data = data;
 		let platform = data.platform;
 		let deviceOption = data.deviceId;
