@@ -22,7 +22,6 @@ export class AutoCompletionService implements IAutoCompletionService {
 	@cache()
 	private get shellProfiles(): string[] {
 		return [
-			this.getHomePath(".bash_profile"),
 			this.getHomePath(".bashrc"),
 			this.getHomePath(".zshrc") // zsh - http://www.acm.uiuc.edu/workshops/zsh/startup_files.html
 		];
