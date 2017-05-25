@@ -758,7 +758,7 @@ interface IIOSDeviceOperations extends IDisposable {
 
 	startLookingForDevices(deviceFoundCallback: DeviceInfoCallback, deviceLostCallback: DeviceInfoCallback): Promise<void>;
 
-	startDeviceLog(deviceIdentifier: string, printLogFunction: (data: string, deviceIdentifier: string) => void): void;
+	startDeviceLog(deviceIdentifier: string, printLogFunction: (response: IOSDeviceLib.IDeviceLogData) => void): void;
 
 	apps(deviceIdentifiers: string[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceAppInfo>;
 
