@@ -64,14 +64,14 @@ export class IOSDeviceOperations implements IIOSDeviceOperations, IDisposable {
 		}
 	}
 
-	public startDeviceLog(deviceIdentifier: string, printLogFunction: (data: string) => void): void {
+	public startDeviceLog(deviceIdentifier: string, printLogFunction: (response: IOSDeviceLib.IDeviceLogData) => void): void {
 		this.assertIsInitialized();
 		this.setShouldDispose(false);
 
 		this.$logger.trace(`Printing device log for device with identifier: ${deviceIdentifier}.`);
 
 		this.deviceLib.on("deviceLogData", (response: IOSDeviceLib.IDeviceLogData) => {
-			printLogFunction(response.message);
+			printLogFunction(response);
 		});
 
 		this.deviceLib.startDeviceLog([deviceIdentifier]);

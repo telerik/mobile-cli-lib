@@ -50,8 +50,10 @@ export class IOSDevice implements Mobile.IiOSDevice {
 
 	public async openDeviceLogStream(): Promise<void> {
 		if (this.deviceInfo.status !== constants.UNREACHABLE_STATUS) {
-			this.$iosDeviceOperations.startDeviceLog(this.deviceInfo.identifier, (data: string) => {
-				this.$deviceLogProvider.logData(data, this.$devicePlatformsConstants.iOS, this.deviceInfo.identifier);
+			this.$iosDeviceOperations.startDeviceLog(this.deviceInfo.identifier, (response: IOSDeviceLib.IDeviceLogData) => {
+				if (response.deviceId === this.deviceInfo.identifier) {
+					this.$deviceLogProvider.logData(response.message, this.$devicePlatformsConstants.iOS, this.deviceInfo.identifier);
+				}
 			});
 		}
 	}
