@@ -107,15 +107,6 @@ export abstract class ProjectBase implements Project.IProjectBase {
 			try {
 				this.projectData = this.getProjectData(projectFilePath);
 				this.validate();
-				let debugProjectFile = path.join(projectDir, this.$projectConstants.DEBUG_PROJECT_FILE_NAME);
-				if (this.$options.debug && !this.$fs.exists(debugProjectFile)) {
-					this.$fs.writeJson(debugProjectFile, {});
-				}
-
-				let releaseProjectFile = path.join(projectDir, this.$projectConstants.RELEASE_PROJECT_FILE_NAME);
-				if (this.$options.release && !this.$fs.exists(releaseProjectFile)) {
-					this.$fs.writeJson(releaseProjectFile, {});
-				}
 
 				_.each(this.$fs.enumerateFilesInDirectorySync(projectDir), (configProjectFile: string) => {
 					let configMatch = path.basename(configProjectFile).match(ProjectBase.CONFIGURATION_FROM_FILE_NAME_REGEX);
