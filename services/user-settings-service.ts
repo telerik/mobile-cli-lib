@@ -49,7 +49,7 @@ export class UserSettingsServiceBase implements IUserSettingsService {
 
 				this.$fs.writeFile(this.userSettingsFilePath, null);
 
-				// when running under 'sudo' we create the /.local/share dir with root as owner
+				// when running under 'sudo' we create the <path to home dir>/.local/share/.nativescript-cli dir with root as owner
 				// and other Applications cannot access this directory anymore. (bower/heroku/etc)
 				if (process.env.SUDO_USER) {
 					for (let dir of unexistingDirs) {
