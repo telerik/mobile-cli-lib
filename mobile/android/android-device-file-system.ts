@@ -51,6 +51,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	}
 
 	public async transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
+		// TODO: Do not start all promises simultaneously as this leads to error EMFILE on Windows for too many opened files. Use chunks (for example on 100).
 		await Promise.all(
 			_(localToDevicePaths)
 				.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).isFile())
@@ -106,9 +107,12 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		} else {
 			// Create or update file hashes on device
 			let oldShasums = await deviceHashService.getShasumsFromDevice();
+			console.log("OLD SHASUMS = ", JSON.stringify(oldShasums, null, 2));
+			console.log("current SHASUMS = ", JSON.stringify(currentShasums, null, 2));
 			if (oldShasums) {
 				let changedShasums: any = _.omitBy(currentShasums, (hash: string, pathToFile: string) => !!_.find(oldShasums, (oldHash: string, oldPath: string) => pathToFile === oldPath && hash === oldHash));
 				this.$logger.trace("Changed file hashes are:", changedShasums);
+				console.log("Changed file hashes are:", changedShasums);
 				filesToChmodOnDevice = [];
 				await Promise.all(
 					_(changedShasums)
