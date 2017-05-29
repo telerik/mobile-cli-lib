@@ -234,7 +234,7 @@ declare module Mobile {
 	interface IDeviceApplicationManager extends NodeJS.EventEmitter {
 		getInstalledApplications(): Promise<string[]>;
 		isApplicationInstalled(appIdentifier: string): Promise<boolean>;
-		installApplication(packageFilePath: string): Promise<void>;
+		installApplication(packageFilePath: string, appIdentifier: string): Promise<void>;
 		uninstallApplication(appIdentifier: string): Promise<void>;
 		reinstallApplication(appIdentifier: string, packageFilePath: string): Promise<void>;
 		startApplication(appIdentifier: string): Promise<void>;
