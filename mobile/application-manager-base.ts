@@ -13,7 +13,7 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 
 	public async reinstallApplication(appIdentifier: string, packageFilePath: string): Promise<void> {
 		await this.uninstallApplication(appIdentifier);
-		await this.installApplication(packageFilePath);
+		await this.installApplication(packageFilePath, appIdentifier);
 	}
 
 	public async restartApplication(appIdentifier: string, appName?: string): Promise<void> {
@@ -67,7 +67,7 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 
 	public abstract async isLiveSyncSupported(appIdentifier: string): Promise<boolean>;
 
-	public abstract async installApplication(packageFilePath: string): Promise<void>;
+	public abstract async installApplication(packageFilePath: string, appIdentifier?: string): Promise<void>;
 	public abstract async uninstallApplication(appIdentifier: string): Promise<void>;
 	public abstract async startApplication(appIdentifier: string): Promise<void>;
 	public abstract async stopApplication(appIdentifier: string, appName?: string): Promise<void>;
