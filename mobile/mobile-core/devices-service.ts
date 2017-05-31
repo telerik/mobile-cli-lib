@@ -308,12 +308,15 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 					result.push({ deviceIdentifier: device.deviceInfo.identifier, result: await action(device) });
 				}
 			} catch (err) {
+				err.deviceIdentifier = device.deviceInfo.identifier;
 				errors.push(err);
 			}
 		}
 
 		if (errors.length) {
-			throw new Error(`Multiple errors were thrown:${EOL}${errors.map(e => e.message || e).join(EOL)}`);
+			let singleError = new Error(`Multiple errors were thrown:${EOL}${errors.map(e => e.message || e).join(EOL)}`);
+			(<any>singleError).allErrors = errors;
+			throw singleError;
 		}
 
 		return result;
