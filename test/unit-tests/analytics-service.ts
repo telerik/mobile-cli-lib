@@ -348,41 +348,6 @@ describe("analytics-service", () => {
 			assert.isTrue(isEqatecStopCalled);
 		});
 
-		it("tracks that user had disabled feature tracking", async () => {
-			let testInjector = createTestInjector(baseTestScenario);
-			service = testInjector.resolve("analyticsService");
-			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
-			await service.setStatus(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, false);
-			assert.isTrue(savedSettingNamesAndValues.indexOf(`${staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME}.false`) !== -1);
-			assert.isTrue(trackedFeatureNamesAndValues.indexOf(`${staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME}.disabled`) !== -1);
-		});
-
-		it("tracks that user had enabled feature tracking", async () => {
-			let testInjector = createTestInjector(baseTestScenario);
-			service = testInjector.resolve("analyticsService");
-			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
-			await service.setStatus(staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, true);
-			assert.isTrue(savedSettingNamesAndValues.indexOf(`${staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME}.true`) !== -1);
-			assert.isTrue(trackedFeatureNamesAndValues.indexOf(`${staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME}.enabled`) !== -1);
-		});
-
-		it("tracks that user had disabled exceptions tracking", async () => {
-			let testInjector = createTestInjector(baseTestScenario);
-			service = testInjector.resolve("analyticsService");
-			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
-			await service.setStatus(staticConfig.ERROR_REPORT_SETTING_NAME, false);
-			assert.isTrue(savedSettingNamesAndValues.indexOf(`${staticConfig.ERROR_REPORT_SETTING_NAME}.false`) !== -1);
-			assert.isTrue(trackedFeatureNamesAndValues.indexOf(`${staticConfig.ERROR_REPORT_SETTING_NAME}.disabled`) !== -1);
-		});
-
-		it("tracks that user had enabled exceptions tracking", async () => {
-			let testInjector = createTestInjector(baseTestScenario);
-			service = testInjector.resolve("analyticsService");
-			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
-			await service.setStatus(staticConfig.ERROR_REPORT_SETTING_NAME, true);
-			assert.isTrue(savedSettingNamesAndValues.indexOf(`${staticConfig.ERROR_REPORT_SETTING_NAME}.true`) !== -1);
-			assert.isTrue(trackedFeatureNamesAndValues.indexOf(`${staticConfig.ERROR_REPORT_SETTING_NAME}.enabled`) !== -1);
-		});
 	});
 
 	describe("getStatusMessage", () => {
@@ -447,6 +412,17 @@ describe("analytics-service", () => {
 			assert.isTrue(savedSettingNamesAndValues.indexOf(`${staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME}.true`) !== -1);
 		});
 
+		it("enables exception tracking when user confirms feature tracking and exception tracking is not set before that", async () => {
+			baseTestScenario.featureTracking = undefined;
+			baseTestScenario.exceptionsTracking = undefined;
+			baseTestScenario.prompterConfirmResult = true;
+			let testInjector = createTestInjector(baseTestScenario);
+			service = testInjector.resolve("analyticsService");
+			await service.checkConsent();
+			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
+			assert.isTrue(savedSettingNamesAndValues.indexOf(`${staticConfig.ERROR_REPORT_SETTING_NAME}.true`) !== -1);
+		});
+
 		it("disables feature tracking user confirms", async () => {
 			baseTestScenario.featureTracking = undefined;
 			baseTestScenario.prompterConfirmResult = false;
@@ -458,17 +434,31 @@ describe("analytics-service", () => {
 			assert.isTrue(savedSettingNamesAndValues.indexOf(`${staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME}.false`) !== -1);
 		});
 
-		it("enables exception tracking when it is not set", async () => {
-			baseTestScenario.featureTracking = false;
+		it("disables exception tracking when user rejects feature tracking and exception tracking is not set before that", async () => {
+			baseTestScenario.featureTracking = undefined;
 			baseTestScenario.exceptionsTracking = undefined;
+			baseTestScenario.prompterConfirmResult = false;
+
 			let testInjector = createTestInjector(baseTestScenario);
 			service = testInjector.resolve("analyticsService");
 			await service.checkConsent();
 			let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
-			assert.isTrue(savedSettingNamesAndValues.indexOf(`${staticConfig.ERROR_REPORT_SETTING_NAME}.true`) !== -1);
+			assert.isTrue(savedSettingNamesAndValues.indexOf(`${staticConfig.ERROR_REPORT_SETTING_NAME}.false`) !== -1);
 		});
 
-		it("do nothing when exception and feature tracking are already set", async () => {
+		[false, true].forEach(featureTrackingValue => {
+			it(`sets exception tracking to feature tracking's value when the first one is not set, but feature tracking is set to ${featureTrackingValue}`, async () => {
+				baseTestScenario.featureTracking = featureTrackingValue;
+				baseTestScenario.exceptionsTracking = undefined;
+				let testInjector = createTestInjector(baseTestScenario);
+				service = testInjector.resolve("analyticsService");
+				await service.checkConsent();
+				let staticConfig: Config.IStaticConfig = testInjector.resolve("staticConfig");
+				assert.isTrue(savedSettingNamesAndValues.indexOf(`${staticConfig.ERROR_REPORT_SETTING_NAME}.${featureTrackingValue}`) !== -1);
+			});
+		});
+
+		it("does nothing when exception and feature tracking are already set", async () => {
 			baseTestScenario.featureTracking = baseTestScenario.exceptionsTracking = true;
 			let testInjector = createTestInjector(baseTestScenario);
 			service = testInjector.resolve("analyticsService");
@@ -476,8 +466,17 @@ describe("analytics-service", () => {
 			assert.deepEqual(savedSettingNamesAndValues, "");
 		});
 
-		it("do nothing when cannot make request", async () => {
+		it("does nothing when cannot make request", async () => {
 			baseTestScenario.canDoRequest = false;
+			baseTestScenario.featureTracking = baseTestScenario.exceptionsTracking = undefined;
+			let testInjector = createTestInjector(baseTestScenario);
+			service = testInjector.resolve("analyticsService");
+			await service.checkConsent();
+			assert.deepEqual(savedSettingNamesAndValues, "");
+		});
+
+		it("does nothing when values are not set and console is not interactive", async () => {
+			baseTestScenario.isInteractive = false;
 			baseTestScenario.featureTracking = baseTestScenario.exceptionsTracking = undefined;
 			let testInjector = createTestInjector(baseTestScenario);
 			service = testInjector.resolve("analyticsService");
