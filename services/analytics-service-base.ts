@@ -26,6 +26,9 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 
 	public async checkConsent(): Promise<void> {
 		if (await this.$analyticsSettingsService.canDoRequest()) {
+			const initialTrackFeatureUsageStatus = await this.getStatus(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME);
+			let trackFeatureUsage = initialTrackFeatureUsageStatus === AnalyticsStatus.enabled;
+
 			if (await this.isNotConfirmed(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME) && helpers.isInteractive()) {
 				this.$logger.out("Do you want to help us improve "
 					+ this.$analyticsSettingsService.getClientName()
@@ -33,19 +36,16 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 					+ " You can read our official Privacy Policy at");
 				let message = this.$analyticsSettingsService.getPrivacyPolicyLink();
 
-				let trackFeatureUsage = await this.$prompter.confirm(message, () => true);
-				await this.setStatus(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, trackFeatureUsage, true);
-				if (!trackFeatureUsage) {
-					// In case user selects to disable feature tracking, disable the exceptions reporting as well.
-					await this.setStatus(this.$staticConfig.ERROR_REPORT_SETTING_NAME, trackFeatureUsage, true);
-				}
+				trackFeatureUsage = await this.$prompter.confirm(message, () => true);
+				await this.setStatus(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, trackFeatureUsage);
 
 				await this.checkConsentCore(trackFeatureUsage);
 			}
 
-			if (await this.isNotConfirmed(this.$staticConfig.ERROR_REPORT_SETTING_NAME)) {
-				this.$logger.out(`Error reporting will be enabled. You can disable it by running '$ ${this.$staticConfig.CLIENT_NAME.toLowerCase()} error-reporting disable'.`);
-				await this.setStatus(this.$staticConfig.ERROR_REPORT_SETTING_NAME, true);
+			const isErrorReportingUnset = await this.isNotConfirmed(this.$staticConfig.ERROR_REPORT_SETTING_NAME);
+			const isUsageReportingConfirmed = !await this.isNotConfirmed(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME);
+			if (isErrorReportingUnset && isUsageReportingConfirmed) {
+				await this.setStatus(this.$staticConfig.ERROR_REPORT_SETTING_NAME, trackFeatureUsage);
 			}
 		}
 	}
@@ -88,13 +88,9 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 		}
 	}
 
-	public async setStatus(settingName: string, enabled: boolean, doNotTrackSetting?: boolean): Promise<void> {
+	public async setStatus(settingName: string, enabled: boolean): Promise<void> {
 		this.analyticsStatuses[settingName] = enabled ? AnalyticsStatus.enabled : AnalyticsStatus.disabled;
 		await this.$userSettingsService.saveSetting(settingName, enabled.toString());
-
-		if (!doNotTrackSetting) {
-			await this.trackFeatureCore(`${settingName}.${enabled ? "enabled" : "disabled"}`);
-		}
 
 		if (this.analyticsStatuses[settingName] === AnalyticsStatus.disabled
 			&& this.analyticsStatuses[settingName] === AnalyticsStatus.disabled) {
@@ -148,7 +144,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 	}
 
 	private async getStatus(settingName: string): Promise<AnalyticsStatus> {
-		if (!this.analyticsStatuses[settingName]) {
+		if (!_.has(this.analyticsStatuses, settingName)) {
 			let settingValue = await this.$userSettingsService.getSettingValue<string>(settingName);
 
 			if (settingValue) {
