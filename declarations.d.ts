@@ -505,7 +505,7 @@ interface IAnalyticsService {
 	checkConsent(): Promise<void>;
 	trackFeature(featureName: string): Promise<void>;
 	trackException(exception: any, message: string): Promise<void>;
-	setStatus(settingName: string, enabled: boolean, doNotTrackSetting?: boolean): Promise<void>;
+	setStatus(settingName: string, enabled: boolean): Promise<void>;
 	getStatusMessage(settingName: string, jsonFormat: boolean, readableSettingName: string): Promise<string>;
 	isEnabled(settingName: string): Promise<boolean>;
 	track(featureName: string, featureValue: string): Promise<void>;
