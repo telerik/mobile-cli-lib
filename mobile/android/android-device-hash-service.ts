@@ -65,6 +65,8 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 				_.map(localToDevicePaths, async ldp => {
 					let localPath = ldp.getLocalPath();
 					if (this.$fs.getFsStats(localPath).isFile()) {
+						// TODO: Use relative to project path for key
+						// This will speed up livesync on the same device for the same project on different PCs.
 						oldShasums[localPath] = await this.$fs.getFileShasum(localPath);
 					}
 				})

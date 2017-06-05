@@ -51,7 +51,8 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	}
 
 	public async transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
-		// TODO: Do not start all promises simultaneously as this leads to error EMFILE on Windows for too many opened files. Use chunks (for example on 100).
+		// TODO: Do not start all promises simultaneously as this leads to error EMFILE on Windows for too many opened files.
+		// Use chunks (for example on 100).
 		await Promise.all(
 			_(localToDevicePaths)
 				.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).isFile())
