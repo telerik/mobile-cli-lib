@@ -85,6 +85,14 @@ declare module Mobile {
 		activeArchitecture?: string;
 	}
 
+	interface IDeviceError extends Error {
+		deviceIdentifier: string;
+	}
+
+	interface IDevicesOperationError extends Error {
+		allErrors: IDeviceError[];
+	}
+
 	interface IDevice {
 		deviceInfo: Mobile.IDeviceInfo;
 		applicationManager: Mobile.IDeviceApplicationManager;
@@ -794,3 +802,4 @@ type IOSDeviceResponse = IDictionary<IOSDeviceLib.IDeviceResponse[]>;
 type IOSDeviceMultipleResponse = IDictionary<IOSDeviceLib.IDeviceMultipleResponse[]>;
 
 type IOSDeviceAppInfo = IDictionary<IOSDeviceLib.IDeviceAppInfo[]>;
+

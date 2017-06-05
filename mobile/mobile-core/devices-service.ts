@@ -301,14 +301,13 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 		let sortedDevices = _.sortBy(devices, device => device.deviceInfo.platform);
 		const result: Mobile.IDeviceActionResult<T>[] = [];
 
-		let errors: Error[] = [];
+		let errors: Mobile.IDeviceError[] = [];
 		for (let device of sortedDevices) {
 			try {
 				if (!canExecute || canExecute(device)) {
 					result.push({ deviceIdentifier: device.deviceInfo.identifier, result: await action(device) });
 				}
 			} catch (err) {
-				console.log("err:", err.stack);
 				err.deviceIdentifier = device.deviceInfo.identifier;
 				errors.push(err);
 			}
@@ -319,8 +318,9 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 			if (errors.length > 1) {
 				preErrorMsg = "Multiple errors were thrown:" + EOL;
 			}
-			let singleError = new Error(`${preErrorMsg}${errors.map(e => e.message || e).join(EOL)}`);
-			(<any>singleError).allErrors = errors;
+
+			let singleError = <Mobile.IDevicesOperationError>(new Error(`${preErrorMsg}${errors.map(e => e.message || e).join(EOL)}`));
+			singleError.allErrors = errors;
 			throw singleError;
 		}
 
