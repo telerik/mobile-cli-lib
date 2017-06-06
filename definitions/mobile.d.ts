@@ -113,6 +113,17 @@ declare module Mobile {
 
 	interface IiOSSimulator extends IDevice { }
 
+	interface IDeviceProjectRootOptions {
+		appIdentifier: string;
+		syncAllFiles?: boolean;
+		watch?: boolean;
+	}
+
+	interface IDevicePathProvider {
+		getDeviceBuildInfoDirname(device: Mobile.IDevice, appIdentifier: string): Promise<string>;
+		getDeviceProjectRootPath(device: Mobile.IDevice, options: Mobile.IDeviceProjectRootOptions): Promise<string>;
+	}
+
 	interface IDeviceAppData {
 		appIdentifier: string;
 		device: Mobile.IDevice;

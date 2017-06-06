@@ -114,12 +114,12 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 				filesToChmodOnDevice = [];
 				await Promise.all(
 					_(changedShasums)
-					.map((hash: string, filePath: string) => _.find(localToDevicePaths, ldp => ldp.getLocalPath() === filePath))
-					.map(localToDevicePathData => {
-						filesToChmodOnDevice.push(`"${localToDevicePathData.getDevicePath()}"`);
-						return this.transferFile(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath());
-					})
-					.value()
+						.map((hash: string, filePath: string) => _.find(localToDevicePaths, ldp => ldp.getLocalPath() === filePath))
+						.map(localToDevicePathData => {
+							filesToChmodOnDevice.push(`"${localToDevicePathData.getDevicePath()}"`);
+							return this.transferFile(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath());
+						})
+						.value()
 				);
 			} else {
 				await this.adb.executeCommand(["push", projectFilesPath, await deviceAppData.getDeviceProjectRootPath()]);
@@ -161,7 +161,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 
 	private getDeviceHashService(appIdentifier: string): Mobile.IAndroidDeviceHashService {
 		if (!this._deviceHashServices[appIdentifier]) {
-			this._deviceHashServices[appIdentifier] = this.$injector.resolve(AndroidDeviceHashService, { adb: this.adb, appIdentifier: appIdentifier });
+			this._deviceHashServices[appIdentifier] = this.$injector.resolve(AndroidDeviceHashService, { adb: this.adb, appIdentifier });
 		}
 
 		return this._deviceHashServices[appIdentifier];

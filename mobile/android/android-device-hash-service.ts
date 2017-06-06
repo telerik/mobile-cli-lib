@@ -1,25 +1,20 @@
 import * as path from "path";
 import * as temp from "temp";
+import { cache } from "../../decorators";
 
 export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashService {
 	private static HASH_FILE_NAME = "hashes";
 	private static DEVICE_ROOT_PATH = "/data/local/tmp";
 
-	private _hashFileDevicePath: string = null;
-	private _hashFileLocalPath: string = null;
-	private _tempDir: string = null;
-
 	constructor(private adb: Mobile.IDeviceAndroidDebugBridge,
 		private appIdentifier: string,
 		private $fs: IFileSystem,
-		private $mobileHelper: Mobile.IMobileHelper) { }
+		private $mobileHelper: Mobile.IMobileHelper) {
+	}
 
+	@cache()
 	public get hashFileDevicePath(): string {
-		if (!this._hashFileDevicePath) {
-			this._hashFileDevicePath = this.$mobileHelper.buildDevicePath(AndroidDeviceHashService.DEVICE_ROOT_PATH, this.appIdentifier, AndroidDeviceHashService.HASH_FILE_NAME);
-		}
-
-		return this._hashFileDevicePath;
+		return this.$mobileHelper.buildDevicePath(AndroidDeviceHashService.DEVICE_ROOT_PATH, this.appIdentifier, AndroidDeviceHashService.HASH_FILE_NAME);
 	}
 
 	public async doesShasumFileExistsOnDevice(): Promise<boolean> {
@@ -91,21 +86,15 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 		return false;
 	}
 
+	@cache()
 	private get hashFileLocalPath(): string {
-		if (!this._hashFileLocalPath) {
-			this._hashFileLocalPath = path.join(this.tempDir, AndroidDeviceHashService.HASH_FILE_NAME);
-		}
-
-		return this._hashFileLocalPath;
+		return path.join(this.tempDir, AndroidDeviceHashService.HASH_FILE_NAME);
 	}
 
+	@cache()
 	private get tempDir(): string {
-		if (!this._tempDir) {
-			temp.track();
-			this._tempDir = temp.mkdirSync(`android-device-hash-service-${this.appIdentifier}`);
-		}
-
-		return this._tempDir;
+		temp.track();
+		return temp.mkdirSync(`android-device-hash-service-${this.appIdentifier}`);
 	}
 
 	private async downloadHashFileFromDevice(): Promise<string> {
