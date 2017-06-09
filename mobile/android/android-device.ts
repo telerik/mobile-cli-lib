@@ -87,7 +87,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 	}
 
 	public get isEmulator(): boolean {
-		return this.deviceInfo.type === "Emulator";
+		return this.deviceInfo.type === constants.DeviceTypes.Emulator;
 	}
 
 	public async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
@@ -146,9 +146,9 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 	private async getType(): Promise<string> {
 		let runningEmulators = await this.$androidEmulatorServices.getAllRunningEmulators();
 		if (_.includes(runningEmulators, this.identifier)) {
-			return "Emulator";
+			return constants.DeviceTypes.Emulator;
 		}
 
-		return "Device";
+		return constants.DeviceTypes.Device;
 	}
 }

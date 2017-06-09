@@ -6,6 +6,11 @@ export class ProvisionType {
 	static Enterprise = "Enterprise";
 }
 
+export class DeviceTypes {
+	static Emulator = "Emulator";
+	static Device = "Device";
+}
+
 export const APP_RESOURCES_FOLDER_NAME = "App_Resources";
 
 export const ERROR_NO_DEVICES = "Cannot find connected devices. Reconnect any connected devices, verify that your system recognizes them, and run this command again.";
