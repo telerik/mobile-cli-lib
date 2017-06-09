@@ -1,5 +1,6 @@
 import * as path from "path";
 import { annotate, isPromise } from "./helpers";
+import { ERROR_NO_VALID_SUBCOMMAND_FORMAT } from "./constants";
 
 let indent = "";
 function trace(formatStr: string, ...args: any[]) {
@@ -266,7 +267,7 @@ export class Yok implements IInjector {
 					}
 
 					let errors = $injector.resolve("errors");
-					errors.fail("The input is not valid sub-command for '%s' command", commandName);
+					errors.fail(ERROR_NO_VALID_SUBCOMMAND_FORMAT, commandName);
 				}
 
 				return true;
