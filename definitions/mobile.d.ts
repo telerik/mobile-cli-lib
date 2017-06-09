@@ -784,7 +784,7 @@ interface IIOSDeviceOperations extends IDisposable {
 
 	stop(stopArray: IOSDeviceLib.IDdiApplicationData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
 
-	postNotification(postNotificatioNArray: IOSDeviceLib.IPostNotificationData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
+	postNotification(postNotificationArray: IOSDeviceLib.IPostNotificationData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
 
 	awaitNotificationResponse(awaitNotificationResponseArray: IOSDeviceLib.IAwaitNotificatioNResponseData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
 
