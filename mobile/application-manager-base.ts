@@ -22,37 +22,45 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 	}
 
 	public async isApplicationInstalled(appIdentifier: string): Promise<boolean> {
-		if (!this.lastInstalledAppIdentifiers || !this.lastInstalledAppIdentifiers.length) {
-			await this.checkForApplicationUpdates();
-		}
-
+		await this.checkForApplicationUpdates();
 		return _.includes(this.lastInstalledAppIdentifiers, appIdentifier);
 	}
 
-	private isChecking = false;
+	private checkForApplicationUpdatesPromise: Promise<void>;
 	public async checkForApplicationUpdates(): Promise<void> {
-		// As this method is called on 500ms, but it's execution may last much longer
-		// use locking, so the next executions will not get into the body, while the first one is still working.
-		// In case we do not break the next executions, we'll report each app as newly installed several times.
-		if (!this.isChecking) {
-			try {
-				this.isChecking = true;
-				let currentlyInstalledAppIdentifiers = await this.getInstalledApplications();
-				let previouslyInstalledAppIdentifiers = this.lastInstalledAppIdentifiers || [];
+		if (!this.checkForApplicationUpdatesPromise) {
+			this.checkForApplicationUpdatesPromise = new Promise<void>(async (resolve, reject) => {
+				let isFulfilled = false;
+				// As this method is called on 500ms, but it's execution may last much longer
+				// use locking, so the next executions will not get into the body, while the first one is still working.
+				// In case we do not break the next executions, we'll report each app as newly installed several times.
+				try {
+					let currentlyInstalledAppIdentifiers = await this.getInstalledApplications();
+					let previouslyInstalledAppIdentifiers = this.lastInstalledAppIdentifiers || [];
 
-				let newAppIdentifiers = _.difference(currentlyInstalledAppIdentifiers, previouslyInstalledAppIdentifiers);
-				let removedAppIdentifiers = _.difference(previouslyInstalledAppIdentifiers, currentlyInstalledAppIdentifiers);
+					let newAppIdentifiers = _.difference(currentlyInstalledAppIdentifiers, previouslyInstalledAppIdentifiers);
+					let removedAppIdentifiers = _.difference(previouslyInstalledAppIdentifiers, currentlyInstalledAppIdentifiers);
 
-				this.lastInstalledAppIdentifiers = currentlyInstalledAppIdentifiers;
+					this.lastInstalledAppIdentifiers = currentlyInstalledAppIdentifiers;
 
-				_.each(newAppIdentifiers, appIdentifier => this.emit("applicationInstalled", appIdentifier));
-				_.each(removedAppIdentifiers, appIdentifier => this.emit("applicationUninstalled", appIdentifier));
+					_.each(newAppIdentifiers, appIdentifier => this.emit("applicationInstalled", appIdentifier));
+					_.each(removedAppIdentifiers, appIdentifier => this.emit("applicationUninstalled", appIdentifier));
 
-				await this.checkForAvailableDebuggableAppsChanges();
-			} finally {
-				this.isChecking = false;
-			}
+					await this.checkForAvailableDebuggableAppsChanges();
+				} catch (err) {
+					isFulfilled = true;
+					reject(err);
+				} finally {
+					this.checkForApplicationUpdatesPromise = null;
+
+					if (!isFulfilled) {
+						resolve();
+					}
+				}
+			});
 		}
+
+		return this.checkForApplicationUpdatesPromise;
 	}
 
 	public async tryStartApplication(appIdentifier: string): Promise<void> {
