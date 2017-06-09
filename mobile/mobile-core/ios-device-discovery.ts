@@ -23,13 +23,13 @@ export class IOSDeviceDiscovery extends DeviceDiscovery {
 		return !this._iTunesErrorMessage;
 	}
 
-	public async startLookingForDevices(): Promise<void> {
+	public async startLookingForDevices(options?: Mobile.IDeviceLookingOptions): Promise<void> {
 		if (this.validateiTunes()) {
 			await this.$iosDeviceOperations.startLookingForDevices((deviceInfo: IOSDeviceLib.IDeviceActionInfo) => {
 				this.createAndAddDevice(deviceInfo);
 			}, (deviceInfo: IOSDeviceLib.IDeviceActionInfo) => {
 				this.removeDevice(deviceInfo.deviceId);
-			});
+			}, options);
 		}
 	}
 

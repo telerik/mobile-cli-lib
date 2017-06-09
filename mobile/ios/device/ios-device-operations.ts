@@ -30,7 +30,7 @@ export class IOSDeviceOperations implements IIOSDeviceOperations, IDisposable {
 	}
 
 	@cache()
-	public async startLookingForDevices(deviceFoundCallback: DeviceInfoCallback, deviceLostCallback: DeviceInfoCallback): Promise<void> {
+	public async startLookingForDevices(deviceFoundCallback: DeviceInfoCallback, deviceLostCallback: DeviceInfoCallback, options?: Mobile.IDeviceLookingOptions): Promise<void> {
 		this.$logger.trace("Starting to look for iOS devices.");
 		this.isInitialized = true;
 		if (!this.deviceLib) {
@@ -42,6 +42,9 @@ export class IOSDeviceOperations implements IIOSDeviceOperations, IDisposable {
 			};
 
 			this.deviceLib = new IOSDeviceLibModule(wrappedDeviceFoundCallback, deviceLostCallback);
+			if (options && options.shouldReturnImmediateResult) {
+				return;
+			}
 
 			// We need this because we need to make sure that we have devices.
 			await new Promise((resolve, reject) => {
