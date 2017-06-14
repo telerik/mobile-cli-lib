@@ -314,7 +314,7 @@ declare module Mobile {
 	}
 
 	interface IDeviceDiscovery extends NodeJS.EventEmitter {
-		startLookingForDevices(platform?: string): Promise<void>;
+		startLookingForDevices(options?: IDeviceLookingOptions): Promise<void>;
 		checkForDevices(): Promise<void>;
 	}
 
@@ -626,6 +626,11 @@ declare module Mobile {
 		resolveProductName(deviceType: string): string;
 	}
 
+	interface IDeviceLookingOptions {
+		shouldReturnImmediateResult: boolean;
+		platform: string
+	}
+
 	interface IAndroidDeviceHashService {
 		/**
 		 * Returns the hash file path on device
@@ -756,7 +761,7 @@ interface IIOSDeviceOperations extends IDisposable {
 
 	uninstall(appIdentifier: string, deviceIdentifiers: string[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
 
-	startLookingForDevices(deviceFoundCallback: DeviceInfoCallback, deviceLostCallback: DeviceInfoCallback): Promise<void>;
+	startLookingForDevices(deviceFoundCallback: DeviceInfoCallback, deviceLostCallback: DeviceInfoCallback, options?: Mobile.IDeviceLookingOptions): Promise<void>;
 
 	startDeviceLog(deviceIdentifier: string, printLogFunction: (response: IOSDeviceLib.IDeviceLogData) => void): void;
 

@@ -146,10 +146,10 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 	/**
 	 * Starts looking for devices. Any found devices are pushed to "_devices" variable.
 	 */
-	public async detectCurrentlyAttachedDevices(): Promise<void> {
+	public async detectCurrentlyAttachedDevices(options?: Mobile.IDeviceLookingOptions): Promise<void> {
 		for (const deviceDiscovery of this._allDeviceDiscoveries) {
 			try {
-				await deviceDiscovery.startLookingForDevices();
+				await deviceDiscovery.startLookingForDevices(options);
 			} catch (err) {
 				this.$logger.trace("Error while checking for devices.", err);
 			}
@@ -217,10 +217,10 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 	/**
 	 * Starts looking for running devices. All found devices are pushed to _devices variable.
 	 */
-	private async startLookingForDevices(): Promise<void> {
+	private async startLookingForDevices(options?: Mobile.IDeviceLookingOptions): Promise<void> {
 		this.$logger.trace("startLookingForDevices; platform is %s", this._platform);
 		if (!this._platform) {
-			await this.detectCurrentlyAttachedDevices();
+			await this.detectCurrentlyAttachedDevices(options);
 			await this.startDeviceDetectionInterval();
 		} else {
 			if (this.$mobileHelper.isiOSPlatform(this._platform)) {
@@ -232,7 +232,7 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 
 			for (const deviceDiscovery of this._otherDeviceDiscoveries) {
 				try {
-					await deviceDiscovery.startLookingForDevices(this._platform);
+					await deviceDiscovery.startLookingForDevices(options);
 				} catch (err) {
 					this.$logger.trace("Error while checking for new devices.", err);
 				}
@@ -451,7 +451,7 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 				if (data.skipDeviceDetectionInterval) {
 					await this.detectCurrentlyAttachedDevices();
 				} else {
-					await this.startLookingForDevices();
+					await this.startLookingForDevices({ shouldReturnImmediateResult: true, platform: this._platform });
 				}
 			} else {
 				await this.detectCurrentlyAttachedDevices();
