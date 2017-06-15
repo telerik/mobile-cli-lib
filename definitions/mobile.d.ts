@@ -85,6 +85,14 @@ declare module Mobile {
 		activeArchitecture?: string;
 	}
 
+	interface IDeviceError extends Error {
+		deviceIdentifier: string;
+	}
+
+	interface IDevicesOperationError extends Error {
+		allErrors: IDeviceError[];
+	}
+
 	interface IDevice {
 		deviceInfo: Mobile.IDeviceInfo;
 		applicationManager: Mobile.IDeviceApplicationManager;
@@ -234,7 +242,7 @@ declare module Mobile {
 	interface IDeviceApplicationManager extends NodeJS.EventEmitter {
 		getInstalledApplications(): Promise<string[]>;
 		isApplicationInstalled(appIdentifier: string): Promise<boolean>;
-		installApplication(packageFilePath: string): Promise<void>;
+		installApplication(packageFilePath: string, appIdentifier?: string): Promise<void>;
 		uninstallApplication(appIdentifier: string): Promise<void>;
 		reinstallApplication(appIdentifier: string, packageFilePath: string): Promise<void>;
 		startApplication(appIdentifier: string): Promise<void>;
@@ -781,7 +789,7 @@ interface IIOSDeviceOperations extends IDisposable {
 
 	stop(stopArray: IOSDeviceLib.IDdiApplicationData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
 
-	postNotification(postNotificatioNArray: IOSDeviceLib.IPostNotificationData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
+	postNotification(postNotificationArray: IOSDeviceLib.IPostNotificationData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
 
 	awaitNotificationResponse(awaitNotificationResponseArray: IOSDeviceLib.IAwaitNotificatioNResponseData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
 
@@ -799,3 +807,4 @@ type IOSDeviceResponse = IDictionary<IOSDeviceLib.IDeviceResponse[]>;
 type IOSDeviceMultipleResponse = IDictionary<IOSDeviceLib.IDeviceMultipleResponse[]>;
 
 type IOSDeviceAppInfo = IDictionary<IOSDeviceLib.IDeviceAppInfo[]>;
+

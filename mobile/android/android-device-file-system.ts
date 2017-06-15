@@ -51,6 +51,8 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	}
 
 	public async transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
+		// TODO: Do not start all promises simultaneously as this leads to error EMFILE on Windows for too many opened files.
+		// Use chunks (for example on 100).
 		await Promise.all(
 			_(localToDevicePaths)
 				.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).isFile())
@@ -112,12 +114,12 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 				filesToChmodOnDevice = [];
 				await Promise.all(
 					_(changedShasums)
-					.map((hash: string, filePath: string) => _.find(localToDevicePaths, ldp => ldp.getLocalPath() === filePath))
-					.map(localToDevicePathData => {
-						filesToChmodOnDevice.push(`"${localToDevicePathData.getDevicePath()}"`);
-						return this.transferFile(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath());
-					})
-					.value()
+						.map((hash: string, filePath: string) => _.find(localToDevicePaths, ldp => ldp.getLocalPath() === filePath))
+						.map(localToDevicePathData => {
+							filesToChmodOnDevice.push(`"${localToDevicePathData.getDevicePath()}"`);
+							return this.transferFile(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath());
+						})
+						.value()
 				);
 			} else {
 				await this.adb.executeCommand(["push", projectFilesPath, await deviceAppData.getDeviceProjectRootPath()]);
@@ -159,7 +161,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 
 	private getDeviceHashService(appIdentifier: string): Mobile.IAndroidDeviceHashService {
 		if (!this._deviceHashServices[appIdentifier]) {
-			this._deviceHashServices[appIdentifier] = this.$injector.resolve(AndroidDeviceHashService, { adb: this.adb, appIdentifier: appIdentifier });
+			this._deviceHashServices[appIdentifier] = this.$injector.resolve(AndroidDeviceHashService, { adb: this.adb, appIdentifier });
 		}
 
 		return this._deviceHashServices[appIdentifier];

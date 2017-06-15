@@ -9,6 +9,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		protected $hooksService: IHooksService,
 		private device: Mobile.IDevice,
 		private $errors: IErrors,
+		private $iOSNotificationService: IiOSNotificationService,
 		private $hostInfo: IHostInfo,
 		private $staticConfig: Config.IStaticConfig,
 		private $iosDeviceOperations: IIOSDeviceOperations,
@@ -92,8 +93,13 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async restartApplication(applicationId: string, appName?: string): Promise<void> {
-		await this.stopApplication(applicationId, appName);
-		await this.runApplicationCore(applicationId);
+		try {
+			await this.stopApplication(applicationId, appName);
+			await this.runApplicationCore(applicationId);
+		} catch (err) {
+			await this.$iOSNotificationService.postNotification(this.device.deviceInfo.identifier, `${applicationId}:NativeScript.LiveSync.RestartApplication`);
+			throw err;
+		}
 	}
 
 	private async runApplicationCore(appIdentifier: string): Promise<void> {

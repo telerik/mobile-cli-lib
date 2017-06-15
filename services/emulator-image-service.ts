@@ -1,4 +1,5 @@
 import { createTable } from "../helpers";
+import { DeviceTypes } from "../constants";
 
 //todo: plamen5kov: moved most of emulator-service here as a temporary solution untill after 3.0-RC
 export class EmulatorImageService implements Mobile.IEmulatorImageService {
@@ -27,7 +28,7 @@ export class EmulatorImageService implements Mobile.IEmulatorImageService {
 						name: device.deviceInfo.displayName,
 						version: device.deviceInfo.version,
 						platform: "Android",
-						type: "emulator",
+						type: DeviceTypes.Emulator,
 						isRunning: true
 					};
 				}
@@ -107,7 +108,7 @@ export class EmulatorImageService implements Mobile.IEmulatorImageService {
 		const androidVirtualDevices: Mobile.IAvdInfo[] = this.$androidEmulatorServices.getAvds().map(avd => this.$androidEmulatorServices.getInfoFromAvd(avd));
 
 		const emulators: Mobile.IEmulatorInfo[] = _.map(androidVirtualDevices, avd => {
-			return { name: avd.device, version: avd.target, id: avd.name, platform: "Android", type: "Emulator", isRunning: false };
+			return { name: avd.device, version: avd.target, id: avd.name, platform: "Android", type: DeviceTypes.Emulator, isRunning: false };
 		});
 
 		return emulators;

@@ -87,6 +87,7 @@ export class HooksService implements IHooksService {
 	}
 
 	private async executeHooksInDirectory(directoryPath: string, hookName: string, hookArguments?: IDictionary<any>): Promise<void> {
+		hookArguments = hookArguments || {};
 		let hooks = this.getHooksByName(directoryPath, hookName);
 		for (let i = 0; i < hooks.length; ++i) {
 			const hook = hooks[i];
@@ -112,6 +113,16 @@ export class HooksService implements IHooksService {
 				if (invalidArguments.length) {
 					this.$logger.warn(`${hookName} will NOT be executed because it has invalid arguments - ${invalidArguments.join(", ").grey}.`);
 					return;
+				}
+
+				// HACK for backwards compatibility:
+				// In case $projectData wasn't resolved by the time we got here (most likely we got here without running a command but through a service directly)
+				// then it is probably passed as a hookArg
+				// if that is the case then pass it directly to the hook instead of trying to resolve $projectData via injector
+				// This helps make hooks stateless
+				const projectDataHookArg = hookArguments["hookArgs"] && hookArguments["hookArgs"]["projectData"];
+				if (projectDataHookArg) {
+					hookArguments["projectData"] = hookArguments["$projectData"] = projectDataHookArg;
 				}
 
 				let maybePromise = this.$injector.resolve(hookEntryPoint, hookArguments);

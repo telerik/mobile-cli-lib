@@ -1824,3 +1824,26 @@ interface IDeferPromise<T> extends IPromiseActions<T> {
 	isPending(): boolean;
 	promise: Promise<T>;
 }
+
+/**
+ * Describes service used for interaction with Notification Center
+ */
+interface IiOSNotificationService {
+	/**
+	 * Posts a notification and waits for a response.
+	 * @param {string} deviceIdentifier Device's identifier.
+	 * @param {number} socket Socket where the notification will be post.
+	 * @param {number} timeout Timeout in seconds.
+	 * @return {Promise<string>} The response.
+	 */
+	awaitNotification(deviceIdentifier: string, socket: number, timeout: number): Promise<string>;
+
+	/**
+	 * Posts a notification.
+	 * @param {string} deviceIdentifier Device's identifier.
+	 * @param {string} notification The xml value of the Name key of the notification to be post.
+	 * @param {string} @optional commandType The xml value of the Command key of the notification to be post.
+	 * @return {Promise<number>} A socket which can be queried for a response.
+	 */
+	postNotification(deviceIdentifier: string, notification: string, commandType?: string): Promise<number>;
+}

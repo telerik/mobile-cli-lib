@@ -168,14 +168,14 @@ export class IOSDeviceOperations implements IIOSDeviceOperations, IDisposable {
 		}
 	}
 
-	public async postNotification(postNotificatioNArray: IOSDeviceLib.IPostNotificationData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse> {
+	public async postNotification(postNotificationArray: IOSDeviceLib.IPostNotificationData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse> {
 		this.assertIsInitialized();
 
-		_.each(postNotificatioNArray, n => {
+		_.each(postNotificationArray, n => {
 			this.$logger.trace(`Sending notification ${n.notificationName} to device with identifier: ${n.deviceId}`);
 		});
 
-		return this.getMultipleResults<IOSDeviceLib.IDeviceResponse>(() => this.deviceLib.postNotification(postNotificatioNArray), errorHandler);
+		return this.getMultipleResults<IOSDeviceLib.IDeviceResponse>(() => this.deviceLib.postNotification(postNotificationArray), errorHandler);
 	}
 
 	public async awaitNotificationResponse(awaitNotificationResponseArray: IOSDeviceLib.IAwaitNotificatioNResponseData[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse> {

@@ -23,7 +23,7 @@ export class IOSSimulator implements Mobile.IiOSSimulator {
 			status: constants.CONNECTED_STATUS,
 			errorHelp: null,
 			isTablet: this.simulator.fullId.toLowerCase().indexOf("ipad") !== -1,
-			type: "Emulator"
+			type: constants.DeviceTypes.Emulator
 		};
 	}
 

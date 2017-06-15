@@ -28,7 +28,12 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 	}
 
 	@hook('install')
-	public installApplication(packageFilePath: string): Promise<void> {
+	public async installApplication(packageFilePath: string, appIdentifier?: string): Promise<void> {
+		if (appIdentifier) {
+			let deviceRootPath = `/data/local/tmp/${appIdentifier}`;
+			await this.adb.executeShellCommand(["rm", "-rf", deviceRootPath]);
+		}
+
 		return this.adb.executeCommand(["install", "-r", `${packageFilePath}`]);
 	}
 
