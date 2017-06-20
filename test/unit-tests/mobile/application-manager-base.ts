@@ -718,6 +718,8 @@ describe("ApplicationManagerBase", () => {
 				return Promise.resolve();
 			};
 
+			applicationManager.isApplicationInstalled = (appIdentifier: string) => Promise.resolve(true);
+
 			await applicationManager.reinstallApplication("appId", "packageFilePath");
 			assert.deepEqual(uninstallApplicationAppIdParam, "appId");
 		});
@@ -736,6 +738,8 @@ describe("ApplicationManagerBase", () => {
 		it("calls uninstallApplication and installApplication in correct order", async () => {
 			let isInstallApplicationCalled = false,
 				isUninstallApplicationCalled = false;
+
+			applicationManager.isApplicationInstalled = (appIdentifier: string) => Promise.resolve(true);
 
 			applicationManager.uninstallApplication = (appId: string) => {
 				assert.isFalse(isInstallApplicationCalled, "When uninstallApplication is called, installApplication should not have been called.");

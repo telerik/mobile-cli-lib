@@ -12,7 +12,12 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 	}
 
 	public async reinstallApplication(appIdentifier: string, packageFilePath: string): Promise<void> {
-		await this.uninstallApplication(appIdentifier);
+		const isApplicationInstalled = await this.isApplicationInstalled(appIdentifier);
+
+		if (isApplicationInstalled) {
+			await this.uninstallApplication(appIdentifier);
+		}
+
 		await this.installApplication(packageFilePath, appIdentifier);
 	}
 
