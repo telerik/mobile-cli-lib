@@ -377,7 +377,7 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 			If you are trying to run on specific emulator, use "${this.$staticConfig.CLIENT_NAME} run --device <DeviceID>`);
 		}
 
-		if (data && data.platform && !data.skipInferPlatform) {
+		if (data && data.platform && !data.skipEmulatorStart) {
 			// are there any running devices
 			this._platform = data.platform;
 			try {
@@ -432,7 +432,7 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 
 		data = data || {};
 
-		if (!data.isBuildForDevice) {
+		if (!data.skipEmulatorStart) {
 			await this.startEmulatorIfNecessary(data);
 		}
 

@@ -355,9 +355,9 @@ declare module Mobile {
 		 */
 		skipDeviceDetectionInterval?: boolean;
 		/**
-		 * Specifies whether this is a ForDevice build.
+		 * Specifies whether we should skip the emulator starting.
 		 */
-		isBuildForDevice?: boolean;
+		skipEmulatorStart?: boolean;
 	}
 
 	interface IDeviceActionResult<T> {
