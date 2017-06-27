@@ -15,7 +15,7 @@ function createTestInjector(loggingLevel: string, emptyFilteredData?: boolean) {
 	testInjector.register("logger", CommonLoggerStub);
 
 	return testInjector;
-};
+}
 
 describe("proton deviceLogProvider", () => {
 	let testInjector: IInjector,

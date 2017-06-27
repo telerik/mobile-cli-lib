@@ -17,17 +17,17 @@ class AndroidDeviceMock {
 	}
 
 	public async init() { /* intentionally empty body */ }
-};
+}
 
 interface IChildProcessMock {
 	stdout: MockEventEmitter;
 	stderr: MockEventEmitter;
-};
+}
 
 class MockEventEmitter extends EventEmitter implements IChildProcessMock {
 	public stdout: MockEventEmitter;
 	public stderr: MockEventEmitter;
-};
+}
 
 let mockStdoutEmitter: MockEventEmitter,
 	mockStderrEmitter: MockEventEmitter,
@@ -218,7 +218,7 @@ describe("androidDeviceDiscovery", () => {
 					await validateDeviceFoundWhenAdbReportsAdditionalMessages(msg);
 				});
 
-			};
+			}
 		});
 
 		describe("when device is already found", () => {

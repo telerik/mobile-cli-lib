@@ -34,7 +34,7 @@ export function deferPromise<T>(): IDeferPromise<T> {
 		isRejected: () => isRejected,
 		isPending: () => !isResolved && !isRejected
 	};
-};
+}
 
 /**
  * Executes all promises and does not stop in case any of them throws.

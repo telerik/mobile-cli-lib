@@ -152,7 +152,7 @@ export class HooksService implements IHooksService {
 					throw new Error(output.stdout + output.stderr);
 				}
 			}
-		};
+		}
 	}
 
 	private getHooksByName(directoryPath: string, hookName: string): IHook[] {

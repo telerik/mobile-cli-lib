@@ -16,7 +16,7 @@ let sampleZipFileTestIncorrectName = path.join(__dirname, "../resources/sampleZi
 function isOsCaseSensitive(testInjector: IInjector): boolean {
 	let hostInfo = testInjector.resolve("hostInfo");
 	return hostInfo.isLinux;
-};
+}
 temp.track();
 
 function createWriteJsonTestCases(): { exists: boolean, text: string, testCondition: string, expectedIndentation: string }[] {
