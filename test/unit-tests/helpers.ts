@@ -382,7 +382,7 @@ describe("helpers", () => {
 	describe("getPidFromiOSSimulatorLogs", () => {
 		interface IiOSSimulatorPidTestData extends ITestData {
 			appId?: string;
-		};
+		}
 
 		const appId = "abc.def.ghi";
 		const pid = "12345";

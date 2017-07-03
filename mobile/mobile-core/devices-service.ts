@@ -285,9 +285,9 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 	 * @param action action to be executed if canExecute returns true
 	 * @param canExecute predicate to decide whether the command can be ran
 	 */
-	private async executeOnDevice<T>(action: (dev: Mobile.IDevice) => Promise<T>, canExecute?: (_dev: Mobile.IDevice) => boolean): Promise<Mobile.IDeviceActionResult<T>[]> {
+	private async executeOnDevice<T>(action: (dev: Mobile.IDevice) => Promise<T>, canExecute?: (_dev: Mobile.IDevice) => boolean): Promise<Mobile.IDeviceActionResult<T>> {
 		if (!canExecute || canExecute(this._device)) {
-			return [{ deviceIdentifier: this._device.deviceInfo.identifier, result: await action(this._device) }];
+			return { deviceIdentifier: this._device.deviceInfo.identifier, result: await action(this._device) };
 		}
 	}
 
@@ -614,7 +614,7 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 
 	private async executeCore<T>(action: (device: Mobile.IDevice) => Promise<T>, canExecute?: (dev: Mobile.IDevice) => boolean): Promise<Mobile.IDeviceActionResult<T>[]> {
 		if (this._device) {
-			return this.executeOnDevice(action, canExecute);
+			return [await this.executeOnDevice(action, canExecute)];
 		}
 
 		return this.executeOnAllConnectedDevices(action, canExecute);

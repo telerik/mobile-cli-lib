@@ -168,7 +168,7 @@ export class CommandsService implements ICommandsService {
 				} else {
 					this.$errors.fail("Missing mandatory parameter.");
 				}
-			};
+			}
 		}
 
 		return commandArgsHelper;
@@ -208,7 +208,7 @@ export class CommandsService implements ICommandsService {
 				} else {
 					this.$errors.fail("The parameter %s is not valid for this command.", parameter);
 				}
-			};
+			}
 		}
 
 		return true;

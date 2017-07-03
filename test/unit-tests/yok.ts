@@ -295,7 +295,7 @@ describe("yok", () => {
 					this.foo = foo;
 					this.bar = bar;
 				}
-			};
+			}
 
 			let result = injector.resolve(Test, { bar: expectedBar });
 
@@ -338,7 +338,7 @@ describe("yok", () => {
 					this.foo = foo;
 					this.bar = bar;
 				}
-			};
+			}
 
 			injector.register("test", Test);
 
@@ -419,7 +419,7 @@ describe("yok", () => {
 				public dispose() {
 					this.disposed = true;
 				}
-			};
+			}
 
 			injector.register("thing", Thing);
 			let thing = injector.resolve("thing");

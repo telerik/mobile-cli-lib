@@ -189,7 +189,7 @@ let nodeJsTimer = {
 
 let originalSetInterval = setInterval;
 function mockSetInterval(testCaseCallback?: Function): void {
-	global.setInterval = (callback: (...args: any[]) => Promise<void>, ms: number, ...args: any[]): NodeJS.Timer => {
+	global.setInterval = (callback: (...args: any[]) => void, ms: number, ...args: any[]): NodeJS.Timer => {
 		const execution = async () => {
 			if (testCaseCallback) {
 				testCaseCallback();
@@ -227,8 +227,7 @@ describe("devicesService", () => {
 				checkForApplicationUpdates: (): Promise<void> => Promise.resolve(),
 				getDebuggableApps: (): Promise<Mobile.IDeviceApplicationInformation[]> => Promise.resolve(null),
 				getDebuggableAppViews: (appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> => Promise.resolve(null)
-			},
-			deploy: (packageFile: string, packageName: string) => Promise.resolve()
+			}
 		},
 		androidDevice = {
 			deviceInfo: {
@@ -247,8 +246,7 @@ describe("devicesService", () => {
 				checkForApplicationUpdates: (): Promise<void> => Promise.resolve(),
 				getDebuggableApps: (): Promise<Mobile.IDeviceApplicationInformation[]> => Promise.resolve(null),
 				getDebuggableAppViews: (appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> => Promise.resolve(null)
-			},
-			deploy: (packageFile: string, packageName: string) => Promise.resolve()
+			}
 		},
 		testInjector: IInjector,
 		devicesService: Mobile.IDevicesService,
