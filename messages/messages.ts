@@ -1,7 +1,7 @@
 //
 // automatically generated code; do not edit manually!
 //
-
+/* tslint:disable:all */
 export class Messages implements IMessages{
 			Devices = {
 			NotFoundDeviceByIdentifierErrorMessage: "Devices.NotFoundDeviceByIdentifierErrorMessage",
@@ -11,3 +11,4 @@ export class Messages implements IMessages{
 
 }
 $injector.register('messages', Messages);
+/* tslint:enable */

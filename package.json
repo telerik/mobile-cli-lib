@@ -9,7 +9,8 @@
   },
   "scripts": {
     "mocha": "node test-scripts/mocha.js",
-    "test": "node test-scripts/istanbul.js"
+    "test": "node test-scripts/istanbul.js",
+    "tslint": "tslint -p tsconfig.json --type-check"
   },
   "main": "./common-lib.js",
   "repository": {
@@ -87,7 +88,6 @@
     "grunt-contrib-watch": "1.0.0",
     "grunt-shell": "2.1.0",
     "grunt-ts": "6.0.0-beta.16",
-    "grunt-tslint": "5.0.1",
     "istanbul": "0.4.5",
     "mocha": "3.2.0",
     "spec-xunit-file": "0.0.1-3",

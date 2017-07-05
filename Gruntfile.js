@@ -1,7 +1,8 @@
-var util = require("util");
-var os = require("os");
+const util = require("util");
+const os = require("os");
+const childProcess = require("child_process");
 
-var now = new Date().toISOString();
+const now = new Date().toISOString();
 
 function shallowCopy(obj) {
 	var result = {};
@@ -54,17 +55,6 @@ module.exports = function (grunt) {
 				options: {
 					sourceMap: false,
 					removeComments: true
-				}
-			}
-		},
-
-		tslint: {
-			build: {
-				files: {
-					src: ["**/*.ts", "!node_modules/**/*.ts", "!messages/**/*.ts", "!**/*.d.ts"]
-				},
-				options: {
-					configuration: grunt.file.readJSON("./tslint.json")
 				}
 			}
 		},
@@ -132,13 +122,16 @@ module.exports = function (grunt) {
 	grunt.loadNpmTasks("grunt-contrib-watch");
 	grunt.loadNpmTasks("grunt-shell");
 	grunt.loadNpmTasks("grunt-ts");
-	grunt.loadNpmTasks("grunt-tslint");
 
 	grunt.registerTask("set_package_version", function (version) {
 		var buildVersion = getBuildVersion(version);
 		var packageJson = grunt.file.readJSON("package.json");
 		packageJson.buildVersion = buildVersion;
 		grunt.file.write("package.json", JSON.stringify(packageJson, null, "  "));
+	});
+
+	grunt.registerTask("tslint:build", function (version) {
+		childProcess.execSync("npm run tslint", { stdio: "inherit" });
 	});
 
 	grunt.registerTask("setPackageName", function (version) {

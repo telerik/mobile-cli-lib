@@ -16,11 +16,13 @@ export class MessageContractGenerator implements IServiceContractGenerator {
 		implementationsFile.writeLine("//");
 		implementationsFile.writeLine("// automatically generated code; do not edit manually!");
 		implementationsFile.writeLine("//");
+		implementationsFile.writeLine("/* tslint:disable:all */");
 		implementationsFile.writeLine("");
 
 		interfacesFile.writeLine("//");
 		interfacesFile.writeLine("// automatically generated code; do not edit manually!");
 		interfacesFile.writeLine("//");
+		interfacesFile.writeLine("/* tslint:disable:all */");
 
 		let messagesClass = new Block("export class Messages implements IMessages");
 		let messagesInterface = new Block("interface IMessages");
@@ -37,9 +39,13 @@ export class MessageContractGenerator implements IServiceContractGenerator {
 		});
 
 		interfacesFile.addBlock(messagesInterface);
+		interfacesFile.writeLine("/* tslint:enable */");
+		interfacesFile.writeLine("");
 
 		implementationsFile.addBlock(messagesClass);
 		implementationsFile.writeLine("$injector.register('messages', Messages);");
+		implementationsFile.writeLine("/* tslint:enable */");
+		implementationsFile.writeLine("");
 
 		let codePrinter = new CodePrinter();
 		return {
