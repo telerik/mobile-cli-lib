@@ -66,7 +66,7 @@ function resolveCallStack(error: Error): string {
 }
 
 export function installUncaughtExceptionListener(actionOnException?: () => void): void {
-	let handler = (err: Error) => {
+	let handler = async (err: Error) => {
 		let callstack = err.stack;
 		if (callstack) {
 			try {
@@ -76,8 +76,8 @@ export function installUncaughtExceptionListener(actionOnException?: () => void)
 			}
 		}
 		console.error(callstack || err.toString());
-		// await: Cannot await here.
-		tryTrackException(err, $injector);
+
+		await tryTrackException(err, $injector);
 
 		if (actionOnException) {
 			actionOnException();
@@ -161,7 +161,7 @@ export class Errors implements IErrors {
 				}
 			}
 
-			tryTrackException(ex, this.$injector);
+			await tryTrackException(ex, this.$injector);
 			process.exit(_.isNumber(ex.errorCode) ? ex.errorCode : ErrorCodes.UNKNOWN);
 		}
 	}

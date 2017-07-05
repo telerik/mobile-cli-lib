@@ -6,6 +6,7 @@ export class StaticConfigBase implements Config.IStaticConfig {
 	public PROJECT_FILE_NAME: string = null;
 	public CLIENT_NAME: string = null;
 	public ANALYTICS_API_KEY: string = null;
+	public ANALYTICS_EXCEPTIONS_API_KEY: string = null;
 	public ANALYTICS_INSTALLATION_ID_SETTING_NAME: string = null;
 	public TRACK_FEATURE_USAGE_SETTING_NAME: string = null;
 	public ERROR_REPORT_SETTING_NAME: string = null;
