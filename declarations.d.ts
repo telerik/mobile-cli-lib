@@ -555,6 +555,13 @@ interface IAnalyticsService {
 	 * @return void
 	 */
 	tryStopEqatecMonitor(code?: string | number): void;
+
+	/**
+	 * Restarts the monitor with a new API key.
+	 * @param {string} projectApiKey The API key for new Analytics project.
+	 * @returns {Promise<void>}
+	 */
+	restartEqatecMonitor(projectApiKey: string): Promise<void>;
 }
 
 interface IAllowEmpty {
