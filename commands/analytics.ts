@@ -1,5 +1,5 @@
 class AnalyticsCommand implements ICommand {
-	constructor(private $analyticsService: IAnalyticsService,
+	constructor(protected $analyticsService: IAnalyticsService,
 		private $logger: ILogger,
 		private $errors: IErrors,
 		private $options: ICommonOptions,
@@ -31,7 +31,7 @@ class AnalyticsCommand implements ICommand {
 }
 
 export class UsageReportingCommand extends AnalyticsCommand {
-	constructor($analyticsService: IAnalyticsService,
+	constructor(protected $analyticsService: IAnalyticsService,
 		$logger: ILogger,
 		$errors: IErrors,
 		$options: ICommonOptions,
@@ -42,12 +42,22 @@ export class UsageReportingCommand extends AnalyticsCommand {
 $injector.registerCommand("usage-reporting", UsageReportingCommand);
 
 export class ErrorReportingCommand extends AnalyticsCommand {
-	constructor($analyticsService: IAnalyticsService,
+	constructor(protected $analyticsService: IAnalyticsService,
 		$logger: ILogger,
 		$errors: IErrors,
 		$options: ICommonOptions,
-		$staticConfig: Config.IStaticConfig) {
+		private $staticConfig: Config.IStaticConfig) {
 		super($analyticsService, $logger, $errors, $options, $staticConfig.ERROR_REPORT_SETTING_NAME, "Error reporting");
+	}
+
+	public async execute(args: string[]): Promise<void> {
+		const shouldRestartEqatecMonitor = this.$staticConfig.ANALYTICS_EXCEPTIONS_API_KEY && await this.$analyticsService.isEnabled(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME);
+
+		if (shouldRestartEqatecMonitor) {
+			await this.$analyticsService.restartEqatecMonitor(this.$staticConfig.ANALYTICS_EXCEPTIONS_API_KEY);
+		}
+
+		await super.execute(args);
 	}
 }
 $injector.registerCommand("error-reporting", ErrorReportingCommand);

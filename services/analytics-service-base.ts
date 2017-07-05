@@ -67,12 +67,20 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 
 	public async trackException(exception: any, message: string): Promise<void> {
 		await this.initAnalyticsStatuses();
-		this.$logger.trace(`Trying to track exception with message '${message}'.`);
 
 		if (this.analyticsStatuses[this.$staticConfig.ERROR_REPORT_SETTING_NAME] === AnalyticsStatus.enabled
 			&& await this.$analyticsSettingsService.canDoRequest()) {
 			try {
-				await this.start();
+				this.$logger.trace(`Trying to track exception with message '${message}'.`);
+				if (this._eqatecMonitor && this.$staticConfig.ANALYTICS_EXCEPTIONS_API_KEY) {
+					// In case eqatecMonitor is already started and we want to track exceptions in a separate project
+					// we have to restart the monitor.
+					await this.restartEqatecMonitor(this.$staticConfig.ANALYTICS_EXCEPTIONS_API_KEY);
+				} else {
+					// In case the monitor is already started, but we want to track exceptions in the same project
+					// In case the monitor is not started we'll start it with specified EXCEPTIONS KEY or with the default one.
+					await this.start(this.$staticConfig.ANALYTICS_EXCEPTIONS_API_KEY);
+				}
 
 				if (this._eqatecMonitor) {
 					this.$logger.printInfoMessageOnSameLine("Sending exception report (press Ctrl+C to stop)...");
@@ -120,7 +128,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 		return this.getHumanReadableStatusMessage(settingName, readableSettingName);
 	}
 
-	protected async restartEqatecMonitor(projectApiKey: string): Promise<void> {
+	public async restartEqatecMonitor(projectApiKey: string): Promise<void> {
 		this.tryStopEqatecMonitor();
 		await this.start(projectApiKey);
 	}
@@ -273,7 +281,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 
 	private waitForSending(): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
-			let intervalTime = 1000;
+			let intervalTime = 100;
 			let remainingTime = AnalyticsServiceBase.MAX_WAIT_SENDING_INTERVAL;
 			if (this.getIsSending()) {
 				this.$logger.trace(`Waiting for analytics to send information. Will check in a ${intervalTime}ms.`);
