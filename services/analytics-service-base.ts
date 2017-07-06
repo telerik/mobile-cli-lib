@@ -5,6 +5,12 @@ cliGlobal.XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 cliGlobal.XMLHttpRequest.prototype.withCredentials = false;
 // HACK -end
 
+export enum AnalyticsStatus {
+	enabled,
+	disabled,
+	notConfirmed
+}
+
 export class AnalyticsServiceBase implements IAnalyticsService {
 	private static MAX_WAIT_SENDING_INTERVAL = 30000; // in milliseconds
 	private _eqatecMonitor: any;
@@ -298,10 +304,4 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 			}
 		});
 	}
-}
-
-export enum AnalyticsStatus {
-	enabled,
-	disabled,
-	notConfirmed
 }

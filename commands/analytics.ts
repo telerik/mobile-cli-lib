@@ -1,3 +1,20 @@
+export class AnalyticsCommandParameter implements ICommandParameter {
+	constructor(private $errors: IErrors) { }
+	mandatory = false;
+	async validate(validationValue: string): Promise<boolean> {
+		let val = validationValue || "";
+		switch (val.toLowerCase()) {
+			case "enable":
+			case "disable":
+			case "status":
+			case "":
+				return true;
+			default:
+				this.$errors.fail(`The value '${validationValue}' is not valid. Valid values are 'enable', 'disable' and 'status'.`);
+		}
+	}
+}
+
 class AnalyticsCommand implements ICommand {
 	constructor(protected $analyticsService: IAnalyticsService,
 		private $logger: ILogger,
@@ -61,20 +78,3 @@ export class ErrorReportingCommand extends AnalyticsCommand {
 	}
 }
 $injector.registerCommand("error-reporting", ErrorReportingCommand);
-
-export class AnalyticsCommandParameter implements ICommandParameter {
-	constructor(private $errors: IErrors) { }
-	mandatory = false;
-	async validate(validationValue: string): Promise<boolean> {
-		let val = validationValue || "";
-		switch (val.toLowerCase()) {
-			case "enable":
-			case "disable":
-			case "status":
-			case "":
-				return true;
-			default:
-				this.$errors.fail(`The value '${validationValue}' is not valid. Valid values are 'enable', 'disable' and 'status'.`);
-		}
-	}
-}
