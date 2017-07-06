@@ -13,7 +13,8 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 	private isStarted: boolean;
 
 	constructor(private $injector: IInjector,
-		private $adb: Mobile.IAndroidDebugBridge) {
+		private $adb: Mobile.IAndroidDebugBridge,
+		private $mobileHelper: Mobile.IMobileHelper) {
 		super();
 	}
 
@@ -29,7 +30,10 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 		this.removeDevice(deviceIdentifier);
 	}
 
-	public async startLookingForDevices(): Promise<void> {
+	public async startLookingForDevices(options?: Mobile.IDeviceLookingOptions): Promise<void> {
+		if (options && options.platform && !this.$mobileHelper.isAndroidPlatform(options.platform)) {
+			return;
+		}
 		await this.ensureAdbServerStarted();
 		await this.checkForDevices();
 	}

@@ -7,11 +7,16 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 	constructor(private $injector: IInjector,
 		private $childProcess: IChildProcess,
 		private $iOSSimResolver: Mobile.IiOSSimResolver,
+		private $mobileHelper: Mobile.IMobileHelper,
 		private $hostInfo: IHostInfo) {
 		super();
 	}
 
-	public async startLookingForDevices(): Promise<void> {
+	public async startLookingForDevices(options?: Mobile.IDeviceLookingOptions): Promise<void> {
+		if (options && options.platform && !this.$mobileHelper.isiOSPlatform(options.platform)) {
+			return;
+		}
+
 		return new Promise<void>((resolve, reject) => {
 			return this.checkForDevices(resolve, reject);
 		});

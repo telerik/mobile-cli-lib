@@ -40,6 +40,11 @@ function createTestInjector(): IInjector {
 	injector.register("errors", {});
 	injector.register("logger", {});
 	injector.register("androidDebugBridgeResultHandler", AndroidDebugBridgeResultHandler);
+	injector.register("mobileHelper", {
+		isAndroidPlatform: () => {
+			return true;
+		}
+	});
 	injector.register("childProcess", {
 		spawn: (command: string, args?: string[], options?: any) => {
 			mockChildProcess = new MockEventEmitter();
