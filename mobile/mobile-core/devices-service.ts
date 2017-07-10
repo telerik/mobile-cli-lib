@@ -255,7 +255,7 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 	 * Method expects running devices.
 	 * @param identifier parameter passed by the user to --device flag
 	 */
-	private async getDevice(deviceOption: string): Promise<Mobile.IDevice> {
+	public async getDevice(deviceOption: string): Promise<Mobile.IDevice> {
 		await this.detectCurrentlyAttachedDevices();
 		let device: Mobile.IDevice = null;
 

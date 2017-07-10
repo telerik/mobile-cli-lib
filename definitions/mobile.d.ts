@@ -393,6 +393,13 @@ declare module Mobile {
 		addDeviceDiscovery(deviceDiscovery: IDeviceDiscovery): void;
 		platform: string;
 		getDevices(): Mobile.IDeviceInfo[];
+
+		/**
+		 * Gets device instance by specified identifier or number.
+		 * @param {string} deviceOption The specified device identifier or number.
+		 * @returns {Promise<Mobile.IDevice>} Instance of IDevice.
+		 */
+		getDevice(deviceOption: string): Promise<Mobile.IDevice>;
 		getDevicesForPlatform(platform: string): Mobile.IDevice[];
 		getDeviceInstances(): Mobile.IDevice[];
 		getDeviceByDeviceOption(): Mobile.IDevice;
