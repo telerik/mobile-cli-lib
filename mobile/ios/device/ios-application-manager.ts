@@ -1,6 +1,7 @@
 import { EOL } from "os";
 import { hook } from "../../../helpers";
 import { ApplicationManagerBase } from "../../application-manager-base";
+import { cache } from "../../../decorators";
 
 export class IOSApplicationManager extends ApplicationManagerBase {
 	private applicationsLiveSyncInfos: Mobile.ILiveSyncApplicationInfo[];
@@ -105,8 +106,13 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	private async runApplicationCore(appIdentifier: string): Promise<void> {
 		await this.$iosDeviceOperations.start([{ deviceId: this.device.deviceInfo.identifier, appId: appIdentifier, ddi: this.$options.ddi }]);
 		if (!this.$options.justlaunch) {
-			await this.device.openDeviceLogStream();
+			await this.startDeviceLog();
 		}
+	}
+
+	@cache()
+	private async startDeviceLog(): Promise<void> {
+		await this.device.openDeviceLogStream();
 	}
 
 	public canStartApplication(): boolean {
