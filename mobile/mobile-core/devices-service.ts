@@ -174,7 +174,7 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 
 					for (const deviceDiscovery of this._allDeviceDiscoveries) {
 						try {
-							await deviceDiscovery.startLookingForDevices();
+							await deviceDiscovery.startLookingForDevices({ shouldReturnImmediateResult: false, platform: this._platform });
 						} catch (err) {
 							this.$logger.trace("Error while checking for new devices.", err);
 						}
@@ -219,15 +219,18 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 	 */
 	private async startLookingForDevices(options?: Mobile.IDeviceLookingOptions): Promise<void> {
 		this.$logger.trace("startLookingForDevices; platform is %s", this._platform);
+		if (!options) {
+			options = {shouldReturnImmediateResult: false, platform: this._platform};
+		}
 		if (!this._platform) {
 			await this.detectCurrentlyAttachedDevices(options);
 			await this.startDeviceDetectionInterval();
 		} else {
 			if (this.$mobileHelper.isiOSPlatform(this._platform)) {
-				await this.$iOSDeviceDiscovery.startLookingForDevices();
-				await this.$iOSSimulatorDiscovery.startLookingForDevices();
+				await this.$iOSDeviceDiscovery.startLookingForDevices(options);
+				await this.$iOSSimulatorDiscovery.startLookingForDevices(options);
 			} else if (this.$mobileHelper.isAndroidPlatform(this._platform)) {
-				await this.$androidDeviceDiscovery.startLookingForDevices();
+				await this.$androidDeviceDiscovery.startLookingForDevices(options);
 			}
 
 			for (const deviceDiscovery of this._otherDeviceDiscoveries) {
@@ -606,9 +609,9 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 		await emulatorServices.startEmulator(emulatorImage);
 
 		if (this.$mobileHelper.isAndroidPlatform(platform)) {
-			await this.$androidDeviceDiscovery.startLookingForDevices();
+			await this.$androidDeviceDiscovery.startLookingForDevices({ shouldReturnImmediateResult: false, platform: platform });
 		} else if (this.$mobileHelper.isiOSPlatform(platform) && this.$hostInfo.isDarwin) {
-			await this.$iOSSimulatorDiscovery.startLookingForDevices();
+			await this.$iOSSimulatorDiscovery.startLookingForDevices({ shouldReturnImmediateResult: false, platform: platform });
 		}
 	}
 
