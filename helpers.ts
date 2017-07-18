@@ -4,6 +4,7 @@ let Table = require("cli-table");
 import { platform, EOL } from "os";
 import { ReadStream } from "tty";
 import { EventEmitter } from "events";
+import * as crypto from "crypto";
 
 export function deferPromise<T>(): IDeferPromise<T> {
 	let resolve: (value?: T | PromiseLike<T>) => void;
@@ -362,6 +363,10 @@ export async function connectEventually(factory: () => Promise<net.Socket>, hand
 	}
 
 	await tryConnect();
+}
+
+export function getHash(str: string, options?: { algorithm?: string, encoding?: crypto.HexBase64Latin1Encoding }): string {
+	return crypto.createHash(options && options.algorithm || 'sha256').update(str).digest(options && options.encoding || 'hex');
 }
 
 export async function connectEventuallyUntilTimeout(factory: () => net.Socket, timeout: number): Promise<net.Socket> {
