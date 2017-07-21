@@ -25,6 +25,12 @@ function createTestInjector(): IInjector {
 
 	injector.register("devicePlatformsConstants", DevicePlatformsConstants);
 
+	injector.register("mobileHelper", {
+		isiOSPlatform: () => {
+			return true;
+		}
+	});
+
 	injector.register("iOSSimulatorDiscovery", IOSSimulatorDiscovery);
 
 	injector.register("iOSSimulatorLogProvider", {});

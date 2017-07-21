@@ -174,7 +174,8 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 
 					for (const deviceDiscovery of this._allDeviceDiscoveries) {
 						try {
-							await deviceDiscovery.startLookingForDevices();
+							const deviceLookingOptions = this.getDeviceLookingOptions();
+							await deviceDiscovery.startLookingForDevices(deviceLookingOptions);
 						} catch (err) {
 							this.$logger.trace("Error while checking for new devices.", err);
 						}
@@ -219,15 +220,18 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 	 */
 	private async startLookingForDevices(options?: Mobile.IDeviceLookingOptions): Promise<void> {
 		this.$logger.trace("startLookingForDevices; platform is %s", this._platform);
+		if (!options) {
+			options = this.getDeviceLookingOptions();
+		}
 		if (!this._platform) {
 			await this.detectCurrentlyAttachedDevices(options);
 			await this.startDeviceDetectionInterval();
 		} else {
 			if (this.$mobileHelper.isiOSPlatform(this._platform)) {
-				await this.$iOSDeviceDiscovery.startLookingForDevices();
-				await this.$iOSSimulatorDiscovery.startLookingForDevices();
+				await this.$iOSDeviceDiscovery.startLookingForDevices(options);
+				await this.$iOSSimulatorDiscovery.startLookingForDevices(options);
 			} else if (this.$mobileHelper.isAndroidPlatform(this._platform)) {
-				await this.$androidDeviceDiscovery.startLookingForDevices();
+				await this.$androidDeviceDiscovery.startLookingForDevices(options);
 			}
 
 			for (const deviceDiscovery of this._otherDeviceDiscoveries) {
@@ -256,7 +260,8 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 	 * @param identifier parameter passed by the user to --device flag
 	 */
 	public async getDevice(deviceOption: string): Promise<Mobile.IDevice> {
-		await this.detectCurrentlyAttachedDevices();
+		const deviceLookingOptions = this.getDeviceLookingOptions();
+		await this.detectCurrentlyAttachedDevices(deviceLookingOptions);
 		let device: Mobile.IDevice = null;
 
 		let emulatorIdentifier = null;
@@ -459,7 +464,8 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 				if (data.skipDeviceDetectionInterval) {
 					await this.detectCurrentlyAttachedDevices();
 				} else {
-					await this.startLookingForDevices({ shouldReturnImmediateResult: true, platform: this._platform });
+					const deviceLookingOptions = this.getDeviceLookingOptions(this._platform, true);
+					await this.startLookingForDevices(deviceLookingOptions);
 				}
 			} else {
 				await this.detectCurrentlyAttachedDevices();
@@ -597,7 +603,7 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 	public async startEmulator(platform?: string, emulatorImage?: string): Promise<void> {
 
 		platform = platform || this._platform;
-
+		const deviceLookingOptions = this.getDeviceLookingOptions(platform);
 		let emulatorServices = this.resolveEmulatorServices(platform);
 		if (!emulatorServices) {
 			this.$errors.failWithoutHelp("Unable to detect platform for which to start emulator.");
@@ -606,9 +612,9 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 		await emulatorServices.startEmulator(emulatorImage);
 
 		if (this.$mobileHelper.isAndroidPlatform(platform)) {
-			await this.$androidDeviceDiscovery.startLookingForDevices();
+			await this.$androidDeviceDiscovery.startLookingForDevices(deviceLookingOptions);
 		} else if (this.$mobileHelper.isiOSPlatform(platform) && this.$hostInfo.isDarwin) {
-			await this.$iOSSimulatorDiscovery.startLookingForDevices();
+			await this.$iOSSimulatorDiscovery.startLookingForDevices(deviceLookingOptions);
 		}
 	}
 
@@ -659,6 +665,12 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 			isInstalled,
 			isLiveSyncSupported
 		};
+	}
+
+	private getDeviceLookingOptions(platform?: string, shouldReturnImmediateResult?: boolean): Mobile.IDeviceLookingOptions {
+		platform = platform || this._platform;
+		shouldReturnImmediateResult = shouldReturnImmediateResult || false;
+		return { shouldReturnImmediateResult: shouldReturnImmediateResult, platform: platform };
 	}
 }
 
