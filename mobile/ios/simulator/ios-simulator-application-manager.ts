@@ -44,7 +44,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 
 		if (!this.$options.justlaunch) {
 			let pid = launchResult.split(":")[1].trim();
-			this.$deviceLogProvider.setApplictionPidForDevice(this.identifier, pid);
+			this.$deviceLogProvider.setApplicationPidForDevice(this.identifier, pid);
 			this.$iOSSimulatorLogProvider.startLogProcess(this.identifier);
 		}
 	}

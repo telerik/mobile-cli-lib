@@ -11,6 +11,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		private $logcatHelper: Mobile.ILogcatHelper,
 		private $androidProcessService: Mobile.IAndroidProcessService,
 		private $httpClient: Server.IHttpClient,
+		private $deviceLogProvider: Mobile.IDeviceLogProvider,
 		$logger: ILogger,
 		$hooksService: IHooksService) {
 		super($logger, $hooksService);
@@ -49,6 +50,12 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 			"1"]);
 
 		if (!this.$options.justlaunch) {
+			const deviceIdentifier = this.identifier;
+			const processIdentifier = await this.$androidProcessService.getAppProcessId(deviceIdentifier, appIdentifier);
+			if (processIdentifier) {
+				this.$deviceLogProvider.setApplicationPidForDevice(deviceIdentifier, processIdentifier);
+			}
+
 			await this.$logcatHelper.start(this.identifier);
 		}
 	}

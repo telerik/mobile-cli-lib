@@ -170,7 +170,7 @@ declare module Mobile {
 		 * @param {string} deviceIdentifier The unique identifier of the device.
 		 * @param {string} pid The Process ID of the currently running application for which we need the logs.
 		 */
-		setApplictionPidForDevice(deviceIdentifier: string, pid: string): void;
+		setApplicationPidForDevice(deviceIdentifier: string, pid: string): void;
 	}
 
 	/**
@@ -448,6 +448,14 @@ declare module Mobile {
 		 * @return {Promise<IDictionary<number>>} Dictionary, where the keys are app identifiers and the values are local ports.
 		 */
 		getMappedAbstractToTcpPorts(deviceIdentifier: string, appIdentifiers: string[], framework: string): Promise<IDictionary<number>>;
+
+		/**
+		 * Gets the PID of a running application.
+		 * @param deviceIdentifier {string} The identifier of the device.
+		 * @param appIdentifier The identifier of the application.
+		 * @return {string} Returns the process id matching the application identifier in the device process list.
+		 */
+		getAppProcessId(deviceIdentifier: string, appIdentifier: string): Promise<string>;
 	}
 
 	/**

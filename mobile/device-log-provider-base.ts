@@ -13,7 +13,7 @@ export abstract class DeviceLogProviderBase extends EventEmitter implements Mobi
 
 	public abstract setLogLevel(logLevel: string, deviceIdentifier?: string): void;
 
-	public setApplictionPidForDevice(deviceIdentifier: string, pid: string): void {
+	public setApplicationPidForDevice(deviceIdentifier: string, pid: string): void {
 		this.setDeviceLogOptionsProperty(deviceIdentifier, (deviceLogOptions: Mobile.IDeviceLogOptions) => deviceLogOptions.applicationPid, pid);
 	}
 
