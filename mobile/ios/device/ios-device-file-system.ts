@@ -61,8 +61,9 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		}]);
 	}
 
-	public async transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): Promise<void> {
-		return this.transferFiles(deviceAppData, localToDevicePaths);
+	public async transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): Promise<Mobile.ILocalToDevicePathData[]> {
+		await this.transferFiles(deviceAppData, localToDevicePaths);
+		return localToDevicePaths;
 	}
 
 	private async uploadFilesCore(filesToUpload: IOSDeviceLib.IUploadFilesData[]): Promise<void> {
