@@ -90,7 +90,14 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async stopApplication(appIdentifier: string, appName?: string): Promise<void> {
-		await this.$iosDeviceOperations.stop([{ deviceId: this.device.deviceInfo.identifier, ddi: this.$options.ddi, appId: appIdentifier }]);
+		const action = () => this.$iosDeviceOperations.stop([{ deviceId: this.device.deviceInfo.identifier, ddi: this.$options.ddi, appId: appIdentifier }]);
+
+		try {
+			await action();
+		} catch (err) {
+			this.$logger.trace(`Error when trying to stop application ${appIdentifier} on device ${this.device.deviceInfo.identifier}: ${err}. Retrying stop operation.`);
+			await action();
+		}
 	}
 
 	public async restartApplication(applicationId: string, appName?: string): Promise<void> {

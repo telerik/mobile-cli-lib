@@ -81,9 +81,9 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		}
 	}
 
-	public async transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): Promise<void> {
-		let devicePaths: string[] = [],
-			currentShasums: IStringDictionary = {};
+	public async transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): Promise<Mobile.ILocalToDevicePathData[]> {
+		const devicePaths: string[] = [];
+		const currentShasums: IStringDictionary = {};
 
 		await Promise.all(
 			localToDevicePaths.map(async localToDevicePathData => {
@@ -98,32 +98,31 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 			})
 		);
 
-		let commandsDeviceFilePath = this.$mobileHelper.buildDevicePath(await deviceAppData.getDeviceProjectRootPath(), "nativescript.commands.sh");
+		const commandsDeviceFilePath = this.$mobileHelper.buildDevicePath(await deviceAppData.getDeviceProjectRootPath(), "nativescript.commands.sh");
 
-		let deviceHashService = this.getDeviceHashService(deviceAppData.appIdentifier);
+		const deviceHashService = this.getDeviceHashService(deviceAppData.appIdentifier);
 		let filesToChmodOnDevice: string[] = devicePaths;
-		if (this.$options.force) {
+		let tranferredFiles: Mobile.ILocalToDevicePathData[] = [];
+		const oldShasums = await deviceHashService.getShasumsFromDevice();
+		if (this.$options.force || !oldShasums) {
 			await this.adb.executeShellCommand(["rm", "-rf", deviceHashService.hashFileDevicePath]);
 			await this.adb.executeCommand(["push", projectFilesPath, await deviceAppData.getDeviceProjectRootPath()]);
+			tranferredFiles = localToDevicePaths;
 		} else {
 			// Create or update file hashes on device
-			let oldShasums = await deviceHashService.getShasumsFromDevice();
-			if (oldShasums) {
-				let changedShasums: any = _.omitBy(currentShasums, (hash: string, pathToFile: string) => !!_.find(oldShasums, (oldHash: string, oldPath: string) => pathToFile === oldPath && hash === oldHash));
-				this.$logger.trace("Changed file hashes are:", changedShasums);
-				filesToChmodOnDevice = [];
-				await Promise.all(
-					_(changedShasums)
-						.map((hash: string, filePath: string) => _.find(localToDevicePaths, ldp => ldp.getLocalPath() === filePath))
-						.map(localToDevicePathData => {
-							filesToChmodOnDevice.push(`"${localToDevicePathData.getDevicePath()}"`);
-							return this.transferFile(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath());
-						})
-						.value()
-				);
-			} else {
-				await this.adb.executeCommand(["push", projectFilesPath, await deviceAppData.getDeviceProjectRootPath()]);
-			}
+			const changedShasums: any = _.omitBy(currentShasums, (hash: string, pathToFile: string) => !!_.find(oldShasums, (oldHash: string, oldPath: string) => pathToFile === oldPath && hash === oldHash));
+			this.$logger.trace("Changed file hashes are:", changedShasums);
+			filesToChmodOnDevice = [];
+			await Promise.all(
+				_(changedShasums)
+					.map((hash: string, filePath: string) => _.find(localToDevicePaths, ldp => ldp.getLocalPath() === filePath))
+					.map(localToDevicePathData => {
+						tranferredFiles.push(localToDevicePathData);
+						filesToChmodOnDevice.push(`"${localToDevicePathData.getDevicePath()}"`);
+						return this.transferFile(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath());
+					})
+					.value()
+			);
 		}
 
 		if (filesToChmodOnDevice.length) {
@@ -132,6 +131,8 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		}
 
 		await deviceHashService.uploadHashFileToDevice(currentShasums);
+
+		return tranferredFiles;
 	}
 
 	public async transferFile(localPath: string, devicePath: string): Promise<void> {
