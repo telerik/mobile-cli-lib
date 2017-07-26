@@ -118,6 +118,13 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 			.value();
 	}
 
+	public async getAppProcessId(deviceIdentifier: string, appIdentifier: string): Promise<string> {
+		const adb = this.getAdb(deviceIdentifier);
+		const processId = (await this.getProcessIds(adb, [appIdentifier]))[appIdentifier];
+
+		return processId ? processId.toString() : null;
+	}
+
 	private async getApplicationInfoFromWebViewPortInformation(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, information: string): Promise<Mobile.IDeviceApplicationInformation> {
 		// Need to search by processId to check for old Android webviews (@webview_devtools_remote_<processId>).
 		let processIdRegExp = /@webview_devtools_remote_(.+)/g,
