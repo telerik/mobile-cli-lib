@@ -413,7 +413,7 @@ declare module Mobile {
 		startDeviceDetectionInterval(): Promise<void>;
 		getDeviceByIdentifier(identifier: string): Mobile.IDevice;
 		mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string, framework: string): Promise<string>;
-		detectCurrentlyAttachedDevices(): Promise<void>;
+		detectCurrentlyAttachedDevices(options?: Mobile.IDeviceLookingOptions): Promise<void>;
 		startEmulator(platform?: string, emulatorImage?: string): Promise<void>;
 		isCompanionAppInstalledOnDevices(deviceIdentifiers: string[], framework: string): Promise<IAppInstalledInfo>[];
 		getDebuggableApps(deviceIdentifiers: string[]): Promise<Mobile.IDeviceApplicationInformation[]>[];

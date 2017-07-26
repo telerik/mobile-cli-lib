@@ -7,6 +7,7 @@ export class IOSDeviceDiscovery extends DeviceDiscovery {
 	constructor(private $injector: IInjector,
 		private $logger: ILogger,
 		private $iTunesValidator: Mobile.IiTunesValidator,
+		private $mobileHelper: Mobile.IMobileHelper,
 		private $iosDeviceOperations: IIOSDeviceOperations) {
 		super();
 	}
@@ -24,6 +25,9 @@ export class IOSDeviceDiscovery extends DeviceDiscovery {
 	}
 
 	public async startLookingForDevices(options?: Mobile.IDeviceLookingOptions): Promise<void> {
+		if (options && options.platform && !this.$mobileHelper.isiOSPlatform(options.platform)) {
+			return;
+		}
 		if (this.validateiTunes()) {
 			await this.$iosDeviceOperations.startLookingForDevices((deviceInfo: IOSDeviceLib.IDeviceActionInfo) => {
 				this.createAndAddDevice(deviceInfo);
