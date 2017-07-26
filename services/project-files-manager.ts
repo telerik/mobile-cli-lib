@@ -37,7 +37,7 @@ export class ProjectFilesManager implements IProjectFilesManager {
 		return localToDevicePaths;
 	}
 
-	public processPlatformSpecificFiles(directoryPath: string, platform: string, excludedDirs?: string[]): void {
+	public processPlatformSpecificFiles(directoryPath: string, platform: string, projectFilesConfig: IProjectFilesConfig, excludedDirs?: string[]): void {
 		let contents = this.$fs.readDirectory(directoryPath);
 		let files: string[] = [];
 
@@ -45,19 +45,19 @@ export class ProjectFilesManager implements IProjectFilesManager {
 			let filePath = path.join(directoryPath, fileName);
 			let fsStat = this.$fs.getFsStats(filePath);
 			if (fsStat.isDirectory() && !_.includes(excludedDirs, fileName)) {
-				this.processPlatformSpecificFilesCore(platform, this.$fs.enumerateFilesInDirectorySync(filePath));
+				this.processPlatformSpecificFilesCore(platform, this.$fs.enumerateFilesInDirectorySync(filePath), projectFilesConfig);
 			} else if (fsStat.isFile()) {
 				files.push(filePath);
 			}
 		});
 
-		this.processPlatformSpecificFilesCore(platform, files);
+		this.processPlatformSpecificFilesCore(platform, files, projectFilesConfig);
 	}
 
-	private processPlatformSpecificFilesCore(platform: string, files: string[]): void {
+	private processPlatformSpecificFilesCore(platform: string, files: string[],  projectFilesConfig: IProjectFilesConfig): void {
 		// Renames the files that have `platform` as substring and removes the files from other platform
 		_.each(files, filePath => {
-			let projectFileInfo = this.$projectFilesProvider.getProjectFileInfo(filePath, platform);
+			let projectFileInfo = this.$projectFilesProvider.getProjectFileInfo(filePath, platform,  projectFilesConfig);
 			if (!projectFileInfo.shouldIncludeFile) {
 				this.$fs.deleteFile(filePath);
 			} else if (projectFileInfo.onDeviceFileName) {

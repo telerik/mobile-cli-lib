@@ -4,13 +4,13 @@ import { Configurations } from "../constants";
 
 export abstract class ProjectFilesProviderBase implements IProjectFilesProvider {
 	abstract isFileExcluded(filePath: string): boolean;
-	abstract mapFilePath(filePath: string, platform: string, projectData: any): string;
+	abstract mapFilePath(filePath: string, platform: string, projectData: any, projectFilesConfig: IProjectFilesConfig): string;
 
 	constructor(private $mobileHelper: Mobile.IMobileHelper,
 		protected $options: ICommonOptions) { }
 
-	public getPreparedFilePath(filePath: string): string {
-		let projectFileInfo = this.getProjectFileInfo(filePath, "");
+	public getPreparedFilePath(filePath: string, projectFilesConfig?: IProjectFilesConfig): string {
+		let projectFileInfo = this.getProjectFileInfo(filePath, "", projectFilesConfig);
 		return path.join(path.dirname(filePath), projectFileInfo.onDeviceFileName);
 	}
 
@@ -18,6 +18,7 @@ export abstract class ProjectFilesProviderBase implements IProjectFilesProvider 
 		let parsed = this.parseFile(filePath, this.$mobileHelper.platformNames, platform || "");
 		let basicConfigurations = [Configurations.Debug.toLowerCase(), Configurations.Release.toLowerCase()];
 		if (!parsed) {
+
 			let validValues = basicConfigurations.concat(projectFilesConfig && projectFilesConfig.additionalConfigurations || []),
 				value = projectFilesConfig && projectFilesConfig.configuration || basicConfigurations[0];
 			parsed = this.parseFile(filePath, validValues, value);
