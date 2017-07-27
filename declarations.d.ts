@@ -867,7 +867,7 @@ interface ILiveSyncServiceBase {
 	 * If watch option is not specified executes full sync
 	 * If watch option is specified executes partial sync
 	 */
-	sync(data: ILiveSyncData[], projectId: string, filePaths?: string[]): Promise<void>;
+	sync(data: ILiveSyncData[], projectId: string, projectFilesConfig: IProjectFilesConfig, filePaths?: string[]): Promise<void>;
 
 	/**
 	 * Returns the `canExecute` method which defines if LiveSync operation can be executed on specified device.
@@ -1489,7 +1489,7 @@ interface IProjectFilesManager {
 	 * @param {string[]} excludedDirs Directories which should be skipped.
 	 * @returns {void}
 	 */
-	processPlatformSpecificFiles(directoryPath: string, platform: string, excludedDirs?: string[]): void;
+	processPlatformSpecificFiles(directoryPath: string, platform: string, projectFilesConfig?: IProjectFilesConfig, excludedDirs?: string[]): void;
 }
 
 interface IProjectFilesProvider {
@@ -1500,7 +1500,7 @@ interface IProjectFilesProvider {
 	/**
 	 * Performs local file path mapping
 	 */
-	mapFilePath(filePath: string, platform: string, projectData?: any): string;
+	mapFilePath(filePath: string, platform: string, projectData: any, projectFilesConfig?: IProjectFilesConfig): string;
 
 	/**
 	 * Returns information about file in the project, that includes file's name on device after removing platform or configuration from the name.
@@ -1509,13 +1509,13 @@ interface IProjectFilesProvider {
 	 * @param  {IProjectFilesConfig} projectFilesConfig configuration for additional parsing
 	 * @return {IProjectFileInfo}
 	 */
-	getProjectFileInfo(filePath: string, platform: string, projectFilesConfig?: IProjectFilesConfig): IProjectFileInfo;
+	getProjectFileInfo(filePath: string, platform: string, projectFilesConfig: IProjectFilesConfig): IProjectFileInfo;
 	/**
 	 * Parses file by removing platform or configuration from its name.
 	 * @param {string} filePath Path to the project file.
 	 * @return {string} Parsed file name or original file name in case it does not have platform/configuration in the filename.
 	 */
-	getPreparedFilePath(filePath: string): string;
+	getPreparedFilePath(filePath: string, projectFilesConfig: IProjectFilesConfig): string;
 }
 
 /**

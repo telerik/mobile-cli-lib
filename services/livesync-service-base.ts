@@ -28,11 +28,11 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		this.fileHashes = Object.create(null);
 	}
 
-	public async sync(data: ILiveSyncData[], projectId: string, filePaths?: string[]): Promise<void> {
+	public async sync(data: ILiveSyncData[], projectId: string, projectFilesConfig: IProjectFilesConfig, filePaths?: string[]): Promise<void> {
 		await this.syncCore(data, filePaths);
 		if (this.$options.watch) {
 			await this.$hooksService.executeBeforeHooks('watch');
-			this.partialSync(data, data[0].syncWorkingDirectory, projectId);
+			this.partialSync(data, data[0].syncWorkingDirectory, projectId, projectFilesConfig);
 		}
 	}
 
@@ -48,7 +48,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		return isFileExcluded;
 	}
 
-	private partialSync(data: ILiveSyncData[], syncWorkingDirectory: string, projectId: string): void {
+	private partialSync(data: ILiveSyncData[], syncWorkingDirectory: string, projectId: string, projectFilesConfig: IProjectFilesConfig): void {
 		let that = this;
 		this.showFullLiveSyncInformation = true;
 		const gazeInstance = gaze(["**/*", "!node_modules/**/*", "!platforms/**/*"], { cwd: syncWorkingDirectory }, function (err: any, watcher: any) {
@@ -76,7 +76,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 								that.$logger.trace(`Skipping livesync for changed file ${filePath} as it is excluded in the patterns: ${dataItem.excludedProjectDirsAndFiles.join(", ")}`);
 								continue;
 							}
-							let mappedFilePath = that.$projectFilesProvider.mapFilePath(filePath, dataItem.platform, projectId);
+							let mappedFilePath = that.$projectFilesProvider.mapFilePath(filePath, dataItem.platform, projectId, projectFilesConfig);
 							that.$logger.trace(`Syncing filePath ${filePath}, mappedFilePath is ${mappedFilePath}`);
 							if (!mappedFilePath) {
 								that.$logger.warn(`Unable to sync ${filePath}.`);

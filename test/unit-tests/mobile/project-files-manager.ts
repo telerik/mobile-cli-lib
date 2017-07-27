@@ -104,10 +104,18 @@ function createTestInjector(): IInjector {
 }
 
 async function createFiles(testInjector: IInjector, filesToCreate: string[]): Promise<string> {
-	let fs = testInjector.resolve("fs");
 	let directoryPath = temp.mkdirSync("Project Files Manager Tests");
 
-	_.each(filesToCreate, file => fs.writeFile(path.join(directoryPath, file), ""));
+	_.each(filesToCreate, file => createFile(testInjector, file, "", directoryPath));
+
+	return directoryPath;
+}
+
+function createFile(testInjector: IInjector, fileToCreate: string, fileContent: string, directoryPath?: string): string {
+	let fs = testInjector.resolve("fs");
+	directoryPath = !directoryPath ? temp.mkdirSync("Project Files Manager Tests") : directoryPath;
+
+	fs.writeFile(path.join(directoryPath, fileToCreate), fileContent);
 
 	return directoryPath;
 }
@@ -170,7 +178,7 @@ describe("Project Files Manager Tests", () => {
 		let files = ["test.ios.x", "test.android.x"];
 		let directoryPath = await createFiles(testInjector, files);
 
-		projectFilesManager.processPlatformSpecificFiles(directoryPath, "android");
+		projectFilesManager.processPlatformSpecificFiles(directoryPath, "android", {});
 
 		let fs = testInjector.resolve("fs");
 		assert.isFalse(fs.exists(path.join(directoryPath, "test.ios.x")));
@@ -182,7 +190,7 @@ describe("Project Files Manager Tests", () => {
 		let files = ["index.ios.html", "index1.android.html", "a.test"];
 		let directoryPath = await createFiles(testInjector, files);
 
-		projectFilesManager.processPlatformSpecificFiles(directoryPath, "ios");
+		projectFilesManager.processPlatformSpecificFiles(directoryPath, "ios", {});
 
 		let fs = testInjector.resolve("fs");
 		assert.isFalse(fs.exists(path.join(directoryPath, "index1.android.html")));
@@ -191,11 +199,39 @@ describe("Project Files Manager Tests", () => {
 		assert.isTrue(fs.exists(path.join(directoryPath, "a.test")));
 	});
 
+	it("filters release specific files", async () => {
+		const directoryPath = createFile(testInjector, "test.debug.x", "debug");
+		const releaseFileContent = "release";
+		createFile(testInjector, "test.release.x", releaseFileContent, directoryPath);
+
+		projectFilesManager.processPlatformSpecificFiles(directoryPath, "android", { configuration: "release" });
+
+		const fs = testInjector.resolve("fs");
+		assert.isFalse(fs.exists(path.join(directoryPath, "test.debug.x")));
+		assert.isTrue(fs.exists(path.join(directoryPath, "test.x")));
+		assert.isFalse(fs.exists(path.join(directoryPath, "test.release.x")));
+		assert.isTrue(fs.readFile(path.join(directoryPath, "test.x")).toString() === releaseFileContent);
+	});
+
+	it("filters debug specific files by default", async () => {
+		const directoryPath = createFile(testInjector, "test.release.x", "release");
+		const debugFileContent = "debug";
+		createFile(testInjector, "test.debug.x", debugFileContent, directoryPath);
+
+		projectFilesManager.processPlatformSpecificFiles(directoryPath, "android", {});
+
+		const fs = testInjector.resolve("fs");
+		assert.isFalse(fs.exists(path.join(directoryPath, "test.debug.x")));
+		assert.isTrue(fs.exists(path.join(directoryPath, "test.x")));
+		assert.isFalse(fs.exists(path.join(directoryPath, "test.release.x")));
+		assert.isTrue(fs.readFile(path.join(directoryPath, "test.x")).toString() === debugFileContent);
+	});
+
 	it("doesn't filter non platform specific files", async () => {
 		let files = ["index1.js", "index2.js", "index3.js"];
 		let directoryPath = await createFiles(testInjector, files);
 
-		projectFilesManager.processPlatformSpecificFiles(directoryPath, "ios");
+		projectFilesManager.processPlatformSpecificFiles(directoryPath, "ios", {});
 
 		let fs = testInjector.resolve("fs");
 		assert.isTrue(fs.exists(path.join(directoryPath, "index1.js")));

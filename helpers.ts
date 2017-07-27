@@ -3,6 +3,7 @@ import * as net from "net";
 let Table = require("cli-table");
 import { platform, EOL } from "os";
 import { ReadStream } from "tty";
+import { Configurations } from "./constants";
 import { EventEmitter } from "events";
 import * as crypto from "crypto";
 
@@ -403,6 +404,13 @@ export async function connectEventuallyUntilTimeout(factory: () => net.Socket, t
 		tryConnect();
 
 	});
+}
+
+export function getProjectFilesConfig(opts: { isReleaseBuild: boolean }): IProjectFilesConfig {
+	const projectFilesConfig: IProjectFilesConfig = {
+		configuration: opts.isReleaseBuild ? Configurations.Release.toLowerCase() : Configurations.Debug.toLowerCase()
+	};
+	return projectFilesConfig;
 }
 
 /**

@@ -42,49 +42,49 @@ describe("ProjectFilesProviderBase", () => {
 	describe("getPreparedFilePath", () => {
 		it("returns correct path, when fileName does not contain platforms", () => {
 			let filePath = "/test/filePath.ts",
-				preparedPath = projectFilesProviderBase.getPreparedFilePath(filePath);
+				preparedPath = projectFilesProviderBase.getPreparedFilePath(filePath, {});
 
 			assert.deepEqual(preparedPath, expectedFilePath);
 		});
 
 		it("returns correct path, when fileName contains android platform", () => {
 			let filePath = "/test/filePath.android.ts",
-				preparedPath = projectFilesProviderBase.getPreparedFilePath(filePath);
+				preparedPath = projectFilesProviderBase.getPreparedFilePath(filePath, {});
 
 			assert.deepEqual(preparedPath, expectedFilePath);
 		});
 
 		it("returns correct path, when fileName contains ios platform", () => {
 			let filePath = "/test/filePath.iOS.ts",
-				preparedPath = projectFilesProviderBase.getPreparedFilePath(filePath);
+				preparedPath = projectFilesProviderBase.getPreparedFilePath(filePath, {});
 
 			assert.deepEqual(preparedPath, expectedFilePath);
 		});
 
 		it("returns correct path, when fileName contains platform (case insensitive test)", () => {
 			let filePath = "/test/filePath.AnDroId.ts",
-				preparedPath = projectFilesProviderBase.getPreparedFilePath(filePath);
+				preparedPath = projectFilesProviderBase.getPreparedFilePath(filePath, {});
 
 			assert.deepEqual(preparedPath, expectedFilePath);
 		});
 
 		it("returns correct path, when fileName contains debug configuration", () => {
 			let filePath = "/test/filePath.debug.ts",
-				preparedPath = projectFilesProviderBase.getPreparedFilePath(filePath);
+				preparedPath = projectFilesProviderBase.getPreparedFilePath(filePath, {});
 
 			assert.deepEqual(preparedPath, expectedFilePath);
 		});
 
 		it("returns correct path, when fileName contains debug configuration (case insensitive test)", () => {
 			let filePath = "/test/filePath.DebUG.ts",
-				preparedPath = projectFilesProviderBase.getPreparedFilePath(filePath);
+				preparedPath = projectFilesProviderBase.getPreparedFilePath(filePath, {});
 
 			assert.deepEqual(preparedPath, expectedFilePath);
 		});
 
 		it("returns correct path, when fileName contains release configuration", () => {
 			let filePath = "/test/filePath.release.ts",
-				preparedPath = projectFilesProviderBase.getPreparedFilePath(filePath);
+				preparedPath = projectFilesProviderBase.getPreparedFilePath(filePath, {});
 
 			assert.deepEqual(preparedPath, expectedFilePath);
 		});
@@ -101,42 +101,42 @@ describe("ProjectFilesProviderBase", () => {
 
 		it("process file without platforms in the name", () => {
 			let filePath = "/test/filePath.ts",
-				projectFileInfo = projectFilesProviderBase.getProjectFileInfo(filePath, "");
+				projectFileInfo = projectFilesProviderBase.getProjectFileInfo(filePath, "", {});
 
 			assert.deepEqual(projectFileInfo, getExpectedProjectFileInfo(filePath, true));
 		});
 
 		it("process file with android platform in the name", () => {
 			let filePath = "/test/filePath.android.ts",
-				projectFileInfo = projectFilesProviderBase.getProjectFileInfo(filePath, "android");
+				projectFileInfo = projectFilesProviderBase.getProjectFileInfo(filePath, "android", {});
 
 			assert.deepEqual(projectFileInfo, getExpectedProjectFileInfo(filePath, true));
 		});
 
 		it("process file with android platform in the name (case insensitive test)", () => {
 			let filePath = "/test/filePath.AndRoID.ts",
-				projectFileInfo = projectFilesProviderBase.getProjectFileInfo(filePath, "android");
+				projectFileInfo = projectFilesProviderBase.getProjectFileInfo(filePath, "android", {});
 
 			assert.deepEqual(projectFileInfo, getExpectedProjectFileInfo(filePath, true));
 		});
 
 		it("process file with iOS platform in the name", () => {
 			let filePath = "/test/filePath.ios.ts",
-				projectFileInfo = projectFilesProviderBase.getProjectFileInfo(filePath, "android");
+				projectFileInfo = projectFilesProviderBase.getProjectFileInfo(filePath, "android", {});
 
 			assert.deepEqual(projectFileInfo, getExpectedProjectFileInfo(filePath, false));
 		});
 
 		it("process file with debug configuration in the name", () => {
 			let filePath = "/test/filePath.debug.ts",
-				projectFileInfo = projectFilesProviderBase.getProjectFileInfo(filePath, "android");
+				projectFileInfo = projectFilesProviderBase.getProjectFileInfo(filePath, "android", {});
 
 			assert.deepEqual(projectFileInfo, getExpectedProjectFileInfo(filePath, true));
 		});
 
 		it("process file with release configuration in the name", () => {
 			let filePath = "/test/filePath.release.ts",
-				projectFileInfo = projectFilesProviderBase.getProjectFileInfo(filePath, "android");
+				projectFileInfo = projectFilesProviderBase.getProjectFileInfo(filePath, "android", {});
 
 			assert.deepEqual(projectFileInfo, getExpectedProjectFileInfo(filePath, false));
 		});
