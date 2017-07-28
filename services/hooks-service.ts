@@ -82,7 +82,7 @@ export class HooksService implements IHooksService {
 			}
 		} catch (err) {
 			this.$logger.trace("Failed during hook execution.");
-			this.$errors.failWithoutHelp(err.message);
+			this.$errors.failWithoutHelp(err.message || err);
 		}
 	}
 
