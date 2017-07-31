@@ -409,7 +409,7 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 	}
 
 	private async _startEmulatorIfNecessary(data?: Mobile.IDevicesServicesInitializationOptions): Promise<void> {
-			let deviceInstances = this.getDeviceInstances();
+			const deviceInstances = this.getDeviceInstances();
 
 			//if no --device is passed and no devices are found, the default emulator is started
 			if (!data.deviceId && _.isEmpty(deviceInstances)) {
@@ -688,14 +688,16 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 	}
 
 	private getEmulatorError(error: Error, platform: string): string {
-		let emulatorName = "Emulator";
+		let emulatorName = constants.DeviceTypes.Emulator;
+
 		if (this.$mobileHelper.isiOSPlatform(platform)) {
-			emulatorName = "Simulator";
+			emulatorName = constants.DeviceTypes.Simulator;
 		}
 
 		return `Cannot find connected devices.${EOL}` +
 			`${emulatorName} start failed with: ${error.message}${EOL}` +
-			`To list currently connected devices and verify that the specified identifier exists, run '${this.$staticConfig.CLIENT_NAME.toLowerCase()} device'.`;
+			`To list currently connected devices and verify that the specified identifier exists, run '${this.$staticConfig.CLIENT_NAME.toLowerCase()} device'.${EOL}` +
+			`To list available ${emulatorName.toLowerCase()} images, run '${this.$staticConfig.CLIENT_NAME.toLowerCase()} device <Platform> --available-devices'.`;
 	}
 }
 
