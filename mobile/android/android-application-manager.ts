@@ -44,10 +44,16 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async startApplication(appIdentifier: string): Promise<void> {
-		await this.adb.executeShellCommand(["monkey",
-			"-p", appIdentifier,
-			"-c", "android.intent.category.LAUNCHER",
-			"1"]);
+		const pmDumpOutput = await this.adb.executeShellCommand(["pm", "dump", appIdentifier, "|", "grep", "-A", "1", "MAIN"]);
+		const fullActivityNameRegExp = /([A-Za-z]{1}[A-Za-z\d_]*\.)*[A-Za-z][A-Za-z\d_]*\/([a-z][a-z_0-9]*\.)*[A-Z_]($[A-Z_]|[\w_])*/;
+		const activityMatch = new RegExp(fullActivityNameRegExp, "m");
+		const possibleIdentifier = activityMatch.exec(pmDumpOutput)[0];
+
+		if (possibleIdentifier) {
+			await this.adb.executeShellCommand(["am", "start", "-n", possibleIdentifier]);
+		} else {
+			this.$logger.trace(`Tried starting activity: ${possibleIdentifier}, but failed`);
+		}
 
 		if (!this.$options.justlaunch) {
 			const deviceIdentifier = this.identifier;
