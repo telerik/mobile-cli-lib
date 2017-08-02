@@ -45,14 +45,19 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 
 	public async startApplication(appIdentifier: string): Promise<void> {
 		const pmDumpOutput = await this.adb.executeShellCommand(["pm", "dump", appIdentifier, "|", "grep", "-A", "1", "MAIN"]);
-		const fullActivityNameRegExp = /([A-Za-z]{1}[A-Za-z\d_]*\.)*[A-Za-z][A-Za-z\d_]*\/([a-z][a-z_0-9]*\.)*[A-Z_]($[A-Z_]|[\w_])*/;
+		const fullActivityNameRegExp = this.getFullyQualifiedActivityRegex();
 		const activityMatch = new RegExp(fullActivityNameRegExp, "m");
-		const possibleIdentifier = activityMatch.exec(pmDumpOutput)[0];
+		const match = activityMatch.exec(pmDumpOutput);
+		let possibleIdentifier = "";
+
+		if(match && match.length > 0) {
+			possibleIdentifier = match[0]
+		}
 
 		if (possibleIdentifier) {
 			await this.adb.executeShellCommand(["am", "start", "-n", possibleIdentifier]);
 		} else {
-			this.$logger.trace(`Tried starting activity: ${possibleIdentifier}, but failed`);
+			this.$logger.trace(`Tried starting activity for: ${appIdentifier}, but failed`);
 		}
 
 		if (!this.$options.justlaunch) {
@@ -107,5 +112,9 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		}));
 
 		return applicationViews;
+	}
+
+	public getFullyQualifiedActivityRegex(): RegExp {
+		return /([A-Za-z]{1}[A-Za-z\d_]*\.)*[A-Za-z][A-Za-z\d_]*\/([a-z][a-z_0-9]*\.)*[A-Z_$]($[A-Z_$]|[$_\w_])*/;
 	}
 }
