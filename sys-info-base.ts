@@ -57,8 +57,13 @@ export class SysInfoBase implements ISysInfo {
 		return this.javaCompilerVerCache;
 	}
 
+	private xCodeVerCache: string = null;
 	public async getXCodeVersion(): Promise<string> {
-		return this.$hostInfo.isDarwin ? await this.exec("xcodebuild -version") : null;
+		if (!this.xCodeVerCache) {
+			this.xCodeVerCache = this.$hostInfo.isDarwin ? await this.exec("xcodebuild -version") : null;
+		}
+
+		return this.xCodeVerCache;
 	}
 
 	private nodeGypVerCache: string = null;
@@ -147,9 +152,9 @@ export class SysInfoBase implements ISysInfo {
 			res.procArch = process.arch;
 			res.nodeVer = process.version;
 
-			res.npmVer = await this.getNpmVersion(); //not used anywhere except for tests
+			res.npmVer = await this.getNpmVersion();
 
-			res.javaVer = await this.getJavaVersion(); //not used anywhere except for tests
+			res.javaVer = await this.getJavaVersion();
 
 			res.nodeGypVer = await this.getNodeGypVersion();
 			res.xcodeVer = await this.getXCodeVersion();
@@ -197,7 +202,7 @@ export class SysInfoBase implements ISysInfo {
 			}
 		} catch (e) {
 			// if we got an error, assume not working
-			this.$logger.trace(`Error while executing child process: ${e}`);
+			this.$logger.trace(`Error while executing ${cmd}: ${e.message}`);
 		}
 
 		return null;

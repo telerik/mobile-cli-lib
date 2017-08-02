@@ -34,6 +34,7 @@ export class XcodeSelectService implements IXcodeSelectService {
 		if (!xcodeVer) {
 			this.$errors.fail("xcodebuild execution failed. Make sure that you have latest Xcode and tools installed.");
 		}
+
 		let xcodeVersionMatch = xcodeVer.match(/Xcode (.*)/),
 			xcodeVersionGroup = xcodeVersionMatch && xcodeVersionMatch[1],
 			xcodeVersionSplit = xcodeVersionGroup && xcodeVersionGroup.split(".");
