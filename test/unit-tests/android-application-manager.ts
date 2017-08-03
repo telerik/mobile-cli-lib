@@ -2,7 +2,6 @@ import { AndroidApplicationManager } from "../../mobile/android/android-applicat
 import { Yok } from "../../yok";
 import { assert } from "chai";
 
-
 describe("android-application-manager", () => {
 
 	let testInjector: IInjector,
@@ -24,8 +23,9 @@ describe("android-application-manager", () => {
 			"/might.fail.on  org.nativescript.testApp/com.tns._TestClass /might.fail.on",
 			"might.fail.on/ org.nativescript.testApp/com.tns.$_TestClass might.fail.on//",
 			"/might.fail org.nativescript.testApp/com.tns._$TestClass something/might.fail.on/"
-		]
-	})
+		];
+	});
+
 	beforeEach(() => {
 		testInjector.register("androidApplicationManager", AndroidApplicationManager);
 		testInjector.register("adb", {});
@@ -49,13 +49,13 @@ describe("android-application-manager", () => {
 			const fullActivityNameRegExp:RegExp = aam.getFullyQualifiedActivityRegex();
 			const activityMatch = new RegExp(fullActivityNameRegExp, "m");
 
-			for(let i = 0; i < validTestInput.length; i+=1) {
+			for (let i = 0; i < validTestInput.length; i += 1) {
 				let validInput = validTestInput[i];
 				const match = activityMatch.exec(validInput);
 				let expectedElement = expectedValidTestInput[i];
 
 				assert.isArray(match);
-				assert.isTrue(expectedElement == match[0]);
+				assert.isTrue(expectedElement === match[0]);
 			}
 			assert.isTrue(true);
 		});
