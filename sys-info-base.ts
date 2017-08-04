@@ -60,12 +60,7 @@ export class SysInfoBase implements ISysInfo {
 	private xCodeVerCache: string = null;
 	public async getXCodeVersion(): Promise<string> {
 		if (!this.xCodeVerCache) {
-			try {
-				this.xCodeVerCache = this.$hostInfo.isDarwin ? await this.exec("xcodebuild -version") : null;
-			} catch (e) {
-				this.$logger.trace(`Command "xcodebuild -version" failed: ${e}`);
-				this.xCodeVerCache = null;
-			}
+			this.xCodeVerCache = this.$hostInfo.isDarwin ? await this.exec("xcodebuild -version") : null;
 		}
 
 		return this.xCodeVerCache;
@@ -207,6 +202,7 @@ export class SysInfoBase implements ISysInfo {
 			}
 		} catch (e) {
 			// if we got an error, assume not working
+			this.$logger.trace(`Error while executing ${cmd}: ${e.message}`);
 		}
 
 		return null;
