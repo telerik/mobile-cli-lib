@@ -32,7 +32,7 @@ export class XcodeSelectService implements IXcodeSelectService {
 		let sysInfoBase = this.$injector.resolve("sysInfoBase");
 		let xcodeVer = await sysInfoBase.getXCodeVersion();
 		if (!xcodeVer) {
-			this.$errors.fail("xcodebuild execution failed. Make sure that you have latest Xcode and tools installed.");
+			this.$errors.failWithoutHelp("xcodebuild execution failed. Make sure that you have latest Xcode and tools installed.");
 		}
 
 		let xcodeVersionMatch = xcodeVer.match(/Xcode (.*)/),
