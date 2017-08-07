@@ -112,7 +112,7 @@ describe("android-application-manager", () => {
 		androidDebugBridge = testInjector.resolve("adb");
 	});
 	describe("startApplication", () => {
-		it.only("fires up the right application", async () => {
+		it("fires up the right application", async () => {
 			for (let i = 0; i < androidDebugBridge.getInputLength(); i += 1) {
 				androidDebugBridge.validIdentifierPassed = false;
 
@@ -121,7 +121,7 @@ describe("android-application-manager", () => {
 				assert.isTrue(androidDebugBridge.startedWithActivityManager);
 			}
 		});
-		it.only("if regex fails monkey is called to start application", async () => {
+		it("if regex fails monkey is called to start application", async () => {
 			await androidApplicationManager.startApplication(invalidIdentifier);
 			assert.isFalse(androidDebugBridge.startedWithActivityManager);
 		});
