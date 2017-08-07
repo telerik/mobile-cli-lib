@@ -1,63 +1,129 @@
 import { AndroidApplicationManager } from "../../mobile/android/android-application-manager";
 import { Yok } from "../../yok";
 import { assert } from "chai";
+import { CommonLoggerStub } from "./stubs";
+const invalidIdentifier: string = "invalid.identifier";
 
-describe("android-application-manager", () => {
-
-	let testInjector: IInjector,
-		validTestInput: Array<string>,
-		expectedValidTestInput: Array<string>;
-
-	before(() => {
-		testInjector = new Yok();
-		expectedValidTestInput = [
+class AndroidDebugBridgeStub {
+	public startedWithActivityManager: Boolean = false;
+	public validIdentifierPassed: Boolean = false;
+	public static methodCallCount: number = 0;
+	private expectedValidTestInput: string[] = [
 			"org.nativescript.testApp/com.tns.TestClass",
 			"org.nativescript.testApp/com.tns.$TestClass",
 			"org.nativescript.testApp/com.tns._TestClass",
 			"org.nativescript.testApp/com.tns.$_TestClass",
-			"org.nativescript.testApp/com.tns._$TestClass"
-		],
-		validTestInput = [
+			"org.nativescript.testApp/com.tns._$TestClass",
+			"org.nativescript.testApp/com.tns.NativeScriptActivity"
+		];
+	private validTestInput: string[] = [
 			"other.stuff/ org.nativescript.testApp/com.tns.TestClass asdaas.dasdh2",
 			"other.stuff.the.regex.might.fail.on org.nativescript.testApp/com.tns.$TestClass other.stuff.the.regex.might.fail.on",
 			"/might.fail.on  org.nativescript.testApp/com.tns._TestClass /might.fail.on",
 			"might.fail.on/ org.nativescript.testApp/com.tns.$_TestClass might.fail.on//",
-			"/might.fail org.nativescript.testApp/com.tns._$TestClass something/might.fail.on/"
+			"/might.fail org.nativescript.testApp/com.tns._$TestClass something/might.fail.on/",
+			"android.intent.action.MAIN: \
+			3b2df03 org.nativescript.testApp/com.tns.NativeScriptActivity filter 50dd82e \
+			Action: \"android.intent.action.MAIN\" \
+			Category: \"android.intent.category.LAUNCHER\" \
+			-- \
+			intent={act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10200000 cmp=org.nativescript.testApp/com.tns.NativeScriptActivity} \
+			realActivity=org.nativescript.testApp/com.tns.NativeScriptActivity \
+			-- \
+			Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10200000 cmp=org.nativescript.testApp/com.tns.NativeScriptActivity } \
+			frontOfTask=true task=TaskRecord{fe592ac #449 A=org.nativescript.testApp U=0 StackId=1 sz=1}"
 		];
-	});
+
+	public async executeShellCommand(args: string[]): Promise<any> {
+		if (args && args.length > 0) {
+			if (args[0] === "pm") {
+				const passedIdentifier = args[2];
+				if (passedIdentifier === invalidIdentifier) {
+					return Promise.resolve("invalid output string");
+				} else {
+					const testString = this.validTestInput[AndroidDebugBridgeStub.methodCallCount];
+					return Promise.resolve(testString);
+				}
+			} else {
+				this.startedWithActivityManager = this.checkIfStartedWithActivityManager(args);
+				if (this.startedWithActivityManager) {
+					this.validIdentifierPassed = this.checkIfValidIdentifierPassed(args);
+				}
+			}
+		}
+		AndroidDebugBridgeStub.methodCallCount++;
+		Promise.resolve();
+	}
+
+	public getInputLength(): number {
+		return this.validTestInput.length;
+	}
+
+	private checkIfStartedWithActivityManager(args: string[]): Boolean {
+		const firstArgument = args[0].trim();
+		switch (firstArgument) {
+			case "am": return true;
+			case "monkey": return false;
+			default: return false;
+		}
+	}
+
+	private checkIfValidIdentifierPassed(args: string[]): Boolean {
+		if (args && args.length) {
+			const possibleIdentifier = args[args.length - 1];
+			let validTestString = this.expectedValidTestInput[AndroidDebugBridgeStub.methodCallCount];
+			if (possibleIdentifier === validTestString) {
+				return true;
+			}
+		}
+		return false;
+	}
+}
+
+function createTestInjector(): IInjector {
+	let testInjector = new Yok();
+	testInjector.register("androidApplicationManager", AndroidApplicationManager);
+	testInjector.register("adb", AndroidDebugBridgeStub);
+	testInjector.register('childProcess', {});
+	testInjector.register("logger", CommonLoggerStub);
+	testInjector.register("config", {});
+	testInjector.register("staticConfig", {});
+	testInjector.register("androidDebugBridgeResultHandler", {});
+	testInjector.register("options", {justlaunch: true});
+	testInjector.register("errors", {});
+	testInjector.register("identifier", {});
+	testInjector.register("logcatHelper", {});
+	testInjector.register("androidProcessService", {});
+	testInjector.register("httpClient", {});
+	testInjector.register("deviceLogProvider", {});
+	testInjector.register("hooksService", {});
+	return testInjector;
+}
+
+describe("android-application-manager", () => {
+
+	let testInjector: IInjector,
+		androidApplicationManager:AndroidApplicationManager,
+		androidDebugBridge:AndroidDebugBridgeStub;
 
 	beforeEach(() => {
-		testInjector.register("androidApplicationManager", AndroidApplicationManager);
-		testInjector.register("adb", {});
-		testInjector.register('childProcess', {});
-		testInjector.register("logger", {});
-		testInjector.register("config", {});
-		testInjector.register("staticConfig", {});
-		testInjector.register("androidDebugBridgeResultHandler", {});
-		testInjector.register("options", {});
-		testInjector.register("errors", {});
-		testInjector.register("identifier", {});
-		testInjector.register("logcatHelper", {});
-		testInjector.register("androidProcessService", {});
-		testInjector.register("httpClient", {});
-		testInjector.register("deviceLogProvider", {});
-		testInjector.register("hooksService", {});
+		testInjector = createTestInjector();
+		androidApplicationManager = testInjector.resolve("androidApplicationManager");
+		androidDebugBridge = testInjector.resolve("adb");
 	});
-	describe("tries to get fully qualified activity class name", () => {
-		it("and succeeds finding the right name", async () => {
-			let aam:AndroidApplicationManager = testInjector.resolve("androidApplicationManager");
-			const fullActivityNameRegExp:RegExp = aam.getFullyQualifiedActivityRegex();
-			const activityMatch = new RegExp(fullActivityNameRegExp, "m");
+	describe("startApplication", () => {
+		it.only("fires up the right application", async () => {
+			for (let i = 0; i < androidDebugBridge.getInputLength(); i += 1) {
+				androidDebugBridge.validIdentifierPassed = false;
 
-			for (let i = 0; i < validTestInput.length; i += 1) {
-				let validInput = validTestInput[i];
-				const match = activityMatch.exec(validInput);
-				let expectedElement = expectedValidTestInput[i];
-
-				assert.isArray(match);
-				assert.isTrue(expectedElement === match[0]);
+				await androidApplicationManager.startApplication("valid.identifier");
+				assert.isTrue(androidDebugBridge.validIdentifierPassed);
+				assert.isTrue(androidDebugBridge.startedWithActivityManager);
 			}
-			assert.isTrue(true);
+		});
+		it.only("if regex fails monkey is called to start application", async () => {
+			await androidApplicationManager.startApplication(invalidIdentifier);
+			assert.isFalse(androidDebugBridge.startedWithActivityManager);
 		});
 	});
 });

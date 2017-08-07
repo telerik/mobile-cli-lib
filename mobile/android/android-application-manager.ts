@@ -44,9 +44,22 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async startApplication(appIdentifier: string): Promise<void> {
+
+		/*
+		Example "pm dump <app_identifier> | grep -A 1 MAIN" output"
+			android.intent.action.MAIN:
+			3b2df03 org.nativescript.cliapp/com.tns.NativeScriptActivity filter 50dd82e
+			Action: "android.intent.action.MAIN"
+			Category: "android.intent.category.LAUNCHER"
+			--
+			intent={act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10200000 cmp=org.nativescript.cliapp/com.tns.NativeScriptActivity}
+			realActivity=org.nativescript.cliapp/com.tns.NativeScriptActivity
+			--
+			Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10200000 cmp=org.nativescript.cliapp/com.tns.NativeScriptActivity }
+			frontOfTask=true task=TaskRecord{fe592ac #449 A=org.nativescript.cliapp U=0 StackId=1 sz=1}
+		*/
 		const pmDumpOutput = await this.adb.executeShellCommand(["pm", "dump", appIdentifier, "|", "grep", "-A", "1", "MAIN"]);
-		const fullActivityNameRegExp = this.getFullyQualifiedActivityRegex();
-		const activityMatch = new RegExp(fullActivityNameRegExp, "m");
+		const activityMatch = this.getFullyQualifiedActivityRegex();
 		const match = activityMatch.exec(pmDumpOutput);
 		let possibleIdentifier = "";
 
@@ -115,7 +128,11 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		return applicationViews;
 	}
 
-	public getFullyQualifiedActivityRegex(): RegExp {
-		return /([A-Za-z]{1}[A-Za-z\d_]*\.)*[A-Za-z][A-Za-z\d_]*\/([a-z][a-z_0-9]*\.)*[A-Z_$]($[A-Z_$]|[$_\w_])*/;
+	private getFullyQualifiedActivityRegex(): RegExp {
+		const androidPackageName = "([A-Za-z]{1}[A-Za-z\\d_]*\\.)*[A-Za-z][A-Za-z\\d_]*";
+		const packageActivitySeparator = "\\/";
+		const fullJavaClassName = "([a-z][a-z_0-9]*\\.)*[A-Z_$]($[A-Z_$]|[$_\\w_])*";
+
+		return new RegExp(`${androidPackageName}${packageActivitySeparator}${fullJavaClassName}`, `m`);
 	}
 }
