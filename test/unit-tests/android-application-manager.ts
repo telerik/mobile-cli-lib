@@ -52,7 +52,6 @@ class AndroidDebugBridgeStub {
 			}
 		}
 		AndroidDebugBridgeStub.methodCallCount++;
-		Promise.resolve();
 	}
 
 	public getInputLength(): number {
@@ -71,10 +70,9 @@ class AndroidDebugBridgeStub {
 	private checkIfValidIdentifierPassed(args: string[]): Boolean {
 		if (args && args.length) {
 			const possibleIdentifier = args[args.length - 1];
-			let validTestString = this.expectedValidTestInput[AndroidDebugBridgeStub.methodCallCount];
-			if (possibleIdentifier === validTestString) {
-				return true;
-			}
+			const validTestString = this.expectedValidTestInput[AndroidDebugBridgeStub.methodCallCount];
+
+			return possibleIdentifier === validTestString;
 		}
 		return false;
 	}
@@ -113,7 +111,7 @@ describe("android-application-manager", () => {
 	});
 	describe("startApplication", () => {
 		it("fires up the right application", async () => {
-			for (let i = 0; i < androidDebugBridge.getInputLength(); i += 1) {
+			for (let i = 0; i < androidDebugBridge.getInputLength(); i++) {
 				androidDebugBridge.validIdentifierPassed = false;
 
 				await androidApplicationManager.startApplication("valid.identifier");

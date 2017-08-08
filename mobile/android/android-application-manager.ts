@@ -2,6 +2,7 @@ import { EOL } from "os";
 import { ApplicationManagerBase } from "../application-manager-base";
 import { LiveSyncConstants, TARGET_FRAMEWORK_IDENTIFIERS } from "../../constants";
 import { hook } from "../../helpers";
+import { cache } from "../../decorators";
 
 export class AndroidApplicationManager extends ApplicationManagerBase {
 
@@ -61,11 +62,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		const pmDumpOutput = await this.adb.executeShellCommand(["pm", "dump", appIdentifier, "|", "grep", "-A", "1", "MAIN"]);
 		const activityMatch = this.getFullyQualifiedActivityRegex();
 		const match = activityMatch.exec(pmDumpOutput);
-		let possibleIdentifier = "";
-
-		if (match && match.length > 0) {
-			possibleIdentifier = match[0];
-		}
+		const possibleIdentifier = match && match[0];
 
 		if (possibleIdentifier) {
 			await this.adb.executeShellCommand(["am", "start", "-n", possibleIdentifier]);
@@ -128,6 +125,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		return applicationViews;
 	}
 
+	@cache()
 	private getFullyQualifiedActivityRegex(): RegExp {
 		const androidPackageName = "([A-Za-z]{1}[A-Za-z\\d_]*\\.)*[A-Za-z][A-Za-z\\d_]*";
 		const packageActivitySeparator = "\\/";
