@@ -128,28 +128,25 @@ export class HooksService implements IHooksService {
 				let maybePromise = this.$injector.resolve(hookEntryPoint, hookArguments);
 				if (maybePromise) {
 					this.$logger.trace('Hook promises to signal completion');
-					await new Promise((resolve, reject) => {
-						maybePromise.then(
-							resolve,
-							(err: any) => {
-								if (_.isBoolean(err.stopExecution) && err.errorAsWarning === true) {
-									this.$logger.warn(err.message);
-									resolve();
-								} else {
-									reject(err);
-								}
-							});
-					});
+					try {
+						await maybePromise;
+					} catch (err) {
+						if (err && _.isBoolean(err.stopExecution) && err.errorAsWarning === true) {
+							this.$logger.warn(err.message);
+						} else {
+							throw err || new Error(`Failed to execute hook: ${hook.fullPath}.`);
+						}
+					}
 
-				}
-				this.$logger.trace('Hook completed');
-			} else {
-				let environment = this.prepareEnvironment(hook.fullPath);
-				this.$logger.trace("Executing %s hook at location %s with environment ", hookName, hook.fullPath, environment);
+					this.$logger.trace('Hook completed');
+				} else {
+					let environment = this.prepareEnvironment(hook.fullPath);
+					this.$logger.trace("Executing %s hook at location %s with environment ", hookName, hook.fullPath, environment);
 
-				let output = await this.$childProcess.spawnFromEvent(command, [hook.fullPath], "close", environment, { throwError: false });
-				if (output.exitCode !== 0) {
-					throw new Error(output.stdout + output.stderr);
+					let output = await this.$childProcess.spawnFromEvent(command, [hook.fullPath], "close", environment, { throwError: false });
+					if (output.exitCode !== 0) {
+						throw new Error(output.stdout + output.stderr);
+					}
 				}
 			}
 		}
