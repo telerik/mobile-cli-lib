@@ -39,10 +39,10 @@ class AndroidDebugBridgeStub {
 			if (args[0] === "pm") {
 				const passedIdentifier = args[2];
 				if (passedIdentifier === invalidIdentifier) {
-					return Promise.resolve("invalid output string");
+					return "invalid output string";
 				} else {
 					const testString = this.validTestInput[AndroidDebugBridgeStub.methodCallCount];
-					return Promise.resolve(testString);
+					return testString;
 				}
 			} else {
 				this.startedWithActivityManager = this.checkIfStartedWithActivityManager(args);
