@@ -132,7 +132,7 @@ export class HooksService implements IHooksService {
 						await maybePromise;
 					} catch (err) {
 						if (err && _.isBoolean(err.stopExecution) && err.errorAsWarning === true) {
-							this.$logger.warn(err.message);
+							this.$logger.warn(err.message || err);
 						} else {
 							throw err || new Error(`Failed to execute hook: ${hook.fullPath}.`);
 						}
