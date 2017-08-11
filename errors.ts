@@ -67,20 +67,28 @@ function resolveCallStack(error: Error): string {
 
 export function installUncaughtExceptionListener(actionOnException?: () => void): void {
 	let handler = async (err: Error) => {
-		let callstack = err.stack;
-		if (callstack) {
-			try {
-				callstack = resolveCallStack(err);
-			} catch (err) {
-				console.error("Error while resolving callStack:", err);
+		try {
+			let callstack = err.stack;
+			if (callstack) {
+				try {
+					callstack = resolveCallStack(err);
+				} catch (err) {
+					console.error("Error while resolving callStack:", err);
+				}
 			}
-		}
-		console.error(callstack || err.toString());
 
-		await tryTrackException(err, $injector);
+			console.error(callstack || err.toString());
 
-		if (actionOnException) {
-			actionOnException();
+			await tryTrackException(err, $injector);
+
+			if (actionOnException) {
+				actionOnException();
+			}
+
+		} catch (err) {
+			// In case the handler throws error and we do not catch it, we'll go in infinite loop of unhandled rejections.
+			// We cannot do anything here as even `console.error` may fail. So just exit the process.
+			process.exit(ErrorCodes.UNHANDLED_REJECTION_FAILURE);
 		}
 	};
 

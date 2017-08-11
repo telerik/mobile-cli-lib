@@ -466,7 +466,8 @@ declare const enum ErrorCodes {
 	UNKNOWN = 127,
 	INVALID_ARGUMENT = 128,
 	RESOURCE_PROBLEM = 129,
-	KARMA_FAIL = 130
+	KARMA_FAIL = 130,
+	UNHANDLED_REJECTION_FAILURE = 131
 }
 
 interface IFutureDispatcher {
