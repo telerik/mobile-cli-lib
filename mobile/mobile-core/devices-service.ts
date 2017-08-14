@@ -392,19 +392,34 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 			}
 			let deviceInstances = this.getDeviceInstances();
 
-			//if no --device is passed and no devices are found, the default emulator is started
 			if (!data.deviceId && _.isEmpty(deviceInstances)) {
 				if (!this.$hostInfo.isDarwin && this.$mobileHelper.isiOSPlatform(data.platform)) {
 					this.$errors.failWithoutHelp(constants.ERROR_NO_DEVICES_CANT_USE_IOS_SIMULATOR);
 				}
+			}
 
+			try {
+				await this._startEmulatorIfNecessary(data);
+			} catch (err) {
+				const errorMessage = this.getEmulatorError(err, data.platform);
+
+				this.$errors.failWithoutHelp(errorMessage);
+			}
+		}
+	}
+
+	private async _startEmulatorIfNecessary(data?: Mobile.IDevicesServicesInitializationOptions): Promise<void> {
+			const deviceInstances = this.getDeviceInstances();
+
+			//if no --device is passed and no devices are found, the default emulator is started
+			if (!data.deviceId && _.isEmpty(deviceInstances)) {
 				return await this.startEmulator(data.platform);
 			}
 
 			//check if --device(value) is running, if it's not or it's not the same as is specified, start with name from --device(value)
 			if (data.deviceId) {
 				if (!helpers.isNumber(data.deviceId)) {
-					let activeDeviceInstance = _.find(this.getDeviceInstances(), (device: Mobile.IDevice) => { return device.deviceInfo.identifier === data.deviceId; });
+					let activeDeviceInstance = _.find(deviceInstances, (device: Mobile.IDevice) => { return device.deviceInfo.identifier === data.deviceId; });
 					if (!activeDeviceInstance) {
 						return await this.startEmulator(data.platform, data.deviceId);
 					}
@@ -418,7 +433,6 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 					return await this.startEmulator(data.platform);
 				}
 			}
-		}
 	}
 
 	/**
@@ -671,6 +685,19 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 		platform = platform || this._platform;
 		shouldReturnImmediateResult = shouldReturnImmediateResult || false;
 		return { shouldReturnImmediateResult: shouldReturnImmediateResult, platform: platform };
+	}
+
+	private getEmulatorError(error: Error, platform: string): string {
+		let emulatorName = constants.DeviceTypes.Emulator;
+
+		if (this.$mobileHelper.isiOSPlatform(platform)) {
+			emulatorName = constants.DeviceTypes.Simulator;
+		}
+
+		return `Cannot find connected devices.${EOL}` +
+			`${emulatorName} start failed with: ${error.message}${EOL}` +
+			`To list currently connected devices and verify that the specified identifier exists, run '${this.$staticConfig.CLIENT_NAME.toLowerCase()} device'.${EOL}` +
+			`To list available ${emulatorName.toLowerCase()} images, run '${this.$staticConfig.CLIENT_NAME.toLowerCase()} device <Platform> --available-devices'.`;
 	}
 }
 

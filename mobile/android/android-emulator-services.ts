@@ -119,7 +119,7 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 			await this.unlockScreen(emulatorId);
 		} else {
 			if (emulatorImage) {
-				this.$errors.fail(this.$messages.Devices.NotFoundDeviceByIdentifierErrorMessageWithIdentifier, emulatorImage, this.$staticConfig.CLIENT_NAME.toLowerCase());
+				this.$errors.fail(`No emulator image available for device identifier '${emulatorImage}'.`);
 			} else {
 				this.$errors.fail(this.$messages.Devices.NotFoundDeviceByIdentifierErrorMessage, this.$staticConfig.CLIENT_NAME.toLowerCase());
 			}

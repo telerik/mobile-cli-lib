@@ -8,6 +8,7 @@ export class ProvisionType {
 
 export class DeviceTypes {
 	static Emulator = "Emulator";
+	static Simulator = "Simulator";
 	static Device = "Device";
 }
 
