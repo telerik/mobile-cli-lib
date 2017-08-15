@@ -18,6 +18,7 @@ export class ProxySetCommand extends ProxyCommandBase {
 		private $injector: IInjector,
 		private $prompter: IPrompter,
 		private $hostInfo: IHostInfo,
+		private $staticConfig: Config.IStaticConfig,
 		protected $analyticsService: IAnalyticsService,
 		protected $logger: ILogger,
 		protected $options: ICommonOptions,
@@ -102,6 +103,13 @@ export class ProxySetCommand extends ProxyCommandBase {
 		if (!this.$hostInfo.isWindows) {
 			this.$logger.warn(`Note that storing credentials is not supported on ${platform()} yet.`);
 		}
+
+		const clientName = this.$staticConfig.CLIENT_NAME.toLowerCase();
+		let messageNote = (clientName === "tns" ?
+			"Note that 'npm' and 'Gradle' need to be configured separately to work with a proxy." :
+			"Note that `npm` needs to be configured separately to work with a proxy.") + EOL;
+
+		this.$logger.warn(`${messageNote}Run '${clientName} proxy set --help' for more information.`);
 
 		this.$proxyService.setCache(proxyCache);
 		this.$logger.out(`Successfully setup proxy.${EOL}`);
