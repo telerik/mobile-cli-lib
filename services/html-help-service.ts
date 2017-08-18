@@ -10,6 +10,10 @@ export class HtmlHelpService implements IHtmlHelpService {
 	private static RELATIVE_PATH_TO_IMAGES_REGEX = /@RELATIVE_PATH_TO_IMAGES@/g;
 	private static RELATIVE_PATH_TO_INDEX_REGEX = /@RELATIVE_PATH_TO_INDEX@/g;
 	private static MARKDOWN_LINK_REGEX = /\[([\w \-\`\<\>\*\:\\]+?)\]\([\s\S]+?\)/g;
+	private static SPAN_REGEX = /([\s\S]*?)<span.*?>([\s\S]*?)<\/span>(?:\r?\n)*/g;
+	private get newLineRegex(): RegExp {
+		return /\r?\n/g;
+	}
 
 	private pathToManPages: string;
 	private pathToHtmlPages: string;
@@ -134,9 +138,15 @@ export class HtmlHelpService implements IHtmlHelpService {
 
 	public async getCommandLineHelpForCommand(commandName: string): Promise<string> {
 		let helpText = await this.readMdFileForCommand(commandName);
-		return (await this.$microTemplateService.parseContent(helpText, { isHtml: false }))
+		const commandLineHelp = (await this.$microTemplateService.parseContent(helpText, { isHtml: false }))
 			.replace(/&nbsp;/g, " ")
-			.replace(HtmlHelpService.MARKDOWN_LINK_REGEX, "$1");
+			.replace(HtmlHelpService.MARKDOWN_LINK_REGEX, "$1")
+			.replace(HtmlHelpService.SPAN_REGEX, (matchingSubstring: string, textBeforeSpan: string, textInsideSpan: string, index: number, fullString: string): string => {
+				return textBeforeSpan.replace(this.newLineRegex, "") + textInsideSpan.replace(this.newLineRegex, "");
+			});
+
+		return commandLineHelp;
 	}
 }
+
 $injector.register("htmlHelpService", HtmlHelpService);
