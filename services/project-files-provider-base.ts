@@ -15,6 +15,14 @@ export abstract class ProjectFilesProviderBase implements IProjectFilesProvider 
 	}
 
 	public getProjectFileInfo(filePath: string, platform: string, projectFilesConfig?: IProjectFilesConfig): IProjectFileInfo {
+		if (!filePath) {
+			return {
+				filePath: filePath,
+				onDeviceFileName: filePath,
+				shouldIncludeFile: false
+			};
+		}
+
 		let parsed = this.parseFile(filePath, this.$mobileHelper.platformNames, platform || "");
 		let basicConfigurations = [Configurations.Debug.toLowerCase(), Configurations.Release.toLowerCase()];
 		if (!parsed) {
