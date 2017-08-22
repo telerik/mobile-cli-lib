@@ -41,10 +41,10 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 
 	public async startApplication(appIdentifier: string): Promise<void> {
 		let launchResult = this.iosSim.startApplication(this.identifier, appIdentifier);
+		let pid = launchResult.split(":")[1].trim();
+		this.$deviceLogProvider.setApplicationPidForDevice(this.identifier, pid);
 
 		if (!this.$options.justlaunch) {
-			let pid = launchResult.split(":")[1].trim();
-			this.$deviceLogProvider.setApplicationPidForDevice(this.identifier, pid);
 			this.$iOSSimulatorLogProvider.startLogProcess(this.identifier);
 		}
 	}
