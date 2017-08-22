@@ -76,10 +76,6 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async startApplication(appIdentifier: string): Promise<void> {
-		if (this.$hostInfo.isWindows && !this.$staticConfig.enableDeviceRunCommandOnWindows) {
-			this.$errors.fail("$%s device run command is not supported on Windows for iOS devices.", this.$staticConfig.CLIENT_NAME.toLowerCase());
-		}
-
 		if (!await this.isApplicationInstalled(appIdentifier)) {
 			this.$errors.failWithoutHelp("Invalid application id: %s. All available application ids are: %s%s ", appIdentifier, EOL, this.applicationsLiveSyncInfos.join(EOL));
 		}
