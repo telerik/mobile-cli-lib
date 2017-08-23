@@ -122,7 +122,7 @@ export class Errors implements IErrors {
 
 	public printCallStack: boolean = false;
 
-	public fail(optsOrFormatStr: any, ...args: any[]): void {
+	public fail(optsOrFormatStr: any, ...args: any[]): never {
 		const argsArray = args || [];
 
 		let opts = optsOrFormatStr;
@@ -146,9 +146,9 @@ export class Errors implements IErrors {
 		throw exception;
 	}
 
-	public failWithoutHelp(message: string, ...args: any[]): void {
+	public failWithoutHelp(message: string, ...args: any[]): never {
 		args.unshift(message);
-		this.fail({ formatStr: util.format.apply(null, args), suppressCommandHelp: true });
+		return this.fail({ formatStr: util.format.apply(null, args), suppressCommandHelp: true });
 	}
 
 	public async beginCommand(action: () => Promise<boolean>, printCommandHelp: () => Promise<boolean>): Promise<boolean> {

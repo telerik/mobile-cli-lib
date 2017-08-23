@@ -38,12 +38,12 @@ describe("common options", () => {
 		testInjector = createTestInjector();
 
 		const errors = new Errors(testInjector);
-		errors.failWithoutHelp = (message: string, ...args: any[]): void => {
+		errors.failWithoutHelp = <any>((message: string, ...args: any[]): void => {
 			isExecutionStopped = true;
-		};
-		errors.fail = (message: string, ...args: any[]): void => {
+		});
+		errors.fail = <any>((message: string, ...args: any[]): void => {
 			isExecutionStopped = true;
-		};
+		});
 
 		testInjector.register("errors", errors);
 		isExecutionStopped = false;
