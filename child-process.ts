@@ -30,7 +30,7 @@ export class ChildProcess extends EventEmitter implements IChildProcess {
 	}
 
 	public async execFile(command: string, args: string[]): Promise<any> {
-		this.$logger.debug("execFile: %s %s", command, this.getArgumentsAsQuotedString(args));
+		this.$logger.trace("execFile: %s %s", command, this.getArgumentsAsQuotedString(args));
 
 		return new Promise<any>((resolve, reject) => {
 			child_process.execFile(command, args, (error: any, stdout: NodeBuffer) => {
@@ -45,12 +45,12 @@ export class ChildProcess extends EventEmitter implements IChildProcess {
 	}
 
 	public spawn(command: string, args?: string[], options?: any): child_process.ChildProcess {
-		this.$logger.debug("spawn: %s %s", command, this.getArgumentsAsQuotedString(args));
+		this.$logger.trace("spawn: %s %s", command, this.getArgumentsAsQuotedString(args));
 		return child_process.spawn(command, args, options);
 	}
 
 	public fork(modulePath: string, args?: string[], options?: any): child_process.ChildProcess {
-		this.$logger.debug("fork: %s %s", modulePath, this.getArgumentsAsQuotedString(args));
+		this.$logger.trace("fork: %s %s", modulePath, this.getArgumentsAsQuotedString(args));
 		return child_process.fork(modulePath, args, options);
 	}
 

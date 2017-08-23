@@ -21,14 +21,14 @@ export class ProjectHelper implements IProjectHelper {
 			let projectFilePath = path.join(projectDir, this.$staticConfig.PROJECT_FILE_NAME);
 
 			if (this.$fs.exists(projectFilePath) && this.isProjectFileCorrect(projectFilePath)) {
-				this.$logger.debug("Project directory is '%s'.", projectDir);
+				this.$logger.trace("Project directory is '%s'.", projectDir);
 				this.cachedProjectDir = projectDir;
 				break;
 			}
 
 			let dir = path.dirname(projectDir);
 			if (dir === projectDir) {
-				this.$logger.debug("No project found at or above '%s'.", this.$options.path || path.resolve("."));
+				this.$logger.trace("No project found at or above '%s'.", this.$options.path || path.resolve("."));
 				break;
 			}
 			projectDir = dir;

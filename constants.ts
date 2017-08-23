@@ -83,3 +83,9 @@ export const HttpProtocolToPort: IDictionary<number> = {
 	'http:': 80,
 	'https:': 443
 };
+
+export const enum LoggerLevels {
+	Info = "INFO",
+	Debug = "DEBUG",
+	Trace = "TRACE"
+};

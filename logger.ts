@@ -4,6 +4,7 @@ import * as stream from "stream";
 import * as marked from "marked";
 let TerminalRenderer = require("marked-terminal");
 let chalk = require("chalk");
+import { LoggerLevels } from "./constants";
 
 export class Logger implements ILogger {
 	private log4jsLogger: log4js.ILogger = null;
@@ -17,29 +18,46 @@ export class Logger implements ILogger {
 
 	constructor($config: Config.IConfig,
 		private $options: ICommonOptions) {
-		let appenders: log4js.IAppender[] = [];
+		let appenders: any = null;
 
 		if (!$config.CI_LOGGER) {
-			appenders.push({
-				type: "console",
-				layout: {
-					type: "messagePassThrough"
+			appenders = {
+				out: {
+					type: "console",
+					layout: {
+						type: 'pattern',
+						pattern: '%[[%d]%] %[[%p]%]: %m',
+						// pattern: '[%d] [%p]: %m',
+					}
+					// layout: { type: 'coloured' }
+					// layout: { type: 'messagePassThrough' }
 				}
-			});
+			}
+			// appenders.push(<any>{
+
+			// });
 		}
 
-		log4js.configure({ appenders: appenders });
+		const logLevel = this.$options.log || ($config.DEBUG ? LoggerLevels.Debug : LoggerLevels.Info);
 
-		this.log4jsLogger = log4js.getLogger();
+		const categories: any = {
+			default: { appenders: ['out'], level: logLevel },
+			// task: { appenders: ['task'], level: 'info' }
 
-		if (this.$options.log) {
-			this.log4jsLogger.setLevel(this.$options.log);
-		} else {
-			this.log4jsLogger.setLevel($config.DEBUG ? "TRACE" : "INFO");
 		}
+
+		log4js.configure(<any>{ appenders, categories });
+
+		this.log4jsLogger = log4js.getLogger("default");
+
+		// if (this.$options.log) {
+		// 	this.log4jsLogger.setLevel(this.$options.log.toUpperCase());
+		// } else {
+		// 	this.log4jsLogger.setLevel($config.DEBUG ? LoggerLevels.Debug : LoggerLevels.Info);
+		// }
 	}
 
-	setLevel(level: string): void {
+	setLevel(level: LoggerLevels): void {
 		this.log4jsLogger.setLevel(level);
 	}
 
@@ -85,7 +103,7 @@ export class Logger implements ILogger {
 	}
 
 	out(...args: string[]): void {
-		console.log(util.format.apply(null, args));
+		this.log4jsLogger.info.apply(this.log4jsLogger, args);
 	}
 
 	write(...args: string[]): void {
