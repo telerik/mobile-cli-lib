@@ -525,8 +525,11 @@ interface ISpawnFromEventOptions {
 	}
 }
 
-interface IProjectHelper {
+interface IProjectDir {
 	projectDir: string;
+}
+
+interface IProjectHelper extends IProjectDir {
 	generateDefaultAppId(appName: string, baseAppId: string): string;
 	sanitizeName(appName: string): string;
 }
@@ -931,8 +934,11 @@ interface ISyncBatch {
 	syncFiles(syncAction: (filesToSync: string[]) => Promise<void>): Promise<void>;
 }
 
-interface ILiveSyncData {
+interface IPlatform {
 	platform: string;
+}
+
+interface ILiveSyncData extends IPlatform {
 	/** Application identifier */
 	appIdentifier: string;
 	/** The path to a directory that contains prepared project files for sync */
@@ -973,13 +979,11 @@ interface IDeviceLiveSyncService extends IDeviceLiveSyncServiceBase {
 	afterInstallApplicationAction?(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<boolean>;
 }
 
-interface ISysInfoData {
+interface ISysInfoData extends IPlatform {
 	/** name and version of the CLI app itself */
 	procInfo: string;
 
 	// os stuff
-	/** os platform flavour, reported by os.platform */
-	platform: string;
 	/** Full os name, like `uname -a` on unix, registry query on win */
 	os: string;
 	/** .net version, applicable to windows only */

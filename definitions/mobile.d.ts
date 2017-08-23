@@ -7,7 +7,7 @@ declare module Mobile {
 	/**
 	 * Describes available information for a device.
 	 */
-	interface IDeviceInfo {
+	interface IDeviceInfo extends IPlatform {
 		/**
 		 * Unique identifier of the device.
 		 */
@@ -40,12 +40,6 @@ declare module Mobile {
 		 * For iOS the value is always "Apple".
 		 */
 		vendor: string;
-
-		/**
-		 * Device's platform.
-		 * Can be Android or iOS.
-		 */
-		platform: string;
 
 		/**
 		 * Status of device describing if you can work with this device or there's communication error.
@@ -85,7 +79,9 @@ declare module Mobile {
 		activeArchitecture?: string;
 	}
 
-	interface IDeviceError extends Error {
+	interface IDeviceError extends Error, IDeviceIdentifier { }
+
+	interface IDeviceIdentifier {
 		deviceIdentifier: string;
 	}
 
@@ -113,10 +109,9 @@ declare module Mobile {
 
 	interface IiOSSimulator extends IDevice { }
 
-	interface IDeviceAppData {
+	interface IDeviceAppData extends IPlatform {
 		appIdentifier: string;
 		device: Mobile.IDevice;
-		platform: string;
 		getDeviceProjectRootPath(): Promise<string>;
 		deviceSyncZipPath?: string;
 		isLiveSyncSupported(): Promise<boolean>;
@@ -360,12 +355,11 @@ declare module Mobile {
 		skipEmulatorStart?: boolean;
 	}
 
-	interface IDeviceActionResult<T> {
-		deviceIdentifier: string;
+	interface IDeviceActionResult<T> extends IDeviceIdentifier {
 		result: T;
 	}
 
-	interface IDevicesService extends NodeJS.EventEmitter {
+	interface IDevicesService extends NodeJS.EventEmitter, IPlatform {
 		hasDevices: boolean;
 		deviceCount: number;
 
@@ -391,7 +385,6 @@ declare module Mobile {
 		 * @return {void}
 		 */
 		addDeviceDiscovery(deviceDiscovery: IDeviceDiscovery): void;
-		platform: string;
 		getDevices(): Mobile.IDeviceInfo[];
 
 		/**
@@ -612,10 +605,9 @@ declare module Mobile {
 	}
 
 	//todo: plamen5kov: this is a duplicate of an interface (IEmulatorInfo) fix after 3.0-RC nativescript-cli/lib/definitions/emulator-platform-service.d.ts
-	interface IEmulatorInfo {
+	interface IEmulatorInfo extends IPlatform {
 		name: string;
 		version: string;
-		platform: string;
 		id: string;
 		type: string;
 		isRunning?: boolean;
@@ -756,12 +748,7 @@ declare module Mobile {
 	/**
 	 * Describes basic information about application on device.
 	 */
-	interface IDeviceApplicationInformationBase {
-		/**
-		 * The device identifier.
-		 */
-		deviceIdentifier: string;
-
+	interface IDeviceApplicationInformationBase extends IDeviceIdentifier {
 		/**
 		 * The application identifier.
 		 */
