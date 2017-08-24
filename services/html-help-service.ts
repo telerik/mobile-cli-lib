@@ -1,4 +1,5 @@
 import * as path from "path";
+import { EOL } from "os";
 import marked = require("marked");
 
 export class HtmlHelpService implements IHtmlHelpService {
@@ -10,7 +11,8 @@ export class HtmlHelpService implements IHtmlHelpService {
 	private static RELATIVE_PATH_TO_IMAGES_REGEX = /@RELATIVE_PATH_TO_IMAGES@/g;
 	private static RELATIVE_PATH_TO_INDEX_REGEX = /@RELATIVE_PATH_TO_INDEX@/g;
 	private static MARKDOWN_LINK_REGEX = /\[([\w \-\`\<\>\*\:\\]+?)\]\([\s\S]+?\)/g;
-	private static SPAN_REGEX = /([\s\S]*?)<span.*?>([\s\S]*?)<\/span>(?:\r?\n)*/g;
+	private static SPAN_REGEX = /([\s\S]*?)(?:\r?\n)?<span.*?>([\s\S]*?)<\/span>(?:\r?\n)*/g;
+	private static NEW_LINE_REGEX = /<\/?\s*?br\s*?\/?>/g; // <br>, <br > <br/> <br />
 	private get newLineRegex(): RegExp {
 		return /\r?\n/g;
 	}
@@ -142,8 +144,9 @@ export class HtmlHelpService implements IHtmlHelpService {
 			.replace(/&nbsp;/g, " ")
 			.replace(HtmlHelpService.MARKDOWN_LINK_REGEX, "$1")
 			.replace(HtmlHelpService.SPAN_REGEX, (matchingSubstring: string, textBeforeSpan: string, textInsideSpan: string, index: number, fullString: string): string => {
-				return textBeforeSpan.replace(this.newLineRegex, "") + textInsideSpan.replace(this.newLineRegex, "");
-			});
+				return textBeforeSpan + textInsideSpan.replace(this.newLineRegex, "");
+			})
+			.replace(HtmlHelpService.NEW_LINE_REGEX, EOL);
 
 		return commandLineHelp;
 	}
