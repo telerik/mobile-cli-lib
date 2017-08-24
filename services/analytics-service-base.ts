@@ -1,21 +1,16 @@
 import * as helpers from "../helpers";
+import { cache } from "../decorators";
+
 const cliGlobal = <ICliGlobal>global;
 // HACK
 cliGlobal.XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 cliGlobal.XMLHttpRequest.prototype.withCredentials = false;
 // HACK -end
 
-export enum AnalyticsStatus {
-	enabled,
-	disabled,
-	notConfirmed
-}
-
 export class AnalyticsServiceBase implements IAnalyticsService {
 	private static MAX_WAIT_SENDING_INTERVAL = 30000; // in milliseconds
-	private _eqatecMonitor: any;
-	private analyticsStatuses: IDictionary<AnalyticsStatus> = {};
-	private isAnalyticsStatusesInitialized = false;
+	protected _eqatecMonitor: any;
+	protected analyticsStatuses: IDictionary<AnalyticsStatus> = {};
 
 	constructor(protected $logger: ILogger,
 		protected $options: ICommonOptions,
@@ -40,11 +35,10 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 					+ this.$analyticsSettingsService.getClientName()
 					+ " by automatically sending anonymous usage statistics? We will not use this information to identify or contact you."
 					+ " You can read our official Privacy Policy at");
-				const message = this.$analyticsSettingsService.getPrivacyPolicyLink();
 
+				const message = this.$analyticsSettingsService.getPrivacyPolicyLink();
 				trackFeatureUsage = await this.$prompter.confirm(message, () => true);
 				await this.setStatus(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, trackFeatureUsage);
-
 				await this.checkConsentCore(trackFeatureUsage);
 			}
 
@@ -78,15 +72,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 			&& await this.$analyticsSettingsService.canDoRequest()) {
 			try {
 				this.$logger.trace(`Trying to track exception with message '${message}'.`);
-				if (this._eqatecMonitor && this.$staticConfig.ANALYTICS_EXCEPTIONS_API_KEY) {
-					// In case eqatecMonitor is already started and we want to track exceptions in a separate project
-					// we have to restart the monitor.
-					await this.restartEqatecMonitor(this.$staticConfig.ANALYTICS_EXCEPTIONS_API_KEY);
-				} else {
-					// In case the monitor is already started, but we want to track exceptions in the same project
-					// In case the monitor is not started we'll start it with specified EXCEPTIONS KEY or with the default one.
-					await this.start(this.$staticConfig.ANALYTICS_EXCEPTIONS_API_KEY);
-				}
+				await this.start();
 
 				if (this._eqatecMonitor) {
 					this.$logger.printInfoMessageOnSameLine("Sending exception report (press Ctrl+C to stop)...");
@@ -134,9 +120,10 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 		return this.getHumanReadableStatusMessage(settingName, readableSettingName);
 	}
 
-	public async restartEqatecMonitor(projectApiKey: string): Promise<void> {
+	public async restartEqatecMonitor(analyticsAPIKey: string): Promise<void> {
 		this.tryStopEqatecMonitor();
-		await this.start(projectApiKey);
+		const analyticsSettings = await this.getEqatecSettings(analyticsAPIKey);
+		await this.startEqatecMonitor(analyticsSettings);
 	}
 
 	protected checkConsentCore(trackFeatureUsage: boolean): Promise<void> {
@@ -155,6 +142,118 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 		} catch (e) {
 			this.$logger.trace("Analytics exception: '%s'", e.toString());
 		}
+	}
+
+	protected async startEqatecMonitor(analyticsSettings: IEqatecInitializeData): Promise<void> {
+		if (this._eqatecMonitor) {
+			return;
+		}
+
+		analyticsSettings = analyticsSettings || Object.create(null);
+
+		require("../vendor/EqatecMonitor.min");
+		const analyticsProjectKey = analyticsSettings.analyticsAPIKey;
+		let settings = cliGlobal._eqatec.createSettings(analyticsProjectKey);
+		settings.useHttps = false;
+		settings.userAgent = this.getUserAgentString();
+		settings.version = this.$staticConfig.version;
+		settings.useCookies = false;
+		settings.loggingInterface = {
+			logMessage: this.$logger.trace.bind(this.$logger),
+			logError: this.$logger.debug.bind(this.$logger)
+		};
+
+		this._eqatecMonitor = cliGlobal._eqatec.createMonitor(settings);
+
+		const analyticsInstallationId = analyticsSettings.analyticsInstallationId;
+
+		this.$logger.trace(`${this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME}: ${analyticsInstallationId}`);
+		this._eqatecMonitor.setInstallationID(analyticsInstallationId);
+
+		try {
+			await this._eqatecMonitor.setUserID(analyticsSettings.userId);
+
+			const currentCount = analyticsSettings.userSessionCount;
+			this._eqatecMonitor.setStartCount(currentCount);
+		} catch (e) {
+			// user not logged in. don't care.
+			this.$logger.trace("Error while initializing eqatecMonitor", e);
+		}
+
+		this._eqatecMonitor.start();
+
+		// End the session on process.exit only or in case user disables both usage tracking and exceptions tracking.
+		process.on("exit", this.tryStopEqatecMonitor);
+
+		await this.reportNodeVersion();
+	}
+
+	@cache()
+	protected async initAnalyticsStatuses(): Promise<void> {
+		if (await this.$analyticsSettingsService.canDoRequest()) {
+			this.$logger.trace("Initializing analytics statuses.");
+			const settingsNames = [this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, this.$staticConfig.ERROR_REPORT_SETTING_NAME];
+
+			for (const settingName of settingsNames) {
+				await this.getStatus(settingName);
+			}
+
+			this.$logger.trace("Analytics statuses: ");
+			this.$logger.trace(this.analyticsStatuses);
+		}
+	}
+
+	protected getIsSending(): boolean {
+		return this._eqatecMonitor.status().isSending;
+	}
+
+	protected waitForSending(): Promise<void> {
+		return new Promise<void>((resolve, reject) => {
+			const intervalTime = 100;
+			let remainingTime = AnalyticsServiceBase.MAX_WAIT_SENDING_INTERVAL;
+
+			if (this.getIsSending()) {
+				this.$logger.trace(`Waiting for analytics to send information. Will check in a ${intervalTime}ms.`);
+				const interval = setInterval(() => {
+					if (!this.getIsSending() || (remainingTime <= 0)) {
+						clearInterval(interval);
+						resolve();
+					}
+
+					remainingTime -= intervalTime;
+					this.$logger.trace(`Waiting for analytics to send information. Will check in a ${intervalTime}ms. Remaining time is: ${remainingTime}`);
+				}, intervalTime);
+			} else {
+				resolve();
+			}
+		});
+	}
+
+	private async getDefaultEqatecInstallationId(): Promise<string> {
+		let guid = await this.$userSettingsService.getSettingValue<string>(this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME);
+		if (!guid) {
+			guid = helpers.createGUID(false);
+			await this.$userSettingsService.saveSetting(this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME, guid);
+		}
+
+		return guid;
+	}
+
+	private async getCurrentSessionCount(analyticsProjectKey: string): Promise<number> {
+		let currentCount = await this.$analyticsSettingsService.getUserSessionsCount(analyticsProjectKey);
+		await this.$analyticsSettingsService.setUserSessionsCount(++currentCount, analyticsProjectKey);
+
+		return currentCount;
+	}
+
+	private async getEqatecSettings(analyticsAPIKey?: string): Promise<IEqatecInitializeData> {
+		return {
+			analyticsAPIKey: analyticsAPIKey || this.$staticConfig.ANALYTICS_API_KEY,
+			analyticsInstallationId: await this.getDefaultEqatecInstallationId(),
+			type: TrackingTypes.Initialization,
+			userId: await this.$analyticsSettingsService.getUserId(),
+			userSessionCount: await this.getCurrentSessionCount(analyticsAPIKey)
+		};
 	}
 
 	private async getStatus(settingName: string): Promise<AnalyticsStatus> {
@@ -176,55 +275,14 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 		return this.analyticsStatuses[settingName];
 	}
 
-	private async start(analyticsProjectKey?: string): Promise<void> {
-		if (this._eqatecMonitor) {
-			return;
-		}
-
-		require("../vendor/EqatecMonitor.min");
-		analyticsProjectKey = analyticsProjectKey || this.$staticConfig.ANALYTICS_API_KEY;
-		const settings = cliGlobal._eqatec.createSettings(analyticsProjectKey);
-		settings.useHttps = false;
-		settings.userAgent = this.getUserAgentString();
-		settings.version = this.$staticConfig.version;
-		settings.useCookies = false;
-		settings.loggingInterface = {
-			logMessage: this.$logger.trace.bind(this.$logger),
-			logError: this.$logger.debug.bind(this.$logger)
-		};
-
-		this._eqatecMonitor = cliGlobal._eqatec.createMonitor(settings);
-
-		let guid = await this.$userSettingsService.getSettingValue(this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME);
-		if (!guid) {
-			guid = helpers.createGUID(false);
-			await this.$userSettingsService.saveSetting(this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME, guid);
-		}
-		this.$logger.trace("%s: %s", this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME, guid.toString());
-		this._eqatecMonitor.setInstallationID(guid);
-
-		try {
-			await this._eqatecMonitor.setUserID(await this.$analyticsSettingsService.getUserId());
-			let currentCount = await this.$analyticsSettingsService.getUserSessionsCount(analyticsProjectKey);
-			// increment with 1 every time and persist the new value so next execution will be marked as new session
-			await this.$analyticsSettingsService.setUserSessionsCount(++currentCount, analyticsProjectKey);
-			this._eqatecMonitor.setStartCount(currentCount);
-		} catch (e) {
-			// user not logged in. don't care.
-			this.$logger.trace("Error while initializing eqatecMonitor", e);
-		}
-
-		this._eqatecMonitor.start();
-
-		// End the session on process.exit only or in case user disables both usage tracking and exceptions tracking.
-		process.on("exit", this.tryStopEqatecMonitor);
-
-		await this.reportNodeVersion();
+	private async start(analyticsAPIKey?: string): Promise<void> {
+		const analyticsSettings = await this.getEqatecSettings(analyticsAPIKey);
+		await this.startEqatecMonitor(analyticsSettings);
 	}
 
 	private async reportNodeVersion(): Promise<void> {
 		const reportedVersion: string = process.version.slice(1).replace(/[.]/g, "_");
-		await this.track("NodeJSVersion", reportedVersion);
+		await this.trackFeatureCore(`NodeJSVersion.${reportedVersion}`);
 	}
 
 	private getUserAgentString(): string {
@@ -252,7 +310,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 		if (await this.isNotConfirmed(settingName)) {
 			status = "disabled until confirmed";
 		} else {
-			status = AnalyticsStatus[await this.getStatus(settingName)];
+			status = await this.getStatus(settingName);
 		}
 
 		return `${readableSettingName} is ${status}.`;
@@ -261,47 +319,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 	private async getJsonStatusMessage(settingName: string): Promise<string> {
 		const status = await this.getStatus(settingName);
 		const enabled = status === AnalyticsStatus.notConfirmed ? null : status === AnalyticsStatus.disabled ? false : true;
-		return JSON.stringify({ enabled: enabled });
+		return JSON.stringify({ enabled });
 	}
 
-	private async initAnalyticsStatuses(): Promise<void> {
-		if (await this.$analyticsSettingsService.canDoRequest()) {
-			if (!this.isAnalyticsStatusesInitialized) {
-				this.$logger.trace("Initializing analytics statuses.");
-				const settingsNames = [this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, this.$staticConfig.ERROR_REPORT_SETTING_NAME];
-				for (let settingsIndex = 0; settingsIndex < settingsNames.length; ++settingsIndex) {
-					const settingName = settingsNames[settingsIndex];
-					await this.getStatus(settingName);
-				}
-
-				this.isAnalyticsStatusesInitialized = true;
-			}
-			this.$logger.trace("Analytics statuses: ");
-			this.$logger.trace(this.analyticsStatuses);
-		}
-	}
-
-	private getIsSending(): boolean {
-		return this._eqatecMonitor.status().isSending;
-	}
-
-	private waitForSending(): Promise<void> {
-		return new Promise<void>((resolve, reject) => {
-			const intervalTime = 100;
-			let remainingTime = AnalyticsServiceBase.MAX_WAIT_SENDING_INTERVAL;
-			if (this.getIsSending()) {
-				this.$logger.trace(`Waiting for analytics to send information. Will check in a ${intervalTime}ms.`);
-				const interval = setInterval(() => {
-					if (!this.getIsSending() || (remainingTime <= 0)) {
-						clearInterval(interval);
-						resolve();
-					}
-					remainingTime -= intervalTime;
-					this.$logger.trace(`Waiting for analytics to send information. Will check in a ${intervalTime}ms. Remaining time is: ${remainingTime}`);
-				}, intervalTime);
-			} else {
-				resolve();
-			}
-		});
-	}
 }
