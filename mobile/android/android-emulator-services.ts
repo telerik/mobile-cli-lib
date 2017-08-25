@@ -238,10 +238,11 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 				client.write(`avd name${EOL}`);
 			});
 
-			client.on('data', (data: any) => {
+			client.on("data", (data: any) => {
 				output += data.toString();
 
 				let name = this.getEmulatorNameFromClientOutput(output);
+				client.end();
 				// old output should look like:
 				// Android Console: type 'help' for a list of commands
 				// OK
@@ -254,13 +255,18 @@ class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
 				// a\u001b[K\u001b[Dav\u001b[K\u001b[D\u001b[Davd\u001b...
 				// <Name of image>
 				// OK
-
 				if (name && !isResolved) {
 					isResolved = true;
 					resolve(name);
+					client.destroy();
 				}
+			});
 
-				client.end();
+			client.on("error", (error: Error) => {
+				if (!isResolved) {
+					isResolved = true;
+					reject(error);
+				}
 			});
 
 		});
