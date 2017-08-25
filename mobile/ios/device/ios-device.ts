@@ -75,8 +75,8 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		let activeArchitecture = "";
 		if (productType) {
 			productType = productType.toLowerCase().trim();
-			let majorVersionAsString = productType.match(/.*?(\d+)\,(\d+)/)[1];
-			let majorVersion = parseInt(majorVersionAsString);
+			const majorVersionAsString = productType.match(/.*?(\d+)\,(\d+)/)[1];
+			const majorVersion = parseInt(majorVersionAsString);
 			let isArm64Architecture = false;
 			//https://en.wikipedia.org/wiki/List_of_iOS_devices
 			if (_.startsWith(productType, "iphone")) {

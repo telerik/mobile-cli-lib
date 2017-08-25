@@ -18,7 +18,7 @@ export class ListFilesCommand implements ICommand {
 
 		appIdentifier = appIdentifier || this.$project.projectData.AppIdentifier;
 
-		let action = (device: Mobile.IDevice) => device.fileSystem.listFiles(pathToList, appIdentifier);
+		const action = (device: Mobile.IDevice) => device.fileSystem.listFiles(pathToList, appIdentifier);
 		await this.$devicesService.execute(action);
 	}
 }

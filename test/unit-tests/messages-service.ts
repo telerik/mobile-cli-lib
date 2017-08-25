@@ -6,7 +6,7 @@ import { existsSync } from "fs";
 import { assert } from "chai";
 
 function createTestInjector(jsonContents: any, options?: { useRealFsExists: boolean }): IInjector {
-	let testInjector = new Yok();
+	const testInjector = new Yok();
 	testInjector.register("fs", {
 		exists: (path: string): boolean => options && options.useRealFsExists ? existsSync(path) : true,
 		readJson: (filename: string, encoding?: string): any => jsonContents
@@ -20,14 +20,14 @@ describe("messages-service", () => {
 
 	describe("pathsToMessageJsonFiles property", () => {
 		it("initializes with the default json file", () => {
-			let injector = createTestInjector({});
+			const injector = createTestInjector({});
 			service = injector.resolve("$messagesService");
 
 			assert.deepEqual(1, service.pathsToMessageJsonFiles.length, "Messages service should initialize with a default json file.");
 		});
 
 		it("appends the default json file when setting pathsToMessageJsonFiles", () => {
-			let injector = createTestInjector({}, { useRealFsExists: false });
+			const injector = createTestInjector({}, { useRealFsExists: false });
 			service = injector.resolve("$messagesService");
 			service.pathsToMessageJsonFiles = ["someHackyJsonFile.json"];
 
@@ -35,7 +35,7 @@ describe("messages-service", () => {
 		});
 
 		it("should throw if non-existent json file is provided", () => {
-			let injector = createTestInjector({}, { useRealFsExists: true });
+			const injector = createTestInjector({}, { useRealFsExists: true });
 			service = injector.resolve("$messagesService");
 			assert.throws(() => { service.pathsToMessageJsonFiles = ["someJsonFile.json"]; }, "someJsonFile.json does not exist");
 		});
@@ -43,17 +43,17 @@ describe("messages-service", () => {
 
 	describe("getMessage", () => {
 		it("returns the given message if not found as key in any json file", () => {
-			let injector = createTestInjector({});
+			const injector = createTestInjector({});
 			service = injector.resolve("$messagesService");
-			let stringMessage = "Some message",
+			const stringMessage = "Some message",
 				resultMessage = service.getMessage(stringMessage);
 			assert.deepEqual(stringMessage, resultMessage, "Messages service should return the given message if not found as key in any json file in `pathsToMessageJsonFiles` property.");
 		});
 
 		it("util.formats the given message if not found as key in any json file and contains special symbol (%s,%d, etc.)", () => {
-			let injector = createTestInjector({});
+			const injector = createTestInjector({});
 			service = injector.resolve("$messagesService");
-			let messageFormat = "Some %s message.",
+			const messageFormat = "Some %s message.",
 				formatArg = "formatted",
 				expectedMessage = format(messageFormat, formatArg),
 				resultMessage = service.getMessage(messageFormat, formatArg);
@@ -62,7 +62,7 @@ describe("messages-service", () => {
 		});
 
 		it("should return correct value from json file if found in json message files", () => {
-			let jsonContents = { KEY: "Value" },
+			const jsonContents = { KEY: "Value" },
 				injector = createTestInjector(jsonContents);
 			service = injector.resolve("$messagesService");
 
@@ -70,11 +70,11 @@ describe("messages-service", () => {
 		});
 
 		it("should util.format value from json file if found in json message files and contains special symbol (%s,%d, etc.)", () => {
-			let jsonContents = { KEY: "%s value" },
+			const jsonContents = { KEY: "%s value" },
 				injector = createTestInjector(jsonContents);
 			service = injector.resolve("$messagesService");
 
-			let formatArg = "Formatted",
+			const formatArg = "Formatted",
 				expectedMessage = format(jsonContents.KEY, formatArg),
 				actualMessage = service.getMessage(jsonContents.KEY, formatArg);
 
@@ -82,7 +82,7 @@ describe("messages-service", () => {
 		});
 
 		it("should return correct value from json file if found in json message files with complex key", () => {
-			let jsonContents = {
+			const jsonContents = {
 				KEY: {
 					NESTED_KEY: "Value"
 				}
@@ -94,7 +94,7 @@ describe("messages-service", () => {
 		});
 
 		it("should return correct value from json file if found in client json before common json", () => {
-			let commonJsonContents = {
+			const commonJsonContents = {
 				KEY: "Value"
 			},
 				clientJsonContents = {

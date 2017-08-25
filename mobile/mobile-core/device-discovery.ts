@@ -10,7 +10,7 @@ export class DeviceDiscovery extends EventEmitter implements Mobile.IDeviceDisco
 	}
 
 	public removeDevice(deviceIdentifier: string) {
-		let device = this.devices[deviceIdentifier];
+		const device = this.devices[deviceIdentifier];
 		if (!device) {
 			return;
 		}

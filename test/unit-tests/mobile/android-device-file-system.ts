@@ -9,7 +9,7 @@ import { DevicePlatformsConstants } from "../../../mobile/device-platforms-const
 import * as path from "path";
 import { assert } from "chai";
 
-let myTestAppIdentifier = "org.nativescript.myApp";
+const myTestAppIdentifier = "org.nativescript.myApp";
 let isAdbPushExecuted = false;
 
 class AndroidDebugBridgeMock {
@@ -69,7 +69,7 @@ function mockFsStats(options: { isDirectory: boolean, isFile: boolean }): (fileP
 }
 
 function createTestInjector(): IInjector {
-	let injector = new Yok();
+	const injector = new Yok();
 	injector.register("fs", FileSystem);
 	injector.register("logger", Logger);
 	injector.register("mobileHelper", MobileHelper);
@@ -83,8 +83,8 @@ function createTestInjector(): IInjector {
 }
 
 function createAndroidDeviceFileSystem(injector: IInjector) {
-	let adb = new AndroidDebugBridgeMock();
-	let androidDeviceFileSystem = injector.resolve(AndroidDeviceFileSystem, { "adb": adb, "identifier": myTestAppIdentifier });
+	const adb = new AndroidDebugBridgeMock();
+	const androidDeviceFileSystem = injector.resolve(AndroidDeviceFileSystem, { "adb": adb, "identifier": myTestAppIdentifier });
 	androidDeviceFileSystem.createFileOnDevice = () => Promise.resolve();
 	return androidDeviceFileSystem;
 }
@@ -96,21 +96,21 @@ function createDeviceAppData() {
 describe("Android device file system tests", () => {
 	describe("Transfer directory unit tests", () => {
 		it("pushes the whole directory when hash file doesn't exist on device", async () => {
-			let injector = createTestInjector();
-			let deviceAppData = createDeviceAppData();
+			const injector = createTestInjector();
+			const deviceAppData = createDeviceAppData();
 
-			let fileToShasumDictionary: IStringDictionary = {
+			const fileToShasumDictionary: IStringDictionary = {
 				"~/TestApp/app/test.js": "1",
 				"~/TestApp/app/myfile.js": "2"
 			};
-			let localToDevicePaths = _.keys(fileToShasumDictionary).map(file => injector.resolve(LocalToDevicePathDataMock, { filePath: file }));
+			const localToDevicePaths = _.keys(fileToShasumDictionary).map(file => injector.resolve(LocalToDevicePathDataMock, { filePath: file }));
 
-			let fs = injector.resolve("fs");
+			const fs = injector.resolve("fs");
 			fs.getFileShasum = async (filePath: string) => fileToShasumDictionary[filePath];
 			fs.exists = (filePath: string) => false;
 			fs.getFsStats = mockFsStats({ isDirectory: false, isFile: true });
 
-			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
+			const androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
 			await androidDeviceFileSystem.transferDirectory(deviceAppData, localToDevicePaths, "~/TestApp/app");
 
 			assert.isTrue(isAdbPushExecuted);
@@ -118,15 +118,15 @@ describe("Android device file system tests", () => {
 		});
 
 		it("pushes the whole directory when force option is specified", async () => {
-			let injector = createTestInjector();
+			const injector = createTestInjector();
 
-			let options = injector.resolve("options");
+			const options = injector.resolve("options");
 			options.force = true;
 
-			let fs = injector.resolve("fs");
+			const fs = injector.resolve("fs");
 			fs.getFileShasum = async (filePath: string) => "0";
 
-			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
+			const androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
 			await androidDeviceFileSystem.transferDirectory(createDeviceAppData(), [], "~/TestApp/app");
 
 			assert.isTrue(isAdbPushExecuted);
@@ -134,23 +134,23 @@ describe("Android device file system tests", () => {
 		});
 
 		it("pushes only changed file when hash file exists on device", async () => {
-			let injector = createTestInjector();
-			let deviceAppData = createDeviceAppData();
+			const injector = createTestInjector();
+			const deviceAppData = createDeviceAppData();
 
-			let fileToShasumDictionary: IStringDictionary = {
+			const fileToShasumDictionary: IStringDictionary = {
 				"~/TestApp/app/test.js": "1",
 				"~/TestApp/app/myfile.js": "2"
 			};
-			let localToDevicePaths = _.keys(fileToShasumDictionary).map(file => injector.resolve(LocalToDevicePathDataMock, { filePath: file }));
+			const localToDevicePaths = _.keys(fileToShasumDictionary).map(file => injector.resolve(LocalToDevicePathDataMock, { filePath: file }));
 
-			let fs = injector.resolve("fs");
+			const fs = injector.resolve("fs");
 			fs.getFileShasum = async (filePath: string) => fileToShasumDictionary[filePath];
 			fs.exists = (filePath: string) => true;
 			fs.readJson = (filePath: string) => ({ "~/TestApp/app/test.js": "0", "~/TestApp/app/myfile.js": "2" });
 			fs.getFsStats = mockFsStats({ isDirectory: false, isFile: true });
 			fs.readText = () => "";
 
-			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
+			const androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
 			let promise: Promise<void>;
 			androidDeviceFileSystem.transferFile = (localPath: string, devicePath: string) => {
 				assert.equal(localPath, "~/TestApp/app/test.js");
@@ -163,25 +163,25 @@ describe("Android device file system tests", () => {
 		});
 
 		it("pushes only changed files when hashes file exists on device", async () => {
-			let injector = createTestInjector();
-			let deviceAppData = createDeviceAppData();
+			const injector = createTestInjector();
+			const deviceAppData = createDeviceAppData();
 
-			let fileToShasumDictionary: IStringDictionary = {
+			const fileToShasumDictionary: IStringDictionary = {
 				"~/TestApp/app/test.js": "1",
 				"~/TestApp/app/myfile.js": "2",
 				"~/TestApp/app/notchangedFile.js": "3"
 			};
-			let localToDevicePaths = _.keys(fileToShasumDictionary).map(file => injector.resolve(LocalToDevicePathDataMock, { filePath: file }));
+			const localToDevicePaths = _.keys(fileToShasumDictionary).map(file => injector.resolve(LocalToDevicePathDataMock, { filePath: file }));
 
-			let fs = injector.resolve("fs");
+			const fs = injector.resolve("fs");
 			fs.getFileShasum = async (filePath: string) => fileToShasumDictionary[filePath];
 			fs.exists = (filePath: string) => true;
 			fs.readJson = (filePath: string) => ({ "~/TestApp/app/test.js": "0", "~/TestApp/app/myfile.js": "4", "~/TestApp/app/notchangedFile.js": "3" });
 			fs.getFsStats = mockFsStats({ isDirectory: false, isFile: true });
 			fs.readText = () => "";
 
-			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
-			let transferedFilesOnDevice: string[] = [];
+			const androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
+			const transferedFilesOnDevice: string[] = [];
 			androidDeviceFileSystem.transferFile = (localPath: string, devicePath: string) => {
 				transferedFilesOnDevice.push(localPath);
 				return Promise.resolve();
@@ -195,23 +195,23 @@ describe("Android device file system tests", () => {
 		});
 
 		it("pushes files which has different location when hash file exists on device", async () => {
-			let injector = createTestInjector();
-			let deviceAppData = createDeviceAppData();
+			const injector = createTestInjector();
+			const deviceAppData = createDeviceAppData();
 
-			let fileToShasumDictionary: IStringDictionary = {
+			const fileToShasumDictionary: IStringDictionary = {
 				"~/TestApp/app/newDir/test.js": "1",
 				"~/TestApp/app/myfile.js": "2"
 			};
-			let localToDevicePaths = _.keys(fileToShasumDictionary).map(file => injector.resolve(LocalToDevicePathDataMock, { filePath: file }));
+			const localToDevicePaths = _.keys(fileToShasumDictionary).map(file => injector.resolve(LocalToDevicePathDataMock, { filePath: file }));
 
-			let fs = injector.resolve("fs");
+			const fs = injector.resolve("fs");
 			fs.getFileShasum = (filePath: string) => fileToShasumDictionary[filePath];
 			fs.exists = (filePath: string) => true;
 			fs.readJson = (filePath: string) => ({ "~/TestApp/app/test.js": "0", "~/TestApp/app/myfile.js": "2" });
 			fs.getFsStats = mockFsStats({ isDirectory: false, isFile: true });
 			fs.readText = () => "";
 
-			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
+			const androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
 			androidDeviceFileSystem.transferFile = (localPath: string, devicePath: string) => {
 				assert.equal(localPath, "~/TestApp/app/newDir/test.js");
 				return Promise.resolve();
@@ -220,23 +220,23 @@ describe("Android device file system tests", () => {
 		});
 
 		it("pushes files which has different location and different shasum when hash file exists on device", async () => {
-			let injector = createTestInjector();
-			let deviceAppData = createDeviceAppData();
+			const injector = createTestInjector();
+			const deviceAppData = createDeviceAppData();
 
-			let fileToShasumDictionary: IStringDictionary = {
+			const fileToShasumDictionary: IStringDictionary = {
 				"~/TestApp/app/newDir/test.js": "2",
 				"~/TestApp/app/myfile.js": "2"
 			};
-			let localToDevicePaths = _.keys(fileToShasumDictionary).map(file => injector.resolve(LocalToDevicePathDataMock, { filePath: file }));
+			const localToDevicePaths = _.keys(fileToShasumDictionary).map(file => injector.resolve(LocalToDevicePathDataMock, { filePath: file }));
 
-			let fs = injector.resolve("fs");
+			const fs = injector.resolve("fs");
 			fs.getFileShasum = async (filePath: string) => fileToShasumDictionary[filePath];
 			fs.exists = (filePath: string) => true;
 			fs.readJson = (filePath: string) => ({ "~/TestApp/app/test.js": "0", "~/TestApp/app/myfile.js": "2" });
 			fs.getFsStats = mockFsStats({ isDirectory: false, isFile: true });
 			fs.readText = () => "";
 
-			let androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
+			const androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
 			androidDeviceFileSystem.transferFile = (localPath: string, devicePath: string) => {
 				assert.equal(localPath, "~/TestApp/app/newDir/test.js");
 				return Promise.resolve();

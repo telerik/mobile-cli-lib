@@ -16,7 +16,7 @@ export class LogFilter implements Mobile.ILogFilter {
 	}
 
 	public filterData(platform: string, data: string, pid?: string, logLevel?: string): string {
-		let deviceLogFilter = this.getDeviceLogFilterInstance(platform);
+		const deviceLogFilter = this.getDeviceLogFilterInstance(platform);
 		if (deviceLogFilter) {
 			return deviceLogFilter.filterData(data, logLevel || this.loggingLevel, pid);
 		}
@@ -38,7 +38,7 @@ export class LogFilter implements Mobile.ILogFilter {
 	}
 
 	private verifyLogLevel(logLevel: string): boolean {
-		let upperCaseLogLevel = (logLevel || '').toUpperCase();
+		const upperCaseLogLevel = (logLevel || '').toUpperCase();
 		return upperCaseLogLevel === this.$loggingLevels.info.toUpperCase() || upperCaseLogLevel === this.$loggingLevels.full.toUpperCase();
 	}
 

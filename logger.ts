@@ -2,8 +2,8 @@ import * as log4js from "log4js";
 import * as util from "util";
 import * as stream from "stream";
 import * as marked from "marked";
-let TerminalRenderer = require("marked-terminal");
-let chalk = require("chalk");
+const TerminalRenderer = require("marked-terminal");
+const chalk = require("chalk");
 
 export class Logger implements ILogger {
 	private log4jsLogger: log4js.ILogger = null;
@@ -17,7 +17,7 @@ export class Logger implements ILogger {
 
 	constructor($config: Config.IConfig,
 		private $options: ICommonOptions) {
-		let appenders: log4js.IAppender[] = [];
+		const appenders: log4js.IAppender[] = [];
 
 		if (!$config.CI_LOGGER) {
 			appenders.push({
@@ -52,21 +52,21 @@ export class Logger implements ILogger {
 	}
 
 	error(...args: string[]): void {
-		let message = util.format.apply(null, args);
-		let colorizedMessage = message.red;
+		const message = util.format.apply(null, args);
+		const colorizedMessage = message.red;
 
 		this.log4jsLogger.error.apply(this.log4jsLogger, [colorizedMessage]);
 	}
 
 	warn(...args: string[]): void {
-		let message = util.format.apply(null, args);
-		let colorizedMessage = message.yellow;
+		const message = util.format.apply(null, args);
+		const colorizedMessage = message.yellow;
 
 		this.log4jsLogger.warn.apply(this.log4jsLogger, [colorizedMessage]);
 	}
 
 	warnWithLabel(...args: string[]): void {
-		let message = util.format.apply(null, args);
+		const message = util.format.apply(null, args);
 		this.warn(`${Logger.LABEL} ${message}`);
 	}
 
@@ -75,12 +75,12 @@ export class Logger implements ILogger {
 	}
 
 	debug(...args: string[]): void {
-		let encodedArgs: string[] = this.getPasswordEncodedArguments(args);
+		const encodedArgs: string[] = this.getPasswordEncodedArguments(args);
 		this.log4jsLogger.debug.apply(this.log4jsLogger, encodedArgs);
 	}
 
 	trace(...args: string[]): void {
-		let encodedArgs: string[] = this.getPasswordEncodedArguments(args);
+		const encodedArgs: string[] = this.getPasswordEncodedArguments(args);
 		this.log4jsLogger.trace.apply(this.log4jsLogger, encodedArgs);
 	}
 
@@ -129,7 +129,7 @@ export class Logger implements ILogger {
 	}
 
 	public printMarkdown(...args: string[]): void {
-		let opts = {
+		const opts = {
 			unescape: true,
 			link: chalk.red,
 			tableOptions: {
@@ -145,7 +145,7 @@ export class Logger implements ILogger {
 		};
 
 		marked.setOptions({ renderer: new TerminalRenderer(opts) });
-		let formattedMessage = marked(util.format.apply(null, args));
+		const formattedMessage = marked(util.format.apply(null, args));
 		this.write(formattedMessage);
 	}
 

@@ -47,7 +47,7 @@ export class Block implements CodeGeneration.IBlock {
 	}
 
 	public writeLine(content: string): void {
-		let line = Line.create(content);
+		const line = Line.create(content);
 		this.codeEntities.push(line);
 	}
 }

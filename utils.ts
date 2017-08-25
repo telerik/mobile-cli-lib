@@ -5,7 +5,7 @@ export class Utils implements IUtils {
 	public getParsedTimeout(defaultTimeout: number): number {
 		let timeout = defaultTimeout;
 		if (this.$options.timeout) {
-			let parsedValue = parseInt(this.$options.timeout);
+			const parsedValue = parseInt(this.$options.timeout);
 			if (!isNaN(parsedValue) && parsedValue >= 0) {
 				timeout = parsedValue;
 			} else {
@@ -17,7 +17,7 @@ export class Utils implements IUtils {
 	}
 
 	public getMilliSecondsTimeout(defaultTimeout: number): number {
-		let timeout = this.getParsedTimeout(defaultTimeout);
+		const timeout = this.getParsedTimeout(defaultTimeout);
 		return timeout * 1000;
 	}
 }

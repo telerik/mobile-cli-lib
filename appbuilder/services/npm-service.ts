@@ -39,7 +39,7 @@ export class NpmService implements INpmService {
 
 	@exported("npmService")
 	public async install(projectDir: string, dependencyToInstall?: INpmDependency): Promise<INpmInstallResult> {
-		let npmInstallResult: INpmInstallResult = {};
+		const npmInstallResult: INpmInstallResult = {};
 
 		if (dependencyToInstall) {
 			npmInstallResult.result = {
@@ -78,7 +78,7 @@ export class NpmService implements INpmService {
 
 	@exported("npmService")
 	public async uninstall(projectDir: string, dependency: string): Promise<void> {
-		let packageJsonContent = this.getPackageJsonContent(projectDir);
+		const packageJsonContent = this.getPackageJsonContent(projectDir);
 
 		if (packageJsonContent && packageJsonContent.dependencies && packageJsonContent.dependencies[dependency]) {
 			await this.npmUninstall(projectDir, dependency, ["--save"]);
@@ -93,12 +93,12 @@ export class NpmService implements INpmService {
 
 	public async search(projectDir: string, keywords: string[], args?: string[]): Promise<IBasicPluginInformation[]> {
 		args = args === undefined ? [] : args;
-		let result: IBasicPluginInformation[] = [];
-		let commandArguments = _.concat(["search"], args, keywords);
-		let spawnResult = await this.executeNpmCommandCore(projectDir, commandArguments);
+		const result: IBasicPluginInformation[] = [];
+		const commandArguments = _.concat(["search"], args, keywords);
+		const spawnResult = await this.executeNpmCommandCore(projectDir, commandArguments);
 		if (spawnResult.stderr) {
 			// npm will write "npm WARN Building the local index for the first time, please be patient" to the stderr and if it is the only message on the stderr we should ignore it.
-			let splitError = spawnResult.stderr.trim().split("\n");
+			const splitError = spawnResult.stderr.trim().split("\n");
 			if (splitError.length > 1 || splitError[0].indexOf("Building the local index for the first time") === -1) {
 				this.$errors.failWithoutHelp(spawnResult.stderr);
 			}
@@ -108,21 +108,21 @@ export class NpmService implements INpmService {
 		// Sample output:
 		// NAME                    DESCRIPTION             AUTHOR        DATE       VERSION  KEYWORDS
 		// cordova-plugin-console  Cordova Console Plugin  =csantanapr…  2016-04-20 1.0.3    cordova console ecosystem:cordova cordova-ios
-		let pluginsRows: string[] = spawnResult.stdout.split("\n");
+		const pluginsRows: string[] = spawnResult.stdout.split("\n");
 
 		// Remove the table headers row.
 		pluginsRows.shift();
 
-		let npmNameGroup = "(\\S+)";
-		let npmDateGroup = "(\\d+-\\d+-\\d+)\\s";
-		let npmFreeTextGroup = "([^=]+)";
-		let npmAuthorsGroup = "((?:=\\S+\\s?)+)\\s+";
+		const npmNameGroup = "(\\S+)";
+		const npmDateGroup = "(\\d+-\\d+-\\d+)\\s";
+		const npmFreeTextGroup = "([^=]+)";
+		const npmAuthorsGroup = "((?:=\\S+\\s?)+)\\s+";
 
 		// Should look like this /(\S+)\s+([^=]+)((?:=\S+\s?)+)\s+(\d+-\d+-\d+)\s(\S+)(\s+([^=]+))?/
-		let pluginRowRegExp = new RegExp(`${npmNameGroup}\\s+${npmFreeTextGroup}${npmAuthorsGroup}${npmDateGroup}${npmNameGroup}(\\s+${npmFreeTextGroup})?`);
+		const pluginRowRegExp = new RegExp(`${npmNameGroup}\\s+${npmFreeTextGroup}${npmAuthorsGroup}${npmDateGroup}${npmNameGroup}(\\s+${npmFreeTextGroup})?`);
 
 		_.each(pluginsRows, (pluginRow: string) => {
-			let matches = pluginRowRegExp.exec(pluginRow.trim());
+			const matches = pluginRowRegExp.exec(pluginRow.trim());
 
 			if (!matches || !matches[0]) {
 				return;
@@ -172,14 +172,14 @@ export class NpmService implements INpmService {
 	}
 
 	public isScopedDependency(dependency: string): boolean {
-		let matches = dependency.match(NpmService.SCOPED_DEPENDENCY_REGEXP);
+		const matches = dependency.match(NpmService.SCOPED_DEPENDENCY_REGEXP);
 
 		return !!(matches && matches[0]);
 	}
 
 	public getDependencyInformation(dependency: string): IDependencyInformation {
-		let regExp = this.isScopedDependency(dependency) ? NpmService.SCOPED_DEPENDENCY_REGEXP : NpmService.DEPENDENCY_REGEXP;
-		let matches = dependency.match(regExp);
+		const regExp = this.isScopedDependency(dependency) ? NpmService.SCOPED_DEPENDENCY_REGEXP : NpmService.DEPENDENCY_REGEXP;
+		const matches = dependency.match(regExp);
 
 		return {
 			name: matches[1],
@@ -219,7 +219,7 @@ export class NpmService implements INpmService {
 	}
 
 	private getPackageJsonContent(projectDir: string): any {
-		let pathToPackageJson = this.getPathToPackageJson(projectDir);
+		const pathToPackageJson = this.getPathToPackageJson(projectDir);
 
 		try {
 			return this.$fs.readJson(pathToPackageJson);
@@ -245,13 +245,13 @@ export class NpmService implements INpmService {
 	}
 
 	private generateReferencesFile(projectDir: string): void {
-		let packageJsonContent = this.getPackageJsonContent(projectDir);
+		const packageJsonContent = this.getPackageJsonContent(projectDir);
 
-		let pathToReferenceFile = this.getPathToReferencesFile(projectDir),
-			lines: string[] = [];
+		const pathToReferenceFile = this.getPathToReferencesFile(projectDir);
+		let lines: string[] = [];
 
 		if (packageJsonContent && packageJsonContent.dependencies && packageJsonContent.dependencies[constants.TNS_CORE_MODULES]) {
-			let relativePathToTnsCoreModulesDts = `./${constants.NODE_MODULES_DIR_NAME}/${constants.TNS_CORE_MODULES}/${NpmService.TNS_CORE_MODULES_DEFINITION_FILE_NAME}`;
+			const relativePathToTnsCoreModulesDts = `./${constants.NODE_MODULES_DIR_NAME}/${constants.TNS_CORE_MODULES}/${NpmService.TNS_CORE_MODULES_DEFINITION_FILE_NAME}`;
 
 			if (this.$fs.exists(path.join(projectDir, relativePathToTnsCoreModulesDts))) {
 				lines.push(this.getReferenceLine(relativePathToTnsCoreModulesDts));
@@ -262,11 +262,11 @@ export class NpmService implements INpmService {
 			.keys()
 			.each(devDependency => {
 				if (this.isFromTypesRepo(devDependency)) {
-					let nodeModulesDirectory = path.join(projectDir, constants.NODE_MODULES_DIR_NAME);
-					let definitionFiles = this.$fs.enumerateFilesInDirectorySync(path.join(nodeModulesDirectory, devDependency),
+					const nodeModulesDirectory = path.join(projectDir, constants.NODE_MODULES_DIR_NAME);
+					const definitionFiles = this.$fs.enumerateFilesInDirectorySync(path.join(nodeModulesDirectory, devDependency),
 						(file, stat) => _.endsWith(file, constants.FileExtensions.TYPESCRIPT_DEFINITION_FILE) || stat.isDirectory(), { enumerateDirectories: false });
 
-					let defs = _.map(definitionFiles, def => this.getReferenceLine(fromWindowsRelativePathToUnix(path.relative(projectDir, def))));
+					const defs = _.map(definitionFiles, def => this.getReferenceLine(fromWindowsRelativePathToUnix(path.relative(projectDir, def))));
 
 					this.$logger.trace(`Adding lines for definition files: ${definitionFiles.join(", ")}`);
 					lines = lines.concat(defs);

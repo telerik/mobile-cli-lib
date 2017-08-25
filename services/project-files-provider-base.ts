@@ -10,7 +10,7 @@ export abstract class ProjectFilesProviderBase implements IProjectFilesProvider 
 		protected $options: ICommonOptions) { }
 
 	public getPreparedFilePath(filePath: string, projectFilesConfig?: IProjectFilesConfig): string {
-		let projectFileInfo = this.getProjectFileInfo(filePath, "", projectFilesConfig);
+		const projectFileInfo = this.getProjectFileInfo(filePath, "", projectFilesConfig);
 		return path.join(path.dirname(filePath), projectFileInfo.onDeviceFileName);
 	}
 
@@ -24,10 +24,10 @@ export abstract class ProjectFilesProviderBase implements IProjectFilesProvider 
 		}
 
 		let parsed = this.parseFile(filePath, this.$mobileHelper.platformNames, platform || "");
-		let basicConfigurations = [Configurations.Debug.toLowerCase(), Configurations.Release.toLowerCase()];
+		const basicConfigurations = [Configurations.Debug.toLowerCase(), Configurations.Release.toLowerCase()];
 		if (!parsed) {
 
-			let validValues = basicConfigurations.concat(projectFilesConfig && projectFilesConfig.additionalConfigurations || []),
+			const validValues = basicConfigurations.concat(projectFilesConfig && projectFilesConfig.additionalConfigurations || []),
 				value = projectFilesConfig && projectFilesConfig.configuration || basicConfigurations[0];
 			parsed = this.parseFile(filePath, validValues, value);
 		}
@@ -40,8 +40,8 @@ export abstract class ProjectFilesProviderBase implements IProjectFilesProvider 
 	}
 
 	private parseFile(filePath: string, validValues: string[], value: string): IProjectFileInfo {
-		let regex = util.format("^(.+?)[.](%s)([.].+?)$", validValues.join("|"));
-		let parsed = filePath.match(new RegExp(regex, "i"));
+		const regex = util.format("^(.+?)[.](%s)([.].+?)$", validValues.join("|"));
+		const parsed = filePath.match(new RegExp(regex, "i"));
 		if (parsed) {
 			return {
 				filePath: filePath,

@@ -27,9 +27,9 @@ export class ProxySetCommand extends ProxyCommandBase {
 	}
 
 	public async execute(args: string[]): Promise<void> {
-		let urlString = args[0],
-			username = args[1],
-			password = args[2];
+		let urlString = args[0];
+		let username = args[1];
+		let password = args[2];
 
 		const noUrl = !urlString;
 		if (noUrl) {
@@ -105,7 +105,7 @@ export class ProxySetCommand extends ProxyCommandBase {
 		}
 
 		const clientName = this.$staticConfig.CLIENT_NAME.toLowerCase();
-		let messageNote = (clientName === "tns" ?
+		const messageNote = (clientName === "tns" ?
 			"Note that 'npm' and 'Gradle' need to be configured separately to work with a proxy." :
 			"Note that `npm` needs to be configured separately to work with a proxy.") + EOL;
 

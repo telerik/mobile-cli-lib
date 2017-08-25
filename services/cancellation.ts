@@ -1,8 +1,8 @@
-let gaze = require("gaze");
+const gaze = require("gaze");
 import * as path from "path";
 import * as os from "os";
 
-let hostInfo: IHostInfo = $injector.resolve("hostInfo");
+const hostInfo: IHostInfo = $injector.resolve("hostInfo");
 
 class CancellationService implements ICancellationService {
 	private watches: IDictionary<IWatcherInstance> = {};
@@ -14,7 +14,7 @@ class CancellationService implements ICancellationService {
 	}
 
 	public async begin(name: string): Promise<void> {
-		let triggerFile = CancellationService.makeKillSwitchFileName(name);
+		const triggerFile = CancellationService.makeKillSwitchFileName(name);
 
 		if (!this.$fs.exists(triggerFile)) {
 			this.$fs.writeFile(triggerFile, "");
@@ -26,7 +26,7 @@ class CancellationService implements ICancellationService {
 
 		this.$logger.trace("Starting watch on killswitch %s", triggerFile);
 
-		let watcherInitialized = new Promise<IWatcherInstance>((resolve, reject) => {
+		const watcherInitialized = new Promise<IWatcherInstance>((resolve, reject) => {
 			gaze(triggerFile, function (err: any, watcher: any) {
 				this.on("deleted", (filePath: string) => process.exit());
 
@@ -38,7 +38,7 @@ class CancellationService implements ICancellationService {
 			});
 		});
 
-		let watcher = await watcherInitialized;
+		const watcher = await watcherInitialized;
 
 		if (watcher) {
 			this.watches[name] = watcher;
@@ -46,7 +46,7 @@ class CancellationService implements ICancellationService {
 	}
 
 	public end(name: string): void {
-		let watcher = this.watches[name];
+		const watcher = this.watches[name];
 		delete this.watches[name];
 		watcher.close();
 	}

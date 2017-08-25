@@ -19,7 +19,7 @@ export class ListDevicesCommand implements ICommand {
 		let index = 1;
 		await this.$devicesService.initialize({ platform: args[0], deviceId: null, skipInferPlatform: true, skipDeviceDetectionInterval: true, skipEmulatorStart: true });
 
-		let table: any = createTable(["#", "Device Name", "Platform", "Device Identifier", "Type", "Status"], []);
+		const table: any = createTable(["#", "Device Name", "Platform", "Device Identifier", "Type", "Status"], []);
 		let action: (_device: Mobile.IDevice) => Promise<void>;
 		if (this.$options.json) {
 			this.$logger.setLevel("ERROR");
@@ -51,8 +51,8 @@ class ListAndroidDevicesCommand implements ICommand {
 	public allowedParameters: ICommandParameter[] = [];
 
 	public async execute(args: string[]): Promise<void> {
-		let listDevicesCommand: ICommand = this.$injector.resolve(ListDevicesCommand);
-		let platform = this.$devicePlatformsConstants.Android;
+		const listDevicesCommand: ICommand = this.$injector.resolve(ListDevicesCommand);
+		const platform = this.$devicePlatformsConstants.Android;
 		await listDevicesCommand.execute([platform]);
 	}
 }
@@ -66,8 +66,8 @@ class ListiOSDevicesCommand implements ICommand {
 	public allowedParameters: ICommandParameter[] = [];
 
 	public async execute(args: string[]): Promise<void> {
-		let listDevicesCommand: ICommand = this.$injector.resolve(ListDevicesCommand);
-		let platform = this.$devicePlatformsConstants.iOS;
+		const listDevicesCommand: ICommand = this.$injector.resolve(ListDevicesCommand);
+		const platform = this.$devicePlatformsConstants.iOS;
 		await listDevicesCommand.execute([platform]);
 	}
 }

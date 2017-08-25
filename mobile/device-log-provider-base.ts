@@ -18,7 +18,7 @@ export abstract class DeviceLogProviderBase extends EventEmitter implements Mobi
 	}
 
 	protected setDefaultLogLevelForDevice(deviceIdentifier: string): string {
-		let logLevel = (this.devicesLogOptions[deviceIdentifier] && this.devicesLogOptions[deviceIdentifier].logLevel) || this.$logFilter.loggingLevel;
+		const logLevel = (this.devicesLogOptions[deviceIdentifier] && this.devicesLogOptions[deviceIdentifier].logLevel) || this.$logFilter.loggingLevel;
 		this.setLogLevel(logLevel, deviceIdentifier);
 
 		return logLevel;
@@ -29,7 +29,7 @@ export abstract class DeviceLogProviderBase extends EventEmitter implements Mobi
 	}
 
 	protected setDeviceLogOptionsProperty(deviceIdentifier: string, propNameFunction: Function, propertyValue: string): void {
-		let propertyName = getPropertyName(propNameFunction);
+		const propertyName = getPropertyName(propNameFunction);
 
 		if (propertyName) {
 			this.devicesLogOptions[deviceIdentifier] = this.devicesLogOptions[deviceIdentifier] || <Mobile.IDeviceLogOptions>{};

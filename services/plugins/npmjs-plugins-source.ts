@@ -19,12 +19,12 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 	}
 
 	public async getPlugins(page: number, count: number): Promise<IBasicPluginInformation[]> {
-		let loadedPlugins = this._pages[page];
+		const loadedPlugins = this._pages[page];
 		if (loadedPlugins) {
 			return loadedPlugins;
 		}
 
-		let result = await this.getPluginsFromNpmjs(this._keywords, page);
+		const result = await this.getPluginsFromNpmjs(this._keywords, page);
 
 		this._pages[page] = result;
 
@@ -61,21 +61,21 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 	}
 
 	private async getPluginsFromNpmjs(keywords: string[], page: number): Promise<IBasicPluginInformation[]> {
-		let pluginName = encodeURIComponent(keywords.join(" "));
-		let url = `${NpmjsPluginsSource.NPMJS_ADDRESS}/search?q=${pluginName}&page=${page}`;
+		const pluginName = encodeURIComponent(keywords.join(" "));
+		const url = `${NpmjsPluginsSource.NPMJS_ADDRESS}/search?q=${pluginName}&page=${page}`;
 
 		try {
-			let responseBody: string = (await this.$httpClient.httpRequest(url)).body;
+			const responseBody: string = (await this.$httpClient.httpRequest(url)).body;
 
-			let document = parse5.parse(responseBody);
-			let html = _.find(document.childNodes, (node: parse5.ASTNode) => node.nodeName === "html");
+			const document = parse5.parse(responseBody);
+			const html = _.find(document.childNodes, (node: parse5.ASTNode) => node.nodeName === "html");
 
-			let resultsContainer = this.findNodeByClass(html, "search-results");
+			const resultsContainer = this.findNodeByClass(html, "search-results");
 			if (!resultsContainer || !resultsContainer.childNodes) {
 				return null;
 			}
 
-			let resultsElements = _.filter(resultsContainer.childNodes, (node: parse5.ASTNode) => node.nodeName === "li");
+			const resultsElements = _.filter(resultsContainer.childNodes, (node: parse5.ASTNode) => node.nodeName === "li");
 			return _.map(resultsElements, (node: parse5.ASTNode) => this.getPluginInfo(node));
 		} catch (err) {
 			this.$logger.trace(`Error while getting information for ${keywords} from http://npmjs.org - ${err}`);
@@ -84,10 +84,10 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 	}
 
 	private getPluginInfo(node: parse5.ASTNode): IBasicPluginInformation {
-		let name = this.getTextFromElementWithClass(node, "name");
-		let version = this.getTextFromElementWithClass(node, "version");
-		let description = this.getTextFromElementWithClass(node, "description");
-		let author = this.getTextFromElementWithClass(node, "author");
+		const name = this.getTextFromElementWithClass(node, "name");
+		const version = this.getTextFromElementWithClass(node, "version");
+		const description = this.getTextFromElementWithClass(node, "description");
+		const author = this.getTextFromElementWithClass(node, "author");
 
 		return {
 			name,
@@ -103,12 +103,12 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 		}
 
 		for (let i = 0; i < parent.childNodes.length; i++) {
-			let node = parent.childNodes[i];
+			const node = parent.childNodes[i];
 
 			if (_.some(node.attrs, (attr: parse5.ASTAttribute) => attr.name === "class" && attr.value === className)) {
 				return node;
 			} else {
-				let result = this.findNodeByClass(node, className);
+				const result = this.findNodeByClass(node, className);
 
 				if (result) {
 					return result;
@@ -118,10 +118,10 @@ export class NpmjsPluginsSource extends PluginsSourceBase implements IPluginsSou
 	}
 
 	private getTextFromElementWithClass(node: parse5.ASTNode, className: string): string {
-		let element = this.findNodeByClass(node, className);
+		const element = this.findNodeByClass(node, className);
 
 		if (element && element.childNodes) {
-			let textElement = _.find(element.childNodes, (child: parse5.ASTNode) => child.nodeName === "#text");
+			const textElement = _.find(element.childNodes, (child: parse5.ASTNode) => child.nodeName === "#text");
 			if (textElement) {
 				return textElement.value;
 			}

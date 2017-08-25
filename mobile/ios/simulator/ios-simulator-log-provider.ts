@@ -10,9 +10,9 @@ export class IOSSimulatorLogProvider implements Mobile.IiOSSimulatorLogProvider 
 
 	public startLogProcess(deviceIdentifier: string): void {
 		if (!this.isStarted) {
-			let deviceLogChildProcess: ChildProcess = this.$iOSSimResolver.iOSSim.getDeviceLogProcess(deviceIdentifier);
+			const deviceLogChildProcess: ChildProcess = this.$iOSSimResolver.iOSSim.getDeviceLogProcess(deviceIdentifier);
 
-			let action = (data: NodeBuffer | string) => {
+			const action = (data: NodeBuffer | string) => {
 				this.$deviceLogProvider.logData(data.toString(), this.$devicePlatformsConstants.iOS, deviceIdentifier);
 			};
 

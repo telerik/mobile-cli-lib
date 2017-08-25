@@ -4,7 +4,7 @@ import { DeviceLogProvider } from "../../../appbuilder/device-log-provider";
 import { CommonLoggerStub } from "../stubs";
 
 function createTestInjector(loggingLevel: string, emptyFilteredData?: boolean) {
-	let testInjector = new Yok();
+	const testInjector = new Yok();
 	testInjector.register("logFilter", {
 		loggingLevel: loggingLevel,
 		filterData: (platform: string, data: string, pid?: string, logLevel?: string) => {
@@ -18,13 +18,13 @@ function createTestInjector(loggingLevel: string, emptyFilteredData?: boolean) {
 }
 
 describe("proton deviceLogProvider", () => {
-	let testInjector: IInjector,
-		deviceLogProvider: any = null,
-		testData = "testData",
-		infoLogLevel = "INFO",
-		fullLogLevel = "FULL",
-		filteredInfoData = `${infoLogLevel} ${testData}`,
-		filteredFullData = `${fullLogLevel} ${testData}`;
+	let testInjector: IInjector;
+	let deviceLogProvider: any = null;
+	const testData = "testData";
+	const infoLogLevel = "INFO";
+	const fullLogLevel = "FULL";
+	const filteredInfoData = `${infoLogLevel} ${testData}`;
+	const filteredFullData = `${fullLogLevel} ${testData}`;
 
 	describe("logData", () => {
 		describe("when device identifier is not specified", () => {
@@ -87,7 +87,7 @@ describe("proton deviceLogProvider", () => {
 			testInjector = createTestInjector(infoLogLevel);
 			deviceLogProvider = testInjector.resolve(DeviceLogProvider);
 			deviceLogProvider.setLogLevel(fullLogLevel);
-			let logFilter = testInjector.resolve("logFilter");
+			const logFilter = testInjector.resolve("logFilter");
 			assert.deepEqual(logFilter.loggingLevel, fullLogLevel);
 		});
 
@@ -95,7 +95,7 @@ describe("proton deviceLogProvider", () => {
 			testInjector = createTestInjector(infoLogLevel);
 			deviceLogProvider = testInjector.resolve(DeviceLogProvider);
 			deviceLogProvider.setLogLevel(fullLogLevel, "deviceID");
-			let logFilter = testInjector.resolve("logFilter");
+			const logFilter = testInjector.resolve("logFilter");
 			assert.deepEqual(logFilter.loggingLevel, infoLogLevel);
 		});
 	});

@@ -10,10 +10,10 @@ export class ListApplicationsCommand implements ICommand {
 
 	public async execute(args: string[]): Promise<void> {
 		await this.$devicesService.initialize({ deviceId: this.$options.device, skipInferPlatform: true });
-		let output: string[] = [];
+		const output: string[] = [];
 
-		let action = async (device: Mobile.IDevice) => {
-			let applications = await device.applicationManager.getInstalledApplications();
+		const action = async (device: Mobile.IDevice) => {
+			const applications = await device.applicationManager.getInstalledApplications();
 			output.push(util.format("%s=====Installed applications on device with UDID '%s' are:", EOL, device.deviceInfo.identifier));
 			_.each(applications, (applicationId: string) => output.push(applicationId));
 		};

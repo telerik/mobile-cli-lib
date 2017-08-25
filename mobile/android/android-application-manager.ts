@@ -19,11 +19,11 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async getInstalledApplications(): Promise<string[]> {
-		let result = await this.adb.executeShellCommand(["pm", "list", "packages"]) || "";
-		let regex = /package:(.+)/;
+		const result = await this.adb.executeShellCommand(["pm", "list", "packages"]) || "";
+		const regex = /package:(.+)/;
 		return result.split(EOL)
 			.map((packageString: string) => {
-				let match = packageString.match(regex);
+				const match = packageString.match(regex);
 				return match ? match[1] : null;
 			})
 			.filter((parsedPackage: string) => parsedPackage !== null);
@@ -32,7 +32,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 	@hook('install')
 	public async installApplication(packageFilePath: string, appIdentifier?: string): Promise<void> {
 		if (appIdentifier) {
-			let deviceRootPath = `/data/local/tmp/${appIdentifier}`;
+			const deviceRootPath = `/data/local/tmp/${appIdentifier}`;
 			await this.adb.executeShellCommand(["rm", "-rf", deviceRootPath]);
 		}
 
@@ -96,7 +96,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async isLiveSyncSupported(appIdentifier: string): Promise<boolean> {
-		let liveSyncVersion = await this.adb.sendBroadcastToDevice(LiveSyncConstants.CHECK_LIVESYNC_INTENT_NAME, { "app-id": appIdentifier });
+		const liveSyncVersion = await this.adb.sendBroadcastToDevice(LiveSyncConstants.CHECK_LIVESYNC_INTENT_NAME, { "app-id": appIdentifier });
 		return liveSyncVersion === LiveSyncConstants.VERSION_2 || liveSyncVersion === LiveSyncConstants.VERSION_3;
 	}
 
@@ -105,16 +105,16 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async getDebuggableAppViews(appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> {
-		let mappedAppIdentifierPorts = await this.$androidProcessService.getMappedAbstractToTcpPorts(this.identifier, appIdentifiers, TARGET_FRAMEWORK_IDENTIFIERS.Cordova),
+		const mappedAppIdentifierPorts = await this.$androidProcessService.getMappedAbstractToTcpPorts(this.identifier, appIdentifiers, TARGET_FRAMEWORK_IDENTIFIERS.Cordova),
 			applicationViews: IDictionary<Mobile.IDebugWebViewInfo[]> = {};
 
 		await Promise.all(_.map(mappedAppIdentifierPorts, async (port: number, appIdentifier: string) => {
 			applicationViews[appIdentifier] = [];
-			let localAddress = `http://127.0.0.1:${port}/json`;
+			const localAddress = `http://127.0.0.1:${port}/json`;
 
 			try {
 				if (port) {
-					let apps = (await this.$httpClient.httpRequest(localAddress)).body;
+					const apps = (await this.$httpClient.httpRequest(localAddress)).body;
 					applicationViews[appIdentifier] = JSON.parse(apps);
 				}
 			} catch (err) {

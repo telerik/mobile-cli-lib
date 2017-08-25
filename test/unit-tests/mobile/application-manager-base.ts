@@ -3,9 +3,9 @@ import { assert } from "chai";
 import { CommonLoggerStub, HooksServiceStub } from "../stubs";
 import { ApplicationManagerBase } from "../../../mobile/application-manager-base";
 
-let currentlyAvailableAppsForDebugging: Mobile.IDeviceApplicationInformation[],
-	currentlyInstalledApps: string[],
-	currentlyAvailableAppWebViewsForDebugging: IDictionary<Mobile.IDebugWebViewInfo[]>;
+let currentlyAvailableAppsForDebugging: Mobile.IDeviceApplicationInformation[];
+let currentlyInstalledApps: string[];
+let currentlyAvailableAppWebViewsForDebugging: IDictionary<Mobile.IDebugWebViewInfo[]>;
 
 class ApplicationManager extends ApplicationManagerBase {
 	constructor($logger: ILogger, $hooksService: IHooksService) {
@@ -54,7 +54,7 @@ class ApplicationManager extends ApplicationManagerBase {
 }
 
 function createTestInjector(): IInjector {
-	let testInjector = new Yok();
+	const testInjector = new Yok();
 	testInjector.register("logger", CommonLoggerStub);
 	testInjector.register("hooksService", HooksServiceStub);
 	testInjector.register("applicationManager", ApplicationManager);
@@ -82,7 +82,7 @@ function createDebuggableWebView(uniqueId: string) {
 }
 
 function createDebuggableWebViews(appInfos: Mobile.IDeviceApplicationInformation[], numberOfViews: number): IDictionary<Mobile.IDebugWebViewInfo[]> {
-	let result: IDictionary<Mobile.IDebugWebViewInfo[]> = {};
+	const result: IDictionary<Mobile.IDebugWebViewInfo[]> = {};
 	_.each(appInfos, (appInfo, index) => {
 		result[appInfo.appIdentifier] = _.times(numberOfViews, (currentViewIndex: number) => createDebuggableWebView(`${index}_${currentViewIndex}`));
 	});
@@ -91,8 +91,8 @@ function createDebuggableWebViews(appInfos: Mobile.IDeviceApplicationInformation
 }
 
 describe("ApplicationManagerBase", () => {
-	let applicationManager: ApplicationManager,
-		testInjector: IInjector;
+	let applicationManager: ApplicationManager;
+	let testInjector: IInjector;
 
 	beforeEach(() => {
 		testInjector = createTestInjector();
@@ -105,7 +105,7 @@ describe("ApplicationManagerBase", () => {
 		describe("debuggableApps", () => {
 			it("emits debuggableAppFound when new application is available for debugging", async () => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(2);
-				let foundAppsForDebug: Mobile.IDeviceApplicationInformation[] = [];
+				const foundAppsForDebug: Mobile.IDeviceApplicationInformation[] = [];
 
 				applicationManager.on("debuggableAppFound", (d: Mobile.IDeviceApplicationInformation) => {
 					foundAppsForDebug.push(d);
@@ -121,8 +121,8 @@ describe("ApplicationManagerBase", () => {
 
 			it("emits debuggableAppFound when new application is available for debugging (several calls)", async () => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(1);
-				let foundAppsForDebug: Mobile.IDeviceApplicationInformation[] = [],
-					isFinalCheck = false;
+				const foundAppsForDebug: Mobile.IDeviceApplicationInformation[] = [];
+				let isFinalCheck = false;
 
 				applicationManager.on("debuggableAppFound", (d: Mobile.IDeviceApplicationInformation) => {
 					foundAppsForDebug.push(d);
@@ -147,7 +147,7 @@ describe("ApplicationManagerBase", () => {
 
 			it("emits debuggableAppLost when application cannot be debugged anymore", async () => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(2);
-				let expectedAppsToBeLost = currentlyAvailableAppsForDebugging,
+				const expectedAppsToBeLost = currentlyAvailableAppsForDebugging,
 					lostAppsForDebug: Mobile.IDeviceApplicationInformation[] = [];
 
 				applicationManager.on("debuggableAppLost", (d: Mobile.IDeviceApplicationInformation) => {
@@ -169,9 +169,9 @@ describe("ApplicationManagerBase", () => {
 
 			it("emits debuggableAppLost when application cannot be debugged anymore (several calls)", async () => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(4);
-				let lostAppsForDebug: Mobile.IDeviceApplicationInformation[] = [],
-					isFinalCheck = false,
-					initialAppsAvailableForDebug = currentlyAvailableAppsForDebugging;
+				const lostAppsForDebug: Mobile.IDeviceApplicationInformation[] = [];
+				let isFinalCheck = false;
+				const initialAppsAvailableForDebug = currentlyAvailableAppsForDebugging;
 
 				applicationManager.on("debuggableAppLost", (d: Mobile.IDeviceApplicationInformation) => {
 					lostAppsForDebug.push(d);
@@ -193,16 +193,16 @@ describe("ApplicationManagerBase", () => {
 			});
 
 			it("emits debuggableAppFound and debuggableAppLost when applications are changed", async () => {
-				let allAppsForDebug = createAppsAvailableForDebugging(4);
+				const allAppsForDebug = createAppsAvailableForDebugging(4);
 				currentlyAvailableAppsForDebugging = _.take(allAppsForDebug, 2);
-				let remainingAppsForDebugging = _.difference(allAppsForDebug, currentlyAvailableAppsForDebugging);
+				const remainingAppsForDebugging = _.difference(allAppsForDebug, currentlyAvailableAppsForDebugging);
 
-				let foundAppsForDebug: Mobile.IDeviceApplicationInformation[] = [];
+				const foundAppsForDebug: Mobile.IDeviceApplicationInformation[] = [];
 
 				// This will raise debuggableAppFound 2 times.
 				await applicationManager.checkForApplicationUpdates();
 
-				let foundAppsPromise = new Promise<void>((resolve, reject) => {
+				const foundAppsPromise = new Promise<void>((resolve, reject) => {
 					applicationManager.on("debuggableAppFound", (d: Mobile.IDeviceApplicationInformation) => {
 						foundAppsForDebug.push(d);
 						if (foundAppsForDebug.length === remainingAppsForDebugging.length) {
@@ -215,7 +215,7 @@ describe("ApplicationManagerBase", () => {
 					});
 				});
 
-				let lostAppsPromise = new Promise<void>((resolve, reject) => {
+				const lostAppsPromise = new Promise<void>((resolve, reject) => {
 					applicationManager.on("debuggableAppLost", (d: Mobile.IDeviceApplicationInformation) => {
 						assert.deepEqual(d, allAppsForDebug[0], "Debuggable app lost does not match.");
 						resolve();
@@ -229,19 +229,19 @@ describe("ApplicationManagerBase", () => {
 
 			it("emits debuggableViewFound when new views are available for debug", (done: mocha.Done) => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(2);
-				let numberOfViewsPerApp = 2;
+				const numberOfViewsPerApp = 2;
 				currentlyAvailableAppWebViewsForDebugging = createDebuggableWebViews(currentlyAvailableAppsForDebugging, numberOfViewsPerApp);
-				let currentDebuggableViews: IDictionary<Mobile.IDebugWebViewInfo[]> = {};
+				const currentDebuggableViews: IDictionary<Mobile.IDebugWebViewInfo[]> = {};
 				applicationManager.on("debuggableViewFound", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
 					currentDebuggableViews[appIdentifier] = currentDebuggableViews[appIdentifier] || [];
 					currentDebuggableViews[appIdentifier].push(d);
-					let numberOfFoundViewsPerApp = _.uniq(_.values(currentDebuggableViews).map(arr => arr.length));
+					const numberOfFoundViewsPerApp = _.uniq(_.values(currentDebuggableViews).map(arr => arr.length));
 					if (_.keys(currentDebuggableViews).length === currentlyAvailableAppsForDebugging.length
 						&& numberOfFoundViewsPerApp.length === 1 // for all apps we've found exactly two apps.
 						&& numberOfFoundViewsPerApp[0] === numberOfViewsPerApp) {
 						_.each(currentDebuggableViews, (webViews, appId) => {
 							_.each(webViews, webView => {
-								let expectedWebView = _.find(currentlyAvailableAppWebViewsForDebugging[appId], c => c.id === webView.id);
+								const expectedWebView = _.find(currentlyAvailableAppWebViewsForDebugging[appId], c => c.id === webView.id);
 								assert.isTrue(_.isEqual(webView, expectedWebView));
 							});
 						});
@@ -254,22 +254,22 @@ describe("ApplicationManagerBase", () => {
 
 			it("emits debuggableViewLost when views for debug are removed", (done: mocha.Done) => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(2);
-				let numberOfViewsPerApp = 2;
+				const numberOfViewsPerApp = 2;
 				currentlyAvailableAppWebViewsForDebugging = createDebuggableWebViews(currentlyAvailableAppsForDebugging, numberOfViewsPerApp);
-				let expectedResults = _.cloneDeep(currentlyAvailableAppWebViewsForDebugging);
-				let currentDebuggableViews: IDictionary<Mobile.IDebugWebViewInfo[]> = {};
+				const expectedResults = _.cloneDeep(currentlyAvailableAppWebViewsForDebugging);
+				const currentDebuggableViews: IDictionary<Mobile.IDebugWebViewInfo[]> = {};
 
 				applicationManager.checkForApplicationUpdates().then(() => {
 					applicationManager.on("debuggableViewLost", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
 						currentDebuggableViews[appIdentifier] = currentDebuggableViews[appIdentifier] || [];
 						currentDebuggableViews[appIdentifier].push(d);
-						let numberOfFoundViewsPerApp = _.uniq(_.values(currentDebuggableViews).map(arr => arr.length));
+						const numberOfFoundViewsPerApp = _.uniq(_.values(currentDebuggableViews).map(arr => arr.length));
 						if (_.keys(currentDebuggableViews).length === currentlyAvailableAppsForDebugging.length
 							&& numberOfFoundViewsPerApp.length === 1 // for all apps we've found exactly two apps.
 							&& numberOfFoundViewsPerApp[0] === numberOfViewsPerApp) {
 							_.each(currentDebuggableViews, (webViews, appId) => {
 								_.each(webViews, webView => {
-									let expectedWebView = _.find(expectedResults[appId], c => c.id === webView.id);
+									const expectedWebView = _.find(expectedResults[appId], c => c.id === webView.id);
 									assert.isTrue(_.isEqual(webView, expectedWebView));
 								});
 							});
@@ -284,11 +284,11 @@ describe("ApplicationManagerBase", () => {
 
 			it("emits debuggableViewFound when new views are available for debug", (done: mocha.Done) => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(2);
-				let numberOfViewsPerApp = 2;
+				const numberOfViewsPerApp = 2;
 				currentlyAvailableAppWebViewsForDebugging = createDebuggableWebViews(currentlyAvailableAppsForDebugging, numberOfViewsPerApp);
-				let expectedViewToBeFound = createDebuggableWebView("uniqueId"),
-					expectedAppIdentifier = currentlyAvailableAppsForDebugging[0].appIdentifier,
-					isLastCheck = false;
+				let expectedViewToBeFound = createDebuggableWebView("uniqueId");
+				let expectedAppIdentifier = currentlyAvailableAppsForDebugging[0].appIdentifier;
+				let isLastCheck = false;
 
 				applicationManager.checkForApplicationUpdates().then(() => {
 					applicationManager.on("debuggableViewFound", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
@@ -318,11 +318,11 @@ describe("ApplicationManagerBase", () => {
 
 			it("emits debuggableViewLost when views for debug are not available anymore", (done: mocha.Done) => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(2);
-				let numberOfViewsPerApp = 2;
+				const numberOfViewsPerApp = 2;
 				currentlyAvailableAppWebViewsForDebugging = createDebuggableWebViews(currentlyAvailableAppsForDebugging, numberOfViewsPerApp);
-				let expectedAppIdentifier = currentlyAvailableAppsForDebugging[0].appIdentifier,
-					expectedViewToBeLost = currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].splice(0, 1)[0],
-					isLastCheck = false;
+				let expectedAppIdentifier = currentlyAvailableAppsForDebugging[0].appIdentifier;
+				let expectedViewToBeLost = currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].splice(0, 1)[0];
+				let isLastCheck = false;
 
 				applicationManager.checkForApplicationUpdates().then(() => {
 					applicationManager.on("debuggableViewLost", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
@@ -350,8 +350,8 @@ describe("ApplicationManagerBase", () => {
 			it("emits debuggableViewChanged when view's property is modified (each one except id)", (done: mocha.Done) => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(1);
 				currentlyAvailableAppWebViewsForDebugging = createDebuggableWebViews(currentlyAvailableAppsForDebugging, 2);
-				let viewToChange = currentlyAvailableAppWebViewsForDebugging[currentlyAvailableAppsForDebugging[0].appIdentifier][0];
-				let expectedView = _.cloneDeep(viewToChange);
+				const viewToChange = currentlyAvailableAppWebViewsForDebugging[currentlyAvailableAppsForDebugging[0].appIdentifier][0];
+				const expectedView = _.cloneDeep(viewToChange);
 				expectedView.title = "new title";
 
 				applicationManager.on("debuggableViewChanged", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
@@ -368,8 +368,8 @@ describe("ApplicationManagerBase", () => {
 			it("does not emit debuggableViewChanged when id is modified", (done: mocha.Done) => {
 				currentlyAvailableAppsForDebugging = createAppsAvailableForDebugging(1);
 				currentlyAvailableAppWebViewsForDebugging = createDebuggableWebViews(currentlyAvailableAppsForDebugging, 2);
-				let viewToChange = currentlyAvailableAppWebViewsForDebugging[currentlyAvailableAppsForDebugging[0].appIdentifier][0];
-				let expectedView = _.cloneDeep(viewToChange);
+				const viewToChange = currentlyAvailableAppWebViewsForDebugging[currentlyAvailableAppsForDebugging[0].appIdentifier][0];
+				const expectedView = _.cloneDeep(viewToChange);
 
 				applicationManager.checkForApplicationUpdates().then(() => {
 					applicationManager.on("debuggableViewChanged", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
@@ -395,7 +395,7 @@ describe("ApplicationManagerBase", () => {
 			it("reports installed applications when initially there are apps", async () => {
 				currentlyInstalledApps = ["app1", "app2", "app3"];
 
-				let reportedInstalledApps: string[] = [],
+				const reportedInstalledApps: string[] = [],
 					promise = new Promise<void>((resolve, reject) => {
 						applicationManager.on("applicationInstalled", (app: string) => {
 							reportedInstalledApps.push(app);
@@ -418,10 +418,10 @@ describe("ApplicationManagerBase", () => {
 			it("reports installed applications when apps are changed between executions", async () => {
 				currentlyInstalledApps = ["app1", "app2", "app3"];
 
-				let reportedInstalledApps: string[] = [],
-					promise: Promise<void>;
+				const reportedInstalledApps: string[] = [];
+				let promise: Promise<void>;
 
-				let testInstalledAppsResults = async () => {
+				const testInstalledAppsResults = async () => {
 					promise = new Promise<void>((resolve, reject) => {
 						applicationManager.on("applicationInstalled", (app: string) => {
 							reportedInstalledApps.push(app);
@@ -454,7 +454,7 @@ describe("ApplicationManagerBase", () => {
 				currentlyInstalledApps = ["app1", "app2", "app3"];
 				await applicationManager.checkForApplicationUpdates();
 
-				let reportedUninstalledApps: string[] = [],
+				const reportedUninstalledApps: string[] = [],
 					initiallyInstalledApps = _.cloneDeep(currentlyInstalledApps),
 					promise = new Promise<void>((resolve, reject) => {
 						currentlyInstalledApps = [];
@@ -482,11 +482,11 @@ describe("ApplicationManagerBase", () => {
 				// Initialize - all apps are marked as installed.
 				await applicationManager.checkForApplicationUpdates();
 
-				let reportedUninstalledApps: string[] = [],
-					removedApps: string[] = [],
-					promise: Promise<void>;
+				const reportedUninstalledApps: string[] = [];
+				let removedApps: string[] = [];
+				let promise: Promise<void>;
 
-				let testInstalledAppsResults = async () => {
+				const testInstalledAppsResults = async () => {
 					promise = new Promise<void>((resolve, reject) => {
 						applicationManager.on("applicationUninstalled", (app: string) => {
 							reportedUninstalledApps.push(app);
@@ -508,7 +508,7 @@ describe("ApplicationManagerBase", () => {
 				};
 
 				while (currentlyInstalledApps.length) {
-					let currentlyRemovedApps = currentlyInstalledApps.splice(0, 2);
+					const currentlyRemovedApps = currentlyInstalledApps.splice(0, 2);
 					removedApps = removedApps.concat(currentlyRemovedApps);
 					await testInstalledAppsResults();
 				}
@@ -518,14 +518,14 @@ describe("ApplicationManagerBase", () => {
 				currentlyInstalledApps = ["app1", "app2", "app3", "app4", "app5", "app6"];
 				await applicationManager.checkForApplicationUpdates();
 
-				let reportedUninstalledApps: string[] = [],
-					reportedInstalledApps: string[] = [],
-					installedApps: string[] = [],
-					removedApps: string[] = [],
-					appUninstalledPromise: Promise<void>,
-					appInstalledPromise: Promise<void>;
+				const reportedUninstalledApps: string[] = [];
+				const reportedInstalledApps: string[] = [];
+				let installedApps: string[] = [];
+				let removedApps: string[] = [];
+				let appUninstalledPromise: Promise<void>;
+				let appInstalledPromise: Promise<void>;
 
-				let testInstalledAppsResults = async () => {
+				const testInstalledAppsResults = async () => {
 					appInstalledPromise = new Promise<void>((resolve, reject) => {
 						applicationManager.on("applicationInstalled", (app: string) => {
 							reportedInstalledApps.push(app);
@@ -564,10 +564,10 @@ describe("ApplicationManagerBase", () => {
 				};
 
 				for (let index = 10; index < 13; index++) {
-					let currentlyRemovedApps = currentlyInstalledApps.splice(0, 2);
+					const currentlyRemovedApps = currentlyInstalledApps.splice(0, 2);
 					removedApps = removedApps.concat(currentlyRemovedApps);
 
-					let currentlyAddedApps = [`app${index}`];
+					const currentlyAddedApps = [`app${index}`];
 					currentlyInstalledApps = currentlyInstalledApps.concat(currentlyAddedApps);
 					installedApps = installedApps.concat(currentlyAddedApps);
 
@@ -618,8 +618,8 @@ describe("ApplicationManagerBase", () => {
 		});
 
 		it("calls stopApplication and startApplication in correct order", async () => {
-			let isStartApplicationCalled = false,
-				isStopApplicationCalled = false;
+			let isStartApplicationCalled = false;
+			let isStopApplicationCalled = false;
 
 			applicationManager.stopApplication = (appId: string) => {
 				isStopApplicationCalled = true;
@@ -668,7 +668,7 @@ describe("ApplicationManagerBase", () => {
 		});
 
 		describe("does not throw Error", () => {
-			let error = new Error("Throw!");
+			const error = new Error("Throw!");
 			let isStartApplicationCalled = false;
 			let logger: CommonLoggerStub;
 
@@ -677,7 +677,7 @@ describe("ApplicationManagerBase", () => {
 				logger = testInjector.resolve("logger");
 			});
 
-			let assertDoesNotThrow = async (opts?: { shouldStartApplicatinThrow: boolean }) => {
+			const assertDoesNotThrow = async (opts?: { shouldStartApplicatinThrow: boolean }) => {
 				assert.deepEqual(logger.traceOutput, "");
 				applicationManager.startApplication = async (appId: string) => {
 					if (opts && opts.shouldStartApplicatinThrow) {
@@ -736,8 +736,8 @@ describe("ApplicationManagerBase", () => {
 		});
 
 		it("calls uninstallApplication and installApplication in correct order", async () => {
-			let isInstallApplicationCalled = false,
-				isUninstallApplicationCalled = false;
+			let isInstallApplicationCalled = false;
+			let isUninstallApplicationCalled = false;
 
 			applicationManager.isApplicationInstalled = (appIdentifier: string) => Promise.resolve(true);
 

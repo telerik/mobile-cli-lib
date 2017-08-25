@@ -12,7 +12,7 @@ export class NpmPluginsSource extends PluginsSourceBase implements IPluginsSourc
 	}
 
 	public async getPlugins(page: number, count: number): Promise<IBasicPluginInformation[]> {
-		let skip = page * count;
+		const skip = page * count;
 
 		return _.slice(this.plugins, skip, skip + count);
 	}

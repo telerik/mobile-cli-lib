@@ -9,12 +9,12 @@ import { CommonLoggerStub } from "./stubs";
 
 use(require("chai-as-promised"));
 
-let sampleZipFileTest = path.join(__dirname, "../resources/sampleZipFileTest.zip");
-let unzippedFileName = "sampleZipFileTest.txt";
-let sampleZipFileTestIncorrectName = path.join(__dirname, "../resources/sampleZipfileTest.zip");
+const sampleZipFileTest = path.join(__dirname, "../resources/sampleZipFileTest.zip");
+const unzippedFileName = "sampleZipFileTest.txt";
+const sampleZipFileTestIncorrectName = path.join(__dirname, "../resources/sampleZipfileTest.zip");
 
 function isOsCaseSensitive(testInjector: IInjector): boolean {
-	let hostInfo = testInjector.resolve("hostInfo");
+	const hostInfo = testInjector.resolve("hostInfo");
 	return hostInfo.isLinux;
 }
 temp.track();
@@ -71,7 +71,7 @@ function createWriteJsonTestCases(): { exists: boolean, text: string, testCondit
 }
 
 function createTestInjector(): IInjector {
-	let testInjector = new Yok();
+	const testInjector = new Yok();
 
 	testInjector.register("fs", fileSystemFile.FileSystem);
 	testInjector.register("errors", {
@@ -91,11 +91,11 @@ function createTestInjector(): IInjector {
 describe("FileSystem", () => {
 	describe("unzip", () => {
 		describe("overwriting files tests", () => {
-			let testInjector: IInjector,
-				tempDir: string,
-				fs: IFileSystem,
-				file: string,
-				msg = "data";
+			let testInjector: IInjector;
+			let tempDir: string;
+			let fs: IFileSystem;
+			let file: string;
+			const msg = "data";
 
 			beforeEach(() => {
 				testInjector = createTestInjector();
@@ -106,25 +106,25 @@ describe("FileSystem", () => {
 			});
 			it("does not overwrite files when overwriteExisitingFiles is false", async () => {
 				await fs.unzip(sampleZipFileTest, tempDir, { overwriteExisitingFiles: false }, [unzippedFileName]);
-				let data = fs.readFile(file);
+				const data = fs.readFile(file);
 				assert.strictEqual(msg, data.toString(), "When overwriteExistingFiles is false, we should not ovewrite files.");
 			});
 
 			it("overwrites files when overwriteExisitingFiles is true", async () => {
 				await fs.unzip(sampleZipFileTest, tempDir, { overwriteExisitingFiles: true }, [unzippedFileName]);
-				let data = fs.readFile(file);
+				const data = fs.readFile(file);
 				assert.notEqual(msg, data.toString(), "We must overwrite files when overwriteExisitingFiles is true.");
 			});
 
 			it("overwrites files when overwriteExisitingFiles is not set", async () => {
 				await fs.unzip(sampleZipFileTest, tempDir, {}, [unzippedFileName]);
-				let data = fs.readFile(file);
+				const data = fs.readFile(file);
 				assert.notEqual(msg, data.toString(), "We must overwrite files when overwriteExisitingFiles is not set.");
 			});
 
 			it("overwrites files when options is not set", async () => {
 				await fs.unzip(sampleZipFileTest, tempDir, undefined, [unzippedFileName]);
-				let data = fs.readFile(file);
+				const data = fs.readFile(file);
 				assert.notEqual(msg, data.toString(), "We must overwrite files when options is not defined.");
 			});
 		});
@@ -133,37 +133,37 @@ describe("FileSystem", () => {
 		describe("case sensitive tests", () => {
 			const commandUnzipFailedMessage = "Command unzip failed with exit code 9";
 			it("is case sensitive when options is not defined", async () => {
-				let testInjector = createTestInjector();
-				let tempDir = temp.mkdirSync("projectToUnzip");
-				let fs: IFileSystem = testInjector.resolve("fs");
+				const testInjector = createTestInjector();
+				const tempDir = temp.mkdirSync("projectToUnzip");
+				const fs: IFileSystem = testInjector.resolve("fs");
 				if (isOsCaseSensitive(testInjector)) {
 					await assert.isRejected(fs.unzip(sampleZipFileTestIncorrectName, tempDir, undefined, [unzippedFileName]), commandUnzipFailedMessage);
 				}
 			});
 
 			it("is case sensitive when caseSensitive option is not defined", async () => {
-				let testInjector = createTestInjector();
-				let tempDir = temp.mkdirSync("projectToUnzip");
-				let fs: IFileSystem = testInjector.resolve("fs");
+				const testInjector = createTestInjector();
+				const tempDir = temp.mkdirSync("projectToUnzip");
+				const fs: IFileSystem = testInjector.resolve("fs");
 				if (isOsCaseSensitive(testInjector)) {
 					await assert.isRejected(fs.unzip(sampleZipFileTestIncorrectName, tempDir, {}, [unzippedFileName]), commandUnzipFailedMessage);
 				}
 			});
 
 			it("is case sensitive when caseSensitive option is true", async () => {
-				let testInjector = createTestInjector();
-				let tempDir = temp.mkdirSync("projectToUnzip");
-				let fs: IFileSystem = testInjector.resolve("fs");
+				const testInjector = createTestInjector();
+				const tempDir = temp.mkdirSync("projectToUnzip");
+				const fs: IFileSystem = testInjector.resolve("fs");
 				if (isOsCaseSensitive(testInjector)) {
 					await assert.isRejected(fs.unzip(sampleZipFileTestIncorrectName, tempDir, { caseSensitive: true }, [unzippedFileName]), commandUnzipFailedMessage);
 				}
 			});
 
 			it("is case insensitive when caseSensitive option is false", async () => {
-				let testInjector = createTestInjector();
-				let tempDir = temp.mkdirSync("projectToUnzip");
-				let fs: IFileSystem = testInjector.resolve("fs");
-				let file = path.join(tempDir, unzippedFileName);
+				const testInjector = createTestInjector();
+				const tempDir = temp.mkdirSync("projectToUnzip");
+				const fs: IFileSystem = testInjector.resolve("fs");
+				const file = path.join(tempDir, unzippedFileName);
 				await fs.unzip(sampleZipFileTestIncorrectName, tempDir, { caseSensitive: false }, [unzippedFileName]);
 				// This will throw error in case file is not extracted
 				fs.readFile(file);
@@ -173,37 +173,37 @@ describe("FileSystem", () => {
 
 	describe("renameIfExists", () => {
 		it("returns true when file is renamed", () => {
-			let testInjector = createTestInjector();
-			let tempDir = temp.mkdirSync("renameIfExists");
-			let testFileName = path.join(tempDir, "testRenameIfExistsMethod");
-			let newFileName = path.join(tempDir, "newfilename");
+			const testInjector = createTestInjector();
+			const tempDir = temp.mkdirSync("renameIfExists");
+			const testFileName = path.join(tempDir, "testRenameIfExistsMethod");
+			const newFileName = path.join(tempDir, "newfilename");
 
-			let fs: IFileSystem = testInjector.resolve("fs");
+			const fs: IFileSystem = testInjector.resolve("fs");
 			fs.writeFile(testFileName, "data");
 
-			let result = fs.renameIfExists(testFileName, newFileName);
+			const result = fs.renameIfExists(testFileName, newFileName);
 			assert.isTrue(result, "On successfull rename, result must be true.");
 			assert.isTrue(fs.exists(newFileName), "Renamed file should exists.");
 			assert.isFalse(fs.exists(testFileName), "Original file should not exist.");
 		});
 
 		it("returns false when file does not exist", () => {
-			let testInjector = createTestInjector();
-			let fs: IFileSystem = testInjector.resolve("fs");
-			let newName = "tempDir2";
-			let result = fs.renameIfExists("tempDir", newName);
+			const testInjector = createTestInjector();
+			const fs: IFileSystem = testInjector.resolve("fs");
+			const newName = "tempDir2";
+			const result = fs.renameIfExists("tempDir", newName);
 			assert.isFalse(result, "When file does not exist, result must be false.");
 			assert.isFalse(fs.exists(newName), "New file should not exist.");
 		});
 	});
 
 	describe("copyFile", () => {
-		let testInjector: IInjector,
-			tempDir: string,
-			testFileName: string,
-			newFileName: string,
-			fileContent = "data",
-			fs: IFileSystem;
+		let testInjector: IInjector;
+		let tempDir: string;
+		let testFileName: string;
+		let newFileName: string;
+		const fileContent = "data";
+		let fs: IFileSystem;
 
 		beforeEach(() => {
 			testInjector = createTestInjector();
@@ -223,7 +223,7 @@ describe("FileSystem", () => {
 		});
 
 		it("copies file to non-existent directory", () => {
-			let newFileNameInSubDir = path.join(tempDir, "subDir", "newfilename");
+			const newFileNameInSubDir = path.join(tempDir, "subDir", "newfilename");
 			assert.isFalse(fs.exists(newFileNameInSubDir));
 			fs.copyFile(testFileName, newFileNameInSubDir);
 			assert.isTrue(fs.exists(newFileNameInSubDir), "Renamed file should exists.");
@@ -232,7 +232,7 @@ describe("FileSystem", () => {
 		});
 
 		it("produces correct file when source and target file are the same", () => {
-			let originalSize = fs.getFsStats(testFileName).size;
+			const originalSize = fs.getFsStats(testFileName).size;
 			fs.copyFile(testFileName, testFileName);
 			assert.isTrue(fs.exists(testFileName), "Original file should exist.");
 			assert.deepEqual(fs.getFsStats(testFileName).size, originalSize, "Original file and copied file must have the same size.");
@@ -243,7 +243,7 @@ describe("FileSystem", () => {
 	describe("removeEmptyParents", () => {
 		let testInjector: IInjector;
 		let fs: IFileSystem;
-		let notEmptyRootDirectory = path.join("not-empty");
+		const notEmptyRootDirectory = path.join("not-empty");
 		let removedDirectories: string[];
 
 		beforeEach(() => {
@@ -257,7 +257,7 @@ describe("FileSystem", () => {
 		});
 
 		it("should remove all empty parents.", () => {
-			let emptyDirectories = ["first", "second", "third"];
+			const emptyDirectories = ["first", "second", "third"];
 
 			let directory = notEmptyRootDirectory;
 
@@ -268,7 +268,7 @@ describe("FileSystem", () => {
 			// We need to add the fourth directory because this directory does not actually exist and the method will start deleting its parents.
 			directory = path.join(directory, "fourth");
 
-			let originalIsEmptyDir = fs.isEmptyDir;
+			const originalIsEmptyDir = fs.isEmptyDir;
 			fs.isEmptyDir = (dirName: string) => dirName !== notEmptyRootDirectory;
 
 			fs.deleteEmptyParents(directory);
@@ -279,9 +279,9 @@ describe("FileSystem", () => {
 	});
 
 	describe("writeJson", () => {
-		let testCases = createWriteJsonTestCases(),
-			testInjector: IInjector,
-			fs: IFileSystem;
+		const testCases = createWriteJsonTestCases();
+		let testInjector: IInjector;
+		let fs: IFileSystem;
 
 		beforeEach(() => {
 			testInjector = createTestInjector();
@@ -296,7 +296,7 @@ describe("FileSystem", () => {
 				fs.writeFile = () => null;
 
 				let actualIndentation: string;
-				let originalJsonStringify = JSON.stringify;
+				const originalJsonStringify = JSON.stringify;
 
 				(<any>JSON).stringify = (value: any, replacer: any[], space: string | number) => {
 					actualIndentation = <string>space;

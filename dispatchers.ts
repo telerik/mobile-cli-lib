@@ -17,14 +17,14 @@ export class CommandDispatcher implements ICommandDispatcher {
 
 		if (this.$logger.getLevel() === "TRACE") {
 			// CommandDispatcher is called from external CLI's only, so pass the path to their package.json
-			let sysInfo = await this.$sysInfo.getSysInfo(path.join(__dirname, "..", "..", "package.json"));
+			const sysInfo = await this.$sysInfo.getSysInfo(path.join(__dirname, "..", "..", "package.json"));
 			this.$logger.trace("System information:");
 			this.$logger.trace(sysInfo);
 		}
 
 		let commandName = this.getCommandName();
-		let commandArguments = this.$options.argv._.slice(1);
-		let lastArgument: string = _.last(commandArguments);
+		const commandArguments = this.$options.argv._.slice(1);
+		const lastArgument: string = _.last(commandArguments);
 
 		if (this.$options.help) {
 			commandArguments.unshift(commandName);
@@ -45,7 +45,7 @@ export class CommandDispatcher implements ICommandDispatcher {
 	}
 
 	private getCommandName(): string {
-		let remaining: string[] = this.$options.argv._;
+		const remaining: string[] = this.$options.argv._;
 		if (remaining.length > 0) {
 			return remaining[0].toString().toLowerCase();
 		}
@@ -57,7 +57,7 @@ export class CommandDispatcher implements ICommandDispatcher {
 	private printVersion(): void {
 		let version = this.$staticConfig.version;
 
-		let json = this.$fs.readJson(this.$staticConfig.pathToPackageJson);
+		const json = this.$fs.readJson(this.$staticConfig.pathToPackageJson);
 		if (json && json.buildVersion) {
 			version = `${version}-${json.buildVersion}`;
 		}
@@ -78,7 +78,7 @@ class FutureDispatcher implements IFutureDispatcher {
 		this.actions = new queue.Queue<any>();
 
 		while (true) {
-			let action = await this.actions.dequeue();
+			const action = await this.actions.dequeue();
 			await action();
 		}
 	}

@@ -10,8 +10,8 @@ function Exception() {
 Exception.prototype = new Error();
 
 function resolveCallStack(error: Error): string {
-	let stackLines: string[] = error.stack.split("\n");
-	let parsed = _.map(stackLines, (line: string): any => {
+	const stackLines: string[] = error.stack.split("\n");
+	const parsed = _.map(stackLines, (line: string): any => {
 		let match = line.match(/^\s*at ([^(]*) \((.*?):([0-9]+):([0-9]+)\)$/);
 		if (match) {
 			return match;
@@ -26,29 +26,29 @@ function resolveCallStack(error: Error): string {
 		return line;
 	});
 
-	let fs = require("fs");
+	const fs = require("fs");
 
-	let remapped = _.map(parsed, (parsedLine) => {
+	const remapped = _.map(parsed, (parsedLine) => {
 		if (_.isString(parsedLine)) {
 			return parsedLine;
 		}
 
-		let functionName = parsedLine[1];
-		let fileName = parsedLine[2];
-		let line = +parsedLine[3];
-		let column = +parsedLine[4];
+		const functionName = parsedLine[1];
+		const fileName = parsedLine[2];
+		const line = +parsedLine[3];
+		const column = +parsedLine[4];
 
-		let mapFileName = fileName + ".map";
+		const mapFileName = fileName + ".map";
 		if (!fs.existsSync(mapFileName)) {
 			return parsedLine.input;
 		}
 
-		let mapData = JSON.parse(fs.readFileSync(mapFileName).toString());
+		const mapData = JSON.parse(fs.readFileSync(mapFileName).toString());
 
-		let consumer = new SourceMapConsumer(mapData);
-		let sourcePos = consumer.originalPositionFor({ line: line, column: column });
+		const consumer = new SourceMapConsumer(mapData);
+		const sourcePos = consumer.originalPositionFor({ line: line, column: column });
 		if (sourcePos && sourcePos.source) {
-			let source = path.join(path.dirname(fileName), sourcePos.source);
+			const source = path.join(path.dirname(fileName), sourcePos.source);
 			return util.format("    at %s (%s:%s:%s)", functionName, source, sourcePos.line, sourcePos.column);
 		}
 
@@ -66,7 +66,7 @@ function resolveCallStack(error: Error): string {
 }
 
 export function installUncaughtExceptionListener(actionOnException?: () => void): void {
-	let handler = async (err: Error) => {
+	const handler = async (err: Error) => {
 		try {
 			let callstack = err.stack;
 			if (callstack) {
@@ -107,7 +107,7 @@ async function tryTrackException(error: Error, injector: IInjector): Promise<voi
 
 	if (!disableAnalytics) {
 		try {
-			let analyticsService = injector.resolve("analyticsService");
+			const analyticsService = injector.resolve("analyticsService");
 			await analyticsService.trackException(error, error.message);
 		} catch (e) {
 			// Do not replace with logger due to cyclic dependency
@@ -130,7 +130,7 @@ export class Errors implements IErrors {
 			opts = { formatStr: opts };
 		}
 
-		let exception: any = new (<any>Exception)();
+		const exception: any = new (<any>Exception)();
 		exception.name = opts.name || "Exception";
 		exception.message = util.format.apply(null, [opts.formatStr].concat(argsArray));
 		try {
@@ -155,8 +155,8 @@ export class Errors implements IErrors {
 		try {
 			return await action();
 		} catch (ex) {
-			let loggerLevel: string = $injector.resolve("logger").getLevel().toUpperCase();
-			let printCallStack = this.printCallStack || loggerLevel === "TRACE" || loggerLevel === "DEBUG";
+			const loggerLevel: string = $injector.resolve("logger").getLevel().toUpperCase();
+			const printCallStack = this.printCallStack || loggerLevel === "TRACE" || loggerLevel === "DEBUG";
 			console.error(printCallStack
 				? resolveCallStack(ex)
 				: "\x1B[31;1m" + ex.message + "\x1B[0m");

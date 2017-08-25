@@ -9,20 +9,20 @@ class AndroidDebugBridgeStub {
 	public validIdentifierPassed: Boolean = false;
 	public static methodCallCount: number = 0;
 	private expectedValidTestInput: string[] = [
-			"org.nativescript.testApp/com.tns.TestClass",
-			"org.nativescript.testApp/com.tns.$TestClass",
-			"org.nativescript.testApp/com.tns._TestClass",
-			"org.nativescript.testApp/com.tns.$_TestClass",
-			"org.nativescript.testApp/com.tns._$TestClass",
-			"org.nativescript.testApp/com.tns.NativeScriptActivity"
-		];
+		"org.nativescript.testApp/com.tns.TestClass",
+		"org.nativescript.testApp/com.tns.$TestClass",
+		"org.nativescript.testApp/com.tns._TestClass",
+		"org.nativescript.testApp/com.tns.$_TestClass",
+		"org.nativescript.testApp/com.tns._$TestClass",
+		"org.nativescript.testApp/com.tns.NativeScriptActivity"
+	];
 	private validTestInput: string[] = [
-			"other.stuff/ org.nativescript.testApp/com.tns.TestClass asdaas.dasdh2",
-			"other.stuff.the.regex.might.fail.on org.nativescript.testApp/com.tns.$TestClass other.stuff.the.regex.might.fail.on",
-			"/might.fail.on  org.nativescript.testApp/com.tns._TestClass /might.fail.on",
-			"might.fail.on/ org.nativescript.testApp/com.tns.$_TestClass might.fail.on//",
-			"/might.fail org.nativescript.testApp/com.tns._$TestClass something/might.fail.on/",
-			"android.intent.action.MAIN: \
+		"other.stuff/ org.nativescript.testApp/com.tns.TestClass asdaas.dasdh2",
+		"other.stuff.the.regex.might.fail.on org.nativescript.testApp/com.tns.$TestClass other.stuff.the.regex.might.fail.on",
+		"/might.fail.on  org.nativescript.testApp/com.tns._TestClass /might.fail.on",
+		"might.fail.on/ org.nativescript.testApp/com.tns.$_TestClass might.fail.on//",
+		"/might.fail org.nativescript.testApp/com.tns._$TestClass something/might.fail.on/",
+		"android.intent.action.MAIN: \
 			3b2df03 org.nativescript.testApp/com.tns.NativeScriptActivity filter 50dd82e \
 			Action: \"android.intent.action.MAIN\" \
 			Category: \"android.intent.category.LAUNCHER\" \
@@ -32,7 +32,7 @@ class AndroidDebugBridgeStub {
 			-- \
 			Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10200000 cmp=org.nativescript.testApp/com.tns.NativeScriptActivity } \
 			frontOfTask=true task=TaskRecord{fe592ac #449 A=org.nativescript.testApp U=0 StackId=1 sz=1}"
-		];
+	];
 
 	public async executeShellCommand(args: string[]): Promise<any> {
 		if (args && args.length > 0) {
@@ -79,7 +79,7 @@ class AndroidDebugBridgeStub {
 }
 
 function createTestInjector(): IInjector {
-	let testInjector = new Yok();
+	const testInjector = new Yok();
 	testInjector.register("androidApplicationManager", AndroidApplicationManager);
 	testInjector.register("adb", AndroidDebugBridgeStub);
 	testInjector.register('childProcess', {});
@@ -87,7 +87,7 @@ function createTestInjector(): IInjector {
 	testInjector.register("config", {});
 	testInjector.register("staticConfig", {});
 	testInjector.register("androidDebugBridgeResultHandler", {});
-	testInjector.register("options", {justlaunch: true});
+	testInjector.register("options", { justlaunch: true });
 	testInjector.register("errors", {});
 	testInjector.register("identifier", {});
 	testInjector.register("logcatHelper", {});
@@ -100,9 +100,9 @@ function createTestInjector(): IInjector {
 
 describe("android-application-manager", () => {
 
-	let testInjector: IInjector,
-		androidApplicationManager:AndroidApplicationManager,
-		androidDebugBridge:AndroidDebugBridgeStub;
+	let testInjector: IInjector;
+	let androidApplicationManager: AndroidApplicationManager;
+	let androidDebugBridge: AndroidDebugBridgeStub;
 
 	beforeEach(() => {
 		testInjector = createTestInjector();

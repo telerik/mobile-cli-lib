@@ -7,7 +7,7 @@ export class ProtonStaticConfig extends StaticConfigBase {
 	}
 
 	public async getAdbFilePath(): Promise<string> {
-		let value = await super.getAdbFilePath();
+		const value = await super.getAdbFilePath();
 		return value.replace("app.asar", "app.asar.unpacked");
 	}
 

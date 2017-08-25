@@ -16,7 +16,7 @@ class LocalToDevicePathData implements Mobile.ILocalToDevicePathData {
 
 	public getDevicePath(): string {
 		if (!this.devicePath) {
-			let devicePath = path.join(this.deviceProjectRootPath, path.dirname(this.getRelativeToProjectBasePath()), this.onDeviceFileName);
+			const devicePath = path.join(this.deviceProjectRootPath, path.dirname(this.getRelativeToProjectBasePath()), this.onDeviceFileName);
 			this.devicePath = helpers.fromWindowsRelativePathToUnix(devicePath);
 		}
 

@@ -40,7 +40,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 					+ this.$analyticsSettingsService.getClientName()
 					+ " by automatically sending anonymous usage statistics? We will not use this information to identify or contact you."
 					+ " You can read our official Privacy Policy at");
-				let message = this.$analyticsSettingsService.getPrivacyPolicyLink();
+				const message = this.$analyticsSettingsService.getPrivacyPolicyLink();
 
 				trackFeatureUsage = await this.$prompter.confirm(message, () => true);
 				await this.setStatus(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, trackFeatureUsage);
@@ -57,7 +57,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 	}
 
 	public trackFeature(featureName: string): Promise<void> {
-		let category = this.$options.analyticsClient ||
+		const category = this.$options.analyticsClient ||
 			(helpers.isInteractive() ? "CLI" : "Non-interactive");
 		return this.track(category, featureName);
 	}
@@ -113,7 +113,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 	}
 
 	public async isEnabled(settingName: string): Promise<boolean> {
-		let analyticsStatus = await this.getStatus(settingName);
+		const analyticsStatus = await this.getStatus(settingName);
 		return analyticsStatus === AnalyticsStatus.enabled;
 	}
 
@@ -159,10 +159,10 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 
 	private async getStatus(settingName: string): Promise<AnalyticsStatus> {
 		if (!_.has(this.analyticsStatuses, settingName)) {
-			let settingValue = await this.$userSettingsService.getSettingValue<string>(settingName);
+			const settingValue = await this.$userSettingsService.getSettingValue<string>(settingName);
 
 			if (settingValue) {
-				let isEnabled = helpers.toBoolean(settingValue);
+				const isEnabled = helpers.toBoolean(settingValue);
 				if (isEnabled) {
 					this.analyticsStatuses[settingName] = AnalyticsStatus.enabled;
 				} else {
@@ -183,7 +183,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 
 		require("../vendor/EqatecMonitor.min");
 		analyticsProjectKey = analyticsProjectKey || this.$staticConfig.ANALYTICS_API_KEY;
-		let settings = cliGlobal._eqatec.createSettings(analyticsProjectKey);
+		const settings = cliGlobal._eqatec.createSettings(analyticsProjectKey);
 		settings.useHttps = false;
 		settings.userAgent = this.getUserAgentString();
 		settings.version = this.$staticConfig.version;
@@ -223,13 +223,13 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 	}
 
 	private async reportNodeVersion(): Promise<void> {
-		let reportedVersion: string = process.version.slice(1).replace(/[.]/g, "_");
+		const reportedVersion: string = process.version.slice(1).replace(/[.]/g, "_");
 		await this.track("NodeJSVersion", reportedVersion);
 	}
 
 	private getUserAgentString(): string {
 		let userAgentString: string;
-		let osType = this.$osInfo.type();
+		const osType = this.$osInfo.type();
 		if (osType === "Windows_NT") {
 			userAgentString = "(Windows NT " + this.$osInfo.release() + ")";
 		} else if (osType === "Darwin") {
@@ -242,7 +242,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 	}
 
 	private async isNotConfirmed(settingName: string): Promise<boolean> {
-		let analyticsStatus = await this.getStatus(settingName);
+		const analyticsStatus = await this.getStatus(settingName);
 		return analyticsStatus === AnalyticsStatus.notConfirmed;
 	}
 
@@ -259,8 +259,8 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 	}
 
 	private async getJsonStatusMessage(settingName: string): Promise<string> {
-		let status = await this.getStatus(settingName);
-		let enabled = status === AnalyticsStatus.notConfirmed ? null : status === AnalyticsStatus.disabled ? false : true;
+		const status = await this.getStatus(settingName);
+		const enabled = status === AnalyticsStatus.notConfirmed ? null : status === AnalyticsStatus.disabled ? false : true;
 		return JSON.stringify({ enabled: enabled });
 	}
 
@@ -268,7 +268,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 		if (await this.$analyticsSettingsService.canDoRequest()) {
 			if (!this.isAnalyticsStatusesInitialized) {
 				this.$logger.trace("Initializing analytics statuses.");
-				let settingsNames = [this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, this.$staticConfig.ERROR_REPORT_SETTING_NAME];
+				const settingsNames = [this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, this.$staticConfig.ERROR_REPORT_SETTING_NAME];
 				for (let settingsIndex = 0; settingsIndex < settingsNames.length; ++settingsIndex) {
 					const settingName = settingsNames[settingsIndex];
 					await this.getStatus(settingName);
@@ -287,11 +287,11 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 
 	private waitForSending(): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
-			let intervalTime = 100;
+			const intervalTime = 100;
 			let remainingTime = AnalyticsServiceBase.MAX_WAIT_SENDING_INTERVAL;
 			if (this.getIsSending()) {
 				this.$logger.trace(`Waiting for analytics to send information. Will check in a ${intervalTime}ms.`);
-				let interval = setInterval(() => {
+				const interval = setInterval(() => {
 					if (!this.getIsSending() || (remainingTime <= 0)) {
 						clearInterval(interval);
 						resolve();

@@ -11,7 +11,7 @@ export class SyncBatch {
 		private done: () => Promise<void>) { }
 
 	private get filesToSync(): string[] {
-		let filteredFiles = _.remove(this.syncQueue, syncFile => this.$projectFilesManager.isFileExcluded(syncFile));
+		const filteredFiles = _.remove(this.syncQueue, syncFile => this.$projectFilesManager.isFileExcluded(syncFile));
 		this.$logger.trace("Removed files from syncQueue: ", filteredFiles);
 		return this.syncQueue;
 	}

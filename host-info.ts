@@ -34,8 +34,8 @@ export class HostInfo implements IHostInfo {
 	public dotNetVersion(): Promise<string> {
 		if (this.isWindows) {
 			return new Promise<string>((resolve, reject) => {
-				let Winreg = require("winreg");
-				let regKey = new Winreg({
+				const Winreg = require("winreg");
+				const regKey = new Winreg({
 					hive: Winreg.HKLM,
 					key: HostInfo.DOT_NET_REGISTRY_PATH
 				});

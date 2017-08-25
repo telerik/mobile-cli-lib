@@ -16,7 +16,7 @@ export class PutFileCommand implements ICommand {
 		}
 
 		appIdentifier = appIdentifier || this.$project.projectData.AppIdentifier;
-		let action = (device: Mobile.IDevice) => device.fileSystem.putFile(args[0], args[1], appIdentifier);
+		const action = (device: Mobile.IDevice) => device.fileSystem.putFile(args[0], args[1], appIdentifier);
 		await this.$devicesService.execute(action);
 	}
 }

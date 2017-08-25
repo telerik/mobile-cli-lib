@@ -24,9 +24,9 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 	public async installApplication(packageFilePath: string): Promise<void> {
 		if (this.$fs.exists(packageFilePath) && path.extname(packageFilePath) === ".zip") {
 			temp.track();
-			let dir = temp.mkdirSync("simulatorPackage");
+			const dir = temp.mkdirSync("simulatorPackage");
 			await this.$fs.unzip(packageFilePath, dir);
-			let app = _.find(this.$fs.readDirectory(dir), directory => path.extname(directory) === ".app");
+			const app = _.find(this.$fs.readDirectory(dir), directory => path.extname(directory) === ".app");
 			if (app) {
 				packageFilePath = path.join(dir, app);
 			}
@@ -40,8 +40,8 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async startApplication(appIdentifier: string): Promise<void> {
-		let launchResult = this.iosSim.startApplication(this.identifier, appIdentifier);
-		let pid = launchResult.split(":")[1].trim();
+		const launchResult = this.iosSim.startApplication(this.identifier, appIdentifier);
+		const pid = launchResult.split(":")[1].trim();
 		this.$deviceLogProvider.setApplicationPidForDevice(this.identifier, pid);
 
 		if (!this.$options.justlaunch) {
@@ -58,8 +58,8 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
-		let result: Mobile.IApplicationInfo = null,
-			plistContent = await this.getParsedPlistContent(applicationIdentifier);
+		let result: Mobile.IApplicationInfo = null;
+		const plistContent = await this.getParsedPlistContent(applicationIdentifier);
 
 		if (plistContent) {
 			result = {
@@ -73,7 +73,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async isLiveSyncSupported(appIdentifier: string): Promise<boolean> {
-		let plistContent = await this.getParsedPlistContent(appIdentifier);
+		const plistContent = await this.getParsedPlistContent(appIdentifier);
 		if (plistContent) {
 			return !!plistContent && !!plistContent.IceniumLiveSyncEnabled;
 		}
@@ -86,7 +86,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 			return null;
 		}
 
-		let applicationPath = this.iosSim.getApplicationPath(this.identifier, appIdentifier),
+		const applicationPath = this.iosSim.getApplicationPath(this.identifier, appIdentifier),
 			pathToInfoPlist = path.join(applicationPath, "Info.plist");
 
 		return this.$fs.exists(pathToInfoPlist) ? (await this.$bplistParser.parseFile(pathToInfoPlist))[0] : null;

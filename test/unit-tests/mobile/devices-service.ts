@@ -6,7 +6,7 @@ import { EventEmitter } from "events";
 import { assert, use } from "chai";
 import * as util from "util";
 
-let chaiAsPromised = require('chai-as-promised');
+const chaiAsPromised = require('chai-as-promised');
 use(chaiAsPromised);
 
 import { CommonLoggerStub, ErrorsStub } from "../stubs";
@@ -67,27 +67,27 @@ function getErrorMessage(injector: IInjector, message: string, ...args: string[]
 		..._.concat(args, injector.resolve("staticConfig").CLIENT_NAME.toLowerCase()));
 }
 
-let androidDeviceDiscovery: EventEmitter,
-	iOSDeviceDiscovery: EventEmitter,
-	iOSSimulatorDiscovery: EventEmitter,
-	androidEmulatorDevice: any = { deviceInfo: { identifier: "androidEmulatorDevice", platform: "android" }, isEmulator: true },
-	iOSSimulator = {
-		deviceInfo: {
-			identifier: "ios-simulator-device",
-			platform: "ios"
-		},
-		applicationManager: {
-			getInstalledApplications: () => Promise.resolve(["com.telerik.unitTest1", "com.telerik.unitTest2"]),
-			canStartApplication: () => true,
-			startApplication: (packageName: string, framework: string) => Promise.resolve(),
-			tryStartApplication: (packageName: string, framework: string) => Promise.resolve(),
-			reinstallApplication: (packageName: string, packageFile: string) => Promise.resolve(),
-			isApplicationInstalled: (packageName: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], packageName)),
-			isLiveSyncSupported: (appIdentifier: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], appIdentifier))
-		},
-		deploy: (packageFile: string, packageName: string) => Promise.resolve(),
-		isEmulator: true
-	};
+let androidDeviceDiscovery: EventEmitter;
+let iOSDeviceDiscovery: EventEmitter;
+let iOSSimulatorDiscovery: EventEmitter;
+const androidEmulatorDevice: any = { deviceInfo: { identifier: "androidEmulatorDevice", platform: "android" }, isEmulator: true };
+const iOSSimulator = {
+	deviceInfo: {
+		identifier: "ios-simulator-device",
+		platform: "ios"
+	},
+	applicationManager: {
+		getInstalledApplications: () => Promise.resolve(["com.telerik.unitTest1", "com.telerik.unitTest2"]),
+		canStartApplication: () => true,
+		startApplication: (packageName: string, framework: string) => Promise.resolve(),
+		tryStartApplication: (packageName: string, framework: string) => Promise.resolve(),
+		reinstallApplication: (packageName: string, packageFile: string) => Promise.resolve(),
+		isApplicationInstalled: (packageName: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], packageName)),
+		isLiveSyncSupported: (appIdentifier: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], appIdentifier))
+	},
+	deploy: (packageFile: string, packageName: string) => Promise.resolve(),
+	isEmulator: true
+};
 
 class AndroidEmulatorServices {
 	public isStartEmulatorCalled = false;
@@ -116,7 +116,7 @@ class IOSEmulatorServices {
 }
 
 function createTestInjector(): IInjector {
-	let testInjector = new Yok();
+	const testInjector = new Yok();
 	testInjector.register("logger", CommonLoggerStub);
 	testInjector.register("errors", ErrorsStub);
 	testInjector.register("iOSDeviceDiscovery", IOSDeviceDiscoveryStub);
@@ -166,9 +166,9 @@ async function throwErrorFunction(): Promise<void> {
 }
 
 const getPromisesResults = async (promises: Promise<any>[]): Promise<any[]> => {
-	let results: any = [];
+	const results: any = [];
 	for (let i = 0; i < promises.length; i++) {
-		let currentResult: any = {};
+		const currentResult: any = {};
 		try {
 			currentResult.result = await promises[i];
 		} catch (err) {
@@ -182,12 +182,12 @@ const getPromisesResults = async (promises: Promise<any>[]): Promise<any[]> => {
 };
 
 let intervalId = 1;
-let nodeJsTimer = {
+const nodeJsTimer = {
 	ref: () => { /* no implementation required */ },
 	unref: () => { return intervalId++; }
 };
 
-let originalSetInterval = setInterval;
+const originalSetInterval = setInterval;
 function mockSetInterval(testCaseCallback?: Function): void {
 	global.setInterval = (callback: (...args: any[]) => void, ms: number, ...args: any[]): NodeJS.Timer => {
 		const execution = async () => {
@@ -209,49 +209,50 @@ function resetDefaultSetInterval(): void {
 }
 
 describe("devicesService", () => {
-	let counter = 0,
-		iOSDevice = {
-			deviceInfo: {
-				identifier: "ios-device",
-				platform: "ios",
-				status: constants.CONNECTED_STATUS
-			},
-			applicationManager: {
-				getInstalledApplications: () => Promise.resolve(["com.telerik.unitTest1", "com.telerik.unitTest2"]),
-				canStartApplication: () => true,
-				startApplication: (packageName: string, framework: string) => Promise.resolve(),
-				tryStartApplication: (packageName: string, framework: string) => Promise.resolve(),
-				reinstallApplication: (packageName: string, packageFile: string) => Promise.resolve(),
-				isApplicationInstalled: (packageName: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], packageName)),
-				isLiveSyncSupported: (appIdentifier: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], appIdentifier)),
-				checkForApplicationUpdates: (): Promise<void> => Promise.resolve(),
-				getDebuggableApps: (): Promise<Mobile.IDeviceApplicationInformation[]> => Promise.resolve(null),
-				getDebuggableAppViews: (appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> => Promise.resolve(null)
-			}
+	let counter = 0;
+	const iOSDevice = {
+		deviceInfo: {
+			identifier: "ios-device",
+			platform: "ios",
+			status: constants.CONNECTED_STATUS
 		},
-		androidDevice = {
-			deviceInfo: {
-				identifier: "android-device",
-				platform: "android",
-				status: constants.CONNECTED_STATUS
-			},
-			applicationManager: {
-				getInstalledApplications: () => Promise.resolve(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"]),
-				canStartApplication: () => true,
-				startApplication: (packageName: string, framework: string) => Promise.resolve(),
-				tryStartApplication: (packageName: string, framework: string) => Promise.resolve(),
-				reinstallApplication: (packageName: string, packageFile: string) => Promise.resolve(),
-				isApplicationInstalled: (packageName: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], packageName)),
-				isLiveSyncSupported: (appIdentifier: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], appIdentifier)),
-				checkForApplicationUpdates: (): Promise<void> => Promise.resolve(),
-				getDebuggableApps: (): Promise<Mobile.IDeviceApplicationInformation[]> => Promise.resolve(null),
-				getDebuggableAppViews: (appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> => Promise.resolve(null)
-			}
+		applicationManager: {
+			getInstalledApplications: () => Promise.resolve(["com.telerik.unitTest1", "com.telerik.unitTest2"]),
+			canStartApplication: () => true,
+			startApplication: (packageName: string, framework: string) => Promise.resolve(),
+			tryStartApplication: (packageName: string, framework: string) => Promise.resolve(),
+			reinstallApplication: (packageName: string, packageFile: string) => Promise.resolve(),
+			isApplicationInstalled: (packageName: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], packageName)),
+			isLiveSyncSupported: (appIdentifier: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], appIdentifier)),
+			checkForApplicationUpdates: (): Promise<void> => Promise.resolve(),
+			getDebuggableApps: (): Promise<Mobile.IDeviceApplicationInformation[]> => Promise.resolve(null),
+			getDebuggableAppViews: (appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> => Promise.resolve(null)
+		}
+	};
+
+	const androidDevice = {
+		deviceInfo: {
+			identifier: "android-device",
+			platform: "android",
+			status: constants.CONNECTED_STATUS
 		},
-		testInjector: IInjector,
-		devicesService: Mobile.IDevicesService,
-		androidEmulatorServices: any,
-		logger: CommonLoggerStub;
+		applicationManager: {
+			getInstalledApplications: () => Promise.resolve(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"]),
+			canStartApplication: () => true,
+			startApplication: (packageName: string, framework: string) => Promise.resolve(),
+			tryStartApplication: (packageName: string, framework: string) => Promise.resolve(),
+			reinstallApplication: (packageName: string, packageFile: string) => Promise.resolve(),
+			isApplicationInstalled: (packageName: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], packageName)),
+			isLiveSyncSupported: (appIdentifier: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], appIdentifier)),
+			checkForApplicationUpdates: (): Promise<void> => Promise.resolve(),
+			getDebuggableApps: (): Promise<Mobile.IDeviceApplicationInformation[]> => Promise.resolve(null),
+			getDebuggableAppViews: (appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> => Promise.resolve(null)
+		}
+	};
+	let testInjector: IInjector;
+	let devicesService: Mobile.IDevicesService;
+	let androidEmulatorServices: any;
+	let logger: CommonLoggerStub;
 
 	beforeEach(() => {
 		testInjector = createTestInjector();
@@ -267,7 +268,7 @@ describe("devicesService", () => {
 	it("attaches to events when a new DevicesService is instantiated", () => {
 		iOSDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, iOSDevice);
 		androidDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, androidDevice);
-		let devices = devicesService.getDeviceInstances();
+		const devices = devicesService.getDeviceInstances();
 		assert.isTrue(devicesService.hasDevices, "After emitting two devices, hasDevices must be true");
 		assert.deepEqual(devices[0], iOSDevice);
 		assert.deepEqual(devices[1], androidDevice);
@@ -279,7 +280,7 @@ describe("devicesService", () => {
 		assert.isFalse(devicesService.hasDevices, "Initially devicesService hasDevices must be false.");
 		customDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, iOSDevice);
 		customDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, androidDevice);
-		let devices = devicesService.getDeviceInstances();
+		const devices = devicesService.getDeviceInstances();
 		assert.isTrue(devicesService.hasDevices, "After emitting two devices, hasDevices must be true");
 		assert.deepEqual(devices[0], iOSDevice);
 		assert.deepEqual(devices[1], androidDevice);
@@ -402,7 +403,7 @@ describe("devicesService", () => {
 			assert.deepEqual(devicesService.getDeviceInstances(), [], "Initially getDevicesInstances must return empty array.");
 			assert.deepEqual(devicesService.getDevices(), [], "Initially getDevices must return empty array.");
 
-			let tempDevice = { deviceInfo: { identifier: "temp-device" } };
+			const tempDevice = { deviceInfo: { identifier: "temp-device" } };
 			androidDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, androidDevice);
 			androidDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, tempDevice);
 			assert.deepEqual(devicesService.getDeviceInstances(), [androidDevice, tempDevice]);
@@ -421,13 +422,13 @@ describe("devicesService", () => {
 		});
 
 		it("returns true for each device on which the app is installed", async () => {
-			let deviceIdentifiers = [androidDevice.deviceInfo.identifier, iOSDevice.deviceInfo.identifier],
+			const deviceIdentifiers = [androidDevice.deviceInfo.identifier, iOSDevice.deviceInfo.identifier],
 				appId = "com.telerik.unitTest1";
-			let results = await devicesService.isAppInstalledOnDevices(deviceIdentifiers, appId, "cordova");
+			const results = await devicesService.isAppInstalledOnDevices(deviceIdentifiers, appId, "cordova");
 			assert.isTrue(results.length > 0);
 
 			for (let index = 0; index < results.length; index++) {
-				let realResult = await results[index];
+				const realResult = await results[index];
 				assert.isTrue(realResult.isInstalled);
 				assert.deepEqual(realResult.appIdentifier, appId);
 				assert.deepEqual(realResult.deviceIdentifier, deviceIdentifiers[index]);
@@ -436,21 +437,21 @@ describe("devicesService", () => {
 		});
 
 		it("returns false for each device on which the app is not installed", async () => {
-			let results = devicesService.isAppInstalledOnDevices([androidDevice.deviceInfo.identifier, iOSDevice.deviceInfo.identifier], "com.telerik.unitTest3", "cordova");
+			const results = devicesService.isAppInstalledOnDevices([androidDevice.deviceInfo.identifier, iOSDevice.deviceInfo.identifier], "com.telerik.unitTest3", "cordova");
 			assert.isTrue(results.length > 0);
 			const isInstalledOnDevices = (await Promise.all(results)).map(r => r.isInstalled);
 			assert.deepEqual(isInstalledOnDevices, [true, false]);
 		});
 
 		it("throws error when invalid identifier is passed", async () => {
-			let results = devicesService.isAppInstalledOnDevices(["invalidDeviceId", iOSDevice.deviceInfo.identifier], "com.telerik.unitTest1", "cordova");
+			const results = devicesService.isAppInstalledOnDevices(["invalidDeviceId", iOSDevice.deviceInfo.identifier], "com.telerik.unitTest1", "cordova");
 
-			let expectedErrorMessage = getErrorMessage(testInjector, "NotFoundDeviceByIdentifierErrorMessageWithIdentifier", "invalidDeviceId");
+			const expectedErrorMessage = getErrorMessage(testInjector, "NotFoundDeviceByIdentifierErrorMessageWithIdentifier", "invalidDeviceId");
 
 			await assert.isRejected(Promise.all(results), expectedErrorMessage);
 
 			_.each(await getPromisesResults(results), promiseResult => {
-				let error = promiseResult.error;
+				const error = promiseResult.error;
 				if (error) {
 					assert.isTrue(error.message.indexOf("invalidDeviceId") !== -1, "The message must contain the id of the invalid device.");
 				} else {
@@ -461,7 +462,7 @@ describe("devicesService", () => {
 	});
 
 	describe("initialize and other methods behavior after initialze work correctly", () => {
-		let tempDevice = {
+		const tempDevice = {
 			deviceInfo: {
 				identifier: "temp-device",
 				platform: "android"
@@ -475,7 +476,7 @@ describe("devicesService", () => {
 
 		describe("when initialize is called with platform and deviceId and device's platform is the same as passed one", () => {
 
-			let assertAllMethodsResults = async (deviceId: string) => {
+			const assertAllMethodsResults = async (deviceId: string) => {
 				assert.isFalse(devicesService.hasDevices, "Initially devicesService hasDevices must be false.");
 				androidDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, androidDevice);
 				await devicesService.initialize({ platform: "android", deviceId: deviceId });
@@ -511,12 +512,12 @@ describe("devicesService", () => {
 			});
 
 			it("fails when deviceId is invalid index (less than 0)", async () => {
-				let expectedErrorMessage = getErrorMessage(testInjector, "NotFoundDeviceByIndexErrorMessage", "-2");
+				const expectedErrorMessage = getErrorMessage(testInjector, "NotFoundDeviceByIndexErrorMessage", "-2");
 				await assert.isRejected(devicesService.initialize({ platform: "android", deviceId: "-1" }), expectedErrorMessage);
 			});
 
 			it("fails when deviceId is invalid index (more than currently connected devices)", async () => {
-				let expectedErrorMessage = getErrorMessage(testInjector, "NotFoundDeviceByIndexErrorMessage", "99");
+				const expectedErrorMessage = getErrorMessage(testInjector, "NotFoundDeviceByIndexErrorMessage", "99");
 				await assert.isRejected(devicesService.initialize({ platform: "android", deviceId: "100" }), expectedErrorMessage);
 			});
 
@@ -529,14 +530,14 @@ describe("devicesService", () => {
 			it("does not fail when androidDeviceDiscovery startLookingForDevices fails", async () => {
 				(<any>androidDeviceDiscovery).startLookingForDevices = (): Promise<void> => { throw new Error("my error"); };
 				iOSDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, iOSDevice);
-				let hostInfo = testInjector.resolve("hostInfo");
+				const hostInfo = testInjector.resolve("hostInfo");
 				hostInfo.isDarwin = true;
 				await devicesService.initialize({ platform: "ios", deviceId: iOSDevice.deviceInfo.identifier });
 				assert.isTrue(logger.traceOutput.indexOf("my error") !== -1);
 			});
 
 			it("does not fail when iosSimulatorDiscovery startLookingForDevices fails", async () => {
-				let hostInfo = testInjector.resolve("hostInfo");
+				const hostInfo = testInjector.resolve("hostInfo");
 				hostInfo.isDarwin = true;
 				(<any>iOSSimulatorDiscovery).startLookingForDevices = (): Promise<void> => { throw new Error("my error"); };
 				iOSDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, iOSDevice);
@@ -548,7 +549,7 @@ describe("devicesService", () => {
 		it("when initialize is called with platform and deviceId and such device cannot be found", async () => {
 			assert.isFalse(devicesService.hasDevices, "Initially devicesService hasDevices must be false.");
 
-			let expectedErrorMessage = getErrorMessage(testInjector, "NotFoundDeviceByIdentifierErrorMessageWithIdentifier", androidDevice.deviceInfo.identifier);
+			const expectedErrorMessage = getErrorMessage(testInjector, "NotFoundDeviceByIdentifierErrorMessageWithIdentifier", androidDevice.deviceInfo.identifier);
 			await assert.isRejected(devicesService.initialize({ platform: "android", deviceId: androidDevice.deviceInfo.identifier }), expectedErrorMessage);
 		});
 
@@ -568,7 +569,7 @@ describe("devicesService", () => {
 
 		describe("when only deviceIdentifier is passed", () => {
 
-			let assertAllMethodsResults = async (deviceId: string) => {
+			const assertAllMethodsResults = async (deviceId: string) => {
 				assert.isFalse(devicesService.hasDevices, "Initially devicesService hasDevices must be false.");
 				androidDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, androidDevice);
 				await devicesService.initialize({ deviceId: deviceId });
@@ -607,12 +608,12 @@ describe("devicesService", () => {
 			});
 
 			it("fails when deviceId is invalid index (less than 0)", async () => {
-				let expectedErrorMessage = getErrorMessage(testInjector, "NotFoundDeviceByIndexErrorMessage", "-2");
+				const expectedErrorMessage = getErrorMessage(testInjector, "NotFoundDeviceByIndexErrorMessage", "-2");
 				await assert.isRejected(devicesService.initialize({ deviceId: "-1" }), expectedErrorMessage);
 			});
 
 			it("fails when deviceId is invalid index (more than currently connected devices)", async () => {
-				let expectedErrorMessage = getErrorMessage(testInjector, "NotFoundDeviceByIndexErrorMessage", "99");
+				const expectedErrorMessage = getErrorMessage(testInjector, "NotFoundDeviceByIndexErrorMessage", "99");
 				await assert.isRejected(devicesService.initialize({ deviceId: "100" }), expectedErrorMessage);
 			});
 
@@ -811,9 +812,9 @@ describe("devicesService", () => {
 
 		describe("when options.emulator is true on non-Darwin OS", () => {
 			beforeEach(() => {
-				let options = testInjector.resolve("options");
+				const options = testInjector.resolve("options");
 				options.emulator = true;
-				let hostInfo = testInjector.resolve("hostInfo");
+				const hostInfo = testInjector.resolve("hostInfo");
 				hostInfo.isDarwin = false;
 			});
 
@@ -849,9 +850,9 @@ describe("devicesService", () => {
 
 		describe("does not fail on Darwin when trying to use iOS simulator", () => {
 			beforeEach(() => {
-				let options = testInjector.resolve("options");
+				const options = testInjector.resolve("options");
 				options.emulator = true;
-				let hostInfo = testInjector.resolve("hostInfo");
+				const hostInfo = testInjector.resolve("hostInfo");
 				hostInfo.isDarwin = true;
 			});
 
@@ -897,16 +898,16 @@ describe("devicesService", () => {
 
 	describe("setLogLevel", () => {
 		it("calls deviceLogProvider's setLogLevel with correct arguments", () => {
-			let deviceLogProvider = testInjector.resolve("deviceLogProvider");
-			let actualLogLevel: string = null,
-				actualDeviceIdentifier: string = null;
+			const deviceLogProvider = testInjector.resolve("deviceLogProvider");
+			let actualLogLevel: string = null;
+			let actualDeviceIdentifier: string = null;
 
 			deviceLogProvider.setLogLevel = (logLevel: string, deviceIdentifier?: string) => {
 				actualLogLevel = logLevel;
 				actualDeviceIdentifier = deviceIdentifier;
 			};
 
-			let expectedLogLevel = "expectedLogLevel",
+			const expectedLogLevel = "expectedLogLevel",
 				expectedDeviceId = "expcetedDeviceId";
 
 			devicesService.setLogLevel(expectedLogLevel, expectedDeviceId);
@@ -926,10 +927,10 @@ describe("devicesService", () => {
 		});
 
 		it("returns undefined for each device on which the app is installed", async () => {
-			let results = devicesService.deployOnDevices([androidDevice.deviceInfo.identifier, iOSDevice.deviceInfo.identifier], "path", "packageName", "cordova");
+			const results = devicesService.deployOnDevices([androidDevice.deviceInfo.identifier, iOSDevice.deviceInfo.identifier], "path", "packageName", "cordova");
 			assert.isTrue(results.length > 0);
 			_.each(await Promise.all(results), deployOnDevicesResult => {
-				let realResult = deployOnDevicesResult;
+				const realResult = deployOnDevicesResult;
 				assert.isTrue(realResult === undefined, "On success, undefined should be returned.");
 			});
 		});
@@ -940,19 +941,19 @@ describe("devicesService", () => {
 				throw new Error("Start application must not be called for iOSDevice when canStartApplication returns false.");
 			};
 
-			let results = devicesService.deployOnDevices([androidDevice.deviceInfo.identifier, iOSDevice.deviceInfo.identifier], "path", "packageName", "cordova");
+			const results = devicesService.deployOnDevices([androidDevice.deviceInfo.identifier, iOSDevice.deviceInfo.identifier], "path", "packageName", "cordova");
 			assert.isTrue(results.length > 0);
 			const deployOnDevicesResults = await Promise.all(results);
 			assert.deepEqual(deployOnDevicesResults, [undefined, undefined]);
 		});
 
 		it("throws error when invalid identifier is passed", async () => {
-			let results = devicesService.deployOnDevices(["invalidDeviceId", iOSDevice.deviceInfo.identifier], "path", "packageName", "cordova");
-			let expectedErrorMessage = getErrorMessage(testInjector, "NotFoundDeviceByIdentifierErrorMessageWithIdentifier", "invalidDeviceId");
+			const results = devicesService.deployOnDevices(["invalidDeviceId", iOSDevice.deviceInfo.identifier], "path", "packageName", "cordova");
+			const expectedErrorMessage = getErrorMessage(testInjector, "NotFoundDeviceByIdentifierErrorMessageWithIdentifier", "invalidDeviceId");
 			await assert.isRejected(Promise.all(results), expectedErrorMessage);
-			let realResults = await getPromisesResults(results);
+			const realResults = await getPromisesResults(results);
 			_.each(realResults, singlePromiseResult => {
-				let error = singlePromiseResult.error;
+				const error = singlePromiseResult.error;
 				if (error) {
 					assert.isTrue(error.message.indexOf("invalidDeviceId") !== -1, "The message must contain the id of the invalid device.");
 				} else {
@@ -974,7 +975,7 @@ describe("devicesService", () => {
 			assert.isFalse(devicesService.hasDevices, "Initially devicesService hasDevices must be false.");
 			androidDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, androidDevice);
 			iOSDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, iOSDevice);
-			let tempDeviceInstance = { deviceInfo: { identifier: "temp-device", platform: "android" } };
+			const tempDeviceInstance = { deviceInfo: { identifier: "temp-device", platform: "android" } };
 			androidDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, tempDeviceInstance);
 			assert.deepEqual(devicesService.getDevicesForPlatform("android"), [androidDevice, tempDeviceInstance]);
 			assert.deepEqual(devicesService.getDevicesForPlatform("ios"), [iOSDevice]);
@@ -985,7 +986,7 @@ describe("devicesService", () => {
 			assert.isFalse(devicesService.hasDevices, "Initially devicesService hasDevices must be false.");
 			androidDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, androidDevice);
 			iOSDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, iOSDevice);
-			let tempDeviceInstance = { deviceInfo: { identifier: "temp-device", platform: "AndroId" } };
+			const tempDeviceInstance = { deviceInfo: { identifier: "temp-device", platform: "AndroId" } };
 			androidDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, tempDeviceInstance);
 			assert.deepEqual(devicesService.getDevicesForPlatform("android"), [androidDevice, tempDeviceInstance]);
 			assert.deepEqual(devicesService.getDevicesForPlatform("ios"), [iOSDevice]);
@@ -1114,7 +1115,7 @@ describe("devicesService", () => {
 
 	describe("isCompanionAppInstalledOnAllDevices", () => {
 		let $companionAppsService: ICompanionAppsService;
-		let deviceIdentifiers = [iOSDevice.deviceInfo.identifier, androidDevice.deviceInfo.identifier];
+		const deviceIdentifiers = [iOSDevice.deviceInfo.identifier, androidDevice.deviceInfo.identifier];
 
 		beforeEach(() => {
 			$companionAppsService = testInjector.resolve("companionAppsService");
@@ -1126,40 +1127,40 @@ describe("devicesService", () => {
 		});
 
 		it("should return correct result for all of the devices passed as argument.", async () => {
-			let expectedResult = [true, true];
+			const expectedResult = [true, true];
 			mockIsAppInstalled([iOSDevice, androidDevice], expectedResult);
-			let isAppInstalledOnDevices = await Promise.all(devicesService.isCompanionAppInstalledOnDevices(deviceIdentifiers, constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova));
-			let result = _.map(isAppInstalledOnDevices, (appInstalledInfo: IAppInstalledInfo) => appInstalledInfo.isInstalled);
+			const isAppInstalledOnDevices = await Promise.all(devicesService.isCompanionAppInstalledOnDevices(deviceIdentifiers, constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova));
+			const result = _.map(isAppInstalledOnDevices, (appInstalledInfo: IAppInstalledInfo) => appInstalledInfo.isInstalled);
 
 			assert.deepEqual(result.length, deviceIdentifiers.length);
 		});
 
 		it("should return correct result when all of the devices have the companion app installed.", async () => {
-			let expectedResult = [true, true];
+			const expectedResult = [true, true];
 			mockIsAppInstalled([iOSDevice, androidDevice], expectedResult);
 
-			let isAppInstalledOnDevices = await Promise.all(devicesService.isCompanionAppInstalledOnDevices(deviceIdentifiers, constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova));
-			let result = _.map(isAppInstalledOnDevices, (appInstalledInfo: IAppInstalledInfo) => appInstalledInfo.isInstalled);
+			const isAppInstalledOnDevices = await Promise.all(devicesService.isCompanionAppInstalledOnDevices(deviceIdentifiers, constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova));
+			const result = _.map(isAppInstalledOnDevices, (appInstalledInfo: IAppInstalledInfo) => appInstalledInfo.isInstalled);
 
 			assert.deepEqual(result, expectedResult);
 		});
 
 		it("should return correct result when some of the devices have the companion app installed.", async () => {
-			let expectedResult = [true, false];
+			const expectedResult = [true, false];
 			mockIsAppInstalled([iOSDevice, androidDevice], expectedResult);
 
-			let isAppInstalledOnDevices = await Promise.all(devicesService.isCompanionAppInstalledOnDevices(deviceIdentifiers, constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova));
-			let result = _.map(isAppInstalledOnDevices, (appInstalledInfo: IAppInstalledInfo) => appInstalledInfo.isInstalled);
+			const isAppInstalledOnDevices = await Promise.all(devicesService.isCompanionAppInstalledOnDevices(deviceIdentifiers, constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova));
+			const result = _.map(isAppInstalledOnDevices, (appInstalledInfo: IAppInstalledInfo) => appInstalledInfo.isInstalled);
 
 			assert.deepEqual(result, expectedResult);
 		});
 
 		it("should return correct result when none of the devices have the companion app installed.", async () => {
-			let expectedResult = [false, false];
+			const expectedResult = [false, false];
 			mockIsAppInstalled([iOSDevice, androidDevice], expectedResult);
 
-			let isAppInstalledOnDevices = await Promise.all(devicesService.isCompanionAppInstalledOnDevices(deviceIdentifiers, constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova));
-			let result = _.map(isAppInstalledOnDevices, (appInstalledInfo: IAppInstalledInfo) => appInstalledInfo.isInstalled);
+			const isAppInstalledOnDevices = await Promise.all(devicesService.isCompanionAppInstalledOnDevices(deviceIdentifiers, constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova));
+			const result = _.map(isAppInstalledOnDevices, (appInstalledInfo: IAppInstalledInfo) => appInstalledInfo.isInstalled);
 
 			assert.deepEqual(result, expectedResult);
 		});
@@ -1368,7 +1369,7 @@ describe("devicesService", () => {
 				iOSDevice.applicationManager.checkForApplicationUpdates = throwErrorFunction;
 				androidDevice.applicationManager.checkForApplicationUpdates = throwErrorFunction;
 
-				let callback = () => {
+				const callback = () => {
 					devicesService.startDeviceDetectionInterval.call(devicesService);
 				};
 
@@ -1457,13 +1458,13 @@ describe("devicesService", () => {
 	});
 
 	it("should call mapAbstractToTcpPort of android process service with the same parameters.", async () => {
-		let expectedDeviceIdentifier = "123456789";
-		let expectedAppIdentifier = "com.telerik.myapp";
-		let expectedFramework = constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova;
+		const expectedDeviceIdentifier = "123456789";
+		const expectedAppIdentifier = "com.telerik.myapp";
+		const expectedFramework = constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova;
 		let actualDeviceIdentifier: string;
 		let actualAppIdentifier: string;
 		let actualFramework: string;
-		let $androidProcessService: Mobile.IAndroidProcessService = testInjector.resolve("androidProcessService");
+		const $androidProcessService: Mobile.IAndroidProcessService = testInjector.resolve("androidProcessService");
 		$androidProcessService.mapAbstractToTcpPort = async (deviceIdentifier: string, appIdentifier: string, framework: string): Promise<string> => {
 			actualDeviceIdentifier = deviceIdentifier;
 			actualAppIdentifier = appIdentifier;
@@ -1479,13 +1480,13 @@ describe("devicesService", () => {
 	});
 
 	it("should get debuggable apps correctly for multiple devices.", async () => {
-		let $iOSDeviceDiscovery: Mobile.IDeviceDiscovery = testInjector.resolve("iOSDeviceDiscovery");
-		let $androidDeviceDiscovery: Mobile.IAndroidDeviceDiscovery = testInjector.resolve("androidDeviceDiscovery");
+		const $iOSDeviceDiscovery: Mobile.IDeviceDiscovery = testInjector.resolve("iOSDeviceDiscovery");
+		const $androidDeviceDiscovery: Mobile.IAndroidDeviceDiscovery = testInjector.resolve("androidDeviceDiscovery");
 
 		$androidDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, androidDevice);
 		$iOSDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, iOSDevice);
 
-		let androidDebuggableApps = [{
+		const androidDebuggableApps = [{
 			appIdentifier: "com.telerik.myapp",
 			deviceIdentifier: androidDevice.deviceInfo.identifier,
 			framework: constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova
@@ -1495,7 +1496,7 @@ describe("devicesService", () => {
 			framework: constants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript
 		}];
 
-		let iosDebuggableApps = [{
+		const iosDebuggableApps = [{
 			appIdentifier: "com.telerik.myapp2",
 			deviceIdentifier: iOSDevice.deviceInfo.identifier,
 			framework: constants.TARGET_FRAMEWORK_IDENTIFIERS.Cordova
@@ -1522,7 +1523,7 @@ describe("devicesService", () => {
 
 	describe("getDebuggableViews", () => {
 		let $androidDeviceDiscovery: Mobile.IAndroidDeviceDiscovery;
-		let debuggableViews: Mobile.IDebugWebViewInfo[] = [{
+		const debuggableViews: Mobile.IDebugWebViewInfo[] = [{
 			description: "descrition",
 			webSocketDebuggerUrl: "debugurl",
 			url: "url",
@@ -1548,24 +1549,24 @@ describe("devicesService", () => {
 
 		it("should get the correct debuggable views.", async () => {
 			androidDevice.applicationManager.getDebuggableAppViews = async (appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> => {
-				let result: any = {};
+				const result: any = {};
 				result[appIdentifiers[0]] = debuggableViews;
 				return result;
 			};
 
-			let actualDebuggableViews = await devicesService.getDebuggableViews(androidDevice.deviceInfo.identifier, "com.telerik.myapp");
+			const actualDebuggableViews = await devicesService.getDebuggableViews(androidDevice.deviceInfo.identifier, "com.telerik.myapp");
 
 			assert.deepEqual(actualDebuggableViews, debuggableViews);
 		});
 
 		it("should return undefined if debuggable views are found for otheer app but not for the specified.", async () => {
 			androidDevice.applicationManager.getDebuggableAppViews = async (appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> => {
-				let result: any = {};
+				const result: any = {};
 				result["com.telerik.otherApp"] = debuggableViews;
 				return result;
 			};
 
-			let actualDebuggableViews = await devicesService.getDebuggableViews(androidDevice.deviceInfo.identifier, "com.telerik.myapp");
+			const actualDebuggableViews = await devicesService.getDebuggableViews(androidDevice.deviceInfo.identifier, "com.telerik.myapp");
 
 			assert.deepEqual(actualDebuggableViews, undefined);
 		});

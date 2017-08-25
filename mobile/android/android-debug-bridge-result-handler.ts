@@ -233,7 +233,7 @@ export class AndroidDebugBridgeResultHandler implements Mobile.IAndroidDebugBrid
 		private $errors: IErrors) { }
 
 	public checkForErrors(adbResult: any): Mobile.IAndroidDebugBridgeError[] {
-		let errors: Mobile.IAndroidDebugBridgeError[] = [];
+		const errors: Mobile.IAndroidDebugBridgeError[] = [];
 
 		if (adbResult) {
 			if (_.isArray(adbResult)) {
@@ -260,7 +260,7 @@ export class AndroidDebugBridgeResultHandler implements Mobile.IAndroidDebugBrid
 			this.$logger.trace(`Error name: ${error.name} result code: ${error.resultCode}`);
 		});
 
-		let errorMessages = _(errors).map((error: Mobile.IAndroidDebugBridgeError) => error.description)
+		const errorMessages = _(errors).map((error: Mobile.IAndroidDebugBridgeError) => error.description)
 			.join(EOL)
 			.toString();
 

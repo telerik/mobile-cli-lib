@@ -6,7 +6,7 @@ import * as path from "path";
 let executionStopped = false;
 
 function createTestInjector(config: { xcodeSelectStdout: string, isDarwin: boolean, xcodeVersionOutput?: string }): IInjector {
-	let testInjector = new Yok();
+	const testInjector = new Yok();
 	testInjector.register("childProcess", {
 		spawnFromEvent: (command: string, args: string[], event: string): Promise<any> => Promise.resolve({
 			stdout: config.xcodeSelectStdout
@@ -34,9 +34,9 @@ function createTestInjector(config: { xcodeSelectStdout: string, isDarwin: boole
 	return testInjector;
 }
 describe("xcode-select-service", () => {
-	let injector: IInjector,
-		service: IXcodeSelectService,
-		defaultXcodeSelectStdout = "/Applications/Xcode.app/Contents/Developer/";
+	let injector: IInjector;
+	let service: IXcodeSelectService;
+	const defaultXcodeSelectStdout = "/Applications/Xcode.app/Contents/Developer/";
 
 	beforeEach(() => {
 		executionStopped = false;
@@ -60,7 +60,7 @@ describe("xcode-select-service", () => {
 		injector = createTestInjector({ xcodeSelectStdout: null, isDarwin: true, xcodeVersionOutput: "Xcode 7.3\nBuild version 7D175" });
 		service = injector.resolve("$xcodeSelectService");
 
-		let xcodeVersion = await service.getXcodeVersion();
+		const xcodeVersion = await service.getXcodeVersion();
 
 		assert.strictEqual(xcodeVersion.major, "7", "xcodeSelectService should get correct Xcode version");
 		assert.strictEqual(xcodeVersion.minor, "3", "xcodeSelectService should get correct Xcode version");
@@ -75,7 +75,7 @@ describe("xcode-select-service", () => {
 
 	it("gets correct path to Contents directory on Mac OS X", async () => {
 		// This path is constructed with path.join so that the tests are OS-agnostic
-		let expected = path.join("/Applications", "Xcode.app", "Contents");
+		const expected = path.join("/Applications", "Xcode.app", "Contents");
 		injector = createTestInjector({ xcodeSelectStdout: defaultXcodeSelectStdout, isDarwin: true });
 		service = injector.resolve("$xcodeSelectService");
 

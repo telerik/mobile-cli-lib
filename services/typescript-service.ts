@@ -39,12 +39,12 @@ export class TypeScriptService implements ITypeScriptService {
 	@exported("typeScriptService")
 	public async transpile(projectDir: string, typeScriptFiles?: string[], definitionFiles?: string[], options?: ITypeScriptTranspileOptions): Promise<void> {
 		options = options || {};
-		let compilerOptions = this.getCompilerOptions(projectDir, options);
-		let typeScriptCompilerSettings = await this.getTypeScriptCompilerSettings({ useLocalTypeScriptCompiler: options.useLocalTypeScriptCompiler }, projectDir);
+		const compilerOptions = this.getCompilerOptions(projectDir, options);
+		const typeScriptCompilerSettings = await this.getTypeScriptCompilerSettings({ useLocalTypeScriptCompiler: options.useLocalTypeScriptCompiler }, projectDir);
 		this.noEmitOnError = compilerOptions.noEmitOnError;
 		this.typeScriptFiles = typeScriptFiles || [];
 		this.definitionFiles = definitionFiles || [];
-		let runTranspilationOptions: IRunTranspilationOptions = { compilerOptions };
+		const runTranspilationOptions: IRunTranspilationOptions = { compilerOptions };
 
 		if (this.typeScriptFiles.length > 0) {
 			let typeScriptDefinitionsFiles: string[] = [];
@@ -54,7 +54,7 @@ export class TypeScriptService implements ITypeScriptService {
 
 			typeScriptDefinitionsFiles = typeScriptDefinitionsFiles.concat(this.getTypeScriptFilesData(projectDir).definitionFiles);
 
-			let filesToTranspile = this.typeScriptFiles.concat(typeScriptDefinitionsFiles);
+			const filesToTranspile = this.typeScriptFiles.concat(typeScriptDefinitionsFiles);
 
 			// Log some messages
 			this.$logger.out("Compiling...".yellow);
@@ -72,16 +72,16 @@ export class TypeScriptService implements ITypeScriptService {
 
 	public getTypeScriptFilesData(projectDir: string): ITypeScriptFiles {
 		// Skip root's node_modules
-		let rootNodeModules = path.join(projectDir, NODE_MODULES_DIR_NAME);
-		let projectFiles = this.$fs.enumerateFilesInDirectorySync(projectDir,
+		const rootNodeModules = path.join(projectDir, NODE_MODULES_DIR_NAME);
+		const projectFiles = this.$fs.enumerateFilesInDirectorySync(projectDir,
 			(fileName: string, fstat: IFsStats) => fileName !== rootNodeModules);
-		let typeScriptFiles = _.filter(projectFiles, this.isTypeScriptFile);
-		let definitionFiles = _.filter(typeScriptFiles, file => _.endsWith(file, FileExtensions.TYPESCRIPT_DEFINITION_FILE));
+		const typeScriptFiles = _.filter(projectFiles, this.isTypeScriptFile);
+		const definitionFiles = _.filter(typeScriptFiles, file => _.endsWith(file, FileExtensions.TYPESCRIPT_DEFINITION_FILE));
 		return { definitionFiles: definitionFiles, typeScriptFiles: _.difference(typeScriptFiles, definitionFiles) };
 	}
 
 	public isTypeScriptProject(projectDir: string): boolean {
-		let typeScriptFilesData = this.getTypeScriptFilesData(projectDir);
+		const typeScriptFilesData = this.getTypeScriptFilesData(projectDir);
 
 		return !!typeScriptFilesData.typeScriptFiles.length;
 	}
@@ -100,19 +100,19 @@ export class TypeScriptService implements ITypeScriptService {
 
 	private getCompilerOptions(projectDir: string, options: ITypeScriptTranspileOptions): ITypeScriptCompilerOptions {
 		let tsConfigFile: ITypeScriptConfig;
-		let pathToConfigJsonFile = this.getPathToTsConfigFile(projectDir);
+		const pathToConfigJsonFile = this.getPathToTsConfigFile(projectDir);
 
 		if (this.hasTsConfigFile(projectDir)) {
 			tsConfigFile = this.$fs.readJson(pathToConfigJsonFile);
 		}
 
 		tsConfigFile = tsConfigFile || { compilerOptions: {} };
-		let compilerOptions = options.compilerOptions || {};
-		let defaultOptions = options.defaultCompilerOptions || {};
+		const compilerOptions = options.compilerOptions || {};
+		const defaultOptions = options.defaultCompilerOptions || {};
 
-		let compilerOptionsKeys = _.union(_.keys(compilerOptions), _.keys(tsConfigFile.compilerOptions), _.keys(defaultOptions));
+		const compilerOptionsKeys = _.union(_.keys(compilerOptions), _.keys(tsConfigFile.compilerOptions), _.keys(defaultOptions));
 
-		let result: ITypeScriptCompilerOptions = {};
+		const result: ITypeScriptCompilerOptions = {};
 		_.each(compilerOptionsKeys, (key: string) => {
 			result[key] = this.getCompilerOptionByKey(key, compilerOptions, tsConfigFile.compilerOptions, defaultOptions);
 		});
@@ -136,8 +136,8 @@ export class TypeScriptService implements ITypeScriptService {
 	}
 
 	private async getTypeScriptCompilerSettings(options: { useLocalTypeScriptCompiler: boolean }, projectDir: string): Promise<ITypeScriptCompilerSettings> {
-		let typeScriptInNodeModulesDir = path.join(NODE_MODULES_DIR_NAME, TypeScriptService.TYPESCRIPT_MODULE_NAME);
-		let typeScriptInProjectsNodeModulesDir = path.join(projectDir, typeScriptInNodeModulesDir);
+		const typeScriptInNodeModulesDir = path.join(NODE_MODULES_DIR_NAME, TypeScriptService.TYPESCRIPT_MODULE_NAME);
+		const typeScriptInProjectsNodeModulesDir = path.join(projectDir, typeScriptInNodeModulesDir);
 		let typeScriptCompilerVersion: string;
 		if (this.$fs.exists(typeScriptInProjectsNodeModulesDir)) {
 			typeScriptCompilerVersion = this.$fs.readJson(path.join(typeScriptInProjectsNodeModulesDir, this.$projectConstants.PACKAGE_JSON_NAME)).version;
@@ -150,12 +150,12 @@ export class TypeScriptService implements ITypeScriptService {
 
 		if (!this.typeScriptModuleFilePath) {
 			if (options.useLocalTypeScriptCompiler) {
-				let typeScriptJsFilePath = require.resolve(TypeScriptService.TYPESCRIPT_MODULE_NAME);
+				const typeScriptJsFilePath = require.resolve(TypeScriptService.TYPESCRIPT_MODULE_NAME);
 
 				this.typeScriptModuleFilePath = typeScriptJsFilePath.substring(0, typeScriptJsFilePath.indexOf(typeScriptInNodeModulesDir) + typeScriptInNodeModulesDir.length);
 			} else {
-				let typeScriptModuleInstallationDir = this.createTempDirectoryForTsc();
-				let pluginToInstall: INpmDependency = {
+				const typeScriptModuleInstallationDir = this.createTempDirectoryForTsc();
+				const pluginToInstall: INpmDependency = {
 					name: TypeScriptService.TYPESCRIPT_MODULE_NAME,
 					version: TypeScriptService.DEFAULT_TSC_VERSION,
 					installTypes: false
@@ -166,7 +166,7 @@ export class TypeScriptService implements ITypeScriptService {
 			}
 		}
 
-		let typeScriptCompilerPath = path.join(this.typeScriptModuleFilePath, "lib", "tsc");
+		const typeScriptCompilerPath = path.join(this.typeScriptModuleFilePath, "lib", "tsc");
 		typeScriptCompilerVersion = typeScriptCompilerVersion || this.$fs.readJson(path.join(this.typeScriptModuleFilePath, this.$projectConstants.PACKAGE_JSON_NAME)).version;
 
 		return { pathToCompiler: typeScriptCompilerPath, version: typeScriptCompilerVersion };
@@ -174,7 +174,7 @@ export class TypeScriptService implements ITypeScriptService {
 
 	private async runTranspilation(projectDir: string, typeScriptCompilerPath: string, options?: IRunTranspilationOptions): Promise<void> {
 		options = options || {};
-		let startTime = new Date().getTime();
+		const startTime = new Date().getTime();
 		let params = _([])
 			.concat(typeScriptCompilerPath)
 			.concat(options.filesToTranspile || [])
@@ -184,15 +184,15 @@ export class TypeScriptService implements ITypeScriptService {
 		// HACK: if we're using the project's own typescript module, do not pass any additional arguments
 		params = ~typeScriptCompilerPath.indexOf(projectDir) ? [typeScriptCompilerPath] : params;
 
-		let output = await this.$childProcess.spawnFromEvent(process.argv[0], params, "close", { cwd: projectDir, stdio: "inherit" }, { throwError: false });
+		const output = await this.$childProcess.spawnFromEvent(process.argv[0], params, "close", { cwd: projectDir, stdio: "inherit" }, { throwError: false });
 
 		// https://github.com/Microsoft/TypeScript/blob/8947757d096338532f1844d55788df87fb5a39ed/src/compiler/types.ts#L605
 		if (output.exitCode === 1 || output.exitCode === 5) {
 			this.$errors.failWithoutHelp(`TypeScript compiler failed with exit code ${output.exitCode}.`);
 		}
 
-		let endTime = new Date().getTime();
-		let time = (endTime - startTime) / 1000;
+		const endTime = new Date().getTime();
+		const time = (endTime - startTime) / 1000;
 		this.$logger.out(`${os.EOL}Success: ${time.toFixed(2)}s${os.EOL}.`.green);
 
 		this.startWatchProcess(params, projectDir);
@@ -211,7 +211,7 @@ export class TypeScriptService implements ITypeScriptService {
 		return _(options)
 			.keys()
 			.map((option: string) => {
-				let value: any = options[option];
+				const value: any = options[option];
 
 				if (typeof (value) === "string") {
 					return [`--${option}`, value];
@@ -233,17 +233,17 @@ export class TypeScriptService implements ITypeScriptService {
 			return [];
 		}
 
-		let defaultDefinitionsFiles = this.$fs.readDirectory(defaultTypeScriptDefinitionsFilesPath);
+		const defaultDefinitionsFiles = this.$fs.readDirectory(defaultTypeScriptDefinitionsFilesPath);
 
 		// Exclude definition files from default path, which are already part of the project (check only the name of the file)
-		let remainingDefaultDefinitionFiles = _.filter(defaultDefinitionsFiles, defFile => !_.some(this.definitionFiles, f => path.basename(f) === defFile));
+		const remainingDefaultDefinitionFiles = _.filter(defaultDefinitionsFiles, defFile => !_.some(this.definitionFiles, f => path.basename(f) === defFile));
 		return _.map(remainingDefaultDefinitionFiles, (definitionFilePath: string) => {
 			return path.join(defaultTypeScriptDefinitionsFilesPath, definitionFilePath);
 		}).concat(this.definitionFiles);
 	}
 
 	private createTempDirectoryForTsc(): string {
-		let tempDir = temp.mkdirSync(`typescript-compiler-${TypeScriptService.DEFAULT_TSC_VERSION}`);
+		const tempDir = temp.mkdirSync(`typescript-compiler-${TypeScriptService.DEFAULT_TSC_VERSION}`);
 		this.$fs.writeJson(path.join(tempDir, this.$projectConstants.PACKAGE_JSON_NAME), { name: "tsc-container", version: "1.0.0" });
 		return tempDir;
 	}

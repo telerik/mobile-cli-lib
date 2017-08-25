@@ -1,4 +1,4 @@
-let Registry = require("winreg");
+const Registry = require("winreg");
 
 export class WinReg implements IWinReg {
 	public registryKeys: IHiveIds = {
@@ -12,7 +12,7 @@ export class WinReg implements IWinReg {
 	public async getRegistryValue(valueName: string, hive?: IHiveId, key?: string, host?: string): Promise<IWinRegResult> {
 		return new Promise<IWinRegResult>((resolve, reject) => {
 			try {
-				let regKey = new Registry({
+				const regKey = new Registry({
 					hive: (hive && hive.registry) ? hive.registry : null,
 					key: key,
 					host: host

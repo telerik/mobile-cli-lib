@@ -2,7 +2,7 @@ export class AnalyticsCommandParameter implements ICommandParameter {
 	constructor(private $errors: IErrors) { }
 	mandatory = false;
 	async validate(validationValue: string): Promise<boolean> {
-		let val = validationValue || "";
+		const val = validationValue || "";
 		switch (val.toLowerCase()) {
 			case "enable":
 			case "disable":
@@ -27,7 +27,7 @@ class AnalyticsCommand implements ICommand {
 	public disableAnalytics = true;
 
 	public async execute(args: string[]): Promise<void> {
-		let arg = args[0] || "";
+		const arg = args[0] || "";
 		switch (arg.toLowerCase()) {
 			case "enable":
 				await this.$analyticsService.setStatus(this.settingName, true);

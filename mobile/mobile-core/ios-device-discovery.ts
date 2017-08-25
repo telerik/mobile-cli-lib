@@ -38,7 +38,7 @@ export class IOSDeviceDiscovery extends DeviceDiscovery {
 	}
 
 	private createAndAddDevice(deviceActionInfo: IOSDeviceLib.IDeviceActionInfo): void {
-		let device = this.$injector.resolve(IOSDevice, { deviceActionInfo: deviceActionInfo });
+		const device = this.$injector.resolve(IOSDevice, { deviceActionInfo: deviceActionInfo });
 		this.addDevice(device);
 	}
 }

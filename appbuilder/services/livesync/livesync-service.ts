@@ -29,13 +29,13 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 	}
 
 	private async liveSyncOnDevice(deviceDescriptor: IDeviceLiveSyncInfo, filePaths: string[], liveSyncOptions?: ILiveSyncDeletionOptions): Promise<IDeviceLiveSyncResult> {
-		let isForDeletedFiles = liveSyncOptions && liveSyncOptions.isForDeletedFiles;
+		const isForDeletedFiles = liveSyncOptions && liveSyncOptions.isForDeletedFiles;
 
-		let result: IDeviceLiveSyncResult = {
+		const result: IDeviceLiveSyncResult = {
 			deviceIdentifier: deviceDescriptor.deviceIdentifier
 		};
 
-		let device = _.find(this.$devicesService.getDeviceInstances(), d => d.deviceInfo.identifier === deviceDescriptor.deviceIdentifier);
+		const device = _.find(this.$devicesService.getDeviceInstances(), d => d.deviceInfo.identifier === deviceDescriptor.deviceIdentifier);
 		if (!device) {
 			result.liveSyncToApp = result.liveSyncToCompanion = {
 				isResolved: false,
@@ -55,7 +55,7 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 		}
 
 		if (!isForDeletedFiles && filePaths && filePaths.length) {
-			let missingFiles = filePaths.filter(filePath => !this.$fs.exists(filePath));
+			const missingFiles = filePaths.filter(filePath => !this.$fs.exists(filePath));
 			if (missingFiles && missingFiles.length) {
 				result.liveSyncToApp = result.liveSyncToCompanion = {
 					isResolved: false,
@@ -66,7 +66,7 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 			}
 		}
 
-		let appIdentifier = await this.$project.getAppIdentifierForPlatform(this.$devicesService.platform),
+		const appIdentifier = await this.$project.getAppIdentifierForPlatform(this.$devicesService.platform),
 			canExecute = (d: Mobile.IDevice) => d.deviceInfo.identifier === device.deviceInfo.identifier,
 			livesyncData: ILiveSyncData = {
 				platform: device.deviceInfo.platform,
@@ -76,7 +76,7 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 				excludedProjectDirsAndFiles: this.excludedProjectDirsAndFiles,
 			};
 
-		let canExecuteAction = await this.$liveSyncServiceBase.getCanExecuteAction(device.deviceInfo.platform, appIdentifier, canExecute);
+		const canExecuteAction = await this.$liveSyncServiceBase.getCanExecuteAction(device.deviceInfo.platform, appIdentifier, canExecute);
 
 		if (deviceDescriptor.syncToApp) {
 			result.liveSyncToApp = await this.liveSyncCore(livesyncData, device, appIdentifier, canExecuteAction, { isForCompanionApp: false, isForDeletedFiles: isForDeletedFiles }, filePaths);
@@ -90,7 +90,7 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 	}
 
 	private async liveSyncCore(livesyncData: ILiveSyncData, device: Mobile.IDevice, appIdentifier: string, canExecuteAction: (dev: Mobile.IDevice) => boolean, liveSyncOptions: ILiveSyncOptions, filePaths: string[]): Promise<ILiveSyncOperationResult> {
-		let liveSyncOperationResult: ILiveSyncOperationResult = {
+		const liveSyncOperationResult: ILiveSyncOperationResult = {
 			isResolved: false
 		};
 
@@ -101,8 +101,8 @@ export class ProtonLiveSyncService implements IProtonLiveSyncService {
 
 		if (await device.applicationManager.isApplicationInstalled(appIdentifier)) {
 
-			let deletedFilesAction: any = liveSyncOptions && liveSyncOptions.isForDeletedFiles ? this.$liveSyncServiceBase.getSyncRemovedFilesAction(livesyncData) : null;
-			let action: any = this.$liveSyncServiceBase.getSyncAction(livesyncData, filePaths, deletedFilesAction, liveSyncOptions);
+			const deletedFilesAction: any = liveSyncOptions && liveSyncOptions.isForDeletedFiles ? this.$liveSyncServiceBase.getSyncRemovedFilesAction(livesyncData) : null;
+			const action: any = this.$liveSyncServiceBase.getSyncAction(livesyncData, filePaths, deletedFilesAction, liveSyncOptions);
 			try {
 				await this.$devicesService.execute(action, canExecuteAction);
 				liveSyncOperationResult.isResolved = true;

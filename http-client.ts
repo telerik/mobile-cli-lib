@@ -25,10 +25,10 @@ export class HttpClient implements Server.IHttpClient {
 			};
 		}
 
-		let unmodifiedOptions = _.clone(options);
+		const unmodifiedOptions = _.clone(options);
 
 		if (options.url) {
-			let urlParts = url.parse(options.url);
+			const urlParts = url.parse(options.url);
 			if (urlParts.protocol) {
 				options.proto = urlParts.protocol.slice(0, -1);
 			}
@@ -37,8 +37,8 @@ export class HttpClient implements Server.IHttpClient {
 			options.path = urlParts.path;
 		}
 
-		let requestProto = options.proto || "http";
-		let body = options.body;
+		const requestProto = options.proto || "http";
+		const body = options.body;
 		delete options.body;
 		let pipeTo = options.pipeTo;
 		delete options.pipeTo;
@@ -46,7 +46,7 @@ export class HttpClient implements Server.IHttpClient {
 		const proxyCache = this.$proxyService.getCache();
 
 		options.headers = options.headers || {};
-		let headers = options.headers;
+		const headers = options.headers;
 
 		await this.useProxySettings(proxySettings, proxyCache, options, headers, requestProto);
 
@@ -73,10 +73,10 @@ export class HttpClient implements Server.IHttpClient {
 			headers["Accept-Encoding"] = "gzip,deflate";
 		}
 
-		let result = new Promise<Server.IResponse>((resolve, reject) => {
+		const result = new Promise<Server.IResponse>((resolve, reject) => {
 			let timerId: number;
 
-			let promiseActions: IPromiseActions<Server.IResponse> = {
+			const promiseActions: IPromiseActions<Server.IResponse> = {
 				resolve,
 				reject,
 				isResolved: () => false
@@ -106,12 +106,12 @@ export class HttpClient implements Server.IHttpClient {
 					// in case there is a better way to obtain status code in future version do not hesitate to remove this code
 					const errorMessageMatch = err.message.match(HttpClient.STATUS_CODE_REGEX);
 					const errorMessageStatusCode = errorMessageMatch && errorMessageMatch[1] && +errorMessageMatch[1];
-					let errorMessage = this.getErrorMessage(errorMessageStatusCode, null);
+					const errorMessage = this.getErrorMessage(errorMessageStatusCode, null);
 					err.message = errorMessage || err.message;
 					this.setResponseResult(promiseActions, timerId, { err });
 				})
 				.on("response", (response: Server.IRequestResponseData) => {
-					let successful = helpers.isRequestSuccessful(response);
+					const successful = helpers.isRequestSuccessful(response);
 					if (!successful) {
 						pipeTo = undefined;
 					}
@@ -136,7 +136,7 @@ export class HttpClient implements Server.IHttpClient {
 
 						responseStream.pipe(pipeTo);
 					} else {
-						let data: string[] = [];
+						const data: string[] = [];
 
 						responseStream.on("data", (chunk: string) => {
 							data.push(chunk);
@@ -150,7 +150,7 @@ export class HttpClient implements Server.IHttpClient {
 								this.setResponseResult(promiseActions, timerId, { body: responseBody, response });
 							} else {
 								const errorMessage = this.getErrorMessage(response.statusCode, responseBody);
-								let err: any = new Error(errorMessage);
+								const err: any = new Error(errorMessage);
 								err.response = response;
 								err.body = responseBody;
 								this.setResponseResult(promiseActions, timerId, { err });
@@ -169,7 +169,7 @@ export class HttpClient implements Server.IHttpClient {
 			}
 		});
 
-		let response = await result;
+		const response = await result;
 
 		if (helpers.isResponseRedirect(response.response)) {
 			if (response.response.statusCode === HttpStatusCodes.SEE_OTHER) {
@@ -196,7 +196,7 @@ export class HttpClient implements Server.IHttpClient {
 				return result.reject(resultData.err);
 			}
 
-			let finalResult: any = resultData;
+			const finalResult: any = resultData;
 			finalResult.headers = resultData.response.headers;
 
 			result.resolve(finalResult);
@@ -205,17 +205,17 @@ export class HttpClient implements Server.IHttpClient {
 
 	private trackDownloadProgress(pipeTo: NodeJS.WritableStream): NodeJS.ReadableStream {
 		// \r for carriage return doesn't work on windows in node for some reason so we have to use it's hex representation \x1B[0G
-		let lastMessageSize = 0,
-			carriageReturn = "\x1B[0G",
-			timeElapsed = 0;
+		let lastMessageSize = 0;
+		const carriageReturn = "\x1B[0G";
+		let timeElapsed = 0;
 
-		let progressStream = progress({ time: 1000 }, (progress: any) => {
+		const progressStream = progress({ time: 1000 }, (progress: any) => {
 			timeElapsed = progress.runtime;
 
 			if (timeElapsed >= 1) {
 				this.$logger.write("%s%s", carriageReturn, Array(lastMessageSize + 1).join(" "));
 
-				let message = util.format("%sDownload progress ... %s | %s | %s/s",
+				const message = util.format("%sDownload progress ... %s | %s | %s/s",
 					carriageReturn,
 					Math.floor(progress.percentage) + "%",
 					filesize(progress.transferred),
@@ -241,13 +241,13 @@ export class HttpClient implements Server.IHttpClient {
 			const clientNameLowerCase = this.$staticConfig.CLIENT_NAME.toLowerCase();
 			return `Your proxy requires authentication. You can run ${EOL}\t${clientNameLowerCase} proxy set <url> <username> <password>.${EOL}In order to supply ${clientNameLowerCase} with the credentials needed.`;
 		} else if (statusCode === HttpStatusCodes.PAYMENT_REQUIRED) {
-			let subscriptionUrl = util.format("%s://%s/appbuilder/account/subscription", this.$config.AB_SERVER_PROTO, this.$config.AB_SERVER);
+			const subscriptionUrl = util.format("%s://%s/appbuilder/account/subscription", this.$config.AB_SERVER_PROTO, this.$config.AB_SERVER);
 			return util.format("Your subscription has expired. Go to %s to manage your subscription. Note: After you renew your subscription, " +
 				"log out and log back in for the changes to take effect.", subscriptionUrl);
 		} else {
 			this.$logger.trace("Request was unsuccessful. Server returned: ", body);
 			try {
-				let err = JSON.parse(body);
+				const err = JSON.parse(body);
 
 				if (_.isString(err)) {
 					return err;

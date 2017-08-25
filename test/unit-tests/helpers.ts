@@ -16,7 +16,7 @@ describe("helpers", () => {
 	};
 
 	describe("getPropertyName", () => {
-		let ES5Functions: ITestData[] = [
+		const ES5Functions: ITestData[] = [
 			{
 				input: `function (a) {
 					return a.test;
@@ -67,7 +67,7 @@ describe("helpers", () => {
 			}
 		];
 
-		let ES6Functions: ITestData[] = [
+		const ES6Functions: ITestData[] = [
 			{
 				input: `(a) => {
 					return a.test;
@@ -154,7 +154,7 @@ describe("helpers", () => {
 	});
 
 	describe("toBoolean", () => {
-		let toBooleanTestData: ITestData[] = [
+		const toBooleanTestData: ITestData[] = [
 			{
 				input: true,
 				expectedResult: true
@@ -222,13 +222,13 @@ describe("helpers", () => {
 		});
 
 		it("returns false when Object.create(null) is passed", () => {
-			let actualResult = helpers.toBoolean(Object.create(null));
+			const actualResult = helpers.toBoolean(Object.create(null));
 			assert.deepEqual(actualResult, false);
 		});
 	});
 
 	describe("isNullOrWhitespace", () => {
-		let isNullOrWhitespaceTestData: ITestData[] = [
+		const isNullOrWhitespaceTestData: ITestData[] = [
 			{
 				input: "",
 				expectedResult: true
@@ -292,7 +292,7 @@ describe("helpers", () => {
 		});
 
 		it("returns false when Object.create(null) is passed", () => {
-			let actualResult = helpers.isNullOrWhitespace(Object.create(null));
+			const actualResult = helpers.isNullOrWhitespace(Object.create(null));
 			assert.deepEqual(actualResult, false);
 		});
 	});
@@ -303,7 +303,7 @@ describe("helpers", () => {
 		};
 
 		const getRejectedPromise = (errorMessage: any): Promise<any> => {
-			let promise = Promise.reject(errorMessage);
+			const promise = Promise.reject(errorMessage);
 			promise.catch(() => {
 				// the handler is here in order to prevent warnings in Node 7+
 				// PromiseRejectionHandledWarning: Promise rejection was handled asynchronously

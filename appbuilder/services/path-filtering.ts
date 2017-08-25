@@ -5,11 +5,11 @@ export class PathFilteringService implements IPathFilteringService {
 	constructor(private $fs: IFileSystem) { }
 
 	public getRulesFromFile(fullFilePath: string): string[] {
-		let COMMENT_START = '#';
+		const COMMENT_START = '#';
 		let rules: string[] = [];
 
 		try {
-			let fileContent = this.$fs.readText(fullFilePath);
+			const fileContent = this.$fs.readText(fullFilePath);
 			rules = _.reject(fileContent.split(/[\n\r]/),
 				(line: string) => line.length === 0 || line[0] === COMMENT_START);
 
@@ -33,20 +33,20 @@ export class PathFilteringService implements IPathFilteringService {
 			// minimatch treats starting '!' as pattern negation
 			// but we want the pattern matched and then do something else with the file
 			// therefore, we manually handle leading ! and \! and hide them from minimatch
-			let shouldInclude = rule[0] === '!';
+			const shouldInclude = rule[0] === '!';
 			if (shouldInclude) {
 				rule = rule.substr(1);
-				let ruleMatched = minimatch(file, rule, { nocase: true, dot: true });
+				const ruleMatched = minimatch(file, rule, { nocase: true, dot: true });
 				if (ruleMatched) {
 					fileMatched = true;
 				}
 			} else {
-				let options = { nocase: true, nonegate: false, dot: true };
+				const options = { nocase: true, nonegate: false, dot: true };
 				if (rule[0] === '\\' && rule[1] === '!') {
 					rule = rule.substr(1);
 					options.nonegate = true;
 				}
-				let ruleMatched = minimatch(file, rule, options);
+				const ruleMatched = minimatch(file, rule, options);
 				fileMatched = fileMatched && !ruleMatched;
 			}
 		});

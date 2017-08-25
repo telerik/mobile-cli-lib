@@ -45,28 +45,28 @@ export class HtmlHelpService implements IHtmlHelpService {
 	}
 
 	public async generateHtmlPages(): Promise<void> {
-		let mdFiles = this.$fs.enumerateFilesInDirectorySync(this.pathToManPages);
-		let basicHtmlPage = this.$fs.readText(this.pathToBasicPage);
+		const mdFiles = this.$fs.enumerateFilesInDirectorySync(this.pathToManPages);
+		const basicHtmlPage = this.$fs.readText(this.pathToBasicPage);
 		await Promise.all(_.map(mdFiles, markdownFile => this.createHtmlPage(basicHtmlPage, markdownFile)));
 		this.$logger.trace("Finished generating HTML files.");
 	}
 
 	// This method should return Promise in order to generate all html pages simultaneously.
 	private async createHtmlPage(basicHtmlPage: string, pathToMdFile: string): Promise<void> {
-		let mdFileName = path.basename(pathToMdFile);
-		let htmlFileName = mdFileName.replace(HtmlHelpService.MARKDOWN_FILE_EXTENSION, HtmlHelpService.HTML_FILE_EXTENSION);
+		const mdFileName = path.basename(pathToMdFile);
+		const htmlFileName = mdFileName.replace(HtmlHelpService.MARKDOWN_FILE_EXTENSION, HtmlHelpService.HTML_FILE_EXTENSION);
 		this.$logger.trace("Generating '%s' help topic.", htmlFileName);
 
-		let helpText = this.$fs.readText(pathToMdFile);
-		let outputText = await this.$microTemplateService.parseContent(helpText, { isHtml: true });
-		let htmlText = marked(outputText);
+		const helpText = this.$fs.readText(pathToMdFile);
+		const outputText = await this.$microTemplateService.parseContent(helpText, { isHtml: true });
+		const htmlText = marked(outputText);
 
-		let filePath = pathToMdFile
+		const filePath = pathToMdFile
 			.replace(path.basename(this.pathToManPages), path.basename(this.pathToHtmlPages))
 			.replace(mdFileName, htmlFileName);
 		this.$logger.trace("HTML file path for '%s' man page is: '%s'.", mdFileName, filePath);
 
-		let outputHtml = basicHtmlPage
+		const outputHtml = basicHtmlPage
 			.replace(HtmlHelpService.MAN_PAGE_NAME_REGEX, mdFileName.replace(HtmlHelpService.MARKDOWN_FILE_EXTENSION, ""))
 			.replace(HtmlHelpService.HTML_COMMAND_HELP_REGEX, htmlText)
 			.replace(HtmlHelpService.RELATIVE_PATH_TO_STYLES_CSS_REGEX, path.relative(path.dirname(filePath), this.pathToStylesCss))
@@ -78,7 +78,7 @@ export class HtmlHelpService implements IHtmlHelpService {
 	}
 
 	public async openHelpForCommandInBrowser(commandName: string): Promise<void> {
-		let htmlPage = await this.convertCommandNameToFileName(commandName) + HtmlHelpService.HTML_FILE_EXTENSION;
+		const htmlPage = await this.convertCommandNameToFileName(commandName) + HtmlHelpService.HTML_FILE_EXTENSION;
 		this.$logger.trace("Opening help for command '%s'. FileName is '%s'.", commandName, htmlPage);
 
 		this.$fs.ensureDirectoryExists(this.pathToHtmlPages);
@@ -93,16 +93,16 @@ export class HtmlHelpService implements IHtmlHelpService {
 	}
 
 	private async convertCommandNameToFileName(commandName: string): Promise<string> {
-		let defaultCommandMatch = commandName.match(/(\w+?)\|\*/);
+		const defaultCommandMatch = commandName.match(/(\w+?)\|\*/);
 		if (defaultCommandMatch) {
 			this.$logger.trace("Default command found. Replace current command name '%s' with '%s'.", commandName, defaultCommandMatch[1]);
 			commandName = defaultCommandMatch[1];
 		}
 
-		let availableCommands = this.$injector.getRegisteredCommandsNames(true).sort();
+		const availableCommands = this.$injector.getRegisteredCommandsNames(true).sort();
 		this.$logger.trace("List of registered commands: %s", availableCommands.join(", "));
 		if (commandName && _.startsWith(commandName, this.$commandsServiceProvider.dynamicCommandsPrefix) && !_.includes(availableCommands, commandName)) {
-			let dynamicCommands = await this.$commandsServiceProvider.getDynamicCommands();
+			const dynamicCommands = await this.$commandsServiceProvider.getDynamicCommands();
 			if (!_.includes(dynamicCommands, commandName)) {
 				this.$errors.failWithoutHelp("Unknown command '%s'. Try '$ %s help' for a full list of supported commands.", commandName, this.$staticConfig.CLIENT_NAME.toLowerCase());
 			}
@@ -112,9 +112,9 @@ export class HtmlHelpService implements IHtmlHelpService {
 	}
 
 	private tryOpeningSelectedPage(htmlPage: string): boolean {
-		let fileList = this.$fs.enumerateFilesInDirectorySync(this.pathToHtmlPages);
+		const fileList = this.$fs.enumerateFilesInDirectorySync(this.pathToHtmlPages);
 		this.$logger.trace("File list: " + fileList);
-		let pageToOpen = _.find(fileList, file => path.basename(file) === htmlPage);
+		const pageToOpen = _.find(fileList, file => path.basename(file) === htmlPage);
 
 		if (pageToOpen) {
 			this.$logger.trace("Found page to open: '%s'", pageToOpen);
@@ -127,10 +127,10 @@ export class HtmlHelpService implements IHtmlHelpService {
 	}
 
 	private async readMdFileForCommand(commandName: string): Promise<string> {
-		let mdFileName = await this.convertCommandNameToFileName(commandName) + HtmlHelpService.MARKDOWN_FILE_EXTENSION;
+		const mdFileName = await this.convertCommandNameToFileName(commandName) + HtmlHelpService.MARKDOWN_FILE_EXTENSION;
 		this.$logger.trace("Reading help for command '%s'. FileName is '%s'.", commandName, mdFileName);
 
-		let markdownFile = _.find(this.$fs.enumerateFilesInDirectorySync(this.pathToManPages), file => path.basename(file) === mdFileName);
+		const markdownFile = _.find(this.$fs.enumerateFilesInDirectorySync(this.pathToManPages), file => path.basename(file) === mdFileName);
 		if (markdownFile) {
 			return this.$fs.readText(markdownFile);
 		}
@@ -139,7 +139,7 @@ export class HtmlHelpService implements IHtmlHelpService {
 	}
 
 	public async getCommandLineHelpForCommand(commandName: string): Promise<string> {
-		let helpText = await this.readMdFileForCommand(commandName);
+		const helpText = await this.readMdFileForCommand(commandName);
 		const commandLineHelp = (await this.$microTemplateService.parseContent(helpText, { isHtml: false }))
 			.replace(/&nbsp;/g, " ")
 			.replace(HtmlHelpService.MARKDOWN_LINK_REGEX, "$1")

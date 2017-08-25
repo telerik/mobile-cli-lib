@@ -22,7 +22,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	}
 
 	public async getFile(deviceFilePath: string, appIdentifier: string, outputPath?: string): Promise<void> {
-		let stdout = !outputPath;
+		const stdout = !outputPath;
 
 		if (stdout) {
 			temp.track();
@@ -33,7 +33,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 
 		if (stdout) {
 			await new Promise<void>((resolve, reject) => {
-				let readStream = this.$fs.createReadStream(outputPath);
+				const readStream = this.$fs.createReadStream(outputPath);
 				readStream.pipe(process.stdout);
 				readStream.on("end", () => {
 					resolve();
@@ -75,7 +75,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		);
 
 		// Update hashes
-		let deviceHashService = this.getDeviceHashService(deviceAppData.appIdentifier);
+		const deviceHashService = this.getDeviceHashService(deviceAppData.appIdentifier);
 		if (! await deviceHashService.updateHashes(localToDevicePaths)) {
 			this.$logger.trace("Unable to find hash file on device. The next livesync command will create it.");
 		}
@@ -87,10 +87,10 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 
 		await Promise.all(
 			localToDevicePaths.map(async localToDevicePathData => {
-				let localPath = localToDevicePathData.getLocalPath();
-				let stats = this.$fs.getFsStats(localPath);
+				const localPath = localToDevicePathData.getLocalPath();
+				const stats = this.$fs.getFsStats(localPath);
 				if (stats.isFile()) {
-					let fileShasum = await this.$fs.getFileShasum(localPath);
+					const fileShasum = await this.$fs.getFileShasum(localPath);
 					currentShasums[localPath] = fileShasum;
 				}
 
@@ -137,7 +137,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 
 	public async transferFile(localPath: string, devicePath: string): Promise<void> {
 		this.$logger.trace(`Transfering ${localPath} to ${devicePath}`);
-		let stats = this.$fs.getFsStats(localPath);
+		const stats = this.$fs.getFsStats(localPath);
 		if (stats.isDirectory()) {
 			await this.adb.executeShellCommand(["mkdir", path.dirname(devicePath)]);
 		} else {
@@ -146,8 +146,8 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	}
 
 	public async createFileOnDevice(deviceFilePath: string, fileContent: string): Promise<void> {
-		let hostTmpDir = this.getTempDir();
-		let commandsFileHostPath = path.join(hostTmpDir, "temp.commands.file");
+		const hostTmpDir = this.getTempDir();
+		const commandsFileHostPath = path.join(hostTmpDir, "temp.commands.file");
 		this.$fs.writeFile(commandsFileHostPath, fileContent);
 
 		// copy it to the device

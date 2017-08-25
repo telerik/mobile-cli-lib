@@ -1,4 +1,4 @@
-let jaroWinklerDistance = require("../vendor/jaro-winkler_distance");
+const jaroWinklerDistance = require("../vendor/jaro-winkler_distance");
 import * as helpers from "../helpers";
 import { EOL } from "os";
 
@@ -28,22 +28,22 @@ export class CommandsService implements ICommandsService {
 	}
 
 	public allCommands(opts: { includeDevCommands: boolean }): string[] {
-		let commands = this.$injector.getRegisteredCommandsNames(opts.includeDevCommands);
+		const commands = this.$injector.getRegisteredCommandsNames(opts.includeDevCommands);
 		return _.reject(commands, (command) => _.includes(command, '|'));
 	}
 
 	public async executeCommandUnchecked(commandName: string, commandArguments: string[]): Promise<boolean> {
-		let command = this.$injector.resolveCommand(commandName);
+		const command = this.$injector.resolveCommand(commandName);
 		if (command) {
 			if (!this.$staticConfig.disableAnalytics && !command.disableAnalytics) {
-				let analyticsService = this.$injector.resolve("analyticsService"); // This should be resolved here due to cyclic dependency
+				const analyticsService = this.$injector.resolve("analyticsService"); // This should be resolved here due to cyclic dependency
 				await analyticsService.checkConsent();
 				await analyticsService.trackFeature(commandName);
 			}
 
 			if (!this.$staticConfig.disableCommandHooks && (command.enableHooks === undefined || command.enableHooks === true)) {
 				// Handle correctly hierarchical commands
-				let hierarchicalCommandName = this.$injector.buildHierarchicalCommand(commandName, commandArguments);
+				const hierarchicalCommandName = this.$injector.buildHierarchicalCommand(commandName, commandArguments);
 				if (hierarchicalCommandName) {
 					commandName = helpers.stringReplaceAll(hierarchicalCommandName.commandName, CommandsService.HIERARCHICAL_COMMANDS_DEFAULT_COMMAND_DELIMITER, CommandsService.HOOKS_COMMANDS_DELIMITER);
 					commandName = helpers.stringReplaceAll(commandName, CommandsService.HIERARCHICAL_COMMANDS_DELIMITER, CommandsService.HOOKS_COMMANDS_DELIMITER);
@@ -56,9 +56,9 @@ export class CommandsService implements ICommandsService {
 				await command.execute(commandArguments);
 			}
 
-			let commandHelp = this.getCommandHelp();
+			const commandHelp = this.getCommandHelp();
 			if (!command.disableCommandHelpSuggestion && commandHelp && commandHelp[commandName]) {
-				let suggestionText: string = commandHelp[commandName];
+				const suggestionText: string = commandHelp[commandName];
 				this.$logger.printMarkdown(~suggestionText.indexOf('%s') ? require('util').format(suggestionText, commandArguments) : suggestionText);
 			}
 
@@ -79,7 +79,7 @@ export class CommandsService implements ICommandsService {
 	}
 
 	private async tryExecuteCommandAction(commandName: string, commandArguments: string[]): Promise<boolean> {
-		let command = this.$injector.resolveCommand(commandName);
+		const command = this.$injector.resolveCommand(commandName);
 		this.$options.validateOptions(command ? command.dashedOptions : null);
 
 		if (!this.areDynamicSubcommandsRegistered) {
@@ -94,7 +94,7 @@ export class CommandsService implements ICommandsService {
 			await this.executeCommandAction(commandName, commandArguments, this.executeCommandUnchecked);
 		} else {
 			// If canExecuteCommand returns false, the command cannot be executed or there's no such command at all.
-			let command = this.$injector.resolveCommand(commandName);
+			const command = this.$injector.resolveCommand(commandName);
 			if (command) {
 				// If command cannot be executed we should print its help.
 				await this.printHelp(commandName);
@@ -103,8 +103,8 @@ export class CommandsService implements ICommandsService {
 	}
 
 	private async canExecuteCommand(commandName: string, commandArguments: string[], isDynamicCommand?: boolean): Promise<boolean> {
-		let command = this.$injector.resolveCommand(commandName);
-		let beautifiedName = helpers.stringReplaceAll(commandName, "|", " ");
+		const command = this.$injector.resolveCommand(commandName);
+		const beautifiedName = helpers.stringReplaceAll(commandName, "|", " ");
 		if (command) {
 			// Verify command is enabled
 			if (command.isDisabled) {
@@ -141,12 +141,12 @@ export class CommandsService implements ICommandsService {
 	}
 
 	private async validateMandatoryParams(commandArguments: string[], mandatoryParams: ICommandParameter[]): Promise<CommandArgumentsValidationHelper> {
-		let commandArgsHelper = new CommandArgumentsValidationHelper(true, commandArguments);
+		const commandArgsHelper = new CommandArgumentsValidationHelper(true, commandArguments);
 
 		if (mandatoryParams.length > 0) {
 			// If command has more mandatory params than the passed ones, we shouldn't execute it
 			if (mandatoryParams.length > commandArguments.length) {
-				let customErrorMessages = _.map(mandatoryParams, mp => mp.errorMessage);
+				const customErrorMessages = _.map(mandatoryParams, mp => mp.errorMessage);
 				customErrorMessages.splice(0, 0, "You need to provide all the required parameters.");
 				this.$errors.fail(customErrorMessages.join(EOL));
 			}
@@ -175,8 +175,8 @@ export class CommandsService implements ICommandsService {
 	}
 
 	private async validateCommandArguments(command: ICommand, commandArguments: string[]): Promise<boolean> {
-		let mandatoryParams: ICommandParameter[] = _.filter(command.allowedParameters, (param) => param.mandatory);
-		let commandArgsHelper = await this.validateMandatoryParams(commandArguments, mandatoryParams);
+		const mandatoryParams: ICommandParameter[] = _.filter(command.allowedParameters, (param) => param.mandatory);
+		const commandArgsHelper = await this.validateMandatoryParams(commandArguments, mandatoryParams);
 		if (!commandArgsHelper.isValid) {
 			return false;
 		}
@@ -188,7 +188,7 @@ export class CommandsService implements ICommandsService {
 			}
 		} else {
 			// Exclude mandatory params, we've already checked them
-			let unverifiedAllowedParams = command.allowedParameters.filter((param) => !param.mandatory);
+			const unverifiedAllowedParams = command.allowedParameters.filter((param) => !param.mandatory);
 
 			for (let remainingArgsIndex = 0; remainingArgsIndex < commandArgsHelper.remainingArguments.length; ++remainingArgsIndex) {
 				const argument = commandArgsHelper.remainingArguments[remainingArgsIndex];
@@ -202,7 +202,7 @@ export class CommandsService implements ICommandsService {
 				}
 
 				if (parameter) {
-					let index = unverifiedAllowedParams.indexOf(parameter);
+					const index = unverifiedAllowedParams.indexOf(parameter);
 					// Remove the matched parameter from unverifiedAllowedParams collection, so it will not be used to verify another argument.
 					unverifiedAllowedParams.splice(index, 1);
 				} else {
@@ -215,12 +215,12 @@ export class CommandsService implements ICommandsService {
 	}
 
 	private tryMatchCommand(commandName: string): void {
-		let allCommands = this.allCommands({ includeDevCommands: false });
+		const allCommands = this.allCommands({ includeDevCommands: false });
 		let similarCommands: ISimilarCommand[] = [];
 		_.each(allCommands, (command) => {
 			if (!this.$injector.isDefaultCommand(command)) {
 				command = helpers.stringReplaceAll(command, "|", " ");
-				let distance = jaroWinklerDistance(commandName, command);
+				const distance = jaroWinklerDistance(commandName, command);
 				if (commandName.length > 3 && command.indexOf(commandName) !== -1) {
 					similarCommands.push({ rating: 1, name: command });
 				} else if (distance >= 0.65) {
@@ -234,7 +234,7 @@ export class CommandsService implements ICommandsService {
 		}).slice(0, 5);
 
 		if (similarCommands.length > 0) {
-			let message = ["Did you mean?"];
+			const message = ["Did you mean?"];
 			_.each(similarCommands, (command) => {
 				message.push("\t" + command.name);
 			});
@@ -243,19 +243,19 @@ export class CommandsService implements ICommandsService {
 	}
 
 	public async completeCommand(): Promise<boolean> {
-		let tabtab = require("tabtab");
+		const tabtab = require("tabtab");
 
-		let completeCallback = (err: Error, data: any) => {
+		const completeCallback = (err: Error, data: any) => {
 			if (err || !data) {
 				return;
 			}
 
-			let commands = this.$injector.getRegisteredCommandsNames(false);
-			let splittedLine = data.line.split(/[ ]+/);
-			let line = _.filter(splittedLine, (w) => w !== "");
+			const commands = this.$injector.getRegisteredCommandsNames(false);
+			const splittedLine = data.line.split(/[ ]+/);
+			const line = _.filter(splittedLine, (w) => w !== "");
 			let commandName = <string>(line[line.length - 2]);
 
-			let childrenCommands = this.$injector.getChildrenCommandsNames(commandName);
+			const childrenCommands = this.$injector.getChildrenCommandsNames(commandName);
 
 			if (data.last && _.startsWith(data.last, "--")) {
 				return tabtab.log(_.keys(this.$options.options), data, "--");
@@ -266,7 +266,7 @@ export class CommandsService implements ICommandsService {
 			}
 
 			if (data.words === 1) {
-				let allCommands = this.allCommands({ includeDevCommands: false });
+				const allCommands = this.allCommands({ includeDevCommands: false });
 				return tabtab.log(allCommands, data);
 			}
 
@@ -278,9 +278,9 @@ export class CommandsService implements ICommandsService {
 				}
 			}
 
-			let command = this.$injector.resolveCommand(commandName);
+			const command = this.$injector.resolveCommand(commandName);
 			if (command) {
-				let completionData = command.completionData;
+				const completionData = command.completionData;
 				if (completionData) {
 					return tabtab.log(completionData, data);
 				} else {
@@ -292,13 +292,13 @@ export class CommandsService implements ICommandsService {
 
 				if (data.words !== line.length) {
 					sanitizedChildrenCommands = nonDefaultSubCommands.map((commandToMap: string) => {
-						let pipePosition = commandToMap.indexOf("|");
+						const pipePosition = commandToMap.indexOf("|");
 						return commandToMap.substring(0, pipePosition !== -1 ? pipePosition : commandToMap.length);
 					});
 				} else {
 					nonDefaultSubCommands = nonDefaultSubCommands.filter((commandNameToFilter: string) => commandNameToFilter.indexOf("|") !== -1);
 					sanitizedChildrenCommands = nonDefaultSubCommands.map((commandToMap: string) => {
-						let pipePosition = commandToMap.lastIndexOf("|");
+						const pipePosition = commandToMap.lastIndexOf("|");
 						return commandToMap.substring(pipePosition !== -1 ? pipePosition + 1 : 0, commandToMap.length);
 					});
 				}
@@ -336,12 +336,12 @@ export class CommandsService implements ICommandsService {
 	}
 
 	private logChildrenCommandsNames(commandName: string, commands: string[], tabtab: any, data: any) {
-		let matchingCommands = commands.filter((commandToFilter: string) => {
+		const matchingCommands = commands.filter((commandToFilter: string) => {
 			return commandToFilter.indexOf(commandName + "|") !== -1 && commandToFilter !== commandName;
 		})
 			.map((commandToMap: string) => {
 
-				let commandResult = commandToMap.replace(commandName + "|", "");
+				const commandResult = commandToMap.replace(commandName + "|", "");
 
 				return commandResult.substring(0, commandResult.indexOf("|") !== -1 ? commandResult.indexOf("|") : commandResult.length);
 			});

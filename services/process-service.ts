@@ -11,7 +11,7 @@ export class ProcessService implements IProcessService {
 	}
 
 	public attachToProcessExitSignals(context: any, callback: () => void): void {
-		let callbackToString = callback.toString();
+		const callbackToString = callback.toString();
 
 		if (this._listeners.length === 0) {
 			_.each(ProcessService.PROCESS_EXIT_SIGNALS, (signal: string) => {

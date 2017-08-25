@@ -18,8 +18,8 @@ export class ProjectNameValidator implements IProjectNameValidator {
 	constructor(private $errors: IErrors) { }
 
 	private validateName(name: string): ValidationResult.ValidationResult {
-		let validNameRegex = /^[a-zA-Z0-9_.\- ]*$/g;
-		let ext = path.extname(name);
+		const validNameRegex = /^[a-zA-Z0-9_.\- ]*$/g;
+		const ext = path.extname(name);
 
 		if (helpers.isNullOrWhitespace(name)) {
 			return new ValidationResult.ValidationResult(ProjectNameValidator.EMPTY_FILENAME_ERROR_MESSAGE);
@@ -50,8 +50,8 @@ export class ProjectNameValidator implements IProjectNameValidator {
 	}
 
 	public validate(name: string): boolean {
-		let validationResult: ValidationResult.ValidationResult = this.validateName(name);
-		let isSuccessful = validationResult.isSuccessful;
+		const validationResult: ValidationResult.ValidationResult = this.validateName(name);
+		const isSuccessful = validationResult.isSuccessful;
 
 		if (!isSuccessful) {
 			this.$errors.fail(validationResult.error);

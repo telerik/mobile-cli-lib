@@ -9,13 +9,13 @@ export class ChildProcess extends EventEmitter implements IChildProcess {
 
 	public async exec(command: string, options?: any, execOptions?: IExecOptions): Promise<any> {
 		return new Promise<any>((resolve, reject) => {
-			let callback = (error: Error, stdout: NodeBuffer, stderr: NodeBuffer) => {
+			const callback = (error: Error, stdout: NodeBuffer, stderr: NodeBuffer) => {
 				this.$logger.trace("Exec %s \n stdout: %s \n stderr: %s", command, stdout.toString(), stderr.toString());
 
 				if (error) {
 					reject(error);
 				} else {
-					let output = execOptions && execOptions.showStderr ? { stdout, stderr } : stdout;
+					const output = execOptions && execOptions.showStderr ? { stdout, stderr } : stdout;
 					resolve(output);
 				}
 			};
@@ -58,7 +58,7 @@ export class ChildProcess extends EventEmitter implements IChildProcess {
 		options?: any, spawnFromEventOptions?: ISpawnFromEventOptions): Promise<ISpawnResult> { // event should be exit or close
 
 		return new Promise<ISpawnResult>((resolve, reject) => {
-			let childProcess = this.spawn(command, args, options);
+			const childProcess = this.spawn(command, args, options);
 			let isResolved = false;
 			let capturedOut = "";
 			let capturedErr = "";
@@ -84,8 +84,8 @@ export class ChildProcess extends EventEmitter implements IChildProcess {
 			}
 
 			childProcess.on(event, (arg: any) => {
-				let exitCode = typeof arg === "number" ? arg : arg && arg.code;
-				let result = {
+				const exitCode = typeof arg === "number" ? arg : arg && arg.code;
+				const result = {
 					stdout: capturedOut,
 					stderr: capturedErr,
 					exitCode: exitCode
@@ -119,7 +119,7 @@ export class ChildProcess extends EventEmitter implements IChildProcess {
 			childProcess.once("error", (err: Error) => {
 				if (!isResolved) {
 					if (spawnFromEventOptions && spawnFromEventOptions.throwError === false) {
-						let result = {
+						const result = {
 							stdout: capturedOut,
 							stderr: err.message,
 							exitCode: (<any>err).code
@@ -138,7 +138,7 @@ export class ChildProcess extends EventEmitter implements IChildProcess {
 
 	public async tryExecuteApplication(command: string, args: string[], event: string,
 		errorMessage: string, condition: (_childProcess: any) => boolean): Promise<any> {
-		let childProcess = await this.tryExecuteApplicationCore(command, args, event, errorMessage);
+		const childProcess = await this.tryExecuteApplicationCore(command, args, event, errorMessage);
 
 		if (condition && condition(childProcess)) {
 			this.$errors.fail(errorMessage);
@@ -149,7 +149,7 @@ export class ChildProcess extends EventEmitter implements IChildProcess {
 		try {
 			return this.spawnFromEvent(command, args, event, undefined, { throwError: false });
 		} catch (e) {
-			let message = (e.code === "ENOENT") ? errorMessage : e.message;
+			const message = (e.code === "ENOENT") ? errorMessage : e.message;
 			this.$errors.failWithoutHelp(message);
 		}
 	}

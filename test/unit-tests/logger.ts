@@ -7,7 +7,7 @@ const debugTrace = ["debug", "trace"];
 const passwordPair = ["password", "Password"];
 
 function createTestInjector(logLevel?: string): IInjector {
-	let testInjector = new Yok();
+	const testInjector = new Yok();
 	testInjector.register("injector", testInjector);
 	testInjector.register("config", {});
 	testInjector.register("options", {
@@ -19,9 +19,9 @@ function createTestInjector(logLevel?: string): IInjector {
 }
 
 describe("logger", () => {
-	let testInjector: IInjector,
-		logger: any,
-		outputs: any;
+	let testInjector: IInjector;
+	let logger: any;
+	let outputs: any;
 
 	beforeEach(() => {
 		testInjector = createTestInjector();

@@ -13,15 +13,15 @@ export class EmulatorImageService implements Mobile.IEmulatorImageService {
 
 	public async getEmulatorInfo(platform: string, idOrName: string): Promise<Mobile.IEmulatorInfo> {
 		if (this.$mobileHelper.isAndroidPlatform(platform)) {
-			let androidEmulators = this.getAndroidEmulators();
-			let found = androidEmulators.filter((info: Mobile.IEmulatorInfo) => info.id === idOrName);
+			const androidEmulators = this.getAndroidEmulators();
+			const found = androidEmulators.filter((info: Mobile.IEmulatorInfo) => info.id === idOrName);
 			if (found.length > 0) {
 				return found[0];
 			}
 
 			await this.$devicesService.initialize({ platform: platform, deviceId: null, skipInferPlatform: true });
 			let info: Mobile.IEmulatorInfo = null;
-			let action = async (device: Mobile.IDevice) => {
+			const action = async (device: Mobile.IDevice) => {
 				if (device.deviceInfo.identifier === idOrName) {
 					info = {
 						id: device.deviceInfo.identifier,
@@ -38,15 +38,15 @@ export class EmulatorImageService implements Mobile.IEmulatorImageService {
 		}
 
 		if (this.$mobileHelper.isiOSPlatform(platform)) {
-			let emulators = await this.getiOSEmulators();
+			const emulators = await this.getiOSEmulators();
 			let sdk: string = null;
-			let versionStart = idOrName.indexOf("(");
+			const versionStart = idOrName.indexOf("(");
 			if (versionStart > 0) {
 				sdk = idOrName.substring(versionStart + 1, idOrName.indexOf(")", versionStart)).trim();
 				idOrName = idOrName.substring(0, versionStart - 1).trim();
 			}
-			let found = emulators.filter((info: Mobile.IEmulatorInfo) => {
-				let sdkMatch = sdk ? info.version === sdk : true;
+			const found = emulators.filter((info: Mobile.IEmulatorInfo) => {
+				const sdkMatch = sdk ? info.version === sdk : true;
 				return sdkMatch && info.id === idOrName || info.name === idOrName;
 			});
 			return found.length > 0 ? found[0] : null;
@@ -59,14 +59,14 @@ export class EmulatorImageService implements Mobile.IEmulatorImageService {
 	public async listAvailableEmulators(platform: string): Promise<void> {
 		let emulators: Mobile.IEmulatorInfo[] = [];
 		if (!platform || this.$mobileHelper.isiOSPlatform(platform)) {
-			let iosEmulators = await this.getiOSEmulators();
+			const iosEmulators = await this.getiOSEmulators();
 			if (iosEmulators) {
 				emulators = emulators.concat(iosEmulators);
 			}
 		}
 
 		if (!platform || this.$mobileHelper.isAndroidPlatform(platform)) {
-			let androidEmulators = this.getAndroidEmulators();
+			const androidEmulators = this.getAndroidEmulators();
 			if (androidEmulators) {
 				emulators = emulators.concat(androidEmulators);
 			}
@@ -76,20 +76,20 @@ export class EmulatorImageService implements Mobile.IEmulatorImageService {
 	}
 
 	public async getiOSEmulators(): Promise<Mobile.IEmulatorInfo[]> {
-		let output = await this.$childProcess.exec("xcrun simctl list --json");
-		let list = JSON.parse(output);
-		let emulators: Mobile.IEmulatorInfo[] = [];
-		for (let osName in list["devices"]) {
+		const output = await this.$childProcess.exec("xcrun simctl list --json");
+		const list = JSON.parse(output);
+		const emulators: Mobile.IEmulatorInfo[] = [];
+		for (const osName in list["devices"]) {
 			if (osName.indexOf("iOS") === -1) {
 				continue;
 			}
-			let os = list["devices"][osName];
-			let version = this.parseiOSVersion(osName);
-			for (let device of os) {
+			const os = list["devices"][osName];
+			const version = this.parseiOSVersion(osName);
+			for (const device of os) {
 				if (device["availability"] !== "(available)") {
 					continue;
 				}
-				let emulatorInfo: Mobile.IEmulatorInfo = {
+				const emulatorInfo: Mobile.IEmulatorInfo = {
 					id: device["udid"],
 					name: device["name"],
 					isRunning: device["state"] === "Booted",
@@ -124,8 +124,8 @@ export class EmulatorImageService implements Mobile.IEmulatorImageService {
 
 	private outputEmulators(title: string, emulators: Mobile.IEmulatorInfo[]) {
 		this.$logger.out(title);
-		let table: any = createTable(["Device Name", "Platform", "Version", "Device Identifier"], []);
-		for (let info of emulators) {
+		const table: any = createTable(["Device Name", "Platform", "Version", "Device Identifier"], []);
+		for (const info of emulators) {
 			table.push([info.name, info.platform, info.version, info.id]);
 		}
 

@@ -2,7 +2,7 @@ import * as prompt from "inquirer";
 import * as helpers from "./helpers";
 import * as readline from "readline";
 import { ReadStream } from "tty";
-let MuteStream = require("mute-stream");
+const MuteStream = require("mute-stream");
 
 export class Prompter implements IPrompter {
 	private ctrlcReader: readline.ReadLine;
@@ -25,7 +25,7 @@ export class Prompter implements IPrompter {
 					if (_.some(schemas, s => !s.default)) {
 						reject(new Error("Console is not interactive and no default action specified."));
 					} else {
-						let result: any = {};
+						const result: any = {};
 
 						_.each(schemas, s => {
 							// Curly brackets needed because s.default() may return false and break the loop
@@ -52,57 +52,57 @@ export class Prompter implements IPrompter {
 	}
 
 	public async getPassword(prompt: string, options?: IAllowEmpty): Promise<string> {
-		let schema: IPromptSchema = {
+		const schema: IPromptSchema = {
 			message: prompt,
 			type: "password",
 			name: "password",
 			validate: (value: any) => {
-				let allowEmpty = options && options.allowEmpty;
+				const allowEmpty = options && options.allowEmpty;
 				return (!allowEmpty && !value) ? "Password must be non-empty" : true;
 			}
 		};
 
-		let result = await this.get([schema]);
+		const result = await this.get([schema]);
 		return result.password;
 	}
 
 	public async getString(prompt: string, options?: IPrompterOptions): Promise<string> {
-		let schema: IPromptSchema = {
+		const schema: IPromptSchema = {
 			message: prompt,
 			type: "input",
 			name: "inputString",
 			validate: (value: any) => {
-				let doesNotAllowEmpty = options && _.has(options, "allowEmpty") && !options.allowEmpty;
+				const doesNotAllowEmpty = options && _.has(options, "allowEmpty") && !options.allowEmpty;
 				return (doesNotAllowEmpty && !value) ? `${prompt} must be non-empty` : true;
 			},
 			default: options && options.defaultAction
 		};
 
-		let result = await this.get([schema]);
+		const result = await this.get([schema]);
 		return result.inputString;
 	}
 
 	public async promptForChoice(promptMessage: string, choices: any[]): Promise<string> {
-		let schema: IPromptSchema = {
+		const schema: IPromptSchema = {
 			message: promptMessage,
 			type: "list",
 			name: "userAnswer",
 			choices: choices
 		};
 
-		let result = await this.get([schema]);
+		const result = await this.get([schema]);
 		return result.userAnswer;
 	}
 
 	public async confirm(prompt: string, defaultAction?: () => boolean): Promise<boolean> {
-		let schema = {
+		const schema = {
 			type: "confirm",
 			name: "prompt",
 			default: defaultAction,
 			message: prompt
 		};
 
-		let result = await this.get([schema]);
+		const result = await this.get([schema]);
 		return result.prompt;
 	}
 
@@ -142,7 +142,7 @@ export class Prompter implements IPrompter {
 	private cleanEventListeners(stream: NodeJS.WritableStream): void {
 		// The events names and listeners names can be found here https://github.com/nodejs/node/blob/master/lib/stream.js
 		// Which event cause memory leak can be tested with stream.listeners("event-name") and if the listeners count keeps increasing with each prompt we need to remove the listener.
-		let memoryLeakEvents: IMemoryLeakEvent[] = [{
+		const memoryLeakEvents: IMemoryLeakEvent[] = [{
 			eventName: "close",
 			listenerName: "cleanup"
 		}, {
@@ -157,9 +157,9 @@ export class Prompter implements IPrompter {
 	}
 
 	private cleanListener(stream: NodeJS.WritableStream, eventName: string, listenerName: string): void {
-		let eventListeners: any[] = process.stdout.listeners(eventName);
+		const eventListeners: any[] = process.stdout.listeners(eventName);
 
-		let listenerFunction: Function = _.find(eventListeners, (func: any) => func.name === listenerName);
+		const listenerFunction: Function = _.find(eventListeners, (func: any) => func.name === listenerName);
 
 		if (listenerFunction) {
 			stream.removeListener(eventName, listenerFunction);

@@ -6,9 +6,9 @@ export class NpmPluginsService implements INpmPluginsService {
 	constructor(private $injector: IInjector) { }
 
 	public async search(projectDir: string, keywords: string[], modifySearchQuery: (keywords: string[]) => string[]): Promise<IPluginsSource> {
-		let query = modifySearchQuery ? modifySearchQuery(keywords) : keywords;
+		const query = modifySearchQuery ? modifySearchQuery(keywords) : keywords;
 
-		let pluginsSource = await this.searchCore(NpmjsPluginsSource, projectDir, keywords) ||
+		const pluginsSource = await this.searchCore(NpmjsPluginsSource, projectDir, keywords) ||
 			await this.searchCore(NpmRegistryPluginsSource, projectDir, keywords) ||
 			await this.preparePluginsSource(NpmPluginsSource, projectDir, query);
 
@@ -20,13 +20,13 @@ export class NpmPluginsService implements INpmPluginsService {
 	}
 
 	private async searchCore(pluginsSourceConstructor: Function, projectDir: string, keywords: string[]): Promise<IPluginsSource> {
-		let npmPluginsSource = await this.preparePluginsSource(pluginsSourceConstructor, projectDir, keywords);
+		const npmPluginsSource = await this.preparePluginsSource(pluginsSourceConstructor, projectDir, keywords);
 
 		return npmPluginsSource.hasPlugins() ? npmPluginsSource : null;
 	}
 
 	private async preparePluginsSource(pluginsSourceConstructor: Function, projectDir: string, keywords: string[]): Promise<IPluginsSource> {
-		let pluginsSource: IPluginsSource = this.$injector.resolve(pluginsSourceConstructor, { projectDir, keywords });
+		const pluginsSource: IPluginsSource = this.$injector.resolve(pluginsSourceConstructor, { projectDir, keywords });
 		await pluginsSource.initialize(projectDir, keywords);
 		return pluginsSource;
 	}
