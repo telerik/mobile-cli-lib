@@ -151,7 +151,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 
 		require("../vendor/EqatecMonitor.min");
 		const analyticsProjectKey = analyticsSettings.analyticsAPIKey;
-		let settings = cliGlobal._eqatec.createSettings(analyticsProjectKey);
+		const settings = cliGlobal._eqatec.createSettings(analyticsProjectKey);
 		settings.useHttps = false;
 		settings.userAgent = this.getUserAgentString();
 		settings.version = this.$staticConfig.version;
