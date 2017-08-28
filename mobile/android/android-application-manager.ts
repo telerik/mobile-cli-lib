@@ -65,10 +65,10 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		const possibleIdentifier = match && match[0];
 
 		if (possibleIdentifier) {
-			await this.adb.executeShellCommand(["am", "start", "-n", possibleIdentifier]);
+			await this.adb.executeShellCommand(["am", "start", "-n", possibleIdentifier], { returnChildProcess: true });
 		} else {
 			this.$logger.trace(`Tried starting activity for: ${appIdentifier}, using activity manager but failed.`);
-			await this.adb.executeShellCommand(["monkey", "-p", appIdentifier, "-c", "android.intent.category.LAUNCHER", "1"]);
+			await this.adb.executeShellCommand(["monkey", "-p", appIdentifier, "-c", "android.intent.category.LAUNCHER", "1"], { returnChildProcess: true });
 		}
 
 		if (!this.$options.justlaunch) {
