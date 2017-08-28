@@ -149,8 +149,6 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 			return;
 		}
 
-		analyticsSettings = analyticsSettings || Object.create(null);
-
 		require("../vendor/EqatecMonitor.min");
 		const analyticsProjectKey = analyticsSettings.analyticsAPIKey;
 		let settings = cliGlobal._eqatec.createSettings(analyticsProjectKey);
@@ -213,15 +211,15 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 			let remainingTime = AnalyticsServiceBase.MAX_WAIT_SENDING_INTERVAL;
 
 			if (this.getIsSending()) {
-				this.$logger.trace(`Waiting for analytics to send information. Will check in a ${intervalTime}ms.`);
+				this.$logger.trace(`Waiting for analytics to send information. Will check in ${intervalTime}ms.`);
 				const interval = setInterval(() => {
-					if (!this.getIsSending() || (remainingTime <= 0)) {
+					if (!this.getIsSending() || remainingTime <= 0) {
 						clearInterval(interval);
 						resolve();
 					}
 
 					remainingTime -= intervalTime;
-					this.$logger.trace(`Waiting for analytics to send information. Will check in a ${intervalTime}ms. Remaining time is: ${remainingTime}`);
+					this.$logger.trace(`Waiting for analytics to send information. Will check in ${intervalTime}ms. Remaining time is: ${remainingTime}`);
 				}, intervalTime);
 			} else {
 				resolve();
@@ -318,7 +316,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 
 	private async getJsonStatusMessage(settingName: string): Promise<string> {
 		const status = await this.getStatus(settingName);
-		const enabled = status === AnalyticsStatus.notConfirmed ? null : status === AnalyticsStatus.disabled ? false : true;
+		const enabled = status === AnalyticsStatus.notConfirmed ? null : status === AnalyticsStatus.enabled;
 		return JSON.stringify({ enabled });
 	}
 
