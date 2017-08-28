@@ -17,7 +17,7 @@ export class GetFileCommand implements ICommand {
 
 		appIdentifier = appIdentifier || this.$project.projectData.AppIdentifier;
 
-		let action = (device: Mobile.IDevice) => device.fileSystem.getFile(args[0], appIdentifier, this.$options.file);
+		const action = (device: Mobile.IDevice) => device.fileSystem.getFile(args[0], appIdentifier, this.$options.file);
 		await this.$devicesService.execute(action);
 	}
 }

@@ -6,7 +6,7 @@ import { InvokeBeforeDecoratorsTest } from "./mocks/decorators-invoke-before";
 import { isPromise } from "../../helpers";
 
 describe("decorators", () => {
-	let moduleName = "moduleName", // This is the name of the injected dependency that will be resolved, for example fs, devicesService, etc.
+	const moduleName = "moduleName", // This is the name of the injected dependency that will be resolved, for example fs, devicesService, etc.
 		propertyName = "propertyName"; // This is the name of the method/property from the resolved module
 
 	beforeEach(() => {
@@ -19,7 +19,7 @@ describe("decorators", () => {
 	});
 
 	describe("exported", () => {
-		let expectedResults: any[] = [
+		const expectedResults: any[] = [
 			"string result",
 			1,
 			{ a: 1, b: "2" },
@@ -29,22 +29,22 @@ describe("decorators", () => {
 			null
 		];
 
-		let generatePublicApiFromExportedDecorator = () => {
+		const generatePublicApiFromExportedDecorator = () => {
 			assert.deepEqual($injector.publicApi.__modules__[moduleName], undefined);
-			let resultFunction: any = decoratorsLib.exported(moduleName);
+			const resultFunction: any = decoratorsLib.exported(moduleName);
 			// Call this line in order to generate publicApi and get the real result
 			resultFunction({}, propertyName, {});
 		};
 
 		it("returns function", () => {
-			let result: any = decoratorsLib.exported("test");
+			const result: any = decoratorsLib.exported("test");
 			assert.equal(typeof (result), "function");
 		});
 
 		it("does not change original method", () => {
-			let exportedFunctionResult: any = decoratorsLib.exported(moduleName);
-			let expectedResult = { "originalObject": "originalValue" };
-			let actualResult = exportedFunctionResult({}, "myTest1", expectedResult);
+			const exportedFunctionResult: any = decoratorsLib.exported(moduleName);
+			const expectedResult = { "originalObject": "originalValue" };
+			const actualResult = exportedFunctionResult({}, "myTest1", expectedResult);
 			assert.deepEqual(actualResult, expectedResult);
 		});
 
@@ -52,68 +52,68 @@ describe("decorators", () => {
 			it(`returns correct result when function returns ${_.isArray(expectedResult) ? "array" : typeof (expectedResult)}`, () => {
 				$injector.register(moduleName, { propertyName: () => expectedResult });
 				generatePublicApiFromExportedDecorator();
-				let actualResult: any = $injector.publicApi.__modules__[moduleName][propertyName]();
+				const actualResult: any = $injector.publicApi.__modules__[moduleName][propertyName]();
 				assert.deepEqual(actualResult, expectedResult);
 		});
 
 			it(`passes correct arguments to original function, when argument type is: ${_.isArray(expectedResult) ? "array" : typeof (expectedResult)}`, () => {
 				$injector.register(moduleName, { propertyName: (arg: any) => arg });
 				generatePublicApiFromExportedDecorator();
-				let actualResult: any = $injector.publicApi.__modules__[moduleName][propertyName](expectedResult);
+				const actualResult: any = $injector.publicApi.__modules__[moduleName][propertyName](expectedResult);
 				assert.deepEqual(actualResult, expectedResult);
 		});
 		});
 
 		it("returns Promise, which is resolved to correct value (function without arguments)", (done: mocha.Done) => {
-			let expectedResult = "result";
+			const expectedResult = "result";
 			$injector.register(moduleName, { propertyName: async () => expectedResult });
 			generatePublicApiFromExportedDecorator();
 
-			let promise: any = $injector.publicApi.__modules__[moduleName][propertyName]();
+			const promise: any = $injector.publicApi.__modules__[moduleName][propertyName]();
 			promise.then((val: string) => {
 				assert.deepEqual(val, expectedResult);
 			}).then(done).catch(done);
 		});
 
 		it("returns Promise, which is resolved to correct value (function with arguments)", (done: mocha.Done) => {
-			let expectedArgs = ["result", "result1", "result2"];
+			const expectedArgs = ["result", "result1", "result2"];
 			$injector.register(moduleName, { propertyName: async (functionArgs: string[]) => functionArgs });
 			generatePublicApiFromExportedDecorator();
 
-			let promise: any = $injector.publicApi.__modules__[moduleName][propertyName](expectedArgs);
+			const promise: any = $injector.publicApi.__modules__[moduleName][propertyName](expectedArgs);
 			promise.then((val: string[]) => {
 				assert.deepEqual(val, expectedArgs);
 			}).then(done).catch(done);
 		});
 
 		it("returns Promise, which is resolved to correct value (function returning Promise without arguments)", (done: mocha.Done) => {
-			let expectedResult = "result";
+			const expectedResult = "result";
 			$injector.register(moduleName, { propertyName: async () => expectedResult });
 			generatePublicApiFromExportedDecorator();
 
-			let promise: any = $injector.publicApi.__modules__[moduleName][propertyName]();
+			const promise: any = $injector.publicApi.__modules__[moduleName][propertyName]();
 			promise.then((val: string) => {
 				assert.deepEqual(val, expectedResult);
 			}).then(done).catch(done);
 		});
 
 		it("returns Promise, which is resolved to correct value (function returning Promise with arguments)", (done: mocha.Done) => {
-			let expectedArgs = ["result", "result1", "result2"];
+			const expectedArgs = ["result", "result1", "result2"];
 			$injector.register(moduleName, { propertyName: async (args: string[]) => args });
 			generatePublicApiFromExportedDecorator();
 
-			let promise: any = $injector.publicApi.__modules__[moduleName][propertyName](expectedArgs);
+			const promise: any = $injector.publicApi.__modules__[moduleName][propertyName](expectedArgs);
 			promise.then((val: string[]) => {
 				assert.deepEqual(val, expectedArgs);
 			}).then(done).catch(done);
 		});
 
 		it("rejects Promise, which is resolved to correct error (function without arguments throws)", (done: mocha.Done) => {
-			let expectedError = new Error("Test msg");
+			const expectedError = new Error("Test msg");
 			$injector.register(moduleName, { propertyName: async () => { throw expectedError; } });
 			generatePublicApiFromExportedDecorator();
 
-			let promise: any = $injector.publicApi.__modules__[moduleName][propertyName]();
+			const promise: any = $injector.publicApi.__modules__[moduleName][propertyName]();
 			promise.then((result: any) => {
 				throw new Error("Then method MUST not be called when promise is rejected!");
 			}, (err: Error) => {
@@ -122,11 +122,11 @@ describe("decorators", () => {
 		});
 
 		it("rejects Promise, which is resolved to correct error (function returning Promise without arguments throws)", (done: mocha.Done) => {
-			let expectedError = new Error("Test msg");
+			const expectedError = new Error("Test msg");
 			$injector.register(moduleName, { propertyName: async () => { throw expectedError; } });
 			generatePublicApiFromExportedDecorator();
 
-			let promise: any = $injector.publicApi.__modules__[moduleName][propertyName]();
+			const promise: any = $injector.publicApi.__modules__[moduleName][propertyName]();
 			promise.then((result: any) => {
 				throw new Error("Then method MUST not be called when promise is rejected!");
 			}, (err: Error) => {
@@ -135,11 +135,11 @@ describe("decorators", () => {
 		});
 
 		it("returns Promises, which are resolved to correct value (function returning Promise<T>[] without arguments)", (done: mocha.Done) => {
-			let expectedResultsArr = ["result1", "result2", "result3"];
+			const expectedResultsArr = ["result1", "result2", "result3"];
 			$injector.register(moduleName, { propertyName: () => _.map(expectedResultsArr, async expectedResult => expectedResult) });
 			generatePublicApiFromExportedDecorator();
 
-			let promises: Promise<string>[] = $injector.publicApi.__modules__[moduleName][propertyName]();
+			const promises: Promise<string>[] = $injector.publicApi.__modules__[moduleName][propertyName]();
 			Promise.all<string>(promises)
 				.then((promiseResults: string[]) => {
 					_.each(promiseResults, (val: string, index: number) => {
@@ -151,12 +151,12 @@ describe("decorators", () => {
 		});
 
 		it("rejects Promises, which are resolved to correct error (function returning Promise<T>[] without arguments throws)", (done: mocha.Done) => {
-			let expectedErrors = [new Error("result1"), new Error("result2"), new Error("result3")];
+			const expectedErrors = [new Error("result1"), new Error("result2"), new Error("result3")];
 			$injector.register(moduleName, { propertyName: () => _.map(expectedErrors, async expectedError => { throw expectedError; }) });
 			generatePublicApiFromExportedDecorator();
 
 			new Promise((onFulfilled: Function, onRejected: Function) => {
-				let promises: Promise<string>[] = $injector.publicApi.__modules__[moduleName][propertyName]();
+				const promises: Promise<string>[] = $injector.publicApi.__modules__[moduleName][propertyName]();
 				_.each(promises, (promise, index) => promise.then((result: any) => {
 					onRejected(new Error(`Then method MUST not be called when promise is rejected!. Result of promise is: ${result}`));
 				}, (err: Error) => {
@@ -172,12 +172,12 @@ describe("decorators", () => {
 		});
 
 		it("rejects only Promises which throw, resolves the others correctly (function returning Promise<T>[] without arguments)", (done: mocha.Done) => {
-			let expectedResultsArr: any[] = ["result1", new Error("result2")];
+			const expectedResultsArr: any[] = ["result1", new Error("result2")];
 			$injector.register(moduleName, { propertyName: () => _.map(expectedResultsArr, async expectedResult => expectedResult) });
 			generatePublicApiFromExportedDecorator();
 
 			new Promise((onFulfilled: Function, onRejected: Function) => {
-				let promises: Promise<string>[] = $injector.publicApi.__modules__[moduleName][propertyName]();
+				const promises: Promise<string>[] = $injector.publicApi.__modules__[moduleName][propertyName]();
 				_.each(promises, (promise, index) => promise.then((val: string) => {
 					assert.deepEqual(val, expectedResultsArr[index]);
 					if (index + 1 === expectedResultsArr.length) {
@@ -193,7 +193,7 @@ describe("decorators", () => {
 		});
 
 		it("when function throws, raises the error only when the public API is called, not when decorator is applied", () => {
-			let errorMessage = "This is error message";
+			const errorMessage = "This is error message";
 			$injector.register(moduleName, { propertyName: () => { throw new Error(errorMessage); } });
 			generatePublicApiFromExportedDecorator();
 			assert.throws(() => $injector.publicApi.__modules__[moduleName][propertyName](), errorMessage);

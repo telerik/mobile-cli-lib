@@ -17,60 +17,60 @@ class MyClass {
 describe("yok", () => {
 	describe("functions", () => {
 		it("resolves pre-constructed singleton", () => {
-			let injector = new Yok();
-			let obj = {};
+			const injector = new Yok();
+			const obj = {};
 			injector.register("foo", obj);
 
-			let resolved = injector.resolve("foo");
+			const resolved = injector.resolve("foo");
 
 			assert.strictEqual(obj, resolved);
 		});
 
 		it("resolves given constructor", () => {
-			let injector = new Yok();
+			const injector = new Yok();
 			let obj: any;
 			injector.register("foo", () => {
 				obj = { foo: "foo" };
 				return obj;
 			});
 
-			let resolved = injector.resolve("foo");
+			const resolved = injector.resolve("foo");
 
 			assert.strictEqual(resolved, obj);
 		});
 
 		it("resolves constructed singleton", () => {
-			let injector = new Yok();
+			const injector = new Yok();
 			injector.register("foo", { foo: "foo" });
 
-			let r1 = injector.resolve("foo");
-			let r2 = injector.resolve("foo");
+			const r1 = injector.resolve("foo");
+			const r2 = injector.resolve("foo");
 
 			assert.strictEqual(r1, r2);
 		});
 
 		it("injects directly into passed constructor", () => {
-			let injector = new Yok();
-			let obj = {};
+			const injector = new Yok();
+			const obj = {};
 			injector.register("foo", obj);
 
 			function Test(foo: any) {
 				this.foo = foo;
 			}
 
-			let result = injector.resolve(Test);
+			const result = injector.resolve(Test);
 
 			assert.strictEqual(obj, result.foo);
 		});
 
 		it("injects directly into passed constructor, ES6 lambda", () => {
-			let injector = new Yok();
-			let obj = {};
+			const injector = new Yok();
+			const obj = {};
 			let resultFoo: any = null;
 
 			injector.register("foo", obj);
 
-			let Test = (foo: any) => {
+			const Test = (foo: any) => {
 				resultFoo = foo;
 			};
 
@@ -84,12 +84,12 @@ describe("yok", () => {
 			const obj = {};
 			const expectedBar = {};
 
-			let resultFoo: any = null,
-				resultBar: any = null;
+			let resultFoo: any = null;
+			let resultBar: any = null;
 
 			injector.register("foo", obj);
 
-			let Test = (foo: any, bar: any) => {
+			const Test = (foo: any, bar: any) => {
 				resultFoo = foo;
 				resultBar = bar;
 			};
@@ -101,8 +101,8 @@ describe("yok", () => {
 		});
 
 		it("inject dependency into registered constructor", () => {
-			let injector = new Yok();
-			let obj = {};
+			const injector = new Yok();
+			const obj = {};
 			injector.register("foo", obj);
 
 			function Test(foo: any) {
@@ -111,19 +111,19 @@ describe("yok", () => {
 
 			injector.register("test", Test);
 
-			let result = injector.resolve("test");
+			const result = injector.resolve("test");
 
 			assert.strictEqual(obj, result.foo);
 		});
 
 		it("inject dependency into registered constructor, ES6 lambda", () => {
-			let injector = new Yok();
-			let obj = {};
+			const injector = new Yok();
+			const obj = {};
 			let resultFoo: any = null;
 
 			injector.register("foo", obj);
 
-			let Test = (foo: any) => {
+			const Test = (foo: any) => {
 				resultFoo = foo;
 			};
 
@@ -139,12 +139,12 @@ describe("yok", () => {
 			const obj = {};
 			const expectedBar = {};
 
-			let resultFoo: any = null,
-				resultBar: any = null;
+			let resultFoo: any = null;
+			let resultBar: any = null;
 
 			injector.register("foo", obj);
 
-			let Test = (foo: any, bar: any) => {
+			const Test = (foo: any, bar: any) => {
 				resultFoo = foo;
 				resultBar = bar;
 			};
@@ -158,51 +158,51 @@ describe("yok", () => {
 		});
 
 		it("inject dependency with $ prefix", () => {
-			let injector = new Yok();
-			let obj = {};
+			const injector = new Yok();
+			const obj = {};
 			injector.register("foo", obj);
 
 			function Test($foo: any) {
 				this.foo = $foo;
 			}
 
-			let result = injector.resolve(Test);
+			const result = injector.resolve(Test);
 
 			assert.strictEqual(obj, result.foo);
 		});
 
 		it("inject into TS constructor", () => {
-			let injector = new Yok();
+			const injector = new Yok();
 
 			injector.register("x", "foo");
 			injector.register("y", 123);
 
-			let result = <MyClass>injector.resolve(MyClass);
+			const result = <MyClass>injector.resolve(MyClass);
 
 			assert.strictEqual(result.y, 123);
 			result.checkX();
 		});
 
 		it("resolves a parameterless constructor", () => {
-			let injector = new Yok();
+			const injector = new Yok();
 
 			function Test() {
 				this.foo = "foo";
 			}
 
-			let result = injector.resolve(Test);
+			const result = injector.resolve(Test);
 
 			assert.equal(result.foo, "foo");
 		});
 
 		it("returns null when it can't resolve a command", () => {
-			let injector = new Yok();
-			let command = injector.resolveCommand("command");
+			const injector = new Yok();
+			const command = injector.resolveCommand("command");
 			assert.isNull(command);
 		});
 
 		it("throws when it can't resolve a registered command", () => {
-			let injector = new Yok();
+			const injector = new Yok();
 
 			function Command(whatever: any) { /* intentionally left blank */ }
 
@@ -212,7 +212,7 @@ describe("yok", () => {
 		});
 
 		it("disposes", () => {
-			let injector = new Yok();
+			const injector = new Yok();
 
 			function Thing() { /* intentionally left blank */ }
 
@@ -221,7 +221,7 @@ describe("yok", () => {
 			};
 
 			injector.register("thing", Thing);
-			let thing = injector.resolve("thing");
+			const thing = injector.resolve("thing");
 			injector.dispose();
 
 			assert.isTrue(thing.disposed);
@@ -231,41 +231,41 @@ describe("yok", () => {
 
 	describe("classes", () => {
 		it("resolves pre-constructed singleton", () => {
-			let injector = new Yok();
-			let obj = {};
+			const injector = new Yok();
+			const obj = {};
 			injector.register("foo", obj);
 
-			let resolved = injector.resolve("foo");
+			const resolved = injector.resolve("foo");
 
 			assert.strictEqual(obj, resolved);
 		});
 
 		it("resolves given constructor", () => {
-			let injector = new Yok();
+			const injector = new Yok();
 			let obj: any;
 			injector.register("foo", () => {
 				obj = { foo: "foo" };
 				return obj;
 			});
 
-			let resolved = injector.resolve("foo");
+			const resolved = injector.resolve("foo");
 
 			assert.strictEqual(resolved, obj);
 		});
 
 		it("resolves constructed singleton", () => {
-			let injector = new Yok();
+			const injector = new Yok();
 			injector.register("foo", { foo: "foo" });
 
-			let r1 = injector.resolve("foo");
-			let r2 = injector.resolve("foo");
+			const r1 = injector.resolve("foo");
+			const r2 = injector.resolve("foo");
 
 			assert.strictEqual(r1, r2);
 		});
 
 		it("injects directly into passed constructor", () => {
-			let injector = new Yok();
-			let obj = {};
+			const injector = new Yok();
+			const obj = {};
 			injector.register("foo", obj);
 
 			class Test {
@@ -276,7 +276,7 @@ describe("yok", () => {
 				}
 			}
 
-			let result = injector.resolve(Test);
+			const result = injector.resolve(Test);
 			assert.strictEqual(obj, result.foo);
 		});
 
@@ -297,15 +297,15 @@ describe("yok", () => {
 				}
 			}
 
-			let result = injector.resolve(Test, { bar: expectedBar });
+			const result = injector.resolve(Test, { bar: expectedBar });
 
 			assert.strictEqual(obj, result.foo);
 			assert.strictEqual(expectedBar, result.bar);
 		});
 
 		it("inject dependency into registered constructor", () => {
-			let injector = new Yok();
-			let obj = {};
+			const injector = new Yok();
+			const obj = {};
 			injector.register("foo", obj);
 
 			class Test {
@@ -318,7 +318,7 @@ describe("yok", () => {
 
 			injector.register("test", Test);
 
-			let result = injector.resolve("test");
+			const result = injector.resolve("test");
 
 			assert.strictEqual(obj, result.foo);
 		});
@@ -342,15 +342,15 @@ describe("yok", () => {
 
 			injector.register("test", Test);
 
-			let result = injector.resolve("test", { bar: expectedBar });
+			const result = injector.resolve("test", { bar: expectedBar });
 
 			assert.strictEqual(obj, result.foo);
 			assert.strictEqual(expectedBar, result.bar);
 		});
 
 		it("inject dependency with $ prefix", () => {
-			let injector = new Yok();
-			let obj = {};
+			const injector = new Yok();
+			const obj = {};
 			injector.register("foo", obj);
 
 			class Test {
@@ -360,25 +360,25 @@ describe("yok", () => {
 				}
 			}
 
-			let result = injector.resolve(Test);
+			const result = injector.resolve(Test);
 
 			assert.strictEqual(obj, result.foo);
 		});
 
 		it("inject into TS constructor", () => {
-			let injector = new Yok();
+			const injector = new Yok();
 
 			injector.register("x", "foo");
 			injector.register("y", 123);
 
-			let result = <MyClass>injector.resolve(MyClass);
+			const result = <MyClass>injector.resolve(MyClass);
 
 			assert.strictEqual(result.y, 123);
 			result.checkX();
 		});
 
 		it("resolves a parameterless constructor", () => {
-			let injector = new Yok();
+			const injector = new Yok();
 
 			class Test {
 				private foo: any;
@@ -387,19 +387,19 @@ describe("yok", () => {
 				}
 			}
 
-			let result = injector.resolve(Test);
+			const result = injector.resolve(Test);
 
 			assert.equal(result.foo, "foo");
 		});
 
 		it("returns null when it can't resolve a command", () => {
-			let injector = new Yok();
-			let command = injector.resolveCommand("command");
+			const injector = new Yok();
+			const command = injector.resolveCommand("command");
 			assert.isNull(command);
 		});
 
 		it("throws when it can't resolve a registered command", () => {
-			let injector = new Yok();
+			const injector = new Yok();
 
 			class Command {
 				constructor(whatever: any) { /* intentionally left blank */ }
@@ -411,7 +411,7 @@ describe("yok", () => {
 		});
 
 		it("disposes", () => {
-			let injector = new Yok();
+			const injector = new Yok();
 
 			class Thing {
 				public disposed = false;
@@ -422,7 +422,7 @@ describe("yok", () => {
 			}
 
 			injector.register("thing", Thing);
-			let thing = injector.resolve("thing");
+			const thing = injector.resolve("thing");
 			injector.dispose();
 
 			assert.isTrue(thing.disposed);
@@ -430,7 +430,7 @@ describe("yok", () => {
 	});
 
 	it("throws error when module is required more than once and overrideAlreadyRequiredModule is false", () => {
-		let injector = new Yok();
+		const injector = new Yok();
 		injector.require("foo", "test");
 		injector.overrideAlreadyRequiredModule = false;
 		assert.throws(() => injector.require("foo", "test2"));
@@ -478,7 +478,7 @@ $injector.register("a", A);
 
 	describe("requirePublic", () => {
 		it("adds module to public api when requirePublic is used", () => {
-			let injector = new Yok();
+			const injector = new Yok();
 			injector.requirePublic("foo", "test");
 			assert.isTrue(_.includes(Object.getOwnPropertyNames(injector.publicApi), "foo"));
 		});
@@ -543,44 +543,44 @@ $injector.register("a", A);
 
 		describe("returns correct command and arguments when command name has one pipe (|)", () => {
 			it("when only command is passed, no arguments are returned", () => {
-				let commandName = "sample|command";
+				const commandName = "sample|command";
 				injector.requireCommand(commandName, "sampleFileName");
-				let buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command"]);
+				const buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command"]);
 				assert.deepEqual(buildHierarchicalCommandResult.commandName, commandName, `The expected command name is ${commandName}`);
 				assert.deepEqual(buildHierarchicalCommandResult.remainingArguments, [], "There shouldn't be any arguments left.");
 			});
 
 			it("when command is passed, correct arguments are returned", () => {
-				let commandName = "sample|command";
+				const commandName = "sample|command";
 				injector.requireCommand(commandName, "sampleFileName");
-				let sampleArguments = ["sample", "arguments", "passed", "to", "command"];
-				let buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command"].concat(sampleArguments));
+				const sampleArguments = ["sample", "arguments", "passed", "to", "command"];
+				const buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command"].concat(sampleArguments));
 				assert.deepEqual(buildHierarchicalCommandResult.commandName, commandName, `The expected command name is ${commandName}`);
 				assert.deepEqual(buildHierarchicalCommandResult.remainingArguments, sampleArguments, "All arguments except first one should be returned.");
 			});
 
 			it("when command is passed, correct arguments are returned when command argument has uppercase letters", () => {
-				let commandName = "sample|command";
+				const commandName = "sample|command";
 				injector.requireCommand(commandName, "sampleFileName");
-				let sampleArguments = ["sample", "arguments", "passed", "to", "command"];
-				let buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["CoMmanD"].concat(sampleArguments));
+				const sampleArguments = ["sample", "arguments", "passed", "to", "command"];
+				const buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["CoMmanD"].concat(sampleArguments));
 				assert.deepEqual(buildHierarchicalCommandResult.commandName, commandName, `The expected command name is ${commandName}`);
 				assert.deepEqual(buildHierarchicalCommandResult.remainingArguments, sampleArguments, "All arguments except first one should be returned.");
 			});
 
 			it("when only default command is passed, no arguments are returned", () => {
-				let commandName = "sample|*command";
+				const commandName = "sample|*command";
 				injector.requireCommand(commandName, "sampleFileName");
-				let buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command"]);
+				const buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command"]);
 				assert.deepEqual(buildHierarchicalCommandResult.commandName, commandName, `The expected command name is ${commandName}`);
 				assert.deepEqual(buildHierarchicalCommandResult.remainingArguments, [], "There shouldn't be any arguments left.");
 			});
 
 			it("when default command is passed, correct arguments are returned", () => {
-				let commandName = "sample|*command";
+				const commandName = "sample|*command";
 				injector.requireCommand(commandName, "sampleFileName");
-				let sampleArguments = ["sample", "arguments", "passed", "to", "command"];
-				let buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command"].concat(sampleArguments));
+				const sampleArguments = ["sample", "arguments", "passed", "to", "command"];
+				const buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command"].concat(sampleArguments));
 				assert.deepEqual(buildHierarchicalCommandResult.commandName, commandName, `The expected command name is ${commandName}`);
 				assert.deepEqual(buildHierarchicalCommandResult.remainingArguments, sampleArguments, "All arguments except first one should be returned.");
 			});
@@ -588,41 +588,41 @@ $injector.register("a", A);
 
 		describe("returns correct command and arguments when command name has more than one pipe (|)", () => {
 			it("when only command is passed, no arguments are returned", () => {
-				let commandName = "sample|command|with|more|pipes";
+				const commandName = "sample|command|with|more|pipes";
 				injector.requireCommand(commandName, "sampleFileName");
-				let buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command", "with", "more", "pipes"]);
+				const buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command", "with", "more", "pipes"]);
 				assert.deepEqual(buildHierarchicalCommandResult.commandName, commandName, `The expected command name is ${commandName}`);
 				assert.deepEqual(buildHierarchicalCommandResult.remainingArguments, [], "There shouldn't be any arguments left.");
 			});
 
 			it("when command is passed, correct arguments are returned", () => {
-				let commandName = "sample|command|pipes";
+				const commandName = "sample|command|pipes";
 				injector.requireCommand(commandName, "sampleFileName");
-				let sampleArguments = ["sample", "arguments", "passed", "to", "command"];
-				let buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command", "pipes"].concat(sampleArguments));
+				const sampleArguments = ["sample", "arguments", "passed", "to", "command"];
+				const buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command", "pipes"].concat(sampleArguments));
 				assert.deepEqual(buildHierarchicalCommandResult.commandName, commandName, `The expected command name is ${commandName}`);
 				assert.deepEqual(buildHierarchicalCommandResult.remainingArguments, sampleArguments, "All arguments except the ones used for commandName should be returned.");
 			});
 
 			it("when only default command is passed, no arguments are returned", () => {
-				let commandName = "sample|*command|pipes";
+				const commandName = "sample|*command|pipes";
 				injector.requireCommand(commandName, "sampleFileName");
-				let buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command", "pipes"]);
+				const buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command", "pipes"]);
 				assert.deepEqual(buildHierarchicalCommandResult.commandName, commandName, `The expected command name is ${commandName}`);
 				assert.deepEqual(buildHierarchicalCommandResult.remainingArguments, [], "There shouldn't be any arguments left.");
 			});
 
 			it("when default command is passed, correct arguments are returned", () => {
-				let commandName = "sample|*command|pipes";
+				const commandName = "sample|*command|pipes";
 				injector.requireCommand(commandName, "sampleFileName");
-				let sampleArguments = ["sample", "arguments", "passed", "to", "command"];
-				let buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command", "pipes"].concat(sampleArguments));
+				const sampleArguments = ["sample", "arguments", "passed", "to", "command"];
+				const buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command", "pipes"].concat(sampleArguments));
 				assert.deepEqual(buildHierarchicalCommandResult.commandName, commandName, `The expected command name is ${commandName}`);
 				assert.deepEqual(buildHierarchicalCommandResult.remainingArguments, sampleArguments, "All arguments except the ones used for commandName should be returned.");
 			});
 
 			describe("returns most applicable hierarchical command", () => {
-				let sampleArguments = ["sample", "arguments", "passed", "to", "command"];
+				const sampleArguments = ["sample", "arguments", "passed", "to", "command"];
 				beforeEach(() => {
 					injector.requireCommand("sample|command", "sampleFileName");
 					injector.requireCommand("sample|command|with", "sampleFileName");
@@ -630,43 +630,43 @@ $injector.register("a", A);
 					injector.requireCommand("sample|command|with|more|pipes", "sampleFileName");
 				});
 				it("when subcommand of subcommand is called", () => {
-					let commandName = "sample|command|with|more|pipes";
-					let buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command", "with", "more", "pipes"]);
+					const commandName = "sample|command|with|more|pipes";
+					const buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command", "with", "more", "pipes"]);
 					assert.deepEqual(buildHierarchicalCommandResult.commandName, commandName, `The expected command name is ${commandName}`);
 					assert.deepEqual(buildHierarchicalCommandResult.remainingArguments, [], "There shouldn't be any arguments left.");
 				});
 
 				it("and correct arguments, when subcommand of subcommand is called", () => {
-					let commandName = "sample|command|with|more|pipes";
-					let buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command", "with", "more", "pipes"].concat(sampleArguments));
+					const commandName = "sample|command|with|more|pipes";
+					const buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command", "with", "more", "pipes"].concat(sampleArguments));
 					assert.deepEqual(buildHierarchicalCommandResult.commandName, commandName, `The expected command name is ${commandName}`);
 					assert.deepEqual(buildHierarchicalCommandResult.remainingArguments, sampleArguments, "All arguments except the ones used for commandName should be returned.");
 				});
 
 				it("when top subcommand is called and it has its own subcommand", () => {
-					let commandName = "sample|command";
-					let buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command"]);
+					const commandName = "sample|command";
+					const buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command"]);
 					assert.deepEqual(buildHierarchicalCommandResult.commandName, commandName, `The expected command name is ${commandName}`);
 					assert.deepEqual(buildHierarchicalCommandResult.remainingArguments, [], "There shouldn't be any arguments left.");
 				});
 
 				it("and correct arguments, when top subcommand is called and it has its own subcommand", () => {
-					let commandName = "sample|command";
-					let buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command"].concat(sampleArguments));
+					const commandName = "sample|command";
+					const buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command"].concat(sampleArguments));
 					assert.deepEqual(buildHierarchicalCommandResult.commandName, commandName, `The expected command name is ${commandName}`);
 					assert.deepEqual(buildHierarchicalCommandResult.remainingArguments, sampleArguments, "All arguments except the ones used for commandName should be returned.");
 				});
 
 				it("when subcommand of subcommand is called and it has its own subcommand", () => {
-					let commandName = "sample|command|with";
-					let buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command", "with"]);
+					const commandName = "sample|command|with";
+					const buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command", "with"]);
 					assert.deepEqual(buildHierarchicalCommandResult.commandName, commandName, `The expected command name is ${commandName}`);
 					assert.deepEqual(buildHierarchicalCommandResult.remainingArguments, [], "There shouldn't be any arguments left.");
 				});
 
 				it("and correct arguments, when subcommand of subcommand is called and it has its own subcommand", () => {
-					let commandName = "sample|command|with";
-					let buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command", "with"].concat(sampleArguments));
+					const commandName = "sample|command|with";
+					const buildHierarchicalCommandResult = injector.buildHierarchicalCommand("sample", ["command", "with"].concat(sampleArguments));
 					assert.deepEqual(buildHierarchicalCommandResult.commandName, commandName, `The expected command name is ${commandName}`);
 					assert.deepEqual(buildHierarchicalCommandResult.remainingArguments, sampleArguments, "All arguments except the ones used for commandName should be returned.");
 				});
@@ -675,15 +675,15 @@ $injector.register("a", A);
 	});
 
 	it("adds whole class to public api when requirePublicClass is used", () => {
-		let injector = new Yok();
-		let dataObject = {
+		const injector = new Yok();
+		const dataObject = {
 			a: "testA",
 			b: {
 				c: "testC"
 			}
 		};
 
-		let filepath = path.join(__dirname, "..", "..", "temp.js");
+		const filepath = path.join(__dirname, "..", "..", "temp.js");
 		fs.writeFileSync(filepath, "");
 
 		// Call to requirePublicClass will add the class to publicApi object.
@@ -691,7 +691,7 @@ $injector.register("a", A);
 		injector.register("foo", dataObject);
 		// Get the real instance here, so we can delete the file before asserts.
 		// This way we'll keep the directory clean, even if assert fails.
-		let resultFooObject = injector.publicApi.foo;
+		const resultFooObject = injector.publicApi.foo;
 		fs.unlinkSync(filepath);
 		assert.isTrue(_.includes(Object.getOwnPropertyNames(injector.publicApi), "foo"));
 		assert.deepEqual(resultFooObject, dataObject);

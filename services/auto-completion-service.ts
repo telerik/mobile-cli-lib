@@ -41,20 +41,20 @@ export class AutoCompletionService implements IAutoCompletionService {
 	}
 
 	private getTabTabObsoleteRegex(clientName: string): RegExp {
-		let tabTabStartPoint = util.format(AutoCompletionService.TABTAB_COMPLETION_START_REGEX_PATTERN, clientName.toLowerCase());
-		let tabTabEndPoint = util.format(AutoCompletionService.TABTAB_COMPLETION_END_REGEX_PATTERN, clientName.toLowerCase());
-		let tabTabRegex = new RegExp(util.format("%s[\\s\\S]*%s", tabTabStartPoint, tabTabEndPoint));
+		const tabTabStartPoint = util.format(AutoCompletionService.TABTAB_COMPLETION_START_REGEX_PATTERN, clientName.toLowerCase());
+		const tabTabEndPoint = util.format(AutoCompletionService.TABTAB_COMPLETION_END_REGEX_PATTERN, clientName.toLowerCase());
+		const tabTabRegex = new RegExp(util.format("%s[\\s\\S]*%s", tabTabStartPoint, tabTabEndPoint));
 		return tabTabRegex;
 	}
 
 	private removeObsoleteAutoCompletion(): void {
 		// In previous releases we were writing directly in .bash_profile, .bashrc, .zshrc and .profile - remove this old code
-		let shellProfilesToBeCleared = this.shellProfiles;
+		const shellProfilesToBeCleared = this.shellProfiles;
 		// Add .profile only here as we do not want new autocompletion in this file, but we have to remove our old code from it.
 		shellProfilesToBeCleared.push(this.getHomePath(".profile"));
 		shellProfilesToBeCleared.forEach(file => {
 			try {
-				let text = this.$fs.readText(file);
+				const text = this.$fs.readText(file);
 				let newText = text.replace(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME), "");
 				if (this.$staticConfig.CLIENT_NAME_ALIAS) {
 					newText = newText.replace(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME_ALIAS), "");
@@ -74,9 +74,9 @@ export class AutoCompletionService implements IAutoCompletionService {
 
 	@cache()
 	private get completionShellScriptContent() {
-		let startText = util.format(AutoCompletionService.COMPLETION_START_COMMENT_PATTERN, this.$staticConfig.CLIENT_NAME.toLowerCase());
-		let content = util.format("if [ -f %s ]; then \n    source %s \nfi", this.cliRunCommandsFile, this.cliRunCommandsFile);
-		let endText = util.format(AutoCompletionService.COMPLETION_END_COMMENT_PATTERN, this.$staticConfig.CLIENT_NAME.toLowerCase());
+		const startText = util.format(AutoCompletionService.COMPLETION_START_COMMENT_PATTERN, this.$staticConfig.CLIENT_NAME.toLowerCase());
+		const content = util.format("if [ -f %s ]; then \n    source %s \nfi", this.cliRunCommandsFile, this.cliRunCommandsFile);
+		const endText = util.format(AutoCompletionService.COMPLETION_END_COMMENT_PATTERN, this.$staticConfig.CLIENT_NAME.toLowerCase());
 		return util.format("\n%s\n%s\n%s\n", startText, content, endText);
 	}
 
@@ -127,7 +127,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 
 	private isNewAutoCompletionEnabledInFile(fileName: string): boolean {
 		try {
-			let data = this.$fs.readText(fileName);
+			const data = this.$fs.readText(fileName);
 			if (data && data.indexOf(this.completionShellScriptContent) !== -1) {
 				return true;
 			}
@@ -140,7 +140,7 @@ export class AutoCompletionService implements IAutoCompletionService {
 
 	private isObsoleteAutoCompletionEnabledInFile(fileName: string): boolean {
 		try {
-			let text = this.$fs.readText(fileName);
+			const text = this.$fs.readText(fileName);
 			return !!(text.match(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME)) || text.match(this.getTabTabObsoleteRegex(this.$staticConfig.CLIENT_NAME)));
 		} catch (err) {
 			this.$logger.trace("Error while checking is obsolete autocompletion enabled in file %s. Error is: '%s'", fileName, err.toString());
@@ -187,13 +187,13 @@ export class AutoCompletionService implements IAutoCompletionService {
 	}
 
 	private async updateCLIShellScript(): Promise<void> {
-		let filePath = this.cliRunCommandsFile;
+		const filePath = this.cliRunCommandsFile;
 
 		try {
 			let doUpdate = true;
 			if (this.$fs.exists(filePath)) {
-				let contents = this.$fs.readText(filePath);
-				let regExp = new RegExp(util.format("%s\\s+completion\\s+--\\s+", this.$staticConfig.CLIENT_NAME.toLowerCase()));
+				const contents = this.$fs.readText(filePath);
+				const regExp = new RegExp(util.format("%s\\s+completion\\s+--\\s+", this.$staticConfig.CLIENT_NAME.toLowerCase()));
 				let matchCondition = contents.match(regExp);
 				if (this.$staticConfig.CLIENT_NAME_ALIAS) {
 					matchCondition = matchCondition || contents.match(new RegExp(util.format("%s\\s+completion\\s+--\\s+", this.$staticConfig.CLIENT_NAME_ALIAS.toLowerCase())));
@@ -205,8 +205,8 @@ export class AutoCompletionService implements IAutoCompletionService {
 			}
 
 			if (doUpdate) {
-				let clientExecutableFileName = (this.$staticConfig.CLIENT_NAME_ALIAS || this.$staticConfig.CLIENT_NAME).toLowerCase();
-				let pathToExecutableFile = path.join(__dirname, `../../../bin/${clientExecutableFileName}.js`);
+				const clientExecutableFileName = (this.$staticConfig.CLIENT_NAME_ALIAS || this.$staticConfig.CLIENT_NAME).toLowerCase();
+				const pathToExecutableFile = path.join(__dirname, `../../../bin/${clientExecutableFileName}.js`);
 				await this.$childProcess.exec(`"${process.argv[0]}" "${pathToExecutableFile}" completion >> "${filePath}"`);
 				this.$fs.chmod(filePath, "0644");
 			}

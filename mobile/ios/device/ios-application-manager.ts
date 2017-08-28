@@ -63,7 +63,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 			await this.getApplicationsLiveSyncSupportedStatus();
 		}
 
-		let selectedApplication = _.find(this.applicationsLiveSyncInfos, app => app.applicationIdentifier === appIdentifier);
+		const selectedApplication = _.find(this.applicationsLiveSyncInfos, app => app.applicationIdentifier === appIdentifier);
 		return !!selectedApplication && selectedApplication.isLiveSyncSupported;
 	}
 

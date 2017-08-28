@@ -11,7 +11,7 @@ export class ITunesValidator implements Mobile.IiTunesValidator {
 	public getError(): string {
 		if (this.$hostInfo.isWindows) {
 			let commonProgramFiles = "";
-			let isNode64 = process.arch === "x64";
+			const isNode64 = process.arch === "x64";
 
 			if (isNode64) { //x64-windows
 				commonProgramFiles = process.env.CommonProgramFiles;
@@ -37,8 +37,8 @@ export class ITunesValidator implements Mobile.IiTunesValidator {
 
 			return null;
 		} else if (this.$hostInfo.isDarwin) {
-			let coreFoundationDir = "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation";
-			let mobileDeviceDir = "/System/Library/PrivateFrameworks/MobileDevice.framework/MobileDevice";
+			const coreFoundationDir = "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation";
+			const mobileDeviceDir = "/System/Library/PrivateFrameworks/MobileDevice.framework/MobileDevice";
 
 			if (!this.isiTunesInstalledCore(coreFoundationDir, mobileDeviceDir)) {
 				return ITunesValidator.NOT_INSTALLED_iTUNES_ERROR_MESSAGE;
@@ -51,8 +51,8 @@ export class ITunesValidator implements Mobile.IiTunesValidator {
 	}
 
 	private isiTunesInstalledOnWindows(commonProgramFiles: string): boolean {
-		let coreFoundationDir = path.join(commonProgramFiles, "Apple", "Apple Application Support");
-		let mobileDeviceDir = path.join(commonProgramFiles, "Apple", "Mobile Device Support");
+		const coreFoundationDir = path.join(commonProgramFiles, "Apple", "Apple Application Support");
+		const mobileDeviceDir = path.join(commonProgramFiles, "Apple", "Mobile Device Support");
 
 		return this.isiTunesInstalledCore(coreFoundationDir, mobileDeviceDir);
 	}

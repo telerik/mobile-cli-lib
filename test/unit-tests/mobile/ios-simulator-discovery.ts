@@ -5,11 +5,11 @@ import { assert } from "chai";
 import { DeviceDiscoveryEventNames } from "../../../constants";
 import { DevicePlatformsConstants } from "../../../mobile/device-platforms-constants";
 
-let currentlyRunningSimulator: any,
-	isCurrentlyRunning: boolean;
+let currentlyRunningSimulator: any;
+let isCurrentlyRunning: boolean;
 
 function createTestInjector(): IInjector {
-	let injector = new Yok();
+	const injector = new Yok();
 	injector.register("childProcess", {
 		exec: (command: string) => Promise.resolve(isCurrentlyRunning ? 'launchd_sim' : '')
 	});
@@ -39,12 +39,12 @@ function createTestInjector(): IInjector {
 }
 
 describe("ios-simulator-discovery", () => {
-	let testInjector: IInjector,
-		iOSSimulatorDiscovery: Mobile.IDeviceDiscovery,
-		defaultRunningSimulator: any,
-		expectedDeviceInfo: Mobile.IDeviceInfo = null;
+	let testInjector: IInjector;
+	let iOSSimulatorDiscovery: Mobile.IDeviceDiscovery;
+	let defaultRunningSimulator: any;
+	let expectedDeviceInfo: Mobile.IDeviceInfo = null;
 
-	let detectNewSimulatorAttached = async (runningSimulator: any): Promise<Mobile.IiOSSimulator> => {
+	const detectNewSimulatorAttached = async (runningSimulator: any): Promise<Mobile.IiOSSimulator> => {
 		return new Promise<Mobile.IiOSSimulator>((resolve, reject) => {
 
 			isCurrentlyRunning = true;
@@ -57,7 +57,7 @@ describe("ios-simulator-discovery", () => {
 		});
 	};
 
-	let detectSimulatorDetached = async (): Promise<Mobile.IiOSSimulator> => {
+	const detectSimulatorDetached = async (): Promise<Mobile.IiOSSimulator> => {
 		isCurrentlyRunning = false;
 		currentlyRunningSimulator = null;
 		return new Promise<Mobile.IDevice>((resolve, reject) => {
@@ -70,10 +70,10 @@ describe("ios-simulator-discovery", () => {
 		});
 	};
 
-	let detectSimulatorChanged = async (newId: string): Promise<any> => {
+	const detectSimulatorChanged = async (newId: string): Promise<any> => {
 		currentlyRunningSimulator.id = newId;
-		let lostDevicePromise: Promise<Mobile.IDevice>,
-			foundDevicePromise: Promise<Mobile.IDevice>;
+		let lostDevicePromise: Promise<Mobile.IDevice>;
+		let foundDevicePromise: Promise<Mobile.IDevice>;
 
 		iOSSimulatorDiscovery.on(DeviceDiscoveryEventNames.DEVICE_LOST, (device: Mobile.IDevice) => {
 			lostDevicePromise = Promise.resolve(device);
@@ -85,8 +85,8 @@ describe("ios-simulator-discovery", () => {
 
 		await iOSSimulatorDiscovery.startLookingForDevices();
 
-		let deviceLost = await lostDevicePromise;
-		let deviceFound = await foundDevicePromise;
+		const deviceLost = await lostDevicePromise;
+		const deviceFound = await foundDevicePromise;
 		return { deviceLost, deviceFound };
 	};
 
@@ -117,23 +117,23 @@ describe("ios-simulator-discovery", () => {
 	});
 
 	it("finds new device when it is attached", async () => {
-		let device = await detectNewSimulatorAttached(defaultRunningSimulator);
+		const device = await detectNewSimulatorAttached(defaultRunningSimulator);
 		assert.deepEqual(device.deviceInfo, expectedDeviceInfo);
 	});
 
 	it("raises deviceLost when device is detached", async () => {
-		let device = await detectNewSimulatorAttached(defaultRunningSimulator);
+		const device = await detectNewSimulatorAttached(defaultRunningSimulator);
 		assert.deepEqual(device.deviceInfo, expectedDeviceInfo);
-		let lostDevice = await detectSimulatorDetached();
+		const lostDevice = await detectSimulatorDetached();
 		assert.deepEqual(lostDevice, device);
 	});
 
 	it("raises deviceLost and deviceFound when device's id has changed (change simulator type)", async () => {
-		let device = await detectNewSimulatorAttached(defaultRunningSimulator),
+		const device = await detectNewSimulatorAttached(defaultRunningSimulator),
 			newId = "newId";
 		assert.deepEqual(device.deviceInfo, expectedDeviceInfo);
 
-		let devices = await detectSimulatorChanged(newId);
+		const devices = await detectSimulatorChanged(newId);
 		assert.deepEqual(devices.deviceLost, device);
 		expectedDeviceInfo.identifier = newId;
 		assert.deepEqual(devices.deviceFound.deviceInfo, expectedDeviceInfo);
@@ -142,7 +142,7 @@ describe("ios-simulator-discovery", () => {
 	it("raises events in correct order when simulator is started, closed and started again", async () => {
 		let device = await detectNewSimulatorAttached(defaultRunningSimulator);
 		assert.deepEqual(device.deviceInfo, expectedDeviceInfo);
-		let lostDevice = await detectSimulatorDetached();
+		const lostDevice = await detectSimulatorDetached();
 		assert.deepEqual(lostDevice, device);
 
 		device = await detectNewSimulatorAttached(defaultRunningSimulator);
@@ -150,7 +150,7 @@ describe("ios-simulator-discovery", () => {
 	});
 
 	it("finds new device when it is attached and reports it as new only once", async () => {
-		let device = await detectNewSimulatorAttached(defaultRunningSimulator);
+		const device = await detectNewSimulatorAttached(defaultRunningSimulator);
 		assert.deepEqual(device.deviceInfo, expectedDeviceInfo);
 		iOSSimulatorDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (d: Mobile.IDevice) => {
 			throw new Error("Device found should not be raised for the same device.");

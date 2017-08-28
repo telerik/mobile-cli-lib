@@ -19,7 +19,7 @@ export class AndroidAppIdentifier extends AppBuilderDeviceAppDataBase implements
 	public async getDeviceProjectRootPath(): Promise<string> {
 		let deviceTmpDirFormat = "";
 
-		let version = await this.getLiveSyncVersion();
+		const version = await this.getLiveSyncVersion();
 		if (version === 2) {
 			deviceTmpDirFormat = LiveSyncConstants.DEVICE_TMP_DIR_FORMAT_V2;
 		} else if (version === 3) {
@@ -102,7 +102,7 @@ export class IOSAppIdentifier extends AppBuilderDeviceAppDataBase implements ILi
 	@cache()
 	public async getDeviceProjectRootPath(): Promise<string> {
 		if (this.device.isEmulator) {
-			let applicationPath = this.$iOSSimResolver.iOSSim.getApplicationPath(this.device.deviceInfo.identifier, this.appIdentifier);
+			const applicationPath = this.$iOSSimResolver.iOSSim.getApplicationPath(this.device.deviceInfo.identifier, this.appIdentifier);
 			return path.join(applicationPath, "www");
 		}
 
@@ -127,7 +127,7 @@ export class IOSNativeScriptAppIdentifier extends AppBuilderDeviceAppDataBase im
 	@cache()
 	public async getDeviceProjectRootPath(): Promise<string> {
 		if (this.device.isEmulator) {
-			let applicationPath = this.$iOSSimResolver.iOSSim.getApplicationPath(this.device.deviceInfo.identifier, this.appIdentifier);
+			const applicationPath = this.$iOSSimResolver.iOSSim.getApplicationPath(this.device.deviceInfo.identifier, this.appIdentifier);
 			return applicationPath;
 		}
 
@@ -217,7 +217,7 @@ export class DeviceAppDataProvider implements Mobile.IDeviceAppDataProvider {
 	constructor(private $project: any) { }
 
 	public createFactoryRules(): IDictionary<Mobile.IDeviceAppDataFactoryRule> {
-		let rules: IDictionary<IDictionary<Mobile.IDeviceAppDataFactoryRule>> = {
+		const rules: IDictionary<IDictionary<Mobile.IDeviceAppDataFactoryRule>> = {
 			Cordova: {
 				Android: {
 					vanilla: AndroidAppIdentifier,

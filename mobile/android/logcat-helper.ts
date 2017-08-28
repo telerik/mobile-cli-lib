@@ -14,13 +14,13 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 
 	public async start(deviceIdentifier: string): Promise<void> {
 		if (deviceIdentifier && !this.mapDeviceToLoggingStarted[deviceIdentifier]) {
-			let adb: Mobile.IDeviceAndroidDebugBridge = this.$injector.resolve(DeviceAndroidDebugBridge, { identifier: deviceIdentifier });
+			const adb: Mobile.IDeviceAndroidDebugBridge = this.$injector.resolve(DeviceAndroidDebugBridge, { identifier: deviceIdentifier });
 
 			// remove cached logs:
 			await adb.executeCommand(["logcat", "-c"]);
 
-			let adbLogcat = await adb.executeCommand(["logcat"], { returnChildProcess: true });
-			let lineStream = byline(adbLogcat.stdout);
+			const adbLogcat = await adb.executeCommand(["logcat"], { returnChildProcess: true });
+			const lineStream = byline(adbLogcat.stdout);
 
 			adbLogcat.stderr.on("data", (data: NodeBuffer) => {
 				this.$logger.trace("ADB logcat stderr: " + data.toString());
@@ -38,7 +38,7 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 			});
 
 			lineStream.on('data', (line: NodeBuffer) => {
-				let lineText = line.toString();
+				const lineText = line.toString();
 				this.$deviceLogProvider.logData(lineText, this.$devicePlatformsConstants.Android, deviceIdentifier);
 			});
 

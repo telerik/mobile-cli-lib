@@ -3,7 +3,7 @@ import { LoggingLevels } from "../../mobile/logging-levels";
 import { Yok } from "../../yok";
 import * as assert from "assert";
 
-let iosTestData = [
+const iosTestData = [
 	{
 		input: 'Dec 29 08:46:04 Dragons-iPhone iaptransportd[65] <Warning>: CIapPortAppleIDBus: Auth timer timeout completed on pAIDBPort:0x135d09410, portID:01 downstream port',
 		output: null,
@@ -109,16 +109,16 @@ let iosTestData = [
 
 describe("iOSLogFilter", () => {
 
-	let assertFiltering = (inputData: string, expectedOutput: string, logLevel?: string, pid?: string) => {
-		let testInjector = new Yok();
+	const assertFiltering = (inputData: string, expectedOutput: string, logLevel?: string, pid?: string) => {
+		const testInjector = new Yok();
 		testInjector.register("loggingLevels", LoggingLevels);
-		let iOSLogFilter = testInjector.resolve(IOSLogFilter);
-		let filteredData = iOSLogFilter.filterData(inputData, logLevel, pid);
+		const iOSLogFilter = testInjector.resolve(IOSLogFilter);
+		const filteredData = iOSLogFilter.filterData(inputData, logLevel, pid);
 		assert.deepEqual(filteredData, expectedOutput, `The actual result '${filteredData}' did NOT match expected output '${expectedOutput}'.`);
 	};
 
-	let logLevel = "INFO",
-		pid = "13309";
+	let logLevel = "INFO";
+	const pid = "13309";
 
 	describe("filterData", () => {
 		describe("when PID is not provided", () => {

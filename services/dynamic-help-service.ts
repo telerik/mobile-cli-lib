@@ -9,14 +9,14 @@ export class DynamicHelpService implements IDynamicHelpService {
 	}
 
 	public isPlatform(...args: string[]): boolean {
-		let platform = os.platform().toLowerCase();
+		const platform = os.platform().toLowerCase();
 		return _.some(args, arg => arg.toLowerCase() === platform);
 	}
 
 	public getLocalVariables(options: { isHtml: boolean }): IDictionary<any> {
-		let isHtml = options.isHtml;
+		const isHtml = options.isHtml;
 		//in html help we want to show all help. Only CONSOLE specific help(wrapped in if(isConsole) ) must be omitted
-		let localVariables = this.$dynamicHelpProvider.getLocalVariables(options);
+		const localVariables = this.$dynamicHelpProvider.getLocalVariables(options);
 		localVariables["isLinux"] = isHtml || this.isPlatform("linux");
 		localVariables["isWindows"] = isHtml || this.isPlatform("win32");
 		localVariables["isMacOS"] = isHtml || this.isPlatform("darwin");

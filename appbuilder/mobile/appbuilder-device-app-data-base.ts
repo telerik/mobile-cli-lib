@@ -24,7 +24,7 @@ export abstract class AppBuilderDeviceAppDataBase extends DeviceAppDataBase impl
 	}
 
 	public async isLiveSyncSupported(): Promise<boolean> {
-		let isApplicationInstalled = await this.device.applicationManager.isApplicationInstalled(this.appIdentifier);
+		const isApplicationInstalled = await this.device.applicationManager.isApplicationInstalled(this.appIdentifier);
 
 		if (!isApplicationInstalled) {
 			await this.$deployHelper.deploy(this.platform.toString());

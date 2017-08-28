@@ -2,10 +2,10 @@ import { Yok } from "../../yok";
 import { ProcessService } from "../../services/process-service";
 import { assert } from "chai";
 
-let processExitSignals = ["exit", "SIGINT", "SIGTERM"];
-let emptyFunction = () => { /* no implementation required */ };
+const processExitSignals = ["exit", "SIGINT", "SIGTERM"];
+const emptyFunction = () => { /* no implementation required */ };
 function createTestInjector(): IInjector {
-	let testInjector = new Yok();
+	const testInjector = new Yok();
 
 	testInjector.register("processService", ProcessService);
 
@@ -27,14 +27,14 @@ describe("Process service", () => {
 
 		_.each(processExitSignals, (signal: string) => {
 			// We need to search only for our listener because each exit signal have different listeners added to it.
-			let actualListeners = _.filter(process.listeners(signal), (listener: Function) => listener.toString().indexOf("executeAllCallbacks") >= 0);
+			const actualListeners = _.filter(process.listeners(signal), (listener: Function) => listener.toString().indexOf("executeAllCallbacks") >= 0);
 			assert.deepEqual(actualListeners.length, 1);
 		});
 	});
 
 	it("should add listener with context only once if there already is callback with the same context.", () => {
-		let context = { test: "test" };
-		let listener = () => 42;
+		const context = { test: "test" };
+		const listener = () => 42;
 
 		$processService.attachToProcessExitSignals(context, listener);
 		$processService.attachToProcessExitSignals(context, listener);
@@ -43,9 +43,9 @@ describe("Process service", () => {
 	});
 
 	it("should add two different listeners for one context.", () => {
-		let context = { test: "test" };
-		let numberListener = () => 42;
-		let booleanListener = () => true;
+		const context = { test: "test" };
+		const numberListener = () => 42;
+		const booleanListener = () => true;
 
 		$processService.attachToProcessExitSignals(context, numberListener);
 		$processService.attachToProcessExitSignals(context, booleanListener);
@@ -54,7 +54,7 @@ describe("Process service", () => {
 	});
 
 	it("should add one listener with different context twice.", () => {
-		let listener = () => 42;
+		const listener = () => 42;
 
 		$processService.attachToProcessExitSignals({}, listener);
 		$processService.attachToProcessExitSignals({}, listener);
@@ -67,15 +67,15 @@ describe("Process service", () => {
 		let hasCalledSecondListener = false;
 		let hasCalledThirdListener = false;
 
-		let firstListener = () => {
+		const firstListener = () => {
 			hasCalledFirstListener = true;
 		};
 
-		let secondListener = () => {
+		const secondListener = () => {
 			hasCalledSecondListener = true;
 		};
 
-		let thirdListener = () => {
+		const thirdListener = () => {
 			hasCalledThirdListener = true;
 		};
 

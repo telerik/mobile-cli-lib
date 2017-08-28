@@ -37,11 +37,11 @@ export class MessagesService implements IMessagesService {
 	public getMessage(id: string, ...args: string[]): string {
 		const argsArray = args || [];
 
-		let keys = id.split("."),
-			result = this.getFormatedMessage.apply(this, [id].concat(argsArray));
+		const keys = id.split(".");
+		let result = this.getFormatedMessage.apply(this, [id].concat(argsArray));
 
 		_.each(this.messageJsonFilesContents, jsonFileContents => {
-			let messageValue = this.getMessageFromJsonRecursive(keys, jsonFileContents, 0);
+			const messageValue = this.getMessageFromJsonRecursive(keys, jsonFileContents, 0);
 			if (messageValue) {
 				result = this.getFormatedMessage.apply(this, [messageValue].concat(argsArray));
 				return false;
@@ -56,7 +56,7 @@ export class MessagesService implements IMessagesService {
 			return null;
 		}
 
-		let jsonValue = jsonContents[keys[index]];
+		const jsonValue = jsonContents[keys[index]];
 		if (!jsonValue) {
 			return null;
 		}

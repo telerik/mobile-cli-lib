@@ -2,7 +2,7 @@
 // This function must be separate to avoid dependencies on C++ modules - it must execute precisely when other functions cannot
 
 // Use only ES5 code here - pure JavaScript can be executed with any Node.js version (even 0.10, 0.12).
-/* tslint:disable:no-var-keyword no-var-requires */
+/* tslint:disable:no-var-keyword no-var-requires prefer-const*/
 var os = require("os"),
 	semver = require("semver"),
 	util = require("util");

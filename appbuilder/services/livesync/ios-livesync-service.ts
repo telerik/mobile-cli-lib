@@ -1,6 +1,6 @@
 import * as path from "path";
 import * as shell from "shelljs";
-let osenv = require("osenv");
+const osenv = require("osenv");
 import * as constants from "../../../constants";
 
 export class IOSLiveSyncService implements IDeviceLiveSyncService {
@@ -25,15 +25,15 @@ export class IOSLiveSyncService implements IDeviceLiveSyncService {
 
 	public async refreshApplication(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
 		if (this.device.isEmulator) {
-			let simulatorLogFilePath = path.join(osenv.home(), `/Library/Developer/CoreSimulator/Devices/${this.device.deviceInfo.identifier}/data/Library/Logs/system.log`);
-			let simulatorLogFileContent = this.$fs.readText(simulatorLogFilePath) || "";
+			const simulatorLogFilePath = path.join(osenv.home(), `/Library/Developer/CoreSimulator/Devices/${this.device.deviceInfo.identifier}/data/Library/Logs/system.log`);
+			const simulatorLogFileContent = this.$fs.readText(simulatorLogFilePath) || "";
 
-			let simulatorCachePath = path.join(osenv.home(), `/Library/Developer/CoreSimulator/Devices/${this.device.deviceInfo.identifier}/data/Containers/Data/Application/`);
-			let regex = new RegExp(`^(?:.*?)${deviceAppData.appIdentifier}(?:.*?)${simulatorCachePath}(.*?)$`, "gm");
+			const simulatorCachePath = path.join(osenv.home(), `/Library/Developer/CoreSimulator/Devices/${this.device.deviceInfo.identifier}/data/Containers/Data/Application/`);
+			const regex = new RegExp(`^(?:.*?)${deviceAppData.appIdentifier}(?:.*?)${simulatorCachePath}(.*?)$`, "gm");
 
 			let guid = "";
 			while (true) {
-				let parsed = regex.exec(simulatorLogFileContent);
+				const parsed = regex.exec(simulatorLogFileContent);
 				if (!parsed) {
 					break;
 				}
@@ -45,8 +45,8 @@ export class IOSLiveSyncService implements IDeviceLiveSyncService {
 				this.$errors.failWithoutHelp(`Unable to find application GUID for application ${deviceAppData.appIdentifier}. Make sure application is installed on Simulator.`);
 			}
 
-			let sourcePath = await deviceAppData.getDeviceProjectRootPath();
-			let destinationPath = path.join(simulatorCachePath, guid, constants.LiveSyncConstants.IOS_PROJECT_PATH);
+			const sourcePath = await deviceAppData.getDeviceProjectRootPath();
+			const destinationPath = path.join(simulatorCachePath, guid, constants.LiveSyncConstants.IOS_PROJECT_PATH);
 
 			this.$logger.trace(`Transferring from ${sourcePath} to ${destinationPath}`);
 			shell.cp("-Rf", path.join(sourcePath, "*"), destinationPath);
@@ -54,7 +54,7 @@ export class IOSLiveSyncService implements IDeviceLiveSyncService {
 			await this.device.applicationManager.restartApplication(deviceAppData.appIdentifier);
 		} else {
 			await this.device.fileSystem.deleteFile("/Documents/AppBuilder/ServerInfo.plist", deviceAppData.appIdentifier);
-			let notification = this.$project.projectData.Framework === constants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript ? "com.telerik.app.refreshApp" : "com.telerik.app.refreshWebView";
+			const notification = this.$project.projectData.Framework === constants.TARGET_FRAMEWORK_IDENTIFIERS.NativeScript ? "com.telerik.app.refreshApp" : "com.telerik.app.refreshWebView";
 			const notificationData = {
 				deviceId: this.device.deviceInfo.identifier,
 				notificationName: notification,
@@ -67,7 +67,7 @@ export class IOSLiveSyncService implements IDeviceLiveSyncService {
 	public async removeFiles(appIdentifier: string, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
 		const devicePaths = localToDevicePaths.map(localToDevicePath => localToDevicePath.getDevicePath());
 
-		for (let deviceFilePath of devicePaths) {
+		for (const deviceFilePath of devicePaths) {
 			await this.device.fileSystem.deleteFile(deviceFilePath, appIdentifier);
 		}
 	}

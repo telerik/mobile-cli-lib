@@ -6,7 +6,7 @@ import * as minimatch from "minimatch";
 import * as constants from "../constants";
 import * as util from "util";
 
-let gaze = require("gaze");
+const gaze = require("gaze");
 
 class LiveSyncServiceBase implements ILiveSyncServiceBase {
 	private showFullLiveSyncInformation: boolean = false;
@@ -49,7 +49,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 	}
 
 	private partialSync(data: ILiveSyncData[], syncWorkingDirectory: string, projectId: string, projectFilesConfig: IProjectFilesConfig): void {
-		let that = this;
+		const that = this;
 		this.showFullLiveSyncInformation = true;
 		const gazeInstance = gaze(["**/*", "!node_modules/**/*", "!platforms/**/*"], { cwd: syncWorkingDirectory }, function (err: any, watcher: any) {
 			this.on('all', (event: string, filePath: string) => {
@@ -62,7 +62,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 							return;
 						}
 
-						let fileHash = that.$fs.exists(filePath) && that.$fs.getFsStats(filePath).isFile() ? await that.$fs.getFileShasum(filePath) : "";
+						const fileHash = that.$fs.exists(filePath) && that.$fs.getFsStats(filePath).isFile() ? await that.$fs.getFileShasum(filePath) : "";
 						if (fileHash === that.fileHashes[filePath]) {
 							that.$logger.trace(`Skipping livesync for ${filePath} file with ${fileHash} hash.`);
 							return;
@@ -71,12 +71,12 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 						that.$logger.trace(`Adding ${filePath} file with ${fileHash} hash.`);
 						that.fileHashes[filePath] = <string>fileHash;
 
-						for (let dataItem of data) {
+						for (const dataItem of data) {
 							if (that.isFileExcluded(filePath, dataItem.excludedProjectDirsAndFiles)) {
 								that.$logger.trace(`Skipping livesync for changed file ${filePath} as it is excluded in the patterns: ${dataItem.excludedProjectDirsAndFiles.join(", ")}`);
 								continue;
 							}
-							let mappedFilePath = that.$projectFilesProvider.mapFilePath(filePath, dataItem.platform, projectId, projectFilesConfig);
+							const mappedFilePath = that.$projectFilesProvider.mapFilePath(filePath, dataItem.platform, projectId, projectFilesConfig);
 							that.$logger.trace(`Syncing filePath ${filePath}, mappedFilePath is ${mappedFilePath}`);
 							if (!mappedFilePath) {
 								that.$logger.warn(`Unable to sync ${filePath}.`);
@@ -106,15 +106,15 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 	private livesyncData: IDictionary<ILiveSyncData> = Object.create(null);
 
 	private batchSync(data: ILiveSyncData, filePath: string, projectId: string): void {
-		let platformBatch: ISyncBatch = this.batch[data.platform];
+		const platformBatch: ISyncBatch = this.batch[data.platform];
 		if (!platformBatch || !platformBatch.syncPending) {
-			let done = () => {
+			const done = () => {
 				setTimeout(() => {
 					this.$dispatcher.dispatch(async () => {
 						try {
-							for (let platformName in this.batch) {
-								let batch = this.batch[platformName];
-								let livesyncData = this.livesyncData[platformName];
+							for (const platformName in this.batch) {
+								const batch = this.batch[platformName];
+								const livesyncData = this.livesyncData[platformName];
 								await batch.syncFiles(async (filesToSync: string[]) => {
 									await this.$liveSyncProvider.preparePlatformForSync(platformName, projectId);
 									this.syncCore([livesyncData], filesToSync);
@@ -135,7 +135,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 	}
 
 	private async syncRemovedFile(data: ILiveSyncData, filePath: string): Promise<void> {
-		let filePathArray = [filePath],
+		const filePathArray = [filePath],
 			deviceFilesAction = this.getSyncRemovedFilesAction(data);
 
 		await this.syncCore([data], filePathArray, deviceFilesAction);
@@ -143,23 +143,23 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 
 	public getSyncRemovedFilesAction(data: ILiveSyncData): (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => Promise<void> {
 		return (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => {
-			let platformLiveSyncService = this.resolveDeviceLiveSyncService(data.platform, device);
+			const platformLiveSyncService = this.resolveDeviceLiveSyncService(data.platform, device);
 			return platformLiveSyncService.removeFiles(deviceAppData.appIdentifier, localToDevicePaths);
 		};
 	}
 
 	public getSyncAction(data: ILiveSyncData, filesToSync: string[], deviceFilesAction: (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => Promise<void>, liveSyncOptions: ILiveSyncOptions): (device: Mobile.IDevice) => Promise<void> {
-		let appIdentifier = data.appIdentifier;
-		let platform = data.platform;
-		let projectFilesPath = data.projectFilesPath;
+		const appIdentifier = data.appIdentifier;
+		const platform = data.platform;
+		const projectFilesPath = data.projectFilesPath;
 
 		let packageFilePath: string = null;
 
 		return async (device: Mobile.IDevice): Promise<void> => {
 			let shouldRefreshApplication = true;
-			let deviceAppData = this.$deviceAppDataFactory.create(appIdentifier, this.$mobileHelper.normalizePlatformName(platform), device, liveSyncOptions);
+			const deviceAppData = this.$deviceAppDataFactory.create(appIdentifier, this.$mobileHelper.normalizePlatformName(platform), device, liveSyncOptions);
 			if (await deviceAppData.isLiveSyncSupported()) {
-				let platformLiveSyncService = this.resolveDeviceLiveSyncService(platform, device);
+				const platformLiveSyncService = this.resolveDeviceLiveSyncService(platform, device);
 
 				if (platformLiveSyncService.beforeLiveSyncAction) {
 					await platformLiveSyncService.beforeLiveSyncAction(deviceAppData);
@@ -177,7 +177,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 					await device.applicationManager.installApplication(packageFilePath);
 
 					if (platformLiveSyncService.afterInstallApplicationAction) {
-						let localToDevicePaths = await this.$projectFilesManager.createLocalToDevicePaths(deviceAppData, projectFilesPath, filesToSync, data.excludedProjectDirsAndFiles, liveSyncOptions);
+						const localToDevicePaths = await this.$projectFilesManager.createLocalToDevicePaths(deviceAppData, projectFilesPath, filesToSync, data.excludedProjectDirsAndFiles, liveSyncOptions);
 						shouldRefreshApplication = await platformLiveSyncService.afterInstallApplicationAction(deviceAppData, localToDevicePaths);
 					} else {
 						shouldRefreshApplication = false;
@@ -192,7 +192,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 				// Restart application or reload page
 				if (shouldRefreshApplication) {
 					// Transfer or remove files on device
-					let localToDevicePaths = await this.$projectFilesManager.createLocalToDevicePaths(deviceAppData, projectFilesPath, filesToSync, data.excludedProjectDirsAndFiles, liveSyncOptions);
+					const localToDevicePaths = await this.$projectFilesManager.createLocalToDevicePaths(deviceAppData, projectFilesPath, filesToSync, data.excludedProjectDirsAndFiles, liveSyncOptions);
 					if (deviceFilesAction) {
 						await deviceFilesAction(deviceAppData, device, localToDevicePaths);
 					} else {
@@ -210,11 +210,11 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 	}
 
 	private async syncCore(data: ILiveSyncData[], filesToSync: string[], deviceFilesAction?: (deviceAppData: Mobile.IDeviceAppData, device: Mobile.IDevice, localToDevicePaths: Mobile.ILocalToDevicePathData[]) => Promise<void>): Promise<void> {
-		for (let dataItem of data) {
-			let appIdentifier = dataItem.appIdentifier;
-			let platform = dataItem.platform;
-			let canExecute = await this.getCanExecuteAction(platform, appIdentifier, dataItem.canExecute);
-			let action = this.getSyncAction(dataItem, filesToSync, deviceFilesAction, { isForCompanionApp: this.$options.companion, additionalConfigurations: dataItem.additionalConfigurations, configuration: dataItem.configuration, isForDeletedFiles: false });
+		for (const dataItem of data) {
+			const appIdentifier = dataItem.appIdentifier;
+			const platform = dataItem.platform;
+			const canExecute = await this.getCanExecuteAction(platform, appIdentifier, dataItem.canExecute);
+			const action = this.getSyncAction(dataItem, filesToSync, deviceFilesAction, { isForCompanionApp: this.$options.companion, additionalConfigurations: dataItem.additionalConfigurations, configuration: dataItem.configuration, isForDeletedFiles: false });
 			await this.$devicesService.execute(action, canExecute);
 		}
 	}
@@ -223,11 +223,11 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		this.$logger.info("Transferring project files...");
 		this.logFilesSyncInformation(localToDevicePaths, "Transferring %s.", this.$logger.trace);
 
-		let canTransferDirectory = isFullSync && (this.$devicesService.isAndroidDevice(deviceAppData.device) || this.$devicesService.isiOSSimulator(deviceAppData.device));
+		const canTransferDirectory = isFullSync && (this.$devicesService.isAndroidDevice(deviceAppData.device) || this.$devicesService.isiOSSimulator(deviceAppData.device));
 		if (canTransferDirectory) {
-			let tempDir = temp.mkdirSync("tempDir");
+			const tempDir = temp.mkdirSync("tempDir");
 			_.each(localToDevicePaths, localToDevicePath => {
-				let fileDirname = path.join(tempDir, path.dirname(localToDevicePath.getRelativeToProjectBasePath()));
+				const fileDirname = path.join(tempDir, path.dirname(localToDevicePath.getRelativeToProjectBasePath()));
 				shell.mkdir("-p", fileDirname);
 				if (!this.$fs.getFsStats(localToDevicePath.getLocalPath()).isDirectory()) {
 					shell.cp("-f", localToDevicePath.getLocalPath(), path.join(fileDirname, path.basename(localToDevicePath.getDevicePath())));
@@ -266,14 +266,14 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 			if (this.$options.emulator) {
 				finalCanExecute = (device: Mobile.IDevice): boolean => canExecute(device) && this.$devicesService.isiOSSimulator(device);
 			} else {
-				let devices = this.$devicesService.getDevicesForPlatform(platform);
-				let simulator = _.find(devices, d => this.$devicesService.isiOSSimulator(d));
+				const devices = this.$devicesService.getDevicesForPlatform(platform);
+				const simulator = _.find(devices, d => this.$devicesService.isiOSSimulator(d));
 				if (simulator) {
-					let iOSDevices = _.filter(devices, d => d.deviceInfo.identifier !== simulator.deviceInfo.identifier);
+					const iOSDevices = _.filter(devices, d => d.deviceInfo.identifier !== simulator.deviceInfo.identifier);
 					if (iOSDevices && iOSDevices.length) {
-						let isApplicationInstalledOnSimulator = await simulator.applicationManager.isApplicationInstalled(appIdentifier);
-						let isInstalledPromises = await Promise.all(iOSDevices.map(device => device.applicationManager.isApplicationInstalled(appIdentifier)));
-						let isApplicationInstalledOnAllDevices = _.intersection.apply(null, isInstalledPromises);
+						const isApplicationInstalledOnSimulator = await simulator.applicationManager.isApplicationInstalled(appIdentifier);
+						const isInstalledPromises = await Promise.all(iOSDevices.map(device => device.applicationManager.isApplicationInstalled(appIdentifier)));
+						const isApplicationInstalledOnAllDevices = _.intersection.apply(null, isInstalledPromises);
 						// In case the application is not installed on both device and simulator, syncs only on device.
 						if (!isApplicationInstalledOnSimulator && !isApplicationInstalledOnAllDevices) {
 							finalCanExecute = (device: Mobile.IDevice): boolean => canExecute(device) && this.$devicesService.isiOSDevice(device);

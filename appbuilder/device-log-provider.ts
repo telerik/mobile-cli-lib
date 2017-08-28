@@ -7,9 +7,9 @@ export class DeviceLogProvider extends DeviceLogProviderBase {
 	}
 
 	public logData(line: string, platform: string, deviceIdentifier: string): void {
-		let logLevel = this.setDefaultLogLevelForDevice(deviceIdentifier);
+		const logLevel = this.setDefaultLogLevelForDevice(deviceIdentifier);
 
-		let applicationPid = this.getApplicationPidForDevice(deviceIdentifier),
+		const applicationPid = this.getApplicationPidForDevice(deviceIdentifier),
 			data = this.$logFilter.filterData(platform, line, applicationPid, logLevel);
 
 		if (data) {

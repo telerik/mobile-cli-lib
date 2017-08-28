@@ -16,10 +16,10 @@ export class PrintPluginsService implements IPrintPluginsService {
 			return;
 		}
 
-		let count: number = options.count || PrintPluginsService.COUNT_OF_PLUGINS_TO_DISPLAY;
+		const count: number = options.count || PrintPluginsService.COUNT_OF_PLUGINS_TO_DISPLAY;
 
 		if (!isInteractive() || options.showAllPlugins) {
-			let allPlugins = await pluginsSource.getAllPlugins();
+			const allPlugins = await pluginsSource.getAllPlugins();
 			this.displayTableWithPlugins(allPlugins);
 			return;
 		}
@@ -50,15 +50,15 @@ export class PrintPluginsService implements IPrintPluginsService {
 		let data: string[][] = [];
 		data = this.createTableCells(plugins);
 
-		let table: any = this.createPluginsTable(data);
+		const table: any = this.createPluginsTable(data);
 
 		this.$logger.out(table.toString());
 	}
 
 	private createPluginsTable(data: string[][]): any {
-		let headers: string[] = ["Plugin", "Version", "Author", "Description"];
+		const headers: string[] = ["Plugin", "Version", "Author", "Description"];
 
-		let table: any = createTable(headers, data);
+		const table: any = createTable(headers, data);
 
 		return table;
 	}

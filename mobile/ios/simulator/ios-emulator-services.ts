@@ -28,7 +28,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 			this.$errors.failWithoutHelp("iOS Simulator is available only on Mac OS X.");
 		}
 
-		let platform = this.$devicePlatformsConstants.iOS;
+		const platform = this.$devicePlatformsConstants.iOS;
 		if (dependsOnProject && !this.$emulatorSettingsService.canStart(platform)) {
 			this.$errors.failWithoutHelp("The current project does not target iOS and cannot be run in the iOS Simulator.");
 		}
@@ -46,10 +46,10 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 	}
 
 	public async postDarwinNotification(notification: string): Promise<void> {
-		let iosSimPath = this.$iOSSimResolver.iOSSimPath;
-		let nodeCommandName = process.argv[0];
+		const iosSimPath = this.$iOSSimResolver.iOSSimPath;
+		const nodeCommandName = process.argv[0];
 
-		let iosSimArgs = [iosSimPath, "notify-post", notification];
+		const iosSimArgs = [iosSimPath, "notify-post", notification];
 
 		if (this.$options.device) {
 			iosSimArgs.push("--device", this.$options.device);
@@ -60,8 +60,8 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 
 	private async runApplicationOnEmulatorCore(app: string, emulatorOptions?: Mobile.IEmulatorOptions): Promise<any> {
 		this.$logger.info("Starting iOS Simulator");
-		let iosSimPath = this.$iOSSimResolver.iOSSimPath;
-		let nodeCommandName = process.argv[0];
+		const iosSimPath = this.$iOSSimResolver.iOSSimPath;
+		const nodeCommandName = process.argv[0];
 
 		if (this.$options.availableDevices) {
 			await this.$childProcess.spawnFromEvent(nodeCommandName, [iosSimPath, "device-types"], "close", { stdio: "inherit" });
@@ -114,7 +114,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 			opts.push("--skipInstall");
 		}
 
-		let stdioOpts = { stdio: (emulatorOptions && emulatorOptions.captureStdin) ? "pipe" : "inherit" };
+		const stdioOpts = { stdio: (emulatorOptions && emulatorOptions.captureStdin) ? "pipe" : "inherit" };
 
 		return this.$childProcess.spawn(nodeCommandName, opts, stdioOpts);
 	}

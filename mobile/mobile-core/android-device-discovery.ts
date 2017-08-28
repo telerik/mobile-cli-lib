@@ -20,7 +20,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 
 	private async createAndAddDevice(adbDeviceInfo: IAdbAndroidDeviceInfo): Promise<void> {
 		this._devices.push(adbDeviceInfo);
-		let device: Mobile.IAndroidDevice = this.$injector.resolve(AndroidDevice, { identifier: adbDeviceInfo.identifier, status: adbDeviceInfo.status });
+		const device: Mobile.IAndroidDevice = this.$injector.resolve(AndroidDevice, { identifier: adbDeviceInfo.identifier, status: adbDeviceInfo.status });
 		await device.init();
 		this.addDevice(device);
 	}
@@ -39,7 +39,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 	}
 
 	public async checkForDevices(): Promise<void> {
-		let result = await this.$adb.executeCommand(["devices"], { returnChildProcess: true });
+		const result = await this.$adb.executeCommand(["devices"], { returnChildProcess: true });
 		return new Promise<void>((resolve, reject) => {
 			let adbData = "";
 			let errorData = "";
@@ -80,13 +80,13 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 	private async checkCurrentData(result: any): Promise<void> {
 		const currentData = result.toString();
 
-		let currentDevices: IAdbAndroidDeviceInfo[] = currentData
+		const currentDevices: IAdbAndroidDeviceInfo[] = currentData
 			.split(EOL)
 			.slice(1)
 			.filter((element: string) => !helpers.isNullOrWhitespace(element) && element.indexOf("* daemon ") === -1 && element.indexOf("adb server") === -1)
 			.map((element: string) => {
 				// http://developer.android.com/tools/help/adb.html#devicestatus
-				let data = element.split('\t'),
+				const data = element.split('\t'),
 					identifier = data[0],
 					status = data[1];
 				return {

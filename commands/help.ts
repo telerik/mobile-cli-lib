@@ -16,13 +16,13 @@ export class HelpCommand implements ICommand {
 
 	public async execute(args: string[]): Promise<void> {
 		let topic = (args[0] || "").toLowerCase();
-		let hierarchicalCommand = this.$injector.buildHierarchicalCommand(args[0], _.tail(args));
+		const hierarchicalCommand = this.$injector.buildHierarchicalCommand(args[0], _.tail(args));
 		if (hierarchicalCommand) {
 			topic = hierarchicalCommand.commandName;
 		}
 
 		if (this.$options.help) {
-			let help = await this.$htmlHelpService.getCommandLineHelpForCommand(topic);
+			const help = await this.$htmlHelpService.getCommandLineHelpForCommand(topic);
 			if (this.$staticConfig.FULL_CLIENT_NAME) {
 				this.$logger.info(this.$staticConfig.FULL_CLIENT_NAME.green.bold + EOL);
 			}

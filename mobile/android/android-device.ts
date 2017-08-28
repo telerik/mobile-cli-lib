@@ -68,7 +68,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 		}
 
 		this.$logger.trace(details);
-		let adbStatusInfo = AndroidDevice.ADB_DEVICE_STATUS_INFO[this.status];
+		const adbStatusInfo = AndroidDevice.ADB_DEVICE_STATUS_INFO[this.status];
 
 		this.deviceInfo = {
 			identifier: this.identifier,
@@ -91,9 +91,9 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 	}
 
 	public async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
-		let files = await this.fileSystem.listFiles(constants.LiveSyncConstants.ANDROID_FILES_PATH, applicationIdentifier),
-			androidFilesMatch = files.match(/(\S+)\.abproject/),
-			result: Mobile.IApplicationInfo = null;
+		const files = await this.fileSystem.listFiles(constants.LiveSyncConstants.ANDROID_FILES_PATH, applicationIdentifier);
+		const androidFilesMatch = files.match(/(\S+)\.abproject/);
+		let result: Mobile.IApplicationInfo = null;
 
 		if (androidFilesMatch && androidFilesMatch[1]) {
 			result = {
@@ -113,7 +113,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 	}
 
 	private async getDeviceDetails(shellCommandArgs: string[]): Promise<IAndroidDeviceDetails> {
-		let parsedDetails: any = {};
+		const parsedDetails: any = {};
 
 		this.$logger.trace(`Trying to get information for Android device. Command is: ${shellCommandArgs}`);
 
@@ -144,7 +144,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 	}
 
 	private async getType(): Promise<string> {
-		let runningEmulators = await this.$androidEmulatorServices.getAllRunningEmulators();
+		const runningEmulators = await this.$androidEmulatorServices.getAllRunningEmulators();
 		if (_.includes(runningEmulators, this.identifier)) {
 			return constants.DeviceTypes.Emulator;
 		}

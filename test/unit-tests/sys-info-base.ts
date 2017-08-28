@@ -7,8 +7,8 @@ import { writeFileSync } from "fs";
 import * as path from "path";
 temp.track();
 
-let toolsPackageJsonDir = temp.mkdirSync("dirWithPackageJson");
-let toolsPackageJson = path.join(toolsPackageJsonDir, "package.json");
+const toolsPackageJsonDir = temp.mkdirSync("dirWithPackageJson");
+const toolsPackageJson = path.join(toolsPackageJsonDir, "package.json");
 writeFileSync(toolsPackageJson, '{ "name": "unit-testing-doctor-service", "version": "1.0.0" }');
 
 interface IChildProcessResultDescription {
@@ -66,8 +66,8 @@ function createChildProcessResults(childProcessResult: IChildProcessResults): ID
 }
 
 function createTestInjector(childProcessResult: IChildProcessResults, hostInfoData: { isWindows: boolean, dotNetVersion: string, isDarwin: boolean }, itunesError: string): IInjector {
-	let injector = new Yok();
-	let childProcessResultDictionary = createChildProcessResults(childProcessResult);
+	const injector = new Yok();
+	const childProcessResultDictionary = createChildProcessResults(childProcessResult);
 	injector.register("childProcess", {
 		exec: async (command: string, options?: any, execOptions?: IExecOptions) => {
 			return getResultFromChildProcess(childProcessResultDictionary[command]);
@@ -110,14 +110,14 @@ function createTestInjector(childProcessResult: IChildProcessResults, hostInfoDa
 
 describe("sysInfoBase", () => {
 	// TODO: Add tests when JAVA_HOME is set and when it is not
-	let originalJavaHome = process.env.JAVA_HOME;
+	const originalJavaHome = process.env.JAVA_HOME;
 	process.env.JAVA_HOME = '';
 
 	after(() => process.env.JAVA_HOME = originalJavaHome);
 
-	let childProcessResult: IChildProcessResults,
-		testInjector: IInjector,
-		sysInfoBase: ISysInfo;
+	let childProcessResult: IChildProcessResults;
+	let testInjector: IInjector;
+	let sysInfoBase: ISysInfo;
 
 	beforeEach(() => {
 		childProcessResult = {
@@ -140,7 +140,7 @@ describe("sysInfoBase", () => {
 	});
 	describe("getSysInfo", () => {
 		describe("returns correct results when everything is installed", () => {
-			let assertCommonValues = (result: ISysInfoData) => {
+			const assertCommonValues = (result: ISysInfoData) => {
 				assert.deepEqual(result.npmVer, childProcessResult.npmV.result);
 				assert.deepEqual(result.javaVer, "1.8.0");
 				assert.deepEqual(result.javacVersion, "1.8.0_60");
@@ -155,7 +155,7 @@ describe("sysInfoBase", () => {
 			it("on Windows", async () => {
 				testInjector = createTestInjector(childProcessResult, { isWindows: true, isDarwin: false, dotNetVersion: "4.5.1" }, null);
 				sysInfoBase = testInjector.resolve("sysInfoBase");
-				let result = await sysInfoBase.getSysInfo(toolsPackageJson);
+				const result = await sysInfoBase.getSysInfo(toolsPackageJson);
 				assertCommonValues(result);
 				assert.deepEqual(result.xcodeVer, null);
 				assert.deepEqual(result.cocoapodVer, null);
@@ -164,7 +164,7 @@ describe("sysInfoBase", () => {
 			it("on Mac", async () => {
 				testInjector = createTestInjector(childProcessResult, { isWindows: false, isDarwin: true, dotNetVersion: "4.5.1" }, null);
 				sysInfoBase = testInjector.resolve("sysInfoBase");
-				let result = await sysInfoBase.getSysInfo(toolsPackageJson);
+				const result = await sysInfoBase.getSysInfo(toolsPackageJson);
 				assertCommonValues(result);
 				assert.deepEqual(result.xcodeVer, childProcessResult.xCodeVersion.result);
 				assert.deepEqual(result.cocoapodVer, childProcessResult.podVersion.result);
@@ -173,7 +173,7 @@ describe("sysInfoBase", () => {
 			it("on Linux", async () => {
 				testInjector = createTestInjector(childProcessResult, { isWindows: false, isDarwin: false, dotNetVersion: "4.5.1" }, null);
 				sysInfoBase = testInjector.resolve("sysInfoBase");
-				let result = await sysInfoBase.getSysInfo(toolsPackageJson);
+				const result = await sysInfoBase.getSysInfo(toolsPackageJson);
 				assertCommonValues(result);
 				assert.deepEqual(result.xcodeVer, null);
 				assert.deepEqual(result.cocoapodVer, null);
@@ -186,14 +186,14 @@ describe("sysInfoBase", () => {
 				childProcessResult.podVersion = { shouldThrowError: true };
 				testInjector = createTestInjector(childProcessResult, { isWindows: false, isDarwin: true, dotNetVersion: "4.5.1" }, null);
 				sysInfoBase = testInjector.resolve("sysInfoBase");
-				let result = await sysInfoBase.getSysInfo(toolsPackageJson);
+				const result = await sysInfoBase.getSysInfo(toolsPackageJson);
 				assert.deepEqual(result.cocoapodVer, null);
 			});
 
 			it("is null when OS is not Mac", async () => {
 				testInjector = createTestInjector(childProcessResult, { isWindows: true, isDarwin: false, dotNetVersion: "4.5.1" }, null);
 				sysInfoBase = testInjector.resolve("sysInfoBase");
-				let result = await sysInfoBase.getSysInfo(toolsPackageJson);
+				const result = await sysInfoBase.getSysInfo(toolsPackageJson);
 				assert.deepEqual(result.cocoapodVer, null);
 			});
 
@@ -201,7 +201,7 @@ describe("sysInfoBase", () => {
 				childProcessResult.podVersion = { result: "0.38.2\nWARNING:\n" };
 				testInjector = createTestInjector(childProcessResult, { isWindows: false, isDarwin: true, dotNetVersion: "4.5.1" }, null);
 				sysInfoBase = testInjector.resolve("sysInfoBase");
-				let result = await sysInfoBase.getSysInfo(toolsPackageJson);
+				const result = await sysInfoBase.getSysInfo(toolsPackageJson);
 				assert.deepEqual(result.cocoapodVer, "0.38.2");
 			});
 
@@ -209,7 +209,7 @@ describe("sysInfoBase", () => {
 				childProcessResult.podVersion = { result: "WARNING\nWARNING2\n0.38.2" };
 				testInjector = createTestInjector(childProcessResult, { isWindows: false, isDarwin: true, dotNetVersion: "4.5.1" }, null);
 				sysInfoBase = testInjector.resolve("sysInfoBase");
-				let result = await sysInfoBase.getSysInfo(toolsPackageJson);
+				const result = await sysInfoBase.getSysInfo(toolsPackageJson);
 				assert.deepEqual(result.cocoapodVer, "0.38.2");
 			});
 		});
@@ -242,16 +242,16 @@ describe("sysInfoBase", () => {
 					};
 					testInjector = createTestInjector(childProcessResult, { isWindows: false, isDarwin: false, dotNetVersion: "4.5.1" }, null);
 					sysInfoBase = testInjector.resolve("sysInfoBase");
-					let result = await sysInfoBase.getSysInfo(toolsPackageJson, { pathToAdb: null });
+					const result = await sysInfoBase.getSysInfo(toolsPackageJson, { pathToAdb: null });
 					assert.deepEqual(result.adbVer, null);
 					assert.deepEqual(result.emulatorInstalled, false);
 				});
 			});
 
 			describe("when all of calls throw", () => {
-				let assertAllValuesAreNull = async () => {
+				const assertAllValuesAreNull = async () => {
 					sysInfoBase = testInjector.resolve("sysInfoBase");
-					let result = await sysInfoBase.getSysInfo(toolsPackageJson);
+					const result = await sysInfoBase.getSysInfo(toolsPackageJson);
 					assert.deepEqual(result.npmVer, null);
 					assert.deepEqual(result.javaVer, null);
 					assert.deepEqual(result.javacVersion, null);

@@ -40,11 +40,11 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 				// use locking, so the next executions will not get into the body, while the first one is still working.
 				// In case we do not break the next executions, we'll report each app as newly installed several times.
 				try {
-					let currentlyInstalledAppIdentifiers = await this.getInstalledApplications();
-					let previouslyInstalledAppIdentifiers = this.lastInstalledAppIdentifiers || [];
+					const currentlyInstalledAppIdentifiers = await this.getInstalledApplications();
+					const previouslyInstalledAppIdentifiers = this.lastInstalledAppIdentifiers || [];
 
-					let newAppIdentifiers = _.difference(currentlyInstalledAppIdentifiers, previouslyInstalledAppIdentifiers);
-					let removedAppIdentifiers = _.difference(previouslyInstalledAppIdentifiers, currentlyInstalledAppIdentifiers);
+					const newAppIdentifiers = _.difference(currentlyInstalledAppIdentifiers, previouslyInstalledAppIdentifiers);
+					const removedAppIdentifiers = _.difference(previouslyInstalledAppIdentifiers, currentlyInstalledAppIdentifiers);
 
 					this.lastInstalledAppIdentifiers = currentlyInstalledAppIdentifiers;
 
@@ -91,11 +91,11 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 	public abstract async getDebuggableAppViews(appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>>;
 
 	private async checkForAvailableDebuggableAppsChanges(): Promise<void> {
-		let currentlyAvailableDebuggableApps = await this.getDebuggableApps();
-		let previouslyAvailableDebuggableApps = this.lastAvailableDebuggableApps || [];
+		const currentlyAvailableDebuggableApps = await this.getDebuggableApps();
+		const previouslyAvailableDebuggableApps = this.lastAvailableDebuggableApps || [];
 
-		let newAvailableDebuggableApps = _.differenceBy(currentlyAvailableDebuggableApps, previouslyAvailableDebuggableApps, "appIdentifier");
-		let notAvailableAppsForDebugging = _.differenceBy(previouslyAvailableDebuggableApps, currentlyAvailableDebuggableApps, "appIdentifier");
+		const newAvailableDebuggableApps = _.differenceBy(currentlyAvailableDebuggableApps, previouslyAvailableDebuggableApps, "appIdentifier");
+		const notAvailableAppsForDebugging = _.differenceBy(previouslyAvailableDebuggableApps, currentlyAvailableDebuggableApps, "appIdentifier");
 
 		this.lastAvailableDebuggableApps = currentlyAvailableDebuggableApps;
 
@@ -112,18 +112,18 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 			}
 		});
 
-		let cordovaDebuggableAppIdentifiers = _(currentlyAvailableDebuggableApps)
+		const cordovaDebuggableAppIdentifiers = _(currentlyAvailableDebuggableApps)
 			.filter(c => c.framework === TARGET_FRAMEWORK_IDENTIFIERS.Cordova)
 			.map(c => c.appIdentifier)
 			.value();
 
-		let currentlyAvailableAppViews = await this.getDebuggableAppViews(cordovaDebuggableAppIdentifiers);
+		const currentlyAvailableAppViews = await this.getDebuggableAppViews(cordovaDebuggableAppIdentifiers);
 
 		_.each(currentlyAvailableAppViews, (currentlyAvailableViews, appIdentifier) => {
-			let previouslyAvailableViews = this.lastAvailableDebuggableAppViews[appIdentifier];
+			const previouslyAvailableViews = this.lastAvailableDebuggableAppViews[appIdentifier];
 
-			let newAvailableViews = _.differenceBy(currentlyAvailableViews, previouslyAvailableViews, "id");
-			let notAvailableViews = _.differenceBy(previouslyAvailableViews, currentlyAvailableViews, "id");
+			const newAvailableViews = _.differenceBy(currentlyAvailableViews, previouslyAvailableViews, "id");
+			const notAvailableViews = _.differenceBy(previouslyAvailableViews, currentlyAvailableViews, "id");
 
 			_.each(notAvailableViews, debugWebViewInfo => {
 				this.emit("debuggableViewLost", appIdentifier, debugWebViewInfo);
@@ -134,9 +134,9 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 			});
 
 			// Determine which of the views had changed since last check and raise debuggableViewChanged event for them:
-			let keptViews = _.differenceBy(currentlyAvailableViews, newAvailableViews, "id");
+			const keptViews = _.differenceBy(currentlyAvailableViews, newAvailableViews, "id");
 			_.each(keptViews, view => {
-				let previousTimeViewInfo = _.find(previouslyAvailableViews, previousView => previousView.id === view.id);
+				const previousTimeViewInfo = _.find(previouslyAvailableViews, previousView => previousView.id === view.id);
 				if (!_.isEqual(view, previousTimeViewInfo)) {
 					this.emit("debuggableViewChanged", appIdentifier, view);
 				}

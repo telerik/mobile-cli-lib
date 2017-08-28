@@ -51,7 +51,7 @@ export abstract class ProjectBase implements Project.IProjectBase {
 	}
 
 	public get capabilities(): Project.ICapabilities {
-		let projectData = this.projectData;
+		const projectData = this.projectData;
 		if (projectData) {
 			if (projectData.Framework && projectData.Framework.toLowerCase() === TARGET_FRAMEWORK_IDENTIFIERS.NativeScript.toLowerCase()) {
 				return this.$nativeScriptProjectCapabilities;
@@ -83,10 +83,10 @@ export abstract class ProjectBase implements Project.IProjectBase {
 		if (platform &&
 			platform.toLowerCase() === this.$projectConstants.ANDROID_PLATFORM_NAME.toLowerCase() &&
 			this.projectData.Framework === TARGET_FRAMEWORK_IDENTIFIERS.Cordova) {
-			let pathToAndroidResources = path.join(this.projectDir, this.$staticConfig.APP_RESOURCES_DIR_NAME, this.$projectConstants.ANDROID_PLATFORM_NAME);
+			const pathToAndroidResources = path.join(this.projectDir, this.$staticConfig.APP_RESOURCES_DIR_NAME, this.$projectConstants.ANDROID_PLATFORM_NAME);
 
-			let pathToAndroidManifest = path.join(pathToAndroidResources, ProjectBase.ANDROID_MANIFEST_NAME);
-			let appIdentifierInAndroidManifest = this.getAppIdentifierFromConfigFile(pathToAndroidManifest, /package\s*=\s*"(\S*)"/);
+			const pathToAndroidManifest = path.join(pathToAndroidResources, ProjectBase.ANDROID_MANIFEST_NAME);
+			const appIdentifierInAndroidManifest = this.getAppIdentifierFromConfigFile(pathToAndroidManifest, /package\s*=\s*"(\S*)"/);
 
 			if (appIdentifierInAndroidManifest && appIdentifierInAndroidManifest !== ProjectBase.APP_IDENTIFIER_PLACEHOLDER) {
 				platformSpecificAppIdentifier = appIdentifierInAndroidManifest;
@@ -100,19 +100,19 @@ export abstract class ProjectBase implements Project.IProjectBase {
 	protected abstract saveProjectIfNeeded(): void;
 
 	protected readProjectData(): void {
-		let projectDir = this.getProjectDir();
+		const projectDir = this.getProjectDir();
 		this.setShouldSaveProject(false);
 		if (projectDir) {
-			let projectFilePath = path.join(projectDir, this.$projectConstants.PROJECT_FILE);
+			const projectFilePath = path.join(projectDir, this.$projectConstants.PROJECT_FILE);
 			try {
 				this.projectData = this.getProjectData(projectFilePath);
 				this.validate();
 
 				_.each(this.$fs.enumerateFilesInDirectorySync(projectDir), (configProjectFile: string) => {
-					let configMatch = path.basename(configProjectFile).match(ProjectBase.CONFIGURATION_FROM_FILE_NAME_REGEX);
+					const configMatch = path.basename(configProjectFile).match(ProjectBase.CONFIGURATION_FROM_FILE_NAME_REGEX);
 					if (configMatch && configMatch.length > 1) {
-						let configurationName = configMatch[1];
-						let configProjectContent = this.$fs.readJson(configProjectFile),
+						const configurationName = configMatch[1];
+						const configProjectContent = this.$fs.readJson(configProjectFile),
 							configurationLowerCase = configurationName.toLowerCase();
 						this.configurationSpecificData[configurationLowerCase] = <any>_.merge(_.cloneDeep(this._projectData), configProjectContent);
 						this._hasBuildConfigurations = true;
@@ -134,7 +134,7 @@ export abstract class ProjectBase implements Project.IProjectBase {
 	}
 
 	private getProjectData(projectFilePath: string): Project.IData {
-		let data = this.$fs.readJson(projectFilePath);
+		const data = this.$fs.readJson(projectFilePath);
 		if (data.projectVersion && data.projectVersion.toString() !== "1") {
 			this.$errors.fail("FUTURE_PROJECT_VER");
 		}
@@ -155,9 +155,9 @@ export abstract class ProjectBase implements Project.IProjectBase {
 
 	private getAppIdentifierFromConfigFile(pathToConfigFile: string, regExp: RegExp): string {
 		if (this.$fs.exists(pathToConfigFile)) {
-			let fileContent = this.$fs.readText(pathToConfigFile);
+			const fileContent = this.$fs.readText(pathToConfigFile);
 
-			let matches = fileContent.match(regExp);
+			const matches = fileContent.match(regExp);
 
 			if (matches && matches[1]) {
 				return matches[1];

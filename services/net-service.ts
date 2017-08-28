@@ -4,12 +4,12 @@ export class Net implements INet {
 	constructor(private $errors: IErrors) { }
 
 	public async getFreePort(): Promise<number> {
-		let server = net.createServer((sock: string) => { /* empty - noone will connect here */ });
+		const server = net.createServer((sock: string) => { /* empty - noone will connect here */ });
 
 		return new Promise<number>((resolve, reject) => {
 			let isResolved = false;
 			server.listen(0, () => {
-				let portUsed = server.address().port;
+				const portUsed = server.address().port;
 				server.close();
 
 				if (!isResolved) {
@@ -31,7 +31,7 @@ export class Net implements INet {
 	public async isPortAvailable(port: number): Promise<boolean> {
 		return new Promise<boolean>((resolve, reject) => {
 			let isResolved = false;
-			let server = net.createServer();
+			const server = net.createServer();
 
 			server.on("error", (err: Error) => {
 				if (!isResolved) {

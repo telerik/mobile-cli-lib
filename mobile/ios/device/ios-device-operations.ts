@@ -35,7 +35,7 @@ export class IOSDeviceOperations implements IIOSDeviceOperations, IDisposable {
 		this.isInitialized = true;
 		if (!this.deviceLib) {
 			let foundDevice = false;
-			let wrappedDeviceFoundCallback = (deviceInfo: IOSDeviceLib.IDeviceActionInfo) => {
+			const wrappedDeviceFoundCallback = (deviceInfo: IOSDeviceLib.IDeviceActionInfo) => {
 				foundDevice = true;
 
 				return deviceFoundCallback(deviceInfo);
@@ -48,10 +48,10 @@ export class IOSDeviceOperations implements IIOSDeviceOperations, IDisposable {
 
 			// We need this because we need to make sure that we have devices.
 			await new Promise((resolve, reject) => {
-				let iterationsCount = 0,
-					maxIterationsCount = 3;
+				let iterationsCount = 0;
+				const maxIterationsCount = 3;
 
-				let intervalHandle: NodeJS.Timer = setInterval(() => {
+				const intervalHandle: NodeJS.Timer = setInterval(() => {
 					if (foundDevice) {
 						resolve();
 						return clearInterval(intervalHandle);
@@ -206,7 +206,7 @@ export class IOSDeviceOperations implements IIOSDeviceOperations, IDisposable {
 		const result: T[] = [];
 		const promises = getPromisesMethod();
 
-		for (let promise of promises) {
+		for (const promise of promises) {
 			if (errorHandler) {
 				try {
 					result.push(await promise);

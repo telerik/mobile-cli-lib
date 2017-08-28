@@ -22,13 +22,13 @@ export class DeviceAndroidDebugBridge extends AndroidDebugBridge implements Mobi
 
 	public async sendBroadcastToDevice(action: string, extras?: IStringDictionary): Promise<number> {
 		extras = extras || {};
-		let broadcastCommand = ["am", "broadcast", "-a", `${action}`];
+		const broadcastCommand = ["am", "broadcast", "-a", `${action}`];
 		_.each(extras, (value, key) => broadcastCommand.push("-e", key, value));
 
-		let result = await this.executeShellCommand(broadcastCommand);
+		const result = await this.executeShellCommand(broadcastCommand);
 		this.$logger.trace(`Broadcast result ${result} from ${broadcastCommand}`);
 
-		let match = result.match(/Broadcast completed: result=(\d+)/);
+		const match = result.match(/Broadcast completed: result=(\d+)/);
 		if (match) {
 			return +match[1];
 		}

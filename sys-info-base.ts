@@ -18,7 +18,7 @@ export class SysInfoBase implements ISysInfo {
 		if (!this.javaVerCache) {
 			try {
 				// different java has different format for `java -version` command
-				let output = (await this.$childProcess.spawnFromEvent("java", ["-version"], "exit")).stderr;
+				const output = (await this.$childProcess.spawnFromEvent("java", ["-version"], "exit")).stderr;
 				this.javaVerCache = /(?:openjdk|java) version \"((?:\d+\.)+(?:\d+))/i.exec(output)[1];
 			} catch (e) {
 				this.javaVerCache = null;
@@ -30,7 +30,7 @@ export class SysInfoBase implements ISysInfo {
 	private npmVerCache: string = null;
 	public async getNpmVersion(): Promise<string> {
 		if (!this.npmVerCache) {
-			let procOutput = await this.exec("npm -v");
+			const procOutput = await this.exec("npm -v");
 			this.npmVerCache = procOutput ? procOutput.split("\n")[0] : null;
 		}
 
@@ -40,11 +40,11 @@ export class SysInfoBase implements ISysInfo {
 	private javaCompilerVerCache: string = null;
 	public async getJavaCompilerVersion(): Promise<string> {
 		if (!this.javaCompilerVerCache) {
-			let javaCompileExecutableName = "javac";
-			let javaHome = process.env.JAVA_HOME;
-			let pathToJavaCompilerExecutable = javaHome ? path.join(javaHome, "bin", javaCompileExecutableName) : javaCompileExecutableName;
+			const javaCompileExecutableName = "javac";
+			const javaHome = process.env.JAVA_HOME;
+			const pathToJavaCompilerExecutable = javaHome ? path.join(javaHome, "bin", javaCompileExecutableName) : javaCompileExecutableName;
 			try {
-				let output = await this.exec(`"${pathToJavaCompilerExecutable}" -version`, { showStderr: true });
+				const output = await this.exec(`"${pathToJavaCompilerExecutable}" -version`, { showStderr: true });
 				// for other versions of java javac version output is not on first line
 				// thus can't use ^ for starts with in regex
 				this.javaCompilerVerCache = output ? /javac (.*)/i.exec(output.stderr)[1] : null;
@@ -113,7 +113,7 @@ export class SysInfoBase implements ISysInfo {
 					let cocoapodVersion = await this.exec("pod --version");
 					if (cocoapodVersion) {
 						// Output of pod --version could contain some warnings. Find the version in it.
-						let cocoapodVersionMatch = cocoapodVersion.match(/^((?:\d+\.){2}\d+.*?)$/gm);
+						const cocoapodVersionMatch = cocoapodVersion.match(/^((?:\d+\.){2}\d+.*?)$/gm);
 						if (cocoapodVersionMatch && cocoapodVersionMatch[0]) {
 							cocoapodVersion = cocoapodVersionMatch[0].trim();
 						}
@@ -132,10 +132,10 @@ export class SysInfoBase implements ISysInfo {
 
 	public async getSysInfo(pathToPackageJson: string, androidToolsInfo?: { pathToAdb: string }): Promise<ISysInfoData> {
 		if (!this.sysInfoCache) {
-			let res: ISysInfoData = Object.create(null);
+			const res: ISysInfoData = Object.create(null);
 			let procOutput: string;
 
-			let packageJson = require(pathToPackageJson);
+			const packageJson = require(pathToPackageJson);
 			res.procInfo = packageJson.name + "/" + packageJson.version;
 
 			// os stuff
@@ -162,7 +162,7 @@ export class SysInfoBase implements ISysInfo {
 			res.itunesInstalled = this.getITunesInstalled();
 
 			res.cocoapodVer = await this.getCocoapodVersion();
-			let pathToAdb = androidToolsInfo ? androidToolsInfo.pathToAdb : "adb";
+			const pathToAdb = androidToolsInfo ? androidToolsInfo.pathToAdb : "adb";
 
 			if (!androidToolsInfo) {
 				this.$logger.trace("'adb' and 'android' will be checked from PATH environment variable.");
@@ -175,7 +175,7 @@ export class SysInfoBase implements ISysInfo {
 
 			procOutput = await this.exec("mono --version");
 			if (!!procOutput) {
-				let match = this.monoVerRegExp.exec(procOutput);
+				const match = this.monoVerRegExp.exec(procOutput);
 				res.monoVer = match ? match[1] : null;
 			} else {
 				res.monoVer = null;

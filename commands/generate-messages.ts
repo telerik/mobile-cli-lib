@@ -12,11 +12,11 @@ export class GenerateMessages implements ICommand {
 	allowedParameters: ICommandParameter[] = [];
 
 	async execute(args: string[]): Promise<void> {
-		let result = await this.$messageContractGenerator.generate(),
-			innerMessagesDirectory = path.join(__dirname, "../messages"),
-			outerMessagesDirectory = path.join(__dirname, "../.."),
-			interfaceFilePath: string,
-			implementationFilePath: string;
+		const result = await this.$messageContractGenerator.generate();
+		const innerMessagesDirectory = path.join(__dirname, "../messages");
+		const outerMessagesDirectory = path.join(__dirname, "../..");
+		let interfaceFilePath: string;
+		let implementationFilePath: string;
 
 		if (this.$options.default) {
 			interfaceFilePath = path.join(innerMessagesDirectory, GenerateMessages.MESSAGES_DEFINITIONS_FILE_NAME);

@@ -37,7 +37,7 @@ export class OptionsBase {
 	}
 
 	public get shorthands(): string[] {
-		let result: string[] = [];
+		const result: string[] = [];
 		_.each(_.keys(this.options), optionName => {
 			if (this.options[optionName].alias) {
 				result.push(this.options[optionName].alias);
@@ -98,7 +98,7 @@ export class OptionsBase {
 			this.setArgv();
 		}
 
-		let parsed = Object.create(null);
+		const parsed = Object.create(null);
 		// DO NOT REMOVE { } as when they are missing and some of the option values is false, the each stops as it thinks we have set "return false".
 		_.each(_.keys(this.argv), optionName => {
 			parsed[optionName] = this.getOptionValue(optionName);
@@ -110,14 +110,14 @@ export class OptionsBase {
 				return;
 			}
 
-			let optionName = this.getCorrectOptionName(originalOptionName);
+			const optionName = this.getCorrectOptionName(originalOptionName);
 
 			if (!_.includes(this.optionsWhiteList, optionName)) {
 				if (!this.isOptionSupported(optionName)) {
 					this.$errors.failWithoutHelp(`The option '${originalOptionName}' is not supported. To see command's options, use '$ ${this.$staticConfig.CLIENT_NAME.toLowerCase()} help ${process.argv[2]}'. To see all commands use '$ ${this.$staticConfig.CLIENT_NAME.toLowerCase()} help'.`);
 				}
 
-				let optionType = this.getOptionType(optionName),
+				const optionType = this.getOptionType(optionName),
 					optionValue = parsed[optionName];
 
 				if (_.isArray(optionValue) && optionType !== OptionType.Array) {
@@ -132,23 +132,23 @@ export class OptionsBase {
 	}
 
 	private getCorrectOptionName(optionName: string): string {
-		let secondaryOptionName = this.getNonDashedOptionName(optionName);
+		const secondaryOptionName = this.getNonDashedOptionName(optionName);
 		return _.includes(this.optionNames, secondaryOptionName) ? secondaryOptionName : optionName;
 	}
 
 	private getOptionType(optionName: string): string {
-		let option = this.options[optionName] || this.tryGetOptionByAliasName(optionName);
+		const option = this.options[optionName] || this.tryGetOptionByAliasName(optionName);
 		return option ? option.type : "";
 	}
 
 	private tryGetOptionByAliasName(aliasName: string) {
-		let option = _.find(this.options, opt => opt.alias === aliasName);
+		const option = _.find(this.options, opt => opt.alias === aliasName);
 		return option;
 	}
 
 	private isOptionSupported(option: string): boolean {
 		if (!this.options[option]) {
-			let opt = this.tryGetOptionByAliasName(option);
+			const opt = this.tryGetOptionByAliasName(option);
 			return !!opt;
 		}
 
@@ -161,11 +161,11 @@ export class OptionsBase {
 	// IMPORTANT: In your code, it is better to use the value without dashes (profileDir in the example).
 	// This way your code will work in case "$ <cli name> emulate android --profile-dir" or "$ <cli name> emulate android --profileDir" is used by user.
 	private getNonDashedOptionName(optionName: string): string {
-		let matchUpperCaseLetters = optionName.match(OptionsBase.NONDASHED_OPTION_REGEX);
+		const matchUpperCaseLetters = optionName.match(OptionsBase.NONDASHED_OPTION_REGEX);
 		if (matchUpperCaseLetters) {
 			// get here if option with upperCase letter is specified, for example profileDir
 			// check if in knownOptions we have its kebabCase presentation
-			let secondaryOptionName = matchUpperCaseLetters[1] + matchUpperCaseLetters[2].toUpperCase() + matchUpperCaseLetters[3] || '';
+			const secondaryOptionName = matchUpperCaseLetters[1] + matchUpperCaseLetters[2].toUpperCase() + matchUpperCaseLetters[3] || '';
 			return this.getNonDashedOptionName(secondaryOptionName);
 		}
 
@@ -173,9 +173,9 @@ export class OptionsBase {
 	}
 
 	private getDashedOptionName(optionName: string): string {
-		let matchUpperCaseLetters = optionName.match(OptionsBase.DASHED_OPTION_REGEX);
+		const matchUpperCaseLetters = optionName.match(OptionsBase.DASHED_OPTION_REGEX);
 		if (matchUpperCaseLetters) {
-			let secondaryOptionName = `${matchUpperCaseLetters[1]}-${matchUpperCaseLetters[2].toLowerCase()}${matchUpperCaseLetters[3] || ''}`;
+			const secondaryOptionName = `${matchUpperCaseLetters[1]}-${matchUpperCaseLetters[2].toLowerCase()}${matchUpperCaseLetters[3] || ''}`;
 			return this.getDashedOptionName(secondaryOptionName);
 		}
 
@@ -183,7 +183,7 @@ export class OptionsBase {
 	}
 
 	private setArgv(): void {
-		let opts: IDictionary<IDashedOption> = <IDictionary<IDashedOption>>{};
+		const opts: IDictionary<IDashedOption> = <IDictionary<IDashedOption>>{};
 		_.each(this.options, (value: IDashedOption, key: string) => {
 			opts[this.getDashedOptionName(key)] = value;
 		});

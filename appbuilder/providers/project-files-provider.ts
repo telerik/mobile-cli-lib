@@ -7,7 +7,7 @@ export class ProjectFilesProvider extends ProjectFilesProviderBase {
 	private _projectDir: string = null;
 	private get projectDir(): string {
 		if (!this._projectDir) {
-			let project = this.$injector.resolve("project");
+			const project = this.$injector.resolve("project");
 			this._projectDir = project.getProjectDir();
 		}
 
@@ -23,7 +23,7 @@ export class ProjectFilesProvider extends ProjectFilesProviderBase {
 	}
 
 	public isFileExcluded(filePath: string): boolean {
-		let exclusionList = ProjectFilesProvider.INTERNAL_NONPROJECT_FILES.concat(this.getIgnoreFilesRules());
+		const exclusionList = ProjectFilesProvider.INTERNAL_NONPROJECT_FILES.concat(this.getIgnoreFilesRules());
 		return this.$pathFilteringService.isFileExcluded(filePath, exclusionList, this.projectDir);
 	}
 
@@ -43,9 +43,9 @@ export class ProjectFilesProvider extends ProjectFilesProviderBase {
 	}
 
 	private get ignoreFilesConfigurations(): string[] {
-		let configurations: string[] = [ProjectFilesProvider.IGNORE_FILE];
+		const configurations: string[] = [ProjectFilesProvider.IGNORE_FILE];
 		// unless release is explicitly set, we use debug config
-		let configFileName = "." +
+		const configFileName = "." +
 			(this.$options.release ? this.$projectConstants.RELEASE_CONFIGURATION_NAME : this.$projectConstants.DEBUG_CONFIGURATION_NAME) +
 			ProjectFilesProvider.IGNORE_FILE;
 		configurations.push(configFileName);

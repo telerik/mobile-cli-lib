@@ -18,12 +18,12 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 	}
 
 	public async doesShasumFileExistsOnDevice(): Promise<boolean> {
-		let lsResult = await this.adb.executeShellCommand(["ls", this.hashFileDevicePath]);
+		const lsResult = await this.adb.executeShellCommand(["ls", this.hashFileDevicePath]);
 		return !!(lsResult && lsResult.trim() === this.hashFileDevicePath);
 	}
 
 	public async getShasumsFromDevice(): Promise<IStringDictionary> {
-		let hashFileLocalPath = await this.downloadHashFileFromDevice();
+		const hashFileLocalPath = await this.downloadHashFileFromDevice();
 
 		if (this.$fs.exists(hashFileLocalPath)) {
 			return this.$fs.readJson(hashFileLocalPath);
@@ -37,10 +37,10 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 		if (_.isArray(data)) {
 			await Promise.all(
 				(<Mobile.ILocalToDevicePathData[]>data).map(async localToDevicePathData => {
-					let localPath = localToDevicePathData.getLocalPath();
-					let stats = this.$fs.getFsStats(localPath);
+					const localPath = localToDevicePathData.getLocalPath();
+					const stats = this.$fs.getFsStats(localPath);
 					if (stats.isFile()) {
-						let fileShasum = await this.$fs.getFileShasum(localPath);
+						const fileShasum = await this.$fs.getFileShasum(localPath);
 						shasums[localPath] = fileShasum;
 					}
 				})
@@ -54,11 +54,11 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 	}
 
 	public async updateHashes(localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<boolean> {
-		let oldShasums = await this.getShasumsFromDevice();
+		const oldShasums = await this.getShasumsFromDevice();
 		if (oldShasums) {
 			await Promise.all(
 				_.map(localToDevicePaths, async ldp => {
-					let localPath = ldp.getLocalPath();
+					const localPath = ldp.getLocalPath();
 					if (this.$fs.getFsStats(localPath).isFile()) {
 						// TODO: Use relative to project path for key
 						// This will speed up livesync on the same device for the same project on different PCs.
@@ -76,9 +76,9 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 	}
 
 	public async removeHashes(localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<boolean> {
-		let oldShasums = await this.getShasumsFromDevice();
+		const oldShasums = await this.getShasumsFromDevice();
 		if (oldShasums) {
-			let fileToShasumDictionary = <IStringDictionary>(_.omit(oldShasums, localToDevicePaths.map(ldp => ldp.getLocalPath())));
+			const fileToShasumDictionary = <IStringDictionary>(_.omit(oldShasums, localToDevicePaths.map(ldp => ldp.getLocalPath())));
 			await this.uploadHashFileToDevice(fileToShasumDictionary);
 			return true;
 		}

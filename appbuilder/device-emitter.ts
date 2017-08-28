@@ -71,7 +71,7 @@ export class DeviceEmitter extends EventEmitter {
 	}
 
 	private checkCompanionAppChanged(device: Mobile.IDevice, applicationName: string, eventName: string): void {
-		let devicePlatform = device.deviceInfo.platform.toLowerCase();
+		const devicePlatform = device.deviceInfo.platform.toLowerCase();
 		_.each(this.companionAppIdentifiers, (platformsCompanionAppIdentifiers: IStringDictionary, framework: string) => {
 			if (applicationName === platformsCompanionAppIdentifiers[devicePlatform]) {
 				this.emit(eventName, device.deviceInfo.identifier, framework);

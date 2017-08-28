@@ -10,7 +10,7 @@ class CustomEventEmitter extends EventEmitter {
 	constructor() { super(); }
 }
 
-let companionAppIdentifiers = {
+const companionAppIdentifiers = {
 	"cordova": {
 		"android": "cordova-android",
 		"ios": "cordova-ios",
@@ -24,7 +24,7 @@ let companionAppIdentifiers = {
 };
 
 function createTestInjector(): IInjector {
-	let testInjector = new Yok();
+	const testInjector = new Yok();
 	testInjector.register("devicesService", CustomEventEmitter);
 	testInjector.register("deviceLogProvider", CustomEventEmitter);
 	testInjector.register("companionAppsService", {
@@ -39,9 +39,9 @@ function createTestInjector(): IInjector {
 }
 
 describe("deviceEmitter", () => {
-	let testInjector: IInjector,
-		deviceEmitter: DeviceEmitter,
-		isOpenDeviceLogStreamCalled = false;
+	let testInjector: IInjector;
+	let deviceEmitter: DeviceEmitter;
+	let isOpenDeviceLogStreamCalled = false;
 
 	beforeEach(() => {
 		testInjector = createTestInjector();
@@ -50,8 +50,8 @@ describe("deviceEmitter", () => {
 	});
 
 	describe("raises correct events after initialize is called:", () => {
-		let devicesService: EventEmitter,
-			deviceInstance: any;
+		let devicesService: EventEmitter;
+		let deviceInstance: any;
 
 		beforeEach(async () => {
 			devicesService = testInjector.resolve("devicesService");
@@ -68,7 +68,7 @@ describe("deviceEmitter", () => {
 
 		_.each([DeviceDiscoveryEventNames.DEVICE_FOUND, DeviceDiscoveryEventNames.DEVICE_LOST], deviceEvent => {
 			describe(deviceEvent, () => {
-				let attachDeviceEventVerificationHandler = (expectedDeviceInfo: any, done: mocha.Done) => {
+				const attachDeviceEventVerificationHandler = (expectedDeviceInfo: any, done: mocha.Done) => {
 					deviceEmitter.on(deviceEvent, (deviceInfo: Mobile.IDeviceInfo) => {
 						assert.deepEqual(deviceInfo, expectedDeviceInfo);
 						// Wait for all operations to be completed and call done after that.
@@ -84,7 +84,7 @@ describe("deviceEmitter", () => {
 		});
 
 		describe("openDeviceLogStream", () => {
-			let attachDeviceEventVerificationHandler = (expectedDeviceInfo: any, done: mocha.Done) => {
+			const attachDeviceEventVerificationHandler = (expectedDeviceInfo: any, done: mocha.Done) => {
 				deviceEmitter.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (deviceInfo: Mobile.IDeviceInfo) => {
 					assert.deepEqual(deviceInfo, expectedDeviceInfo);
 
@@ -110,9 +110,9 @@ describe("deviceEmitter", () => {
 			});
 
 			describe("raises deviceLogData with correct identifier and data", () => {
-				let expectedDeviceLogData = "This is some log data from device.";
+				const expectedDeviceLogData = "This is some log data from device.";
 
-				let attachDeviceLogDataVerificationHandler = (expectedDeviceIdentifier: string, done: mocha.Done) => {
+				const attachDeviceLogDataVerificationHandler = (expectedDeviceIdentifier: string, done: mocha.Done) => {
 					deviceEmitter.on("deviceLogData", (identifier: string, data: any) => {
 						assert.deepEqual(identifier, expectedDeviceIdentifier);
 						assert.deepEqual(data, expectedDeviceLogData);
@@ -131,9 +131,9 @@ describe("deviceEmitter", () => {
 
 		_.each(["applicationInstalled", "applicationUninstalled"], (applicationEvent: string) => {
 			describe(applicationEvent, () => {
-				let expectedApplicationIdentifier = "application identifier";
+				const expectedApplicationIdentifier = "application identifier";
 
-				let attachApplicationEventVerificationHandler = (expectedDeviceIdentifier: string, done: mocha.Done) => {
+				const attachApplicationEventVerificationHandler = (expectedDeviceIdentifier: string, done: mocha.Done) => {
 					deviceEmitter.on(applicationEvent, (deviceIdentifier: string, appIdentifier: string) => {
 						assert.deepEqual(deviceIdentifier, expectedDeviceIdentifier);
 						assert.deepEqual(appIdentifier, expectedApplicationIdentifier);
@@ -154,7 +154,7 @@ describe("deviceEmitter", () => {
 		_.each(["debuggableAppFound", "debuggableAppLost"], (applicationEvent: string) => {
 			describe(applicationEvent, () => {
 
-				let attachDebuggableEventVerificationHandler = (expectedDebuggableAppInfo: Mobile.IDeviceApplicationInformation, done: mocha.Done) => {
+				const attachDebuggableEventVerificationHandler = (expectedDebuggableAppInfo: Mobile.IDeviceApplicationInformation, done: mocha.Done) => {
 					deviceEmitter.on(applicationEvent, (debuggableAppInfo: Mobile.IDeviceApplicationInformation) => {
 						assert.deepEqual(debuggableAppInfo, expectedDebuggableAppInfo);
 
@@ -164,7 +164,7 @@ describe("deviceEmitter", () => {
 				};
 
 				it("is raised when working with device", (done: mocha.Done) => {
-					let debuggableAppInfo: Mobile.IDeviceApplicationInformation = {
+					const debuggableAppInfo: Mobile.IDeviceApplicationInformation = {
 						appIdentifier: "app identifier",
 						deviceIdentifier: deviceInstance.deviceInfo.identifier,
 						framework: "cordova"
@@ -180,7 +180,7 @@ describe("deviceEmitter", () => {
 		_.each(["debuggableViewFound", "debuggableViewLost", "debuggableViewChanged"], (applicationEvent: string) => {
 			describe(applicationEvent, () => {
 
-				let createDebuggableWebView = (uniqueId: string) => {
+				const createDebuggableWebView = (uniqueId: string) => {
 					return {
 						description: `description_${uniqueId}`,
 						devtoolsFrontendUrl: `devtoolsFrontendUrl_${uniqueId}`,
@@ -192,9 +192,9 @@ describe("deviceEmitter", () => {
 					};
 				};
 
-				let appId = "appId";
+				const appId = "appId";
 
-				let attachDebuggableEventVerificationHandler = (expectedDeviceIdentifier: string, expectedAppIdentifier: string, expectedDebuggableViewInfo: Mobile.IDebugWebViewInfo, done: mocha.Done) => {
+				const attachDebuggableEventVerificationHandler = (expectedDeviceIdentifier: string, expectedAppIdentifier: string, expectedDebuggableViewInfo: Mobile.IDebugWebViewInfo, done: mocha.Done) => {
 					deviceEmitter.on(applicationEvent, (deviceIdentifier: string, appIdentifier: string, debuggableViewInfo: Mobile.IDebugWebViewInfo) => {
 						assert.deepEqual(deviceIdentifier, expectedDeviceIdentifier);
 
@@ -208,7 +208,7 @@ describe("deviceEmitter", () => {
 				};
 
 				it("is raised when working with device", (done: mocha.Done) => {
-					let expectedDebuggableViewInfo: Mobile.IDebugWebViewInfo = createDebuggableWebView("test1");
+					const expectedDebuggableViewInfo: Mobile.IDebugWebViewInfo = createDebuggableWebView("test1");
 
 					attachDebuggableEventVerificationHandler(deviceInstance.deviceInfo.identifier, appId, expectedDebuggableViewInfo, done);
 					devicesService.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, deviceInstance);
@@ -221,7 +221,7 @@ describe("deviceEmitter", () => {
 			describe(applicationEvent, () => {
 				_.each(companionAppIdentifiers, (companionAppIdentifersForPlatform: any, applicationFramework: string) => {
 					describe(`is raised for ${applicationFramework}`, () => {
-						let attachCompanionEventVerificationHandler = (expectedDeviceIdentifier: string, done: mocha.Done) => {
+						const attachCompanionEventVerificationHandler = (expectedDeviceIdentifier: string, done: mocha.Done) => {
 							deviceEmitter.on(applicationEvent, (deviceIdentifier: string, framework: string) => {
 								assert.deepEqual(deviceIdentifier, expectedDeviceIdentifier);
 								assert.deepEqual(framework, applicationFramework);

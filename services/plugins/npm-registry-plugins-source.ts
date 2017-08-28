@@ -16,7 +16,7 @@ export class NpmRegistryPluginsSource extends PluginsSourceBase implements IPlug
 	}
 
 	protected async initializeCore(projectDir: string, keywords: string[]): Promise<void> {
-		let plugin = await this.getPluginFromNpmRegistry(keywords[0]);
+		const plugin = await this.getPluginFromNpmRegistry(keywords[0]);
 		this.plugins = plugin ? [plugin] : null;
 	}
 
@@ -25,11 +25,11 @@ export class NpmRegistryPluginsSource extends PluginsSourceBase implements IPlug
 	}
 
 	private async getPluginFromNpmRegistry(plugin: string): Promise<IBasicPluginInformation> {
-		let dependencyInfo = this.$npmService.getDependencyInformation(plugin);
+		const dependencyInfo = this.$npmService.getDependencyInformation(plugin);
 
-		let pluginName = this.$npmService.isScopedDependency(plugin) ? this.prepareScopedPluginName(dependencyInfo.name) : dependencyInfo.name;
+		const pluginName = this.$npmService.isScopedDependency(plugin) ? this.prepareScopedPluginName(dependencyInfo.name) : dependencyInfo.name;
 
-		let result = await this.$npmService.getPackageJsonFromNpmRegistry(pluginName, dependencyInfo.version);
+		const result = await this.$npmService.getPackageJsonFromNpmRegistry(pluginName, dependencyInfo.version);
 
 		if (!result) {
 			return null;

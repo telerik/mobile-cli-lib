@@ -4,7 +4,7 @@ import { Yok } from "../../yok";
 import * as assert from "assert";
 import { EOL } from "os";
 
-let androidApiLevel23TestData = [
+const androidApiLevel23TestData = [
 	{ input: '12-28 10:14:15.977    99    99 D Genymotion: Received Set Clipboard', output: null },
 	{ input: '12-28 10:14:31.303   779   790 I ActivityManager: START u0 {act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10200000 cmp=com.telerik.app1/.TelerikCallbackActivity (has extras)} from uid 10008 on display 0', output: 'ActivityManager: START u0 {act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10200000 cmp=com.telerik.app1/.TelerikCallbackActivity (has extras)} from uid 10008 on display 0' },
 	{ input: '--------- beginning of main', output: null },
@@ -37,7 +37,7 @@ let androidApiLevel23TestData = [
 	}
 ];
 
-let androidApiLevel22TestData = [
+const androidApiLevel22TestData = [
 	{ input: '--------- beginning of system', output: null },
 	{ input: 'D/Genymotion(   82): Received Ping', output: null },
 	{ input: '--------- beginning of main', output: null },
@@ -92,7 +92,7 @@ let androidApiLevel22TestData = [
 	}
 ];
 
-let androidApiLevel23MapForPid8141 = [
+const androidApiLevel23MapForPid8141 = [
 	{ input: "--------- beginning of main", output: null },
 	{ input: "07-25 06:36:22.590  8141  8141 D TNS.Native: lenNodes=71568, lenNames=824195, lenValues=963214", output: null },
 	{ input: "07-25 06:36:22.590  8141  8141 D TNS.Native: time=1", output: null },
@@ -207,11 +207,11 @@ let androidApiLevel23MapForPid8141 = [
 
 describe("androidLogFilter", () => {
 
-	let assertFiltering = (inputData: string, expectedOutput: string, logLevel?: string, pid?: string) => {
-		let testInjector = new Yok();
+	const assertFiltering = (inputData: string, expectedOutput: string, logLevel?: string, pid?: string) => {
+		const testInjector = new Yok();
 		testInjector.register("loggingLevels", LoggingLevels);
-		let androidLogFilter = testInjector.resolve(AndroidLogFilter);
-		let filteredData = androidLogFilter.filterData(inputData, logLevel, pid);
+		const androidLogFilter = testInjector.resolve(AndroidLogFilter);
+		const filteredData = androidLogFilter.filterData(inputData, logLevel, pid);
 		assert.deepEqual(filteredData, expectedOutput, `The actual result '${filteredData}' did NOT match expected output '${expectedOutput}'.`);
 	};
 

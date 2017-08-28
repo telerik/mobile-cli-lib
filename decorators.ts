@@ -27,12 +27,12 @@
 export function cache(): any {
 	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> => {
 		let result: any;
-		let propName: string = descriptor.value ? "value" : "get";
+		const propName: string = descriptor.value ? "value" : "get";
 
 		const originalValue = (<any>descriptor)[propName];
 
 		(<any>descriptor)[propName] = function (...args: any[]) {
-			let propertyName = `__isCalled_${propertyKey}__`;
+			const propertyName = `__isCalled_${propertyKey}__`;
 			if (this && !this[propertyName]) {
 				this[propertyName] = true;
 				result = originalValue.apply(this, args);
@@ -73,7 +73,7 @@ export function exported(moduleName: string): any {
 	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<any>): TypedPropertyDescriptor<any> => {
 		$injector.publicApi.__modules__[moduleName] = $injector.publicApi.__modules__[moduleName] || {};
 		$injector.publicApi.__modules__[moduleName][propertyKey] = (...args: any[]): any => {
-			let originalModule = $injector.resolve(moduleName),
+			const originalModule = $injector.resolve(moduleName),
 				originalMethod: any = originalModule[propertyKey],
 				result = originalMethod.apply(originalModule, args);
 

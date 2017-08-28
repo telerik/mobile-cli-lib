@@ -1,11 +1,12 @@
 import * as uuid from "uuid";
 import * as net from "net";
-let Table = require("cli-table");
 import { platform, EOL } from "os";
 import { ReadStream } from "tty";
 import { Configurations } from "./constants";
 import { EventEmitter } from "events";
 import * as crypto from "crypto";
+
+const Table = require("cli-table");
 
 export function deferPromise<T>(): IDeferPromise<T> {
 	let resolve: (value?: T | PromiseLike<T>) => void;
@@ -47,9 +48,9 @@ export function deferPromise<T>(): IDeferPromise<T> {
  */
 export function settlePromises<T>(promises: Promise<T>[]): Promise<T[]> {
 	return new Promise((resolve, reject) => {
-		let settledPromisesCount = 0,
-			results: T[] = [],
-			errors: Error[] = [];
+		let settledPromisesCount = 0;
+		const results: T[] = [];
+		const errors: Error[] = [];
 
 		const length = promises.length;
 
@@ -79,7 +80,7 @@ export function settlePromises<T>(promises: Promise<T>[]): Promise<T[]> {
 
 export function getPropertyName(func: Function): string {
 	if (func) {
-		let match = func.toString().match(/(?:return\s+?.*\.(.+);)|(?:=>\s*?.*\.(.+)\b)/);
+		const match = func.toString().match(/(?:return\s+?.*\.(.+);)|(?:=>\s*?.*\.(.+)\b)/);
 		if (match) {
 			return (match[1] || match[2]).trim();
 		}
@@ -148,17 +149,17 @@ export function formatListOfNames(names: string[], conjunction?: string): string
 }
 
 export function getRelativeToRootPath(rootPath: string, filePath: string): string {
-	let relativeToRootPath = filePath.substr(rootPath.length);
+	const relativeToRootPath = filePath.substr(rootPath.length);
 	return relativeToRootPath;
 }
 
 function getVersionArray(version: string | IVersionData): number[] {
-	let result: number[] = [],
-		parseLambda = (x: string) => parseInt(x, 10),
-		filterLambda = (x: number) => !isNaN(x);
+	let result: number[] = [];
+	const parseLambda = (x: string) => parseInt(x, 10);
+	const filterLambda = (x: number) => !isNaN(x);
 
 	if (typeof version === "string") {
-		let versionString = <string>version.split("-")[0];
+		const versionString = <string>version.split("-")[0];
 		result = _.map(versionString.split("."), parseLambda);
 	} else {
 		result = _(version).map(parseLambda).filter(filterLambda).value();
@@ -168,7 +169,7 @@ function getVersionArray(version: string | IVersionData): number[] {
 }
 
 export function versionCompare(version1: string | IVersionData, version2: string | IVersionData): number {
-	let v1array = getVersionArray(version1),
+	const v1array = getVersionArray(version1),
 		v2array = getVersionArray(version2);
 
 	if (v1array.length !== v2array.length) {
@@ -219,7 +220,7 @@ export function isNullOrWhitespace(input: any): boolean {
 }
 
 export function getCurrentEpochTime(): number {
-	let dateTime = new Date();
+	const dateTime = new Date();
 	return dateTime.getTime();
 }
 
@@ -230,7 +231,7 @@ export async function sleep(ms: number): Promise<void> {
 }
 
 export function createTable(headers: string[], data: string[][]): any {
-	let table = new Table({
+	const table = new Table({
 		head: headers,
 		chars: { "mid": "", "left-mid": "", "mid-mid": "", "right-mid": "" }
 	});
@@ -241,7 +242,7 @@ export function createTable(headers: string[], data: string[][]): any {
 
 export function remove<T>(array: T[], predicate: (element: T) => boolean, numberOfElements?: number): T[] {
 	numberOfElements = numberOfElements || 1;
-	let index = _.findIndex(array, predicate);
+	const index = _.findIndex(array, predicate);
 	if (index === -1) {
 		return new Array<T>();
 	}
@@ -272,7 +273,7 @@ export async function getFuturesResults<T>(promises: Promise<T | T[]>[], predica
 }
 
 export function appendZeroesToVersion(version: string, requiredVersionLength: number): string {
-	let zeroesToAppend = requiredVersionLength - version.split(".").length;
+	const zeroesToAppend = requiredVersionLength - version.split(".").length;
 	for (let index = 0; index < zeroesToAppend; index++) {
 		version += ".0";
 	}
@@ -282,12 +283,12 @@ export function appendZeroesToVersion(version: string, requiredVersionLength: nu
 
 export function decorateMethod(before: (method1: any, self1: any, args1: any[]) => Promise<void>, after: (method2: any, self2: any, result2: any, args2: any[]) => Promise<any>) {
 	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<Function>) => {
-		let sink = descriptor.value;
+		const sink = descriptor.value;
 		descriptor.value = async function (...args: any[]): Promise<any> {
 			if (before) {
 				await before(sink, this, args);
 			}
-			let result = sink.apply(this, args);
+			const result = sink.apply(this, args);
 			if (after) {
 				return await after(sink, this, result, args);
 			}
@@ -301,7 +302,7 @@ export function hook(commandName: string) {
 	function getHooksService(self: any): IHooksService {
 		let hooksService: IHooksService = self.$hooksService;
 		if (!hooksService) {
-			let injector = self.$injector;
+			const injector = self.$injector;
 			if (!injector) {
 				throw Error('Type with hooks needs to have either $hooksService or $injector injected.');
 			}
@@ -312,12 +313,12 @@ export function hook(commandName: string) {
 
 	function prepareArguments(method: any, args: any[], hooksService: IHooksService): { [key: string]: any } {
 		annotate(method);
-		let argHash: any = {};
+		const argHash: any = {};
 		for (let i = 0; i < method.$inject.args.length; ++i) {
 			argHash[method.$inject.args[i]] = args[i];
 		}
 		argHash.$arguments = args;
-		let result: any = {};
+		const result: any = {};
 		result[hooksService.hookArgsName] = argHash;
 
 		return result;
@@ -325,12 +326,12 @@ export function hook(commandName: string) {
 
 	return decorateMethod(
 		async (method: any, self: any, args: any[]) => {
-			let hooksService = getHooksService(self);
+			const hooksService = getHooksService(self);
 			await hooksService.executeBeforeHooks(commandName, prepareArguments(method, args, hooksService));
 		},
 		async (method: any, self: any, resultPromise: any, args: any[]) => {
-			let result = await resultPromise;
-			let hooksService = getHooksService(self);
+			const result = await resultPromise;
+			const hooksService = getHooksService(self);
 			await hooksService.executeAfterHooks(commandName, prepareArguments(method, args, hooksService));
 			return Promise.resolve(result);
 		});
@@ -352,9 +353,9 @@ export async function attachAwaitDetach(eventName: string, eventEmitter: EventEm
 
 export async function connectEventually(factory: () => Promise<net.Socket>, handler: (_socket: net.Socket) => void): Promise<void> {
 	async function tryConnect() {
-		let tryConnectAfterTimeout = setTimeout.bind(undefined, tryConnect, 1000);
+		const tryConnectAfterTimeout = setTimeout.bind(undefined, tryConnect, 1000);
 
-		let socket = await factory();
+		const socket = await factory();
 		socket.on("connect", () => {
 			socket.removeListener("error", tryConnectAfterTimeout);
 			handler(socket);
@@ -383,7 +384,7 @@ export async function connectEventuallyUntilTimeout(factory: () => net.Socket, t
 		}, timeout);
 
 		function tryConnect() {
-			let tryConnectAfterTimeout = (error: Error) => {
+			const tryConnectAfterTimeout = (error: Error) => {
 				if (isResolved) {
 					return;
 				}
@@ -392,7 +393,7 @@ export async function connectEventuallyUntilTimeout(factory: () => net.Socket, t
 				setTimeout(tryConnect, 1000);
 			};
 
-			let socket = factory();
+			const socket = factory();
 			socket.on("connect", () => {
 				socket.removeListener("error", tryConnectAfterTimeout);
 				isResolved = true;

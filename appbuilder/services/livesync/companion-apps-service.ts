@@ -12,8 +12,8 @@ export class CompanionAppsService implements ICompanionAppsService {
 
 	@exported("companionAppsService")
 	public getCompanionAppIdentifier(framework: string, platform: string): string {
-		let lowerCasedFramework = (framework || "").toLowerCase();
-		let lowerCasedPlatform = (platform || "").toLowerCase();
+		const lowerCasedFramework = (framework || "").toLowerCase();
+		const lowerCasedPlatform = (platform || "").toLowerCase();
 
 		if (lowerCasedFramework === TARGET_FRAMEWORK_IDENTIFIERS.Cordova.toLowerCase()) {
 			if (this.$mobileHelper.isAndroidPlatform(lowerCasedPlatform)) {
@@ -34,23 +34,23 @@ export class CompanionAppsService implements ICompanionAppsService {
 
 	@exported("companionAppsService")
 	public getAllCompanionAppIdentifiers(): IDictionary<IStringDictionary> {
-		let platforms = [
+		const platforms = [
 			this.$devicePlatformsConstants.Android,
 			this.$devicePlatformsConstants.iOS,
 			this.$devicePlatformsConstants.WP8
 		];
 
-		let frameworks = [
+		const frameworks = [
 			TARGET_FRAMEWORK_IDENTIFIERS.Cordova.toLowerCase(),
 			TARGET_FRAMEWORK_IDENTIFIERS.NativeScript.toLowerCase()
 		];
 
-		let companionAppIdentifiers: IDictionary<IStringDictionary> = {};
+		const companionAppIdentifiers: IDictionary<IStringDictionary> = {};
 		_.each(frameworks, framework => {
-			let lowerCasedFramework = framework.toLowerCase();
+			const lowerCasedFramework = framework.toLowerCase();
 			companionAppIdentifiers[lowerCasedFramework] = companionAppIdentifiers[lowerCasedFramework] || {};
 			_.each(platforms, platform => {
-				let lowerCasedPlatform = platform.toLowerCase();
+				const lowerCasedPlatform = platform.toLowerCase();
 				companionAppIdentifiers[lowerCasedFramework][lowerCasedPlatform] = this.getCompanionAppIdentifier(lowerCasedFramework, lowerCasedPlatform);
 			});
 		});

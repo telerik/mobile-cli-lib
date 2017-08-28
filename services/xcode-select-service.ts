@@ -13,7 +13,7 @@ export class XcodeSelectService implements IXcodeSelectService {
 			this.$errors.failWithoutHelp("xcode-select is only available on Mac OS X.");
 		}
 
-		let childProcess = await this.$childProcess.spawnFromEvent("xcode-select", ["-print-path"], "close", {}, { throwError: false }),
+		const childProcess = await this.$childProcess.spawnFromEvent("xcode-select", ["-print-path"], "close", {}, { throwError: false }),
 			result = childProcess.stdout.trim();
 
 		if (!result) {
@@ -29,13 +29,13 @@ export class XcodeSelectService implements IXcodeSelectService {
 
 	@cache()
 	public async getXcodeVersion(): Promise<IVersionData> {
-		let sysInfoBase = this.$injector.resolve("sysInfoBase");
-		let xcodeVer = await sysInfoBase.getXCodeVersion();
+		const sysInfoBase = this.$injector.resolve("sysInfoBase");
+		const xcodeVer = await sysInfoBase.getXCodeVersion();
 		if (!xcodeVer) {
 			this.$errors.failWithoutHelp("xcodebuild execution failed. Make sure that you have latest Xcode and tools installed.");
 		}
 
-		let xcodeVersionMatch = xcodeVer.match(/Xcode (.*)/),
+		const xcodeVersionMatch = xcodeVer.match(/Xcode (.*)/),
 			xcodeVersionGroup = xcodeVersionMatch && xcodeVersionMatch[1],
 			xcodeVersionSplit = xcodeVersionGroup && xcodeVersionGroup.split(".");
 

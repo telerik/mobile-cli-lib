@@ -18,20 +18,20 @@ export class FileSystem implements IFileSystem {
 	//TODO: try 'archiver' module for zipping
 	public async zipFiles(zipFile: string, files: string[], zipPathCallback: (path: string) => string): Promise<void> {
 		//we are resolving it here instead of in the constructor, because config has dependency on file system and config shouldn't require logger
-		let $logger = this.$injector.resolve("logger");
-		let zipstream = require("zipstream");
-		let zip = zipstream.createZip({ level: 9 });
-		let outFile = fs.createWriteStream(zipFile);
+		const $logger = this.$injector.resolve("logger");
+		const zipstream = require("zipstream");
+		const zip = zipstream.createZip({ level: 9 });
+		const outFile = fs.createWriteStream(zipFile);
 		zip.pipe(outFile);
 
 		return new Promise<void>((resolve, reject) => {
 			outFile.on("error", (err: Error) => reject(err));
 
 			let fileIdx = -1;
-			let zipCallback = () => {
+			const zipCallback = () => {
 				fileIdx++;
 				if (fileIdx < files.length) {
-					let file = files[fileIdx];
+					const file = files[fileIdx];
 
 					let relativePath = zipPathCallback(file);
 					relativePath = relativePath.replace(/\\/g, "/");
@@ -61,9 +61,9 @@ export class FileSystem implements IFileSystem {
 
 	public async unzip(zipFile: string, destinationDir: string, options?: { overwriteExisitingFiles?: boolean; caseSensitive?: boolean },
 		fileFilters?: string[]): Promise<void> {
-		let shouldOverwriteFiles = !(options && options.overwriteExisitingFiles === false);
-		let isCaseSensitive = !(options && options.caseSensitive === false);
-		let $hostInfo = this.$injector.resolve("$hostInfo");
+		const shouldOverwriteFiles = !(options && options.overwriteExisitingFiles === false);
+		const isCaseSensitive = !(options && options.caseSensitive === false);
+		const $hostInfo = this.$injector.resolve("$hostInfo");
 
 		this.createDirectory(destinationDir);
 
@@ -80,7 +80,7 @@ export class FileSystem implements IFileSystem {
 			zipFile = this.findFileCaseInsensitive(zipFile);
 		}
 
-		let args = _.flatten<string>(["-b",
+		const args = _.flatten<string>(["-b",
 			shouldOverwriteFiles ? "-o" : "-n",
 			isCaseSensitive ? [] : "-C",
 			zipFile,
@@ -88,16 +88,16 @@ export class FileSystem implements IFileSystem {
 			"-d",
 			destinationDir]);
 
-		let $childProcess = this.$injector.resolve("childProcess");
+		const $childProcess = this.$injector.resolve("childProcess");
 		await $childProcess.spawnFromEvent(proc, args, "close", { stdio: "ignore", detached: true });
 	}
 
 	private findFileCaseInsensitive(file: string): string {
-		let dir = path.dirname(file);
-		let basename = path.basename(file);
-		let entries = this.readDirectory(dir);
-		let match = minimatch.match(entries, basename, { nocase: true, nonegate: true, nonull: true })[0];
-		let result = path.join(dir, match);
+		const dir = path.dirname(file);
+		const basename = path.basename(file);
+		const entries = this.readDirectory(dir);
+		const match = minimatch.match(entries, basename, { nocase: true, nonegate: true, nonull: true })[0];
+		const result = path.join(dir, match);
 		return result;
 	}
 
@@ -126,17 +126,17 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public getFileSize(path: string): number {
-		let stat = this.getFsStats(path);
+		const stat = this.getFsStats(path);
 		return stat.size;
 	}
 
 	public async futureFromEvent(eventEmitter: any, event: string): Promise<any> {
 		return new Promise((resolve, reject) => {
 			eventEmitter.once(event, function () {
-				let args = _.toArray(arguments);
+				const args = _.toArray(arguments);
 
 				if (event === "error") {
-					let err = <Error>args[0];
+					const err = <Error>args[0];
 					reject(err);
 					return;
 				}
@@ -183,7 +183,7 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public readJson(filename: string, encoding?: string): any {
-		let data = this.readText(filename, encoding);
+		const data = this.readText(filename, encoding);
 		if (data) {
 			// Replace BOM from the header of the file if it exists
 			return JSON.parse(data.replace(/^\uFEFF/, ""));
@@ -260,11 +260,11 @@ export class FileSystem implements IFileSystem {
 		if (!this.exists(baseName)) {
 			return baseName;
 		}
-		let extension = path.extname(baseName);
-		let prefix = path.basename(baseName, extension);
+		const extension = path.extname(baseName);
+		const prefix = path.basename(baseName, extension);
 
 		for (let i = 2; ; ++i) {
-			let numberedName = prefix + i + extension;
+			const numberedName = prefix + i + extension;
 			if (!this.exists(numberedName)) {
 				return numberedName;
 			}
@@ -272,13 +272,13 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public isEmptyDir(directoryPath: string): boolean {
-		let directoryContent = this.readDirectory(directoryPath);
+		const directoryContent = this.readDirectory(directoryPath);
 		return directoryContent.length === 0;
 	}
 
 	public isRelativePath(p: string): boolean {
-		let normal = path.normalize(p);
-		let absolute = path.resolve(p);
+		const normal = path.normalize(p);
+		const absolute = path.resolve(p);
 		return normal !== absolute;
 	}
 
@@ -309,10 +309,10 @@ export class FileSystem implements IFileSystem {
 	}
 
 	public async setCurrentUserAsOwner(path: string, owner: string): Promise<void> {
-		let $childProcess = this.$injector.resolve("childProcess");
+		const $childProcess = this.$injector.resolve("childProcess");
 
 		if (!this.$injector.resolve("$hostInfo").isWindows) {
-			let chown = $childProcess.spawn("chown", ["-R", owner, path],
+			const chown = $childProcess.spawn("chown", ["-R", owner, path],
 				{ stdio: "ignore", detached: true });
 			await this.futureFromEvent(chown, "close");
 		}
@@ -326,15 +326,15 @@ export class FileSystem implements IFileSystem {
 		foundFiles = foundFiles || [];
 
 		if (!this.exists(directoryPath)) {
-			let $logger = this.$injector.resolve("logger");
+			const $logger = this.$injector.resolve("logger");
 			$logger.warn('Could not find folder: ' + directoryPath);
 			return foundFiles;
 		}
 
-		let contents = this.readDirectory(directoryPath);
+		const contents = this.readDirectory(directoryPath);
 		for (let i = 0; i < contents.length; ++i) {
-			let file = path.join(directoryPath, contents[i]);
-			let stat = this.getFsStats(file);
+			const file = path.join(directoryPath, contents[i]);
+			const stat = this.getFsStats(file);
 			if (filterCallback && !filterCallback(file, stat)) {
 				continue;
 			}
@@ -357,17 +357,17 @@ export class FileSystem implements IFileSystem {
 
 	public async getFileShasum(fileName: string, options?: { algorithm?: string, encoding?: crypto.HexBase64Latin1Encoding }): Promise<string> {
 		return new Promise<string>((resolve, reject) => {
-			let algorithm = (options && options.algorithm) || "sha1";
-			let encoding = (options && options.encoding) || "hex";
-			let logger: ILogger = this.$injector.resolve("$logger");
-			let shasumData = crypto.createHash(algorithm);
-			let fileStream = this.createReadStream(fileName);
+			const algorithm = (options && options.algorithm) || "sha1";
+			const encoding = (options && options.encoding) || "hex";
+			const logger: ILogger = this.$injector.resolve("$logger");
+			const shasumData = crypto.createHash(algorithm);
+			const fileStream = this.createReadStream(fileName);
 			fileStream.on("data", (data: NodeBuffer | string) => {
 				shasumData.update(data);
 			});
 
 			fileStream.on("end", () => {
-				let shasum: string = shasumData.digest(encoding);
+				const shasum: string = shasumData.digest(encoding);
 				logger.trace(`Shasum of file ${fileName} is ${shasum}`);
 				resolve(shasum);
 			});
@@ -409,14 +409,14 @@ export class FileSystem implements IFileSystem {
 			return FileSystem.DEFAULT_INDENTATION_CHARACTER;
 		}
 
-		let fileContent = this.readText(filePath).trim();
-		let matches = fileContent.match(FileSystem.JSON_OBJECT_REGEXP);
+		const fileContent = this.readText(filePath).trim();
+		const matches = fileContent.match(FileSystem.JSON_OBJECT_REGEXP);
 
 		if (!matches || !matches[1]) {
 			return FileSystem.DEFAULT_INDENTATION_CHARACTER;
 		}
 
-		let indentation = matches[1];
+		const indentation = matches[1];
 
 		return indentation[0] === " " ? indentation : FileSystem.DEFAULT_INDENTATION_CHARACTER;
 	}

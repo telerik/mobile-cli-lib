@@ -5,7 +5,7 @@ import { OptionType, OptionsBase } from "../../options";
 
 let isExecutionStopped = false;
 
-let knownOpts = {
+const knownOpts = {
 	"path1": { type: OptionType.String },
 	"help": { type: OptionType.Boolean },
 	"verbose": { type: OptionType.Boolean, alias: "v" },
@@ -17,7 +17,7 @@ let knownOpts = {
 };
 
 function createTestInjector(): IInjector {
-	let testInjector = new Yok();
+	const testInjector = new Yok();
 	testInjector.register("options", {});
 	testInjector.register("staticConfig", {
 		CLIENT_NAME: ""
@@ -28,7 +28,7 @@ function createTestInjector(): IInjector {
 }
 
 function createOptions(testInjector: IInjector): ICommonOptions {
-	let options = testInjector.resolve(OptionsBase, { options: knownOpts, defaultProfileDir: "1" }); // Validation is triggered in options's constructor
+	const options = testInjector.resolve(OptionsBase, { options: knownOpts, defaultProfileDir: "1" }); // Validation is triggered in options's constructor
 	return options;
 }
 
@@ -37,7 +37,7 @@ describe("common options", () => {
 	beforeEach(() => {
 		testInjector = createTestInjector();
 
-		let errors = new Errors(testInjector);
+		const errors = new Errors(testInjector);
 		errors.failWithoutHelp = (message: string, ...args: any[]): void => {
 			isExecutionStopped = true;
 		};
@@ -53,7 +53,7 @@ describe("common options", () => {
 		it("breaks execution when option is not valid", () => {
 			process.argv.push('--pathr');
 			process.argv.push("incorrect argument");
-			let options = createOptions(testInjector);
+			const options = createOptions(testInjector);
 			options.validateOptions();
 			process.argv.pop();
 			process.argv.pop();
@@ -63,7 +63,7 @@ describe("common options", () => {
 		it("breaks execution when valid option does not have value", () => {
 			process.argv.push('--path1');
 			// If you do not pass value to an option, it's automatically set as true.
-			let options = createOptions(testInjector);
+			const options = createOptions(testInjector);
 			process.argv.pop();
 			options.validateOptions();
 			assert.isTrue(isExecutionStopped);
@@ -72,7 +72,7 @@ describe("common options", () => {
 		it("breaks execution when valid dashed option passed without dashes does not have value", () => {
 			process.argv.push('--someDashedValue');
 			// If you do not pass value to a string option, it's automatically set to "".
-			let options = createOptions(testInjector);
+			const options = createOptions(testInjector);
 			process.argv.pop();
 			options.validateOptions();
 			assert.isTrue(isExecutionStopped);
@@ -81,7 +81,7 @@ describe("common options", () => {
 		it("breaks execution when valid dashed option does not have value", () => {
 			process.argv.push('--some-dashed-value');
 			// If you do not pass value to an option, it's automatically set as true.
-			let options = createOptions(testInjector);
+			const options = createOptions(testInjector);
 			process.argv.pop();
 			options.validateOptions();
 			assert.isTrue(isExecutionStopped);
@@ -90,7 +90,7 @@ describe("common options", () => {
 		it("does not break execution when valid option has correct value", () => {
 			process.argv.push('--path1');
 			process.argv.push("SomeDir");
-			let options = createOptions(testInjector);
+			const options = createOptions(testInjector);
 			options.validateOptions();
 			process.argv.pop();
 			process.argv.pop();
@@ -99,7 +99,7 @@ describe("common options", () => {
 
 		it("breaks execution when valid option has empty string value", () => {
 			process.argv.push('--path');
-			let options = createOptions(testInjector);
+			const options = createOptions(testInjector);
 			options.validateOptions();
 			process.argv.pop();
 			assert.isTrue(isExecutionStopped);
@@ -108,7 +108,7 @@ describe("common options", () => {
 		it("breaks execution when valid option has value with spaces only", () => {
 			process.argv.push('--path');
 			process.argv.push('  ');
-			let options = createOptions(testInjector);
+			const options = createOptions(testInjector);
 			options.validateOptions();
 			process.argv.pop();
 			process.argv.pop();
@@ -118,7 +118,7 @@ describe("common options", () => {
 		it("breaks execution when shorthand option is not valid", () => {
 			process.argv.push('-j');
 			process.argv.push('incorrect shorthand');
-			let options = createOptions(testInjector);
+			const options = createOptions(testInjector);
 			options.validateOptions();
 			process.argv.pop();
 			process.argv.pop();
@@ -127,7 +127,7 @@ describe("common options", () => {
 
 		it("does not break execution when valid shorthand option has correct value", () => {
 			process.argv.push('-v');
-			let options = createOptions(testInjector);
+			const options = createOptions(testInjector);
 			options.validateOptions();
 			process.argv.pop();
 			assert.isFalse(isExecutionStopped);
@@ -138,7 +138,7 @@ describe("common options", () => {
 		it("does not break execution when valid option has number value", () => {
 			process.argv.push('--path');
 			process.argv.push('1');
-			let options = createOptions(testInjector);
+			const options = createOptions(testInjector);
 			options.validateOptions();
 			process.argv.pop();
 			process.argv.pop();
@@ -150,7 +150,7 @@ describe("common options", () => {
 			process.argv.push("value 1");
 			process.argv.push('--path');
 			process.argv.push("value 2");
-			let options = createOptions(testInjector);
+			const options = createOptions(testInjector);
 			options.validateOptions();
 			process.argv.pop();
 			process.argv.pop();
@@ -160,7 +160,7 @@ describe("common options", () => {
 		});
 
 		it("converts string value to array when option type is array", () => {
-			let options: any = createOptions(testInjector);
+			const options: any = createOptions(testInjector);
 			process.argv.push("--test1");
 			process.argv.push("value");
 			options.validateOptions({ test1: { type: OptionType.Array } });
@@ -173,7 +173,7 @@ describe("common options", () => {
 		it("does not break execution when valid commandSpecificOptions are passed", () => {
 			process.argv.push("--test1");
 			process.argv.push("value");
-			let options = createOptions(testInjector);
+			const options = createOptions(testInjector);
 			options.validateOptions({ test1: { type: OptionType.String } });
 			process.argv.pop();
 			process.argv.pop();
@@ -181,7 +181,7 @@ describe("common options", () => {
 		});
 
 		it("does not break execution when valid commandSpecificOptions are passed and user specifies globally valid option", () => {
-			let options = createOptions(testInjector);
+			const options = createOptions(testInjector);
 			process.argv.push("--version");
 			options.validateOptions({ test1: { type: OptionType.String } });
 			process.argv.pop();
@@ -190,7 +190,7 @@ describe("common options", () => {
 
 		it("breaks execution when valid array option has value with length 0", () => {
 			process.argv.push('--arr');
-			let options = createOptions(testInjector);
+			const options = createOptions(testInjector);
 			options.validateOptions();
 			process.argv.pop();
 			assert.isTrue(isExecutionStopped);
@@ -199,7 +199,7 @@ describe("common options", () => {
 		describe("when commandSpecificOptions are passed", () => {
 			it("breaks execution when commandSpecificOptions are passed and user tries to use invalid option", () => {
 				process.argv.push("--invalidOption");
-				let options = testInjector.resolve(OptionsBase, { options: knownOpts, defaultProfileDir: "1" });
+				const options = testInjector.resolve(OptionsBase, { options: knownOpts, defaultProfileDir: "1" });
 				options.validateOptions({ test1: { type: OptionType.String } });
 				process.argv.pop();
 				assert.isTrue(isExecutionStopped);
@@ -207,17 +207,17 @@ describe("common options", () => {
 
 			it("breaks execution when commandSpecificOptions are passed and user tries to use option valid for CLI, but not for this command", () => {
 				process.argv.push("--json");
-				let options = testInjector.resolve(OptionsBase, { options: knownOpts, defaultProfileDir: "1" });
+				const options = testInjector.resolve(OptionsBase, { options: knownOpts, defaultProfileDir: "1" });
 				options.validateOptions({ test1: { type: OptionType.String } });
 				process.argv.pop();
 				assert.isTrue(isExecutionStopped);
 			});
 
 			it("uses profile-dir from yargs when it exists and commandSpecificOptions are passed", () => {
-				let expectedProfileDir = "TestDir";
+				const expectedProfileDir = "TestDir";
 				process.argv.push("--profile-dir");
 				process.argv.push(expectedProfileDir);
-				let options = testInjector.resolve(OptionsBase, { options: knownOpts, defaultProfileDir: "1" });
+				const options = testInjector.resolve(OptionsBase, { options: knownOpts, defaultProfileDir: "1" });
 				options.validateOptions({ test1: { type: OptionType.String } });
 				assert.equal(options.profileDir, expectedProfileDir);
 				process.argv.pop();
@@ -232,7 +232,7 @@ describe("common options", () => {
 			it("does not break execution when dashed option with single dash is passed", () => {
 				process.argv.push("profile-dir");
 				process.argv.push("some dir");
-				let options = createOptions(testInjector);
+				const options = createOptions(testInjector);
 				options.validateOptions();
 				process.argv.pop();
 				process.argv.pop();
@@ -243,7 +243,7 @@ describe("common options", () => {
 			it("does not break execution when dashed option with two dashes is passed", () => {
 				process.argv.push("some-dashed-value");
 				process.argv.push("some dir");
-				let options = createOptions(testInjector);
+				const options = createOptions(testInjector);
 				options.validateOptions();
 				process.argv.pop();
 				process.argv.pop();
@@ -254,7 +254,7 @@ describe("common options", () => {
 			it("does not break execution when dashed option with a lot of dashes is passed", () => {
 				process.argv.push("a-b-c-d-e-f-g");
 				process.argv.push("some dir");
-				let options = createOptions(testInjector);
+				const options = createOptions(testInjector);
 				options.validateOptions();
 
 				process.argv.pop();
@@ -265,7 +265,7 @@ describe("common options", () => {
 
 			it("does not break execution when dashed option with two dashes is passed", () => {
 				process.argv.push("--special-dashed-v");
-				let options = createOptions(testInjector);
+				const options = createOptions(testInjector);
 				options.validateOptions();
 				process.argv.pop();
 				assert.isFalse(isExecutionStopped, "Dashed options should be validated in specific way. Make sure validation allows yargs specific behavior:" +
@@ -277,11 +277,11 @@ describe("common options", () => {
 });
 
 function createOptionsWithProfileDir(profileDir: string): ICommonOptions {
-	let testInjector = new Yok();
+	const testInjector = new Yok();
 	testInjector.register("errors", {});
 	testInjector.register("staticConfig", {});
 
-	let options = testInjector.resolve(OptionsBase, { options: {}, defaultProfileDir: profileDir });
+	const options = testInjector.resolve(OptionsBase, { options: {}, defaultProfileDir: profileDir });
 	return options;
 }
 
@@ -289,10 +289,10 @@ describe("common options profile-dir tests", () => {
 	describe("setProfileDir", () => {
 
 		it("uses profile-dir from yargs when it exists", () => {
-			let expectedProfileDir = "TestDir";
+			const expectedProfileDir = "TestDir";
 			process.argv.push("--profile-dir");
 			process.argv.push(expectedProfileDir);
-			let options = createOptionsWithProfileDir("");
+			const options = createOptionsWithProfileDir("");
 			options.validateOptions();
 			process.argv.pop();
 			process.argv.pop();
@@ -300,17 +300,17 @@ describe("common options profile-dir tests", () => {
 		});
 
 		it("sets default profile-dir when it is not passed on command line", () => {
-			let profileDir = "TestDir";
-			let options = createOptionsWithProfileDir("TestDir");
+			const profileDir = "TestDir";
+			const options = createOptionsWithProfileDir("TestDir");
 			options.validateOptions();
 			assert.equal(options.profileDir, profileDir);
 		});
 
 		it("uses profile-dir from yargs when it exists even if default one has non-empty value", () => {
-			let expectedProfileDir = "TestDir";
+			const expectedProfileDir = "TestDir";
 			process.argv.push("--profile-dir");
 			process.argv.push(expectedProfileDir);
-			let options = createOptionsWithProfileDir("TestDir123");
+			const options = createOptionsWithProfileDir("TestDir123");
 			options.validateOptions();
 			process.argv.pop();
 			process.argv.pop();
@@ -318,10 +318,10 @@ describe("common options profile-dir tests", () => {
 		});
 
 		it("uses profileDir from yargs when it exists", () => {
-			let expectedProfileDir = "TestDir";
+			const expectedProfileDir = "TestDir";
 			process.argv.push("--profileDir");
 			process.argv.push(expectedProfileDir);
-			let options = createOptionsWithProfileDir("");
+			const options = createOptionsWithProfileDir("");
 			options.validateOptions();
 			process.argv.pop();
 			process.argv.pop();

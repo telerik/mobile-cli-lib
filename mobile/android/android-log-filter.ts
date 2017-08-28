@@ -1,4 +1,4 @@
-let os = require("os");
+const os = require("os");
 
 export class AndroidLogFilter implements Mobile.IPlatformLogFilter {
 

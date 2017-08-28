@@ -18,10 +18,10 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 	private get androidPortInformationRegExp(): RegExp {
 		// The RegExp should look like this:
 		// /(\d+):\s+([0-9A-Za-z]+:[0-9A-Za-z]+)\s+([0-9A-Za-z]+:[0-9A-Za-z]+)\s+[0-9A-Za-z]+\s+[0-9A-Za-z]+:[0-9A-Za-z]+\s+[0-9A-Za-z]+:[0-9A-Za-z]+\s+[0-9A-Za-z]+\s+(\d+)/g
-		let wordCharacters = "[0-9A-Za-z]+";
-		let hexIpAddressWithPort = "[0-9A-Za-z]+:[0-9A-Za-z]+";
-		let hexIpAddressWithPortWithSpace = `${hexIpAddressWithPort}\\s+`;
-		let hexIpAddressWithPortWithSpaceMatch = `(${hexIpAddressWithPort})\\s+`;
+		const wordCharacters = "[0-9A-Za-z]+";
+		const hexIpAddressWithPort = "[0-9A-Za-z]+:[0-9A-Za-z]+";
+		const hexIpAddressWithPortWithSpace = `${hexIpAddressWithPort}\\s+`;
+		const hexIpAddressWithPortWithSpaceMatch = `(${hexIpAddressWithPort})\\s+`;
 
 		return new RegExp(`(\\d+):\\s+${hexIpAddressWithPortWithSpaceMatch}${hexIpAddressWithPortWithSpaceMatch}${wordCharacters}\\s+${hexIpAddressWithPortWithSpace}${hexIpAddressWithPortWithSpace}${wordCharacters}\\s+(\\d+)`, "g");
 	}
@@ -29,16 +29,16 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 	public async mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string, framework: string): Promise<string> {
 		this.tryAttachToProcessExitSignals();
 
-		let adb = this.getAdb(deviceIdentifier);
-		let processId = (await this.getProcessIds(adb, [appIdentifier]))[appIdentifier];
-		let applicationNotStartedErrorMessage = `The application is not started on the device with identifier ${deviceIdentifier}.`;
+		const adb = this.getAdb(deviceIdentifier);
+		const processId = (await this.getProcessIds(adb, [appIdentifier]))[appIdentifier];
+		const applicationNotStartedErrorMessage = `The application is not started on the device with identifier ${deviceIdentifier}.`;
 
 		if (!processId) {
 			this.$errors.failWithoutHelp(applicationNotStartedErrorMessage);
 		}
 
-		let abstractPortsInformation = await this.getAbstractPortsInformation(adb);
-		let abstractPort = await this.getAbstractPortForApplication(adb, processId, appIdentifier, abstractPortsInformation, framework);
+		const abstractPortsInformation = await this.getAbstractPortsInformation(adb);
+		const abstractPort = await this.getAbstractPortForApplication(adb, processId, appIdentifier, abstractPortsInformation, framework);
 
 		if (!abstractPort) {
 			this.$errors.failWithoutHelp(applicationNotStartedErrorMessage);
@@ -56,7 +56,7 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 	}
 
 	public async getMappedAbstractToTcpPorts(deviceIdentifier: string, appIdentifiers: string[], framework: string): Promise<IDictionary<number>> {
-		let adb = this.getAdb(deviceIdentifier),
+		const adb = this.getAdb(deviceIdentifier),
 			abstractPortsInformation = await this.getAbstractPortsInformation(adb),
 			processIds = await this.getProcessIds(adb, appIdentifiers),
 			adbForwardList = await adb.executeCommand(["forward", "--list"]),
@@ -65,19 +65,19 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 		await Promise.all(
 			_.map(appIdentifiers, async appIdentifier => {
 				localPorts[appIdentifier] = null;
-				let processId = processIds[appIdentifier];
+				const processId = processIds[appIdentifier];
 
 				if (!processId) {
 					return;
 				}
 
-				let abstractPort = await this.getAbstractPortForApplication(adb, processId, appIdentifier, abstractPortsInformation, framework);
+				const abstractPort = await this.getAbstractPortForApplication(adb, processId, appIdentifier, abstractPortsInformation, framework);
 
 				if (!abstractPort) {
 					return;
 				}
 
-				let localPort = await this.getAlreadyMappedPort(adb, deviceIdentifier, abstractPort, adbForwardList);
+				const localPort = await this.getAlreadyMappedPort(adb, deviceIdentifier, abstractPort, adbForwardList);
 
 				if (localPort) {
 					localPorts[appIdentifier] = localPort;
@@ -88,8 +88,8 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 	}
 
 	public async getDebuggableApps(deviceIdentifier: string): Promise<Mobile.IDeviceApplicationInformation[]> {
-		let adb = this.getAdb(deviceIdentifier);
-		let androidWebViewPortInformation = (await this.getAbstractPortsInformation(adb)).split(EOL);
+		const adb = this.getAdb(deviceIdentifier);
+		const androidWebViewPortInformation = (await this.getAbstractPortsInformation(adb)).split(EOL);
 
 		// TODO: Add tests and make sure only unique names are returned. Input before groupBy is:
 		// [ { deviceIdentifier: 'SH26BW100473',
@@ -104,7 +104,7 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 		// 	{ deviceIdentifier: 'SH26BW100473',
 		// 	appIdentifier: 'chrome',
 		// 	framework: 'Cordova' } ]
-		let portInformation = await Promise.all(
+		const portInformation = await Promise.all(
 			_.map(androidWebViewPortInformation, async line => await this.getApplicationInfoFromWebViewPortInformation(adb, deviceIdentifier, line)
 				|| await this.getNativeScriptApplicationInformation(adb, deviceIdentifier, line)
 			)
@@ -127,17 +127,17 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 
 	private async getApplicationInfoFromWebViewPortInformation(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, information: string): Promise<Mobile.IDeviceApplicationInformation> {
 		// Need to search by processId to check for old Android webviews (@webview_devtools_remote_<processId>).
-		let processIdRegExp = /@webview_devtools_remote_(.+)/g,
-			processIdMatches = processIdRegExp.exec(information),
-			cordovaAppIdentifier: string;
+		const processIdRegExp = /@webview_devtools_remote_(.+)/g;
+		const processIdMatches = processIdRegExp.exec(information);
+		let cordovaAppIdentifier: string;
 
 		if (processIdMatches) {
-			let processId = processIdMatches[1];
+			const processId = processIdMatches[1];
 			cordovaAppIdentifier = await this.getApplicationIdentifierFromPid(adb, processId);
 		} else {
 			// Search for appIdentifier (@<appIdentifier>_devtools_remote).
-			let chromeAppIdentifierRegExp = /@(.+)_devtools_remote\s?/g;
-			let chromeAppIdentifierMatches = chromeAppIdentifierRegExp.exec(information);
+			const chromeAppIdentifierRegExp = /@(.+)_devtools_remote\s?/g;
+			const chromeAppIdentifierMatches = chromeAppIdentifierRegExp.exec(information);
 
 			if (chromeAppIdentifierMatches && chromeAppIdentifierMatches.length > 0) {
 				cordovaAppIdentifier = chromeAppIdentifierMatches[1];
@@ -157,11 +157,11 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 
 	private async getNativeScriptApplicationInformation(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, information: string): Promise<Mobile.IDeviceApplicationInformation> {
 		// Search for appIdentifier (@<appIdentifier-debug>).
-		let nativeScriptAppIdentifierRegExp = /@(.+)-(debug|inspectorServer)/g;
-		let nativeScriptAppIdentifierMatches = nativeScriptAppIdentifierRegExp.exec(information);
+		const nativeScriptAppIdentifierRegExp = /@(.+)-(debug|inspectorServer)/g;
+		const nativeScriptAppIdentifierMatches = nativeScriptAppIdentifierRegExp.exec(information);
 
 		if (nativeScriptAppIdentifierMatches && nativeScriptAppIdentifierMatches.length > 0) {
-			let appIdentifier = nativeScriptAppIdentifierMatches[1];
+			const appIdentifier = nativeScriptAppIdentifierMatches[1];
 			return {
 				deviceIdentifier: deviceIdentifier,
 				appIdentifier: appIdentifier,
@@ -204,9 +204,9 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 	}
 
 	private getPortInformation(abstractPortsInformation: string, searchedInfo: string | number): string {
-		let processRegExp = new RegExp(`\\w+:\\s+(?:\\w+\\s+){1,6}@(.*?${searchedInfo})$`, "gm");
+		const processRegExp = new RegExp(`\\w+:\\s+(?:\\w+\\s+){1,6}@(.*?${searchedInfo})$`, "gm");
 
-		let match = processRegExp.exec(abstractPortsInformation);
+		const match = processRegExp.exec(abstractPortsInformation);
 		return match && match[1];
 	}
 
@@ -214,10 +214,10 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 		// Process information will look like this (without the columns names):
 		// USER     PID   PPID  VSIZE   RSS   WCHAN    PC         NAME
 		// u0_a63   25512 1334  1519560 96040 ffffffff f76a8f75 S com.telerik.appbuildertabstest
-		let result: IDictionary<number> = {};
-		let processIdInformation: string = await adb.executeShellCommand(["ps"]);
+		const result: IDictionary<number> = {};
+		const processIdInformation: string = await adb.executeShellCommand(["ps"]);
 		_.each(appIdentifiers, appIdentifier => {
-			let processIdRegExp = new RegExp(`^\\w*\\s*(\\d+).*?${appIdentifier}$`);
+			const processIdRegExp = new RegExp(`^\\w*\\s*(\\d+).*?${appIdentifier}$`);
 			result[appIdentifier] = this.getFirstMatchingGroupFromMultilineResult<number>(processIdInformation, processIdRegExp);
 		});
 
@@ -225,14 +225,14 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 	}
 
 	private async getAlreadyMappedPort(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, abstractPort: string, adbForwardList?: any): Promise<number> {
-		let allForwardedPorts: string = adbForwardList || await adb.executeCommand(["forward", "--list"]) || "";
+		const allForwardedPorts: string = adbForwardList || await adb.executeCommand(["forward", "--list"]) || "";
 
 		// Sample output:
 		// 5e2e580b tcp:62503 localabstract:webview_devtools_remote_7985
 		// 5e2e580b tcp:62524 localabstract:webview_devtools_remote_7986
 		// 5e2e580b tcp:63160 localabstract:webview_devtools_remote_7987
 		// 5e2e580b tcp:57577 localabstract:com.telerik.nrel-debug
-		let regex = new RegExp(`${deviceIdentifier}\\s+?tcp:(\\d+?)\\s+?.*?${abstractPort}$`);
+		const regex = new RegExp(`${deviceIdentifier}\\s+?tcp:(\\d+?)\\s+?.*?${abstractPort}$`);
 
 		return this.getFirstMatchingGroupFromMultilineResult<number>(allForwardedPorts, regex);
 	}
@@ -260,7 +260,7 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 			.map(line => line.trim())
 			.filter(line => !!line)
 			.each(line => {
-				let matches = line.match(regex);
+				const matches = line.match(regex);
 				if (matches && matches[1]) {
 					result = <any>matches[1];
 					return false;
