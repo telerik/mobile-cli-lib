@@ -63,16 +63,17 @@ export class ErrorReportingCommand extends AnalyticsCommand {
 		$logger: ILogger,
 		$errors: IErrors,
 		$options: ICommonOptions,
-		private $staticConfig: Config.IStaticConfig) {
+		$staticConfig: Config.IStaticConfig
+	) {
 		super($analyticsService, $logger, $errors, $options, $staticConfig.ERROR_REPORT_SETTING_NAME, "Error reporting");
 	}
 
 	public async execute(args: string[]): Promise<void> {
-		const shouldRestartEqatecMonitor = this.$staticConfig.ANALYTICS_EXCEPTIONS_API_KEY && await this.$analyticsService.isEnabled(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME);
+		// const shouldRestartEqatecMonitor = this.$staticConfig.ANALYTICS_EXCEPTIONS_API_KEY && await this.$analyticsService.isEnabled(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME);
 
-		if (shouldRestartEqatecMonitor) {
-			await this.$analyticsService.restartEqatecMonitor(this.$staticConfig.ANALYTICS_EXCEPTIONS_API_KEY);
-		}
+		// if (shouldRestartEqatecMonitor) {
+		// 	await this.$analyticsService.restartEqatecMonitor(this.$staticConfig.ANALYTICS_EXCEPTIONS_API_KEY);
+		// }
 
 		await super.execute(args);
 	}

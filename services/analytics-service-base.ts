@@ -9,7 +9,19 @@ cliGlobal.XMLHttpRequest.prototype.withCredentials = false;
 
 export class AnalyticsServiceBase implements IAnalyticsService {
 	private static MAX_WAIT_SENDING_INTERVAL = 30000; // in milliseconds
-	protected _eqatecMonitor: any;
+	protected eqatecMonitors: IDictionary<IEqatecMonitor> = {};
+	protected featureTrackingAPIKeys: string[] = [
+		this.$staticConfig.ANALYTICS_API_KEY
+	];
+
+	protected acceptUsageReportingAPIKeys: string[] = [
+		this.$staticConfig.ANALYTICS_API_KEY
+	];
+
+	protected exceptionsTrackingAPIKeys: string[] = [
+		this.$staticConfig.ANALYTICS_EXCEPTIONS_API_KEY
+	];
+
 	protected analyticsStatuses: IDictionary<AnalyticsStatus> = {};
 
 	constructor(protected $logger: ILogger,
@@ -18,7 +30,6 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 		private $prompter: IPrompter,
 		private $userSettingsService: UserSettings.IUserSettingsService,
 		private $analyticsSettingsService: IAnalyticsSettingsService,
-		private $progressIndicator: IProgressIndicator,
 		private $osInfo: IOsInfo) { }
 
 	protected get acceptTrackFeatureSetting(): string {
@@ -39,7 +50,8 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 				const message = this.$analyticsSettingsService.getPrivacyPolicyLink();
 				trackFeatureUsage = await this.$prompter.confirm(message, () => true);
 				await this.setStatus(this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME, trackFeatureUsage);
-				await this.checkConsentCore(trackFeatureUsage);
+
+				await this.trackAcceptFeatureUsage({ acceptTrackFeatureUsage: trackFeatureUsage });
 			}
 
 			const isErrorReportingUnset = await this.isNotConfirmed(this.$staticConfig.ERROR_REPORT_SETTING_NAME);
@@ -47,6 +59,15 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 			if (isErrorReportingUnset && isUsageReportingConfirmed) {
 				await this.setStatus(this.$staticConfig.ERROR_REPORT_SETTING_NAME, trackFeatureUsage);
 			}
+		}
+	}
+
+	public async trackAcceptFeatureUsage(settings: { acceptTrackFeatureUsage: boolean }): Promise<void> {
+		try {
+			await this.sendDataToEqatecMonitors(this.acceptUsageReportingAPIKeys,
+				(eqatecMonitor: IEqatecMonitor) => eqatecMonitor.trackFeature(`${this.acceptTrackFeatureSetting}.${settings.acceptTrackFeatureUsage}`));
+		} catch (e) {
+			this.$logger.trace(`Analytics exception: '${e}'`);
 		}
 	}
 
@@ -72,18 +93,11 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 			&& await this.$analyticsSettingsService.canDoRequest()) {
 			try {
 				this.$logger.trace(`Trying to track exception with message '${message}'.`);
-				await this.start();
 
-				if (this._eqatecMonitor) {
-					this.$logger.printInfoMessageOnSameLine("Sending exception report (press Ctrl+C to stop)...");
-					this._eqatecMonitor.trackException(exception, message);
-					// Sending the exception might take a while.
-					// As in most cases we exit immediately after exception is caught,
-					// wait for tracking the exception.
-					await this.$progressIndicator.showProgressIndicator(this.waitForSending(), 500);
-				}
+				await this.sendDataToEqatecMonitors(this.exceptionsTrackingAPIKeys,
+					(eqatecMonitor: IEqatecMonitor) => eqatecMonitor.trackException(exception, message));
 			} catch (e) {
-				this.$logger.trace("Analytics exception: '%s'", e.toString());
+				this.$logger.trace(`Analytics exception: '${e}'`);
 			}
 		}
 	}
@@ -94,7 +108,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 
 		if (this.analyticsStatuses[settingName] === AnalyticsStatus.disabled
 			&& this.analyticsStatuses[settingName] === AnalyticsStatus.disabled) {
-			this.tryStopEqatecMonitor();
+			this.tryStopEqatecMonitors();
 		}
 	}
 
@@ -103,12 +117,13 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 		return analyticsStatus === AnalyticsStatus.enabled;
 	}
 
-	public tryStopEqatecMonitor(code?: string | number): void {
-		if (this._eqatecMonitor) {
-			// remove the listener for exit event and explicitly call stop of monitor
-			process.removeListener("exit", this.tryStopEqatecMonitor);
-			this._eqatecMonitor.stop();
-			this._eqatecMonitor = null;
+	public tryStopEqatecMonitors(code?: string | number): void {
+		process.removeListener("exit", this.tryStopEqatecMonitors);
+
+		for (const eqatecMonitorApiKey in this.eqatecMonitors) {
+			const eqatecMonitor = this.eqatecMonitors[eqatecMonitorApiKey];
+			eqatecMonitor.stop();
+			delete this.eqatecMonitors[eqatecMonitorApiKey];
 		}
 	}
 
@@ -120,70 +135,14 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 		return this.getHumanReadableStatusMessage(settingName, readableSettingName);
 	}
 
-	public async restartEqatecMonitor(analyticsAPIKey: string): Promise<void> {
-		this.tryStopEqatecMonitor();
-		const analyticsSettings = await this.getEqatecSettings(analyticsAPIKey);
-		await this.startEqatecMonitor(analyticsSettings);
-	}
-
-	protected checkConsentCore(trackFeatureUsage: boolean): Promise<void> {
-		return this.trackFeatureCore(`${this.acceptTrackFeatureSetting}.${!!trackFeatureUsage}`);
-	}
-
 	protected async trackFeatureCore(featureTrackString: string): Promise<void> {
 		try {
 			if (await this.$analyticsSettingsService.canDoRequest()) {
-				await this.start();
-				if (this._eqatecMonitor) {
-					this._eqatecMonitor.trackFeature(featureTrackString);
-					await this.waitForSending();
-				}
+				await this.sendDataToEqatecMonitors(this.featureTrackingAPIKeys, (eqatecMonitor: IEqatecMonitor) => eqatecMonitor.trackFeature(featureTrackString));
 			}
 		} catch (e) {
-			this.$logger.trace("Analytics exception: '%s'", e.toString());
+			this.$logger.trace(`Analytics exception: '${e}'`);
 		}
-	}
-
-	protected async startEqatecMonitor(analyticsSettings: IEqatecInitializeData): Promise<void> {
-		if (this._eqatecMonitor) {
-			return;
-		}
-
-		require("../vendor/EqatecMonitor.min");
-		const analyticsProjectKey = analyticsSettings.analyticsAPIKey;
-		const settings = cliGlobal._eqatec.createSettings(analyticsProjectKey);
-		settings.useHttps = false;
-		settings.userAgent = this.getUserAgentString();
-		settings.version = this.$staticConfig.version;
-		settings.useCookies = false;
-		settings.loggingInterface = {
-			logMessage: this.$logger.trace.bind(this.$logger),
-			logError: this.$logger.debug.bind(this.$logger)
-		};
-
-		this._eqatecMonitor = cliGlobal._eqatec.createMonitor(settings);
-
-		const analyticsInstallationId = analyticsSettings.analyticsInstallationId;
-
-		this.$logger.trace(`${this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME}: ${analyticsInstallationId}`);
-		this._eqatecMonitor.setInstallationID(analyticsInstallationId);
-
-		try {
-			await this._eqatecMonitor.setUserID(analyticsSettings.userId);
-
-			const currentCount = analyticsSettings.userSessionCount;
-			this._eqatecMonitor.setStartCount(currentCount);
-		} catch (e) {
-			// user not logged in. don't care.
-			this.$logger.trace("Error while initializing eqatecMonitor", e);
-		}
-
-		this._eqatecMonitor.start();
-
-		// End the session on process.exit only or in case user disables both usage tracking and exceptions tracking.
-		process.on("exit", this.tryStopEqatecMonitor);
-
-		await this.reportNodeVersion();
 	}
 
 	@cache()
@@ -201,19 +160,19 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 		}
 	}
 
-	protected getIsSending(): boolean {
-		return this._eqatecMonitor.status().isSending;
+	private getIsSending(eqatecMonitor: any): boolean {
+		return eqatecMonitor.status().isSending;
 	}
 
-	protected waitForSending(): Promise<void> {
+	private waitForSending(eqatecMonitor: any): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			const intervalTime = 100;
 			let remainingTime = AnalyticsServiceBase.MAX_WAIT_SENDING_INTERVAL;
 
-			if (this.getIsSending()) {
+			if (this.getIsSending(eqatecMonitor)) {
 				this.$logger.trace(`Waiting for analytics to send information. Will check in ${intervalTime}ms.`);
 				const interval = setInterval(() => {
-					if (!this.getIsSending() || remainingTime <= 0) {
+					if (!this.getIsSending(eqatecMonitor) || remainingTime <= 0) {
 						clearInterval(interval);
 						resolve();
 					}
@@ -225,6 +184,14 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 				resolve();
 			}
 		});
+	}
+
+	private async sendDataToEqatecMonitors(analyticsAPIKeys: string[], eqatecMonitorAction: (eqatecMonitor: IEqatecMonitor) => void): Promise<void> {
+		for (const eqatecAPIKey of analyticsAPIKeys) {
+			const eqatecMonitor = await this.start(eqatecAPIKey);
+			eqatecMonitorAction(eqatecMonitor);
+			await this.waitForSending(eqatecMonitor);
+		}
 	}
 
 	private async getDefaultEqatecInstallationId(): Promise<string> {
@@ -244,9 +211,9 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 		return currentCount;
 	}
 
-	private async getEqatecSettings(analyticsAPIKey?: string): Promise<IEqatecInitializeData> {
+	private async getEqatecSettings(analyticsAPIKey: string): Promise<IEqatecInitializeData> {
 		return {
-			analyticsAPIKey: analyticsAPIKey || this.$staticConfig.ANALYTICS_API_KEY,
+			analyticsAPIKey,
 			analyticsInstallationId: await this.getDefaultEqatecInstallationId(),
 			type: TrackingTypes.Initialization,
 			userId: await this.$analyticsSettingsService.getUserId(),
@@ -273,9 +240,56 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 		return this.analyticsStatuses[settingName];
 	}
 
-	private async start(analyticsAPIKey?: string): Promise<void> {
+	private async start(analyticsAPIKey: string): Promise<any> {
 		const analyticsSettings = await this.getEqatecSettings(analyticsAPIKey);
-		await this.startEqatecMonitor(analyticsSettings);
+		return this.startEqatecMonitor(analyticsSettings);
+	}
+
+	private async startEqatecMonitor(analyticsSettings: IEqatecInitializeData): Promise<IEqatecMonitor> {
+		const eqatecMonitorForSpecifiedAPIKey = this.eqatecMonitors[analyticsSettings.analyticsAPIKey];
+		if (eqatecMonitorForSpecifiedAPIKey) {
+			return eqatecMonitorForSpecifiedAPIKey;
+		}
+
+		require("../vendor/EqatecMonitor.min");
+		const analyticsProjectKey = analyticsSettings.analyticsAPIKey;
+		const settings = cliGlobal._eqatec.createSettings(analyticsProjectKey);
+		settings.useHttps = false;
+		settings.userAgent = this.getUserAgentString();
+		settings.version = this.$staticConfig.version;
+		settings.useCookies = false;
+		settings.loggingInterface = {
+			logMessage: this.$logger.trace.bind(this.$logger),
+			logError: this.$logger.debug.bind(this.$logger)
+		};
+
+		const eqatecMonitor = cliGlobal._eqatec.createMonitor(settings);
+
+		const analyticsInstallationId = analyticsSettings.analyticsInstallationId;
+
+		this.$logger.trace(`${this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME}: ${analyticsInstallationId}`);
+		eqatecMonitor.setInstallationID(analyticsInstallationId);
+
+		try {
+			await eqatecMonitor.setUserID(analyticsSettings.userId);
+
+			const currentCount = analyticsSettings.userSessionCount;
+			eqatecMonitor.setStartCount(currentCount);
+		} catch (e) {
+			// user not logged in. don't care.
+			this.$logger.trace("Error while initializing eqatecMonitor", e);
+		}
+
+		eqatecMonitor.start();
+
+		// End the session on process.exit only or in case user disables both usage tracking and exceptions tracking.
+		process.on("exit", this.tryStopEqatecMonitors);
+
+		this.eqatecMonitors[analyticsSettings.analyticsAPIKey] = eqatecMonitor;
+
+		await this.reportNodeVersion();
+
+		return eqatecMonitor;
 	}
 
 	private async reportNodeVersion(): Promise<void> {

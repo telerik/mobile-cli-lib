@@ -18,5 +18,7 @@ export class ProtonStaticConfig extends StaticConfigBase {
 	public disableAnalytics = true;
 
 	public CLIENT_NAME = "Desktop Client - Universal";
+
+	public ANALYTICS_EXCEPTIONS_API_KEY: string = null;
 }
 $injector.register("staticConfig", ProtonStaticConfig);

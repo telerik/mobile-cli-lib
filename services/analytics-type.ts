@@ -19,6 +19,11 @@ const enum TrackingTypes {
 	Exception = "exception",
 
 	/**
+	 * Defines that the data contains the answer of the question if user allows to be tracked.
+	 */
+	AcceptTrackFeatureUsage = "acceptTrackFeatureUsage",
+
+	/**
 	 * Defines that all information has been sent and no more data will be tracked in current session.
 	 */
 	Finish = "finish"

@@ -559,14 +559,14 @@ interface IAnalyticsService {
 	 * @param {string|number} code - Exit code as the method is used for process.exit event handler.
 	 * @return void
 	 */
-	tryStopEqatecMonitor(code?: string | number): void;
+	tryStopEqatecMonitors(code?: string | number): void;
 
 	/**
-	 * Restarts the monitor with a new API key.
-	 * @param {string} projectApiKey The API key for new Analytics project.
-	 * @returns {Promise<void>}
+	 * Tracks the answer of question if user allows to be tracked.
+	 * @param {{ acceptTrackFeatureUsage: boolean }} settings Object containing information about user's answer.
+	 * @return {Promise<void>}
 	 */
-	restartEqatecMonitor(projectApiKey: string): Promise<void>;
+	trackAcceptFeatureUsage(settings: { acceptTrackFeatureUsage: boolean }): Promise<void>;
 }
 
 interface IAllowEmpty {
