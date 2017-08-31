@@ -73,7 +73,7 @@ describe("logcat-helper", () => {
 	});
 
 	describe("start", () => {
-		it.only("whole logcat is read correctly", (done: mocha.Done) => {
+		it("whole logcat is read correctly", (done: mocha.Done) => {
 			injector.register("deviceLogProvider", {
 				logData(line: string, platform: string, deviceIdentifier: string): void {
 					loggedData.push(line);
@@ -87,7 +87,7 @@ describe("logcat-helper", () => {
 			const logcatHelper: LogcatHelper = injector.resolve("logcatHelper");
 			logcatHelper.start("valid-identifier");
 		});
-		it.only("if loghelper start is called multiple times with the same identifier it's a noop the second time", async () => {
+		it("if loghelper start is called multiple times with the same identifier it's a noop the second time", async () => {
 			const logcatHelper: LogcatHelper = injector.resolve("logcatHelper");
 			await logcatHelper.start("valid-identifier");
 			assert.equal(ChildProcessStub.methodCallCount, 1);
@@ -96,7 +96,7 @@ describe("logcat-helper", () => {
 			await logcatHelper.start("valid-identifier");
 			assert.equal(ChildProcessStub.methodCallCount, 1);
 		});
-		it.only("if loghelper start works when it's called multiple times with different identifiers", async () => {
+		it("if loghelper start works when it's called multiple times with different identifiers", async () => {
 			const logcatHelper: LogcatHelper = injector.resolve("logcatHelper");
 			await logcatHelper.start("valid-identifier1");
 			assert.equal(ChildProcessStub.methodCallCount, 1);
@@ -107,7 +107,7 @@ describe("logcat-helper", () => {
 		});
 	});
 	describe("stop", () => {
-		it.only("device identifier is cleared on stop", async () => {
+		it("device identifier is cleared on stop", async () => {
 			const logcatHelper: LogcatHelper = injector.resolve("logcatHelper");
 			await logcatHelper.start("valid-identifier");
 			assert.equal(ChildProcessStub.methodCallCount, 1);
@@ -115,7 +115,7 @@ describe("logcat-helper", () => {
 			await logcatHelper.start("valid-identifier");
 			assert.equal(ChildProcessStub.methodCallCount, 2);
 		});
-		it.only("stop doesn't blow up if called multiple times", async () => {
+		it("stop doesn't blow up if called multiple times", async () => {
 			const logcatHelper: LogcatHelper = injector.resolve("logcatHelper");
 			await logcatHelper.stop("valid-identifier");
 			await logcatHelper.stop("valid-identifier");
