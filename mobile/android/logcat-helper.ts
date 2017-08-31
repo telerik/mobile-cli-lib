@@ -3,6 +3,8 @@ import { DeviceAndroidDebugBridge } from "./device-android-debug-bridge";
 
 export class LogcatHelper implements Mobile.ILogcatHelper {
 	private mapDeviceToLoggingStarted: IDictionary<boolean>;
+	private adbLogcat:any;
+	private lineStream:any;
 
 	constructor(private $deviceLogProvider: Mobile.IDeviceLogProvider,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
@@ -16,17 +18,14 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 		if (deviceIdentifier && !this.mapDeviceToLoggingStarted[deviceIdentifier]) {
 			const adb: Mobile.IDeviceAndroidDebugBridge = this.$injector.resolve(DeviceAndroidDebugBridge, { identifier: deviceIdentifier });
 
-			// remove cached logs:
-			await adb.executeCommand(["logcat", "-c"]);
+			this.adbLogcat = await adb.executeCommand(["logcat"], { returnChildProcess: true });
+			this.lineStream = byline(this.adbLogcat.stdout);
 
-			const adbLogcat = await adb.executeCommand(["logcat"], { returnChildProcess: true });
-			const lineStream = byline(adbLogcat.stdout);
-
-			adbLogcat.stderr.on("data", (data: NodeBuffer) => {
+			this.adbLogcat.stderr.on("data", (data: NodeBuffer) => {
 				this.$logger.trace("ADB logcat stderr: " + data.toString());
 			});
 
-			adbLogcat.on("close", (code: number) => {
+			this.adbLogcat.on("close", (code: number) => {
 				try {
 					this.mapDeviceToLoggingStarted[deviceIdentifier] = false;
 					if (code !== 0) {
@@ -37,15 +36,21 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 				}
 			});
 
-			lineStream.on('data', (line: NodeBuffer) => {
+			this.lineStream.on('data', (line: NodeBuffer) => {
 				const lineText = line.toString();
 				this.$deviceLogProvider.logData(lineText, this.$devicePlatformsConstants.Android, deviceIdentifier);
 			});
 
-			this.$processService.attachToProcessExitSignals(this, adbLogcat.kill);
+			this.$processService.attachToProcessExitSignals(this, this.adbLogcat.kill);
 
 			this.mapDeviceToLoggingStarted[deviceIdentifier] = true;
 		}
+	}
+
+	public stop(deviceIdentifier: string): void {
+		this.mapDeviceToLoggingStarted[deviceIdentifier] = false;
+		if (this.adbLogcat) { this.adbLogcat.removeAllListeners(); }
+		if (this.lineStream) { this.lineStream.removeAllListeners(); }
 	}
 }
 

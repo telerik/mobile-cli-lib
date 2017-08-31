@@ -1,0 +1,4 @@
+#!/bin/bash
+TEST_FILE=$1
+FILE_CONTENT=$(cat $TEST_FILE)
+echo "$FILE_CONTENT"
