@@ -1,6 +1,7 @@
 import { LogcatHelper } from "../../../../mobile/android/logcat-helper";
 import { Yok } from "../../../../yok";
 import { assert } from "chai";
+import * as path from "path";
 import * as childProcess from "child_process";
 
 class ChildProcessStub {
@@ -15,8 +16,8 @@ class ChildProcessStub {
 		} else {
 			pathToExecutable = "getcontent";
 		}
-		pathToExecutable = `${__dirname}/${pathToExecutable}`;
-		const pathToSample = `${__dirname}/valid-sample.txt`;
+		pathToExecutable = path.join(__dirname, pathToExecutable);
+		const pathToSample = path.join(__dirname, "valid-sample.txt");
 		return childProcess.spawn(pathToExecutable, [pathToSample]);
 	}
 }
