@@ -467,8 +467,7 @@ declare const enum ErrorCodes {
 	INVALID_ARGUMENT = 128,
 	RESOURCE_PROBLEM = 129,
 	KARMA_FAIL = 130,
-	UNHANDLED_REJECTION_FAILURE = 131,
-	FAILED_EQATEC_ANALYTICS_PROCESS = 132
+	UNHANDLED_REJECTION_FAILURE = 131
 }
 
 interface IFutureDispatcher {
@@ -554,6 +553,7 @@ interface IAnalyticsService {
 	getStatusMessage(settingName: string, jsonFormat: boolean, readableSettingName: string): Promise<string>;
 	isEnabled(settingName: string): Promise<boolean>;
 	track(featureName: string, featureValue: string): Promise<void>;
+
 	/**
 	 * Tries to stop current eqatec monitor, clean it's state and remove the process.exit event handler.
 	 * @param {string|number} code - Exit code as the method is used for process.exit event handler.
@@ -567,6 +567,20 @@ interface IAnalyticsService {
 	 * @return {Promise<void>}
 	 */
 	trackAcceptFeatureUsage(settings: { acceptTrackFeatureUsage: boolean }): Promise<void>;
+
+	/**
+	 * Tracks data to Google Analytics project.
+	 * @param {IGoogleAnalyticsData} data DTO describing the data that should be tracked.
+	 * @return {Promise<void>}
+	 */
+	trackInGoogleAnalytics(data: IGoogleAnalyticsData): Promise<void>;
+
+	/**
+	 * Tracks event action in Google Analytics project.
+	 * @param {IEventActionData} data DTO describing information for the event.
+	 * @return {Promise<void>}
+	 */
+	trackEventActionInGoogleAnalytics(data: IEventActionData): Promise<void>
 }
 
 interface IAllowEmpty {
@@ -604,6 +618,12 @@ interface IAnalyticsSettingsService {
 	 * @return {Promise<void>}
 	 */
 	setUserSessionsCount(count: number, projectName: string): Promise<void>;
+
+	/**
+	 * Gets the unique client identifier (AnalyticsInstallationId). In case it does not exist - set it to new value and return it.
+	 * @returns {Promise<string>}
+	 */
+	getClientId(): Promise<string>;
 }
 
 interface IHostCapabilities {
@@ -1824,6 +1844,12 @@ interface IOsInfo {
 	 * @return {string} A string identifying the operating system release.
 	 */
 	release(): string;
+
+	/**
+	 * Returns a string identifying the operating system bitness.
+	 * @return {string} A string identifying the operating system bitness.
+	 */
+	arch(): string;
 }
 
 interface IPromiseActions<T> {

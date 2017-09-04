@@ -1,4 +1,5 @@
 import * as helpers from "../helpers";
+import { AnalyticsClients } from "../constants";
 import { cache } from "../decorators";
 
 const cliGlobal = <ICliGlobal>global;
@@ -67,13 +68,13 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 			await this.sendDataToEqatecMonitors(this.acceptUsageReportingAPIKeys,
 				(eqatecMonitor: IEqatecMonitor) => eqatecMonitor.trackFeature(`${this.acceptTrackFeatureSetting}.${settings.acceptTrackFeatureUsage}`));
 		} catch (e) {
-			this.$logger.trace(`Analytics exception: '${e}'`);
+			this.$logger.trace("Analytics exception: ", e);
 		}
 	}
 
 	public trackFeature(featureName: string): Promise<void> {
 		const category = this.$options.analyticsClient ||
-			(helpers.isInteractive() ? "CLI" : "Non-interactive");
+			(helpers.isInteractive() ? AnalyticsClients.Cli : AnalyticsClients.NonInteractive);
 		return this.track(category, featureName);
 	}
 
@@ -97,9 +98,17 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 				await this.sendDataToEqatecMonitors(this.exceptionsTrackingAPIKeys,
 					(eqatecMonitor: IEqatecMonitor) => eqatecMonitor.trackException(exception, message));
 			} catch (e) {
-				this.$logger.trace(`Analytics exception: '${e}'`);
+				this.$logger.trace("Analytics exception: ", e);
 			}
 		}
+	}
+
+	public async trackInGoogleAnalytics(gaSettings: IGoogleAnalyticsData): Promise<void> {
+		// Intentionally left blank.
+	}
+
+	public async trackEventActionInGoogleAnalytics(data: IEventActionData): Promise<void> {
+		// Intentionally left blank.
 	}
 
 	public async setStatus(settingName: string, enabled: boolean): Promise<void> {
@@ -135,13 +144,13 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 		return this.getHumanReadableStatusMessage(settingName, readableSettingName);
 	}
 
-	protected async trackFeatureCore(featureTrackString: string): Promise<void> {
+	protected async trackFeatureCore(featureTrackString: string, settings?: { userInteraction: boolean }): Promise<void> {
 		try {
 			if (await this.$analyticsSettingsService.canDoRequest()) {
 				await this.sendDataToEqatecMonitors(this.featureTrackingAPIKeys, (eqatecMonitor: IEqatecMonitor) => eqatecMonitor.trackFeature(featureTrackString));
 			}
 		} catch (e) {
-			this.$logger.trace(`Analytics exception: '${e}'`);
+			this.$logger.trace("Analytics exception: ", e);
 		}
 	}
 
@@ -155,22 +164,22 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 				await this.getStatus(settingName);
 			}
 
-			this.$logger.trace("Analytics statuses: ");
-			this.$logger.trace(this.analyticsStatuses);
+			this.$logger.trace("Analytics statuses: ", this.analyticsStatuses);
 		}
 	}
 
-	private getIsSending(eqatecMonitor: any): boolean {
+	private getIsSending(eqatecMonitor: IEqatecMonitor): boolean {
 		return eqatecMonitor.status().isSending;
 	}
 
-	private waitForSending(eqatecMonitor: any): Promise<void> {
+	private waitForSending(eqatecMonitor: IEqatecMonitor): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			const intervalTime = 100;
 			let remainingTime = AnalyticsServiceBase.MAX_WAIT_SENDING_INTERVAL;
 
 			if (this.getIsSending(eqatecMonitor)) {
-				this.$logger.trace(`Waiting for analytics to send information. Will check in ${intervalTime}ms.`);
+				const message = `Waiting for analytics to send information. Will check in ${intervalTime}ms.`;
+				this.$logger.trace(message);
 				const interval = setInterval(() => {
 					if (!this.getIsSending(eqatecMonitor) || remainingTime <= 0) {
 						clearInterval(interval);
@@ -178,7 +187,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 					}
 
 					remainingTime -= intervalTime;
-					this.$logger.trace(`Waiting for analytics to send information. Will check in ${intervalTime}ms. Remaining time is: ${remainingTime}`);
+					this.$logger.trace(`${message} Remaining time is: ${remainingTime}`);
 				}, intervalTime);
 			} else {
 				resolve();
@@ -194,16 +203,6 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 		}
 	}
 
-	private async getDefaultEqatecInstallationId(): Promise<string> {
-		let guid = await this.$userSettingsService.getSettingValue<string>(this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME);
-		if (!guid) {
-			guid = helpers.createGUID(false);
-			await this.$userSettingsService.saveSetting(this.$staticConfig.ANALYTICS_INSTALLATION_ID_SETTING_NAME, guid);
-		}
-
-		return guid;
-	}
-
 	private async getCurrentSessionCount(analyticsProjectKey: string): Promise<number> {
 		let currentCount = await this.$analyticsSettingsService.getUserSessionsCount(analyticsProjectKey);
 		await this.$analyticsSettingsService.setUserSessionsCount(++currentCount, analyticsProjectKey);
@@ -214,7 +213,7 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 	private async getEqatecSettings(analyticsAPIKey: string): Promise<IEqatecInitializeData> {
 		return {
 			analyticsAPIKey,
-			analyticsInstallationId: await this.getDefaultEqatecInstallationId(),
+			analyticsInstallationId: await this.$analyticsSettingsService.getClientId(),
 			type: TrackingTypes.Initialization,
 			userId: await this.$analyticsSettingsService.getUserId(),
 			userSessionCount: await this.getCurrentSessionCount(analyticsAPIKey)

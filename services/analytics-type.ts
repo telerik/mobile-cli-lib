@@ -24,6 +24,11 @@ const enum TrackingTypes {
 	AcceptTrackFeatureUsage = "acceptTrackFeatureUsage",
 
 	/**
+	 * Defines data that will be tracked to Google Analytics.
+	 */
+	GoogleAnalyticsData = "googleAnalyticsData",
+
+	/**
 	 * Defines that all information has been sent and no more data will be tracked in current session.
 	 */
 	Finish = "finish"

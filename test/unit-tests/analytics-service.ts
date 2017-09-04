@@ -103,6 +103,9 @@ function createTestInjector(testScenario: ITestScenario): IInjector {
 		getUserId: () => {
 			return Promise.resolve("UnitTestsUserId");
 		},
+		getClientId: () => {
+			return Promise.resolve("UnitTestsUserId");
+		},
 		getUserSessionsCount: () => Promise.resolve(0),
 		setUserSessionsCount: (count: number) => Promise.resolve()
 	});
