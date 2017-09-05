@@ -8,7 +8,7 @@ cliGlobal.XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 cliGlobal.XMLHttpRequest.prototype.withCredentials = false;
 // HACK -end
 
-export class AnalyticsServiceBase implements IAnalyticsService {
+export abstract class AnalyticsServiceBase implements IAnalyticsService, IDisposable {
 	private static MAX_WAIT_SENDING_INTERVAL = 30000; // in milliseconds
 	protected eqatecMonitors: IDictionary<IEqatecMonitor> = {};
 	protected featureTrackingAPIKeys: string[] = [
@@ -23,6 +23,8 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 		this.$staticConfig.ANALYTICS_EXCEPTIONS_API_KEY
 	];
 
+	protected shouldDisposeInstance: boolean = true;
+
 	protected analyticsStatuses: IDictionary<AnalyticsStatus> = {};
 
 	constructor(protected $logger: ILogger,
@@ -36,6 +38,12 @@ export class AnalyticsServiceBase implements IAnalyticsService {
 	protected get acceptTrackFeatureSetting(): string {
 		return `Accept${this.$staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME}`;
 	}
+
+	public setShouldDispose(shouldDispose: boolean): void {
+		this.shouldDisposeInstance = shouldDispose;
+	}
+
+	public abstract dispose(): void;
 
 	public async checkConsent(): Promise<void> {
 		if (await this.$analyticsSettingsService.canDoRequest()) {

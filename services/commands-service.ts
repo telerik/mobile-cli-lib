@@ -39,10 +39,13 @@ export class CommandsService implements ICommandsService {
 				const analyticsService = this.$injector.resolve<IAnalyticsService>("analyticsService"); // This should be resolved here due to cyclic dependency
 				await analyticsService.checkConsent();
 				await analyticsService.trackFeature(commandName);
+
+				const beautifiedCommandName = this.beautifyCommandName(commandName).replace(/\|/g, " ");
+
 				const googleAnalyticsPageData: IGoogleAnalyticsPageviewData = {
 					googleAnalyticsDataType: GoogleAnalyticsDataType.Page,
-					path: this.beautifyCommandName(commandName).replace(/\|/g, " "),
-					title: this.beautifyCommandName(commandName).replace(/\|/g, " ")
+					path: beautifiedCommandName,
+					title: beautifiedCommandName
 				};
 
 				await analyticsService.trackInGoogleAnalytics(googleAnalyticsPageData);

@@ -24,7 +24,7 @@ interface IEventActionData {
 
 	/**
 	 * Mobile platform for which the action will be tracked.
-	 * In case device is passed, this property is disregarded and device.deviceInfo.platfomr is used instead.
+	 * In case device is passed, this property is disregarded and device.deviceInfo.platform is used instead.
 	 */
 	platform?: string;
 

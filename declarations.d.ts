@@ -580,7 +580,14 @@ interface IAnalyticsService {
 	 * @param {IEventActionData} data DTO describing information for the event.
 	 * @return {Promise<void>}
 	 */
-	trackEventActionInGoogleAnalytics(data: IEventActionData): Promise<void>
+	trackEventActionInGoogleAnalytics(data: IEventActionData): Promise<void>;
+
+	/**
+	 * Defines if the instance should be disposed.
+	 * @param {boolean} shouldDispose Defines if the instance should be disposed and the child processes should be disconnected.
+	 * @returns {void}
+	 */
+	setShouldDispose(shouldDispose: boolean): void;
 }
 
 interface IAllowEmpty {
