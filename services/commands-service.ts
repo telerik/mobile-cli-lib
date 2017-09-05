@@ -36,9 +36,19 @@ export class CommandsService implements ICommandsService {
 		const command = this.$injector.resolveCommand(commandName);
 		if (command) {
 			if (!this.$staticConfig.disableAnalytics && !command.disableAnalytics) {
-				const analyticsService = this.$injector.resolve("analyticsService"); // This should be resolved here due to cyclic dependency
+				const analyticsService = this.$injector.resolve<IAnalyticsService>("analyticsService"); // This should be resolved here due to cyclic dependency
 				await analyticsService.checkConsent();
 				await analyticsService.trackFeature(commandName);
+
+				const beautifiedCommandName = this.beautifyCommandName(commandName).replace(/\|/g, " ");
+
+				const googleAnalyticsPageData: IGoogleAnalyticsPageviewData = {
+					googleAnalyticsDataType: GoogleAnalyticsDataType.Page,
+					path: beautifiedCommandName,
+					title: beautifiedCommandName
+				};
+
+				await analyticsService.trackInGoogleAnalytics(googleAnalyticsPageData);
 			}
 
 			if (!this.$staticConfig.disableCommandHooks && (command.enableHooks === undefined || command.enableHooks === true)) {
