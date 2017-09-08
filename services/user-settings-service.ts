@@ -3,15 +3,23 @@ import * as path from "path";
 export class UserSettingsServiceBase implements IUserSettingsService {
 	private userSettingsFilePath: string = null;
 	protected userSettingsData: any = null;
+	private get lockFilePath(): string {
+		return `${this.userSettingsFilePath}.lock`;
+	}
 
 	constructor(userSettingsFilePath: string,
-		protected $fs: IFileSystem) {
+		protected $fs: IFileSystem,
+		protected $lockfile: ILockFile) {
 		this.userSettingsFilePath = userSettingsFilePath;
 	}
 
 	public async getSettingValue<T>(settingName: string): Promise<T> {
-		await this.loadUserSettingsFile();
-		return this.userSettingsData ? this.userSettingsData[settingName] : null;
+		const action = async (): Promise<T> => {
+			await this.loadUserSettingsFile();
+			return this.userSettingsData ? this.userSettingsData[settingName] : null;
+		};
+
+		return this.executeActionWithLock<T>(action);
 	}
 
 	public async saveSetting<T>(key: string, value: T): Promise<void> {
@@ -22,44 +30,67 @@ export class UserSettingsServiceBase implements IUserSettingsService {
 	}
 
 	public async removeSetting(key: string): Promise<void> {
-		await this.loadUserSettingsFile();
+		const action = async (): Promise<void> => {
+			await this.loadUserSettingsFile();
 
-		delete this.userSettingsData[key];
-		await this.saveSettings();
+			delete this.userSettingsData[key];
+			await this.saveSettings();
+		};
+
+		return this.executeActionWithLock<void>(action);
+
 	}
 
-	public async saveSettings(data?: any): Promise<void> {
-		await this.loadUserSettingsFile();
-		this.userSettingsData = this.userSettingsData || {};
+	private async executeActionWithLock<T>(action: () => Promise<T>): Promise<T> {
+		try {
+			await this.$lockfile.lock(this.lockFilePath);
+			const result = await action();
+			return result;
+		} finally {
+			this.$lockfile.unlock(this.lockFilePath);
+		}
+	}
 
-		_(data)
-			.keys()
-			.each(propertyName => {
-				this.userSettingsData[propertyName] = data[propertyName];
-			});
+	public saveSettings(data?: any): Promise<void> {
+		const action = async (): Promise<void> => {
+			await this.loadUserSettingsFile();
+			this.userSettingsData = this.userSettingsData || {};
 
-		this.$fs.writeJson(this.userSettingsFilePath, this.userSettingsData);
+			_(data)
+				.keys()
+				.each(propertyName => {
+					this.userSettingsData[propertyName] = data[propertyName];
+				});
+
+			this.$fs.writeJson(this.userSettingsFilePath, this.userSettingsData);
+		};
+
+		return this.executeActionWithLock<void>(action);
 	}
 
 	// TODO: Remove Promise, reason: writeFile - blocked as other implementation of the interface has async operation.
 	public async loadUserSettingsFile(): Promise<void> {
 		if (!this.userSettingsData) {
-			if (!this.$fs.exists(this.userSettingsFilePath)) {
-				const unexistingDirs = this.getUnexistingDirectories(this.userSettingsFilePath);
+			await this.loadUserSettingsData();
+		}
+	}
 
-				this.$fs.writeFile(this.userSettingsFilePath, null);
+	protected async loadUserSettingsData(): Promise<void> {
+		if (!this.$fs.exists(this.userSettingsFilePath)) {
+			const unexistingDirs = this.getUnexistingDirectories(this.userSettingsFilePath);
 
-				// when running under 'sudo' we create the <path to home dir>/.local/share/.nativescript-cli dir with root as owner
-				// and other Applications cannot access this directory anymore. (bower/heroku/etc)
-				if (process.env.SUDO_USER) {
-					for (const dir of unexistingDirs) {
-						await this.$fs.setCurrentUserAsOwner(dir, process.env.SUDO_USER);
-					}
+			this.$fs.writeFile(this.userSettingsFilePath, null);
+
+			// when running under 'sudo' we create the <path to home dir>/.local/share/.nativescript-cli dir with root as owner
+			// and other Applications cannot access this directory anymore. (bower/heroku/etc)
+			if (process.env.SUDO_USER) {
+				for (const dir of unexistingDirs) {
+					await this.$fs.setCurrentUserAsOwner(dir, process.env.SUDO_USER);
 				}
 			}
-
-			this.userSettingsData = this.$fs.readJson(this.userSettingsFilePath);
 		}
+
+		this.userSettingsData = this.$fs.readJson(this.userSettingsFilePath);
 	}
 
 	private getUnexistingDirectories(filePath: string): Array<string> {
