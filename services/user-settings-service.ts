@@ -14,12 +14,12 @@ export class UserSettingsServiceBase implements IUserSettingsService {
 	}
 
 	public async getSettingValue<T>(settingName: string): Promise<T> {
-		const action = async () => {
+		const action = async (): Promise<T> => {
 			await this.loadUserSettingsFile();
 			return this.userSettingsData ? this.userSettingsData[settingName] : null;
 		};
 
-		return this.executeActionWithLock(action);
+		return this.executeActionWithLock<T>(action);
 	}
 
 	public async saveSetting<T>(key: string, value: T): Promise<void> {
@@ -30,18 +30,18 @@ export class UserSettingsServiceBase implements IUserSettingsService {
 	}
 
 	public async removeSetting(key: string): Promise<void> {
-		const action = async () => {
+		const action = async (): Promise<void> => {
 			await this.loadUserSettingsFile();
 
 			delete this.userSettingsData[key];
 			await this.saveSettings();
 		};
 
-		return this.executeActionWithLock(action);
+		return this.executeActionWithLock<void>(action);
 
 	}
 
-	private async executeActionWithLock(action: () => Promise<any>): Promise<any> {
+	private async executeActionWithLock<T>(action: () => Promise<T>): Promise<T> {
 		try {
 			await this.$lockfile.lock(this.lockFilePath);
 			const result = await action();
@@ -52,7 +52,7 @@ export class UserSettingsServiceBase implements IUserSettingsService {
 	}
 
 	public saveSettings(data?: any): Promise<void> {
-		const action = async () => {
+		const action = async (): Promise<void> => {
 			await this.loadUserSettingsFile();
 			this.userSettingsData = this.userSettingsData || {};
 
@@ -65,7 +65,7 @@ export class UserSettingsServiceBase implements IUserSettingsService {
 			this.$fs.writeJson(this.userSettingsFilePath, this.userSettingsData);
 		};
 
-		return this.executeActionWithLock(action);
+		return this.executeActionWithLock<void>(action);
 	}
 
 	// TODO: Remove Promise, reason: writeFile - blocked as other implementation of the interface has async operation.

@@ -1,8 +1,10 @@
 import * as lockfile from "lockfile";
 import * as path from "path";
+import { cache } from "../decorators";
 
 export class LockFile implements ILockFile {
 
+	@cache()
 	private get defaultLockFilePath(): string {
 		return path.join(this.$options.profileDir, "lockfile.lock");
 	}
@@ -19,11 +21,15 @@ export class LockFile implements ILockFile {
 		return lockParams;
 	}
 
-	constructor(private $options: ICommonOptions) {
+	constructor(private $fs: IFileSystem,
+		private $options: ICommonOptions) {
 	}
 
 	public lock(lockFilePath?: string, lockFileOpts?: lockfile.Options): Promise<void> {
 		const { filePath, fileOpts } = this.getLockFileSettings(lockFilePath, lockFileOpts);
+
+		// Prevent ENOENT error when the dir, where lock should be created, does not exist.
+		this.$fs.ensureDirectoryExists(path.dirname(filePath));
 
 		return new Promise<void>((resolve, reject) => {
 			lockfile.lock(filePath, fileOpts, (err: Error) => {
