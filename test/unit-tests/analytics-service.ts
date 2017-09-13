@@ -1,35 +1,60 @@
 import { CommonLoggerStub, ErrorsStub } from "./stubs";
 import { Yok } from "../../yok";
-import { AnalyticsServiceBase } from "../../services/analytics-service-base";
-import * as os from "os";
+import { AnalyticsServiceBase } from '../../services/analytics-service-base';
 import helpersLib = require("../../helpers");
 import { HostInfo } from "../../host-info";
 import { OsInfo } from "../../os-info";
-const assert = require("chai").assert;
-
-let trackedFeatureNamesAndValues = "";
-let savedSettingNamesAndValues = "";
-let lastTrackedExceptionMsg = "";
-let lastUsedEqatecSettings: any;
-let isEqatecStopCalled = false;
 require("../../vendor/EqatecMonitor.min"); // note - it modifies global scope!
-
+const assert = require("chai").assert;
 const cliGlobal = <ICliGlobal>global;
 const originalEqatec = cliGlobal._eqatec;
+const originalIsInteractive = helpersLib.isInteractive;
+const exception = "Exception";
+const message = "Track Exception Msg";
+
+let trackedFeatureNamesAndValues: string[] = [];
+let savedSettingNamesAndValues = "";
+let trackedExceptionMessages: string[] = [];
+let lastUsedEqatecSettings: IEqatecSettings;
+let usedEqatecSettings: IEqatecSettings[] = [];
+let apiKeysPassedToCreateEqatecSettings: string[] = [];
+let isEqatecStopCalled = false;
+let startCalledCount = 0;
+
+class AnalyticsServiceInheritor extends AnalyticsServiceBase {
+	public featureTrackingAPIKeys: string[] = [
+		this.$staticConfig.ANALYTICS_API_KEY
+	];
+
+	public acceptUsageReportingAPIKeys: string[] = [
+		this.$staticConfig.ANALYTICS_API_KEY
+	];
+
+	public exceptionsTrackingAPIKeys: string[] = [
+		this.$staticConfig.ANALYTICS_EXCEPTIONS_API_KEY
+	];
+
+	public dispose(): void {
+		// nothing to do here
+	}
+}
 
 function setGlobalEqatec(shouldSetUserThrowException: boolean, shouldStartThrow: boolean): void {
 	cliGlobal._eqatec = {
 		createSettings: (apiKey: string) => {
+			apiKeysPassedToCreateEqatecSettings.push(apiKey);
 			return <any>{};
 		},
 		createMonitor: (settings: any) => {
 			lastUsedEqatecSettings = settings;
+			usedEqatecSettings.push(settings);
+
 			return {
 				trackFeature: (featureNameAndValue: string) => {
-					trackedFeatureNamesAndValues += featureNameAndValue + os.EOL;
+					trackedFeatureNamesAndValues.push(featureNameAndValue);
 				},
-				trackException: (exception: any, message: string) => {
-					lastTrackedExceptionMsg = message;
+				trackException: (exceptionToTrack: any, messageToTrack: string) => {
+					trackedExceptionMessages.push(messageToTrack);
 				},
 				stop: () => { isEqatecStopCalled = true; },
 				setInstallationID: (guid: string) => { /*a mock*/ },
@@ -39,6 +64,7 @@ function setGlobalEqatec(shouldSetUserThrowException: boolean, shouldStartThrow:
 					}
 				},
 				start: () => {
+					startCalledCount++;
 					if (shouldStartThrow) {
 						throw new Error("start throws");
 					}
@@ -114,7 +140,7 @@ function createTestInjector(testScenario: ITestScenario): IInjector {
 		analyticsClient: null
 	});
 	testInjector.register("prompter", {
-		confirm: (message: string, defaultAction?: () => boolean) => {
+		confirm: (messageToUser: string, defaultAction?: () => boolean) => {
 			return Promise.resolve(testScenario.prompterConfirmResult);
 		}
 	});
@@ -122,24 +148,24 @@ function createTestInjector(testScenario: ITestScenario): IInjector {
 		ERROR_REPORT_SETTING_NAME: "TrackExceptions",
 		TRACK_FEATURE_USAGE_SETTING_NAME: "TrackFeatureUsage",
 		CLIENT_NAME: "common-lib",
-		ANALYTICS_API_KEY: "AnalyticsAPIKey"
+		ANALYTICS_API_KEY: "AnalyticsAPIKey",
+		ANALYTICS_EXCEPTIONS_API_KEY: "AnalyticsExceptionsAPIKey"
 	});
 	testInjector.register("hostInfo", HostInfo);
 	testInjector.register("osInfo", OsInfo);
 	testInjector.register("userSettingsService", new UserSettingsServiceStub(testScenario.featureTracking, testScenario.exceptionsTracking, testInjector));
-	testInjector.register("progressIndicator", {
-		showProgressIndicator: (future: Promise<any>, timeout: number, options?: { surpressTrailingNewLine?: boolean }) => {
-			return future;
-		}
-	});
 	helpersLib.isInteractive = () => {
 		return testScenario.isInteractive;
 	};
 
+	testInjector.register("processService", {
+		attachToProcessExitSignals: (context: any, callback: () => void): void => (undefined)
+	});
+
 	return testInjector;
 }
 
-describe("analytics-service", () => {
+describe("analytics-service-base", () => {
 	let baseTestScenario: ITestScenario;
 	const featureName = "unit tests feature";
 	let service: IAnalyticsService = null;
@@ -154,12 +180,16 @@ describe("analytics-service", () => {
 			shouldSetUserThrowException: false,
 			shouldStartThrow: false
 		};
-		trackedFeatureNamesAndValues = "";
-		lastTrackedExceptionMsg = "";
+		trackedFeatureNamesAndValues = [];
+		trackedExceptionMessages = [];
 		savedSettingNamesAndValues = "";
 		isEqatecStopCalled = false;
-		lastUsedEqatecSettings = {};
+		lastUsedEqatecSettings = <any>{};
+		usedEqatecSettings = [];
+		apiKeysPassedToCreateEqatecSettings = [];
+
 		service = null;
+		startCalledCount = 0;
 	});
 
 	afterEach(() => {
@@ -171,6 +201,7 @@ describe("analytics-service", () => {
 
 	after(() => {
 		cliGlobal._eqatec = originalEqatec;
+		helpersLib.isInteractive = originalIsInteractive;
 	});
 
 	describe("trackFeature", () => {
@@ -196,7 +227,7 @@ describe("analytics-service", () => {
 			const testInjector = createTestInjector(baseTestScenario);
 			service = testInjector.resolve<IAnalyticsService>("analyticsService");
 			await service.trackFeature(featureName);
-			assert.deepEqual(trackedFeatureNamesAndValues, "");
+			assert.deepEqual(trackedFeatureNamesAndValues, []);
 		});
 
 		it("does not track feature when console is not interactive and feature tracking is disabled", async () => {
@@ -204,7 +235,7 @@ describe("analytics-service", () => {
 			const testInjector = createTestInjector(baseTestScenario);
 			service = testInjector.resolve<IAnalyticsService>("analyticsService");
 			await service.trackFeature(featureName);
-			assert.deepEqual(trackedFeatureNamesAndValues, "");
+			assert.deepEqual(trackedFeatureNamesAndValues, []);
 		});
 
 		it("does not track feature when console is interactive and feature tracking is enabled, but cannot make request", async () => {
@@ -212,7 +243,7 @@ describe("analytics-service", () => {
 			const testInjector = createTestInjector(baseTestScenario);
 			service = testInjector.resolve<IAnalyticsService>("analyticsService");
 			await service.trackFeature(featureName);
-			assert.deepEqual(trackedFeatureNamesAndValues, "");
+			assert.deepEqual(trackedFeatureNamesAndValues, []);
 		});
 
 		it("does not track feature when console is not interactive and feature tracking is enabled, but cannot make request", async () => {
@@ -220,7 +251,7 @@ describe("analytics-service", () => {
 			const testInjector = createTestInjector(baseTestScenario);
 			service = testInjector.resolve<IAnalyticsService>("analyticsService");
 			await service.trackFeature(featureName);
-			assert.deepEqual(trackedFeatureNamesAndValues, "");
+			assert.deepEqual(trackedFeatureNamesAndValues, []);
 		});
 
 		it("does not throw exception when eqatec start throws", async () => {
@@ -228,18 +259,16 @@ describe("analytics-service", () => {
 			const testInjector = createTestInjector(baseTestScenario);
 			service = testInjector.resolve<IAnalyticsService>("analyticsService");
 			await service.trackFeature(featureName);
-			assert.deepEqual(trackedFeatureNamesAndValues, "");
+			assert.deepEqual(trackedFeatureNamesAndValues, []);
 		});
 	});
 
 	describe("trackException", () => {
-		const exception = "Exception";
-		const message = "Track Exception Msg";
 		it("tracks when all conditions are correct", async () => {
 			const testInjector = createTestInjector(baseTestScenario);
 			service = testInjector.resolve<IAnalyticsService>("analyticsService");
 			await service.trackException(exception, message);
-			assert.isTrue(lastTrackedExceptionMsg.indexOf(message) !== -1);
+			assert.isTrue(trackedExceptionMessages.indexOf(message) !== -1);
 		});
 
 		it("does not track when exception tracking is disabled", async () => {
@@ -247,7 +276,7 @@ describe("analytics-service", () => {
 			const testInjector = createTestInjector(baseTestScenario);
 			service = testInjector.resolve<IAnalyticsService>("analyticsService");
 			await service.trackException(exception, message);
-			assert.deepEqual(lastTrackedExceptionMsg, "");
+			assert.deepEqual(trackedExceptionMessages, []);
 		});
 
 		it("does not track when feature tracking is enabled, but cannot make request", async () => {
@@ -255,7 +284,7 @@ describe("analytics-service", () => {
 			const testInjector = createTestInjector(baseTestScenario);
 			service = testInjector.resolve<IAnalyticsService>("analyticsService");
 			await service.trackException(exception, message);
-			assert.deepEqual(lastTrackedExceptionMsg, "");
+			assert.deepEqual(trackedExceptionMessages, []);
 		});
 
 		it("does not throw exception when eqatec start throws", async () => {
@@ -263,7 +292,7 @@ describe("analytics-service", () => {
 			const testInjector = createTestInjector(baseTestScenario);
 			service = testInjector.resolve<IAnalyticsService>("analyticsService");
 			await service.trackException(exception, message);
-			assert.deepEqual(lastTrackedExceptionMsg, "");
+			assert.deepEqual(trackedExceptionMessages, []);
 		});
 	});
 
@@ -281,7 +310,7 @@ describe("analytics-service", () => {
 			const testInjector = createTestInjector(baseTestScenario);
 			service = testInjector.resolve<IAnalyticsService>("analyticsService");
 			await service.track(name, featureName);
-			assert.deepEqual(trackedFeatureNamesAndValues, "");
+			assert.deepEqual(trackedFeatureNamesAndValues, []);
 		});
 
 		it("does not track when feature tracking is enabled, but cannot make request", async () => {
@@ -289,7 +318,7 @@ describe("analytics-service", () => {
 			const testInjector = createTestInjector(baseTestScenario);
 			service = testInjector.resolve<IAnalyticsService>("analyticsService");
 			await service.track(name, featureName);
-			assert.deepEqual(trackedFeatureNamesAndValues, "");
+			assert.deepEqual(trackedFeatureNamesAndValues, []);
 		});
 
 		it("does not throw exception when eqatec start throws", async () => {
@@ -297,7 +326,7 @@ describe("analytics-service", () => {
 			const testInjector = createTestInjector(baseTestScenario);
 			service = testInjector.resolve<IAnalyticsService>("analyticsService");
 			await service.track(name, featureName);
-			assert.deepEqual(trackedFeatureNamesAndValues, "");
+			assert.deepEqual(trackedFeatureNamesAndValues, []);
 		});
 	});
 
@@ -549,6 +578,110 @@ describe("analytics-service", () => {
 			osInfo.release = () => { return release; };
 			await service.track(name, featureName);
 			assert.equal(lastUsedEqatecSettings.userAgent, `(Linux)`);
+		});
+	});
+
+	describe("tracks to multiple projects simultaneously", () => {
+		let analyticsService: AnalyticsServiceInheritor;
+		const getNodeJsVersionString = () => {
+			const reportedVersion = process.version.slice(1).replace(/[.]/g, "_");
+			return `NodeJSVersion.${reportedVersion}`;
+		};
+
+		it("features when featureTrackingAPIKeys setting contains multiple keys", async () => {
+			const testInjector = createTestInjector(baseTestScenario);
+			analyticsService = testInjector.resolve<AnalyticsServiceInheritor>("analyticsService");
+			analyticsService.featureTrackingAPIKeys = [
+				"ApiKey1",
+				"ApiKey2"
+			];
+
+			const secondFeatureName = "second feature";
+
+			await analyticsService.trackFeature(featureName);
+			await analyticsService.trackFeature(secondFeatureName);
+
+			assert.equal(startCalledCount, 2, "When we have two API Keys, the start method should be called exactly two times.");
+			assert.deepEqual(apiKeysPassedToCreateEqatecSettings, analyticsService.featureTrackingAPIKeys);
+
+			const featureFullName = `CLI.${featureName}`;
+			const secondFeatureFullName = `CLI.${secondFeatureName}`;
+			const nodeJsVersionString = getNodeJsVersionString();
+			const expectedTrackedFeatures = [
+				nodeJsVersionString,
+				featureFullName,
+				nodeJsVersionString,
+				featureFullName,
+				secondFeatureFullName,
+				secondFeatureFullName
+			];
+
+			assert.deepEqual(trackedFeatureNamesAndValues, expectedTrackedFeatures);
+		});
+
+		it("exceptions when exceptionsTrackingAPIKeys setting contains multiple keys", async () => {
+			const testInjector = createTestInjector(baseTestScenario);
+			analyticsService = testInjector.resolve<AnalyticsServiceInheritor>("analyticsService");
+			analyticsService.exceptionsTrackingAPIKeys = [
+				"ApiKey1",
+				"ApiKey2"
+			];
+
+			const secondExceptionMessage = "second exception";
+
+			await analyticsService.trackException(exception, message);
+			await analyticsService.trackException(exception, secondExceptionMessage);
+
+			assert.equal(startCalledCount, 2, "When we have two API Keys, the start method should be called exactly two times.");
+			assert.deepEqual(apiKeysPassedToCreateEqatecSettings, analyticsService.exceptionsTrackingAPIKeys);
+
+			const expectedExceptionMessage = [
+				message,
+				message, // for second project
+				secondExceptionMessage,
+				secondExceptionMessage // for second project
+			];
+
+			assert.deepEqual(trackedExceptionMessages, expectedExceptionMessage);
+
+			const nodeJsVersionString = getNodeJsVersionString();
+
+			// NodeJSVersion should be tracked in all processes for exceptions tracking.
+			const expectedTrackedMessages = [
+				nodeJsVersionString,
+				nodeJsVersionString,
+			];
+			assert.deepEqual(trackedFeatureNamesAndValues, expectedTrackedMessages);
+		});
+
+		it("accept feature tracking when acceptUsageReportingAPIKeys setting contains multiple keys", async () => {
+			const testInjector = createTestInjector(baseTestScenario);
+			analyticsService = testInjector.resolve<AnalyticsServiceInheritor>("analyticsService");
+			analyticsService.acceptUsageReportingAPIKeys = [
+				"ApiKey1",
+				"ApiKey2"
+			];
+
+			await analyticsService.trackAcceptFeatureUsage({ acceptTrackFeatureUsage: true });
+			await analyticsService.trackAcceptFeatureUsage({ acceptTrackFeatureUsage: false });
+
+			const staticConfig = testInjector.resolve<Config.IStaticConfig>("staticConfig");
+
+			assert.equal(startCalledCount, 2, "When we have two API Keys, the start method should be called exactly two times.");
+			assert.deepEqual(apiKeysPassedToCreateEqatecSettings, analyticsService.acceptUsageReportingAPIKeys);
+			const acceptTrackFeatureUsageTrue = `Accept${staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME}.true`;
+			const acceptTrackFeatureUsageFalse = `Accept${staticConfig.TRACK_FEATURE_USAGE_SETTING_NAME}.false`;
+			const nodeJsVersionString = getNodeJsVersionString();
+			const expectedTrackedFeatures = [
+				nodeJsVersionString,
+				acceptTrackFeatureUsageTrue,
+				nodeJsVersionString,
+				acceptTrackFeatureUsageTrue,
+				acceptTrackFeatureUsageFalse,
+				acceptTrackFeatureUsageFalse
+			];
+
+			assert.deepEqual(trackedFeatureNamesAndValues, expectedTrackedFeatures);
 		});
 	});
 });

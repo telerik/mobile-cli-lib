@@ -30,6 +30,7 @@ export abstract class AnalyticsServiceBase implements IAnalyticsService, IDispos
 	constructor(protected $logger: ILogger,
 		protected $options: ICommonOptions,
 		protected $staticConfig: Config.IStaticConfig,
+		protected $processService: IProcessService,
 		private $prompter: IPrompter,
 		private $userSettingsService: UserSettings.IUserSettingsService,
 		private $analyticsSettingsService: IAnalyticsSettingsService,
@@ -135,8 +136,6 @@ export abstract class AnalyticsServiceBase implements IAnalyticsService, IDispos
 	}
 
 	public tryStopEqatecMonitors(code?: string | number): void {
-		process.removeListener("exit", this.tryStopEqatecMonitors);
-
 		for (const eqatecMonitorApiKey in this.eqatecMonitors) {
 			const eqatecMonitor = this.eqatecMonitors[eqatecMonitorApiKey];
 			eqatecMonitor.stop();
@@ -247,7 +246,12 @@ export abstract class AnalyticsServiceBase implements IAnalyticsService, IDispos
 		return this.analyticsStatuses[settingName];
 	}
 
-	private async start(analyticsAPIKey: string): Promise<any> {
+	private async start(analyticsAPIKey: string): Promise<IEqatecMonitor> {
+		const eqatecMonitorForSpecifiedAPIKey = this.eqatecMonitors[analyticsAPIKey];
+		if (eqatecMonitorForSpecifiedAPIKey) {
+			return eqatecMonitorForSpecifiedAPIKey;
+		}
+
 		const analyticsSettings = await this.getEqatecSettings(analyticsAPIKey);
 		return this.startEqatecMonitor(analyticsSettings);
 	}
@@ -271,6 +275,7 @@ export abstract class AnalyticsServiceBase implements IAnalyticsService, IDispos
 		};
 
 		const eqatecMonitor = cliGlobal._eqatec.createMonitor(settings);
+		this.eqatecMonitors[analyticsSettings.analyticsAPIKey] = eqatecMonitor;
 
 		const analyticsInstallationId = analyticsSettings.analyticsInstallationId;
 
@@ -290,18 +295,16 @@ export abstract class AnalyticsServiceBase implements IAnalyticsService, IDispos
 		eqatecMonitor.start();
 
 		// End the session on process.exit only or in case user disables both usage tracking and exceptions tracking.
-		process.on("exit", this.tryStopEqatecMonitors);
+		this.$processService.attachToProcessExitSignals(this, this.tryStopEqatecMonitors);
 
-		this.eqatecMonitors[analyticsSettings.analyticsAPIKey] = eqatecMonitor;
-
-		await this.reportNodeVersion();
+		await this.reportNodeVersion(analyticsSettings.analyticsAPIKey);
 
 		return eqatecMonitor;
 	}
 
-	private async reportNodeVersion(): Promise<void> {
+	private async reportNodeVersion(apiKey: string): Promise<void> {
 		const reportedVersion: string = process.version.slice(1).replace(/[.]/g, "_");
-		await this.trackFeatureCore(`NodeJSVersion.${reportedVersion}`);
+		await this.sendDataToEqatecMonitors([apiKey], (eqatecMonitor: IEqatecMonitor) => eqatecMonitor.trackFeature(`NodeJSVersion.${reportedVersion}`));
 	}
 
 	private getUserAgentString(): string {
