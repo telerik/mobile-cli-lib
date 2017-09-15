@@ -90,7 +90,9 @@ export class CommandsService implements ICommandsService {
 
 	private async tryExecuteCommandAction(commandName: string, commandArguments: string[]): Promise<boolean> {
 		const command = this.$injector.resolveCommand(commandName);
-		this.$options.validateOptions(command ? command.dashedOptions : null);
+		if (!command || (command && !command.isHierarchicalCommand)) {
+			this.$options.validateOptions(command ? command.dashedOptions : null);
+		}
 
 		if (!this.areDynamicSubcommandsRegistered) {
 			this.$commandsServiceProvider.registerDynamicSubCommands();

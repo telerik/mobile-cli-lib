@@ -13,6 +13,7 @@ interface ICommand extends ICommandOptions {
 	canExecute?(args: string[]): Promise<boolean>;
 	completionData?: string[];
 	dashedOptions?: IDictionary<IDashedOption>;
+	isHierarchicalCommand?: boolean;
 }
 
 interface IDynamicCommand extends ICommand { }
