@@ -1,7 +1,7 @@
 import { Errors } from "../../errors";
 import { Yok } from "../../yok";
 import { assert } from "chai";
-import { OptionType, OptionsBase } from "../../options";
+import { OptionsBase } from "../../options";
 
 let isExecutionStopped = false;
 
@@ -205,12 +205,12 @@ describe("common options", () => {
 				assert.isTrue(isExecutionStopped);
 			});
 
-			it("breaks execution when commandSpecificOptions are passed and user tries to use option valid for CLI, but not for this command", () => {
+			it("does not break execution when commandSpecificOptions are passed and user tries to use option valid for CLI, but not for this command", () => {
 				process.argv.push("--json");
 				const options = testInjector.resolve(OptionsBase, { options: knownOpts, defaultProfileDir: "1" });
 				options.validateOptions({ test1: { type: OptionType.String } });
 				process.argv.pop();
-				assert.isTrue(isExecutionStopped);
+				assert.isFalse(isExecutionStopped);
 			});
 
 			it("uses profile-dir from yargs when it exists and commandSpecificOptions are passed", () => {
