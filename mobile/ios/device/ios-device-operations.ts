@@ -164,6 +164,7 @@ export class IOSDeviceOperations implements IIOSDeviceOperations, IDisposable {
 		if (this.shouldDispose && this.deviceLib) {
 			this.deviceLib.removeAllListeners();
 			this.deviceLib.dispose(signal);
+			this.deviceLib = null;
 			this.$logger.trace("IOSDeviceOperations disposed.");
 		}
 	}
