@@ -4,7 +4,6 @@ interface Object {
 
 interface IStringDictionary extends IDictionary<string> { }
 
-
 /**
  * Describes iTunes Connect application types
  */
@@ -19,6 +18,16 @@ interface IiTunesConnectApplicationType {
 	 * @type {string}
 	 */
 	Mac: string;
+}
+
+/**
+ * Describes the types of data that can be send to Google Analytics.
+ * Their values are the names of the methods in universnal-analytics that have to be called to track this type of data.
+ * Also known as Hit Type: https://developers.google.com/analytics/devguides/collection/protocol/v1/parameters#t
+ */
+declare const enum GoogleAnalyticsDataType {
+	Page = "pageview",
+	Event = "event"
 }
 
 /**
@@ -149,6 +158,87 @@ declare module Server {
 
 interface IDisposable {
 	dispose(): void;
+}
+
+/**
+ * Describes the type of data sent to analytics service.
+ */
+declare const enum TrackingTypes {
+	/**
+	 * Defines that the data contains information for initialization of a new Analytics monitor.
+	 */
+	Initialization = "initialization",
+
+	/**
+	 * Defines that the data contains feature that should be tracked.
+	 */
+	Feature = "feature",
+
+	/**
+	 * Defines that the data contains exception that should be tracked.
+	 */
+	Exception = "exception",
+
+	/**
+	 * Defines that the data contains the answer of the question if user allows to be tracked.
+	 */
+	AcceptTrackFeatureUsage = "acceptTrackFeatureUsage",
+
+	/**
+	 * Defines data that will be tracked to Google Analytics.
+	 */
+	GoogleAnalyticsData = "googleAnalyticsData",
+
+	/**
+	 * Defines that all information has been sent and no more data will be tracked in current session.
+	 */
+	Finish = "finish"
+}
+
+/**
+ * Describes the status of the current Analytics status, i.e. has the user allowed to be tracked.
+ */
+declare const enum AnalyticsStatus {
+	/**
+	 * User has allowed to be tracked.
+	 */
+	enabled = "enabled",
+
+	/**
+	 * User has declined to be tracked.
+	 */
+	disabled = "disabled",
+
+	/**
+	 * User has not been asked to allow feature and error tracking.
+	 */
+	notConfirmed = "not confirmed"
+}
+
+/**
+ * Describes types of options that manage -- flags.
+ */
+declare const enum OptionType {
+	/**
+	 * String option
+	 */
+	String = "string",
+	/**
+	 * Boolean option
+	 */
+	Boolean = "boolean",
+	/**
+	 * Number option
+	 */
+	Number = "number",
+	/**
+	 * Array option
+	 */
+	Array = "array",
+	/**
+	 * Object option
+	 */
+	Object = "object"
 }
 
 /**
@@ -1156,8 +1246,6 @@ interface ICommonOptions extends IRelease, IDeviceIdentifier, IJustLaunch, IAvd,
 	validateOptions(commandSpecificDashedOptions?: IDictionary<IDashedOption>): void;
 	options: IDictionary<any>;
 	shorthands: string[];
-
-
 	/**
 	 * Project Configuration
 	 */

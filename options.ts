@@ -1,14 +1,6 @@
 import * as helpers from "./helpers";
 import * as yargs from "yargs";
 
-export class OptionType {
-	public static String = "string";
-	public static Boolean = "boolean";
-	public static Number = "number";
-	public static Array = "array";
-	public static Object = "object";
-}
-
 export class OptionsBase {
 	private static DASHED_OPTION_REGEX = /(.+?)([A-Z])(.*)/;
 	private static NONDASHED_OPTION_REGEX = /(.+?)[-]([a-zA-Z])(.*)/;
@@ -93,7 +85,6 @@ export class OptionsBase {
 
 	public validateOptions(commandSpecificDashedOptions?: IDictionary<IDashedOption>): void {
 		if (commandSpecificDashedOptions) {
-			this.options = this.globalOptions;
 			_.extend(this.options, commandSpecificDashedOptions);
 			this.setArgv();
 		}
