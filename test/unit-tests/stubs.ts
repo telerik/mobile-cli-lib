@@ -43,14 +43,14 @@ export class CommonLoggerStub implements ILogger {
 export class ErrorsStub implements IErrors {
 	printCallStack: boolean = false;
 
-	fail(formatStr: string, ...args: any[]): void;
-	fail(opts: { formatStr?: string; errorCode?: number; suppressCommandHelp?: boolean }, ...args: any[]): void;
+	fail(formatStr: string, ...args: any[]): never;
+	fail(opts: { formatStr?: string; errorCode?: number; suppressCommandHelp?: boolean }, ...args: any[]): never;
 
-	fail(...args: any[]) {
+	fail(...args: any[]): never {
 		throw new Error(util.format.apply(null, args));
 	}
 
-	failWithoutHelp(message: string, ...args: any[]): void {
+	failWithoutHelp(message: string, ...args: any[]): never {
 		throw new Error(message);
 	}
 
