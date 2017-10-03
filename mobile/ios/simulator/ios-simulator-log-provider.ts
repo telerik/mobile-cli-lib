@@ -10,7 +10,7 @@ export class IOSSimulatorLogProvider implements Mobile.IiOSSimulatorLogProvider 
 
 	public startLogProcess(deviceIdentifier: string): void {
 		if (!this.isStarted) {
-			const deviceLogChildProcess: ChildProcess = this.$iOSSimResolver.iOSSim.getDeviceLogProcess(deviceIdentifier);
+			const deviceLogChildProcess: ChildProcess = this.$iOSSimResolver.iOSSim.getDeviceLogProcess(deviceIdentifier, 'senderImagePath contains "NativeScript"');
 
 			const action = (data: NodeBuffer | string) => {
 				this.$deviceLogProvider.logData(data.toString(), this.$devicePlatformsConstants.iOS, deviceIdentifier);
