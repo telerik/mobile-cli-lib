@@ -138,6 +138,7 @@ declare module Mobile {
 
 	interface ILogcatHelper {
 		start(deviceIdentifier: string): Promise<void>;
+		stop(deviceIdentifier: string): void;
 	}
 
 	/**

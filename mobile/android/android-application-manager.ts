@@ -83,6 +83,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 	}
 
 	public stopApplication(appIdentifier: string): Promise<void> {
+		this.$logcatHelper.stop(this.identifier);
 		return this.adb.executeShellCommand(["am", "force-stop", `${appIdentifier}`]);
 	}
 
