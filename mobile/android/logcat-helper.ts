@@ -3,8 +3,8 @@ import { DeviceAndroidDebugBridge } from "./device-android-debug-bridge";
 import { ChildProcess } from "child_process";
 
 interface IDeviceLoggingData {
-    loggingProcess: ChildProcess;
-    lineStream: any;
+	loggingProcess: ChildProcess;
+	lineStream: any;
 }
 
 export class LogcatHelper implements Mobile.ILogcatHelper {
@@ -27,7 +27,7 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 			this.mapDevicesLoggingData[deviceIdentifier] = {
 				loggingProcess: logcatStream,
 				lineStream: lineStream
-			}
+			};
 
 			logcatStream.stderr.on("data", (data: NodeBuffer) => {
 				this.$logger.trace("ADB logcat stderr: " + data.toString());
@@ -54,7 +54,7 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 	}
 
 	public stop(deviceIdentifier: string): void {
-		if(this.mapDevicesLoggingData[deviceIdentifier]) {
+		if (this.mapDevicesLoggingData[deviceIdentifier]) {
 			this.mapDevicesLoggingData[deviceIdentifier].loggingProcess.removeAllListeners();
 			this.mapDevicesLoggingData[deviceIdentifier].lineStream.removeAllListeners();
 		}
