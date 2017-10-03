@@ -1,10 +1,15 @@
 import byline = require("byline");
 import { DeviceAndroidDebugBridge } from "./device-android-debug-bridge";
+import { ChildProcess } from "child_process";
+
+interface IDeviceLoggingData {
+    loggingProcess: ChildProcess;
+    lineStream: any;
+}
 
 export class LogcatHelper implements Mobile.ILogcatHelper {
 	private mapDeviceToLoggingStarted: IDictionary<boolean>;
-	private mapDeviceToLogcat:any;
-	private mapDeviceToLineStream:any;
+	private mapDevicesLoggingData: IDictionary<IDeviceLoggingData>;
 
 	constructor(private $deviceLogProvider: Mobile.IDeviceLogProvider,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
@@ -12,24 +17,27 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 		private $injector: IInjector,
 		private $processService: IProcessService) {
 		this.mapDeviceToLoggingStarted = Object.create(null);
-		this.mapDeviceToLogcat = Object.create(null);
-		this.mapDeviceToLineStream = Object.create(null);
+		this.mapDevicesLoggingData = Object.create(null);
 	}
 
 	public async start(deviceIdentifier: string): Promise<void> {
-		if (deviceIdentifier && !this.mapDeviceToLoggingStarted[deviceIdentifier]) {
+		if (deviceIdentifier && !this.mapDevicesLoggingData[deviceIdentifier]) {
 			const adb: Mobile.IDeviceAndroidDebugBridge = this.$injector.resolve(DeviceAndroidDebugBridge, { identifier: deviceIdentifier });
 
-			this.mapDeviceToLogcat[deviceIdentifier] = await adb.executeCommand(["logcat"], { returnChildProcess: true });
-			this.mapDeviceToLineStream[deviceIdentifier] = byline(this.mapDeviceToLogcat[deviceIdentifier].stdout);
+			const logcatStream = await adb.executeCommand(["logcat"], { returnChildProcess: true });
+			const lineStream = byline(logcatStream.stdout);
+			this.mapDevicesLoggingData[deviceIdentifier] = {
+				loggingProcess: logcatStream,
+				lineStream: lineStream
+			}
 
-			this.mapDeviceToLogcat[deviceIdentifier].stderr.on("data", (data: NodeBuffer) => {
+			logcatStream.stderr.on("data", (data: NodeBuffer) => {
 				this.$logger.trace("ADB logcat stderr: " + data.toString());
 			});
 
-			this.mapDeviceToLogcat[deviceIdentifier].on("close", (code: number) => {
+			logcatStream.on("close", (code: number) => {
 				try {
-					this.mapDeviceToLoggingStarted[deviceIdentifier] = false;
+					this.stop(deviceIdentifier);
 					if (code !== 0) {
 						this.$logger.trace("ADB process exited with code " + code.toString());
 					}
@@ -38,25 +46,21 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 				}
 			});
 
-			this.mapDeviceToLineStream[deviceIdentifier].on('data', (line: NodeBuffer) => {
+			lineStream.on('data', (line: NodeBuffer) => {
 				const lineText = line.toString();
 				this.$deviceLogProvider.logData(lineText, this.$devicePlatformsConstants.Android, deviceIdentifier);
 			});
 
-			this.$processService.attachToProcessExitSignals(this, this.mapDeviceToLogcat[deviceIdentifier].kill);
-
-			this.mapDeviceToLoggingStarted[deviceIdentifier] = true;
+			this.$processService.attachToProcessExitSignals(this, logcatStream.kill);
 		}
 	}
 
 	public stop(deviceIdentifier: string): void {
-		this.mapDeviceToLoggingStarted[deviceIdentifier] = false;
-		if (this.mapDeviceToLogcat[deviceIdentifier]) {
-			this.mapDeviceToLogcat[deviceIdentifier].removeAllListeners();
+		if(this.mapDevicesLoggingData[deviceIdentifier]) {
+			this.mapDevicesLoggingData[deviceIdentifier].loggingProcess.removeAllListeners();
+			this.mapDevicesLoggingData[deviceIdentifier].lineStream.removeAllListeners();
 		}
-		if (this.mapDeviceToLineStream[deviceIdentifier]) {
-			this.mapDeviceToLineStream[deviceIdentifier].removeAllListeners();
-		}
+		delete this.mapDevicesLoggingData[deviceIdentifier];
 	}
 }
 
