@@ -8,7 +8,6 @@ interface IDeviceLoggingData {
 }
 
 export class LogcatHelper implements Mobile.ILogcatHelper {
-	private mapDeviceToLoggingStarted: IDictionary<boolean>;
 	private mapDevicesLoggingData: IDictionary<IDeviceLoggingData>;
 
 	constructor(private $deviceLogProvider: Mobile.IDeviceLogProvider,
@@ -16,7 +15,6 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 		private $logger: ILogger,
 		private $injector: IInjector,
 		private $processService: IProcessService) {
-		this.mapDeviceToLoggingStarted = Object.create(null);
 		this.mapDevicesLoggingData = Object.create(null);
 	}
 
