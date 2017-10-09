@@ -281,14 +281,32 @@ export function appendZeroesToVersion(version: string, requiredVersionLength: nu
 	return version;
 }
 
-export function decorateMethod(before: (method1: any, self1: any, args1: any[]) => Promise<void>, after: (method2: any, self2: any, result2: any, args2: any[]) => Promise<any>) {
+export function decorateMethod(before: (method1: any, self1: any, args1: any[]) => Promise<any>, after: (method2: any, self2: any, result2: any, args2: any[]) => Promise<any>) {
 	return (target: Object, propertyKey: string, descriptor: TypedPropertyDescriptor<Function>) => {
 		const sink = descriptor.value;
 		descriptor.value = async function (...args: any[]): Promise<any> {
+			let newMethods: Function[] = null;
 			if (before) {
-				await before(sink, this, args);
+				newMethods = await before(sink, this, args);
 			}
-			const result = sink.apply(this, args);
+
+			let hasBeenReplaced = false;
+			let result: any;
+			if (newMethods && newMethods.length) {
+				// Find all functions
+				_(newMethods)
+					.filter(f => _.isFunction(f))
+					.each(f => {
+						// maybe add logger.trace here
+						hasBeenReplaced = true;
+						result = f(args, sink.bind(this));
+					});
+			}
+
+			if (!hasBeenReplaced) {
+				result = sink.apply(this, args);
+			}
+
 			if (after) {
 				return await after(sink, this, result, args);
 			}
@@ -327,7 +345,7 @@ export function hook(commandName: string) {
 	return decorateMethod(
 		async (method: any, self: any, args: any[]) => {
 			const hooksService = getHooksService(self);
-			await hooksService.executeBeforeHooks(commandName, prepareArguments(method, args, hooksService));
+			return hooksService.executeBeforeHooks(commandName, prepareArguments(method, args, hooksService));
 		},
 		async (method: any, self: any, resultPromise: any, args: any[]) => {
 			const result = await resultPromise;
