@@ -467,6 +467,15 @@ declare module Mobile {
 		result: T;
 	}
 
+	/**
+	 * Describes a projectIdentifier for both platforms.
+	 */
+	interface IProjectIdentifier {
+		ios: string;
+		android: string;
+		[platform: string]: string;
+	}
+
 	interface IDevicesService extends NodeJS.EventEmitter, IPlatform {
 		hasDevices: boolean;
 		deviceCount: number;
