@@ -293,14 +293,16 @@ export function decorateMethod(before: (method1: any, self1: any, args1: any[]) 
 			let hasBeenReplaced = false;
 			let result: any;
 			if (newMethods && newMethods.length) {
-				// Find all functions
-				_(newMethods)
-					.filter(f => _.isFunction(f))
-					.each(f => {
-						// maybe add logger.trace here
-						hasBeenReplaced = true;
-						result = f(args, sink.bind(this));
-					});
+				const replacementMethods = _.filter(newMethods, f => _.isFunction(f));
+				if (replacementMethods.length > 0) {
+					if (replacementMethods.length > 1) {
+						const $logger = $injector.resolve<ILogger>("logger");
+						$logger.warn(`Multiple methods detected which try to replace ${sink.name}. Will execute only the first of them.`);
+					}
+
+					hasBeenReplaced = true;
+					result = _.head(replacementMethods)(args, sink.bind(this));
+				}
 			}
 
 			if (!hasBeenReplaced) {
