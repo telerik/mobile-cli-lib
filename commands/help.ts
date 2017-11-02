@@ -1,10 +1,6 @@
-import { EOL } from "os";
-
 export class HelpCommand implements ICommand {
-	constructor(private $logger: ILogger,
-		private $injector: IInjector,
-		private $htmlHelpService: IHtmlHelpService,
-		private $staticConfig: Config.IStaticConfig,
+	constructor(private $injector: IInjector,
+		private $helpService: IHelpService,
 		private $options: ICommonOptions) { }
 
 	public enableHooks = false;
@@ -22,14 +18,9 @@ export class HelpCommand implements ICommand {
 		}
 
 		if (this.$options.help) {
-			const help = await this.$htmlHelpService.getCommandLineHelpForCommand(topic);
-			if (this.$staticConfig.FULL_CLIENT_NAME) {
-				this.$logger.info(this.$staticConfig.FULL_CLIENT_NAME.green.bold + EOL);
-			}
-
-			this.$logger.printMarkdown(help);
+			await this.$helpService.showCommandLineHelp(topic);
 		} else {
-			await this.$htmlHelpService.openHelpForCommandInBrowser(topic);
+			await this.$helpService.openHelpForCommandInBrowser(topic);
 		}
 	}
 }
