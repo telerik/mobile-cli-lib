@@ -958,13 +958,6 @@ interface IMicroTemplateService {
 interface IHelpService {
 	generateHtmlPages(): Promise<void>;
 
-	/**
-	 * Gets the help content for a specific command that should be shown on the terminal.
-	 * @param {string} commandName Name of the command for which to read the help.
-	 * @returns {Promise<string>} Help content of the command parsed with all terminal rules applied (stripped content that should be shown only for html help).
-	 */
-	getCommandLineHelpForCommand(commandName: string): Promise<string>;
-
 	openHelpForCommandInBrowser(commandName: string): Promise<void>;
 
 	/**

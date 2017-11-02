@@ -74,7 +74,12 @@ export class HelpService implements IHelpService {
 		this.$logger.printMarkdown(help);
 	}
 
-	public async getCommandLineHelpForCommand(commandName: string): Promise<string> {
+	/**
+	 * Gets the help content for a specific command that should be shown on the terminal.
+	 * @param {string} commandName Name of the command for which to read the help.
+	 * @returns {Promise<string>} Help content of the command parsed with all terminal rules applied (stripped content that should be shown only for html help).
+	 */
+	private async getCommandLineHelpForCommand(commandName: string): Promise<string> {
 		const helpText = await this.readMdFileForCommand(commandName);
 		const commandLineHelp = (await this.$microTemplateService.parseContent(helpText, { isHtml: false }))
 			.replace(/&nbsp;/g, " ")

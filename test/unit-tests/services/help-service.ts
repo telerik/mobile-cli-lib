@@ -1,6 +1,6 @@
 import { CommonLoggerStub, ErrorsStub } from "../stubs";
 import { MicroTemplateService } from "../../../services/micro-templating-service";
-import { HelpService } from "../../../services/html-help-service";
+import { HelpService } from "../../../services/help-service";
 import { assert } from "chai";
 import { EOL } from "os";
 import { Yok } from '../../../yok';
