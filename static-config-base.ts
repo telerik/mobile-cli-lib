@@ -36,10 +36,6 @@ export abstract class StaticConfigBase implements Config.IStaticConfig {
 
 	constructor(protected $injector: IInjector) { }
 
-	public get helpTextPath(): string {
-		return null;
-	}
-
 	public async getAdbFilePath(): Promise<string> {
 		if (!this._adbFilePath) {
 			this._adbFilePath = await this.getAdbFilePathCore();

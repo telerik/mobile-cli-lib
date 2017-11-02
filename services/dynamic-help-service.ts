@@ -15,7 +15,7 @@ export class DynamicHelpService implements IDynamicHelpService {
 
 	public getLocalVariables(options: { isHtml: boolean }): IDictionary<any> {
 		const isHtml = options.isHtml;
-		//in html help we want to show all help. Only CONSOLE specific help(wrapped in if(isConsole) ) must be omitted
+		// in html help we want to show all help. Only CONSOLE specific help(wrapped in if(isConsole) ) must be omitted
 		const localVariables = this.$dynamicHelpProvider.getLocalVariables(options);
 		localVariables["isLinux"] = isHtml || this.isPlatform("linux");
 		localVariables["isWindows"] = isHtml || this.isPlatform("win32");

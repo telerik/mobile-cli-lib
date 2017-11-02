@@ -540,7 +540,7 @@ interface IErrors {
 	fail(formatStr: string, ...args: any[]): never;
 	fail(opts: { formatStr?: string; errorCode?: number; suppressCommandHelp?: boolean }, ...args: any[]): never;
 	failWithoutHelp(message: string, ...args: any[]): never;
-	beginCommand(action: () => Promise<boolean>, printCommandHelp: () => Promise<boolean>): Promise<boolean>;
+	beginCommand(action: () => Promise<boolean>, printCommandHelp: () => Promise<void>): Promise<boolean>;
 	verifyHeap(message: string): void;
 	printCallStack: boolean;
 }
@@ -955,7 +955,7 @@ interface IMicroTemplateService {
 	parseContent(data: string, options: { isHtml: boolean }): Promise<string>;
 }
 
-interface IHtmlHelpService {
+interface IHelpService {
 	generateHtmlPages(): Promise<void>;
 
 	/**
@@ -966,6 +966,13 @@ interface IHtmlHelpService {
 	getCommandLineHelpForCommand(commandName: string): Promise<string>;
 
 	openHelpForCommandInBrowser(commandName: string): Promise<void>;
+
+	/**
+	 * Shows command line help for specified command.
+	 * @param {string} commandName The name of the command for which to show the help.
+	 * @returns {Promise<void>}
+	 */
+	showCommandLineHelp(commandName: string): Promise<void>;
 }
 
 /**
