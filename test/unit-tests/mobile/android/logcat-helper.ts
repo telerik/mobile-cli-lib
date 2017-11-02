@@ -11,14 +11,17 @@ class ChildProcessStub {
 	public spawn(command: string, args?: string[], options?: any): childProcess.ChildProcess {
 		ChildProcessStub.methodCallCount++;
 		let pathToExecutable = "";
+		let shell = "";
 		if (this.isWin) {
 			pathToExecutable = "type";
+			shell = "cmd";
 		} else {
 			pathToExecutable = "cat";
 		}
 		pathToExecutable = path.join(pathToExecutable);
 		const pathToSample = path.join(__dirname, "valid-sample.txt");
-		return childProcess.spawn(pathToExecutable, [pathToSample]);
+
+		return childProcess.spawn(pathToExecutable, [pathToSample], { shell });
 	}
 }
 

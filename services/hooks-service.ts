@@ -63,7 +63,7 @@ export class HooksService implements IHooksService {
 		return this.executeHooks(afterHookName, traceMessage, hookArguments);
 	}
 
-	private async executeHooks(hookName: string, traceMessage: string, hookArguments?: IDictionary<any>): Promise<void> {
+	private async executeHooks(hookName: string, traceMessage: string, hookArguments?: IDictionary<any>): Promise<any> {
 		if (this.$config.DISABLE_HOOKS || !this.$options.hooks) {
 			return;
 		}
@@ -75,19 +75,22 @@ export class HooksService implements IHooksService {
 		this.initialize(projectDir);
 
 		this.$logger.trace(traceMessage);
-
+		const results: any[] = [];
 		try {
 			for (const hooksDirectory of this.hooksDirectories) {
-				await this.executeHooksInDirectory(hooksDirectory, hookName, hookArguments);
+				results.push(await this.executeHooksInDirectory(hooksDirectory, hookName, hookArguments));
 			}
 		} catch (err) {
 			this.$logger.trace("Failed during hook execution.");
 			this.$errors.failWithoutHelp(err.message || err);
 		}
+
+		return _.flatten(results);
 	}
 
-	private async executeHooksInDirectory(directoryPath: string, hookName: string, hookArguments?: IDictionary<any>): Promise<void> {
+	private async executeHooksInDirectory(directoryPath: string, hookName: string, hookArguments?: IDictionary<any>): Promise<any[]> {
 		hookArguments = hookArguments || {};
+		const results: any[] = [];
 		const hooks = this.getHooksByName(directoryPath, hookName);
 		for (let i = 0; i < hooks.length; ++i) {
 			const hook = hooks[i];
@@ -129,7 +132,8 @@ export class HooksService implements IHooksService {
 				if (maybePromise) {
 					this.$logger.trace('Hook promises to signal completion');
 					try {
-						await maybePromise;
+						const result = await maybePromise;
+						results.push(result);
 					} catch (err) {
 						if (err && _.isBoolean(err.stopExecution) && err.errorAsWarning === true) {
 							this.$logger.warn(err.message || err);
@@ -144,12 +148,16 @@ export class HooksService implements IHooksService {
 					this.$logger.trace("Executing %s hook at location %s with environment ", hookName, hook.fullPath, environment);
 
 					const output = await this.$childProcess.spawnFromEvent(command, [hook.fullPath], "close", environment, { throwError: false });
+					results.push(output);
+
 					if (output.exitCode !== 0) {
 						throw new Error(output.stdout + output.stderr);
 					}
 				}
 			}
 		}
+
+		return results;
 	}
 
 	private getHooksByName(directoryPath: string, hookName: string): IHook[] {
