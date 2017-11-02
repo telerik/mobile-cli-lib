@@ -721,6 +721,13 @@ interface IAnalyticsSettingsService {
 	 * @returns {Promise<string>}
 	 */
 	getClientId(): Promise<string>;
+
+	/**
+	 * Gets user agent string identifing the current system in the following format: `${identifier} (${systemInfo}) ${osArch}`
+	 * @param {string} identifier The product identifier.
+	 * @returns {string} The user agent string.
+	 */
+	getUserAgentString(identifier: string): string;
 }
 
 interface IHostCapabilities {
