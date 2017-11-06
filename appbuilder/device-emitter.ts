@@ -1,5 +1,5 @@
 import { EventEmitter } from "events";
-import { DeviceDiscoveryEventNames } from "../constants";
+import { DeviceDiscoveryEventNames, DEVICE_LOG_EVENT_NAME } from "../constants";
 
 export class DeviceEmitter extends EventEmitter {
 	constructor(private $deviceLogProvider: EventEmitter,
@@ -34,7 +34,7 @@ export class DeviceEmitter extends EventEmitter {
 		});
 
 		this.$deviceLogProvider.on("data", (identifier: string, data: any) => {
-			this.emit('deviceLogData', identifier, data.toString());
+			this.emit(DEVICE_LOG_EVENT_NAME, identifier, data.toString());
 		});
 	}
 

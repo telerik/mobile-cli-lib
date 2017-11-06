@@ -1,14 +1,18 @@
 import { IOSDeviceLib as IOSDeviceLibModule } from "ios-device-lib";
 import { cache } from "../../../decorators";
+import { DEVICE_LOG_EVENT_NAME } from "../../../constants";
 import assert = require("assert");
+import { EventEmitter } from "events";
 
-export class IOSDeviceOperations implements IIOSDeviceOperations, IDisposable {
+export class IOSDeviceOperations extends EventEmitter implements IIOSDeviceOperations, IDisposable {
 	public isInitialized: boolean;
 	public shouldDispose: boolean;
 	private deviceLib: IOSDeviceLib.IOSDeviceLib;
 
 	constructor(private $logger: ILogger,
 		private $processService: IProcessService) {
+		super();
+
 		this.isInitialized = false;
 		this.shouldDispose = true;
 		this.$processService.attachToProcessExitSignals(this, () => {
@@ -67,15 +71,13 @@ export class IOSDeviceOperations implements IIOSDeviceOperations, IDisposable {
 		}
 	}
 
-	public startDeviceLog(deviceIdentifier: string, printLogFunction: (response: IOSDeviceLib.IDeviceLogData) => void): void {
+	public startDeviceLog(deviceIdentifier: string): void {
 		this.assertIsInitialized();
 		this.setShouldDispose(false);
 
 		this.$logger.trace(`Printing device log for device with identifier: ${deviceIdentifier}.`);
 
-		this.deviceLib.on("deviceLogData", (response: IOSDeviceLib.IDeviceLogData) => {
-			printLogFunction(response);
-		});
+		this.attacheDeviceLogDataHandler();
 
 		this.deviceLib.startDeviceLog([deviceIdentifier]);
 	}
@@ -229,6 +231,13 @@ export class IOSDeviceOperations implements IIOSDeviceOperations, IDisposable {
 
 	private assertIsInitialized(): void {
 		assert.ok(this.isInitialized, "iOS device operations not initialized.");
+	}
+
+	@cache()
+	private attacheDeviceLogDataHandler(): void {
+		this.deviceLib.on(DEVICE_LOG_EVENT_NAME, (response: IOSDeviceLib.IDeviceLogData) => {
+			this.emit(DEVICE_LOG_EVENT_NAME, response);
+		});
 	}
 }
 
