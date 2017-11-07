@@ -2,6 +2,7 @@ import * as applicationManagerPath from "./ios-application-manager";
 import * as fileSystemPath from "./ios-device-file-system";
 import * as constants from "../../../constants";
 import * as net from "net";
+import { cache } from "../../../decorators";
 
 export class IOSDevice implements Mobile.IiOSDevice {
 	public applicationManager: Mobile.IDeviceApplicationManager;
@@ -9,6 +10,7 @@ export class IOSDevice implements Mobile.IiOSDevice {
 	public deviceInfo: Mobile.IDeviceInfo;
 
 	private _socket: net.Socket;
+	private _deviceLogHandler: Function;
 
 	constructor(private deviceActionInfo: IOSDeviceLib.IDeviceActionInfo,
 		private $injector: IInjector,
@@ -48,13 +50,24 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		return this.applicationManager.getApplicationInfo(applicationIdentifier);
 	}
 
+	private actionOnDeviceLog(response: IOSDeviceLib.IDeviceLogData): void {
+		if (response.deviceId === this.deviceInfo.identifier) {
+			this.$deviceLogProvider.logData(response.message, this.$devicePlatformsConstants.iOS, this.deviceInfo.identifier);
+		}
+	}
+
+	@cache()
 	public async openDeviceLogStream(): Promise<void> {
 		if (this.deviceInfo.status !== constants.UNREACHABLE_STATUS) {
-			this.$iosDeviceOperations.startDeviceLog(this.deviceInfo.identifier, (response: IOSDeviceLib.IDeviceLogData) => {
-				if (response.deviceId === this.deviceInfo.identifier) {
-					this.$deviceLogProvider.logData(response.message, this.$devicePlatformsConstants.iOS, this.deviceInfo.identifier);
-				}
-			});
+			this.$iosDeviceOperations.startDeviceLog(this.deviceInfo.identifier);
+			this._deviceLogHandler = this.actionOnDeviceLog.bind(this);
+			this.$iosDeviceOperations.on(constants.DEVICE_LOG_EVENT_NAME, this._deviceLogHandler);
+		}
+	}
+
+	public detach(): void {
+		if (this._deviceLogHandler) {
+			this.$iosDeviceOperations.removeListener(constants.DEVICE_LOG_EVENT_NAME, this._deviceLogHandler);
 		}
 	}
 

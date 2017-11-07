@@ -96,6 +96,12 @@ declare module Mobile {
 		isEmulator: boolean;
 		openDeviceLogStream(): Promise<void>;
 		getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo>;
+
+		/**
+		 * Called when device is lost. Its purpose is to clean any resources used by the instance.
+		 * @returns {void}
+		 */
+		detach?(): void;
 	}
 
 	interface IiOSDevice extends IDevice {
@@ -767,14 +773,14 @@ declare module Mobile {
 	}
 }
 
-interface IIOSDeviceOperations extends IDisposable {
+interface IIOSDeviceOperations extends IDisposable, NodeJS.EventEmitter {
 	install(ipaPath: string, deviceIdentifiers: string[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
 
 	uninstall(appIdentifier: string, deviceIdentifiers: string[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceResponse>;
 
 	startLookingForDevices(deviceFoundCallback: DeviceInfoCallback, deviceLostCallback: DeviceInfoCallback, options?: Mobile.IDeviceLookingOptions): Promise<void>;
 
-	startDeviceLog(deviceIdentifier: string, printLogFunction: (response: IOSDeviceLib.IDeviceLogData) => void): void;
+	startDeviceLog(deviceIdentifier: string): void;
 
 	apps(deviceIdentifiers: string[], errorHandler?: DeviceOperationErrorHandler): Promise<IOSDeviceAppInfo>;
 
