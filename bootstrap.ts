@@ -92,7 +92,7 @@ $injector.require("dynamicHelpService", "./services/dynamic-help-service");
 $injector.require("microTemplateService", "./services/micro-templating-service");
 $injector.require("mobileHelper", "./mobile/mobile-helper");
 $injector.require("devicePlatformsConstants", "./mobile/device-platforms-constants");
-$injector.require("htmlHelpService", "./services/html-help-service");
+$injector.require("helpService", "./services/help-service");
 $injector.require("messageContractGenerator", "./services/message-contract-generator");
 $injector.require("proxyService", "./services/proxy-service");
 $injector.require("credentialsService", "./services/credentials-service");

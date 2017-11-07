@@ -151,7 +151,7 @@ export class Errors implements IErrors {
 		return this.fail({ formatStr: util.format.apply(null, args), suppressCommandHelp: true });
 	}
 
-	public async beginCommand(action: () => Promise<boolean>, printCommandHelp: () => Promise<boolean>): Promise<boolean> {
+	public async beginCommand(action: () => Promise<boolean>, printCommandHelp: () => Promise<void>): Promise<boolean> {
 		try {
 			return await action();
 		} catch (ex) {

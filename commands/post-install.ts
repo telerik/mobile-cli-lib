@@ -2,7 +2,7 @@ export class PostInstallCommand implements ICommand {
 	constructor(private $fs: IFileSystem,
 		private $staticConfig: Config.IStaticConfig,
 		private $commandsService: ICommandsService,
-		private $htmlHelpService: IHtmlHelpService,
+		private $helpService: IHelpService,
 		private $options: ICommonOptions,
 		private $doctorService: IDoctorService,
 		private $analyticsService: IAnalyticsService,
@@ -22,7 +22,7 @@ export class PostInstallCommand implements ICommand {
 			}
 		}
 
-		await this.$htmlHelpService.generateHtmlPages();
+		await this.$helpService.generateHtmlPages();
 
 		const doctorResult = await this.$doctorService.printWarnings({ trackResult: false });
 		// Explicitly ask for confirmation of usage-reporting:

@@ -37,7 +37,9 @@ export class CommonLoggerStub implements ILogger {
 		return null;
 	}
 
-	printMarkdown(message: string): void { }
+	printMarkdown(message: string): void {
+		this.output += message;
+	}
 }
 
 export class ErrorsStub implements IErrors {
@@ -54,7 +56,7 @@ export class ErrorsStub implements IErrors {
 		throw new Error(message);
 	}
 
-	async beginCommand(action: () => Promise<boolean>, printHelpCommand: () => Promise<boolean>): Promise<boolean> {
+	async beginCommand(action: () => Promise<boolean>, printHelpCommand: () => Promise<void>): Promise<boolean> {
 		return action();
 	}
 

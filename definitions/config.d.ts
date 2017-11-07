@@ -13,7 +13,6 @@ declare module Config {
 		ERROR_REPORT_SETTING_NAME: string;
 		SYS_REQUIREMENTS_LINK: string;
 		version: string;
-		helpTextPath: string;
 		getAdbFilePath(): Promise<string>;
 		disableAnalytics?: boolean;
 		disableCommandHooks?: boolean;
