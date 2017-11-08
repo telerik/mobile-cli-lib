@@ -1,7 +1,7 @@
 /* reset */
 *, *:before, *:after {
-	-moz-box-sizing: border-box; 
-	-webkit-box-sizing: border-box; 
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
 	box-sizing: border-box;
  }
 
@@ -133,7 +133,7 @@ body {
 	color: #2c3d4f;
 	font-family: "open_sansregular",sans-serif;
 	line-height: 1.2;
-	padding: 15px 3em;
+	/* padding: 15px 3em; */
 	margin: 0 auto;
 	max-width: 75%;
 }
@@ -151,6 +151,15 @@ body, h1, h2, h3, h4, h5, h6, p, blockquote, abbr, address, cite, del, dfn, dl, 
 
 strong, b {
 	font-weight: bold;
+}
+
+.discontinuation-btn {
+	color: #34495e;
+}
+
+.discontinuation-btn:hover {
+	text-decoration: none;
+	color: #34495e;
 }
 
 a {

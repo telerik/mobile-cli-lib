@@ -1,4 +1,5 @@
 let jaroWinklerDistance = require("../vendor/jaro-winkler_distance");
+import { cache } from "../../common/decorators";
 import * as helpers from "../helpers";
 import { EOL } from "os";
 
@@ -89,7 +90,13 @@ export class CommandsService implements ICommandsService {
 		return this.canExecuteCommand(commandName, commandArguments);
 	}
 
+	@cache()
+	private printDiscontinuationMessage(): void {
+		this.$logger.warn("Progress will discontinue Telerik Platform on May 10th, 2018.\nFor more information, see https://www.telerik.com/platform-next-level");
+	}
+
 	public async tryExecuteCommand(commandName: string, commandArguments: string[]): Promise<void> {
+		this.printDiscontinuationMessage();
 		if (await this.executeCommandAction(commandName, commandArguments, this.tryExecuteCommandAction)) {
 			await this.executeCommandAction(commandName, commandArguments, this.executeCommandUnchecked);
 		} else {
