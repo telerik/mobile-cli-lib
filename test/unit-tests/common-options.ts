@@ -23,6 +23,10 @@ function createTestInjector(): IInjector {
 		CLIENT_NAME: ""
 	});
 	testInjector.register("hostInfo", {});
+	testInjector.register("settingsService", {
+		setSettings: (settings: IConfigurationSettings): any => undefined,
+		getProfileDir: () => "profileDir"
+	});
 
 	return testInjector;
 }
@@ -199,7 +203,7 @@ describe("common options", () => {
 		describe("when commandSpecificOptions are passed", () => {
 			it("breaks execution when commandSpecificOptions are passed and user tries to use invalid option", () => {
 				process.argv.push("--invalidOption");
-				const options = testInjector.resolve(OptionsBase, { options: knownOpts, defaultProfileDir: "1" });
+				const options = testInjector.resolve(OptionsBase, { options: knownOpts });
 				options.validateOptions({ test1: { type: OptionType.String } });
 				process.argv.pop();
 				assert.isTrue(isExecutionStopped);
@@ -207,7 +211,7 @@ describe("common options", () => {
 
 			it("does not break execution when commandSpecificOptions are passed and user tries to use option valid for CLI, but not for this command", () => {
 				process.argv.push("--json");
-				const options = testInjector.resolve(OptionsBase, { options: knownOpts, defaultProfileDir: "1" });
+				const options = testInjector.resolve(OptionsBase, { options: knownOpts });
 				options.validateOptions({ test1: { type: OptionType.String } });
 				process.argv.pop();
 				assert.isFalse(isExecutionStopped);
@@ -217,7 +221,14 @@ describe("common options", () => {
 				const expectedProfileDir = "TestDir";
 				process.argv.push("--profile-dir");
 				process.argv.push(expectedProfileDir);
-				const options = testInjector.resolve(OptionsBase, { options: knownOpts, defaultProfileDir: "1" });
+				const settingsService = testInjector.resolve<ISettingsService>("settingsService");
+				let valuePassedToSetSettings: string;
+				settingsService.setSettings = (settings: IConfigurationSettings): any => {
+					valuePassedToSetSettings = settings.profileDir;
+				};
+
+				settingsService.getProfileDir = () => valuePassedToSetSettings;
+				const options = testInjector.resolve(OptionsBase, { options: knownOpts });
 				options.validateOptions({ test1: { type: OptionType.String } });
 				assert.equal(options.profileDir, expectedProfileDir);
 				process.argv.pop();
@@ -276,12 +287,19 @@ describe("common options", () => {
 	});
 });
 
-function createOptionsWithProfileDir(profileDir: string): ICommonOptions {
+function createOptionsWithProfileDir(defaultProfileDir?: string): ICommonOptions {
 	const testInjector = new Yok();
 	testInjector.register("errors", {});
 	testInjector.register("staticConfig", {});
+	let valuePassedToSetSettings: string;
+	testInjector.register("settingsService", {
+		setSettings: (settings: IConfigurationSettings): any => {
+			valuePassedToSetSettings = settings.profileDir;
+		},
+		getProfileDir: () => valuePassedToSetSettings || defaultProfileDir
+	});
 
-	const options = testInjector.resolve(OptionsBase, { options: {}, defaultProfileDir: profileDir });
+	const options = testInjector.resolve(OptionsBase, { options: {} });
 	return options;
 }
 
@@ -292,7 +310,7 @@ describe("common options profile-dir tests", () => {
 			const expectedProfileDir = "TestDir";
 			process.argv.push("--profile-dir");
 			process.argv.push(expectedProfileDir);
-			const options = createOptionsWithProfileDir("");
+			const options = createOptionsWithProfileDir();
 			options.validateOptions();
 			process.argv.pop();
 			process.argv.pop();
@@ -301,7 +319,7 @@ describe("common options profile-dir tests", () => {
 
 		it("sets default profile-dir when it is not passed on command line", () => {
 			const profileDir = "TestDir";
-			const options = createOptionsWithProfileDir("TestDir");
+			const options = createOptionsWithProfileDir(profileDir);
 			options.validateOptions();
 			assert.equal(options.profileDir, profileDir);
 		});
@@ -310,7 +328,7 @@ describe("common options profile-dir tests", () => {
 			const expectedProfileDir = "TestDir";
 			process.argv.push("--profile-dir");
 			process.argv.push(expectedProfileDir);
-			const options = createOptionsWithProfileDir("TestDir123");
+			const options = createOptionsWithProfileDir();
 			options.validateOptions();
 			process.argv.pop();
 			process.argv.pop();
@@ -321,7 +339,7 @@ describe("common options profile-dir tests", () => {
 			const expectedProfileDir = "TestDir";
 			process.argv.push("--profileDir");
 			process.argv.push(expectedProfileDir);
-			const options = createOptionsWithProfileDir("");
+			const options = createOptionsWithProfileDir();
 			options.validateOptions();
 			process.argv.pop();
 			process.argv.pop();

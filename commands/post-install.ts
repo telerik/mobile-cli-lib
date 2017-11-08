@@ -3,7 +3,7 @@ export class PostInstallCommand implements ICommand {
 		private $staticConfig: Config.IStaticConfig,
 		private $commandsService: ICommandsService,
 		private $helpService: IHelpService,
-		private $options: ICommonOptions,
+		private $settingsService: ISettingsService,
 		private $doctorService: IDoctorService,
 		private $analyticsService: IAnalyticsService,
 		private $logger: ILogger) {
@@ -18,7 +18,7 @@ export class PostInstallCommand implements ICommand {
 			// it is no longer accessible for the user initiating the installation
 			// patch the owner here
 			if (process.env.SUDO_USER) {
-				await this.$fs.setCurrentUserAsOwner(this.$options.profileDir, process.env.SUDO_USER);
+				await this.$fs.setCurrentUserAsOwner(this.$settingsService.getProfileDir(), process.env.SUDO_USER);
 			}
 		}
 

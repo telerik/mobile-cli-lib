@@ -28,6 +28,7 @@ declare module Config {
 		PATH_TO_BOOTSTRAP: string;
 		QR_SIZE: number;
 		INSTALLATION_SUCCESS_MESSAGE?: string;
+		PROFILE_DIR_NAME: string
 	}
 
 	interface IConfig {
