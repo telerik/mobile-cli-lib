@@ -19,6 +19,7 @@ export abstract class StaticConfigBase implements Config.IStaticConfig {
 	public version: string = null;
 	public pathToPackageJson: string;
 	private _userAgent: string = null;
+	public abstract PROFILE_DIR_NAME: string;
 
 	public get USER_AGENT_NAME(): string {
 		if (!this._userAgent) {

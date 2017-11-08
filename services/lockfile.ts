@@ -6,7 +6,7 @@ export class LockFile implements ILockFile {
 
 	@cache()
 	private get defaultLockFilePath(): string {
-		return path.join(this.$options.profileDir, "lockfile.lock");
+		return path.join(this.$settingsService.getProfileDir(), "lockfile.lock");
 	}
 
 	private get defaultLockParams(): lockfile.Options {
@@ -22,7 +22,7 @@ export class LockFile implements ILockFile {
 	}
 
 	constructor(private $fs: IFileSystem,
-		private $options: ICommonOptions) {
+		private $settingsService: ISettingsService) {
 	}
 
 	public lock(lockFilePath?: string, lockFileOpts?: lockfile.Options): Promise<void> {

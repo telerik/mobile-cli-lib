@@ -79,7 +79,13 @@ interface IConfigurationSettings {
 	 * This string will be used when constructing the UserAgent http header.
 	 * @type {string}
 	 */
-	userAgentName: string;
+	userAgentName?: string;
+
+	/**
+	 * Describes the profile directory that will be used for various CLI settings, like user-settings.json file location, extensions, etc.
+	 * @type {string}
+	 */
+	profileDir?: string;
 }
 
 /**
@@ -92,6 +98,12 @@ interface ISettingsService {
 	 * @returns {void}
 	 */
 	setSettings(settings: IConfigurationSettings): void;
+
+	/**
+	 * Returns currently used profile directory.
+	 * @returns {string}
+	 */
+	getProfileDir(): string;
 }
 
 /**
