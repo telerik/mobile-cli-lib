@@ -119,7 +119,7 @@ export class HelpService implements IHelpService {
 	}
 
 	private async convertCommandNameToFileName(commandName: string): Promise<string> {
-		const defaultCommandMatch = commandName.match(/(\w+?)\|\*/);
+		const defaultCommandMatch = commandName && commandName.match(/(\w+?)\|\*/);
 		if (defaultCommandMatch) {
 			this.$logger.trace("Default command found. Replace current command name '%s' with '%s'.", commandName, defaultCommandMatch[1]);
 			commandName = defaultCommandMatch[1];
@@ -127,11 +127,11 @@ export class HelpService implements IHelpService {
 
 		const availableCommands = this.$injector.getRegisteredCommandsNames(true).sort();
 		this.$logger.trace("List of registered commands: %s", availableCommands.join(", "));
-		if (!_.includes(availableCommands, commandName)) {
+		if (commandName && !_.includes(availableCommands, commandName)) {
 			this.$errors.failWithoutHelp("Unknown command '%s'. Try '$ %s help' for a full list of supported commands.", commandName, this.$staticConfig.CLIENT_NAME.toLowerCase());
 		}
 
-		return commandName.replace(/\|/g, "-") || "index";
+		return (commandName && commandName.replace(/\|/g, "-")) || "index";
 	}
 
 	private tryOpeningSelectedPage(htmlPage: string): boolean {

@@ -419,5 +419,20 @@ and another one`
 			const output = injector.resolve("logger").output;
 			assert.isTrue(output.indexOf("bla param1 param2 end") >= 0);
 		});
+
+		_.each(["", null, undefined], (commandName: string) => {
+			it("shows index help when command is not specified", async () => {
+				const injector = createTestInjector();
+				injector.register("fs", {
+					enumerateFilesInDirectorySync: (path: string) => ["index.md"],
+					readText: () => "index data is read"
+				});
+
+				const helpService = injector.resolve<IHelpService>("helpService");
+				await helpService.showCommandLineHelp(commandName);
+				const output = injector.resolve("logger").output;
+				assert.isTrue(output.indexOf("index data is read") >= 0);
+			});
+		});
 	});
 });
