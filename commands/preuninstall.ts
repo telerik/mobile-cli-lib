@@ -6,10 +6,10 @@ export class PreUninstallCommand implements ICommand {
 	public allowedParameters: ICommandParameter[] = [];
 
 	constructor(private $fs: IFileSystem,
-		private $options: ICommonOptions) { }
+		private $settingsService: ISettingsService) { }
 
 	public async execute(args: string[]): Promise<void> {
-		this.$fs.deleteFile(path.join(this.$options.profileDir, "KillSwitches", "cli"));
+		this.$fs.deleteFile(path.join(this.$settingsService.getProfileDir(), "KillSwitches", "cli"));
 	}
 }
 

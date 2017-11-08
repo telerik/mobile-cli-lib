@@ -8,9 +8,9 @@ export class ProxyService implements IProxyService {
 
 	constructor(private $credentialsService: ICredentialsService,
 		private $fs: IFileSystem,
-		private $options: ICommonOptions,
+		private $settingsService: ISettingsService,
 		private $staticConfig: Config.IStaticConfig) {
-		this.proxyCacheFilePath = path.join(this.$options.profileDir, Proxy.CACHE_FILE_NAME);
+		this.proxyCacheFilePath = path.join(this.$settingsService.getProfileDir(), Proxy.CACHE_FILE_NAME);
 		this.credentialsKey = `${this.$staticConfig.CLIENT_NAME}_PROXY`;
 	}
 

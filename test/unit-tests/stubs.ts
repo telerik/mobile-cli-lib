@@ -77,3 +77,13 @@ export class HooksServiceStub implements IHooksService {
 
 	hookArgsName = "hookArgs";
 }
+
+export class SettingsService implements ISettingsService {
+	public setSettings (settings: IConfigurationSettings) {
+		// Intentionally left blank
+	}
+
+	public getProfileDir() {
+		return "profileDir";
+	}
+}

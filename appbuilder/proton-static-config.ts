@@ -20,5 +20,7 @@ export class ProtonStaticConfig extends StaticConfigBase {
 	public CLIENT_NAME = "Desktop Client - Universal";
 
 	public ANALYTICS_EXCEPTIONS_API_KEY: string = null;
+
+	public PROFILE_DIR_NAME: string = ".appbuilder-desktop-universal";
 }
 $injector.register("staticConfig", ProtonStaticConfig);
