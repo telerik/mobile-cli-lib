@@ -139,14 +139,15 @@ export class HooksService implements IHooksService {
 					}
 
 					this.$logger.trace('Hook completed');
-				} else {
-					const environment = this.prepareEnvironment(hook.fullPath);
-					this.$logger.trace("Executing %s hook at location %s with environment ", hookName, hook.fullPath, environment);
+				}
+			} else {
+				const environment = this.prepareEnvironment(hook.fullPath);
+				this.$logger.trace("Executing %s hook at location %s with environment ", hookName, hook.fullPath, environment);
 
-					const output = await this.$childProcess.spawnFromEvent(command, [hook.fullPath], "close", environment, { throwError: false });
-					if (output.exitCode !== 0) {
-						throw new Error(output.stdout + output.stderr);
-					}
+				const output = await this.$childProcess.spawnFromEvent(command, [hook.fullPath], "close", environment, { throwError: false });
+
+				if (output.exitCode !== 0) {
+					throw new Error(output.stdout + output.stderr);
 				}
 			}
 		}
