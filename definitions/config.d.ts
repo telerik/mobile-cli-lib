@@ -13,7 +13,6 @@ declare module Config {
 		ERROR_REPORT_SETTING_NAME: string;
 		SYS_REQUIREMENTS_LINK: string;
 		version: string;
-		helpTextPath: string;
 		getAdbFilePath(): Promise<string>;
 		disableAnalytics?: boolean;
 		disableCommandHooks?: boolean;
@@ -29,6 +28,7 @@ declare module Config {
 		PATH_TO_BOOTSTRAP: string;
 		QR_SIZE: number;
 		INSTALLATION_SUCCESS_MESSAGE?: string;
+		PROFILE_DIR_NAME: string
 	}
 
 	interface IConfig {

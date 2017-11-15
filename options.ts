@@ -12,7 +12,7 @@ export class OptionsBase {
 		verbose: { type: OptionType.Boolean, alias: "v" },
 		version: { type: OptionType.Boolean },
 		help: { type: OptionType.Boolean, alias: "h" },
-		profileDir: { type: OptionType.String, default: this.defaultProfileDir },
+		profileDir: { type: OptionType.String },
 		analyticsClient: { type: OptionType.String },
 		path: { type: OptionType.String, alias: "p" },
 		// This will parse all non-hyphenated values as strings.
@@ -20,9 +20,9 @@ export class OptionsBase {
 	};
 
 	constructor(public options: IDictionary<IDashedOption>,
-		public defaultProfileDir: string,
 		private $errors: IErrors,
-		private $staticConfig: Config.IStaticConfig) {
+		private $staticConfig: Config.IStaticConfig,
+		private $settingsService: ISettingsService) {
 
 		this.options = _.extend({}, this.commonOptions, this.options, this.globalOptions);
 		this.setArgv();
@@ -180,6 +180,13 @@ export class OptionsBase {
 		});
 
 		this.argv = yargs(process.argv.slice(2)).options(opts).argv;
+
+		// For backwards compatibility
+		// Previously profileDir had a default option and calling `this.$options.profileDir` always returned valid result.
+		// Now the profileDir should be used from $settingsService, but ensure the `this.$options.profileDir` returns the same value.
+		this.$settingsService.setSettings({ profileDir: this.argv.profileDir});
+		this.argv.profileDir = this.argv["profile-dir"] = this.$settingsService.getProfileDir();
+
 		this.adjustDashedOptions();
 	}
 
@@ -187,10 +194,10 @@ export class OptionsBase {
 		_.each(this.optionNames, optionName => {
 			Object.defineProperty(OptionsBase.prototype, optionName, {
 				configurable: true,
-				get: function () {
+				get: () => {
 					return this.getOptionValue(optionName);
 				},
-				set: function (value: any) {
+				set: (value: any) => {
 					this.argv[optionName] = value;
 				}
 			});

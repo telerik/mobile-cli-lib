@@ -139,6 +139,11 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 
 	private onDeviceLost(device: Mobile.IDevice): void {
 		this.$logger.trace(`Lost device with identifier '${device.deviceInfo.identifier}'`);
+
+		if (device.detach) {
+			device.detach();
+		}
+
 		delete this._devices[device.deviceInfo.identifier];
 		this.emit(constants.DeviceDiscoveryEventNames.DEVICE_LOST, device);
 	}

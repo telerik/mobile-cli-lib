@@ -2,8 +2,8 @@ export class PostInstallCommand implements ICommand {
 	constructor(private $fs: IFileSystem,
 		private $staticConfig: Config.IStaticConfig,
 		private $commandsService: ICommandsService,
-		private $htmlHelpService: IHtmlHelpService,
-		private $options: ICommonOptions,
+		private $helpService: IHelpService,
+		private $settingsService: ISettingsService,
 		private $doctorService: IDoctorService,
 		private $analyticsService: IAnalyticsService,
 		private $logger: ILogger) {
@@ -18,11 +18,11 @@ export class PostInstallCommand implements ICommand {
 			// it is no longer accessible for the user initiating the installation
 			// patch the owner here
 			if (process.env.SUDO_USER) {
-				await this.$fs.setCurrentUserAsOwner(this.$options.profileDir, process.env.SUDO_USER);
+				await this.$fs.setCurrentUserAsOwner(this.$settingsService.getProfileDir(), process.env.SUDO_USER);
 			}
 		}
 
-		await this.$htmlHelpService.generateHtmlPages();
+		await this.$helpService.generateHtmlPages();
 
 		const doctorResult = await this.$doctorService.printWarnings({ trackResult: false });
 		// Explicitly ask for confirmation of usage-reporting:

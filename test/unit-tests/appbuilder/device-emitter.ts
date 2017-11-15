@@ -3,7 +3,7 @@ import { assert } from "chai";
 import { EventEmitter } from "events";
 import { ProjectConstants } from "../../../appbuilder/project-constants";
 import { DeviceEmitter } from "../../../appbuilder/device-emitter";
-import { DeviceDiscoveryEventNames } from "../../../constants";
+import { DeviceDiscoveryEventNames, DEVICE_LOG_EVENT_NAME } from "../../../constants";
 // Injector dependencies must be classes.
 // EventEmitter is function, so our annotate method will fail.
 class CustomEventEmitter extends EventEmitter {
@@ -109,11 +109,11 @@ describe("deviceEmitter", () => {
 				deviceLogProvider = testInjector.resolve("deviceLogProvider");
 			});
 
-			describe("raises deviceLogData with correct identifier and data", () => {
+			describe(`raises ${DEVICE_LOG_EVENT_NAME} with correct identifier and data`, () => {
 				const expectedDeviceLogData = "This is some log data from device.";
 
 				const attachDeviceLogDataVerificationHandler = (expectedDeviceIdentifier: string, done: mocha.Done) => {
-					deviceEmitter.on("deviceLogData", (identifier: string, data: any) => {
+					deviceEmitter.on(DEVICE_LOG_EVENT_NAME, (identifier: string, data: any) => {
 						assert.deepEqual(identifier, expectedDeviceIdentifier);
 						assert.deepEqual(data, expectedDeviceLogData);
 						// Wait for all operations to be completed and call done after that.

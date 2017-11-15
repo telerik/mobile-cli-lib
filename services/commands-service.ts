@@ -24,7 +24,8 @@ export class CommandsService implements ICommandsService {
 		private $logger: ILogger,
 		private $options: ICommonOptions,
 		private $resources: IResourceLoader,
-		private $staticConfig: Config.IStaticConfig) {
+		private $staticConfig: Config.IStaticConfig,
+		private $helpService: IHelpService) {
 	}
 
 	public allCommands(opts: { includeDevCommands: boolean }): string[] {
@@ -77,9 +78,8 @@ export class CommandsService implements ICommandsService {
 		return false;
 	}
 
-	private async printHelp(commandName: string): Promise<boolean> {
-		this.$options.help = true;
-		return this.executeCommandUnchecked("help", [this.beautifyCommandName(commandName)]);
+	private printHelp(commandName: string): Promise<void> {
+		return this.$helpService.showCommandLineHelp(this.beautifyCommandName(commandName));
 	}
 
 	private async executeCommandAction(commandName: string, commandArguments: string[], action: (_commandName: string, _commandArguments: string[]) => Promise<boolean>): Promise<boolean> {

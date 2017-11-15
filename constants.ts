@@ -39,6 +39,8 @@ export class DeviceDiscoveryEventNames {
 	static DEVICE_LOST = "deviceLost";
 }
 
+export const DEVICE_LOG_EVENT_NAME = "deviceLogData";
+
 export const TARGET_FRAMEWORK_IDENTIFIERS = {
 	Cordova: "Cordova",
 	NativeScript: "NativeScript"

@@ -79,7 +79,13 @@ interface IConfigurationSettings {
 	 * This string will be used when constructing the UserAgent http header.
 	 * @type {string}
 	 */
-	userAgentName: string;
+	userAgentName?: string;
+
+	/**
+	 * Describes the profile directory that will be used for various CLI settings, like user-settings.json file location, extensions, etc.
+	 * @type {string}
+	 */
+	profileDir?: string;
 }
 
 /**
@@ -92,6 +98,12 @@ interface ISettingsService {
 	 * @returns {void}
 	 */
 	setSettings(settings: IConfigurationSettings): void;
+
+	/**
+	 * Returns currently used profile directory.
+	 * @returns {string}
+	 */
+	getProfileDir(): string;
 }
 
 /**
@@ -540,7 +552,7 @@ interface IErrors {
 	fail(formatStr: string, ...args: any[]): never;
 	fail(opts: { formatStr?: string; errorCode?: number; suppressCommandHelp?: boolean }, ...args: any[]): never;
 	failWithoutHelp(message: string, ...args: any[]): never;
-	beginCommand(action: () => Promise<boolean>, printCommandHelp: () => Promise<boolean>): Promise<boolean>;
+	beginCommand(action: () => Promise<boolean>, printCommandHelp: () => Promise<void>): Promise<boolean>;
 	verifyHeap(message: string): void;
 	printCallStack: boolean;
 }
@@ -721,6 +733,13 @@ interface IAnalyticsSettingsService {
 	 * @returns {Promise<string>}
 	 */
 	getClientId(): Promise<string>;
+
+	/**
+	 * Gets user agent string identifing the current system in the following format: `${identifier} (${systemInfo}) ${osArch}`
+	 * @param {string} identifier The product identifier.
+	 * @returns {string} The user agent string.
+	 */
+	getUserAgentString(identifier: string): string;
 }
 
 interface IHostCapabilities {
@@ -948,17 +967,17 @@ interface IMicroTemplateService {
 	parseContent(data: string, options: { isHtml: boolean }): Promise<string>;
 }
 
-interface IHtmlHelpService {
+interface IHelpService {
 	generateHtmlPages(): Promise<void>;
 
-	/**
-	 * Gets the help content for a specific command that should be shown on the terminal.
-	 * @param {string} commandName Name of the command for which to read the help.
-	 * @returns {Promise<string>} Help content of the command parsed with all terminal rules applied (stripped content that should be shown only for html help).
-	 */
-	getCommandLineHelpForCommand(commandName: string): Promise<string>;
-
 	openHelpForCommandInBrowser(commandName: string): Promise<void>;
+
+	/**
+	 * Shows command line help for specified command.
+	 * @param {string} commandName The name of the command for which to show the help.
+	 * @returns {Promise<void>}
+	 */
+	showCommandLineHelp(commandName: string): Promise<void>;
 }
 
 /**
