@@ -116,6 +116,12 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 	}
 
 	@exported("devicesService")
+	public async getInstalledApplications(deviceIdentifier: string): Promise<string[]> {
+		const device = await this.getDevice(deviceIdentifier);
+		return device.applicationManager.getInstalledApplications();
+	}
+
+	@exported("devicesService")
 	public addDeviceDiscovery(deviceDiscovery: Mobile.IDeviceDiscovery): void {
 		this._otherDeviceDiscoveries.push(deviceDiscovery);
 		this._allDeviceDiscoveries.push(deviceDiscovery);
