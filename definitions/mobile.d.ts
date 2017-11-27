@@ -418,6 +418,13 @@ declare module Mobile {
 		isCompanionAppInstalledOnDevices(deviceIdentifiers: string[], framework: string): Promise<IAppInstalledInfo>[];
 		getDebuggableApps(deviceIdentifiers: string[]): Promise<Mobile.IDeviceApplicationInformation[]>[];
 		getDebuggableViews(deviceIdentifier: string, appIdentifier: string): Promise<Mobile.IDebugWebViewInfo[]>;
+
+		/**
+		 * Returns all applications installed on the specified device.
+		 * @param {string} deviceIdentifer The identifier of the device for which to get installed applications.
+		 * @returns {Promise<string[]>} Array of all application identifiers of the apps installed on device.
+		 */
+		getInstalledApplications(deviceIdentifier: string): Promise<string[]>;
 	}
 
 	/**

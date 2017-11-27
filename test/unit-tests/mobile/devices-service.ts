@@ -1571,4 +1571,23 @@ describe("devicesService", () => {
 			assert.deepEqual(actualDebuggableViews, undefined);
 		});
 	});
+
+	describe("getInstalledApplications", () => {
+		beforeEach(() => {
+			androidDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, androidDevice);
+			iOSDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, iOSDevice);
+		});
+
+		_.each([null, undefined, "", "invalid device id"], deviceId => {
+			it(`fails when invalid identfier is passed: '${deviceId === '' ? "empty string" : deviceId}'`, async () => {
+				const expectedErrorMessage = getErrorMessage(testInjector, "NotFoundDeviceByIdentifierErrorMessageWithIdentifier", deviceId);
+				await assert.isRejected(devicesService.getInstalledApplications(deviceId), expectedErrorMessage);
+			});
+		});
+
+		it("returns installed applications", async () => {
+			const actualResult = await devicesService.getInstalledApplications(androidDevice.deviceInfo.identifier);
+			assert.deepEqual(actualResult, ["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"]);
+		});
+	});
 });

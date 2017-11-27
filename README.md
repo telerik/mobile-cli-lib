@@ -752,6 +752,22 @@ Sample result will be:
 ]
 ```
 
+* `getInstalledApplications(deviceIdentifier: string): Promise<string[]>` - returns information about applications installed on specified device. The method will reject the resulting Promise in case the passed `deviceIdentifier` is not found (i.e. there's no currently attached device with this identifier).
+
+Sample usage:
+```JavaScript
+require("mobile-cli-lib").devicesService.getInstalledApplications("4df18f307d8a8f1b")
+	.then(function(appIdentifiers) {
+		console.log("Installed applications are: ", appIdentifiers);
+	}, function(err) {
+		console.log(err);
+	});
+```
+Sample result of the method call is:
+```JSON
+["com.telerik.app1", "org.nativescript.app1"]
+```
+
 ### Module liveSyncService
 > Stability: 1 - Could be changed due to some new requirments.
 
