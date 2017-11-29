@@ -452,6 +452,25 @@ export function getPidFromiOSSimulatorLogs(applicationIdentifier: string, logLin
 	return null;
 }
 
+export function getValueFromNestedObject(obj: any, key: string): any {
+	function _getValueRecursive(_obj: any, _key: string): any[] {
+		if (_.has(_obj, _key)) {
+			return [_obj];
+		}
+
+		const res: any[] = [];
+		_.forEach(_obj, (v, k) => {
+			if (typeof v === "object" && typeof k === "string" && !_.startsWith(k, '$') && !_.endsWith(k.toLowerCase(), "service") && (v = _getValueRecursive(v, _key)).length) {
+				res.push.apply(res, v);
+			}
+		});
+
+		return res;
+	}
+
+	return _.head(_getValueRecursive(obj, key));
+}
+
 //--- begin part copied from AngularJS
 
 //The MIT License
