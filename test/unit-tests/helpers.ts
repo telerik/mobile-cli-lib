@@ -457,4 +457,88 @@ describe("helpers", () => {
 			_.each(getPidFromiOSSimulatorLogsTestData, testData => assertPidTestData(testData));
 		});
 	});
+
+	describe("getValueFromNestedObject", () => {
+		interface IValueFromNestedObjectTestData extends ITestData {
+			key: string;
+		}
+
+		const key = "key";
+		const dollarKey = "$key";
+		const dollarTestObj = { [dollarKey]: "value" };
+		const serviceKey = "keyEndingWithService";
+		const serviceTestObj = { [serviceKey]: "value" };
+		const testObj = { key };
+		const getValueFromNestedObjectTestData: IValueFromNestedObjectTestData[] = [
+			{
+				key,
+				input: {},
+				expectedResult: undefined
+			},
+			{
+				key,
+				input: testObj,
+				expectedResult: testObj
+			},
+			{
+				key,
+				input: { nestedKey: testObj },
+				expectedResult: testObj
+			},
+			{
+				key,
+				input: { nestedKey: { anotherNestedKey: testObj } },
+				expectedResult: testObj
+			},
+			{
+				key,
+				input: { otherKey: "otherValue" },
+				expectedResult: undefined
+			},
+			{
+				key,
+				input: { otherKey: "otherValue" },
+				expectedResult: undefined
+			},
+			{
+				key: dollarKey,
+				input: dollarTestObj,
+				expectedResult: dollarTestObj
+			},
+			{
+				key: dollarKey,
+				input: { nestedKey: dollarTestObj },
+				expectedResult: dollarTestObj
+			},
+			{
+				key: dollarKey,
+				input: { "$nestedKey": dollarTestObj },
+				expectedResult: undefined
+			},
+			{
+				key: serviceKey,
+				input: serviceTestObj,
+				expectedResult: serviceTestObj
+			},
+			{
+				key: serviceKey,
+				input: { nestedKey: serviceTestObj },
+				expectedResult: serviceTestObj
+			},
+			{
+				key: serviceKey,
+				input: { nestedKeyService: serviceTestObj },
+				expectedResult: undefined
+			}
+		];
+
+		const assertValueFromNestedObjectTestData = (testData: IValueFromNestedObjectTestData) => {
+			const actualResult = helpers.getValueFromNestedObject(testData.input, testData.key);
+			assert.deepEqual(actualResult, testData.expectedResult, `For input ${JSON.stringify(testData.input)}, the expected result is: ${JSON.stringify(testData.expectedResult || "undefined")}, but actual result is: ${JSON.stringify(actualResult || "undefined")}.`);
+		};
+
+		it("returns expected result", () => {
+			_.each(getValueFromNestedObjectTestData, testData => assertValueFromNestedObjectTestData(testData));
+		});
+	});
 });

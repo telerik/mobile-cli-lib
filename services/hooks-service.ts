@@ -1,6 +1,6 @@
 import * as path from "path";
 import * as util from "util";
-import { annotate } from "../helpers";
+import { annotate, getValueFromNestedObject } from "../helpers";
 
 class Hook implements IHook {
 	constructor(public name: string,
@@ -69,7 +69,12 @@ export class HooksService implements IHooksService {
 		}
 
 		const hookArgs: any = hookArguments && hookArguments[this.hookArgsName];
-		const projectDir = hookArgs && (hookArgs.projectDir || (hookArgs.projectData && hookArgs.projectData.projectDir));
+		let projectDir = hookArgs && hookArgs.projectDir;
+		if (!projectDir && hookArgs) {
+			const candidate = getValueFromNestedObject(hookArgs, "projectDir");
+			projectDir = candidate && candidate.projectDir;
+		}
+
 		this.$logger.trace(`Project dir from hooksArgs is: ${projectDir}.`);
 
 		this.initialize(projectDir);
