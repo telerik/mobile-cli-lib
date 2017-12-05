@@ -41,7 +41,7 @@ export class SysInfoBase implements ISysInfo {
 	public async getJavaCompilerVersion(): Promise<string> {
 		if (!this.javaCompilerVerCache) {
 			const javaCompileExecutableName = "javac";
-			const javaHome = process.env.JAVA_HOME;
+			const javaHome = process.env.JDK_HOME || process.env.JAVA_HOME;
 			const pathToJavaCompilerExecutable = javaHome ? path.join(javaHome, "bin", javaCompileExecutableName) : javaCompileExecutableName;
 			try {
 				const output = await this.exec(`"${pathToJavaCompilerExecutable}" -version`, { showStderr: true });
