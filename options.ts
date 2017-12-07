@@ -184,8 +184,13 @@ export class OptionsBase {
 		// For backwards compatibility
 		// Previously profileDir had a default option and calling `this.$options.profileDir` always returned valid result.
 		// Now the profileDir should be used from $settingsService, but ensure the `this.$options.profileDir` returns the same value.
-		this.$settingsService.setSettings({ profileDir: this.argv.profileDir});
+		this.$settingsService.setSettings({ profileDir: this.argv.profileDir });
 		this.argv.profileDir = this.argv["profile-dir"] = this.$settingsService.getProfileDir();
+
+		// Default to "nativescript-dev-webpack" if only `--bundle` is passed
+		if (this.argv.bundle !== undefined) {
+			this.argv.bundle = this.argv.bundle || "webpack";
+		}
 
 		this.adjustDashedOptions();
 	}
