@@ -189,7 +189,7 @@ export class OptionsBase {
 
 		// Default to "nativescript-dev-webpack" if only `--bundle` is passed
 		if (this.argv.bundle !== undefined) {
-			this.argv.bundle = this.argv.bundle || "nativescript-dev-webpack";
+			this.argv.bundle = this.argv.bundle || "webpack";
 		}
 
 		this.adjustDashedOptions();
