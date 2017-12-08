@@ -86,18 +86,11 @@ export class ProxySetCommand extends ProxyCommandBase {
 			password = await this.$prompter.getPassword("Password");
 		}
 
-		if (username && password) {
-			await this.$proxyService.setCredentials({
-				password,
-				username
-			});
-		}
-
-		const proxyCache: IProxyCache = {
-			PROXY_HOSTNAME: urlObj.hostname,
-			PROXY_PORT: port,
-			PROXY_PROTOCOL: urlObj.protocol,
-			ALLOW_INSECURE: this.$options.insecure
+		const settings: IProxyLibSettings = {
+			proxyUrl: urlString,
+			username,
+			password,
+			rejectUnauthorized: !this.$options.insecure
 		};
 
 		if (!this.$hostInfo.isWindows) {
@@ -111,7 +104,7 @@ export class ProxySetCommand extends ProxyCommandBase {
 
 		this.$logger.warn(`${messageNote}Run '${clientName} proxy set --help' for more information.`);
 
-		this.$proxyService.setCache(proxyCache);
+		await this.$proxyService.setCache(settings);
 		this.$logger.out(`Successfully setup proxy.${EOL}`);
 		this.$logger.out(await this.$proxyService.getInfo());
 		await this.tryTrackUsage();

@@ -843,31 +843,6 @@ interface IDynamicHelpService {
 }
 
 /**
- * Describes cache information about proxy settings.
- */
-interface IProxyCache {
-	/**
-	 * Hostname of the proxy
-	 */
-
-	PROXY_HOSTNAME: string;
-	/**
-	 * Port of the proxy
-	 */
-	PROXY_PORT: number;
-
-	/**
-	 * Protocol of the proxy - http or https
-	 */
-	PROXY_PROTOCOL: string;
-
-	/**
-	 * Protocol of the proxy - http or https
-	 */
-	ALLOW_INSECURE: boolean;
-}
-
-/**
  * Describes standard username/password type credentials.
  */
 interface ICredentials {
@@ -875,29 +850,40 @@ interface ICredentials {
 	password: string;
 }
 
+interface IRejectUnauthorized {
+	/**
+	 * Defines if NODE_TLS_REJECT_UNAUTHORIZED should be set to true or false. Default value is true.
+	 */
+	rejectUnauthorized: boolean;
+}
+
 /**
- * Describes Service used for interaction with the OS' secure storage (Windows Credentials manager for example).
+ * Proxy settings required for http request.
  */
-interface ICredentialsService {
+interface IProxySettings extends IRejectUnauthorized, ICredentials  {
 	/**
-	 * Sets the provided credentials in the OS' secure storage.
-	 * @param key {string} A key which can later be used to retrieve the credentials.
-	 * @param credentials {ICredentials} Credentials to be stored.
-	 * @returns {Promise<ICredentials>} The stored credentials.
+	 * Hostname of the machine used for proxy.
 	 */
-	setCredentials(key: string, credentials: ICredentials): Promise<ICredentials>;
+	hostname: string;
+
 	/**
-	 * Retrieves credentials from the OS' secure storage with the given key.
-	 * @param key {string} A key based on which to retrieve the credentials.
-	 * @returns {Promise<ICredentials>} The stored credentials.
+	 * Port of the machine used for proxy that allows connections.
 	 */
-	getCredentials(key: string): Promise<ICredentials>;
+	port: string;
+
 	/**
-	 * Clears credentials from the OS' secure storage with the given key.
-	 * @param key {string} A key based on which to clear the credentials.
-	 * @returns {Promise<void>}
+	 * Protocol of the proxy - http or https
 	 */
-	clearCredentials(key: string): Promise<void>;
+	protocol?: string;
+
+
+	proxy?: string;
+}
+
+interface IProxyLibSettings extends IRejectUnauthorized, ICredentials {
+	proxyUrl: string;
+	credentialsKey?: string;
+	userSpecifiedSettingsFilePath?: string;
 }
 
 /**
@@ -906,35 +892,22 @@ interface ICredentialsService {
 interface IProxyService {
 	/**
 	 * Caches proxy data.
-	 * @param cacheData {IProxyCache} Data to be cached.
-	 * @returns {Promise<ICredentials>} The cache.
+	 * @param cacheData {IProxyLibSettings} Data to be cached.
+	 * @returns {Promise<void>} The cache.
 	 */
-	setCache(cacheData: IProxyCache): IProxyCache;
+	setCache(settings: IProxyLibSettings): Promise<void>;
 
 	/**
 	 * Retrieves proxy cache data.
-	 * @returns {IProxyCache} The cache.
+	 * @returns {Promise<IGetProxySettings>} The cache.
 	 */
-	getCache(): IProxyCache;
+	getCache(): Promise<IProxySettings>;
 
 	/**
 	 * Clears proxy cache data.
-	 * @returns {void}
+	 * @returns {Promise<void>}
 	 */
-	clearCache(): void;
-
-	/**
-	 * Sets the provided proxy credentials in the OS' secure storage.
-	 * @param credentials {ICredentials} Proxy credentials to be stored.
-	 * @returns {Promise<ICredentials>} The stored proxy credentials.
-	 */
-	setCredentials(credentials: ICredentials): Promise<ICredentials>;
-
-	/**
-	 * Retrieves proxy credentials from the OS' secure storage with the given key.
-	 * @returns {Promise<ICredentials>} The stored proxy credentials.
-	 */
-	getCredentials(): Promise<ICredentials>;
+	clearCache(): Promise<void>;
 
 	/**
 	 * Gets info about the proxy that can be printed and shown to the user.
@@ -1916,31 +1889,6 @@ interface ITypeScriptTranspileOptions {
 	 * Use the typescript compiler which is installed localy for the project.
 	 */
 	useLocalTypeScriptCompiler?: boolean;
-}
-
-/**
- * Proxy settings required for http request.
- */
-interface IProxySettings {
-	/**
-	 * Hostname of the machine used for proxy.
-	 */
-	hostname: string;
-
-	/**
-	 * Port of the machine used for proxy that allows connections.
-	 */
-	port: string;
-
-	/**
-	 * Protocol of the proxy - http or https
-	 */
-	protocol?: string;
-
-	/**
-	 * Defines if NODE_TLS_REJECT_UNAUTHORIZED should be set to true or false. Default value is true.
-	 */
-	rejectUnauthorized: boolean;
 }
 
 /**

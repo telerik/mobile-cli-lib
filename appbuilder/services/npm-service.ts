@@ -338,6 +338,18 @@ export class NpmService implements INpmService {
 		return this.$childProcess.spawnFromEvent(this.npmExecutableName, npmArguments, "close", { cwd: projectDir, stdio: "inherit" });
 	}
 
+	private getCredentialsFromAuth(auth: string): ICredentials {
+		const colonIndex = auth.indexOf(":");
+		let username = "";
+		let password = "";
+		if (colonIndex > -1) {
+			username = auth.substring(0, colonIndex);
+			password = auth.substring(colonIndex + 1);
+		}
+
+		return { username, password };
+	}
+
 	private async getNpmProxySettings(): Promise<IProxySettings> {
 		if (!this._hasCheckedNpmProxy) {
 			try {
@@ -347,10 +359,14 @@ export class NpmService implements INpmService {
 				if (npmProxy && npmProxy !== "null") {
 					const strictSslString = (await this.$childProcess.exec("npm config get strict-ssl") || "").toString().trim();
 					const uri = url.parse(npmProxy);
+					const { username, password } = this.getCredentialsFromAuth(uri.auth || "");
+
 					this._proxySettings = {
 						hostname: uri.hostname,
 						port: uri.port,
-						rejectUnauthorized: toBoolean(strictSslString)
+						rejectUnauthorized: toBoolean(strictSslString),
+						username,
+						password
 					};
 				}
 			} catch (err) {

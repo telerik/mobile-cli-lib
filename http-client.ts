@@ -43,12 +43,12 @@ export class HttpClient implements Server.IHttpClient {
 		let pipeTo = options.pipeTo;
 		delete options.pipeTo;
 
-		const proxyCache = this.$proxyService.getCache();
+		const cliProxySettings = await this.$proxyService.getCache();
 
 		options.headers = options.headers || {};
 		const headers = options.headers;
 
-		await this.useProxySettings(proxySettings, proxyCache, options, headers, requestProto);
+		await this.useProxySettings(proxySettings, cliProxySettings, options, headers, requestProto);
 
 		if (!headers.Accept || headers.Accept.indexOf("application/json") < 0) {
 			if (headers.Accept) {
@@ -253,10 +253,10 @@ export class HttpClient implements Server.IHttpClient {
 					return err;
 				}
 
-				if (err.ExceptionMessage) {
+				if (err && err.ExceptionMessage) {
 					return err.ExceptionMessage;
 				}
-				if (err.Message) {
+				if (err && err.Message) {
 					return err.Message;
 				}
 			} catch (parsingFailed) {
@@ -270,25 +270,24 @@ export class HttpClient implements Server.IHttpClient {
 	/**
 	 * This method respects the proxySettings (or proxyCache) by modifying headers and options passed to http(s) module.
 	 * @param {IProxySettings} proxySettings The settings passed for this specific call.
-	 * @param {IProxyCache} proxyCache The globally set proxy for this CLI.
+	 * @param {IProxySettings} cliProxySettings The globally set proxy for this CLI.
 	 * @param {any}options The object that will be passed to http(s) module.
 	 * @param {any} headers Headers of the current request.
 	 * @param {string} requestProto The protocol used for the current request - http or https.
 	 */
-	private async useProxySettings(proxySettings: IProxySettings, proxyCache: IProxyCache, options: any, headers: any, requestProto: string): Promise<void> {
-		if (proxySettings || proxyCache) {
-			const proto = (proxySettings && proxySettings.protocol) || proxyCache.PROXY_PROTOCOL || "http:";
-			const host = (proxySettings && proxySettings.hostname) || proxyCache.PROXY_HOSTNAME;
-			const port = (proxySettings && proxySettings.port) || proxyCache.PROXY_PORT;
+	private async useProxySettings(proxySettings: IProxySettings, cliProxySettings: IProxySettings, options: any, headers: any, requestProto: string): Promise<void> {
+		if (proxySettings || cliProxySettings) {
+			const proto = (proxySettings && proxySettings.protocol) || cliProxySettings.protocol || "http:";
+			const host = (proxySettings && proxySettings.hostname) || cliProxySettings.hostname;
+			const port = (proxySettings && proxySettings.port) || cliProxySettings.port;
 			let credentialsPart = "";
-			const proxyCredentials = await this.$proxyService.getCredentials();
-			if (proxyCredentials && proxyCredentials.username && proxyCredentials.password) {
-				credentialsPart = `${proxyCredentials.username}:${proxyCredentials.password}@`;
+			if (cliProxySettings.username && cliProxySettings.password) {
+				credentialsPart = `${cliProxySettings.username}:${cliProxySettings.password}@`;
 			}
 
 			// Note that proto ends with :
 			options.proxy = `${proto}//${credentialsPart}${host}:${port}`;
-			options.rejectUnauthorized = proxySettings ? proxySettings.rejectUnauthorized : (proxyCache ? !proxyCache.ALLOW_INSECURE : true);
+			options.rejectUnauthorized = proxySettings ? proxySettings.rejectUnauthorized : cliProxySettings.rejectUnauthorized;
 
 			this.$logger.trace("Using proxy: %s", options.proxy);
 		}
