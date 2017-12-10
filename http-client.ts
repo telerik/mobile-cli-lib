@@ -98,7 +98,7 @@ export class HttpClient implements Server.IHttpClient {
 			const requestObj = request(options);
 
 			requestObj
-				.on("error", (err: Error) => {
+				.on("error", (err: IHttpRequestError) => {
 					this.$logger.trace("An error occurred while sending the request:", err);
 					// In case we get a 4xx error code there seems to be no better way than this regex to get the error code
 					// the tunnel-agent module that request is using is obscuring the response and hence the statusCode by throwing an error message
@@ -107,6 +107,7 @@ export class HttpClient implements Server.IHttpClient {
 					const errorMessageMatch = err.message.match(HttpClient.STATUS_CODE_REGEX);
 					const errorMessageStatusCode = errorMessageMatch && errorMessageMatch[1] && +errorMessageMatch[1];
 					const errorMessage = this.getErrorMessage(errorMessageStatusCode, null);
+					err.proxyAuthenticationRequired = errorMessageStatusCode === HttpStatusCodes.PROXY_AUTHENTICATION_REQUIRED;
 					err.message = errorMessage || err.message;
 					this.setResponseResult(promiseActions, timerId, { err });
 				})
@@ -239,7 +240,8 @@ export class HttpClient implements Server.IHttpClient {
 	private getErrorMessage(statusCode: number, body: string): string {
 		if (statusCode === HttpStatusCodes.PROXY_AUTHENTICATION_REQUIRED) {
 			const clientNameLowerCase = this.$staticConfig.CLIENT_NAME.toLowerCase();
-			return `Your proxy requires authentication. You can run ${EOL}\t${clientNameLowerCase} proxy set <url> <username> <password>.${EOL}In order to supply ${clientNameLowerCase} with the credentials needed.`;
+			this.$logger.error(`You can run ${EOL}\t${clientNameLowerCase} proxy set <url> <username> <password>.${EOL}In order to supply ${clientNameLowerCase} with the credentials needed.`);
+			return "Your proxy requires authentication.";
 		} else if (statusCode === HttpStatusCodes.PAYMENT_REQUIRED) {
 			const subscriptionUrl = util.format("%s://%s/appbuilder/account/subscription", this.$config.AB_SERVER_PROTO, this.$config.AB_SERVER);
 			return util.format("Your subscription has expired. Go to %s to manage your subscription. Note: After you renew your subscription, " +

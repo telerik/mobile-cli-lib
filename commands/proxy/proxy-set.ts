@@ -4,6 +4,7 @@ import { ProxyCommandBase } from "./proxy-base";
 import { HttpProtocolToPort } from "../../constants";
 import { parse } from "url";
 import { platform, EOL } from "os";
+const { getCredentialsFromAuth } = require("proxy-lib/lib/utils");
 
 const proxySetCommandName = "proxy|set";
 
@@ -53,7 +54,7 @@ export class ProxySetCommand extends ProxyCommandBase {
 
 		let port = urlObj.port && +urlObj.port || HttpProtocolToPort[urlObj.protocol];
 		const noPort = !port || !this.isValidPort(port);
-		const authCredentials = this.getCredentialsFromAuth(urlObj.auth || "");
+		const authCredentials = getCredentialsFromAuth(urlObj.auth || "");
 		if ((username && authCredentials.username && username !== authCredentials.username) ||
 			password && authCredentials.password && password !== authCredentials.password) {
 			this.$errors.fail("The credentials you have provided in the url address mismatch those passed as command line arguments.");
@@ -108,18 +109,6 @@ export class ProxySetCommand extends ProxyCommandBase {
 		this.$logger.out(`Successfully setup proxy.${EOL}`);
 		this.$logger.out(await this.$proxyService.getInfo());
 		await this.tryTrackUsage();
-	}
-
-	private getCredentialsFromAuth(auth: string): ICredentials {
-		const colonIndex = auth.indexOf(":");
-		let username = "";
-		let password = "";
-		if (colonIndex > -1) {
-			username = auth.substring(0, colonIndex);
-			password = auth.substring(colonIndex + 1);
-		}
-
-		return { username, password };
 	}
 
 	private isPasswordRequired(username: string, password: string): boolean {

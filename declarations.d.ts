@@ -550,11 +550,22 @@ interface IOpener {
 
 interface IErrors {
 	fail(formatStr: string, ...args: any[]): never;
-	fail(opts: { formatStr?: string; errorCode?: number; suppressCommandHelp?: boolean }, ...args: any[]): never;
+	fail(opts: { formatStr?: string; errorCode?: number; suppressCommandHelp?: boolean, proxyAuthenticationRequired?: boolean }, ...args: any[]): never;
 	failWithoutHelp(message: string, ...args: any[]): never;
 	beginCommand(action: () => Promise<boolean>, printCommandHelp: () => Promise<void>): Promise<boolean>;
 	verifyHeap(message: string): void;
 	printCallStack: boolean;
+}
+
+/**
+ * Describes error raised when making http requests.
+ */
+interface IHttpRequestError extends Error {
+
+	/**
+	 * Defines if the error is caused by the proxy requiring authentication.
+	 */
+	proxyAuthenticationRequired: boolean;
 }
 
 interface ICommandOptions {
@@ -899,7 +910,7 @@ interface IProxyService {
 
 	/**
 	 * Retrieves proxy cache data.
-	 * @returns {Promise<IGetProxySettings>} The cache.
+	 * @returns {Promise<IProxySettings>} Proxy data.
 	 */
 	getCache(): Promise<IProxySettings>;
 
