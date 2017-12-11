@@ -4,6 +4,7 @@ import * as constants from "../../constants";
 import { fromWindowsRelativePathToUnix, toBoolean } from "../../helpers";
 import { exported } from "../../decorators";
 import * as url from "url";
+const { getCredentialsFromAuth } = require("proxy-lib/lib/utils");
 
 export class NpmService implements INpmService {
 	private static TYPES_DIRECTORY = "@types/";
@@ -347,10 +348,14 @@ export class NpmService implements INpmService {
 				if (npmProxy && npmProxy !== "null") {
 					const strictSslString = (await this.$childProcess.exec("npm config get strict-ssl") || "").toString().trim();
 					const uri = url.parse(npmProxy);
+					const { username, password } = getCredentialsFromAuth(uri.auth || "");
+
 					this._proxySettings = {
 						hostname: uri.hostname,
 						port: uri.port,
-						rejectUnauthorized: toBoolean(strictSslString)
+						rejectUnauthorized: toBoolean(strictSslString),
+						username,
+						password
 					};
 				}
 			} catch (err) {
