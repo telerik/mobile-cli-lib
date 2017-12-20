@@ -1,6 +1,8 @@
 import * as path from "path";
 import * as temp from "temp";
 import { AndroidDeviceHashService } from "./android-device-hash-service";
+import { executeActionByChunks } from "../../helpers";
+import { DEFAULT_CHUNK_SIZE } from '../../constants';
 
 export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	private _deviceHashServices = Object.create(null);
@@ -51,28 +53,24 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	}
 
 	public async transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
-		// TODO: Do not start all promises simultaneously as this leads to error EMFILE on Windows for too many opened files.
-		// Use chunks (for example on 100).
-		await Promise.all(
-			_(localToDevicePaths)
-				.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).isFile())
-				.map(async localToDevicePathData => {
-					const devicePath = localToDevicePathData.getDevicePath();
-					await this.adb.executeCommand(["push", localToDevicePathData.getLocalPath(), devicePath]);
-					await this.adb.executeShellCommand(["chmod", "0777", path.dirname(devicePath)]);
-				}
-				)
-				.value()
-		);
+		const directoriesToChmod: string[] = [];
+		const action = async (localToDevicePathData: Mobile.ILocalToDevicePathData) => {
+			const fstat = this.$fs.getFsStats(localToDevicePathData.getLocalPath());
+			if (fstat.isFile()) {
+				const devicePath = localToDevicePathData.getDevicePath();
+				await this.adb.executeCommand(["push", localToDevicePathData.getLocalPath(), devicePath]);
+				await this.adb.executeShellCommand(["chmod", "0777", path.dirname(devicePath)]);
+			} else if (fstat.isDirectory()) {
+				const dirToChmod = localToDevicePathData.getDevicePath();
+				directoriesToChmod.push(dirToChmod);
+			}
+		};
 
-		await Promise.all(
-			_(localToDevicePaths)
-				.filter(localToDevicePathData => this.$fs.getFsStats(localToDevicePathData.getLocalPath()).isDirectory())
-				.map(async localToDevicePathData =>
-					await this.adb.executeShellCommand(["chmod", "0777", localToDevicePathData.getDevicePath()])
-				)
-				.value()
-		);
+		await executeActionByChunks<Mobile.ILocalToDevicePathData>(localToDevicePaths, DEFAULT_CHUNK_SIZE, action);
+
+		const dirsChmodAction = (directoryToChmod: string) => this.adb.executeShellCommand(["chmod", "0777", directoryToChmod]);
+
+		await executeActionByChunks<string>(_.uniq(directoriesToChmod), DEFAULT_CHUNK_SIZE, dirsChmodAction);
 
 		// Update hashes
 		const deviceHashService = this.getDeviceHashService(deviceAppData.appIdentifier);
@@ -82,25 +80,12 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	}
 
 	public async transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): Promise<Mobile.ILocalToDevicePathData[]> {
-		const devicePaths: string[] = [];
 		const currentShasums: IStringDictionary = {};
-
-		await Promise.all(
-			localToDevicePaths.map(async localToDevicePathData => {
-				const localPath = localToDevicePathData.getLocalPath();
-				const stats = this.$fs.getFsStats(localPath);
-				if (stats.isFile()) {
-					const fileShasum = await this.$fs.getFileShasum(localPath);
-					currentShasums[localPath] = fileShasum;
-				}
-
-				devicePaths.push(`"${localToDevicePathData.getDevicePath()}"`);
-			})
-		);
+		const deviceHashService = this.getDeviceHashService(deviceAppData.appIdentifier);
+		const devicePaths: string[] = await deviceHashService.generateHashesFromLocalToDevicePaths(localToDevicePaths, currentShasums);
 
 		const commandsDeviceFilePath = this.$mobileHelper.buildDevicePath(await deviceAppData.getDeviceProjectRootPath(), "nativescript.commands.sh");
 
-		const deviceHashService = this.getDeviceHashService(deviceAppData.appIdentifier);
 		let filesToChmodOnDevice: string[] = devicePaths;
 		let tranferredFiles: Mobile.ILocalToDevicePathData[] = [];
 		const oldShasums = await deviceHashService.getShasumsFromDevice();
@@ -113,16 +98,15 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 			const changedShasums: any = _.omitBy(currentShasums, (hash: string, pathToFile: string) => !!_.find(oldShasums, (oldHash: string, oldPath: string) => pathToFile === oldPath && hash === oldHash));
 			this.$logger.trace("Changed file hashes are:", changedShasums);
 			filesToChmodOnDevice = [];
-			await Promise.all(
-				_(changedShasums)
-					.map((hash: string, filePath: string) => _.find(localToDevicePaths, ldp => ldp.getLocalPath() === filePath))
-					.map(localToDevicePathData => {
-						tranferredFiles.push(localToDevicePathData);
-						filesToChmodOnDevice.push(`"${localToDevicePathData.getDevicePath()}"`);
-						return this.transferFile(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath());
-					})
-					.value()
-			);
+
+			const transferFileAction = async (hash: string, filePath: string) => {
+				const localToDevicePathData = _.find(localToDevicePaths, ldp => ldp.getLocalPath() === filePath);
+				tranferredFiles.push(localToDevicePathData);
+				filesToChmodOnDevice.push(`"${localToDevicePathData.getDevicePath()}"`);
+				return this.transferFile(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath());
+			};
+
+			await executeActionByChunks<string>(changedShasums, DEFAULT_CHUNK_SIZE, transferFileAction);
 		}
 
 		if (filesToChmodOnDevice.length) {

@@ -671,9 +671,9 @@ declare module Mobile {
 		 */
 		getShasumsFromDevice(): Promise<IStringDictionary>;
 		/**
-		 * Computes the shasums of localToDevicePaths and changes the content of hash file on device
+		 * Uploads updated shasums to hash file on device
 		 */
-		uploadHashFileToDevice(data: IStringDictionary | Mobile.ILocalToDevicePathData[]): Promise<void>;
+		uploadHashFileToDevice(data: IStringDictionary): Promise<void>;
 		/**
 		 * Computes the shasums of localToDevicePaths and updates hash file on device
 		 */
@@ -688,6 +688,14 @@ declare module Mobile {
 		 * @return {Promise<boolean>} boolean True if file exists and false otherwise.
 		 */
 		doesShasumFileExistsOnDevice(): Promise<boolean>;
+
+		/**
+		 * Generates hashes of specified localToDevicePaths by chunks and persists them in the passed @shasums argument.
+		 * @param {Mobile.ILocalToDevicePathData[]} localToDevicePaths The localToDevicePaths objects for which the hashes should be generated.
+		 * @param {IStringDicitionary} shasums Object in which the shasums will be persisted.
+		 * @returns {Promise<string>[]} DevicePaths of all elements from the input localToDevicePaths.
+		 */
+		generateHashesFromLocalToDevicePaths(localToDevicePaths: Mobile.ILocalToDevicePathData[], shasums: IStringDictionary): Promise<string[]>;
 	}
 
 	/**
