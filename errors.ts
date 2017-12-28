@@ -142,6 +142,7 @@ export class Errors implements IErrors {
 		exception.stack = (new Error(exception.message)).stack;
 		exception.errorCode = opts.errorCode || ErrorCodes.UNKNOWN;
 		exception.suppressCommandHelp = opts.suppressCommandHelp;
+		exception.proxyAuthenticationRequired = !!opts.proxyAuthenticationRequired;
 		this.$injector.resolve("logger").trace(opts.formatStr);
 		throw exception;
 	}

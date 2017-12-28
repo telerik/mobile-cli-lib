@@ -91,3 +91,5 @@ export const enum AnalyticsClients {
 	NonInteractive = "Non-interactive",
 	Unknown = "Unknown"
 }
+
+export const DEFAULT_CHUNK_SIZE = 100;

@@ -95,7 +95,6 @@ $injector.require("devicePlatformsConstants", "./mobile/device-platforms-constan
 $injector.require("helpService", "./services/help-service");
 $injector.require("messageContractGenerator", "./services/message-contract-generator");
 $injector.require("proxyService", "./services/proxy-service");
-$injector.require("credentialsService", "./services/credentials-service");
 $injector.requireCommand("dev-preuninstall", "./commands/preuninstall");
 $injector.requireCommand("dev-generate-messages", "./commands/generate-messages");
 $injector.requireCommand("doctor", "./commands/doctor");

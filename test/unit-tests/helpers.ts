@@ -15,6 +15,61 @@ describe("helpers", () => {
 		assert.deepEqual(actualResult, testData.expectedResult, `For input ${testData.input}, the expected result is: ${testData.expectedResult}, but actual result is: ${actualResult}.`);
 	};
 
+	describe("executeActionByChunks", () => {
+		const chunkSize = 2;
+
+		const assertElements = (initialDataValues: any[], handledElements: any[], element: any, passedChunkSize: number) => {
+			return new Promise(resolve => setImmediate(() => {
+				const remainingElements = _.difference(initialDataValues, handledElements);
+				const isFromLastChunk = (element + passedChunkSize) > initialDataValues.length;
+				// If the element is one of the last chunk, the remainingElements must be empty.
+				// If the element is from any other chunk, the remainingElements must contain all elements outside of this chunk.
+				if (isFromLastChunk) {
+					assert.isTrue(!remainingElements.length);
+				} else {
+					const indexOfElement = initialDataValues.indexOf(element);
+					const chunkNumber = Math.floor(indexOfElement / passedChunkSize) + 1;
+					const expectedRemainingElements = _.drop(initialDataValues, chunkNumber * passedChunkSize);
+
+					assert.deepEqual(remainingElements, expectedRemainingElements);
+				}
+
+				resolve();
+			}));
+		};
+
+		it("works correctly with array", () => {
+			const initialData = _.range(7);
+			const handledElements: number[] = [];
+
+			return helpers.executeActionByChunks(initialData, chunkSize, (element: number, index: number) => {
+				handledElements.push(element);
+				assert.deepEqual(element, initialData[index]);
+				assert.isTrue(initialData.indexOf(element) !== -1);
+				return assertElements(initialData, handledElements, element, chunkSize);
+			});
+		});
+
+		it("works correctly with IDictionary", () => {
+			const initialData: IDictionary<any> = {
+				a: 1,
+				b: 2,
+				c: 3,
+				d: 4,
+				e: 5,
+				f: 6
+			};
+
+			const initialDataValues = _.values(initialData);
+			const handledElements: number[] = [];
+			return helpers.executeActionByChunks(initialData, chunkSize, (element, key) => {
+				handledElements.push(element);
+				assert.isTrue(initialData[key] === element);
+				return assertElements(initialDataValues, handledElements, element, chunkSize);
+			});
+		});
+	});
+
 	describe("getPropertyName", () => {
 		const ES5Functions: ITestData[] = [
 			{

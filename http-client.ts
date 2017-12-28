@@ -43,12 +43,12 @@ export class HttpClient implements Server.IHttpClient {
 		let pipeTo = options.pipeTo;
 		delete options.pipeTo;
 
-		const proxyCache = this.$proxyService.getCache();
+		const cliProxySettings = await this.$proxyService.getCache();
 
 		options.headers = options.headers || {};
 		const headers = options.headers;
 
-		await this.useProxySettings(proxySettings, proxyCache, options, headers, requestProto);
+		await this.useProxySettings(proxySettings, cliProxySettings, options, headers, requestProto);
 
 		if (!headers.Accept || headers.Accept.indexOf("application/json") < 0) {
 			if (headers.Accept) {
@@ -98,7 +98,7 @@ export class HttpClient implements Server.IHttpClient {
 			const requestObj = request(options);
 
 			requestObj
-				.on("error", (err: Error) => {
+				.on("error", (err: IHttpRequestError) => {
 					this.$logger.trace("An error occurred while sending the request:", err);
 					// In case we get a 4xx error code there seems to be no better way than this regex to get the error code
 					// the tunnel-agent module that request is using is obscuring the response and hence the statusCode by throwing an error message
@@ -107,6 +107,7 @@ export class HttpClient implements Server.IHttpClient {
 					const errorMessageMatch = err.message.match(HttpClient.STATUS_CODE_REGEX);
 					const errorMessageStatusCode = errorMessageMatch && errorMessageMatch[1] && +errorMessageMatch[1];
 					const errorMessage = this.getErrorMessage(errorMessageStatusCode, null);
+					err.proxyAuthenticationRequired = errorMessageStatusCode === HttpStatusCodes.PROXY_AUTHENTICATION_REQUIRED;
 					err.message = errorMessage || err.message;
 					this.setResponseResult(promiseActions, timerId, { err });
 				})
@@ -239,7 +240,8 @@ export class HttpClient implements Server.IHttpClient {
 	private getErrorMessage(statusCode: number, body: string): string {
 		if (statusCode === HttpStatusCodes.PROXY_AUTHENTICATION_REQUIRED) {
 			const clientNameLowerCase = this.$staticConfig.CLIENT_NAME.toLowerCase();
-			return `Your proxy requires authentication. You can run ${EOL}\t${clientNameLowerCase} proxy set <url> <username> <password>.${EOL}In order to supply ${clientNameLowerCase} with the credentials needed.`;
+			this.$logger.error(`You can run ${EOL}\t${clientNameLowerCase} proxy set <url> <username> <password>.${EOL}In order to supply ${clientNameLowerCase} with the credentials needed.`);
+			return "Your proxy requires authentication.";
 		} else if (statusCode === HttpStatusCodes.PAYMENT_REQUIRED) {
 			const subscriptionUrl = util.format("%s://%s/appbuilder/account/subscription", this.$config.AB_SERVER_PROTO, this.$config.AB_SERVER);
 			return util.format("Your subscription has expired. Go to %s to manage your subscription. Note: After you renew your subscription, " +
@@ -253,10 +255,10 @@ export class HttpClient implements Server.IHttpClient {
 					return err;
 				}
 
-				if (err.ExceptionMessage) {
+				if (err && err.ExceptionMessage) {
 					return err.ExceptionMessage;
 				}
-				if (err.Message) {
+				if (err && err.Message) {
 					return err.Message;
 				}
 			} catch (parsingFailed) {
@@ -270,25 +272,24 @@ export class HttpClient implements Server.IHttpClient {
 	/**
 	 * This method respects the proxySettings (or proxyCache) by modifying headers and options passed to http(s) module.
 	 * @param {IProxySettings} proxySettings The settings passed for this specific call.
-	 * @param {IProxyCache} proxyCache The globally set proxy for this CLI.
+	 * @param {IProxySettings} cliProxySettings The globally set proxy for this CLI.
 	 * @param {any}options The object that will be passed to http(s) module.
 	 * @param {any} headers Headers of the current request.
 	 * @param {string} requestProto The protocol used for the current request - http or https.
 	 */
-	private async useProxySettings(proxySettings: IProxySettings, proxyCache: IProxyCache, options: any, headers: any, requestProto: string): Promise<void> {
-		if (proxySettings || proxyCache) {
-			const proto = (proxySettings && proxySettings.protocol) || proxyCache.PROXY_PROTOCOL || "http:";
-			const host = (proxySettings && proxySettings.hostname) || proxyCache.PROXY_HOSTNAME;
-			const port = (proxySettings && proxySettings.port) || proxyCache.PROXY_PORT;
+	private async useProxySettings(proxySettings: IProxySettings, cliProxySettings: IProxySettings, options: any, headers: any, requestProto: string): Promise<void> {
+		if (proxySettings || cliProxySettings) {
+			const proto = (proxySettings && proxySettings.protocol) || cliProxySettings.protocol || "http:";
+			const host = (proxySettings && proxySettings.hostname) || cliProxySettings.hostname;
+			const port = (proxySettings && proxySettings.port) || cliProxySettings.port;
 			let credentialsPart = "";
-			const proxyCredentials = await this.$proxyService.getCredentials();
-			if (proxyCredentials && proxyCredentials.username && proxyCredentials.password) {
-				credentialsPart = `${proxyCredentials.username}:${proxyCredentials.password}@`;
+			if (cliProxySettings.username && cliProxySettings.password) {
+				credentialsPart = `${cliProxySettings.username}:${cliProxySettings.password}@`;
 			}
 
 			// Note that proto ends with :
 			options.proxy = `${proto}//${credentialsPart}${host}:${port}`;
-			options.rejectUnauthorized = proxySettings ? proxySettings.rejectUnauthorized : (proxyCache ? !proxyCache.ALLOW_INSECURE : true);
+			options.rejectUnauthorized = proxySettings ? proxySettings.rejectUnauthorized : cliProxySettings.rejectUnauthorized;
 
 			this.$logger.trace("Using proxy: %s", options.proxy);
 		}

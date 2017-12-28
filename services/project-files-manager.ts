@@ -75,7 +75,9 @@ export class ProjectFilesManager implements IProjectFilesManager {
 						this.$fs.writeFile(filePath, fileContent);
 					}
 					// Rename the file
-					this.$fs.rename(filePath, onDeviceFilePath);
+					// this.$fs.rename is not called as it is error prone on some systems with slower hard drives and rigorous antivirus software
+					this.$fs.writeFile(onDeviceFilePath, this.$fs.readText(filePath));
+					this.$fs.deleteFile(filePath);
 				}
 			}
 		});

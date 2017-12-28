@@ -1,41 +1,50 @@
 import * as path from "path";
 import { EOL } from "os";
 import { Proxy } from "../constants";
+const proxyLib = require("proxy-lib");
 
 export class ProxyService implements IProxyService {
 	private proxyCacheFilePath: string;
 	private credentialsKey: string;
 
-	constructor(private $credentialsService: ICredentialsService,
-		private $fs: IFileSystem,
+	constructor(
 		private $settingsService: ISettingsService,
 		private $staticConfig: Config.IStaticConfig) {
 		this.proxyCacheFilePath = path.join(this.$settingsService.getProfileDir(), Proxy.CACHE_FILE_NAME);
 		this.credentialsKey = `${this.$staticConfig.CLIENT_NAME}_PROXY`;
 	}
 
-	public setCache(cacheData: IProxyCache): IProxyCache {
-		this.$fs.writeJson(this.proxyCacheFilePath, cacheData);
-		return cacheData;
+	public setCache(settings: IProxyLibSettings): Promise<void> {
+		settings.userSpecifiedSettingsFilePath = settings.userSpecifiedSettingsFilePath || this.proxyCacheFilePath;
+		settings.credentialsKey = settings.credentialsKey || this.credentialsKey;
+		return proxyLib.setProxySettings(settings);
 	}
 
-	public getCache(): IProxyCache {
-		return this.$fs.exists(this.proxyCacheFilePath) && this.$fs.readJson(this.proxyCacheFilePath);
+	public getCache(): Promise<IProxySettings> {
+		const settings = {
+			credentialsKey: this.credentialsKey,
+			userSpecifiedSettingsFilePath: this.proxyCacheFilePath
+		};
+
+		return proxyLib.getProxySettings(settings);
 	}
 
-	public clearCache(): void {
-		this.$fs.deleteFile(this.proxyCacheFilePath);
-		this.$credentialsService.clearCredentials(this.credentialsKey);
+	public clearCache(): Promise<void> {
+		const settings = {
+			credentialsKey: this.credentialsKey,
+			userSpecifiedSettingsFilePath: this.proxyCacheFilePath
+		};
+
+		return proxyLib.clearProxySettings(settings);
 	}
 
 	public async getInfo(): Promise<string> {
 		let message = "";
-		const proxyCache: IProxyCache = this.getCache();
+		const proxyCache: IProxySettings = await this.getCache();
 		if (proxyCache) {
-			const proxyCredentials = await this.getCredentials();
-			message = `Proxy Url: ${proxyCache.PROXY_PROTOCOL}//${proxyCache.PROXY_HOSTNAME}:${proxyCache.PROXY_PORT}`;
-			if (proxyCredentials && proxyCredentials.username) {
-				message += `${EOL}Username: ${proxyCredentials.username}`;
+			message = `Proxy Url: ${proxyCache.protocol}//${proxyCache.hostname}:${proxyCache.port}`;
+			if (proxyCache.username) {
+				message += `${EOL}Username: ${proxyCache.username}`;
 			}
 
 			message += `${EOL}Proxy is Enabled`;
@@ -44,14 +53,6 @@ export class ProxyService implements IProxyService {
 		}
 
 		return message;
-	}
-
-	public async getCredentials(): Promise<ICredentials> {
-		return this.$credentialsService.getCredentials(this.credentialsKey);
-	}
-
-	public async setCredentials(credentials: ICredentials): Promise<ICredentials> {
-		return this.$credentialsService.setCredentials(this.credentialsKey, credentials);
 	}
 }
 

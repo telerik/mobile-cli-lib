@@ -8,6 +8,24 @@ import * as crypto from "crypto";
 
 const Table = require("cli-table");
 
+export async function executeActionByChunks<T>(initialData: T[] | IDictionary<T>, chunkSize: number, elementAction: (element: T, key?: string | number) => Promise<any>): Promise<void> {
+	let arrayToChunk: (T | string)[];
+	let action: (key: string | T) => Promise<any>;
+
+	if (_.isArray(initialData)) {
+		arrayToChunk = initialData;
+		action = (element: T) => elementAction(element, initialData.indexOf(element));
+	} else {
+		arrayToChunk = _.keys(initialData);
+		action = (key: string) => elementAction(initialData[key], key);
+	}
+
+	const chunks = _.chunk(arrayToChunk, chunkSize);
+	for (const chunk of chunks) {
+		await Promise.all(_.map(chunk, element => action(element)));
+	}
+}
+
 export function deferPromise<T>(): IDeferPromise<T> {
 	let resolve: (value?: T | PromiseLike<T>) => void;
 	let reject: (reason?: any) => void;
