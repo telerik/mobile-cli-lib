@@ -1123,8 +1123,6 @@ interface ISysInfoData extends IPlatform {
 	nodeGypVer: string;
 
 	// dependencies
-	/** version of java, as returned by `java -version` */
-	javaVer: string;
 	/** Xcode version string as returned by `xcodebuild -version`. Valid only on Mac */
 	xcodeVer: string;
 	/** Version string of adb, as returned by `adb version` */
@@ -1155,9 +1153,6 @@ interface ISysInfo {
 	 * @return {Promise<ISysInfoData>} Object containing information for current system.
 	 */
 	getSysInfo(pathToPackageJson: string, androidToolsInfo?: { pathToAdb: string }): Promise<ISysInfoData>;
-
-	/** Returns Java version. **/
-	getJavaVersion(): Promise<string>;
 
 	/** Returns Java compiler version. **/
 	getJavaCompilerVersion(): Promise<string>;

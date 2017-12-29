@@ -13,19 +13,6 @@ export class SysInfoBase implements ISysInfo {
 
 	private monoVerRegExp = /version (\d+[.]\d+[.]\d+) /gm;
 	private sysInfoCache: ISysInfoData = undefined;
-	private javaVerCache: string = null;
-	public async getJavaVersion(): Promise<string> {
-		if (!this.javaVerCache) {
-			try {
-				// different java has different format for `java -version` command
-				const output = (await this.$childProcess.spawnFromEvent("java", ["-version"], "exit")).stderr;
-				this.javaVerCache = /(?:openjdk|java) version \"((?:\d+\.)+(?:\d+))/i.exec(output)[1];
-			} catch (e) {
-				this.javaVerCache = null;
-			}
-		}
-		return this.javaVerCache;
-	}
 
 	private npmVerCache: string = null;
 	public async getNpmVersion(): Promise<string> {
@@ -47,7 +34,7 @@ export class SysInfoBase implements ISysInfo {
 				const output = await this.exec(`"${pathToJavaCompilerExecutable}" -version`, { showStderr: true });
 				// for other versions of java javac version output is not on first line
 				// thus can't use ^ for starts with in regex
-				this.javaCompilerVerCache = output ? /javac (.*)/i.exec(output.stderr)[1] : null;
+				this.javaCompilerVerCache = output ? /javac (.*)/i.exec(`${output.stderr}${os.EOL}${output.stdout}`)[1] : null;
 			} catch (e) {
 				this.$logger.trace(`Command "${pathToJavaCompilerExecutable} --version" failed: ${e}`);
 				this.javaCompilerVerCache = null;
@@ -153,8 +140,6 @@ export class SysInfoBase implements ISysInfo {
 			res.nodeVer = process.version;
 
 			res.npmVer = await this.getNpmVersion();
-
-			res.javaVer = await this.getJavaVersion();
 
 			res.nodeGypVer = await this.getNodeGypVersion();
 			res.xcodeVer = await this.getXCodeVersion();
