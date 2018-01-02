@@ -15,6 +15,61 @@ describe("helpers", () => {
 		assert.deepEqual(actualResult, testData.expectedResult, `For input ${testData.input}, the expected result is: ${testData.expectedResult}, but actual result is: ${actualResult}.`);
 	};
 
+	describe("appendZeroesToVersion", () => {
+		interface IAppendZeroesToVersionTestData extends ITestData {
+			requiredVersionLength: number;
+		}
+
+		const testData: IAppendZeroesToVersionTestData[] = [
+			{
+				input: "3.0.0",
+				requiredVersionLength: 3,
+				expectedResult: "3.0.0"
+			},
+			{
+				input: "3.0",
+				requiredVersionLength: 3,
+				expectedResult: "3.0.0"
+			},
+			{
+				input: "3",
+				requiredVersionLength: 3,
+				expectedResult: "3.0.0"
+			},
+			{
+				input: "1.8.0_152",
+				requiredVersionLength: 3,
+				expectedResult: "1.8.0_152"
+			},
+			{
+				input: "",
+				requiredVersionLength: 3,
+				expectedResult: ""
+			},
+			{
+				input: null,
+				requiredVersionLength: 3,
+				expectedResult: null
+			},
+			{
+				input: undefined,
+				requiredVersionLength: 3,
+				expectedResult: undefined
+			},
+			{
+				input: "1",
+				requiredVersionLength: 5,
+				expectedResult: "1.0.0.0.0"
+			},
+		];
+
+		it("appends correct number of zeroes", () => {
+			_.each(testData, testCase => {
+				assert.deepEqual(helpers.appendZeroesToVersion(testCase.input, testCase.requiredVersionLength), testCase.expectedResult);
+			});
+		});
+	});
+
 	describe("executeActionByChunks", () => {
 		const chunkSize = 2;
 
