@@ -290,10 +290,18 @@ export async function getFuturesResults<T>(promises: Promise<T | T[]>[], predica
 		.value();
 }
 
+/**
+ * Appends zeroes to a version string until it reaches a specified length.
+ * @param {string} version The version on which to append zeroes.
+ * @param requiredVersionLength The required length of the version string.
+ * @returns {string} Appended version string. In case input is null, undefined or empty string, it is returned immediately without appending anything.
+ */
 export function appendZeroesToVersion(version: string, requiredVersionLength: number): string {
-	const zeroesToAppend = requiredVersionLength - version.split(".").length;
-	for (let index = 0; index < zeroesToAppend; index++) {
-		version += ".0";
+	if (version) {
+		const zeroesToAppend = requiredVersionLength - version.split(".").length;
+		for (let index = 0; index < zeroesToAppend; index++) {
+			version += ".0";
+		}
 	}
 
 	return version;
