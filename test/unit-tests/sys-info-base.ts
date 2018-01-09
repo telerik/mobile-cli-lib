@@ -19,7 +19,6 @@ interface IChildProcessResultDescription {
 interface IChildProcessResults {
 	uname: IChildProcessResultDescription;
 	npmV: IChildProcessResultDescription;
-	javaVersion: IChildProcessResultDescription;
 	javacVersion: IChildProcessResultDescription;
 	nodeGypVersion: IChildProcessResultDescription;
 	xCodeVersion: IChildProcessResultDescription;
@@ -32,7 +31,7 @@ interface IChildProcessResults {
 }
 
 function getResultFromChildProcess(childProcessResultDescription: IChildProcessResultDescription, spawnFromEventOpts?: { throwError: boolean }): any {
-	if (childProcessResultDescription.shouldThrowError) {
+	if (!childProcessResultDescription || childProcessResultDescription.shouldThrowError) {
 		if (spawnFromEventOpts && !spawnFromEventOpts.throwError) {
 			return {
 				stderr: "This one throws error.",
@@ -51,7 +50,6 @@ function createChildProcessResults(childProcessResult: IChildProcessResults): ID
 	return {
 		"uname -a": childProcessResult.uname,
 		"npm -v": childProcessResult.npmV,
-		"java": childProcessResult.javaVersion,
 		'"javac" -version': childProcessResult.javacVersion,
 		"node-gyp -v": childProcessResult.nodeGypVersion,
 		"xcodebuild -version": childProcessResult.xCodeVersion,
@@ -65,7 +63,7 @@ function createChildProcessResults(childProcessResult: IChildProcessResults): ID
 	};
 }
 
-function createTestInjector(childProcessResult: IChildProcessResults, hostInfoData: { isWindows: boolean, dotNetVersion: string, isDarwin: boolean }, itunesError: string): IInjector {
+function createTestInjector(childProcessResult: IChildProcessResults, hostInfoData: { isWindows: boolean, dotNetVersion?: string, isDarwin: boolean }, itunesError: string): IInjector {
 	const injector = new Yok();
 	const childProcessResultDictionary = createChildProcessResults(childProcessResult);
 	injector.register("childProcess", {
@@ -79,7 +77,7 @@ function createTestInjector(childProcessResult: IChildProcessResults, hostInfoDa
 	});
 
 	injector.register("hostInfo", {
-		dotNetVersion: () => Promise.resolve(hostInfoData.dotNetVersion),
+		dotNetVersion: () => Promise.resolve(hostInfoData.dotNetVersion || "4.5.1"),
 		isWindows: hostInfoData.isWindows,
 		isDarwin: hostInfoData.isDarwin
 	});
@@ -123,7 +121,6 @@ describe("sysInfoBase", () => {
 		childProcessResult = {
 			uname: { result: "name" },
 			npmV: { result: "2.14.1" },
-			javaVersion: { result: { stderr: 'java version "1.8.0_60"' } },
 			javacVersion: { result: { stderr: 'javac 1.8.0_60' } },
 			nodeGypVersion: { result: "2.0.0" },
 			xCodeVersion: { result: "6.4.0" },
@@ -142,7 +139,6 @@ describe("sysInfoBase", () => {
 		describe("returns correct results when everything is installed", () => {
 			const assertCommonValues = (result: ISysInfoData) => {
 				assert.deepEqual(result.npmVer, childProcessResult.npmV.result);
-				assert.deepEqual(result.javaVer, "1.8.0");
 				assert.deepEqual(result.javacVersion, "1.8.0_60");
 				assert.deepEqual(result.nodeGypVer, childProcessResult.nodeGypVersion.result);
 				assert.deepEqual(result.adbVer, childProcessResult.adbVersion.result);
@@ -214,12 +210,33 @@ describe("sysInfoBase", () => {
 			});
 		});
 
+		describe("getJavaCompilerVersion", () => {
+			const verifyJavaCompilerVersion = async (javaCompilerVersion: string, resultStream: string): Promise<void> => {
+				const javaCompilerChildProcessResult: any = {
+					[resultStream]: `javac ${javaCompilerVersion}`
+				};
+
+				javaCompilerChildProcessResult.javacVersion = { result: javaCompilerChildProcessResult };
+				testInjector = createTestInjector(javaCompilerChildProcessResult, { isWindows: false, isDarwin: true }, null);
+				sysInfoBase = testInjector.resolve("sysInfoBase");
+				const actualJavaCompilerVersion = await sysInfoBase.getJavaCompilerVersion();
+				assert.deepEqual(actualJavaCompilerVersion, javaCompilerVersion);
+			};
+
+			it("returns correct javac version when it is printed on stderr (Java 8)", () => {
+				return verifyJavaCompilerVersion("1.8.0_152", "stderr");
+			});
+
+			it("returns correct javac version when it is printed on stdout (Java 9)", () => {
+				return verifyJavaCompilerVersion("9.0.1", "stdout");
+			});
+		});
+
 		describe("returns correct results when exceptions are raised during sysInfo data collection", () => {
 			beforeEach(() => {
 				childProcessResult = {
 					uname: { shouldThrowError: true },
 					npmV: { shouldThrowError: true },
-					javaVersion: { shouldThrowError: true },
 					javacVersion: { shouldThrowError: true },
 					nodeGypVersion: { shouldThrowError: true },
 					xCodeVersion: { shouldThrowError: true },
@@ -253,7 +270,6 @@ describe("sysInfoBase", () => {
 					sysInfoBase = testInjector.resolve("sysInfoBase");
 					const result = await sysInfoBase.getSysInfo(toolsPackageJson);
 					assert.deepEqual(result.npmVer, null);
-					assert.deepEqual(result.javaVer, null);
 					assert.deepEqual(result.javacVersion, null);
 					assert.deepEqual(result.nodeGypVer, null);
 					assert.deepEqual(result.xcodeVer, null);
