@@ -262,7 +262,8 @@ export class HttpClient implements Server.IHttpClient {
 					return err.Message;
 				}
 			} catch (parsingFailed) {
-				return `The server returned unexpected response: ${parsingFailed.toString()}`;
+				this.$logger.trace("Failed to get error from http request: ", parsingFailed);
+				return `The server returned unexpected response: ${body}`;
 			}
 
 			return body;
