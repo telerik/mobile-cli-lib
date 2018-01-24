@@ -580,8 +580,34 @@ declare module Mobile {
 		iOSSimPath: string;
 	}
 
+	/**
+	 * Describes the information when trying to connect to port.
+	 */
+	interface IConnectToPortData {
+		/**
+		 * The port to connect.
+		 * @type {number}
+		 */
+		port: number;
+
+		/**
+		 * Timeout in milliseconds.
+		 * @type {number}
+		 */
+		timeout?: number;
+	}
+
 	interface IiOSSimulatorService extends IEmulatorPlatformServices {
 		postDarwinNotification(notification: string): Promise<void>;
+
+		/**
+		 * Tries to connect to specified port for speciefied amount of time.
+		 * In case it succeeds, a socket is returned.
+		 * In case it fails, undefined is returned.
+		 * @param {IConnectToPortData} connectToPortData Data describing port and timeout to try to connect.
+		 * @returns {net.Socket} Returns instance of net.Socket when connection is successful, otherwise undefined is returned.
+		 */
+		connectToPort(connectToPortData: IConnectToPortData): Promise<any>;
 	}
 
 	interface IEmulatorSettingsService {
