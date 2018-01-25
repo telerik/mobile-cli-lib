@@ -568,6 +568,17 @@ interface IHttpRequestError extends Error {
 	proxyAuthenticationRequired: boolean;
 }
 
+/**
+ * Describes error that has stderr information.
+ */
+interface IStdError extends Error {
+
+	/**
+	 * If the error comes from process and have some stderr information - use this property to store it.
+	 */
+	stderr: string;
+}
+
 interface ICommandOptions {
 	disableAnalytics?: boolean;
 	enableHooks?: boolean;
@@ -871,7 +882,7 @@ interface IRejectUnauthorized {
 /**
  * Proxy settings required for http request.
  */
-interface IProxySettings extends IRejectUnauthorized, ICredentials  {
+interface IProxySettings extends IRejectUnauthorized, ICredentials {
 	/**
 	 * Hostname of the machine used for proxy.
 	 */
