@@ -12,6 +12,10 @@ export class OsInfo implements IOsInfo {
 	public arch(): string {
 		return os.arch();
 	}
+
+	public platform(): string {
+		return os.platform();
+	}
 }
 
 $injector.register("osInfo", OsInfo);
