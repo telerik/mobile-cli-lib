@@ -125,6 +125,7 @@ export class AndroidProcessServiceStub implements Mobile.IAndroidProcessService 
 export class LogcatHelperStub implements Mobile.ILogcatHelper {
 	public StopCallCount = 0;
 	public StartCallCount = 0;
+	public DumpCallCount = 0;
 	public LastStartCallOptions: Mobile.ILogcatStartOptions = {
 		deviceIdentifier: ""
 	};
@@ -138,6 +139,10 @@ export class LogcatHelperStub implements Mobile.ILogcatHelper {
 	stop(deviceIdentifier: string): void {
 		this.LastStopDeviceId = deviceIdentifier;
 		this.StopCallCount++;
+	}
+	dump(): Promise<void> {
+		this.DumpCallCount++;
+		return Promise.resolve();
 	}
 }
 

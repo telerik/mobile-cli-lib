@@ -180,6 +180,7 @@ declare module Mobile {
 	interface ILogcatHelper {
 		start(options: ILogcatStartOptions): Promise<void>;
 		stop(deviceIdentifier: string): void;
+		dump(deviceIdentifier: string): Promise<void>;
 	}
 
 	/**

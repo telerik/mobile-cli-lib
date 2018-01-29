@@ -72,6 +72,24 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 		return logcatStream;
 	}
 
+	public async dump(deviceIdentifier: string): Promise<void> {
+		const adb: Mobile.IDeviceAndroidDebugBridge = this.$injector.resolve(DeviceAndroidDebugBridge, { identifier: deviceIdentifier });
+		const logcatDumpStream = await adb.executeCommand(["logcat", "-d"], { returnChildProcess: true });
+
+		const lineStream = byline(logcatDumpStream.stdout);
+		lineStream.on('data', (line: NodeBuffer) => {
+			const lineText = line.toString();
+			this.$logger.trace(lineText);
+		});
+
+		logcatDumpStream.on("close", (code: number) => {
+			logcatDumpStream.removeAllListeners();
+			lineStream.removeAllListeners();
+		});
+
+		this.$processService.attachToProcessExitSignals(this, logcatDumpStream.kill);
+	}
+
 	/**
 	 * Stops the logcat process for the specified device if keepSingleProcess is not passed on start
 	 */
