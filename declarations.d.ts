@@ -1736,6 +1736,25 @@ interface IVersionData {
 	patch: string;
 }
 
+interface IWaitForPortListenData {
+	/**
+	 * Port to be checked.
+	 * @type {number}
+	 */
+	port: number;
+
+	/**
+	 * Max amount of time in milliseconds to wait.
+	 * @type {number}
+	 */
+	timeout: number;
+	/**
+	 * @optional The amount of time between each check.
+	 * @type {number}
+	 */
+	interval?: number;
+}
+
 /**
  * Wrapper for net module of Node.js.
  */
@@ -1761,6 +1780,13 @@ interface INet {
 	 * @return {Promise<boolean>} true if the port is available.
 	 */
 	isPortAvailable(port: number): Promise<boolean>;
+
+	/**
+	 * Waits for port to be in LISTEN state.
+	 * @param {IWaitForPortListenData} waitForPortListenData Data describing port, timeout and interval.
+	 * @returns {boolean} true in case port is in LISTEN state, false otherwise.
+	 */
+	waitForPortToListen(waitForPortListenData: IWaitForPortListenData): Promise<boolean>;
 }
 
 interface IProcessService {
@@ -1950,6 +1976,12 @@ interface IOsInfo {
 	 * @return {string} A string identifying the operating system bitness.
 	 */
 	arch(): string;
+
+	/**
+	 * Returns a string identifying the operating system platform.
+	 * @return {string} A string identifying the operating system platform.
+	 */
+	platform(): string;
 }
 
 interface IPromiseActions<T> {
