@@ -1,4 +1,9 @@
+import * as net from "net";
+import { connectEventuallyUntilTimeout } from "../../../helpers";
+
 class IosEmulatorServices implements Mobile.IiOSSimulatorService {
+	private static DEFAULT_TIMEOUT = 10000;
+
 	constructor(private $logger: ILogger,
 		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
 		private $errors: IErrors,
@@ -56,6 +61,15 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		}
 
 		await this.$childProcess.spawnFromEvent(nodeCommandName, iosSimArgs, "close", { stdio: "inherit" });
+	}
+
+	public async connectToPort(data: Mobile.IConnectToPortData): Promise<net.Socket> {
+		try {
+			const socket = await connectEventuallyUntilTimeout(() => net.connect(data.port), data.timeout || IosEmulatorServices.DEFAULT_TIMEOUT);
+			return socket;
+		} catch (e) {
+			this.$logger.debug(e);
+		}
 	}
 
 	private async runApplicationOnEmulatorCore(app: string, emulatorOptions?: Mobile.IEmulatorOptions): Promise<any> {

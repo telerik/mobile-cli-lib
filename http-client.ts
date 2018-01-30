@@ -3,8 +3,6 @@ import { EOL } from "os";
 import * as helpers from "./helpers";
 import * as zlib from "zlib";
 import * as util from "util";
-import progress = require("progress-stream");
-import filesize = require("filesize");
 import { HttpStatusCodes } from "./constants";
 import * as request from "request";
 
@@ -133,8 +131,6 @@ export class HttpClient implements Server.IHttpClient {
 							this.setResponseResult(promiseActions, timerId, { response });
 						});
 
-						pipeTo = this.trackDownloadProgress(pipeTo);
-
 						responseStream.pipe(pipeTo);
 					} else {
 						const data: string[] = [];
@@ -204,39 +200,6 @@ export class HttpClient implements Server.IHttpClient {
 		}
 	}
 
-	private trackDownloadProgress(pipeTo: NodeJS.WritableStream): NodeJS.ReadableStream {
-		// \r for carriage return doesn't work on windows in node for some reason so we have to use it's hex representation \x1B[0G
-		let lastMessageSize = 0;
-		const carriageReturn = "\x1B[0G";
-		let timeElapsed = 0;
-
-		const progressStream = progress({ time: 1000 }, (progress: any) => {
-			timeElapsed = progress.runtime;
-
-			if (timeElapsed >= 1) {
-				this.$logger.write("%s%s", carriageReturn, Array(lastMessageSize + 1).join(" "));
-
-				const message = util.format("%sDownload progress ... %s | %s | %s/s",
-					carriageReturn,
-					Math.floor(progress.percentage) + "%",
-					filesize(progress.transferred),
-					filesize(progress.speed));
-
-				this.$logger.write(message);
-				lastMessageSize = message.length;
-			}
-		});
-
-		progressStream.on("finish", () => {
-			if (timeElapsed >= 1) {
-				this.$logger.out("%s%s%s%s", carriageReturn, Array(lastMessageSize + 1).join(" "), carriageReturn, "Download completed.");
-			}
-		});
-
-		progressStream.pipe(pipeTo);
-		return progressStream;
-	}
-
 	private getErrorMessage(statusCode: number, body: string): string {
 		if (statusCode === HttpStatusCodes.PROXY_AUTHENTICATION_REQUIRED) {
 			const clientNameLowerCase = this.$staticConfig.CLIENT_NAME.toLowerCase();
@@ -262,7 +225,8 @@ export class HttpClient implements Server.IHttpClient {
 					return err.Message;
 				}
 			} catch (parsingFailed) {
-				return `The server returned unexpected response: ${parsingFailed.toString()}`;
+				this.$logger.trace("Failed to get error from http request: ", parsingFailed);
+				return `The server returned unexpected response: ${body}`;
 			}
 
 			return body;
