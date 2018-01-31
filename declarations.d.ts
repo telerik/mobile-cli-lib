@@ -1575,6 +1575,38 @@ interface IProgressIndicator {
 	 * @return {Promise<T>}
 	 */
 	showProgressIndicator<T>(promise: Promise<T>, timeout: number, options?: { surpressTrailingNewLine?: boolean }): Promise<T>;
+
+	/**
+	 * Returns a spinner instance that will print a specified message when spinner is started and will repeat it until spinner is stopped.
+	 * In case the terminal is not interactive, a mocked instance is returned, so the spinner will print the required message a single time - when it is started.
+	 * @param {string} message The message to be printed.
+	 * @returns {ISpinner} Instance of clui.Spinner in case terminal is interactive, mocked instance otherwise.
+	 */
+	getSpinner(message: string): ISpinner;
+}
+
+/**
+ * Describes the clui spinner.
+ */
+interface ISpinner {
+	/**
+	 * Sets the message that will be printed by spinner.
+	 * @param {string} msg The new message.
+	 * @returns {void}
+	 */
+	message(msg: string): void;
+
+	/**
+	 * Starts the spinner.
+	 * @returns {void}
+	 */
+	start(): void;
+
+	/**
+	 * Stops the spinner.
+	 * @returns {void}
+	 */
+	stop(): void;
 }
 
 /**
@@ -1715,6 +1747,25 @@ interface IVersionData {
 	patch: string;
 }
 
+interface IWaitForPortListenData {
+	/**
+	 * Port to be checked.
+	 * @type {number}
+	 */
+	port: number;
+
+	/**
+	 * Max amount of time in milliseconds to wait.
+	 * @type {number}
+	 */
+	timeout: number;
+	/**
+	 * @optional The amount of time between each check.
+	 * @type {number}
+	 */
+	interval?: number;
+}
+
 /**
  * Wrapper for net module of Node.js.
  */
@@ -1740,6 +1791,13 @@ interface INet {
 	 * @return {Promise<boolean>} true if the port is available.
 	 */
 	isPortAvailable(port: number): Promise<boolean>;
+
+	/**
+	 * Waits for port to be in LISTEN state.
+	 * @param {IWaitForPortListenData} waitForPortListenData Data describing port, timeout and interval.
+	 * @returns {boolean} true in case port is in LISTEN state, false otherwise.
+	 */
+	waitForPortToListen(waitForPortListenData: IWaitForPortListenData): Promise<boolean>;
 }
 
 interface IProcessService {
@@ -1929,6 +1987,12 @@ interface IOsInfo {
 	 * @return {string} A string identifying the operating system bitness.
 	 */
 	arch(): string;
+
+	/**
+	 * Returns a string identifying the operating system platform.
+	 * @return {string} A string identifying the operating system platform.
+	 */
+	platform(): string;
 }
 
 interface IPromiseActions<T> {
