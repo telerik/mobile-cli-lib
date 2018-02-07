@@ -23,6 +23,8 @@ export class DynamicHelpService implements IDynamicHelpService {
 		localVariables["isConsole"] = !isHtml;
 		localVariables["isHtml"] = isHtml;
 		localVariables["formatListOfNames"] = formatListOfNames;
+		localVariables["isJekyll"] = false;
+
 		return localVariables;
 	}
 }
