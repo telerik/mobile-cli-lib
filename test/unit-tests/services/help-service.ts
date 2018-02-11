@@ -4,6 +4,7 @@ import { HelpService } from "../../../services/help-service";
 import { assert } from "chai";
 import { EOL } from "os";
 import { Yok } from '../../../yok';
+import { join } from "path";
 
 interface ITestData {
 	input: string;
@@ -45,6 +46,10 @@ const createTestInjector = (opts?: { isProjectTypeResult: boolean; isPlatformRes
 		getDynamicCommands: (): Promise<string[]> => {
 			return Promise.resolve(<string[]>[]);
 		}
+	});
+
+	injector.register("extensibilityService", {
+		getInstalledExtensionsData: (): IExtensionData[] => []
 	});
 
 	injector.registerCommand("foo", {});
@@ -432,6 +437,71 @@ and another one`
 				await helpService.showCommandLineHelp(commandName);
 				const output = injector.resolve("logger").output;
 				assert.isTrue(output.indexOf("index data is read") >= 0);
+			});
+		});
+
+		describe("extensions tests", () => {
+			const assertData = async (expectedEnumerateFilesInDirectorySyncCalledCounter: number, extensionsData?: IExtensionData[]): Promise<void> => {
+				const injector = createTestInjector({ isProjectTypeResult: false, isPlatformResult: true });
+				const $staticConfig = injector.resolve<Config.IStaticConfig>("staticConfig");
+				$staticConfig.MAN_PAGES_DIR = "man_pages_dir";
+				$staticConfig.HTML_PAGES_DIR = "html_pages_dir";
+				$staticConfig.CLIENT_NAME = "client name";
+				const extensionDocsDir = "extensionDocsDir";
+				let enumerateFilesInDirectorySyncCalledCounter = 0;
+				injector.register("fs", {
+					enumerateFilesInDirectorySync: (path: string) => {
+						enumerateFilesInDirectorySyncCalledCounter++;
+						if (path === extensionDocsDir) {
+							return [join(extensionDocsDir, "foo.md")];
+						}
+
+						return [];
+					},
+					readText: (pathToRead: string) => {
+						return pathToRead === join(extensionDocsDir, "foo.md") ? "bla end" : "";
+					}
+				});
+
+				const $extensibilityService = injector.resolve<IExtensibilityService>("extensibilityService");
+				extensionsData = extensionsData || [];
+				extensionsData.push({
+					extensionName: "extension3",
+					docs: extensionDocsDir,
+					version: "1.2.3",
+					pathToExtension: "extension3path"
+				});
+
+				$extensibilityService.getInstalledExtensionsData = (): IExtensionData[] => extensionsData;
+
+				const helpService = injector.resolve<IHelpService>("helpService");
+				await helpService.showCommandLineHelp("foo");
+				const output = injector.resolve("logger").output;
+				assert.isTrue(output.indexOf("bla end") >= 0);
+
+				assert.equal(enumerateFilesInDirectorySyncCalledCounter, expectedEnumerateFilesInDirectorySyncCalledCounter, "The enumerateFilesInDirectorySync method must be called exactly three times - one for CLI help, one for extension2 and one for extension3");
+			};
+
+			it("help from a single installed extension is successfully loaded", async () => {
+				await assertData(2);
+			});
+
+			it("when multiple extensions are installed, the full ", async () => {
+				const extensionsData = [
+					{
+						extensionName: "extension1",
+						version: "1.2.3",
+						pathToExtension: "extension1path"
+					},
+					{
+						extensionName: "extension2",
+						docs: "extension2docs",
+						version: "1.2.3",
+						pathToExtension: "extension2path"
+					}
+				];
+
+				await assertData(3, extensionsData);
 			});
 		});
 	});
