@@ -10,6 +10,7 @@ export class HelpService implements IHelpService {
 	private static RELATIVE_PATH_TO_STYLES_CSS_REGEX = /@RELATIVE_PATH_TO_STYLES_CSS@/g;
 	private static RELATIVE_PATH_TO_IMAGES_REGEX = /@RELATIVE_PATH_TO_IMAGES@/g;
 	private static RELATIVE_PATH_TO_INDEX_REGEX = /@RELATIVE_PATH_TO_INDEX@/g;
+	private static EXTENSION_NAME_REGEX = /@EXTENSION_NAME@/g;
 	private static MARKDOWN_LINK_REGEX = /\[([\w \-\`\<\>\*\:\\]+?)\]\([\s\S]+?\)/g;
 	private static SPAN_REGEX = /([\s\S]*?)(?:\r?\n)?<span.*?>([\s\S]*?)<\/span>(?:\r?\n)*/g;
 	private static NEW_LINE_REGEX = /<\/?\s*?br\s*?\/?>/g; // <br>, <br > <br/> <br />
@@ -25,6 +26,10 @@ export class HelpService implements IHelpService {
 
 	private get pathToBasicPage(): string {
 		return path.join(this.$staticConfig.HTML_COMMON_HELPERS_DIR, "basic-page.html");
+	}
+
+	private get pathToBasicPageForExtensions(): string {
+		return path.join(this.$staticConfig.HTML_COMMON_HELPERS_DIR, "basic-extensions-page.html");
 	}
 
 	private pathToImages = this.$staticConfig.HTML_CLI_HELPERS_DIR;
@@ -66,6 +71,7 @@ export class HelpService implements IHelpService {
 
 		const installedExtensionsData = this.$extensibilityService.getInstalledExtensionsData();
 
+		const basicHtmlPageForExtensions = this.$fs.readText(this.pathToBasicPageForExtensions);
 		for (const extensionData of installedExtensionsData) {
 			const docsDir = extensionData.docs;
 
@@ -80,7 +86,7 @@ export class HelpService implements IHelpService {
 				this.$fs.ensureDirectoryExists(htmlDirFullPath);
 				const extensionMdFiles = this.$fs.enumerateFilesInDirectorySync(docsDir);
 				try {
-					await Promise.all(_.map(extensionMdFiles, markdownFile => this.createHtmlPage(basicHtmlPage, markdownFile, docsDir, htmlDirFullPath)));
+					await Promise.all(_.map(extensionMdFiles, markdownFile => this.createHtmlPage(basicHtmlPageForExtensions, markdownFile, docsDir, htmlDirFullPath, extensionData.extensionName)));
 				} catch (err) {
 					this.$logger.warn(`Unable to generate html help for extension ${extensionData.extensionName}. Error is: ${err.message}`);
 				}
@@ -120,7 +126,7 @@ export class HelpService implements IHelpService {
 	}
 
 	// This method should return Promise in order to generate all html pages simultaneously.
-	private async createHtmlPage(basicHtmlPage: string, pathToMdFile: string, pathToMdPages: string, pathToHtmlPages: string): Promise<void> {
+	private async createHtmlPage(basicHtmlPage: string, pathToMdFile: string, pathToMdPages: string, pathToHtmlPages: string, extensionName?: string): Promise<void> {
 		const mdFileName = path.basename(pathToMdFile);
 		const htmlFileName = mdFileName.replace(HelpService.MARKDOWN_FILE_EXTENSION, HelpService.HTML_FILE_EXTENSION);
 		this.$logger.trace("Generating '%s' help topic.", htmlFileName);
@@ -139,7 +145,8 @@ export class HelpService implements IHelpService {
 			.replace(HelpService.HTML_COMMAND_HELP_REGEX, htmlText)
 			.replace(HelpService.RELATIVE_PATH_TO_STYLES_CSS_REGEX, path.relative(path.dirname(filePath), this.pathToStylesCss))
 			.replace(HelpService.RELATIVE_PATH_TO_IMAGES_REGEX, path.relative(path.dirname(filePath), this.pathToImages))
-			.replace(HelpService.RELATIVE_PATH_TO_INDEX_REGEX, path.relative(path.dirname(filePath), this.pathToIndexHtml));
+			.replace(HelpService.RELATIVE_PATH_TO_INDEX_REGEX, path.relative(path.dirname(filePath), this.pathToIndexHtml))
+			.replace(HelpService.EXTENSION_NAME_REGEX, extensionName);
 
 		this.$fs.writeFile(filePath, outputHtml);
 		this.$logger.trace("Finished writing file '%s'.", filePath);
@@ -172,7 +179,7 @@ export class HelpService implements IHelpService {
 				const docsDir = extensionData.docs;
 				if (docsDir) {
 					const htmlDirFullPath = path.join(path.dirname(docsDir), "html");
-					pageToOpen = _.find(this.$fs.enumerateFilesInDirectorySync(htmlDirFullPath), file => path.basename(file) === htmlPage);
+					pageToOpen = this.$fs.exists(htmlDirFullPath) && _.find(this.$fs.enumerateFilesInDirectorySync(htmlDirFullPath), file => path.basename(file) === htmlPage);
 
 					if (pageToOpen) {
 						break;
