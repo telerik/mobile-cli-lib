@@ -66,17 +66,17 @@ export class SysInfoBase implements ISysInfo {
 		return this.nodeGypVerCache;
 	}
 
-	private xcodeprojGemLocationCache: string = null;
-	public async getXCodeProjGemLocation(): Promise<string> {
-		if (!this.xcodeprojGemLocationCache) {
+	private xcodeprojLocationCache: string = null;
+	public async getXCodeProjLocation(): Promise<string> {
+		if (!this.xcodeprojLocationCache) {
 			try {
-				this.xcodeprojGemLocationCache = this.$hostInfo.isDarwin ? await this.exec("gem which xcodeproj") : null;
+				this.xcodeprojLocationCache = this.$hostInfo.isDarwin ? await this.exec("which xcodeproj") : null;
 			} catch (e) {
-				this.$logger.trace(`Command "gem which xcodeproj" failed with: ${e}`);
-				this.xcodeprojGemLocationCache = null;
+				this.$logger.trace(`Command "which xcodeproj" failed with: ${e}`);
+				this.xcodeprojLocationCache = null;
 			}
 		}
-		return this.xcodeprojGemLocationCache;
+		return this.xcodeprojLocationCache;
 	}
 
 	private itunesInstalledCache: boolean = null;
@@ -143,7 +143,7 @@ export class SysInfoBase implements ISysInfo {
 
 			res.nodeGypVer = await this.getNodeGypVersion();
 			res.xcodeVer = await this.getXCodeVersion();
-			res.xcodeprojGemLocation = await this.getXCodeProjGemLocation();
+			res.xcodeprojLocation = await this.getXCodeProjLocation();
 			res.itunesInstalled = this.getITunesInstalled();
 
 			res.cocoapodVer = await this.getCocoapodVersion();
