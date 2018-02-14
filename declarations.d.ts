@@ -1715,7 +1715,7 @@ interface ILiveSyncProvider {
 	 */
 	canExecuteFastSync(filePath: string, projectData?: any, platform?: string): boolean;
 
-	transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string, isFullSync: boolean): Promise<void>;
+	transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string, isFullSync: boolean): Promise<Mobile.ILocalToDevicePathData[]>;
 
 	/**
 	 * Returns a dictionary that map platform to platform specific livesync service.

@@ -23,7 +23,7 @@ export abstract class AppBuilderLiveSyncProviderBase implements ILiveSyncProvide
 		return false;
 	}
 
-	public transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string, isFullSync: boolean): Promise<void> {
+	public transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string, isFullSync: boolean): Promise<Mobile.ILocalToDevicePathData[]> {
 		return deviceAppData.device.fileSystem.transferFiles(deviceAppData, localToDevicePaths);
 	}
 

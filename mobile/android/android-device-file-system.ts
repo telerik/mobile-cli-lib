@@ -52,12 +52,14 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		return this.adb.executeCommand(["push", localFilePath, deviceFilePath]);
 	}
 
-	public async transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
+	public async transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<Mobile.ILocalToDevicePathData[]> {
 		const directoriesToChmod: string[] = [];
+		const tranferredFiles: Mobile.ILocalToDevicePathData[] = [];
 		const action = async (localToDevicePathData: Mobile.ILocalToDevicePathData) => {
 			const fstat = this.$fs.getFsStats(localToDevicePathData.getLocalPath());
 			if (fstat.isFile()) {
 				const devicePath = localToDevicePathData.getDevicePath();
+				tranferredFiles.push(localToDevicePathData);
 				await this.adb.executeCommand(["push", localToDevicePathData.getLocalPath(), devicePath]);
 				await this.adb.executeShellCommand(["chmod", "0777", path.dirname(devicePath)]);
 			} else if (fstat.isDirectory()) {
@@ -77,6 +79,8 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		if (! await deviceHashService.updateHashes(localToDevicePaths)) {
 			this.$logger.trace("Unable to find hash file on device. The next livesync command will create it.");
 		}
+
+		return tranferredFiles;
 	}
 
 	public async transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): Promise<Mobile.ILocalToDevicePathData[]> {
