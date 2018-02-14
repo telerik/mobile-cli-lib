@@ -48,6 +48,10 @@ const createTestInjector = (opts?: { isProjectTypeResult: boolean; isPlatformRes
 		}
 	});
 
+	injector.register("fs", {
+		exists: (filePath: string) => false
+	});
+
 	injector.register("extensibilityService", {
 		getInstalledExtensionsData: (): IExtensionData[] => []
 	});
@@ -58,6 +62,8 @@ const createTestInjector = (opts?: { isProjectTypeResult: boolean; isPlatformRes
 };
 
 describe("helpService", () => {
+	const blaEnd = "bla end";
+
 	describe("showCommandLineHelp", () => {
 		const testData: ITestData[] = [
 			{
@@ -318,7 +324,7 @@ and another one`
 			assert.isTrue(output.indexOf("bla isLinux and myLocalVar end") < 0);
 			assert.isTrue(output.indexOf("isLinux") < 0);
 			assert.isTrue(output.indexOf("myLocalVar") < 0);
-			assert.isTrue(output.indexOf("bla end") >= 0);
+			assert.isTrue(output.indexOf(blaEnd) >= 0);
 		});
 
 		it("process correctly multiple if statements with local variables (isProjectType is false, isPlatform is true)", async () => {
@@ -368,7 +374,7 @@ and another one`
 			assert.isTrue(output.indexOf("bla command1 and command2 end") < 0);
 			assert.isTrue(output.indexOf("command1") < 0);
 			assert.isTrue(output.indexOf("command2") < 0);
-			assert.isTrue(output.indexOf("bla end") >= 0);
+			assert.isTrue(output.indexOf(blaEnd) >= 0);
 		});
 
 		it("process correctly multiple if statements with dynamicCalls (different result)", async () => {
@@ -459,8 +465,9 @@ and another one`
 						return [];
 					},
 					readText: (pathToRead: string) => {
-						return pathToRead === join(extensionDocsDir, "foo.md") ? "bla end" : "";
-					}
+						return pathToRead === join(extensionDocsDir, "foo.md") ? blaEnd : "";
+					},
+					exists: (filePath: string) => true
 				});
 
 				const $extensibilityService = injector.resolve<IExtensibilityService>("extensibilityService");
@@ -477,16 +484,17 @@ and another one`
 				const helpService = injector.resolve<IHelpService>("helpService");
 				await helpService.showCommandLineHelp("foo");
 				const output = injector.resolve("logger").output;
-				assert.isTrue(output.indexOf("bla end") >= 0);
+				assert.isTrue(output.indexOf(blaEnd) >= 0);
 
-				assert.equal(enumerateFilesInDirectorySyncCalledCounter, expectedEnumerateFilesInDirectorySyncCalledCounter, "The enumerateFilesInDirectorySync method must be called exactly three times - one for CLI help, one for extension2 and one for extension3");
+				assert.equal(enumerateFilesInDirectorySyncCalledCounter, expectedEnumerateFilesInDirectorySyncCalledCounter,
+					`The enumerateFilesInDirectorySync method must be called exactly ${enumerateFilesInDirectorySyncCalledCounter} times.`);
 			};
 
 			it("help from a single installed extension is successfully loaded", async () => {
 				await assertData(2);
 			});
 
-			it("when multiple extensions are installed, the full ", async () => {
+			it("when multiple extensions are installed, the correct help content is shown", async () => {
 				const extensionsData = [
 					{
 						extensionName: "extension1",
