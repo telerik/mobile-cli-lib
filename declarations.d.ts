@@ -1153,7 +1153,7 @@ interface ISysInfoData extends IPlatform {
 	/** pod version string, as returned by `pod --version` **/
 	cocoapodVer: string;
 	/** xcodeproj gem location, as returned by `which gem xcodeproj` **/
-	xcodeprojGemLocation: string;
+	xcodeprojLocation: string;
 }
 
 interface ISysInfo {
@@ -1175,7 +1175,7 @@ interface ISysInfo {
 	getNodeGypVersion(): Promise<string>;
 
 	/** Returns XCode project gem location. **/
-	getXCodeProjGemLocation(): Promise<string>;
+	getXCodeProjLocation(): Promise<string>;
 
 	/** Returns if ITunes is installed or not. **/
 	getITunesInstalled(): boolean;
