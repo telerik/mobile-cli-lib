@@ -2,6 +2,14 @@ import * as path from "path";
 import { EOL } from "os";
 import marked = require("marked");
 
+interface IHtmlPageGenerationData {
+	basicHtmlPage: string;
+	pathToMdFile: string;
+	pathToMdPages: string;
+	pathToHtmlPages: string;
+	extensionName?: string;
+}
+
 export class HelpService implements IHelpService {
 	private static MARKDOWN_FILE_EXTENSION = ".md";
 	private static HTML_FILE_EXTENSION = ".html";
@@ -10,6 +18,7 @@ export class HelpService implements IHelpService {
 	private static RELATIVE_PATH_TO_STYLES_CSS_REGEX = /@RELATIVE_PATH_TO_STYLES_CSS@/g;
 	private static RELATIVE_PATH_TO_IMAGES_REGEX = /@RELATIVE_PATH_TO_IMAGES@/g;
 	private static RELATIVE_PATH_TO_INDEX_REGEX = /@RELATIVE_PATH_TO_INDEX@/g;
+	private static EXTENSION_NAME_REGEX = /@EXTENSION_NAME@/g;
 	private static MARKDOWN_LINK_REGEX = /\[([\w \-\`\<\>\*\:\\]+?)\]\([\s\S]+?\)/g;
 	private static SPAN_REGEX = /([\s\S]*?)(?:\r?\n)?<span.*?>([\s\S]*?)<\/span>(?:\r?\n)*/g;
 	private static NEW_LINE_REGEX = /<\/?\s*?br\s*?\/?>/g; // <br>, <br > <br/> <br />
@@ -27,6 +36,10 @@ export class HelpService implements IHelpService {
 		return path.join(this.$staticConfig.HTML_COMMON_HELPERS_DIR, "basic-page.html");
 	}
 
+	private get pathToBasicPageForExtensions(): string {
+		return path.join(this.$staticConfig.HTML_COMMON_HELPERS_DIR, "basic-extensions-page.html");
+	}
+
 	private pathToImages = this.$staticConfig.HTML_CLI_HELPERS_DIR;
 	private get pathToIndexHtml(): string {
 		return path.join(this.$staticConfig.HTML_PAGES_DIR, "index.html");
@@ -37,6 +50,7 @@ export class HelpService implements IHelpService {
 		private $errors: IErrors,
 		private $fs: IFileSystem,
 		private $staticConfig: Config.IStaticConfig,
+		private $extensibilityService: IExtensibilityService,
 		private $microTemplateService: IMicroTemplateService,
 		private $opener: IOpener) {
 		this.pathToHtmlPages = this.$staticConfig.HTML_PAGES_DIR;
@@ -61,7 +75,53 @@ export class HelpService implements IHelpService {
 	public async generateHtmlPages(): Promise<void> {
 		const mdFiles = this.$fs.enumerateFilesInDirectorySync(this.pathToManPages);
 		const basicHtmlPage = this.$fs.readText(this.pathToBasicPage);
-		await Promise.all(_.map(mdFiles, markdownFile => this.createHtmlPage(basicHtmlPage, markdownFile)));
+		await Promise.all(_.map(mdFiles, markdownFile => {
+			const htmlPageGenerationData: IHtmlPageGenerationData = {
+				basicHtmlPage,
+				pathToMdFile: markdownFile,
+				pathToMdPages: this.pathToManPages,
+				pathToHtmlPages: this.pathToHtmlPages
+			};
+
+			return this.createHtmlPage(htmlPageGenerationData);
+		}));
+
+		const installedExtensionsData = this.$extensibilityService.getInstalledExtensionsData();
+
+		const basicHtmlPageForExtensions = this.$fs.readText(this.pathToBasicPageForExtensions);
+		for (const extensionData of installedExtensionsData) {
+			const docsDir = extensionData.docs;
+
+			if (docsDir) {
+				this.$logger.trace(`Start generation of html help content for extension ${extensionData.extensionName}`);
+				if (!this.$fs.exists(docsDir)) {
+					this.$logger.warn(`Unable to generate html help pages for extension ${extensionData.extensionName} as the docs directory ${docsDir} does not exist.`);
+					continue;
+				}
+
+				const htmlDirFullPath = HelpService.getHtmlDirFullPath(docsDir);
+				this.$fs.ensureDirectoryExists(htmlDirFullPath);
+				const extensionMdFiles = this.$fs.enumerateFilesInDirectorySync(docsDir);
+				try {
+					await Promise.all(_.map(extensionMdFiles, markdownFile => {
+						const htmlPageGenerationData: IHtmlPageGenerationData = {
+							basicHtmlPage: basicHtmlPageForExtensions,
+							pathToMdFile: markdownFile,
+							pathToMdPages: docsDir,
+							pathToHtmlPages: htmlDirFullPath,
+							extensionName: extensionData.extensionName
+						};
+
+						return this.createHtmlPage(htmlPageGenerationData);
+					}));
+				} catch (err) {
+					this.$logger.warn(`Unable to generate html help for extension ${extensionData.extensionName}. Error is: ${err.message}`);
+				}
+
+				this.$logger.trace(`Finished generation of html help content for extension ${extensionData.extensionName}`);
+			}
+		}
+
 		this.$logger.trace("Finished generating HTML files.");
 	}
 
@@ -93,7 +153,8 @@ export class HelpService implements IHelpService {
 	}
 
 	// This method should return Promise in order to generate all html pages simultaneously.
-	private async createHtmlPage(basicHtmlPage: string, pathToMdFile: string): Promise<void> {
+	private async createHtmlPage(htmlPageGenerationData: IHtmlPageGenerationData): Promise<void> {
+		const { basicHtmlPage, pathToMdFile, pathToMdPages, pathToHtmlPages, extensionName } = htmlPageGenerationData;
 		const mdFileName = path.basename(pathToMdFile);
 		const htmlFileName = mdFileName.replace(HelpService.MARKDOWN_FILE_EXTENSION, HelpService.HTML_FILE_EXTENSION);
 		this.$logger.trace("Generating '%s' help topic.", htmlFileName);
@@ -103,16 +164,20 @@ export class HelpService implements IHelpService {
 		const htmlText = marked(outputText);
 
 		const filePath = pathToMdFile
-			.replace(path.basename(this.pathToManPages), path.basename(this.pathToHtmlPages))
+			.replace(path.basename(pathToMdPages), path.basename(pathToHtmlPages))
 			.replace(mdFileName, htmlFileName);
 		this.$logger.trace("HTML file path for '%s' man page is: '%s'.", mdFileName, filePath);
 
-		const outputHtml = basicHtmlPage
+		let outputHtml = basicHtmlPage
 			.replace(HelpService.MAN_PAGE_NAME_REGEX, mdFileName.replace(HelpService.MARKDOWN_FILE_EXTENSION, ""))
 			.replace(HelpService.HTML_COMMAND_HELP_REGEX, htmlText)
 			.replace(HelpService.RELATIVE_PATH_TO_STYLES_CSS_REGEX, path.relative(path.dirname(filePath), this.pathToStylesCss))
 			.replace(HelpService.RELATIVE_PATH_TO_IMAGES_REGEX, path.relative(path.dirname(filePath), this.pathToImages))
 			.replace(HelpService.RELATIVE_PATH_TO_INDEX_REGEX, path.relative(path.dirname(filePath), this.pathToIndexHtml));
+
+		if (extensionName) {
+			outputHtml = outputHtml.replace(HelpService.EXTENSION_NAME_REGEX, extensionName);
+		}
 
 		this.$fs.writeFile(filePath, outputHtml);
 		this.$logger.trace("Finished writing file '%s'.", filePath);
@@ -134,10 +199,37 @@ export class HelpService implements IHelpService {
 		return (commandName && commandName.replace(/\|/g, "-")) || "index";
 	}
 
+	private static getHtmlDirFullPath(docsDir: string): string {
+		return path.join(path.dirname(docsDir), "html");
+	}
+
+	private getHelpFile(searchedFileName: string, dirToCheck: string, getFullPathAction?: (docsDir: string) => string): string {
+		const fileList = this.$fs.enumerateFilesInDirectorySync(dirToCheck);
+		let fileToOpen = _.find(fileList, file => path.basename(file) === searchedFileName);
+		if (!fileToOpen) {
+			fileToOpen = this.getHelpFileFromExtensions(searchedFileName, getFullPathAction);
+		}
+
+		return fileToOpen;
+	}
+
+	private getHelpFileFromExtensions(searchedFileName: string, getFullPathAction?: (docsDir: string) => string): string {
+		const installedExtensionsData = this.$extensibilityService.getInstalledExtensionsData();
+
+		for (const extensionData of installedExtensionsData) {
+			const docsDir = extensionData.docs;
+			if (docsDir) {
+				const fullPath = getFullPathAction ? getFullPathAction(docsDir) : docsDir;
+				const fileToOpen = this.$fs.exists(fullPath) && _.find(this.$fs.enumerateFilesInDirectorySync(fullPath), file => path.basename(file) === searchedFileName);
+				if (fileToOpen) {
+					return fileToOpen;
+				}
+			}
+		}
+	}
+
 	private tryOpeningSelectedPage(htmlPage: string): boolean {
-		const fileList = this.$fs.enumerateFilesInDirectorySync(this.pathToHtmlPages);
-		this.$logger.trace("File list: " + fileList);
-		const pageToOpen = _.find(fileList, file => path.basename(file) === htmlPage);
+		const pageToOpen = this.getHelpFile(htmlPage, this.pathToHtmlPages, HelpService.getHtmlDirFullPath);
 
 		if (pageToOpen) {
 			this.$logger.trace("Found page to open: '%s'", pageToOpen);
@@ -153,7 +245,8 @@ export class HelpService implements IHelpService {
 		const mdFileName = await this.convertCommandNameToFileName(commandName) + HelpService.MARKDOWN_FILE_EXTENSION;
 		this.$logger.trace("Reading help for command '%s'. FileName is '%s'.", commandName, mdFileName);
 
-		const markdownFile = _.find(this.$fs.enumerateFilesInDirectorySync(this.pathToManPages), file => path.basename(file) === mdFileName);
+		const markdownFile = this.getHelpFile(mdFileName, this.pathToManPages);
+
 		if (markdownFile) {
 			return this.$fs.readText(markdownFile);
 		}
