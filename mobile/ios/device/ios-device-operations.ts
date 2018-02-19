@@ -160,12 +160,12 @@ export class IOSDeviceOperations extends EventEmitter implements IIOSDeviceOpera
 		return this.getMultipleResults<IOSDeviceLib.IDeviceResponse>(() => this.deviceLib.stop(stopArray), errorHandler);
 	}
 
-	public dispose(signal?: string): void {
+	public dispose(disposeOptions?: IForceOption): void {
 		// We need to check if we should dispose the device lib.
 		// For example we do not want to dispose it when we start printing the device logs.
-		if (this.shouldDispose && this.deviceLib) {
+		if ((disposeOptions && disposeOptions.force) || (this.shouldDispose && this.deviceLib)) {
 			this.deviceLib.removeAllListeners();
-			this.deviceLib.dispose(signal);
+			this.deviceLib.dispose();
 			this.deviceLib = null;
 			this.$logger.trace("IOSDeviceOperations disposed.");
 		}
