@@ -163,7 +163,7 @@ export class IOSDeviceOperations extends EventEmitter implements IIOSDeviceOpera
 	public dispose(disposeOptions?: IForceOption): void {
 		// We need to check if we should dispose the device lib.
 		// For example we do not want to dispose it when we start printing the device logs.
-		if ((disposeOptions && disposeOptions.force) || (this.shouldDispose && this.deviceLib)) {
+		if (this.deviceLib && (disposeOptions && disposeOptions.force || this.shouldDispose)) {
 			this.deviceLib.removeAllListeners();
 			this.deviceLib.dispose();
 			this.deviceLib = null;
