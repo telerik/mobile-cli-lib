@@ -365,13 +365,10 @@ export function decorateMethod(before: (method1: any, self1: any, args1: any[]) 
 			if (newMethods && newMethods.length) {
 				const replacementMethods = _.filter(newMethods, f => _.isFunction(f));
 				if (replacementMethods.length > 0) {
-					if (replacementMethods.length > 1) {
-						const $logger = $injector.resolve<ILogger>("logger");
-						$logger.warn(`Multiple methods detected which try to replace ${sink.name}. Will execute only the first of them.`);
-					}
 
 					hasBeenReplaced = true;
-					result = _.head(replacementMethods)(args, sink.bind(this));
+					const chainedReplacementMethod = _.reduce(replacementMethods, (prev, next) => next.bind(next, args, prev), sink.bind(this));
+					result = chainedReplacementMethod();
 				}
 			}
 
