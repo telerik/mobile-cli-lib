@@ -12,7 +12,7 @@ function createTestInjector(config: { xcodeSelectStdout: string, isDarwin: boole
 			stdout: config.xcodeSelectStdout
 		})
 	});
-	testInjector.register("sysInfoBase", {
+	testInjector.register("sysInfo", {
 		getSysInfo: (pathToPackageJson: string, androidToolsInfo?: { pathToAdb: string, pathToAndroid: string }) => {
 			return Promise.resolve({
 				xcodeVer: config.xcodeVersionOutput

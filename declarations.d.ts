@@ -1111,80 +1111,8 @@ interface IDeviceLiveSyncService extends IDeviceLiveSyncServiceBase {
 	afterInstallApplicationAction?(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<boolean>;
 }
 
-interface ISysInfoData extends IPlatform {
-	/** name and version of the CLI app itself */
-	procInfo: string;
-
-	// os stuff
-	/** Full os name, like `uname -a` on unix, registry query on win */
-	os: string;
-	/** .net version, applicable to windows only */
-	dotNetVer: string;
-	/** The command shell in use, usually bash or cmd */
-	shell: string;
-
-	// node stuff
-	/** node.js version, returned by `process.version` */
-	nodeVer: string;
-	/** npm version, returned by `npm -v` */
-	npmVer: string;
-	/** Process architecture, returned by `process.arch` */
-	procArch: string;
-	/** node-gyp version as returned by `node-gyp -v`*/
-	nodeGypVer: string;
-
-	// dependencies
-	/** Xcode version string as returned by `xcodebuild -version`. Valid only on Mac */
-	xcodeVer: string;
-	/** Version string of adb, as returned by `adb version` */
-	adbVer: string;
-	/** Whether iTunes is installed on the machine */
-	itunesInstalled: boolean;
-	/** Whether `emulator` executable can be run */
-	emulatorInstalled: boolean;
-	/** mono version, relevant on Mac only **/
-	monoVer: string;
-	/** git version string, as returned by `git --version` **/
-	gitVer: string;
-	/** gradle version string as returned by `gradle -v` **/
-	gradleVer: string;
-	/** javac version string as returned by `javac -version` **/
-	javacVersion: string;
-	/** pod version string, as returned by `pod --version` **/
-	cocoapodVer: string;
-	/** xcodeproj gem location, as returned by `which gem xcodeproj` **/
-	xcodeprojLocation: string;
-}
-
 interface ISysInfo {
-	/**
-	 * Returns information for the current system.
-	 * @param {string} pathToPackageJson Path to package.json of the CLI.
-	 * @param {any} androidToolsInfo Defines paths to adb and android executables.
-	 * @return {Promise<ISysInfoData>} Object containing information for current system.
-	 */
-	getSysInfo(pathToPackageJson: string, androidToolsInfo?: { pathToAdb: string }): Promise<ISysInfoData>;
-
-	/** Returns Java compiler version. **/
-	getJavaCompilerVersion(): Promise<string>;
-
-	/** Returns XCode version. **/
-	getXCodeVersion(): Promise<string>;
-
-	/** Returns node-gyp version. **/
-	getNodeGypVersion(): Promise<string>;
-
-	/** Returns XCode project gem location. **/
-	getXCodeProjLocation(): Promise<string>;
-
-	/** Returns if ITunes is installed or not. **/
-	getITunesInstalled(): boolean;
-
-	/** Returns Cocoapod version. **/
-	getCocoapodVersion(): Promise<string>;
-
-	/** Returns npm version. */
-	getNpmVersion(): Promise<string>;
+	getSysInfo(config?: NativeScriptDoctor.ISysInfoConfig): Promise<NativeScriptDoctor.ISysInfoData>;
 }
 
 interface IHostInfo {
@@ -1463,47 +1391,6 @@ interface IServiceContractGenerator {
 }
 
 /**
- * Describes Registry values returned from winreg
- */
-interface IWinRegResult {
-	/**
-	 * The hostname, if it has been set in the options.
-	 */
-	host: string;
-
-	/**
-	 * The hive id, as specified in the options
-	 */
-	hive: string;
-	/**
-	 * The key, as specified in the options
-	 */
-	key: string;
-
-	/**
-	 * The name of the registry value
-	 */
-	name: string;
-
-	/**
-	 * One of the types:
-	 * 	REG_SZ a string value
-	 * 	REG_MULTI_SZ a multiline string value
-	 * 	REG_EXPAND_SZ an expandable string value
-	 * 	REG_DWORD a double word value (32 bit integer)
-	 * 	REG_QWORD a quad word value (64 bit integer)
-	 * 	REG_BINARY a binary value
-	 * 	REG_NONE a value of unknown type
-	 */
-	type: string;
-
-	/**
-	 * A string containing the value
-	 */
-	value: string;
-}
-
-/**
  * Describes single registry available for search.
  */
 interface IHiveId {
@@ -1541,26 +1428,6 @@ interface IHiveIds {
 	 * HKEY_USERS
 	 */
 	HKU: IHiveId;
-}
-
-/**
- * Defines reading values from registry. Wrapper for node-winreg module.s
- */
-interface IWinReg {
-	/**
-	 * Gets specified value from the registry.
-	 * The following options are processed by the Winreg constructor:
-	 * @param {string} valueName Value that has to be checked in the registry.
-	 * @param {IHiveId} hive The optional hive id, the default is HKLM.
-	 * @param {string} key The optional key, the default is the root key
-	 * @param {string} host The optional hostname, must start with the '\\' sequence
-	 */
-	getRegistryValue(valueName: string, hive?: IHiveId, key?: string, host?: string): Promise<IWinRegResult>;
-
-	/**
-	 * Gets object containing available registries for search.
-	 */
-	registryKeys: IHiveIds;
 }
 
 /**
