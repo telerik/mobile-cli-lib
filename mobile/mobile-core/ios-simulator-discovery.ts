@@ -2,10 +2,9 @@ import { DeviceDiscovery } from "./device-discovery";
 import { IOSSimulator } from "./../ios/simulator/ios-simulator-device";
 
 export class IOSSimulatorDiscovery extends DeviceDiscovery {
-	private cachedSimulator: Mobile.IiSimDevice;
+	private cachedSimulators: Mobile.IiSimDevice[] = [];
 
 	constructor(private $injector: IInjector,
-		private $childProcess: IChildProcess,
 		private $iOSSimResolver: Mobile.IiOSSimResolver,
 		private $mobileHelper: Mobile.IMobileHelper,
 		private $hostInfo: IHostInfo) {
@@ -24,23 +23,17 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 
 	public async checkForDevices(resolve?: (value?: void | PromiseLike<void>) => void, reject?: (reason?: any) => void): Promise<void> {
 		if (this.$hostInfo.isDarwin) {
-			let currentSimulator: any = null;
-			if (await this.isSimulatorRunning()) {
-				currentSimulator = await this.$iOSSimResolver.iOSSim.getRunningSimulator();
-			}
+			const currentSimulators: Mobile.IiSimDevice[] = await this.$iOSSimResolver.iOSSim.getRunningSimulators();
 
-			if (currentSimulator) {
-				if (!this.cachedSimulator) {
-					this.createAndAddDevice(currentSimulator);
-				} else if (this.cachedSimulator.id !== currentSimulator.id) {
-					this.removeDevice(this.cachedSimulator.id);
-					this.createAndAddDevice(currentSimulator);
-				}
-			} else if (this.cachedSimulator) {
-				// In case there's no running simulator, but it's been running before, we should report it as removed.
-				this.removeDevice(this.cachedSimulator.id);
-				this.cachedSimulator = null;
-			}
+			// Remove old simulators
+			_(this.cachedSimulators)
+				.reject(s => _.find(currentSimulators, simulator => simulator && s && simulator.id === s.id && simulator.state === s.state))
+				.each(s => this.deleteAndRemoveDevice(s));
+
+			// Add new simulators
+			_(currentSimulators)
+				.reject(s => _.find(this.cachedSimulators, simulator => simulator && s && simulator.id === s.id && simulator.state === s.state))
+				.each(s => this.createAndAddDevice(s));
 		}
 
 		if (resolve) {
@@ -48,18 +41,14 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 		}
 	}
 
-	private async isSimulatorRunning(): Promise<boolean> {
-		try {
-			const output = await this.$childProcess.exec("ps cax | grep launchd_sim");
-			return output.indexOf('launchd_sim') !== -1;
-		} catch (e) {
-			return false;
-		}
+	private createAndAddDevice(simulator: Mobile.IiSimDevice): void {
+		this.cachedSimulators.push(_.cloneDeep(simulator));
+		this.addDevice(this.$injector.resolve(IOSSimulator, { simulator: simulator }));
 	}
 
-	private createAndAddDevice(simulator: Mobile.IiSimDevice): void {
-		this.cachedSimulator = _.cloneDeep(simulator);
-		this.addDevice(this.$injector.resolve(IOSSimulator, { simulator: this.cachedSimulator }));
+	private deleteAndRemoveDevice(simulator: Mobile.IiSimDevice): void {
+		_.remove(this.cachedSimulators, s => s && s.id === simulator.id);
+		this.removeDevice(simulator.id);
 	}
 }
 

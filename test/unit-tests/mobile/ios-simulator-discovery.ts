@@ -5,18 +5,14 @@ import { assert } from "chai";
 import { DeviceDiscoveryEventNames } from "../../../constants";
 import { DevicePlatformsConstants } from "../../../mobile/device-platforms-constants";
 
-let currentlyRunningSimulator: any;
-let isCurrentlyRunning: boolean;
+let currentlyRunningSimulators: Mobile.IiSimDevice[];
 
 function createTestInjector(): IInjector {
 	const injector = new Yok();
-	injector.register("childProcess", {
-		exec: (command: string) => Promise.resolve(isCurrentlyRunning ? 'launchd_sim' : '')
-	});
 	injector.register("injector", injector);
 	injector.register("iOSSimResolver", {
 		iOSSim: {
-			getRunningSimulator: async () => currentlyRunningSimulator
+			getRunningSimulators: async () => currentlyRunningSimulators
 		}
 	});
 	injector.register("hostInfo", {
@@ -38,6 +34,21 @@ function createTestInjector(): IInjector {
 	return injector;
 }
 
+function getDeviceInfo(simulator: Mobile.IiSimDevice): Mobile.IDeviceInfo {
+	return {
+		identifier: simulator.id,
+		displayName: simulator.name,
+		model: 'c',
+		version: simulator.runtimeVersion,
+		vendor: 'Apple',
+		platform: 'iOS',
+		status: 'Connected',
+		errorHelp: null,
+		isTablet: false,
+		type: 'Emulator'
+	};
+}
+
 describe("ios-simulator-discovery", () => {
 	let testInjector: IInjector;
 	let iOSSimulatorDiscovery: Mobile.IDeviceDiscovery;
@@ -46,9 +57,7 @@ describe("ios-simulator-discovery", () => {
 
 	const detectNewSimulatorAttached = async (runningSimulator: any): Promise<Mobile.IiOSSimulator> => {
 		return new Promise<Mobile.IiOSSimulator>((resolve, reject) => {
-
-			isCurrentlyRunning = true;
-			currentlyRunningSimulator = _.cloneDeep(runningSimulator);
+			currentlyRunningSimulators.push(_.cloneDeep(runningSimulator));
 			iOSSimulatorDiscovery.once(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
 				resolve(device);
 			});
@@ -57,9 +66,8 @@ describe("ios-simulator-discovery", () => {
 		});
 	};
 
-	const detectSimulatorDetached = async (): Promise<Mobile.IiOSSimulator> => {
-		isCurrentlyRunning = false;
-		currentlyRunningSimulator = null;
+	const detectSimulatorDetached = async (simulatorId: string): Promise<Mobile.IiOSSimulator> => {
+		_.remove(currentlyRunningSimulators, simulator => simulator.id === simulatorId);
 		return new Promise<Mobile.IDevice>((resolve, reject) => {
 			iOSSimulatorDiscovery.once(DeviceDiscoveryEventNames.DEVICE_LOST, (device: Mobile.IDevice) => {
 				resolve(device);
@@ -70,7 +78,8 @@ describe("ios-simulator-discovery", () => {
 		});
 	};
 
-	const detectSimulatorChanged = async (newId: string): Promise<any> => {
+	const detectSimulatorChanged = async (oldId: string, newId: string): Promise<any> => {
+		const currentlyRunningSimulator = _.find(currentlyRunningSimulators, simulator => simulator.id === oldId);
 		currentlyRunningSimulator.id = newId;
 		let lostDevicePromise: Promise<Mobile.IDevice>;
 		let foundDevicePromise: Promise<Mobile.IDevice>;
@@ -91,8 +100,7 @@ describe("ios-simulator-discovery", () => {
 	};
 
 	beforeEach(() => {
-		isCurrentlyRunning = false;
-		currentlyRunningSimulator = null;
+		currentlyRunningSimulators = [];
 		testInjector = createTestInjector();
 		iOSSimulatorDiscovery = testInjector.resolve("iOSSimulatorDiscovery");
 		expectedDeviceInfo = {
@@ -124,7 +132,7 @@ describe("ios-simulator-discovery", () => {
 	it("raises deviceLost when device is detached", async () => {
 		const device = await detectNewSimulatorAttached(defaultRunningSimulator);
 		assert.deepEqual(device.deviceInfo, expectedDeviceInfo);
-		const lostDevice = await detectSimulatorDetached();
+		const lostDevice = await detectSimulatorDetached(device.deviceInfo.identifier);
 		assert.deepEqual(lostDevice, device);
 	});
 
@@ -133,7 +141,7 @@ describe("ios-simulator-discovery", () => {
 			newId = "newId";
 		assert.deepEqual(device.deviceInfo, expectedDeviceInfo);
 
-		const devices = await detectSimulatorChanged(newId);
+		const devices = await detectSimulatorChanged(device.deviceInfo.identifier, newId);
 		assert.deepEqual(devices.deviceLost, device);
 		expectedDeviceInfo.identifier = newId;
 		assert.deepEqual(devices.deviceFound.deviceInfo, expectedDeviceInfo);
@@ -142,7 +150,7 @@ describe("ios-simulator-discovery", () => {
 	it("raises events in correct order when simulator is started, closed and started again", async () => {
 		let device = await detectNewSimulatorAttached(defaultRunningSimulator);
 		assert.deepEqual(device.deviceInfo, expectedDeviceInfo);
-		const lostDevice = await detectSimulatorDetached();
+		const lostDevice = await detectSimulatorDetached(device.deviceInfo.identifier);
 		assert.deepEqual(lostDevice, device);
 
 		device = await detectNewSimulatorAttached(defaultRunningSimulator);
@@ -160,37 +168,34 @@ describe("ios-simulator-discovery", () => {
 		await iOSSimulatorDiscovery.startLookingForDevices();
 	});
 
-	it("does not detect devices and does not throw when getting running iOS Simulator throws", async () => {
-		testInjector.resolve("childProcess").exec = async (command: string) => {
-			throw new Error("Cannot find iOS Devices.");
-		};
-
-		isCurrentlyRunning = true;
-
-		iOSSimulatorDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
-			throw new Error("Device found should not be raised when getting running iOS Simulator fails.");
-		});
-
-		await iOSSimulatorDiscovery.startLookingForDevices();
-	});
-
 	it("does not detect iOS Simulator when not running on OS X", async () => {
 		testInjector.resolve("hostInfo").isDarwin = false;
-		isCurrentlyRunning = true;
-
 		iOSSimulatorDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
 			throw new Error("Device found should not be raised when OS is not OS X.");
 		});
-
 		await iOSSimulatorDiscovery.startLookingForDevices();
 	});
 
 	it("checkForDevices return future", async () => {
 		testInjector.resolve("hostInfo").isDarwin = false;
-		isCurrentlyRunning = true;
 		iOSSimulatorDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
 			throw new Error("Device found should not be raised when OS is not OS X.");
 		});
 		await iOSSimulatorDiscovery.checkForDevices();
+	});
+
+	it('find correctly two simulators', async () => {
+		const firstSimulator = await detectNewSimulatorAttached(defaultRunningSimulator);
+		assert.deepEqual(firstSimulator.deviceInfo, expectedDeviceInfo);
+
+		const secondRunningSimulator = {
+			id: 'secondSimulator',
+			name: 'secondName',
+			fullId: 'd.e.c',
+			runtimeVersion: '9.2'
+		};
+
+		const secondSimulator = await detectNewSimulatorAttached(secondRunningSimulator);
+		assert.deepEqual(secondSimulator.deviceInfo, getDeviceInfo(secondRunningSimulator));
 	});
 });
