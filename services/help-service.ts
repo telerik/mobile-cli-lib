@@ -1,6 +1,7 @@
 import * as path from "path";
 import { EOL } from "os";
 import marked = require("marked");
+import { CommandsDelimiters } from "../constants";
 
 interface IHtmlPageGenerationData {
 	basicHtmlPage: string;
@@ -57,8 +58,9 @@ export class HelpService implements IHelpService {
 		this.pathToManPages = this.$staticConfig.MAN_PAGES_DIR;
 	}
 
-	public async openHelpForCommandInBrowser(commandName: string): Promise<void> {
-		const htmlPage = await this.convertCommandNameToFileName(commandName) + HelpService.HTML_FILE_EXTENSION;
+	public async openHelpForCommandInBrowser(commandData: ICommandData): Promise<void> {
+		const { commandName } = commandData;
+		const htmlPage = await this.convertCommandNameToFileName(commandData) + HelpService.HTML_FILE_EXTENSION;
 		this.$logger.trace("Opening help for command '%s'. FileName is '%s'.", commandName, htmlPage);
 
 		this.$fs.ensureDirectoryExists(this.pathToHtmlPages);
@@ -125,8 +127,8 @@ export class HelpService implements IHelpService {
 		this.$logger.trace("Finished generating HTML files.");
 	}
 
-	public async showCommandLineHelp(commandName: string): Promise<void> {
-		const help = await this.getCommandLineHelpForCommand(commandName);
+	public async showCommandLineHelp(commandData: ICommandData): Promise<void> {
+		const help = await this.getCommandLineHelpForCommand(commandData);
 		if (this.$staticConfig.FULL_CLIENT_NAME) {
 			this.$logger.info(this.$staticConfig.FULL_CLIENT_NAME.green.bold + EOL);
 		}
@@ -139,8 +141,8 @@ export class HelpService implements IHelpService {
 	 * @param {string} commandName Name of the command for which to read the help.
 	 * @returns {Promise<string>} Help content of the command parsed with all terminal rules applied (stripped content that should be shown only for html help).
 	 */
-	private async getCommandLineHelpForCommand(commandName: string): Promise<string> {
-		const helpText = await this.readMdFileForCommand(commandName);
+	private async getCommandLineHelpForCommand(commandData: ICommandData): Promise<string> {
+		const helpText = await this.readMdFileForCommand(commandData);
 		const commandLineHelp = (await this.$microTemplateService.parseContent(helpText, { isHtml: false }))
 			.replace(/&nbsp;/g, " ")
 			.replace(HelpService.MARKDOWN_LINK_REGEX, "$1")
@@ -183,7 +185,8 @@ export class HelpService implements IHelpService {
 		this.$logger.trace("Finished writing file '%s'.", filePath);
 	}
 
-	private async convertCommandNameToFileName(commandName: string): Promise<string> {
+	private async convertCommandNameToFileName(commandData: ICommandData): Promise<string> {
+		let { commandName } = commandData;
 		const defaultCommandMatch = commandName && commandName.match(/(\w+?)\|\*/);
 		if (defaultCommandMatch) {
 			this.$logger.trace("Default command found. Replace current command name '%s' with '%s'.", commandName, defaultCommandMatch[1]);
@@ -193,12 +196,27 @@ export class HelpService implements IHelpService {
 		const availableCommands = this.$injector.getRegisteredCommandsNames(true).sort();
 		this.$logger.trace("List of registered commands: %s", availableCommands.join(", "));
 		if (commandName && !_.includes(availableCommands, commandName)) {
-			this.$errors.failWithoutHelp("Unknown command '%s'. Try '$ %s help' for a full list of supported commands.", commandName, this.$staticConfig.CLIENT_NAME.toLowerCase());
+			await this.throwMissingCommandError(commandData);
 		}
 
 		return (commandName && commandName.replace(/\|/g, "-")) || "index";
 	}
 
+	private async throwMissingCommandError(commandData: ICommandData): Promise<void> {
+		const commandName = commandData.commandName;
+		const commandInfo = {
+			inputStrings: [commandName, ...commandData.commandArguments],
+			commandDelimiter: CommandsDelimiters.HierarchicalCommand,
+			defaultCommandDelimiter: CommandsDelimiters.DefaultHierarchicalCommand
+		};
+
+		const extensionData = await this.$extensibilityService.getExtensionNameWhereCommandIsRegistered(commandInfo);
+		if (extensionData) {
+			this.$errors.failWithoutHelp(extensionData.installationMessage);
+		}
+
+		this.$errors.failWithoutHelp("Unknown command '%s'. Try '$ %s help' for a full list of supported commands.", commandName, this.$staticConfig.CLIENT_NAME.toLowerCase());
+	}
 	private static getHtmlDirFullPath(docsDir: string): string {
 		return path.join(path.dirname(docsDir), "html");
 	}
@@ -241,9 +259,9 @@ export class HelpService implements IHelpService {
 		return false;
 	}
 
-	private async readMdFileForCommand(commandName: string): Promise<string> {
-		const mdFileName = await this.convertCommandNameToFileName(commandName) + HelpService.MARKDOWN_FILE_EXTENSION;
-		this.$logger.trace("Reading help for command '%s'. FileName is '%s'.", commandName, mdFileName);
+	private async readMdFileForCommand(commandData: ICommandData): Promise<string> {
+		const mdFileName = await this.convertCommandNameToFileName(commandData) + HelpService.MARKDOWN_FILE_EXTENSION;
+		this.$logger.trace("Reading help for command '%s'. FileName is '%s'.", commandData.commandName, mdFileName);
 
 		const markdownFile = this.getHelpFile(mdFileName, this.pathToManPages);
 
@@ -251,7 +269,7 @@ export class HelpService implements IHelpService {
 			return this.$fs.readText(markdownFile);
 		}
 
-		this.$errors.failWithoutHelp("Unknown command '%s'. Try '$ %s help' for a full list of supported commands.", mdFileName.replace(".md", ""), this.$staticConfig.CLIENT_NAME.toLowerCase());
+		await this.throwMissingCommandError(commandData);
 	}
 }
 

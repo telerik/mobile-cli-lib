@@ -11,6 +11,31 @@ import * as util from "util";
 
 const Table = require("cli-table");
 
+/**
+ * Creates regular expression from input string.
+ * The method replaces all occurences of RegExp special symbols in the input string with \<symbol>.
+ * @param {string} input The string from which a regular expression should be created.
+ * @param {string} opts RegExp options, for example "gm" - global and multiline.
+ * @returns {RegExp} The regular expression created from the input string.
+ */
+export function createRegExp(input: string, opts?: string): RegExp {
+	if (!input || !_.isString(input)) {
+		throw new Error("Input must be a string.");
+	}
+
+	const escapedSource = regExpEscape(input);
+	return new RegExp(escapedSource, opts);
+}
+
+/**
+ * Escapes all special symbols used in regex.
+ * @param {string} input The string in which to replace the special regexp symbols.
+ * @returns {string} A string in which all regex symbols are escaped.
+ */
+export function regExpEscape(input: string): string {
+	return input.replace(/[|\\{}()[\]^$+*?.]/g, "\\$&");
+}
+
 export function trackDownloadProgress(destinationStream: NodeJS.WritableStream, url: string): NodeJS.ReadableStream {
 	// \r for carriage return doesn't work on windows in node for some reason so we have to use it's hex representation \x1B[0G
 	let lastMessageSize = 0;

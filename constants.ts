@@ -93,3 +93,9 @@ export const enum AnalyticsClients {
 }
 
 export const DEFAULT_CHUNK_SIZE = 100;
+
+export const enum CommandsDelimiters {
+	HierarchicalCommand = "|",
+	DefaultHierarchicalCommand = "|*",
+	HooksCommand = "-"
+}

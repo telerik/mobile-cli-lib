@@ -965,14 +965,19 @@ interface IMicroTemplateService {
 interface IHelpService {
 	generateHtmlPages(): Promise<void>;
 
-	openHelpForCommandInBrowser(commandName: string): Promise<void>;
+	/**
+	 * Finds the html help for specified command and opens it in the browser.
+	 * @param {IComandData} commandData Data describing searched command - name and arguments.
+	 * @returns {Promise<void>}
+	 */
+	openHelpForCommandInBrowser(commandData: ICommandData): Promise<void>;
 
 	/**
 	 * Shows command line help for specified command.
 	 * @param {string} commandName The name of the command for which to show the help.
 	 * @returns {Promise<void>}
 	 */
-	showCommandLineHelp(commandName: string): Promise<void>;
+	showCommandLineHelp(commandData: ICommandData): Promise<void>;
 }
 
 /**

@@ -1,5 +1,6 @@
 const jaroWinklerDistance = require("../vendor/jaro-winkler_distance");
 import * as helpers from "../helpers";
+import { CommandsDelimiters } from "../constants";
 import { EOL } from "os";
 
 class CommandArgumentsValidationHelper {
@@ -11,9 +12,6 @@ class CommandArgumentsValidationHelper {
 }
 
 export class CommandsService implements ICommandsService {
-	private static HIERARCHICAL_COMMANDS_DELIMITER = "|";
-	private static HIERARCHICAL_COMMANDS_DEFAULT_COMMAND_DELIMITER = "|*";
-	private static HOOKS_COMMANDS_DELIMITER = "-";
 	private areDynamicSubcommandsRegistered = false;
 
 	constructor(private $commandsServiceProvider: ICommandsServiceProvider,
@@ -25,7 +23,8 @@ export class CommandsService implements ICommandsService {
 		private $options: ICommonOptions,
 		private $resources: IResourceLoader,
 		private $staticConfig: Config.IStaticConfig,
-		private $helpService: IHelpService) {
+		private $helpService: IHelpService,
+		private $extensibilityService: IExtensibilityService) {
 	}
 
 	public allCommands(opts: { includeDevCommands: boolean }): string[] {
@@ -56,8 +55,8 @@ export class CommandsService implements ICommandsService {
 				// Handle correctly hierarchical commands
 				const hierarchicalCommandName = this.$injector.buildHierarchicalCommand(commandName, commandArguments);
 				if (hierarchicalCommandName) {
-					commandName = helpers.stringReplaceAll(hierarchicalCommandName.commandName, CommandsService.HIERARCHICAL_COMMANDS_DEFAULT_COMMAND_DELIMITER, CommandsService.HOOKS_COMMANDS_DELIMITER);
-					commandName = helpers.stringReplaceAll(commandName, CommandsService.HIERARCHICAL_COMMANDS_DELIMITER, CommandsService.HOOKS_COMMANDS_DELIMITER);
+					commandName = helpers.stringReplaceAll(hierarchicalCommandName.commandName, CommandsDelimiters.DefaultHierarchicalCommand, CommandsDelimiters.HooksCommand);
+					commandName = helpers.stringReplaceAll(commandName, CommandsDelimiters.HierarchicalCommand, CommandsDelimiters.HooksCommand);
 				}
 
 				await this.$hooksService.executeBeforeHooks(commandName);
@@ -78,14 +77,14 @@ export class CommandsService implements ICommandsService {
 		return false;
 	}
 
-	private printHelp(commandName: string): Promise<void> {
-		return this.$helpService.showCommandLineHelp(this.beautifyCommandName(commandName));
+	private printHelp(commandName: string, commandArguments: string[]): Promise<void> {
+		return this.$helpService.showCommandLineHelp({ commandName: this.beautifyCommandName(commandName), commandArguments });
 	}
 
 	private async executeCommandAction(commandName: string, commandArguments: string[], action: (_commandName: string, _commandArguments: string[]) => Promise<boolean>): Promise<boolean> {
 		return this.$errors.beginCommand(
 			() => action.apply(this, [commandName, commandArguments]),
-			() => this.printHelp(commandName));
+			() => this.printHelp(commandName, commandArguments));
 	}
 
 	private async tryExecuteCommandAction(commandName: string, commandArguments: string[]): Promise<boolean> {
@@ -109,7 +108,7 @@ export class CommandsService implements ICommandsService {
 			const command = this.$injector.resolveCommand(commandName);
 			if (command) {
 				// If command cannot be executed we should print its help.
-				await this.printHelp(commandName);
+				await this.printHelp(commandName, commandArguments);
 			}
 		}
 	}
@@ -146,8 +145,20 @@ export class CommandsService implements ICommandsService {
 			}
 		}
 
-		this.$logger.fatal("Unknown command '%s'. Use '%s help' for help.", beautifiedName, this.$staticConfig.CLIENT_NAME.toLowerCase());
-		this.tryMatchCommand(commandName);
+		const commandInfo = {
+			inputStrings: [commandName, ...commandArguments],
+			commandDelimiter: CommandsDelimiters.HierarchicalCommand,
+			defaultCommandDelimiter: CommandsDelimiters.DefaultHierarchicalCommand
+		};
+
+		const extensionData = await this.$extensibilityService.getExtensionNameWhereCommandIsRegistered(commandInfo);
+
+		if (extensionData) {
+			this.$logger.warn(extensionData.installationMessage);
+		} else {
+			this.$logger.fatal("Unknown command '%s'. Use '%s help' for help.", beautifiedName, this.$staticConfig.CLIENT_NAME.toLowerCase());
+			this.tryMatchCommand(commandName);
+		}
 
 		return false;
 	}
