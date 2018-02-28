@@ -16,7 +16,8 @@ export class CommandsService implements ICommandsService {
 	private static HOOKS_COMMANDS_DELIMITER = "-";
 	private areDynamicSubcommandsRegistered = false;
 
-	constructor(private $commandsServiceProvider: ICommandsServiceProvider,
+	constructor(private $analyticsSettingsService: IAnalyticsSettingsService,
+		private $commandsServiceProvider: ICommandsServiceProvider,
 		private $errors: IErrors,
 		private $fs: IFileSystem,
 		private $hooksService: IHooksService,
@@ -48,6 +49,14 @@ export class CommandsService implements ICommandsService {
 					path: beautifiedCommandName,
 					title: beautifiedCommandName
 				};
+
+				const playgrounInfo = await this.$analyticsSettingsService.getPlaygroundInfo(null);
+				if (playgrounInfo && playgrounInfo.id) {
+					googleAnalyticsPageData.customDimensions = {
+						[GoogleAnalyticsCustomDimensions.playgroundId]: playgrounInfo.id,
+						[GoogleAnalyticsCustomDimensions.usedTutorial]: playgrounInfo.usedTutorial.toString()
+					};
+				}
 
 				await analyticsService.trackInGoogleAnalytics(googleAnalyticsPageData);
 			}
