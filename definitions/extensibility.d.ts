@@ -1,12 +1,17 @@
 /**
- * Describes each extension.
+ * Describes extension name data.
  */
-interface IExtensionData {
+interface IExtensionName {
 	/**
 	 * The name of the extension.
 	 */
 	extensionName: string;
+}
 
+/**
+ * Describes each extension.
+ */
+interface IExtensionData extends IExtensionName {
 	/**
 	 * Extension version.
 	 */
@@ -23,6 +28,41 @@ interface IExtensionData {
 	 * Full path to the directory of the installed extension.
 	 */
 	pathToExtension: string;
+}
+
+/**
+ * Describes the object passed to getExtensionNameWhereCommandIsRegistered
+ */
+interface IGetExtensionCommandInfoParams {
+	/**
+	 * All input strings specified by user.
+	 */
+	inputStrings: string[];
+
+	/**
+	 * The separator that is used between each strings when command is registered.
+	 */
+	commandDelimiter: string;
+
+	/**
+	 * The default separator that is used between each strings when command is registered.
+	 */
+	defaultCommandDelimiter: string;
+}
+
+/**
+ * Describes information in which extension a command is registered.
+ */
+interface IExtensionCommandInfo extends IExtensionName {
+	/**
+	 * The name of the command registered in the extension.
+	 */
+	registeredCommandName: string;
+
+	/**
+	 * Information how to install the extension.
+	 */
+	installationMessage: string;
 }
 
 /**
@@ -71,6 +111,19 @@ interface IExtensibilityService {
 	 * @returns {IExtensionData[]} Data for each of the installed extensions, like name, version, path to extension, etc.
 	 */
 	getInstalledExtensionsData(): IExtensionData[];
+
+	/**
+	 * Gives the name of the extension that contains a required command.
+	 * The method finds all extensions from npm and checks the command property defined in the nativescript key of the package.json.
+	 * Based on specified input array, the method tries to find a suitable command that is defined in the extension.
+	 * @example In case the input is `tns execute this command now`, the array will be ["execute", "this", "command", "now"].
+	 * There may be an extension that defines execute|this as a command. The method will check each extension for the following commands:
+	 * execute|this|command|now, execute|this|command, execute|this, execute
+	 * In case it finds any of this commands, the method will return the extension name and the command name.
+	 * @param {string[]} inputStrings All strings written on the terminal.
+	 * @returns {IExtensionCommandInfo} Information about the extension and the registered command.
+	 */
+	getExtensionNameWhereCommandIsRegistered(inputOpts: IGetExtensionCommandInfoParams): Promise<IExtensionCommandInfo>;
 }
 
 /**

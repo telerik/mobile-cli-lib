@@ -11,16 +11,23 @@ export class HelpCommand implements ICommand {
 	public allowedParameters: ICommandParameter[] = [];
 
 	public async execute(args: string[]): Promise<void> {
-		let topic = (args[0] || "").toLowerCase();
-		const hierarchicalCommand = this.$injector.buildHierarchicalCommand(args[0], _.tail(args));
+		let commandName = (args[0] || "").toLowerCase();
+		let commandArguments = _.tail(args);
+		const hierarchicalCommand = this.$injector.buildHierarchicalCommand(args[0], commandArguments);
 		if (hierarchicalCommand) {
-			topic = hierarchicalCommand.commandName;
+			commandName = hierarchicalCommand.commandName;
+			commandArguments = hierarchicalCommand.remainingArguments;
 		}
 
+		const commandData: ICommandData = {
+			commandName,
+			commandArguments
+		};
+
 		if (this.$options.help) {
-			await this.$helpService.showCommandLineHelp(topic);
+			await this.$helpService.showCommandLineHelp(commandData);
 		} else {
-			await this.$helpService.openHelpForCommandInBrowser(topic);
+			await this.$helpService.openHelpForCommandInBrowser(commandData);
 		}
 	}
 }

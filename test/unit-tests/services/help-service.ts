@@ -151,7 +151,7 @@ and another one`
 					});
 
 					const helpService = injector.resolve<IHelpService>("helpService");
-					await helpService.showCommandLineHelp("foo");
+					await helpService.showCommandLineHelp({ commandName: "foo", commandArguments: [] });
 					const actualOutput = injector.resolve("logger").output.trim();
 					assert.equal(actualOutput, testCase.expectedOutput);
 				});
@@ -170,7 +170,7 @@ and another one`
 			});
 
 			const helpService = injector.resolve<IHelpService>("helpService");
-			await helpService.showCommandLineHelp("foo");
+			await helpService.showCommandLineHelp({ commandName: "foo", commandArguments: [] });
 			const actualOutput = injector.resolve("logger").output.trim();
 			const expectedOutput = `some text${EOL}more text${EOL}${EOL}and more${EOL}and again${EOL}and final line`;
 			assert.equal(actualOutput, expectedOutput);
@@ -188,7 +188,7 @@ and another one`
 			});
 
 			const helpService = injector.resolve<IHelpService>("helpService");
-			await helpService.showCommandLineHelp("foo");
+			await helpService.showCommandLineHelp({ commandName: "foo", commandArguments: [] });
 			assert.isTrue(injector.resolve("logger").output.indexOf("bla woot bla") >= 0);
 		});
 
@@ -204,7 +204,7 @@ and another one`
 			});
 
 			const helpService = injector.resolve<IHelpService>("helpService");
-			await helpService.showCommandLineHelp("foo");
+			await helpService.showCommandLineHelp({ commandName: "foo", commandArguments: [] });
 			const output = injector.resolve("logger").output;
 			assert.isTrue(output.indexOf("bla") >= 0);
 			assert.isTrue(output.indexOf("secondBla") < 0);
@@ -222,7 +222,7 @@ and another one`
 			});
 
 			const helpService = injector.resolve<IHelpService>("helpService");
-			await helpService.showCommandLineHelp("foo");
+			await helpService.showCommandLineHelp({ commandName: "foo", commandArguments: [] });
 
 			const output = injector.resolve("logger").output;
 			assert.isTrue(output.indexOf("bla") >= 0);
@@ -239,7 +239,7 @@ and another one`
 			});
 
 			const helpService = injector.resolve<IHelpService>("helpService");
-			await helpService.showCommandLineHelp("foo");
+			await helpService.showCommandLineHelp({ commandName: "foo", commandArguments: [] });
 
 			const output = injector.resolve("logger").output;
 			assert.isTrue(output.indexOf("bla") >= 0);
@@ -255,7 +255,7 @@ and another one`
 			});
 
 			const helpService = injector.resolve<IHelpService>("helpService");
-			await helpService.showCommandLineHelp("foo");
+			await helpService.showCommandLineHelp({ commandName: "foo", commandArguments: [] });
 
 			const output = injector.resolve("logger").output;
 			assert.isTrue(output.indexOf("bla") >= 0);
@@ -271,7 +271,7 @@ and another one`
 			});
 
 			const helpService = injector.resolve<IHelpService>("helpService");
-			await helpService.showCommandLineHelp("foo");
+			await helpService.showCommandLineHelp({ commandName: "foo", commandArguments: [] });
 			const output = injector.resolve("logger").output;
 			assert.isTrue(output.indexOf("bla isLinux isWindows isMacOS") >= 0);
 		});
@@ -284,7 +284,7 @@ and another one`
 			});
 
 			const helpService = injector.resolve<IHelpService>("helpService");
-			await helpService.showCommandLineHelp("foo");
+			await helpService.showCommandLineHelp({ commandName: "foo", commandArguments: [] });
 
 			const output = injector.resolve("logger").output;
 			assert.isTrue(output.indexOf("bla isLinux isWindows isMacOS") < 0);
@@ -303,7 +303,7 @@ and another one`
 			});
 
 			const helpService = injector.resolve<IHelpService>("helpService");
-			await helpService.showCommandLineHelp("foo");
+			await helpService.showCommandLineHelp({ commandName: "foo", commandArguments: [] });
 
 			const output = injector.resolve("logger").output;
 			assert.isTrue(output.indexOf("bla isLinux and myLocalVar end") >= 0);
@@ -318,7 +318,7 @@ and another one`
 			});
 
 			const helpService = injector.resolve<IHelpService>("helpService");
-			await helpService.showCommandLineHelp("foo");
+			await helpService.showCommandLineHelp({ commandName: "foo", commandArguments: [] });
 
 			const output = injector.resolve("logger").output;
 			assert.isTrue(output.indexOf("bla isLinux and myLocalVar end") < 0);
@@ -335,7 +335,7 @@ and another one`
 			});
 
 			const helpService = injector.resolve<IHelpService>("helpService");
-			await helpService.showCommandLineHelp("foo");
+			await helpService.showCommandLineHelp({ commandName: "foo", commandArguments: [] });
 			const output = injector.resolve("logger").output;
 			assert.isTrue(output.indexOf("bla isLinux end") >= 0);
 		});
@@ -352,7 +352,7 @@ and another one`
 			});
 
 			const helpService = injector.resolve<IHelpService>("helpService");
-			await helpService.showCommandLineHelp("foo");
+			await helpService.showCommandLineHelp({ commandName: "foo", commandArguments: [] });
 			const output = injector.resolve("logger").output;
 			assert.isTrue(output.indexOf("bla command1 and command2 end") >= 0);
 		});
@@ -369,7 +369,7 @@ and another one`
 			});
 
 			const helpService = injector.resolve<IHelpService>("helpService");
-			await helpService.showCommandLineHelp("foo");
+			await helpService.showCommandLineHelp({ commandName: "foo", commandArguments: [] });
 			const output = injector.resolve("logger").output;
 			assert.isTrue(output.indexOf("bla command1 and command2 end") < 0);
 			assert.isTrue(output.indexOf("command1") < 0);
@@ -390,7 +390,7 @@ and another one`
 			});
 
 			const helpService = injector.resolve<IHelpService>("helpService");
-			await helpService.showCommandLineHelp("foo");
+			await helpService.showCommandLineHelp({ commandName: "foo", commandArguments: [] });
 			const output = injector.resolve("logger").output;
 			assert.isTrue(output.indexOf("bla command1 end") >= 0);
 			assert.isTrue(output.indexOf("command2") < 0);
@@ -410,7 +410,7 @@ and another one`
 			});
 
 			const helpService = injector.resolve<IHelpService>("helpService");
-			await helpService.showCommandLineHelp("foo");
+			await helpService.showCommandLineHelp({ commandName: "foo", commandArguments: [] });
 			const output = injector.resolve("logger").output;
 			assert.isTrue(output.indexOf("bla command1 command2 command3 end") >= 0);
 		});
@@ -426,7 +426,7 @@ and another one`
 			});
 
 			const helpService = injector.resolve<IHelpService>("helpService");
-			await helpService.showCommandLineHelp("foo");
+			await helpService.showCommandLineHelp({ commandName: "foo", commandArguments: [] });
 			const output = injector.resolve("logger").output;
 			assert.isTrue(output.indexOf("bla param1 param2 end") >= 0);
 		});
@@ -440,7 +440,7 @@ and another one`
 				});
 
 				const helpService = injector.resolve<IHelpService>("helpService");
-				await helpService.showCommandLineHelp(commandName);
+				await helpService.showCommandLineHelp({ commandName, commandArguments: [] });
 				const output = injector.resolve("logger").output;
 				assert.isTrue(output.indexOf("index data is read") >= 0);
 			});
@@ -482,7 +482,7 @@ and another one`
 				$extensibilityService.getInstalledExtensionsData = (): IExtensionData[] => extensionsData;
 
 				const helpService = injector.resolve<IHelpService>("helpService");
-				await helpService.showCommandLineHelp("foo");
+				await helpService.showCommandLineHelp({ commandName: "foo", commandArguments: [] });
 				const output = injector.resolve("logger").output;
 				assert.isTrue(output.indexOf(blaEnd) >= 0);
 
