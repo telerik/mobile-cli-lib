@@ -48,17 +48,17 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		});
 	}
 
-	public async transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
-		const files: IOSDeviceLib.IFileData[] = _(localToDevicePaths)
-			.filter(l => this.$fs.getFsStats(l.getLocalPath()).isFile())
-			.map(l => ({ source: l.getLocalPath(), destination: l.getDevicePath() }))
-			.value();
+	public async transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<Mobile.ILocalToDevicePathData[]> {
+		const filesToUpload: Mobile.ILocalToDevicePathData[] = _.filter(localToDevicePaths, l => this.$fs.getFsStats(l.getLocalPath()).isFile());
+		const files: IOSDeviceLib.IFileData[] = filesToUpload.map(l => ({ source: l.getLocalPath(), destination: l.getDevicePath() }));
 
 		await this.uploadFilesCore([{
 			deviceId: this.device.deviceInfo.identifier,
 			appId: deviceAppData.appIdentifier,
 			files: files
 		}]);
+
+		return filesToUpload;
 	}
 
 	public async transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): Promise<Mobile.ILocalToDevicePathData[]> {
