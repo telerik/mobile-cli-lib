@@ -4,6 +4,7 @@ import * as minimatch from "minimatch";
 import * as injector from "./yok";
 import * as crypto from "crypto";
 import * as shelljs from "shelljs";
+import { parseJson } from "./helpers";
 
 // TODO: Add .d.ts for mkdirp module (or use it from @types repo).
 const mkdirp = require("mkdirp");
@@ -185,8 +186,7 @@ export class FileSystem implements IFileSystem {
 	public readJson(filename: string, encoding?: string): any {
 		const data = this.readText(filename, encoding);
 		if (data) {
-			// Replace BOM from the header of the file if it exists
-			return JSON.parse(data.replace(/^\uFEFF/, ""));
+			return parseJson(data);
 		}
 		return null;
 	}

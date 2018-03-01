@@ -349,6 +349,11 @@ export function trimSymbol(str: string, symbol: string) {
 	return str;
 }
 
+export function parseJson(data: string): any {
+	// Replace BOM from the header of the file if it exists
+	return JSON.parse(data.replace(/^\uFEFF/, ""));
+}
+
 // TODO: Use generic for predicatе predicate: (element: T|T[]) when TypeScript support this.
 export async function getFuturesResults<T>(promises: Promise<T | T[]>[], predicate: (element: any) => boolean): Promise<T[]> {
 	const results = await Promise.all(promises);
