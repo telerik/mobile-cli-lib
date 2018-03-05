@@ -77,12 +77,12 @@ export function trackDownloadProgress(destinationStream: NodeJS.WritableStream, 
 	return progressStream;
 }
 
-export function isBuildFromCLI(item: string) {
+export function isAllowedFinalFile(item: string): RegExpMatchArray {
 	return item.match(/.*\.aar/) ||
 			item.match(".*include.gradle");
 }
 
-export function isRecommendedAarFile(foundAarFile: string, packageJsonPluginName: string) {
+export function isRecommendedAarFile(foundAarFile: string, packageJsonPluginName: string): boolean {
 	const filename = foundAarFile.replace(/^.*[\\\/]/, '');
 	packageJsonPluginName = packageJsonPluginName.replace(/[\-]/g, "_");
 	return `${packageJsonPluginName}.aar` === filename;
