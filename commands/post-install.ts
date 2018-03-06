@@ -4,7 +4,6 @@ export class PostInstallCommand implements ICommand {
 		private $commandsService: ICommandsService,
 		private $helpService: IHelpService,
 		private $settingsService: ISettingsService,
-		private $doctorService: IDoctorService,
 		private $analyticsService: IAnalyticsService,
 		private $logger: ILogger) {
 	}
@@ -24,12 +23,10 @@ export class PostInstallCommand implements ICommand {
 
 		await this.$helpService.generateHtmlPages();
 
-		const doctorResult = await this.$doctorService.printWarnings({ trackResult: false });
 		// Explicitly ask for confirmation of usage-reporting:
 		await this.$analyticsService.checkConsent();
 
 		await this.$commandsService.tryExecuteCommand("autocomplete", []);
-		await this.$analyticsService.track("InstallEnvironmentSetup", doctorResult ? "incorrect" : "correct");
 
 		if (this.$staticConfig.INSTALLATION_SUCCESS_MESSAGE) {
 			// Make sure the success message is separated with at least one line from all other messages.
