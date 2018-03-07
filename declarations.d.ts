@@ -1447,18 +1447,10 @@ interface IProgressIndicator {
 	 * @return {Promise<T>}
 	 */
 	showProgressIndicator<T>(promise: Promise<T>, timeout: number, options?: { surpressTrailingNewLine?: boolean }): Promise<T>;
-
-	/**
-	 * Returns a spinner instance that will print a specified message when spinner is started and will repeat it until spinner is stopped.
-	 * In case the terminal is not interactive, a mocked instance is returned, so the spinner will print the required message a single time - when it is started.
-	 * @param {string} message The message to be printed.
-	 * @returns {ISpinner} Instance of clui.Spinner in case terminal is interactive, mocked instance otherwise.
-	 */
-	getSpinner(message: string): ISpinner;
 }
 
 /**
- * Describes the clui spinner.
+ * Describes the spinner.
  */
 interface ISpinner {
 	/**
