@@ -1,7 +1,5 @@
 import { isInteractive } from './helpers';
 
-const clui = require("clui");
-
 export class ProgressIndicator implements IProgressIndicator {
 	constructor(private $logger: ILogger) { }
 
@@ -31,19 +29,6 @@ export class ProgressIndicator implements IProgressIndicator {
 		}
 
 		return tempPromise;
-	}
-
-	public getSpinner(message: string): ISpinner {
-		if (isInteractive()) {
-			return new clui.Spinner(message);
-		} else {
-			let msg = message;
-			return {
-				start: () => this.$logger.info(msg),
-				message: (newMsg: string) => msg = newMsg,
-				stop: (): void => undefined
-			};
-		}
 	}
 }
 $injector.register("progressIndicator", ProgressIndicator);
