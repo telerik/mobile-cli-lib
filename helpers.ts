@@ -77,6 +77,17 @@ export function trackDownloadProgress(destinationStream: NodeJS.WritableStream, 
 	return progressStream;
 }
 
+export function isAllowedFinalFile(item: string): RegExpMatchArray {
+	return item.match(/.*\.aar/) ||
+			item.match(".*include.gradle");
+}
+
+export function isRecommendedAarFile(foundAarFile: string, packageJsonPluginName: string): boolean {
+	const filename = foundAarFile.replace(/^.*[\\\/]/, '');
+	packageJsonPluginName = packageJsonPluginName.replace(/[\-]/g, "_");
+	return `${packageJsonPluginName}.aar` === filename;
+}
+
 export async function executeActionByChunks<T>(initialData: T[] | IDictionary<T>, chunkSize: number, elementAction: (element: T, key?: string | number) => Promise<any>): Promise<void> {
 	let arrayToChunk: (T | string)[];
 	let action: (key: string | T) => Promise<any>;
