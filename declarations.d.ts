@@ -550,7 +550,7 @@ interface IOpener {
 
 interface IErrors {
 	fail(formatStr: string, ...args: any[]): never;
-	fail(opts: { formatStr?: string; errorCode?: number; suppressCommandHelp?: boolean, proxyAuthenticationRequired?: boolean }, ...args: any[]): never;
+	fail(opts: { formatStr?: string; errorCode?: number; suppressCommandHelp?: boolean, proxyAuthenticationRequired?: boolean, printOnStdout?: boolean }, ...args: any[]): never;
 	failWithoutHelp(message: string, ...args: any[]): never;
 	beginCommand(action: () => Promise<boolean>, printCommandHelp: () => Promise<void>): Promise<boolean>;
 	verifyHeap(message: string): void;
@@ -1347,6 +1347,17 @@ interface IDoctorService {
 	 * @returns {Promise<boolean>} true if at least one warning was printed
 	 */
 	printWarnings(configOptions?: { trackResult: boolean }): Promise<boolean>;
+	/** 
+	 * Runs the setup script on host machine
+	 * @returns {Promise<ISpawnResult>}
+	*/
+	runSetupScript(): Promise<ISpawnResult>;
+	/**
+	 * Checks if the envrironment is properly configured and it is possible to execute local builds
+	 * @param platform The current platform
+	 * @returns {Promise<boolean>} true if the environment is properly configured for local builds
+	 */
+	canExecuteLocalBuild(platform?: string): Promise<boolean>;
 }
 
 interface IUtils {
