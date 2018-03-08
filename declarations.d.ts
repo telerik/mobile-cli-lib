@@ -1354,7 +1354,7 @@ interface IDoctorService {
 	runSetupScript(): Promise<ISpawnResult>;
 	/**
 	 * Checks if the envrironment is properly configured and it is possible to execute local builds
-	 * @param platform The current platform
+	 * @param platform @optional The current platform
 	 * @returns {Promise<boolean>} true if the environment is properly configured for local builds
 	 */
 	canExecuteLocalBuild(platform?: string): Promise<boolean>;
