@@ -1,4 +1,5 @@
 import * as path from "path";
+import { parseJson } from "../helpers";
 
 export class UserSettingsServiceBase implements IUserSettingsService {
 	private userSettingsFilePath: string = null;
@@ -9,7 +10,8 @@ export class UserSettingsServiceBase implements IUserSettingsService {
 
 	constructor(userSettingsFilePath: string,
 		protected $fs: IFileSystem,
-		protected $lockfile: ILockFile) {
+		protected $lockfile: ILockFile,
+		private $logger: ILogger) {
 		this.userSettingsFilePath = userSettingsFilePath;
 	}
 
@@ -38,7 +40,6 @@ export class UserSettingsServiceBase implements IUserSettingsService {
 		};
 
 		return this.executeActionWithLock<void>(action);
-
 	}
 
 	private async executeActionWithLock<T>(action: () => Promise<T>): Promise<T> {
@@ -90,7 +91,14 @@ export class UserSettingsServiceBase implements IUserSettingsService {
 			}
 		}
 
-		this.userSettingsData = this.$fs.readJson(this.userSettingsFilePath);
+		const data = this.$fs.readText(this.userSettingsFilePath);
+
+		try {
+			this.userSettingsData = parseJson(data);
+		} catch (err) {
+			this.$logger.trace(`Error while trying to parseJson ${data} data from ${this.userSettingsFilePath} file. Err is: ${err}`);
+			this.$fs.deleteFile(this.userSettingsFilePath);
+		}
 	}
 
 	private getUnexistingDirectories(filePath: string): Array<string> {
