@@ -1118,6 +1118,21 @@ interface IDeviceLiveSyncService extends IDeviceLiveSyncServiceBase {
 
 interface ISysInfo {
 	getSysInfo(config?: NativeScriptDoctor.ISysInfoConfig): Promise<NativeScriptDoctor.ISysInfoData>;
+	/**
+ 	 * Returns the currently installed version of Xcode.
+ 	 * @return {Promise<string>} Returns the currently installed version of Xcode or null if Xcode is not installed or executed on Linux or Windows.
+ 	 */
+	getXcodeVersion(): Promise<string>;
+	/**
+	 * Returns the currently installed Cocoapods version.
+	 * @return {Promise<string>} Returns the currently installed Cocoapods version. It will return null if Cocoapods is not installed.
+	 */
+	getCocoaPodsVersion(): Promise<string>;
+	/**
+ 	 * Returns the currently installed Java compiler version.
+ 	 * @return {Promise<string>} The currently installed Java compiler version.
+ 	 */
+	getJavaCompilerVersion(): Promise<string>;
 }
 
 interface IHostInfo {
