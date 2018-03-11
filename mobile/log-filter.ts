@@ -15,10 +15,12 @@ export class LogFilter implements Mobile.ILogFilter {
 		}
 	}
 
-	public filterData(platform: string, data: string, pid?: string, logLevel?: string): string {
+	public filterData(platform: string, data: string, loggingOptions: Mobile.IDeviceLogOptions = <any>{}): string {
+		loggingOptions = loggingOptions || <any>{};
 		const deviceLogFilter = this.getDeviceLogFilterInstance(platform);
+		loggingOptions.logLevel = loggingOptions.logLevel || this.loggingLevel;
 		if (deviceLogFilter) {
-			return deviceLogFilter.filterData(data, logLevel || this.loggingLevel, pid);
+			return deviceLogFilter.filterData(data, loggingOptions);
 		}
 
 		// In case the platform is not valid, just return the data without filtering.

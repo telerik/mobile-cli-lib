@@ -14,7 +14,8 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		private $hostInfo: IHostInfo,
 		private $staticConfig: Config.IStaticConfig,
 		private $iosDeviceOperations: IIOSDeviceOperations,
-		private $options: ICommonOptions) {
+		private $options: ICommonOptions,
+		private $deviceLogProvider: Mobile.IDeviceLogProvider) {
 		super($logger, $hooksService);
 	}
 
@@ -75,11 +76,12 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		this.$logger.trace("Application %s has been uninstalled successfully.", appIdentifier);
 	}
 
-	public async startApplication(appIdentifier: string): Promise<void> {
+	public async startApplication(appIdentifier: string, projectName: string): Promise<void> {
 		if (!await this.isApplicationInstalled(appIdentifier)) {
 			this.$errors.failWithoutHelp("Invalid application id: %s. All available application ids are: %s%s ", appIdentifier, EOL, this.applicationsLiveSyncInfos.join(EOL));
 		}
 
+		this.$deviceLogProvider.setProjectNameForDevice(this.device.deviceInfo.identifier, projectName);
 		await this.runApplicationCore(appIdentifier);
 
 		this.$logger.info(`Successfully run application ${appIdentifier} on device with ID ${this.device.deviceInfo.identifier}.`);

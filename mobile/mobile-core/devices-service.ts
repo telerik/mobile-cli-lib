@@ -79,10 +79,11 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 	}
 	/* tslint:enable:no-unused-variable */
 
+	// Breaking change
 	@exported("devicesService")
-	public isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string): Promise<IAppInstalledInfo>[] {
+	public isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string, appName: string): Promise<IAppInstalledInfo>[] {
 		this.$logger.trace(`Called isInstalledOnDevices for identifiers ${deviceIdentifiers}. AppIdentifier is ${appIdentifier}.`);
-		return _.map(deviceIdentifiers, deviceIdentifier => this.isApplicationInstalledOnDevice(deviceIdentifier, appIdentifier));
+		return _.map(deviceIdentifiers, deviceIdentifier => this.isApplicationInstalledOnDevice(deviceIdentifier, appIdentifier, appName));
 	}
 
 	@exported("devicesService")
@@ -578,7 +579,7 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 		const device = this.getDeviceByIdentifier(deviceIdentifier);
 		await device.applicationManager.reinstallApplication(packageName, packageFile);
 		this.$logger.info(`Successfully deployed on device with identifier '${device.deviceInfo.identifier}'.`);
-		await device.applicationManager.tryStartApplication(packageName);
+		await device.applicationManager.tryStartApplication(packageName, packageName);
 	}
 
 	/**
@@ -651,14 +652,14 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 		return this.executeOnAllConnectedDevices(action, canExecute);
 	}
 
-	private async isApplicationInstalledOnDevice(deviceIdentifier: string, appIdentifier: string): Promise<IAppInstalledInfo> {
+	private async isApplicationInstalledOnDevice(deviceIdentifier: string, appIdentifier: string, packageName: string): Promise<IAppInstalledInfo> {
 		let isInstalled = false;
 		let isLiveSyncSupported = false;
 		const device = this.getDeviceByIdentifier(deviceIdentifier);
 
 		try {
 			isInstalled = await device.applicationManager.isApplicationInstalled(appIdentifier);
-			await device.applicationManager.tryStartApplication(appIdentifier);
+			await device.applicationManager.tryStartApplication(appIdentifier, packageName);
 			isLiveSyncSupported = await isInstalled && !!device.applicationManager.isLiveSyncSupported(appIdentifier);
 		} catch (err) {
 			this.$logger.trace("Error while checking is application installed. Error is: ", err);

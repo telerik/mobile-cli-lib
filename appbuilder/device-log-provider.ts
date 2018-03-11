@@ -2,15 +2,16 @@ import { DeviceLogProviderBase } from "../mobile/device-log-provider-base";
 
 export class DeviceLogProvider extends DeviceLogProviderBase {
 	constructor(protected $logFilter: Mobile.ILogFilter,
-		$logger: ILogger) {
+		$logger: ILogger,
+		private $loggingLevels: Mobile.ILoggingLevels) {
 		super($logFilter, $logger);
 	}
 
 	public logData(line: string, platform: string, deviceIdentifier: string): void {
-		const logLevel = this.setDefaultLogLevelForDevice(deviceIdentifier);
+		this.setDefaultLogLevelForDevice(deviceIdentifier);
 
-		const applicationPid = this.getApplicationPidForDevice(deviceIdentifier),
-			data = this.$logFilter.filterData(platform, line, applicationPid, logLevel);
+		const loggingOptions = this.getDeviceLogOptionsForDevice(deviceIdentifier) || { logLevel: this.$loggingLevels.info };
+		const data = this.$logFilter.filterData(platform, line, loggingOptions);
 
 		if (data) {
 			this.emit('data', deviceIdentifier, data);

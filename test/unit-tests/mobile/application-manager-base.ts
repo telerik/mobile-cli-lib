@@ -24,7 +24,7 @@ class ApplicationManager extends ApplicationManagerBase {
 		return;
 	}
 
-	public async startApplication(appIdentifier: string): Promise<void> {
+	public async startApplication(appIdentifier: string, appName: string): Promise<void> {
 		return;
 	}
 
@@ -599,22 +599,22 @@ describe("ApplicationManagerBase", () => {
 				return Promise.resolve();
 			};
 
-			await applicationManager.restartApplication("appId");
+			await applicationManager.restartApplication("appId", "appName");
 			assert.deepEqual(stopApplicationParam, "appId", "When bundleIdentifier is not passed to restartApplication, stopApplication must be called with application identifier.");
 		});
 
 		it("calls startApplication with correct arguments", async () => {
 			let startApplicationAppIdParam: string;
-			applicationManager.startApplication = (appId: string) => {
+			let startApplicationAppNameParam: string;
+			applicationManager.startApplication = (appId: string, appName: string) => {
 				startApplicationAppIdParam = appId;
+				startApplicationAppNameParam = appName;
 				return Promise.resolve();
 			};
 
-			await applicationManager.restartApplication("appId");
+			await applicationManager.restartApplication("appId", "appName");
 			assert.deepEqual(startApplicationAppIdParam, "appId", "startApplication must be called with application identifier.");
-
-			await applicationManager.restartApplication("appId");
-			assert.deepEqual(startApplicationAppIdParam, "appId", "startApplication must be called with application identifier.");
+			assert.deepEqual(startApplicationAppNameParam, "appName", "startApplication must be called with application name.");
 		});
 
 		it("calls stopApplication and startApplication in correct order", async () => {
@@ -626,13 +626,13 @@ describe("ApplicationManagerBase", () => {
 				return Promise.resolve();
 			};
 
-			applicationManager.startApplication = (appId: string) => {
+			applicationManager.startApplication = (appId: string, appName: string) => {
 				assert.isTrue(isStopApplicationCalled, "When startApplication is called, stopApplication must have been resolved.");
 				isStartApplicationCalled = true;
 				return Promise.resolve();
 			};
 
-			await applicationManager.restartApplication("appId");
+			await applicationManager.restartApplication("appId", "appName");
 			assert.isTrue(isStopApplicationCalled, "stopApplication must be called.");
 			assert.isTrue(isStartApplicationCalled, "startApplication must be called.");
 		});
@@ -641,18 +641,22 @@ describe("ApplicationManagerBase", () => {
 	describe("tryStartApplication", () => {
 		it("calls startApplication, when canStartApplication returns true", async () => {
 			let startApplicationAppIdParam: string;
+			let startApplicationAppNameParam: string;
 
 			applicationManager.canStartApplication = () => true;
-			applicationManager.startApplication = (appId: string) => {
+			applicationManager.startApplication = (appId: string, appName: string) => {
 				startApplicationAppIdParam = appId;
+				startApplicationAppNameParam = appName;
 				return Promise.resolve();
 			};
 
-			await applicationManager.tryStartApplication("appId");
+			await applicationManager.tryStartApplication("appId", "appName");
 			assert.deepEqual(startApplicationAppIdParam, "appId");
+			assert.deepEqual(startApplicationAppNameParam, "appName");
 
-			await applicationManager.tryStartApplication("appId2");
+			await applicationManager.tryStartApplication("appId2", "appName2");
 			assert.deepEqual(startApplicationAppIdParam, "appId2");
+			assert.deepEqual(startApplicationAppNameParam, "appName2");
 		});
 
 		it("does not call startApplication, when canStartApplication returns false", async () => {
@@ -663,7 +667,7 @@ describe("ApplicationManagerBase", () => {
 				return Promise.resolve();
 			};
 
-			await applicationManager.tryStartApplication("appId");
+			await applicationManager.tryStartApplication("appId", "appName");
 			assert.isFalse(isStartApplicationCalled, "startApplication must not be called when canStartApplication returns false.");
 		});
 
@@ -687,7 +691,7 @@ describe("ApplicationManagerBase", () => {
 					isStartApplicationCalled = true;
 				};
 
-				await applicationManager.tryStartApplication("appId");
+				await applicationManager.tryStartApplication("appId", "appName");
 				assert.isFalse(isStartApplicationCalled, "startApplication must not be called when there's an error.");
 				assert.isTrue(logger.traceOutput.indexOf("Throw!") !== -1, "Error message must be shown in trace output.");
 				assert.isTrue(logger.traceOutput.indexOf("Unable to start application") !== -1, "'Unable to start application' must be shown in trace output.");

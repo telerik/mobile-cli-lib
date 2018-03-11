@@ -39,10 +39,11 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		return this.iosSim.uninstallApplication(this.identifier, appIdentifier);
 	}
 
-	public async startApplication(appIdentifier: string): Promise<void> {
+	public async startApplication(appIdentifier: string, projectName: string): Promise<void> {
 		const launchResult = this.iosSim.startApplication(this.identifier, appIdentifier);
 		const pid = launchResult.split(":")[1].trim();
 		this.$deviceLogProvider.setApplicationPidForDevice(this.identifier, pid);
+		this.$deviceLogProvider.setProjectNameForDevice(this.identifier, projectName);
 
 		if (!this.$options.justlaunch) {
 			this.$iOSSimulatorLogProvider.startLogProcess(this.identifier);

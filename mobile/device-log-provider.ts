@@ -7,8 +7,8 @@ export class DeviceLogProvider extends DeviceLogProviderBase {
 	}
 
 	public logData(lineText: string, platform: string, deviceIdentifier: string): void {
-		const applicationPid = this.getApplicationPidForDevice(deviceIdentifier);
-		const data = this.$logFilter.filterData(platform, lineText, applicationPid);
+		const loggingOptions = this.getDeviceLogOptionsForDevice(deviceIdentifier);
+		const data = this.$logFilter.filterData(platform, lineText, loggingOptions);
 		if (data) {
 			this.$logger.write(data);
 		}
