@@ -143,6 +143,7 @@ export class Errors implements IErrors {
 		exception.errorCode = opts.errorCode || ErrorCodes.UNKNOWN;
 		exception.suppressCommandHelp = opts.suppressCommandHelp;
 		exception.proxyAuthenticationRequired = !!opts.proxyAuthenticationRequired;
+		exception.printOnStdout = opts.printOnStdout;
 		this.$injector.resolve("logger").trace(opts.formatStr);
 		throw exception;
 	}
@@ -158,9 +159,13 @@ export class Errors implements IErrors {
 		} catch (ex) {
 			const loggerLevel: string = $injector.resolve("logger").getLevel().toUpperCase();
 			const printCallStack = this.printCallStack || loggerLevel === "TRACE" || loggerLevel === "DEBUG";
-			console.error(printCallStack
-				? resolveCallStack(ex)
-				: "\x1B[31;1m" + ex.message + "\x1B[0m");
+			const message = printCallStack ? resolveCallStack(ex) : `\x1B[31;1m${ex.message}\x1B[0m`;
+
+			if (ex.printOnStdout) {
+				this.$injector.resolve("logger").out(message);
+			} else {
+				console.error(message);
+			}
 
 			if (!ex.suppressCommandHelp) {
 				try {

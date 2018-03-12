@@ -12,7 +12,12 @@ class CommandArgumentsValidationHelper {
 }
 
 export class CommandsService implements ICommandsService {
+	public get currentCommandData(): ICommandData {
+		return _.last(this.commands);
+	}
+
 	private areDynamicSubcommandsRegistered = false;
+	private commands: ICommandData[] = [];
 
 	constructor(private $analyticsSettingsService: IAnalyticsSettingsService,
 		private $commandsServiceProvider: ICommandsServiceProvider,
@@ -34,6 +39,7 @@ export class CommandsService implements ICommandsService {
 	}
 
 	public async executeCommandUnchecked(commandName: string, commandArguments: string[]): Promise<boolean> {
+		this.commands.push({ commandName, commandArguments });
 		const command = this.$injector.resolveCommand(commandName);
 		if (command) {
 			if (!this.$staticConfig.disableAnalytics && !command.disableAnalytics) {
@@ -81,8 +87,11 @@ export class CommandsService implements ICommandsService {
 				this.$logger.printMarkdown(~suggestionText.indexOf('%s') ? require('util').format(suggestionText, commandArguments) : suggestionText);
 			}
 
+			this.commands.pop();
 			return true;
 		}
+
+		this.commands.pop();
 		return false;
 	}
 
