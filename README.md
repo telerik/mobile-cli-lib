@@ -431,19 +431,19 @@ devices.forEach(function(device) {
 });
 ```
 
-* `deployOnDevices(deviceIdentifiers: string[], packageFile: string, packageName: string, framework: string)` - Deploys the specified package to the specified devices.
+* `deployOnDevices(deviceIdentifiers: string[], packageFile: string, appId: string, projectName: string)` - Deploys the specified package to the specified devices.
 Returns array of Promises. Each of them will be rejected in case the file cannot be deployed on the device or in case there's no device with such identifier.
 The function accepts three arguments:
 	* `deviceIdentifiers` - array of the unique identifiers of the devices where the application will be deployed.
 	* `packageFile` - path to the specified package (`.apk` or `.ipa`);
-	* `packageName` - the identifier of the package. This corresponds to appId from `.abproject`.
-	* `framework` - the framework of the project. Valid values are `Cordova` and `NativeScript`.
+	* `appId` - the identifier of the package. This corresponds to id from `package.json`.
+	* `projectName` - the project name, this is usually the dir name of the project
 
 Sample usage:
 ```JavaScript
 Promise.all(require("mobile-cli-lib")
 				.devicesService
-				.deployOnDevices(["129604ab96a4d0053023b4bf5b288cf34a9ed5fa", "153544fa45f4a5646543b5bf1b221fe31a8fa6bc"], "./app.ipa", "com.telerik.testApp", "Cordova"))
+				.deployOnDevices(["129604ab96a4d0053023b4bf5b288cf34a9ed5fa", "153544fa45f4a5646543b5bf1b221fe31a8fa6bc"], "./app.ipa", "com.telerik.testApp", "Test App"))
 			.then(function(data) {
 				console.log(data);
 			}, function(err) {

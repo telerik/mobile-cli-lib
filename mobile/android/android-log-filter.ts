@@ -12,11 +12,9 @@ export class AndroidLogFilter implements Mobile.IPlatformLogFilter {
 	constructor(private $loggingLevels: Mobile.ILoggingLevels) { }
 
 	public filterData(data: string, loggingOptions: Mobile.IDeviceLogOptions = <any>{}): string {
-		const pid = loggingOptions.applicationPid;
-
 		const specifiedLogLevel = (loggingOptions.logLevel || '').toUpperCase();
 		if (specifiedLogLevel === this.$loggingLevels.info) {
-			const log = this.getConsoleLogFromLine(data, pid);
+			const log = this.getConsoleLogFromLine(data, loggingOptions.applicationPid);
 			if (log) {
 				if (log.tag) {
 					return `${log.tag}: ${log.message}` + os.EOL;

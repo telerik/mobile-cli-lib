@@ -256,6 +256,11 @@ declare module Mobile {
 		appId: string;
 		projectName: string;
 	}
+
+	interface IInstallAppData extends IApplicationData {
+		packagePath: string;
+	}
+
 	interface IDeviceApplicationManager extends NodeJS.EventEmitter {
 		getInstalledApplications(): Promise<string[]>;
 		isApplicationInstalled(appIdentifier: string): Promise<boolean>;

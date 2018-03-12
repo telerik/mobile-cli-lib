@@ -79,11 +79,10 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 	}
 	/* tslint:enable:no-unused-variable */
 
-	// Breaking change
 	@exported("devicesService")
-	public isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string, appName: string): Promise<IAppInstalledInfo>[] {
-		this.$logger.trace(`Called isInstalledOnDevices for identifiers ${deviceIdentifiers}. AppIdentifier is ${appIdentifier}.`);
-		return _.map(deviceIdentifiers, deviceIdentifier => this.isApplicationInstalledOnDevice(deviceIdentifier, appIdentifier, appName));
+	public isAppInstalledOnDevices(deviceIdentifiers: string[], appId: string, projectName: string): Promise<IAppInstalledInfo>[] {
+		this.$logger.trace(`Called isInstalledOnDevices for identifiers ${deviceIdentifiers}. AppIdentifier is ${appId}.`);
+		return _.map(deviceIdentifiers, deviceIdentifier => this.isApplicationInstalledOnDevice(deviceIdentifier, { appId, projectName }));
 	}
 
 	@exported("devicesService")
@@ -345,9 +344,9 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 	}
 
 	@exported("devicesService")
-	public deployOnDevices(deviceIdentifiers: string[], packageFile: string, packageName: string): Promise<void>[] {
-		this.$logger.trace(`Called deployOnDevices for identifiers ${deviceIdentifiers} for packageFile: ${packageFile}. packageName is ${packageName}.`);
-		return _.map(deviceIdentifiers, deviceIdentifier => this.deployOnDevice(deviceIdentifier, packageFile, packageName));
+	public deployOnDevices(deviceIdentifiers: string[], packagePath: string, appId: string, projectName: string): Promise<void>[] {
+		this.$logger.trace(`Called deployOnDevices for identifiers ${deviceIdentifiers} for packageFile: ${packagePath}. Application identifier is ${appId}. Project Name is: ${projectName}`);
+		return _.map(deviceIdentifiers, deviceIdentifier => this.deployOnDevice(deviceIdentifier, { packagePath, appId, projectName }));
 	}
 
 	/**
@@ -368,7 +367,7 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 				canExecute = (dev: Mobile.IDevice): boolean => this.isiOSSimulator(dev) && (!originalCanExecute || !!(originalCanExecute(dev)));
 			}
 
-			return await this.executeCore(action, canExecute);
+			return this.executeCore(action, canExecute);
 		} else {
 			const message = constants.ERROR_NO_DEVICES;
 			if (options && options.allowNoDevices) {
@@ -377,7 +376,7 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 				if (!this.$hostInfo.isDarwin && this._platform && this.$mobileHelper.isiOSPlatform(this._platform)) {
 					this.$errors.failWithoutHelp(message);
 				} else {
-					return await this.executeCore(action, canExecute);
+					return this.executeCore(action, canExecute);
 				}
 			}
 		}
@@ -425,15 +424,15 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 
 		//if no --device is passed and no devices are found, the default emulator is started
 		if (!data.deviceId && _.isEmpty(deviceInstances)) {
-			return await this.startEmulator(data.platform);
+			return this.startEmulator(data.platform);
 		}
 
 		//check if --device(value) is running, if it's not or it's not the same as is specified, start with name from --device(value)
 		if (data.deviceId) {
 			if (!helpers.isNumber(data.deviceId)) {
-				const activeDeviceInstance = _.find(deviceInstances, (device: Mobile.IDevice) => { return device.deviceInfo.identifier === data.deviceId; });
+				const activeDeviceInstance = _.find(deviceInstances, (device: Mobile.IDevice) => device.deviceInfo.identifier === data.deviceId);
 				if (!activeDeviceInstance) {
-					return await this.startEmulator(data.platform, data.deviceId);
+					return this.startEmulator(data.platform, data.deviceId);
 				}
 			}
 		}
@@ -442,7 +441,7 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 		if (data.emulator && deviceInstances.length) {
 			const runningDeviceInstance = _.some(deviceInstances, (value) => value.isEmulator);
 			if (!runningDeviceInstance) {
-				return await this.startEmulator(data.platform);
+				return this.startEmulator(data.platform);
 			}
 		}
 	}
@@ -570,17 +569,16 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 		}
 	}
 
-	private async getDebuggableAppsCore(deviceIdentifier: string): Promise<Mobile.IDeviceApplicationInformation[]> {
+	private getDebuggableAppsCore(deviceIdentifier: string): Promise<Mobile.IDeviceApplicationInformation[]> {
 		const device = this.getDeviceByIdentifier(deviceIdentifier);
-		return await device.applicationManager.getDebuggableApps();
+		return device.applicationManager.getDebuggableApps();
 	}
 
-	// TODO: Fix this method - it needs the projectName
-	private async deployOnDevice(deviceIdentifier: string, packageFile: string, packageName: string): Promise<void> {
+	private async deployOnDevice(deviceIdentifier: string, appData: Mobile.IInstallAppData): Promise<void> {
 		const device = this.getDeviceByIdentifier(deviceIdentifier);
-		await device.applicationManager.reinstallApplication(packageName, packageFile);
+		await device.applicationManager.reinstallApplication(appData.appId, appData.packagePath);
 		this.$logger.info(`Successfully deployed on device with identifier '${device.deviceInfo.identifier}'.`);
-		await device.applicationManager.tryStartApplication({ appId: packageName, projectName: packageName });
+		await device.applicationManager.tryStartApplication(appData);
 	}
 
 	/**
@@ -653,21 +651,21 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 		return this.executeOnAllConnectedDevices(action, canExecute);
 	}
 
-	private async isApplicationInstalledOnDevice(deviceIdentifier: string, appIdentifier: string, projectName: string): Promise<IAppInstalledInfo> {
+	private async isApplicationInstalledOnDevice(deviceIdentifier: string, appData: Mobile.IApplicationData): Promise<IAppInstalledInfo> {
 		let isInstalled = false;
 		let isLiveSyncSupported = false;
 		const device = this.getDeviceByIdentifier(deviceIdentifier);
 
 		try {
-			isInstalled = await device.applicationManager.isApplicationInstalled(appIdentifier);
-			await device.applicationManager.tryStartApplication({ appId: appIdentifier, projectName });
-			isLiveSyncSupported = await isInstalled && !!device.applicationManager.isLiveSyncSupported(appIdentifier);
+			isInstalled = await device.applicationManager.isApplicationInstalled(appData.appId);
+			await device.applicationManager.tryStartApplication(appData);
+			isLiveSyncSupported = await isInstalled && !!device.applicationManager.isLiveSyncSupported(appData.appId);
 		} catch (err) {
 			this.$logger.trace("Error while checking is application installed. Error is: ", err);
 		}
 
 		return {
-			appIdentifier,
+			appIdentifier: appData.appId,
 			deviceIdentifier,
 			isInstalled,
 			isLiveSyncSupported
