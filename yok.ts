@@ -432,11 +432,11 @@ export class Yok implements IInjector {
 		return `${this.COMMANDS_NAMESPACE}.${name}`;
 	}
 
-	public dispose(): void {
+	public dispose(disposeOptions?: IForceOption): void {
 		Object.keys(this.modules).forEach((moduleName) => {
 			const instance = this.modules[moduleName].instance;
 			if (instance && instance.dispose && instance !== this) {
-				instance.dispose();
+				instance.dispose(disposeOptions);
 			}
 		});
 	}

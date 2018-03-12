@@ -169,7 +169,7 @@ declare module Server {
 }
 
 interface IDisposable {
-	dispose(): void;
+	dispose(disposeOptions?: IForceOption): void;
 }
 
 /**
@@ -1229,7 +1229,11 @@ interface IProfileDir {
 	profileDir: string;
 }
 
-interface ICommonOptions extends IRelease, IDeviceIdentifier, IJustLaunch, IAvd, IAvailableDevices, IProfileDir {
+interface IForceOption {
+	force: boolean;
+}
+
+interface ICommonOptions extends IForceOption, IRelease, IDeviceIdentifier, IJustLaunch, IAvd, IAvailableDevices, IProfileDir {
 	argv: IYargArgv;
 	validateOptions(commandSpecificDashedOptions?: IDictionary<IDashedOption>): void;
 	options: IDictionary<any>;
@@ -1257,7 +1261,6 @@ interface ICommonOptions extends IRelease, IDeviceIdentifier, IJustLaunch, IAvd,
 	skipRefresh: boolean;
 	file: string;
 	analyticsClient: string;
-	force: boolean;
 	companion: boolean;
 	emulator: boolean;
 	sdk: string;
