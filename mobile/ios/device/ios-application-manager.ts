@@ -76,7 +76,8 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		this.$logger.trace("Application %s has been uninstalled successfully.", appIdentifier);
 	}
 
-	public async startApplication(appIdentifier: string, projectName: string): Promise<void> {
+	public async startApplication(appData: Mobile.IApplicationData): Promise<void> {
+		const { appId: appIdentifier, projectName } = appData;
 		if (!await this.isApplicationInstalled(appIdentifier)) {
 			this.$errors.failWithoutHelp("Invalid application id: %s. All available application ids are: %s%s ", appIdentifier, EOL, this.applicationsLiveSyncInfos.join(EOL));
 		}
@@ -87,23 +88,25 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		this.$logger.info(`Successfully run application ${appIdentifier} on device with ID ${this.device.deviceInfo.identifier}.`);
 	}
 
-	public async stopApplication(appIdentifier: string, appName?: string): Promise<void> {
-		const action = () => this.$iosDeviceOperations.stop([{ deviceId: this.device.deviceInfo.identifier, ddi: this.$options.ddi, appId: appIdentifier }]);
+	public async stopApplication(appData: Mobile.IApplicationData): Promise<void> {
+		const { appId } = appData;
+
+		const action = () => this.$iosDeviceOperations.stop([{ deviceId: this.device.deviceInfo.identifier, ddi: this.$options.ddi, appId }]);
 
 		try {
 			await action();
 		} catch (err) {
-			this.$logger.trace(`Error when trying to stop application ${appIdentifier} on device ${this.device.deviceInfo.identifier}: ${err}. Retrying stop operation.`);
+			this.$logger.trace(`Error when trying to stop application ${appId} on device ${this.device.deviceInfo.identifier}: ${err}. Retrying stop operation.`);
 			await action();
 		}
 	}
 
-	public async restartApplication(applicationId: string, appName?: string): Promise<void> {
+	public async restartApplication(appData: Mobile.IApplicationData): Promise<void> {
 		try {
-			await this.stopApplication(applicationId, appName);
-			await this.runApplicationCore(applicationId);
+			await this.stopApplication(appData);
+			await this.runApplicationCore(appData.appId);
 		} catch (err) {
-			await this.$iOSNotificationService.postNotification(this.device.deviceInfo.identifier, `${applicationId}:NativeScript.LiveSync.RestartApplication`);
+			await this.$iOSNotificationService.postNotification(this.device.deviceInfo.identifier, `${appData.appId}:NativeScript.LiveSync.RestartApplication`);
 			throw err;
 		}
 	}

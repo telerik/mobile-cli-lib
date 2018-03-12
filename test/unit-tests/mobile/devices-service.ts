@@ -219,8 +219,8 @@ describe("devicesService", () => {
 		applicationManager: {
 			getInstalledApplications: () => Promise.resolve(["com.telerik.unitTest1", "com.telerik.unitTest2"]),
 			canStartApplication: () => true,
-			startApplication: (packageName: string, framework: string) => Promise.resolve(),
-			tryStartApplication: (packageName: string, framework: string) => Promise.resolve(),
+			startApplication: (appId: Mobile.IApplicationData) => Promise.resolve(),
+			tryStartApplication: (appId: Mobile.IApplicationData) => Promise.resolve(),
 			reinstallApplication: (packageName: string, packageFile: string) => Promise.resolve(),
 			isApplicationInstalled: (packageName: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], packageName)),
 			isLiveSyncSupported: (appIdentifier: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2"], appIdentifier)),
@@ -239,8 +239,8 @@ describe("devicesService", () => {
 		applicationManager: {
 			getInstalledApplications: () => Promise.resolve(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"]),
 			canStartApplication: () => true,
-			startApplication: (packageName: string, framework: string) => Promise.resolve(),
-			tryStartApplication: (packageName: string, framework: string) => Promise.resolve(),
+			startApplication: (appId: Mobile.IApplicationData) => Promise.resolve(),
+			tryStartApplication: (appId: Mobile.IApplicationData) => Promise.resolve(),
 			reinstallApplication: (packageName: string, packageFile: string) => Promise.resolve(),
 			isApplicationInstalled: (packageName: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], packageName)),
 			isLiveSyncSupported: (appIdentifier: string) => Promise.resolve(_.includes(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"], appIdentifier)),

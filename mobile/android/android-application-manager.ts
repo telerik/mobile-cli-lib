@@ -44,8 +44,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		return this.adb.executeShellCommand(["pm", "uninstall", `${appIdentifier}`], { treatErrorsAsWarnings: true });
 	}
 
-	public async startApplication(appIdentifier: string): Promise<void> {
-
+	public async startApplication(appData: Mobile.IApplicationData): Promise<void> {
 		/*
 		Example "pm dump <app_identifier> | grep -A 1 MAIN" output"
 			android.intent.action.MAIN:
@@ -59,6 +58,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 			Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] flg=0x10200000 cmp=org.nativescript.cliapp/com.tns.NativeScriptActivity }
 			frontOfTask=true task=TaskRecord{fe592ac #449 A=org.nativescript.cliapp U=0 StackId=1 sz=1}
 		*/
+		const appIdentifier = appData.appId;
 		const pmDumpOutput = await this.adb.executeShellCommand(["pm", "dump", appIdentifier, "|", "grep", "-A", "1", "MAIN"]);
 		const activityMatch = this.getFullyQualifiedActivityRegex();
 		const match = activityMatch.exec(pmDumpOutput);
@@ -82,9 +82,9 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		}
 	}
 
-	public stopApplication(appIdentifier: string): Promise<void> {
+	public stopApplication(appData: Mobile.IApplicationData): Promise<void> {
 		this.$logcatHelper.stop(this.identifier);
-		return this.adb.executeShellCommand(["am", "force-stop", `${appIdentifier}`]);
+		return this.adb.executeShellCommand(["am", "force-stop", `${appData.appId}`]);
 	}
 
 	public getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {

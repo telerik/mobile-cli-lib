@@ -421,30 +421,30 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 	}
 
 	private async _startEmulatorIfNecessary(data?: Mobile.IDevicesServicesInitializationOptions): Promise<void> {
-			const deviceInstances = this.getDeviceInstances();
+		const deviceInstances = this.getDeviceInstances();
 
-			//if no --device is passed and no devices are found, the default emulator is started
-			if (!data.deviceId && _.isEmpty(deviceInstances)) {
+		//if no --device is passed and no devices are found, the default emulator is started
+		if (!data.deviceId && _.isEmpty(deviceInstances)) {
+			return await this.startEmulator(data.platform);
+		}
+
+		//check if --device(value) is running, if it's not or it's not the same as is specified, start with name from --device(value)
+		if (data.deviceId) {
+			if (!helpers.isNumber(data.deviceId)) {
+				const activeDeviceInstance = _.find(deviceInstances, (device: Mobile.IDevice) => { return device.deviceInfo.identifier === data.deviceId; });
+				if (!activeDeviceInstance) {
+					return await this.startEmulator(data.platform, data.deviceId);
+				}
+			}
+		}
+
+		// if only emulator flag is passed and no other emulators are running, start default emulator
+		if (data.emulator && deviceInstances.length) {
+			const runningDeviceInstance = _.some(deviceInstances, (value) => value.isEmulator);
+			if (!runningDeviceInstance) {
 				return await this.startEmulator(data.platform);
 			}
-
-			//check if --device(value) is running, if it's not or it's not the same as is specified, start with name from --device(value)
-			if (data.deviceId) {
-				if (!helpers.isNumber(data.deviceId)) {
-					const activeDeviceInstance = _.find(deviceInstances, (device: Mobile.IDevice) => { return device.deviceInfo.identifier === data.deviceId; });
-					if (!activeDeviceInstance) {
-						return await this.startEmulator(data.platform, data.deviceId);
-					}
-				}
-			}
-
-			// if only emulator flag is passed and no other emulators are running, start default emulator
-			if (data.emulator && deviceInstances.length) {
-				const runningDeviceInstance = _.some(deviceInstances, (value) => value.isEmulator);
-				if (!runningDeviceInstance) {
-					return await this.startEmulator(data.platform);
-				}
-			}
+		}
 	}
 
 	/**
@@ -575,11 +575,12 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 		return await device.applicationManager.getDebuggableApps();
 	}
 
+	// TODO: Fix this method - it needs the projectName
 	private async deployOnDevice(deviceIdentifier: string, packageFile: string, packageName: string): Promise<void> {
 		const device = this.getDeviceByIdentifier(deviceIdentifier);
 		await device.applicationManager.reinstallApplication(packageName, packageFile);
 		this.$logger.info(`Successfully deployed on device with identifier '${device.deviceInfo.identifier}'.`);
-		await device.applicationManager.tryStartApplication(packageName, packageName);
+		await device.applicationManager.tryStartApplication({ appId: packageName, projectName: packageName });
 	}
 
 	/**
@@ -652,14 +653,14 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 		return this.executeOnAllConnectedDevices(action, canExecute);
 	}
 
-	private async isApplicationInstalledOnDevice(deviceIdentifier: string, appIdentifier: string, packageName: string): Promise<IAppInstalledInfo> {
+	private async isApplicationInstalledOnDevice(deviceIdentifier: string, appIdentifier: string, projectName: string): Promise<IAppInstalledInfo> {
 		let isInstalled = false;
 		let isLiveSyncSupported = false;
 		const device = this.getDeviceByIdentifier(deviceIdentifier);
 
 		try {
 			isInstalled = await device.applicationManager.isApplicationInstalled(appIdentifier);
-			await device.applicationManager.tryStartApplication(appIdentifier, packageName);
+			await device.applicationManager.tryStartApplication({ appId: appIdentifier, projectName });
 			isLiveSyncSupported = await isInstalled && !!device.applicationManager.isLiveSyncSupported(appIdentifier);
 		} catch (err) {
 			this.$logger.trace("Error while checking is application installed. Error is: ", err);

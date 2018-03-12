@@ -24,11 +24,11 @@ class ApplicationManager extends ApplicationManagerBase {
 		return;
 	}
 
-	public async startApplication(appIdentifier: string, appName: string): Promise<void> {
+	public async startApplication(appData: Mobile.IApplicationData): Promise<void> {
 		return;
 	}
 
-	public async stopApplication(appIdentifier: string): Promise<void> {
+	public async stopApplication(appData: Mobile.IApplicationData): Promise<void> {
 		return;
 	}
 
@@ -93,6 +93,10 @@ function createDebuggableWebViews(appInfos: Mobile.IDeviceApplicationInformation
 describe("ApplicationManagerBase", () => {
 	let applicationManager: ApplicationManager;
 	let testInjector: IInjector;
+	const applicationData = {
+		appId: "appId",
+		projectName: "appName"
+	};
 
 	beforeEach(() => {
 		testInjector = createTestInjector();
@@ -593,46 +597,43 @@ describe("ApplicationManagerBase", () => {
 
 	describe("restartApplication", () => {
 		it("calls stopApplication with correct arguments", async () => {
-			let stopApplicationParam: string;
-			applicationManager.stopApplication = (appId: string) => {
-				stopApplicationParam = appId;
+			let passedApplicationData: Mobile.IApplicationData = null;
+			applicationManager.stopApplication = (appData: Mobile.IApplicationData) => {
+				passedApplicationData = appData;
 				return Promise.resolve();
 			};
 
-			await applicationManager.restartApplication("appId", "appName");
-			assert.deepEqual(stopApplicationParam, "appId", "When bundleIdentifier is not passed to restartApplication, stopApplication must be called with application identifier.");
+			await applicationManager.restartApplication(applicationData);
+			assert.deepEqual(applicationData, passedApplicationData, "When bundleIdentifier is not passed to restartApplication, stopApplication must be called with application identifier.");
 		});
 
 		it("calls startApplication with correct arguments", async () => {
-			let startApplicationAppIdParam: string;
-			let startApplicationAppNameParam: string;
-			applicationManager.startApplication = (appId: string, appName: string) => {
-				startApplicationAppIdParam = appId;
-				startApplicationAppNameParam = appName;
+			let passedApplicationData: Mobile.IApplicationData = null;
+			applicationManager.startApplication = (appData: Mobile.IApplicationData) => {
+				passedApplicationData = appData;
 				return Promise.resolve();
 			};
 
-			await applicationManager.restartApplication("appId", "appName");
-			assert.deepEqual(startApplicationAppIdParam, "appId", "startApplication must be called with application identifier.");
-			assert.deepEqual(startApplicationAppNameParam, "appName", "startApplication must be called with application name.");
+			await applicationManager.restartApplication(applicationData);
+			assert.deepEqual(passedApplicationData, applicationData, "startApplication must be called with correct args.");
 		});
 
 		it("calls stopApplication and startApplication in correct order", async () => {
 			let isStartApplicationCalled = false;
 			let isStopApplicationCalled = false;
 
-			applicationManager.stopApplication = (appId: string) => {
+			applicationManager.stopApplication = (appData: Mobile.IApplicationData) => {
 				isStopApplicationCalled = true;
 				return Promise.resolve();
 			};
 
-			applicationManager.startApplication = (appId: string, appName: string) => {
+			applicationManager.startApplication = (appData: Mobile.IApplicationData) => {
 				assert.isTrue(isStopApplicationCalled, "When startApplication is called, stopApplication must have been resolved.");
 				isStartApplicationCalled = true;
 				return Promise.resolve();
 			};
 
-			await applicationManager.restartApplication("appId", "appName");
+			await applicationManager.restartApplication(applicationData);
 			assert.isTrue(isStopApplicationCalled, "stopApplication must be called.");
 			assert.isTrue(isStartApplicationCalled, "startApplication must be called.");
 		});
@@ -640,34 +641,32 @@ describe("ApplicationManagerBase", () => {
 
 	describe("tryStartApplication", () => {
 		it("calls startApplication, when canStartApplication returns true", async () => {
-			let startApplicationAppIdParam: string;
-			let startApplicationAppNameParam: string;
+			let passedApplicationData: Mobile.IApplicationData = null;
 
 			applicationManager.canStartApplication = () => true;
-			applicationManager.startApplication = (appId: string, appName: string) => {
-				startApplicationAppIdParam = appId;
-				startApplicationAppNameParam = appName;
+			applicationManager.startApplication = (appData: Mobile.IApplicationData) => {
+				passedApplicationData = appData;
 				return Promise.resolve();
 			};
 
-			await applicationManager.tryStartApplication("appId", "appName");
-			assert.deepEqual(startApplicationAppIdParam, "appId");
-			assert.deepEqual(startApplicationAppNameParam, "appName");
+			await applicationManager.tryStartApplication(applicationData);
+			assert.deepEqual(passedApplicationData, applicationData);
 
-			await applicationManager.tryStartApplication("appId2", "appName2");
-			assert.deepEqual(startApplicationAppIdParam, "appId2");
-			assert.deepEqual(startApplicationAppNameParam, "appName2");
+			const secondApplicationData = { appId: "appId2", projectName: "appName2" };
+			await applicationManager.tryStartApplication(secondApplicationData);
+			assert.deepEqual(passedApplicationData, secondApplicationData);
+
 		});
 
 		it("does not call startApplication, when canStartApplication returns false", async () => {
 			let isStartApplicationCalled = false;
 			applicationManager.canStartApplication = () => false;
-			applicationManager.startApplication = (appId: string) => {
+			applicationManager.startApplication = (appData: Mobile.IApplicationData) => {
 				isStartApplicationCalled = true;
 				return Promise.resolve();
 			};
 
-			await applicationManager.tryStartApplication("appId", "appName");
+			await applicationManager.tryStartApplication(applicationData);
 			assert.isFalse(isStartApplicationCalled, "startApplication must not be called when canStartApplication returns false.");
 		});
 
@@ -683,7 +682,7 @@ describe("ApplicationManagerBase", () => {
 
 			const assertDoesNotThrow = async (opts?: { shouldStartApplicatinThrow: boolean }) => {
 				assert.deepEqual(logger.traceOutput, "");
-				applicationManager.startApplication = async (appId: string) => {
+				applicationManager.startApplication = async (appData: Mobile.IApplicationData) => {
 					if (opts && opts.shouldStartApplicatinThrow) {
 						throw error;
 					}
@@ -691,7 +690,7 @@ describe("ApplicationManagerBase", () => {
 					isStartApplicationCalled = true;
 				};
 
-				await applicationManager.tryStartApplication("appId", "appName");
+				await applicationManager.tryStartApplication(applicationData);
 				assert.isFalse(isStartApplicationCalled, "startApplication must not be called when there's an error.");
 				assert.isTrue(logger.traceOutput.indexOf("Throw!") !== -1, "Error message must be shown in trace output.");
 				assert.isTrue(logger.traceOutput.indexOf("Unable to start application") !== -1, "'Unable to start application' must be shown in trace output.");

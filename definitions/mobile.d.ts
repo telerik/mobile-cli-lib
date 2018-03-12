@@ -173,7 +173,7 @@ declare module Mobile {
 		 * @param {string} pid The Process ID of the currently running application for which we need the logs.
 		 */
 		setApplicationPidForDevice(deviceIdentifier: string, pid: string): void;
-		
+
 		/**
 		 * Sets the project name of the application on the specified device.
 		 * @param {string} deviceIdentifier The unique identifier of the device.
@@ -252,20 +252,24 @@ declare module Mobile {
 		full: string;
 	}
 
+	interface IApplicationData {
+		appId: string;
+		projectName: string;
+	}
 	interface IDeviceApplicationManager extends NodeJS.EventEmitter {
 		getInstalledApplications(): Promise<string[]>;
 		isApplicationInstalled(appIdentifier: string): Promise<boolean>;
 		installApplication(packageFilePath: string, appIdentifier?: string): Promise<void>;
 		uninstallApplication(appIdentifier: string): Promise<void>;
 		reinstallApplication(appIdentifier: string, packageFilePath: string): Promise<void>;
-		startApplication(appIdentifier: string, appName: string): Promise<void>;
-		stopApplication(appIdentifier: string, appName?: string): Promise<void>;
-		restartApplication(appIdentifier: string, appName: string): Promise<void>;
+		startApplication(appData: IApplicationData): Promise<void>;
+		stopApplication(appData: IApplicationData): Promise<void>;
+		restartApplication(appData: IApplicationData): Promise<void>;
 		canStartApplication(): boolean;
 		checkForApplicationUpdates(): Promise<void>;
 		isLiveSyncSupported(appIdentifier: string): Promise<boolean>;
 		getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo>;
-		tryStartApplication(appIdentifier: string, appName: string): Promise<void>;
+		tryStartApplication(appData: IApplicationData): Promise<void>;
 		getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]>;
 		getDebuggableAppViews(appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>>;
 	}

@@ -21,9 +21,9 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 		await this.installApplication(packageFilePath, appIdentifier);
 	}
 
-	public async restartApplication(appIdentifier: string, appName: string): Promise<void> {
-		await this.stopApplication(appIdentifier, appName);
-		await this.startApplication(appIdentifier, appName);
+	public async restartApplication(appData: Mobile.IApplicationData): Promise<void> {
+		await this.stopApplication(appData);
+		await this.startApplication(appData);
 	}
 
 	public async isApplicationInstalled(appIdentifier: string): Promise<boolean> {
@@ -68,13 +68,13 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 		return this.checkForApplicationUpdatesPromise;
 	}
 
-	public async tryStartApplication(appIdentifier: string, appName: string): Promise<void> {
+	public async tryStartApplication(appData: Mobile.IApplicationData): Promise<void> {
 		try {
 			if (this.canStartApplication()) {
-				await this.startApplication(appIdentifier, appName);
+				await this.startApplication(appData);
 			}
 		} catch (err) {
-			this.$logger.trace(`Unable to start application ${appIdentifier}. Error is: ${err.message}`);
+			this.$logger.trace(`Unable to start application ${appData.appId}. Error is: ${err.message}`);
 		}
 	}
 
@@ -82,8 +82,8 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 
 	public abstract async installApplication(packageFilePath: string, appIdentifier?: string): Promise<void>;
 	public abstract async uninstallApplication(appIdentifier: string): Promise<void>;
-	public abstract async startApplication(appIdentifier: string, appName: string): Promise<void>;
-	public abstract async stopApplication(appIdentifier: string, appName?: string): Promise<void>;
+	public abstract async startApplication(appData: Mobile.IApplicationData): Promise<void>;
+	public abstract async stopApplication(appData: Mobile.IApplicationData): Promise<void>;
 	public abstract async getInstalledApplications(): Promise<string[]>;
 	public abstract async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo>;
 	public abstract canStartApplication(): boolean;
