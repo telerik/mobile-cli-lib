@@ -762,6 +762,37 @@ interface IAnalyticsSettingsService {
 	 * @returns {string} The user agent string.
 	 */
 	getUserAgentString(identifier: string): string;
+
+	/**
+	 * Gets information for projects that are exported from playground
+	 * @param projectDir Project directory path
+	 */
+ 	getPlaygroundInfo(projectDir?: string): Promise<IPlaygroundInfo>;
+}
+
+/** 
+ * Designed for getting information for projects that are exported from playground.
+ */
+interface IPlaygroundService {
+	/** 
+	 * Gets information for projects that are exported from playground
+	 * @return {Promise<IPlaygroundInfo>} collected info
+	 * @param projectDir Project directory path
+	 */
+	getPlaygroundInfo(projectDir?: string): Promise<IPlaygroundInfo>;
+}
+/**
+ * Describes information about project that is exported from playground.
+ */
+interface IPlaygroundInfo {
+	/** 
+	 * The unique client identifier
+	 */
+	id: string;
+	/**
+	 * Whether the user comes from tutorial page. Can be true or false
+	 */
+	usedTutorial: boolean;
 }
 
 interface IHostCapabilities {
