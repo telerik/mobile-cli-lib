@@ -79,13 +79,22 @@ export function trackDownloadProgress(destinationStream: NodeJS.WritableStream, 
 
 export function isAllowedFinalFile(item: string): RegExpMatchArray {
 	return item.match(/.*\.aar/) ||
-			item.match(".*include.gradle");
+		item.match(".*include.gradle");
 }
 
 export function isRecommendedAarFile(foundAarFile: string, packageJsonPluginName: string): boolean {
 	const filename = foundAarFile.replace(/^.*[\\\/]/, '');
-	packageJsonPluginName = packageJsonPluginName.replace(/[\-]/g, "_");
+	packageJsonPluginName = getShortPluginName(packageJsonPluginName);
 	return `${packageJsonPluginName}.aar` === filename;
+}
+
+export function getShortPluginName(pluginName: string): string {
+	return sanitizePluginName(pluginName).replace(/[\-]/g, "_");
+}
+
+function sanitizePluginName(pluginName: string): string {
+	// avoid long plugin names, exclude the npm module scope (@scope/nativescript-plugin) from the android plugin name
+	return pluginName.split("/").pop();
 }
 
 export async function executeActionByChunks<T>(initialData: T[] | IDictionary<T>, chunkSize: number, elementAction: (element: T, key?: string | number) => Promise<any>): Promise<void> {
