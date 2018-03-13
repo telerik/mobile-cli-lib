@@ -2,18 +2,19 @@ import { Yok } from "../../../yok";
 import * as assert from "assert";
 import { DeviceLogProvider } from "../../../appbuilder/device-log-provider";
 import { CommonLoggerStub } from "../stubs";
+import { LoggingLevels } from "../../../mobile/logging-levels";
 
 function createTestInjector(loggingLevel: string, emptyFilteredData?: boolean) {
 	const testInjector = new Yok();
 	testInjector.register("logFilter", {
 		loggingLevel: loggingLevel,
-		filterData: (platform: string, data: string, pid?: string, logLevel?: string) => {
-			return emptyFilteredData ? null : `${logLevel} ${data}`;
+		filterData: (platform: string, data: string, loggingOptions: Mobile.IDeviceLogOptions) => {
+			return emptyFilteredData ? null : `${loggingOptions.logLevel} ${data}`;
 		}
 	});
 
 	testInjector.register("logger", CommonLoggerStub);
-
+	testInjector.register("loggingLevels", LoggingLevels);
 	return testInjector;
 }
 

@@ -173,6 +173,13 @@ declare module Mobile {
 		 * @param {string} pid The Process ID of the currently running application for which we need the logs.
 		 */
 		setApplicationPidForDevice(deviceIdentifier: string, pid: string): void;
+
+		/**
+		 * Sets the project name of the application on the specified device.
+		 * @param {string} deviceIdentifier The unique identifier of the device.
+		 * @param {string} projectName The project name of the currently running application for which we need the logs.
+		 */
+		setProjectNameForDevice(deviceIdentifier: string, projectName: string): void;
 	}
 
 	/**
@@ -182,12 +189,17 @@ declare module Mobile {
 		/**
 		 * Process id of the application on the device.
 		 */
-		applicationPid: string;
+		applicationPid?: string;
 
 		/**
 		 * Selected log level for the current device. It can be INFO or FULL.
 		 */
 		logLevel: string;
+
+		/**
+		 * The project name.
+		 */
+		projectName?: string;
 	}
 
 	/**
@@ -215,11 +227,10 @@ declare module Mobile {
 		 * Filters data for specified platform.
 		 * @param {string} platform The platform for which is the device log.
 		 * @param {string} data The input data for filtering.
-		 * @param {string} pid @optional The application PID for this device.
-		 * @param {string} logLevel @optional The logging level based on which input data will be filtered.
+		 * @param {Mobile.IDeviceLogOptions} deviceLogOptions The logging options based on which the filtering for this device logs will be executed.
 		 * @return {string} The filtered result based on the input or null when the input data shouldn't be shown.
 		 */
-		filterData(platform: string, data: string, pid?: string, logLevel?: string): string;
+		filterData(platform: string, data: string, deviceLogOptions: Mobile.IDeviceLogOptions): string;
 	}
 
 	/**
@@ -233,12 +244,21 @@ declare module Mobile {
 		 * @param {string} pid The Process ID of the currently running application for which we need the logs.
 		 * @return {string} The filtered result based on the input or null when the input data shouldn't be shown.
 		 */
-		filterData(data: string, logLevel: string, pid: string): string;
+		filterData(data: string, deviceLogOptions: Mobile.IDeviceLogOptions): string;
 	}
 
 	interface ILoggingLevels {
 		info: string;
 		full: string;
+	}
+
+	interface IApplicationData {
+		appId: string;
+		projectName: string;
+	}
+
+	interface IInstallAppData extends IApplicationData {
+		packagePath: string;
 	}
 
 	interface IDeviceApplicationManager extends NodeJS.EventEmitter {
@@ -247,14 +267,14 @@ declare module Mobile {
 		installApplication(packageFilePath: string, appIdentifier?: string): Promise<void>;
 		uninstallApplication(appIdentifier: string): Promise<void>;
 		reinstallApplication(appIdentifier: string, packageFilePath: string): Promise<void>;
-		startApplication(appIdentifier: string): Promise<void>;
-		stopApplication(appIdentifier: string, appName?: string): Promise<void>;
-		restartApplication(appIdentifier: string, appName?: string): Promise<void>;
+		startApplication(appData: IApplicationData): Promise<void>;
+		stopApplication(appData: IApplicationData): Promise<void>;
+		restartApplication(appData: IApplicationData): Promise<void>;
 		canStartApplication(): boolean;
 		checkForApplicationUpdates(): Promise<void>;
 		isLiveSyncSupported(appIdentifier: string): Promise<boolean>;
 		getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo>;
-		tryStartApplication(appIdentifier: string): Promise<void>;
+		tryStartApplication(appData: IApplicationData): Promise<void>;
 		getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]>;
 		getDebuggableAppViews(appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>>;
 	}

@@ -114,13 +114,13 @@ describe("android-application-manager", () => {
 			for (let i = 0; i < androidDebugBridge.getInputLength(); i++) {
 				androidDebugBridge.validIdentifierPassed = false;
 
-				await androidApplicationManager.startApplication("valid.identifier");
+				await androidApplicationManager.startApplication({ appId: "valid.identifier", projectName: "" });
 				assert.isTrue(androidDebugBridge.validIdentifierPassed);
 				assert.isTrue(androidDebugBridge.startedWithActivityManager);
 			}
 		});
 		it("if regex fails monkey is called to start application", async () => {
-			await androidApplicationManager.startApplication(invalidIdentifier);
+			await androidApplicationManager.startApplication({ appId: invalidIdentifier, projectName: "" });
 			assert.isFalse(androidDebugBridge.startedWithActivityManager);
 		});
 	});
