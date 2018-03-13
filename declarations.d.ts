@@ -1344,9 +1344,9 @@ interface IDoctorService {
 	/**
 	 * Verifies the host OS configuration and prints warnings to the users
 	 * @param configOptions: defines if the result should be tracked by Analytics
-	 * @returns {Promise<boolean>} true if at least one warning was printed
+	 * @returns {Promise<void>}
 	 */
-	printWarnings(configOptions?: { trackResult: boolean }): Promise<boolean>;
+	printWarnings(configOptions?: { trackResult: boolean }): Promise<void>;
 	/** 
 	 * Runs the setup script on host machine
 	 * @returns {Promise<ISpawnResult>}
