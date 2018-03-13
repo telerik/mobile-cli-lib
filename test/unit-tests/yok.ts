@@ -515,6 +515,105 @@ $injector.register("a", A);
 		});
 	});
 
+	describe("isValidHierarchicalCommand", () => {
+		let injector: IInjector;
+		beforeEach(() => {
+			injector = new Yok();
+		});
+
+		describe("returns true", () => {
+			describe("when command consists of two parts", () => {
+				it("and is valid", async () => {
+					injector.requireCommand("sample|command", "sampleFileName");
+					assert.isTrue(await injector.isValidHierarchicalCommand("sample", ["command"]));
+				});
+
+				it("and has default value and no arguments passed", async () => {
+					injector.requireCommand("sample|*default", "sampleFileName");
+					assert.isTrue(await injector.isValidHierarchicalCommand("sample", []));
+				});
+
+				it("and has default value and canExecute returns true", async () => {
+					const command = {
+						canExecute: () => true
+					};
+					injector.registerCommand("sample|*default", command);
+					injector.requireCommand("sample|*default", "sampleFileName");
+					assert.isTrue(await injector.isValidHierarchicalCommand("sample", ["arg"]));
+				});
+
+				it("and has default value and allowedParameters' length is greater than 0", async () => {
+					const command = {
+						allowedParameters: ["param1", "param2"]
+					};
+					injector.registerCommand("sample|*default", command);
+					injector.requireCommand("sample|*default", "sampleFileName");
+					assert.isTrue(await injector.isValidHierarchicalCommand("sample", ["arg"]));
+				});
+
+				it("and has default value and argument default passed", async () => {
+					injector.requireCommand("sample|*default", "sampleFileName");
+					assert.isTrue(await injector.isValidHierarchicalCommand("sample", ["default"]));
+				});
+			});
+
+			describe("when command consists of multiple parts", () => {
+				it("and is valid", async () => {
+					injector.requireCommand("sample|command|subcommand", "sampleFileName");
+					assert.isTrue(await injector.isValidHierarchicalCommand("sample", ["command", "subcommand"]));
+				});
+
+				it("and has default value and no arguments passed", async () => {
+					injector.requireCommand("sample|command|*default", "sampleFileName");
+					assert.isTrue(await injector.isValidHierarchicalCommand("sample", ["command"]));
+				});
+
+				it("has default value and default argument passed", async () => {
+					injector.requireCommand("sample|command|*default", "sampleFileName");
+					assert.isTrue(await injector.isValidHierarchicalCommand("sample", ["command", "default"]));
+				});
+			});
+		});
+
+		describe("returns false", () => {
+			it("when command is invalid", async () => {
+				injector.requireCommand("sample|command", "sampleFileName");
+				assert.isFalse(await injector.isValidHierarchicalCommand("wrong", ["command"]));
+			});
+
+			it("when has default value and canExecute returns false", async () => {
+				const command = {
+					canExecute: () => false
+				};
+				injector.registerCommand("sample|*default", command);
+				injector.requireCommand("sample|*default", "sampleFileName");
+				assert.isFalse(await injector.isValidHierarchicalCommand("sample", ["arg"]));
+			});
+		});
+
+		describe("throws", () => {
+			it("when has default value and some arguments passed", async () => {
+				injector.requireCommand("sample|*default", "sampleFileName");
+				assert.isRejected(injector.isValidHierarchicalCommand("sample", ["argument"]));
+			});
+
+			it("when arguments are invalid", async () => {
+				injector.requireCommand("sample|command", "sampleFileName");
+				assert.isRejected(injector.isValidHierarchicalCommand("sample", ["commandarg"]));
+			});
+
+			it("when has default value and allowedParameters' length is 0", async () => {
+				const allowedParameters: string[] = [];
+				const command = {
+					allowedParameters
+				};
+				injector.registerCommand("sample|*default", command);
+				injector.requireCommand("sample|*default", "sampleFileName");
+				assert.isRejected(injector.isValidHierarchicalCommand("sample", ["arg"]));
+			});
+		});
+	});
+
 	describe("buildHierarchicalCommand", () => {
 		let injector: IInjector;
 		beforeEach(() => {
