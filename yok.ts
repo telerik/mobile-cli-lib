@@ -1,6 +1,7 @@
 import * as path from "path";
 import { annotate, isPromise } from "./helpers";
 import { ERROR_NO_VALID_SUBCOMMAND_FORMAT } from "./constants";
+import { CommandsDelimiters } from "./constants";
 
 let indent = "";
 function trace(formatStr: string, ...args: any[]) {
@@ -60,7 +61,7 @@ export class Yok implements IInjector {
 
 	public requireCommand(names: any, file: string): void {
 		forEachName(names, (commandName) => {
-			const commands = commandName.split("|");
+			const commands = commandName.split(CommandsDelimiters.HierarchicalCommand);
 
 			if (commands.length > 1) {
 				if (_.startsWith(commands[1], '*') && this.modules[this.createCommandName(commands[0])]) {
@@ -73,7 +74,7 @@ export class Yok implements IInjector {
 					this.hierarchicalCommands[parentCommandName] = [];
 				}
 
-				this.hierarchicalCommands[parentCommandName].push(_.tail(commands).join("|"));
+				this.hierarchicalCommands[parentCommandName].push(_.tail(commands).join(CommandsDelimiters.HierarchicalCommand));
 			}
 
 			if (commands.length > 1 && !this.modules[this.createCommandName(commands[0])]) {
@@ -151,7 +152,7 @@ export class Yok implements IInjector {
 
 	public registerCommand(names: any, resolver: any): void {
 		forEachName(names, (name) => {
-			const commands = name.split("|");
+			const commands = name.split(CommandsDelimiters.HierarchicalCommand);
 			this.register(this.createCommandName(name), resolver);
 
 			if (commands.length > 1) {
@@ -160,9 +161,19 @@ export class Yok implements IInjector {
 		});
 	}
 
-	private getDefaultCommand(name: string) {
+	private getDefaultCommand(name: string, commandArguments: string[]) {
 		const subCommands = this.hierarchicalCommands[name];
-		const defaultCommand = _.find(subCommands, (command) => _.startsWith(command, "*"));
+		const defaultCommand = _.find(subCommands, command => _.some(command.split(CommandsDelimiters.HierarchicalCommand), c => _.startsWith(c, CommandsDelimiters.DefaultCommandSymbol)));
+
+		if (defaultCommand) {
+			// In case the defaultCommand consists of more than one part (e.g. someCommand|someSubcommand|*default)
+			// we need to remove all parts from the arguments list - they are not actually arguments
+			defaultCommand
+				.split(CommandsDelimiters.HierarchicalCommand)
+				.map(command => _.startsWith(command, CommandsDelimiters.DefaultCommandSymbol) ? command.substr(1) : command)
+				.forEach(command => _.remove(commandArguments, arg => arg === command));
+		}
+
 		return defaultCommand;
 	}
 
@@ -176,7 +187,7 @@ export class Yok implements IInjector {
 			arg = arg.toLowerCase();
 			currentSubCommandName = currentSubCommandName ? this.getHierarchicalCommandName(currentSubCommandName, arg) : arg;
 			remainingArguments = _.tail(remainingArguments);
-			if (matchingSubCommandName = _.find(subCommands, (sc) => sc === currentSubCommandName || sc === "*" + currentSubCommandName)) {
+			if (matchingSubCommandName = _.find(subCommands, sc => sc === currentSubCommandName || sc === `${CommandsDelimiters.DefaultCommandSymbol}${currentSubCommandName}`)) {
 				finalSubCommandName = matchingSubCommandName;
 				finalRemainingArguments = remainingArguments;
 				foundSubCommand = true;
@@ -198,7 +209,7 @@ export class Yok implements IInjector {
 				execute: async (args: string[]): Promise<void> => {
 					const commandsService = $injector.resolve("commandsService");
 					let commandName: string = null;
-					const defaultCommand = this.getDefaultCommand(name);
+					const defaultCommand = this.getDefaultCommand(name, args);
 					let commandArguments: ICommandArgument[] = [];
 
 					if (args.length > 0) {
@@ -210,7 +221,7 @@ export class Yok implements IInjector {
 							commandName = defaultCommand ? this.getHierarchicalCommandName(name, defaultCommand) : "help";
 							// If we'll execute the default command, but it's full name had been written by the user
 							// for example "appbuilder cloud list", we have to remove the "list" option from the arguments that we'll pass to the command.
-							if (_.includes(this.hierarchicalCommands[name], "*" + args[0])) {
+							if (_.includes(this.hierarchicalCommands[name], CommandsDelimiters.DefaultCommandSymbol + args[0])) {
 								commandArguments = _.tail(args);
 							} else {
 								commandArguments = args;
@@ -238,12 +249,12 @@ export class Yok implements IInjector {
 	}
 
 	private getHierarchicalCommandName(parentCommandName: string, subCommandName: string) {
-		return [parentCommandName, subCommandName].join("|");
+		return [parentCommandName, subCommandName].join(CommandsDelimiters.HierarchicalCommand);
 	}
 
 	public async isValidHierarchicalCommand(commandName: string, commandArguments: string[]): Promise<boolean> {
 		if (_.includes(Object.keys(this.hierarchicalCommands), commandName)) {
-			const defaultCommandName = this.getDefaultCommand(commandName);
+			const defaultCommandName = this.getDefaultCommand(commandName, commandArguments);
 			if (defaultCommandName && (!commandArguments || commandArguments.length === 0)) {
 				// Will execute default command as there aren't passed arguments.
 				return true;
@@ -279,7 +290,7 @@ export class Yok implements IInjector {
 	}
 
 	public isDefaultCommand(commandName: string): boolean {
-		return commandName.indexOf("*") > 0 && commandName.indexOf("|") > 0;
+		return commandName.indexOf(CommandsDelimiters.DefaultCommandSymbol) > 0 && commandName.indexOf(CommandsDelimiters.HierarchicalCommand) > 0;
 	}
 
 	public register(name: string, resolver: any, shared?: boolean): void {
