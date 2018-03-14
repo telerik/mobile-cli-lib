@@ -96,6 +96,7 @@ export const DEFAULT_CHUNK_SIZE = 100;
 
 export const enum CommandsDelimiters {
 	HierarchicalCommand = "|",
+	DefaultCommandSymbol = "*",
 	DefaultHierarchicalCommand = "|*",
 	HooksCommand = "-"
 }

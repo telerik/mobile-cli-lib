@@ -523,93 +523,94 @@ $injector.register("a", A);
 
 		describe("returns true", () => {
 			describe("when command consists of two parts", () => {
-				it("and is valid", async () => {
+				it("and is valid", () => {
 					injector.requireCommand("sample|command", "sampleFileName");
-					assert.isTrue(await injector.isValidHierarchicalCommand("sample", ["command"]));
+					return assert.eventually.isTrue(injector.isValidHierarchicalCommand("sample", ["command"]));
 				});
 
-				it("and has default value and no arguments passed", async () => {
+				it("and has default value and no arguments passed", () => {
 					injector.requireCommand("sample|*default", "sampleFileName");
-					assert.isTrue(await injector.isValidHierarchicalCommand("sample", []));
+					return assert.eventually.isTrue(injector.isValidHierarchicalCommand("sample", []));
 				});
 
-				it("and has default value and canExecute returns true", async () => {
+				it("and has default value and canExecute returns true", () => {
 					const command = {
-						canExecute: () => true
+						canExecute: async () => true
 					};
 					injector.registerCommand("sample|*default", command);
 					injector.requireCommand("sample|*default", "sampleFileName");
-					assert.isTrue(await injector.isValidHierarchicalCommand("sample", ["arg"]));
+					return assert.eventually.isTrue(injector.isValidHierarchicalCommand("sample", ["arg"]));
 				});
 
-				it("and has default value and allowedParameters' length is greater than 0", async () => {
+				it("and has default value and allowedParameters' length is greater than 0", () => {
+					const allowedParameters: ICommandParameter[] = [{ mandatory: false, validate: async () => true }];
 					const command = {
-						allowedParameters: ["param1", "param2"]
+						allowedParameters
 					};
 					injector.registerCommand("sample|*default", command);
 					injector.requireCommand("sample|*default", "sampleFileName");
-					assert.isTrue(await injector.isValidHierarchicalCommand("sample", ["arg"]));
+					return assert.eventually.isTrue(injector.isValidHierarchicalCommand("sample", ["arg"]));
 				});
 
-				it("and has default value and argument default passed", async () => {
+				it("and has default value and argument default passed", () => {
 					injector.requireCommand("sample|*default", "sampleFileName");
-					assert.isTrue(await injector.isValidHierarchicalCommand("sample", ["default"]));
+					return assert.eventually.isTrue(injector.isValidHierarchicalCommand("sample", ["default"]));
 				});
 			});
 
 			describe("when command consists of multiple parts", () => {
-				it("and is valid", async () => {
+				it("and is valid", () => {
 					injector.requireCommand("sample|command|subcommand", "sampleFileName");
-					assert.isTrue(await injector.isValidHierarchicalCommand("sample", ["command", "subcommand"]));
+					return assert.eventually.isTrue(injector.isValidHierarchicalCommand("sample", ["command", "subcommand"]));
 				});
 
-				it("and has default value and no arguments passed", async () => {
+				it("and has default value and no arguments passed", () => {
 					injector.requireCommand("sample|command|*default", "sampleFileName");
-					assert.isTrue(await injector.isValidHierarchicalCommand("sample", ["command"]));
+					return assert.eventually.isTrue(injector.isValidHierarchicalCommand("sample", ["command"]));
 				});
 
-				it("has default value and default argument passed", async () => {
+				it("has default value and default argument passed", () => {
 					injector.requireCommand("sample|command|*default", "sampleFileName");
-					assert.isTrue(await injector.isValidHierarchicalCommand("sample", ["command", "default"]));
+					return assert.eventually.isTrue(injector.isValidHierarchicalCommand("sample", ["command", "default"]));
 				});
 			});
 		});
 
 		describe("returns false", () => {
-			it("when command is invalid", async () => {
+			it("when command is invalid", () => {
 				injector.requireCommand("sample|command", "sampleFileName");
-				assert.isFalse(await injector.isValidHierarchicalCommand("wrong", ["command"]));
+				return assert.eventually.isFalse(injector.isValidHierarchicalCommand("wrong", ["command"]));
 			});
 
-			it("when has default value and canExecute returns false", async () => {
+			it("when has default value and canExecute returns false", () => {
 				const command = {
-					canExecute: () => false
+					canExecute: async () => false
 				};
 				injector.registerCommand("sample|*default", command);
 				injector.requireCommand("sample|*default", "sampleFileName");
-				assert.isFalse(await injector.isValidHierarchicalCommand("sample", ["arg"]));
+				return assert.eventually.isFalse(injector.isValidHierarchicalCommand("sample", ["arg"]));
 			});
 		});
 
 		describe("throws", () => {
-			it("when has default value and some arguments passed", async () => {
+			it("when has default value and some arguments passed", () => {
 				injector.requireCommand("sample|*default", "sampleFileName");
-				assert.isRejected(injector.isValidHierarchicalCommand("sample", ["argument"]));
+				return assert.isRejected(injector.isValidHierarchicalCommand("sample", ["argument"]));
 			});
 
-			it("when arguments are invalid", async () => {
+			it("when arguments are invalid", () => {
 				injector.requireCommand("sample|command", "sampleFileName");
-				assert.isRejected(injector.isValidHierarchicalCommand("sample", ["commandarg"]));
+				return assert.isRejected(injector.isValidHierarchicalCommand("sample", ["commandarg"]));
 			});
 
-			it("when has default value and allowedParameters' length is 0", async () => {
-				const allowedParameters: string[] = [];
+			it("when has default value and allowedParameters' length is 0", () => {
+				const allowedParameters: ICommandParameter[] = [];
 				const command = {
 					allowedParameters
 				};
 				injector.registerCommand("sample|*default", command);
 				injector.requireCommand("sample|*default", "sampleFileName");
-				assert.isRejected(injector.isValidHierarchicalCommand("sample", ["arg"]));
+				return assert.isRejected(injector.isValidHierarchicalCommand("sample", ["arg"]));
 			});
 		});
 	});
