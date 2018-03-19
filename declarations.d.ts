@@ -1660,6 +1660,14 @@ interface IVersionInformation {
 	 * The latest available version of the component.
 	 */
 	latestVersion: string;
+	/**
+	 * The message that will be displayed.
+	 */
+	message?: string;
+	/**
+	 * The type of the component. Can be UpToDate, UpdateAvailable, NotInstalled.
+	 */
+	type?: "UpToDate" | "UpdateAvailable" | "NotInstalled";
 }
 
 interface IVersionData {
