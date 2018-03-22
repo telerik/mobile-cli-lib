@@ -77,15 +77,14 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async startApplication(appData: Mobile.IApplicationData): Promise<void> {
-		const { appId: appIdentifier, projectName } = appData;
-		if (!await this.isApplicationInstalled(appIdentifier)) {
-			this.$errors.failWithoutHelp("Invalid application id: %s. All available application ids are: %s%s ", appIdentifier, EOL, this.applicationsLiveSyncInfos.join(EOL));
+
+		if (!await this.isApplicationInstalled(appData.appId)) {
+			this.$errors.failWithoutHelp("Invalid application id: %s. All available application ids are: %s%s ", appData.appId, EOL, this.applicationsLiveSyncInfos.join(EOL));
 		}
 
-		this.$deviceLogProvider.setProjectNameForDevice(this.device.deviceInfo.identifier, projectName);
-		await this.runApplicationCore(appIdentifier);
+		await this.runApplicationCore(appData);
 
-		this.$logger.info(`Successfully run application ${appIdentifier} on device with ID ${this.device.deviceInfo.identifier}.`);
+		this.$logger.info(`Successfully run application ${appData.appId} on device with ID ${this.device.deviceInfo.identifier}.`);
 	}
 
 	public async stopApplication(appData: Mobile.IApplicationData): Promise<void> {
@@ -104,15 +103,16 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	public async restartApplication(appData: Mobile.IApplicationData): Promise<void> {
 		try {
 			await this.stopApplication(appData);
-			await this.runApplicationCore(appData.appId);
+			await this.runApplicationCore(appData);
 		} catch (err) {
 			await this.$iOSNotificationService.postNotification(this.device.deviceInfo.identifier, `${appData.appId}:NativeScript.LiveSync.RestartApplication`);
 			throw err;
 		}
 	}
 
-	private async runApplicationCore(appIdentifier: string): Promise<void> {
-		await this.$iosDeviceOperations.start([{ deviceId: this.device.deviceInfo.identifier, appId: appIdentifier, ddi: this.$options.ddi }]);
+	private async runApplicationCore(appData: Mobile.IApplicationData): Promise<void> {
+		this.$deviceLogProvider.setProjectNameForDevice(this.device.deviceInfo.identifier, appData.projectName);
+		await this.$iosDeviceOperations.start([{ deviceId: this.device.deviceInfo.identifier, appId: appData.appId, ddi: this.$options.ddi }]);
 		if (!this.$options.justlaunch) {
 			await this.startDeviceLog();
 		}
