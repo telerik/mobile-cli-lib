@@ -1365,8 +1365,17 @@ interface IUtils {
 	getMilliSecondsTimeout(defaultTimeout: number): number;
 }
 
-interface IBinaryPlistParser {
+/**
+ * Used for parsing of .plist files
+ */
+interface IPlistParser {
+	/**
+	 * Parses the .plist file and returns the result as object
+	 * @param {string} plistFilePath Absolute path to .plist file
+	 * @return {Promise<any>} The parsed object
+	 */
 	parseFile(plistFilePath: string): Promise<any>;
+	parseFileSync(plistFilePath: string): any;
 }
 
 interface IUserSettingsService extends UserSettings.IUserSettingsService {
