@@ -40,10 +40,6 @@ class ApplicationManager extends ApplicationManagerBase {
 		return null;
 	}
 
-	public canStartApplication(): boolean {
-		return true;
-	}
-
 	public async getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]> {
 		return currentlyAvailableAppsForDebugging;
 	}

@@ -270,7 +270,6 @@ declare module Mobile {
 		startApplication(appData: IApplicationData): Promise<void>;
 		stopApplication(appData: IApplicationData): Promise<void>;
 		restartApplication(appData: IApplicationData): Promise<void>;
-		canStartApplication(): boolean;
 		checkForApplicationUpdates(): Promise<void>;
 		isLiveSyncSupported(appIdentifier: string): Promise<boolean>;
 		getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo>;
