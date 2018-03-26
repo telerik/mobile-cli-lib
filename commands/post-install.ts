@@ -5,7 +5,7 @@ export class PostInstallCommand implements ICommand {
 		private $helpService: IHelpService,
 		private $settingsService: ISettingsService,
 		private $analyticsService: IAnalyticsService,
-		private $logger: ILogger) {
+		protected $logger: ILogger) {
 	}
 
 	public disableAnalytics = true;
