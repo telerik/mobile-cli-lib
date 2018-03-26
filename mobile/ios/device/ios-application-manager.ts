@@ -102,6 +102,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 
 	public async restartApplication(appData: Mobile.IApplicationData): Promise<void> {
 		try {
+			this.$deviceLogProvider.setProjectNameForDevice(this.device.deviceInfo.identifier, appData.projectName);
 			await this.stopApplication(appData);
 			await this.runApplicationCore(appData);
 		} catch (err) {
