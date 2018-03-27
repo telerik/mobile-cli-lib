@@ -103,7 +103,7 @@ $injector.requireCommand("proxy|set", "./commands/proxy/proxy-set");
 $injector.requireCommand("proxy|clear", "./commands/proxy/proxy-clear");
 
 $injector.require("utils", "./utils");
-$injector.require("bplistParser", "./bplist-parser");
+$injector.require("plistParser", "./plist-parser");
 $injector.require("winreg", "./winreg");
 
 $injector.require("loggingLevels", "./mobile/logging-levels");
