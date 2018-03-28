@@ -658,13 +658,6 @@ interface IProjectHelper extends IProjectDir {
 	sanitizeName(appName: string): string;
 }
 
-interface IPropertiesParser {
-	parse(text: string): any;
-	createEditor(filePath: string): Promise<any>;
-	saveEditor(): Promise<void>;
-	read(filePath: string): Promise<any>;
-}
-
 interface IDictionary<T> {
 	[key: string]: T
 }
@@ -770,11 +763,11 @@ interface IAnalyticsSettingsService {
  	getPlaygroundInfo(projectDir?: string): Promise<IPlaygroundInfo>;
 }
 
-/** 
+/**
  * Designed for getting information for projects that are exported from playground.
  */
 interface IPlaygroundService {
-	/** 
+	/**
 	 * Gets information for projects that are exported from playground
 	 * @return {Promise<IPlaygroundInfo>} collected info
 	 * @param projectDir Project directory path
@@ -785,7 +778,7 @@ interface IPlaygroundService {
  * Describes information about project that is exported from playground.
  */
 interface IPlaygroundInfo {
-	/** 
+	/**
 	 * The unique client identifier
 	 */
 	id: string;
@@ -1347,7 +1340,7 @@ interface IDoctorService {
 	 * @returns {Promise<void>}
 	 */
 	printWarnings(configOptions?: { trackResult: boolean }): Promise<void>;
-	/** 
+	/**
 	 * Runs the setup script on host machine
 	 * @returns {Promise<ISpawnResult>}
 	*/
