@@ -26,7 +26,6 @@
     "Proton"
   ],
   "dependencies": {
-    "bufferpack": "0.0.6",
     "byline": "4.2.1",
     "chalk": "1.0.0",
     "cli-table": "https://github.com/telerik/cli-table/tarball/v0.3.1.1",
