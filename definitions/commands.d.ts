@@ -14,6 +14,13 @@ interface ICommand extends ICommandOptions {
 	completionData?: string[];
 	dashedOptions?: IDictionary<IDashedOption>;
 	isHierarchicalCommand?: boolean;
+
+	/**
+	 * Describes the action that will be executed after the command succeeds.
+	 * @param {string[]} args Arguments passed to the command.
+	 * @returns {Promise<void>}
+	 */
+	postCommandAction?(args: string[]): Promise<void>;
 }
 
 interface IDynamicCommand extends ICommand { }
