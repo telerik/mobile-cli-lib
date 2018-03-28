@@ -11,8 +11,6 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		private device: Mobile.IDevice,
 		private $errors: IErrors,
 		private $iOSNotificationService: IiOSNotificationService,
-		private $hostInfo: IHostInfo,
-		private $staticConfig: Config.IStaticConfig,
 		private $iosDeviceOperations: IIOSDeviceOperations,
 		private $options: ICommonOptions,
 		private $deviceLogProvider: Mobile.IDeviceLogProvider) {
@@ -102,6 +100,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 
 	public async restartApplication(appData: Mobile.IApplicationData): Promise<void> {
 		try {
+			this.$deviceLogProvider.setProjectNameForDevice(this.device.deviceInfo.identifier, appData.projectName);
 			await this.stopApplication(appData);
 			await this.runApplicationCore(appData);
 		} catch (err) {
@@ -121,10 +120,6 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	@cache()
 	private async startDeviceLog(): Promise<void> {
 		await this.device.openDeviceLogStream();
-	}
-
-	public canStartApplication(): boolean {
-		return this.$hostInfo.isDarwin || (this.$hostInfo.isWindows && this.$staticConfig.enableDeviceRunCommandOnWindows);
 	}
 
 	public getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]> {

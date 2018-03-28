@@ -54,10 +54,6 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		return this.iosSim.stopApplication(this.identifier, appData.appId, appData.projectName);
 	}
 
-	public canStartApplication(): boolean {
-		return true;
-	}
-
 	public async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
 		let result: Mobile.IApplicationInfo = null;
 		const plistContent = await this.getParsedPlistContent(applicationIdentifier);

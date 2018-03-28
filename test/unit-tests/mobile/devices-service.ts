@@ -78,7 +78,6 @@ const iOSSimulator = {
 	},
 	applicationManager: {
 		getInstalledApplications: () => Promise.resolve(["com.telerik.unitTest1", "com.telerik.unitTest2"]),
-		canStartApplication: () => true,
 		startApplication: (packageName: string, framework: string) => Promise.resolve(),
 		tryStartApplication: (packageName: string, framework: string) => Promise.resolve(),
 		reinstallApplication: (packageName: string, packageFile: string) => Promise.resolve(),
@@ -218,7 +217,6 @@ describe("devicesService", () => {
 		},
 		applicationManager: {
 			getInstalledApplications: () => Promise.resolve(["com.telerik.unitTest1", "com.telerik.unitTest2"]),
-			canStartApplication: () => true,
 			startApplication: (appData: Mobile.IApplicationData) => Promise.resolve(),
 			tryStartApplication: (appData: Mobile.IApplicationData) => Promise.resolve(),
 			reinstallApplication: (packageName: string, packageFile: string) => Promise.resolve(),
@@ -238,7 +236,6 @@ describe("devicesService", () => {
 		},
 		applicationManager: {
 			getInstalledApplications: () => Promise.resolve(["com.telerik.unitTest1", "com.telerik.unitTest2", "com.telerik.unitTest3"]),
-			canStartApplication: () => true,
 			startApplication: (appData: Mobile.IApplicationData) => Promise.resolve(),
 			tryStartApplication: (appData: Mobile.IApplicationData) => Promise.resolve(),
 			reinstallApplication: (packageName: string, packageFile: string) => Promise.resolve(),
@@ -933,18 +930,6 @@ describe("devicesService", () => {
 				const realResult = deployOnDevicesResult;
 				assert.isTrue(realResult === undefined, "On success, undefined should be returned.");
 			});
-		});
-
-		it("does not call startApplication when canStartApplication returns false", async () => {
-			iOSDevice.applicationManager.canStartApplication = () => false;
-			iOSDevice.applicationManager.startApplication = (): Promise<void> => {
-				throw new Error("Start application must not be called for iOSDevice when canStartApplication returns false.");
-			};
-
-			const results = devicesService.deployOnDevices([androidDevice.deviceInfo.identifier, iOSDevice.deviceInfo.identifier], "path", "packageName", "cordova");
-			assert.isTrue(results.length > 0);
-			const deployOnDevicesResults = await Promise.all(results);
-			assert.deepEqual(deployOnDevicesResults, [undefined, undefined]);
 		});
 
 		it("throws error when invalid identifier is passed", async () => {
