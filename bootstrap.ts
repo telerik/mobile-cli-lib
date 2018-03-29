@@ -28,7 +28,6 @@ $injector.require("childProcess", "./child-process");
 $injector.require("prompter", "./prompter");
 $injector.require("projectHelper", "./project-helper");
 $injector.require("pluginVariablesHelper", "./plugin-variables-helper");
-$injector.require("propertiesParser", "./properties-parser");
 $injector.require("progressIndicator", "./progress-indicator");
 
 $injector.requireCommand(["help", "/?"], "./commands/help");
