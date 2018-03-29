@@ -75,11 +75,11 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async startApplication(appData: Mobile.IApplicationData): Promise<void> {
-
 		if (!await this.isApplicationInstalled(appData.appId)) {
 			this.$errors.failWithoutHelp("Invalid application id: %s. All available application ids are: %s%s ", appData.appId, EOL, this.applicationsLiveSyncInfos.join(EOL));
 		}
 
+		await this.setDeviceLogData(appData);
 		await this.runApplicationCore(appData);
 
 		this.$logger.info(`Successfully run application ${appData.appId} on device with ID ${this.device.deviceInfo.identifier}.`);
@@ -100,7 +100,7 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 
 	public async restartApplication(appData: Mobile.IApplicationData): Promise<void> {
 		try {
-			this.$deviceLogProvider.setProjectNameForDevice(this.device.deviceInfo.identifier, appData.projectName);
+			await this.setDeviceLogData(appData);
 			await this.stopApplication(appData);
 			await this.runApplicationCore(appData);
 		} catch (err) {
@@ -109,12 +109,15 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 		}
 	}
 
-	private async runApplicationCore(appData: Mobile.IApplicationData): Promise<void> {
+	private async setDeviceLogData(appData: Mobile.IApplicationData): Promise<void> {
 		this.$deviceLogProvider.setProjectNameForDevice(this.device.deviceInfo.identifier, appData.projectName);
-		await this.$iosDeviceOperations.start([{ deviceId: this.device.deviceInfo.identifier, appId: appData.appId, ddi: this.$options.ddi }]);
 		if (!this.$options.justlaunch) {
 			await this.startDeviceLog();
 		}
+	}
+
+	private async runApplicationCore(appData: Mobile.IApplicationData): Promise<void> {
+		await this.$iosDeviceOperations.start([{ deviceId: this.device.deviceInfo.identifier, appId: appData.appId, ddi: this.$options.ddi }]);
 	}
 
 	@cache()
