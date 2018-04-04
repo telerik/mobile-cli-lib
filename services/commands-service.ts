@@ -66,7 +66,8 @@ export class CommandsService implements ICommandsService {
 				await analyticsService.trackInGoogleAnalytics(googleAnalyticsPageData);
 			}
 
-			if (!this.$staticConfig.disableCommandHooks && (command.enableHooks === undefined || command.enableHooks === true)) {
+			const shouldExecuteHooks = !this.$staticConfig.disableCommandHooks && (command.enableHooks === undefined || command.enableHooks === true);
+			if (shouldExecuteHooks) {
 				// Handle correctly hierarchical commands
 				const hierarchicalCommandName = this.$injector.buildHierarchicalCommand(commandName, commandArguments);
 				if (hierarchicalCommandName) {
@@ -75,10 +76,15 @@ export class CommandsService implements ICommandsService {
 				}
 
 				await this.$hooksService.executeBeforeHooks(commandName);
-				await command.execute(commandArguments);
+			}
+
+			await command.execute(commandArguments);
+			if (command.postCommandAction) {
+				await command.postCommandAction(commandArguments);
+			}
+
+			if (shouldExecuteHooks) {
 				await this.$hooksService.executeAfterHooks(commandName);
-			} else {
-				await command.execute(commandArguments);
 			}
 
 			const commandHelp = this.getCommandHelp();

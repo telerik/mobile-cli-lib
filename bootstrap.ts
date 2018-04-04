@@ -28,7 +28,6 @@ $injector.require("childProcess", "./child-process");
 $injector.require("prompter", "./prompter");
 $injector.require("projectHelper", "./project-helper");
 $injector.require("pluginVariablesHelper", "./plugin-variables-helper");
-$injector.require("propertiesParser", "./properties-parser");
 $injector.require("progressIndicator", "./progress-indicator");
 
 $injector.requireCommand(["help", "/?"], "./commands/help");
@@ -103,7 +102,7 @@ $injector.requireCommand("proxy|set", "./commands/proxy/proxy-set");
 $injector.requireCommand("proxy|clear", "./commands/proxy/proxy-clear");
 
 $injector.require("utils", "./utils");
-$injector.require("bplistParser", "./bplist-parser");
+$injector.require("plistParser", "./plist-parser");
 $injector.require("winreg", "./winreg");
 
 $injector.require("loggingLevels", "./mobile/logging-levels");

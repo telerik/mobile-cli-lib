@@ -70,11 +70,9 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 
 	public async tryStartApplication(appData: Mobile.IApplicationData): Promise<void> {
 		try {
-			if (this.canStartApplication()) {
-				await this.startApplication(appData);
-			}
+			await this.startApplication(appData);
 		} catch (err) {
-			this.$logger.trace(`Unable to start application ${appData.appId}. Error is: ${err.message}`);
+			this.$logger.trace(`Unable to start application ${appData.appId} with name ${appData.projectName}. Error is: ${err.message}`);
 		}
 	}
 
@@ -86,7 +84,6 @@ export abstract class ApplicationManagerBase extends EventEmitter implements Mob
 	public abstract async stopApplication(appData: Mobile.IApplicationData): Promise<void>;
 	public abstract async getInstalledApplications(): Promise<string[]>;
 	public abstract async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo>;
-	public abstract canStartApplication(): boolean;
 	public abstract async getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]>;
 	public abstract async getDebuggableAppViews(appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>>;
 
