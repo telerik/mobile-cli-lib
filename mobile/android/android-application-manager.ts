@@ -92,10 +92,6 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		return Promise.resolve(null);
 	}
 
-	public canStartApplication(): boolean {
-		return true;
-	}
-
 	public async isLiveSyncSupported(appIdentifier: string): Promise<boolean> {
 		const liveSyncVersion = await this.adb.sendBroadcastToDevice(LiveSyncConstants.CHECK_LIVESYNC_INTENT_NAME, { "app-id": appIdentifier });
 		return liveSyncVersion === LiveSyncConstants.VERSION_2 || liveSyncVersion === LiveSyncConstants.VERSION_3;

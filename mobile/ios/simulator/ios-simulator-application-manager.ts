@@ -8,7 +8,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		private identifier: string,
 		private $options: ICommonOptions,
 		private $fs: IFileSystem,
-		private $bplistParser: IBinaryPlistParser,
+		private $plistParser: IPlistParser,
 		private $iOSSimulatorLogProvider: Mobile.IiOSSimulatorLogProvider,
 		private $deviceLogProvider: Mobile.IDeviceLogProvider,
 		$logger: ILogger,
@@ -54,10 +54,6 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		return this.iosSim.stopApplication(this.identifier, appData.appId, appData.projectName);
 	}
 
-	public canStartApplication(): boolean {
-		return true;
-	}
-
 	public async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
 		let result: Mobile.IApplicationInfo = null;
 		const plistContent = await this.getParsedPlistContent(applicationIdentifier);
@@ -90,7 +86,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		const applicationPath = this.iosSim.getApplicationPath(this.identifier, appIdentifier),
 			pathToInfoPlist = path.join(applicationPath, "Info.plist");
 
-		return this.$fs.exists(pathToInfoPlist) ? (await this.$bplistParser.parseFile(pathToInfoPlist))[0] : null;
+		return this.$fs.exists(pathToInfoPlist) ? await this.$plistParser.parseFile(pathToInfoPlist) : null;
 	}
 
 	public async getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]> {

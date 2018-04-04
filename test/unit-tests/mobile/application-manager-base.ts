@@ -40,10 +40,6 @@ class ApplicationManager extends ApplicationManagerBase {
 		return null;
 	}
 
-	public canStartApplication(): boolean {
-		return true;
-	}
-
 	public async getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]> {
 		return currentlyAvailableAppsForDebugging;
 	}
@@ -640,10 +636,9 @@ describe("ApplicationManagerBase", () => {
 	});
 
 	describe("tryStartApplication", () => {
-		it("calls startApplication, when canStartApplication returns true", async () => {
+		it("calls startApplication", async () => {
 			let passedApplicationData: Mobile.IApplicationData = null;
 
-			applicationManager.canStartApplication = () => true;
 			applicationManager.startApplication = (appData: Mobile.IApplicationData) => {
 				passedApplicationData = appData;
 				return Promise.resolve();
@@ -656,18 +651,6 @@ describe("ApplicationManagerBase", () => {
 			await applicationManager.tryStartApplication(secondApplicationData);
 			assert.deepEqual(passedApplicationData, secondApplicationData);
 
-		});
-
-		it("does not call startApplication, when canStartApplication returns false", async () => {
-			let isStartApplicationCalled = false;
-			applicationManager.canStartApplication = () => false;
-			applicationManager.startApplication = (appData: Mobile.IApplicationData) => {
-				isStartApplicationCalled = true;
-				return Promise.resolve();
-			};
-
-			await applicationManager.tryStartApplication(applicationData);
-			assert.isFalse(isStartApplicationCalled, "startApplication must not be called when canStartApplication returns false.");
 		});
 
 		describe("does not throw Error", () => {
@@ -696,16 +679,7 @@ describe("ApplicationManagerBase", () => {
 				assert.isTrue(logger.traceOutput.indexOf("Unable to start application") !== -1, "'Unable to start application' must be shown in trace output.");
 			};
 
-			it("when canStartApplication throws error", async () => {
-				applicationManager.canStartApplication = (): boolean => {
-					throw error;
-				};
-				applicationManager.isApplicationInstalled = (appId: string) => Promise.resolve(true);
-				await assertDoesNotThrow();
-			});
-
 			it("when startApplications throws", async () => {
-				applicationManager.canStartApplication = () => true;
 				applicationManager.isApplicationInstalled = (appId: string) => Promise.resolve(true);
 				await assertDoesNotThrow({ shouldStartApplicatinThrow: true });
 			});
