@@ -218,7 +218,12 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 	 * @param identifier running emulator or device identifier
 	 */
 	public getDeviceByIdentifier(identifier: string): Mobile.IDevice {
-		const searchedDevice = _.find(this.getDeviceInstances(), (device: Mobile.IDevice) => { return device.deviceInfo.identifier === identifier; });
+		const searchedDevice = _.find(this.getDeviceInstances(), (device: Mobile.IDevice) => {
+			if (this.$mobileHelper.isiOSPlatform(device.deviceInfo.platform) && device.isEmulator) {
+				return device.deviceInfo.identifier === identifier || device.deviceInfo.displayName === identifier;
+			}
+			return device.deviceInfo.identifier === identifier;
+		});
 		if (!searchedDevice) {
 			this.$errors.fail(this.$messages.Devices.NotFoundDeviceByIdentifierErrorMessageWithIdentifier, identifier, this.$staticConfig.CLIENT_NAME.toLowerCase());
 		}

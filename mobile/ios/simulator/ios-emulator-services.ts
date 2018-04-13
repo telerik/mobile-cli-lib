@@ -42,7 +42,8 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 	public async startEmulator(emulatorImage?: string): Promise<string> {
 		return this.$iOSSimResolver.iOSSim.startSimulator({
 			id: emulatorImage,
-			state: "None"
+			state: "None",
+			sdkVersion: this.$options.sdk
 		});
 	}
 
