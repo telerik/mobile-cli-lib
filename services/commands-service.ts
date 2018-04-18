@@ -253,7 +253,7 @@ export class CommandsService implements ICommandsService {
 					// Remove the matched parameter from unverifiedAllowedParams collection, so it will not be used to verify another argument.
 					unverifiedAllowedParams.splice(index, 1);
 				} else {
-					this.$errors.fail("The parameter %s is not valid for this command.", parameter);
+					this.$errors.fail(`The parameter ${argument} is not valid for this command.`);
 				}
 			}
 		}
