@@ -2,6 +2,7 @@ import { EOL } from "os";
 import { hook } from "../../../helpers";
 import { ApplicationManagerBase } from "../../application-manager-base";
 import { cache } from "../../../decorators";
+import { STARTING_IOS_APPLICATION_EVENT_NAME } from "../../../constants";
 
 export class IOSApplicationManager extends ApplicationManagerBase {
 	private applicationsLiveSyncInfos: Mobile.ILiveSyncApplicationInfo[];
@@ -75,6 +76,8 @@ export class IOSApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async startApplication(appData: Mobile.IApplicationData): Promise<void> {
+		this.emit(STARTING_IOS_APPLICATION_EVENT_NAME, { deviceId: this.device.deviceInfo.identifier, appId: appData.appId });
+
 		if (!await this.isApplicationInstalled(appData.appId)) {
 			this.$errors.failWithoutHelp("Invalid application id: %s. All available application ids are: %s%s ", appData.appId, EOL, this.applicationsLiveSyncInfos.join(EOL));
 		}
