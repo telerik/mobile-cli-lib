@@ -75,7 +75,7 @@ $injector.require("deviceAppDataFactory", "./mobile/device-app-data/device-app-d
 $injector.requirePublic("typeScriptService", "./services/typescript-service");
 
 $injector.requirePublic("devicesService", "./mobile/mobile-core/devices-service");
-$injector.require("androidProcessService", "./mobile/mobile-core/android-process-service");
+$injector.requirePublic("androidProcessService", "./mobile/mobile-core/android-process-service");
 $injector.require("projectNameValidator", "./validators/project-name-validator");
 
 $injector.require("androidEmulatorServices", "./mobile/android/android-emulator-services");
