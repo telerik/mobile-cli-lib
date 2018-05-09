@@ -2,6 +2,7 @@ import { EOL } from "os";
 import * as shelljs from "shelljs";
 import { DeviceAndroidDebugBridge } from "../android/device-android-debug-bridge";
 import { TARGET_FRAMEWORK_IDENTIFIERS } from "../../constants";
+import { exported } from "../../decorators";
 
 export class AndroidProcessService implements Mobile.IAndroidProcessService {
 	private _devicesAdbs: IDictionary<Mobile.IDeviceAndroidDebugBridge>;
@@ -13,17 +14,6 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 		private $processService: IProcessService) {
 		this._devicesAdbs = {};
 		this._forwardedLocalPorts = [];
-	}
-
-	private get androidPortInformationRegExp(): RegExp {
-		// The RegExp should look like this:
-		// /(\d+):\s+([0-9A-Za-z]+:[0-9A-Za-z]+)\s+([0-9A-Za-z]+:[0-9A-Za-z]+)\s+[0-9A-Za-z]+\s+[0-9A-Za-z]+:[0-9A-Za-z]+\s+[0-9A-Za-z]+:[0-9A-Za-z]+\s+[0-9A-Za-z]+\s+(\d+)/g
-		const wordCharacters = "[0-9A-Za-z]+";
-		const hexIpAddressWithPort = "[0-9A-Za-z]+:[0-9A-Za-z]+";
-		const hexIpAddressWithPortWithSpace = `${hexIpAddressWithPort}\\s+`;
-		const hexIpAddressWithPortWithSpaceMatch = `(${hexIpAddressWithPort})\\s+`;
-
-		return new RegExp(`(\\d+):\\s+${hexIpAddressWithPortWithSpaceMatch}${hexIpAddressWithPortWithSpaceMatch}${wordCharacters}\\s+${hexIpAddressWithPortWithSpace}${hexIpAddressWithPortWithSpace}${wordCharacters}\\s+(\\d+)`, "g");
 	}
 
 	public async mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string, framework: string): Promise<string> {
@@ -118,6 +108,7 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 			.value();
 	}
 
+	@exported("androidProcessService")
 	public async getAppProcessId(deviceIdentifier: string, appIdentifier: string): Promise<string> {
 		const adb = this.getAdb(deviceIdentifier);
 		const processId = (await this.getProcessIds(adb, [appIdentifier]))[appIdentifier];
