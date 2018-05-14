@@ -10,7 +10,7 @@ var os = require("os"),
 // These versions cannot be used with CLI due to bugs in the node itself.
 // We are absolutely sure we cannot work with them, so inform the user if he is trying to use any of them and exit the process.
 var versionsCausingFailure = ["0.10.34", "4.0.0", "4.2.0", "5.0.0"];
-var minimumRequiredVersion = "4.2.1";
+var minimumRequiredVersion = "6.0.0";
 
 export function verifyNodeVersion(supportedVersionsRange: string, cliName: string, deprecatedVersions?: string[]): void {
 	// The colors module should not be assigned to variable because the lint task will fail for not used variable.
