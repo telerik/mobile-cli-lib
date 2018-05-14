@@ -233,7 +233,7 @@ declare module Mobile {
 		 * @param {string} deviceId The unique identifier of the device.
 		 * @param {Mobile.IiOSLogStreamOptions} options Describes the options which can be passed
 		 */
-		startLogProcess(deviceId: string, options?: Mobile.IiOSLogStreamOptions): void;
+		startLogProcess(deviceId: string, options?: Mobile.IiOSLogStreamOptions): Promise<void>;
 		/**
 		 * Starts a new process for getting simulator logs and emits and DEVICE_LOG_EVENT_NAME event. The event's reponse is with muted=true flag so it will not be printed from deviceLogProvider.
 		 * @param {string} deviceId The unique identifier of the device.

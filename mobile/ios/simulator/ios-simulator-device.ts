@@ -58,7 +58,7 @@ export class IOSSimulator implements Mobile.IiOSSimulator {
 	public async openDeviceLogStream(options?: Mobile.IiOSLogStreamOptions): Promise<void> {
 		this._deviceLogHandler = this.onDeviceLog.bind(this, options);
 		this.$iOSSimulatorLogProvider.on(constants.DEVICE_LOG_EVENT_NAME, this._deviceLogHandler);
-		this.$iOSSimulatorLogProvider.startLogProcess(this.simulator.id, options);
+		return this.$iOSSimulatorLogProvider.startLogProcess(this.simulator.id, options);
 	}
 
 	public detach(): void {

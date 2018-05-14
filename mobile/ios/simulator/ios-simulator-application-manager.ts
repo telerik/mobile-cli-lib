@@ -32,7 +32,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 			}
 		}
 
-		this.iosSim.installApplication(this.device.deviceInfo.identifier, packageFilePath);
+		return this.iosSim.installApplication(this.device.deviceInfo.identifier, packageFilePath);
 	}
 
 	public async uninstallApplication(appIdentifier: string): Promise<void> {
@@ -40,7 +40,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async startApplication(appData: Mobile.IApplicationData): Promise<void> {
-		const launchResult = this.iosSim.startApplication(this.device.deviceInfo.identifier, appData.appId);
+		const launchResult = await this.iosSim.startApplication(this.device.deviceInfo.identifier, appData.appId);
 		const pid = getPidFromiOSSimulatorLogs(appData.appId, launchResult);
 		await this.setDeviceLogData(appData, pid);
 	}
@@ -87,7 +87,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 			return null;
 		}
 
-		const applicationPath = this.iosSim.getApplicationPath(this.device.deviceInfo.identifier, appIdentifier),
+		const applicationPath = await this.iosSim.getApplicationPath(this.device.deviceInfo.identifier, appIdentifier),
 			pathToInfoPlist = path.join(applicationPath, "Info.plist");
 
 		return this.$fs.exists(pathToInfoPlist) ? await this.$plistParser.parseFile(pathToInfoPlist) : null;

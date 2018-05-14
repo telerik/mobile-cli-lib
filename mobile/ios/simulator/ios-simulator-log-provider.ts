@@ -18,9 +18,9 @@ export class IOSSimulatorLogProvider extends EventEmitter implements Mobile.IiOS
 		this.shouldDispose = shouldDispose;
 	}
 
-	public startLogProcess(deviceId: string, options?: Mobile.IiOSLogStreamOptions): void {
+	public async startLogProcess(deviceId: string, options?: Mobile.IiOSLogStreamOptions): Promise<void> {
 		if (!this.simulatorsLoggingEnabled[deviceId]) {
-			const deviceLogChildProcess: ChildProcess = this.$iOSSimResolver.iOSSim.getDeviceLogProcess(deviceId, options ? options.predicate : null);
+			const deviceLogChildProcess: ChildProcess = await this.$iOSSimResolver.iOSSim.getDeviceLogProcess(deviceId, options ? options.predicate : null);
 
 			const action = (data: NodeBuffer | string) => {
 				const message = data.toString();
