@@ -1157,6 +1157,24 @@ interface ISysInfo {
  	 * @return {Promise<string>} The currently installed Java compiler version.
  	 */
 	getJavaCompilerVersion(): Promise<string>;
+
+	/**
+	 * Gets all global warnings for the current environment, for example Node.js version compatibility, OS compatibility, etc.
+	 * @return {Promise<string[]>} All warnings. Empty array is returned in case the system is setup correctly.
+	 */
+	getSystemWarnings(): Promise<string[]>;
+
+	/**
+	 * Gets warning message for current macOS version.
+	 * @return {Promise<string>} Message in case the current macOS version is deprecated, null otherwise.
+	 */
+	getMacOSWarningMessage(): Promise<string>;
+
+	/**
+	 * Returns the value of engines.node key from CLI's package.json file.
+	 * @return {string} The range of supported Node.js versions.
+	 */
+	getSupportedNodeVersionRange(): string;
 }
 
 interface IHostInfo {
@@ -1168,6 +1186,7 @@ interface IHostInfo {
 	isLinux64: boolean;
 	dotNetVersion(): Promise<string>;
 	isDotNet40Installed(message: string): Promise<boolean>;
+	getMacOSVersion(): Promise<string>;
 }
 
 interface GenericFunction<T> extends Function {
