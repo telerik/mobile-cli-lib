@@ -26,16 +26,23 @@ class AnalyticsCommand implements ICommand {
 	public allowedParameters = [new AnalyticsCommandParameter(this.$errors)];
 	public disableAnalytics = true;
 
+	private trackInGA(status: string): Promise<void> {
+		return this.$analyticsService.trackEventActionInGoogleAnalytics({
+			action: this.humanReadableSettingName,
+			additionalData: status
+		});
+	}
+
 	public async execute(args: string[]): Promise<void> {
-		const arg = args[0] || "";
-		switch (arg.toLowerCase()) {
+		const arg = (args[0] || "").toLowerCase();
+		switch (arg) {
 			case "enable":
 				await this.$analyticsService.setStatus(this.settingName, true);
-				await this.$analyticsService.track(this.settingName, "enabled");
+				await this.trackInGA(arg);
 				this.$logger.info(`${this.humanReadableSettingName} is now enabled.`);
 				break;
 			case "disable":
-				await this.$analyticsService.track(this.settingName, "disabled");
+				await this.trackInGA(arg);
 				await this.$analyticsService.setStatus(this.settingName, false);
 				this.$logger.info(`${this.humanReadableSettingName} is now disabled.`);
 				break;

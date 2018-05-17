@@ -664,19 +664,9 @@ interface IDictionary<T> {
 
 interface IAnalyticsService {
 	checkConsent(): Promise<void>;
-	trackFeature(featureName: string): Promise<void>;
-	trackException(exception: any, message: string): Promise<void>;
 	setStatus(settingName: string, enabled: boolean): Promise<void>;
 	getStatusMessage(settingName: string, jsonFormat: boolean, readableSettingName: string): Promise<string>;
 	isEnabled(settingName: string): Promise<boolean>;
-	track(featureName: string, featureValue: string): Promise<void>;
-
-	/**
-	 * Tries to stop current eqatec monitor, clean it's state and remove the process.exit event handler.
-	 * @param {string|number} code - Exit code as the method is used for process.exit event handler.
-	 * @return void
-	 */
-	tryStopEqatecMonitors(code?: string | number): void;
 
 	/**
 	 * Tracks the answer of question if user allows to be tracked.
@@ -1336,10 +1326,9 @@ interface IDashedOption {
 interface IDoctorService {
 	/**
 	 * Verifies the host OS configuration and prints warnings to the users
-	 * @param configOptions: defines if the result should be tracked by Analytics
 	 * @returns {Promise<void>}
 	 */
-	printWarnings(configOptions?: { trackResult: boolean }): Promise<void>;
+	printWarnings(): Promise<void>;
 	/**
 	 * Runs the setup script on host machine
 	 * @returns {Promise<ISpawnResult>}
