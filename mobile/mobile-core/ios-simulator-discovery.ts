@@ -16,12 +16,10 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 			return;
 		}
 
-		return new Promise<void>((resolve, reject) => {
-			return this.checkForDevices(resolve, reject);
-		});
+		return this.checkForDevices();
 	}
 
-	public async checkForDevices(resolve?: (value?: void | PromiseLike<void>) => void, reject?: (reason?: any) => void): Promise<void> {
+	public async checkForDevices(): Promise<void> {
 		if (this.$hostInfo.isDarwin) {
 			const currentSimulators: Mobile.IiSimDevice[] = await this.$iOSSimResolver.iOSSim.getRunningSimulators();
 
@@ -34,10 +32,6 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 			_(currentSimulators)
 				.reject(s => _.find(this.cachedSimulators, simulator => simulator && s && simulator.id === s.id && simulator.state === s.state))
 				.each(s => this.createAndAddDevice(s));
-		}
-
-		if (resolve) {
-			resolve();
 		}
 	}
 
