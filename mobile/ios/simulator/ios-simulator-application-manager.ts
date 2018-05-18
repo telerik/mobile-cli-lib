@@ -3,7 +3,6 @@ import * as path from "path";
 import * as temp from "temp";
 import { hook, getPidFromiOSSimulatorLogs } from "../../../helpers";
 import { cache } from "../../../decorators";
-import { STARTING_IOS_APPLICATION_EVENT_NAME } from "../../../constants";
 
 export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 	constructor(private iosSim: any,
@@ -41,8 +40,6 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async startApplication(appData: Mobile.IApplicationData): Promise<void> {
-		this.emit(STARTING_IOS_APPLICATION_EVENT_NAME, { deviceId: this.device.deviceInfo.identifier, appId: appData.appId });
-
 		const launchResult = this.iosSim.startApplication(this.device.deviceInfo.identifier, appData.appId);
 		const pid = getPidFromiOSSimulatorLogs(appData.appId, launchResult);
 		await this.setDeviceLogData(appData, pid);
