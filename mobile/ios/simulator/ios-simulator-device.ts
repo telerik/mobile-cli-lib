@@ -68,7 +68,7 @@ export class IOSSimulator implements Mobile.IiOSSimulator {
 	}
 
 	private onDeviceLog(options: Mobile.IiOSLogStreamOptions, response: IOSDeviceLib.IDeviceLogData): void {
-		if (response.deviceId === this.deviceInfo.identifier && !(options || {}).muted) {
+		if (response.deviceId === this.deviceInfo.identifier && !(<any>response).muted) {
 			this.$deviceLogProvider.logData(response.message, this.$devicePlatformsConstants.iOS, this.deviceInfo.identifier);
 		}
 	}

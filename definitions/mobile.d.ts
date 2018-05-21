@@ -227,7 +227,7 @@ declare module Mobile {
 	/**
 	 * Describes required methods for getting iOS Simulator's logs.
 	 */
-	interface IiOSSimulatorLogProvider extends NodeJS.EventEmitter {
+	interface IiOSSimulatorLogProvider extends NodeJS.EventEmitter, IShouldDispose {
 		/**
 		 * Starts the process for getting simulator logs and emits and DEVICE_LOG_EVENT_NAME event.
 		 * @param {string} deviceId The unique identifier of the device.

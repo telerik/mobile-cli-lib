@@ -4,7 +4,7 @@ import { DEVICE_LOG_EVENT_NAME } from "../../../constants";
 import assert = require("assert");
 import { EventEmitter } from "events";
 
-export class IOSDeviceOperations extends EventEmitter implements IIOSDeviceOperations, IDisposable {
+export class IOSDeviceOperations extends EventEmitter implements IIOSDeviceOperations, IDisposable, IShouldDispose {
 	public isInitialized: boolean;
 	public shouldDispose: boolean;
 	private deviceLib: IOSDeviceLib.IOSDeviceLib;

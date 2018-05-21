@@ -6,7 +6,10 @@ export class OpenDeviceLogStreamCommand implements ICommand {
 		private $commandsService: ICommandsService,
 		private $options: ICommonOptions,
 		private $deviceLogProvider: Mobile.IDeviceLogProvider,
-		private $loggingLevels: Mobile.ILoggingLevels) { }
+		private $loggingLevels: Mobile.ILoggingLevels,
+		$iOSSimulatorLogProvider: Mobile.IiOSSimulatorLogProvider) {
+			$iOSSimulatorLogProvider.setShouldDispose(false);
+		}
 
 	allowedParameters: ICommandParameter[] = [];
 
@@ -20,7 +23,7 @@ export class OpenDeviceLogStreamCommand implements ICommand {
 			this.$errors.fail(OpenDeviceLogStreamCommand.NOT_SPECIFIED_DEVICE_ERROR_MESSAGE);
 		}
 
-		const action = (device: Mobile.IDevice) => device.openDeviceLogStream();
+		const action = (device: Mobile.IiOSDevice) => device.openDeviceLogStream({predicate: 'senderImagePath contains "NativeScript"'});
 		await this.$devicesService.execute(action);
 	}
 }

@@ -47,8 +47,6 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 	}
 
 	public runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): Promise<any> {
-		this.$logger.info("Starting iOS Simulator");
-
 		if (this.$options.availableDevices) {
 			return this.$iOSSimResolver.iOSSim.printDeviceTypes();
 		}

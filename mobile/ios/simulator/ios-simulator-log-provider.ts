@@ -2,14 +2,21 @@ import { ChildProcess } from "child_process";
 import { DEVICE_LOG_EVENT_NAME } from "../../../constants";
 import { EventEmitter } from "events";
 
-export class IOSSimulatorLogProvider extends EventEmitter implements Mobile.IiOSSimulatorLogProvider {
+export class IOSSimulatorLogProvider extends EventEmitter implements Mobile.IiOSSimulatorLogProvider, IDisposable, IShouldDispose {
+	public shouldDispose: boolean;
 	private simulatorsLoggingEnabled: IDictionary<boolean> = {};
+	private simulatorsLogProcess: IDictionary<ChildProcess> = {};
 
 	constructor(private $iOSSimResolver: Mobile.IiOSSimResolver,
 		private $logger: ILogger,
 		private $processService: IProcessService) {
 			super();
+			this.shouldDispose = true;
 		}
+
+	public setShouldDispose(shouldDispose: boolean) {
+		this.shouldDispose = shouldDispose;
+	}
 
 	public startLogProcess(deviceId: string, options?: Mobile.IiOSLogStreamOptions): void {
 		if (!this.simulatorsLoggingEnabled[deviceId]) {
@@ -42,6 +49,7 @@ export class IOSSimulatorLogProvider extends EventEmitter implements Mobile.IiOS
 			this.$processService.attachToProcessExitSignals(this, deviceLogChildProcess.kill);
 
 			this.simulatorsLoggingEnabled[deviceId] = true;
+			this.simulatorsLogProcess[deviceId] = deviceLogChildProcess;
 		}
 	}
 
@@ -51,6 +59,16 @@ export class IOSSimulatorLogProvider extends EventEmitter implements Mobile.IiOS
 		this.simulatorsLoggingEnabled[deviceId] = false;
 		this.startLogProcess(deviceId, options);
 		this.simulatorsLoggingEnabled[deviceId] = false;
+	}
+
+	public dispose(signal?: any) {
+		if (this.shouldDispose) {
+			_.each(this.simulatorsLogProcess, (logProcess: ChildProcess, deviceId: string) => {
+				if (logProcess) {
+					logProcess.kill(signal);
+				}
+			});
+		}
 	}
 }
 $injector.register("iOSSimulatorLogProvider", IOSSimulatorLogProvider);
