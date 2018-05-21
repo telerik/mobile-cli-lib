@@ -100,3 +100,6 @@ export const enum CommandsDelimiters {
 	DefaultHierarchicalCommand = "|*",
 	HooksCommand = "-"
 }
+
+export const DEBUGGER_PORT_FOUND_EVENT_NAME = "DEBUGGER_PORT_FOUND";
+export const ATTACH_REQUEST_EVENT_NAME = "ATTACH_REQUEST";

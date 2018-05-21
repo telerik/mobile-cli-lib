@@ -1,13 +1,16 @@
 import * as applicationManagerPath from "./ios-simulator-application-manager";
 import * as fileSystemPath from "./ios-simulator-file-system";
 import * as constants from "../../../constants";
+import { cache } from "../../../decorators";
 
 export class IOSSimulator implements Mobile.IiOSSimulator {
 	private _applicationManager: Mobile.IDeviceApplicationManager;
 	private _fileSystem: Mobile.IDeviceFileSystem;
+	private _deviceLogHandler: Function;
 
 	constructor(private simulator: Mobile.IiSimDevice,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
+		private $deviceLogProvider: Mobile.IDeviceLogProvider,
 		private $injector: IInjector,
 		private $iOSSimResolver: Mobile.IiOSSimResolver,
 		private $iOSSimulatorLogProvider: Mobile.IiOSSimulatorLogProvider) { }
@@ -37,7 +40,7 @@ export class IOSSimulator implements Mobile.IiOSSimulator {
 
 	public get applicationManager(): Mobile.IDeviceApplicationManager {
 		if (!this._applicationManager) {
-			this._applicationManager = this.$injector.resolve(applicationManagerPath.IOSSimulatorApplicationManager, { iosSim: this.$iOSSimResolver.iOSSim, identifier: this.simulator.id });
+			this._applicationManager = this.$injector.resolve(applicationManagerPath.IOSSimulatorApplicationManager, { iosSim: this.$iOSSimResolver.iOSSim, device: this });
 		}
 
 		return this._applicationManager;
@@ -51,7 +54,22 @@ export class IOSSimulator implements Mobile.IiOSSimulator {
 		return this._fileSystem;
 	}
 
-	public async openDeviceLogStream(): Promise<void> {
-		this.$iOSSimulatorLogProvider.startLogProcess(this.simulator.id);
+	@cache()
+	public async openDeviceLogStream(options?: Mobile.IiOSLogStreamOptions): Promise<void> {
+		this._deviceLogHandler = this.onDeviceLog.bind(this, options);
+		this.$iOSSimulatorLogProvider.on(constants.DEVICE_LOG_EVENT_NAME, this._deviceLogHandler);
+		this.$iOSSimulatorLogProvider.startLogProcess(this.simulator.id, options);
+	}
+
+	public detach(): void {
+		if (this._deviceLogHandler) {
+			this.$iOSSimulatorLogProvider.removeListener(constants.DEVICE_LOG_EVENT_NAME, this._deviceLogHandler);
+		}
+	}
+
+	private onDeviceLog(options: Mobile.IiOSLogStreamOptions, response: IOSDeviceLib.IDeviceLogData): void {
+		if (response.deviceId === this.deviceInfo.identifier && !(<any>response).muted) {
+			this.$deviceLogProvider.logData(response.message, this.$devicePlatformsConstants.iOS, this.deviceInfo.identifier);
+		}
 	}
 }

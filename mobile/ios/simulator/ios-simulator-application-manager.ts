@@ -1,15 +1,15 @@
 import { ApplicationManagerBase } from "../../application-manager-base";
 import * as path from "path";
 import * as temp from "temp";
-import { hook } from "../../../helpers";
+import { hook, getPidFromiOSSimulatorLogs } from "../../../helpers";
+import { cache } from "../../../decorators";
 
 export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 	constructor(private iosSim: any,
-		private identifier: string,
+		private device: Mobile.IiOSDevice,
 		private $options: ICommonOptions,
 		private $fs: IFileSystem,
 		private $plistParser: IPlistParser,
-		private $iOSSimulatorLogProvider: Mobile.IiOSSimulatorLogProvider,
 		private $deviceLogProvider: Mobile.IDeviceLogProvider,
 		$logger: ILogger,
 		$hooksService: IHooksService) {
@@ -17,7 +17,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 	}
 
 	public async getInstalledApplications(): Promise<string[]> {
-		return this.iosSim.getInstalledApplications(this.identifier);
+		return this.iosSim.getInstalledApplications(this.device.deviceInfo.identifier);
 	}
 
 	@hook('install')
@@ -32,26 +32,21 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 			}
 		}
 
-		this.iosSim.installApplication(this.identifier, packageFilePath);
+		this.iosSim.installApplication(this.device.deviceInfo.identifier, packageFilePath);
 	}
 
 	public async uninstallApplication(appIdentifier: string): Promise<void> {
-		return this.iosSim.uninstallApplication(this.identifier, appIdentifier);
+		return this.iosSim.uninstallApplication(this.device.deviceInfo.identifier, appIdentifier);
 	}
 
 	public async startApplication(appData: Mobile.IApplicationData): Promise<void> {
-		const launchResult = this.iosSim.startApplication(this.identifier, appData.appId);
-		const pid = launchResult.split(":")[1].trim();
-		this.$deviceLogProvider.setApplicationPidForDevice(this.identifier, pid);
-		this.$deviceLogProvider.setProjectNameForDevice(this.identifier, appData.projectName);
-
-		if (!this.$options.justlaunch) {
-			this.$iOSSimulatorLogProvider.startLogProcess(this.identifier);
-		}
+		const launchResult = this.iosSim.startApplication(this.device.deviceInfo.identifier, appData.appId);
+		const pid = getPidFromiOSSimulatorLogs(appData.appId, launchResult);
+		await this.setDeviceLogData(appData, pid);
 	}
 
 	public async stopApplication(appData: Mobile.IApplicationData): Promise<void> {
-		return this.iosSim.stopApplication(this.identifier, appData.appId, appData.projectName);
+		return this.iosSim.stopApplication(this.device.deviceInfo.identifier, appData.appId, appData.projectName);
 	}
 
 	public async getApplicationInfo(applicationIdentifier: string): Promise<Mobile.IApplicationInfo> {
@@ -61,7 +56,7 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		if (plistContent) {
 			result = {
 				applicationIdentifier,
-				deviceIdentifier: this.identifier,
+				deviceIdentifier: this.device.deviceInfo.identifier,
 				configuration: plistContent && plistContent.configuration
 			};
 		}
@@ -78,17 +73,6 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 		return false;
 	}
 
-	private async getParsedPlistContent(appIdentifier: string): Promise<any> {
-		if (! await this.isApplicationInstalled(appIdentifier)) {
-			return null;
-		}
-
-		const applicationPath = this.iosSim.getApplicationPath(this.identifier, appIdentifier),
-			pathToInfoPlist = path.join(applicationPath, "Info.plist");
-
-		return this.$fs.exists(pathToInfoPlist) ? await this.$plistParser.parseFile(pathToInfoPlist) : null;
-	}
-
 	public async getDebuggableApps(): Promise<Mobile.IDeviceApplicationInformation[]> {
 		return [];
 	}
@@ -96,5 +80,30 @@ export class IOSSimulatorApplicationManager extends ApplicationManagerBase {
 	public async getDebuggableAppViews(appIdentifiers: string[]): Promise<IDictionary<Mobile.IDebugWebViewInfo[]>> {
 		// Implement when we can find debuggable applications for iOS.
 		return Promise.resolve(null);
+	}
+
+	private async getParsedPlistContent(appIdentifier: string): Promise<any> {
+		if (! await this.isApplicationInstalled(appIdentifier)) {
+			return null;
+		}
+
+		const applicationPath = this.iosSim.getApplicationPath(this.device.deviceInfo.identifier, appIdentifier),
+			pathToInfoPlist = path.join(applicationPath, "Info.plist");
+
+		return this.$fs.exists(pathToInfoPlist) ? await this.$plistParser.parseFile(pathToInfoPlist) : null;
+	}
+
+	private async setDeviceLogData(appData: Mobile.IApplicationData, pid: string): Promise<void> {
+		this.$deviceLogProvider.setApplicationPidForDevice(this.device.deviceInfo.identifier, pid);
+		this.$deviceLogProvider.setProjectNameForDevice(this.device.deviceInfo.identifier, appData.projectName);
+
+		if (!this.$options.justlaunch) {
+			await this.startDeviceLog();
+		}
+	}
+
+	@cache()
+	private startDeviceLog(): Promise<void> {
+		return this.device.openDeviceLogStream({predicate: 'senderImagePath contains "NativeScript"'});
 	}
 }

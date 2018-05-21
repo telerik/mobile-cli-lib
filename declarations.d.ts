@@ -172,6 +172,11 @@ interface IDisposable {
 	dispose(): void;
 }
 
+interface IShouldDispose {
+	shouldDispose: boolean;
+	setShouldDispose(shouldDispose: boolean): void;
+}
+
 /**
  * Describes the type of data sent to analytics service.
  */

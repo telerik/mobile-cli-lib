@@ -1,4 +1,3 @@
-
 declare module Mobile {
 	interface ISyncOptions {
 		skipRefresh?: boolean;
@@ -106,6 +105,7 @@ declare module Mobile {
 
 	interface IiOSDevice extends IDevice {
 		connectToPort(port: number): Promise<any>;
+		openDeviceLogStream(options?: IiOSLogStreamOptions): Promise<void>;
 	}
 
 	interface IAndroidDevice extends IDevice {
@@ -114,6 +114,28 @@ declare module Mobile {
 	}
 
 	interface IiOSSimulator extends IDevice { }
+
+	/**
+	 * Describes log stream options
+	 */
+	interface IiOSLogStreamOptions {
+		/**
+		 * This is the --predicate option which will be passed to `log stream` command
+		 * log stream --predicate examples:
+				--predicate 'eventMessage contains "my message"'
+				--predicate 'eventType == logEvent and messageType == info'
+				--predicate 'processImagePath endswith "d"'
+				--predicate 'not processImagePath contains[c] "some spammer"'
+				--predicate 'processID < 100'
+				--predicate 'senderImagePath beginswith "my sender"'
+				--predicate 'eventType == logEvent and subsystem contains "com.example.my_subsystem"'
+		 */
+		predicate?: string;
+		/**
+		 * If set to true, device's log will not be displayed on the console.
+		 */
+		muted?: boolean;
+	}
 
 	interface IDeviceAppData extends IPlatform {
 		appIdentifier: string;
@@ -205,12 +227,19 @@ declare module Mobile {
 	/**
 	 * Describes required methods for getting iOS Simulator's logs.
 	 */
-	interface IiOSSimulatorLogProvider {
+	interface IiOSSimulatorLogProvider extends NodeJS.EventEmitter, IShouldDispose {
 		/**
-		 * Starts the process for getting simulator logs and sends collected data to deviceLogProvider, which should decide how to show it to the user.
-		 * @param {string} deviceIdentifier The unique identifier of the device.
+		 * Starts the process for getting simulator logs and emits and DEVICE_LOG_EVENT_NAME event.
+		 * @param {string} deviceId The unique identifier of the device.
+		 * @param {Mobile.IiOSLogStreamOptions} options Describes the options which can be passed
 		 */
-		startLogProcess(deviceIdentifier: string): void;
+		startLogProcess(deviceId: string, options?: Mobile.IiOSLogStreamOptions): void;
+		/**
+		 * Starts a new process for getting simulator logs and emits and DEVICE_LOG_EVENT_NAME event. The event's reponse is with muted=true flag so it will not be printed from deviceLogProvider.
+		 * @param {string} deviceId The unique identifier of the device.
+		 * @param {Mobile.IiOSLogStreamOptions} options Describes the options which can be passed
+		 */
+		startNewMutedLogProcess(deviceId: string, options?: Mobile.IiOSLogStreamOptions): void;
 	}
 
 	/**
@@ -617,7 +646,7 @@ declare module Mobile {
 	}
 
 	interface IiOSSimulatorService extends IEmulatorPlatformServices {
-		postDarwinNotification(notification: string): Promise<void>;
+		postDarwinNotification(notification: string, deviceId: string): Promise<void>;
 
 		/**
 		 * Tries to connect to specified port for speciefied amount of time.

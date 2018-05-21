@@ -1,44 +1,73 @@
 import { ChildProcess } from "child_process";
+import { DEVICE_LOG_EVENT_NAME } from "../../../constants";
+import { EventEmitter } from "events";
 
-export class IOSSimulatorLogProvider implements Mobile.IiOSSimulatorLogProvider {
+export class IOSSimulatorLogProvider extends EventEmitter implements Mobile.IiOSSimulatorLogProvider, IDisposable, IShouldDispose {
+	public shouldDispose: boolean;
 	private simulatorsLoggingEnabled: IDictionary<boolean> = {};
+	private simulatorsLogProcess: IDictionary<ChildProcess> = {};
 
 	constructor(private $iOSSimResolver: Mobile.IiOSSimResolver,
-		private $deviceLogProvider: Mobile.IDeviceLogProvider,
-		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $logger: ILogger,
-		private $processService: IProcessService) { }
+		private $processService: IProcessService) {
+			super();
+			this.shouldDispose = true;
+		}
 
-	public startLogProcess(deviceIdentifier: string): void {
-		if (!this.simulatorsLoggingEnabled[deviceIdentifier]) {
-			const deviceLogChildProcess: ChildProcess = this.$iOSSimResolver.iOSSim.getDeviceLogProcess(deviceIdentifier, 'senderImagePath contains "NativeScript"');
+	public setShouldDispose(shouldDispose: boolean) {
+		this.shouldDispose = shouldDispose;
+	}
+
+	public startLogProcess(deviceId: string, options?: Mobile.IiOSLogStreamOptions): void {
+		if (!this.simulatorsLoggingEnabled[deviceId]) {
+			const deviceLogChildProcess: ChildProcess = this.$iOSSimResolver.iOSSim.getDeviceLogProcess(deviceId, options ? options.predicate : null);
 
 			const action = (data: NodeBuffer | string) => {
-				this.$deviceLogProvider.logData(data.toString(), this.$devicePlatformsConstants.iOS, deviceIdentifier);
+				const message = data.toString();
+				this.emit(DEVICE_LOG_EVENT_NAME, { deviceId, message, muted: (options || {}).muted });
 			};
 
 			if (deviceLogChildProcess) {
 				deviceLogChildProcess.once("close", () => {
-					this.simulatorsLoggingEnabled[deviceIdentifier] = false;
+					this.simulatorsLoggingEnabled[deviceId] = false;
 				});
 
 				deviceLogChildProcess.once("error", (err) => {
-					this.$logger.trace(`Error is thrown for device with identifier ${deviceIdentifier}. More info: ${err.message}.`);
-					this.simulatorsLoggingEnabled[deviceIdentifier] = false;
+					this.$logger.trace(`Error is thrown for device with identifier ${deviceId}. More info: ${err.message}.`);
+					this.simulatorsLoggingEnabled[deviceId] = false;
 				});
 			}
 
 			if (deviceLogChildProcess.stdout) {
-				deviceLogChildProcess.stdout.on("data", action);
+				deviceLogChildProcess.stdout.on("data", action.bind(this));
 			}
 
 			if (deviceLogChildProcess.stderr) {
-				deviceLogChildProcess.stderr.on("data", action);
+				deviceLogChildProcess.stderr.on("data", action.bind(this));
 			}
 
 			this.$processService.attachToProcessExitSignals(this, deviceLogChildProcess.kill);
 
-			this.simulatorsLoggingEnabled[deviceIdentifier] = true;
+			this.simulatorsLoggingEnabled[deviceId] = true;
+			this.simulatorsLogProcess[deviceId] = deviceLogChildProcess;
+		}
+	}
+
+	public startNewMutedLogProcess(deviceId: string, options?: Mobile.IiOSLogStreamOptions): void {
+		options = options || {};
+		options.muted = true;
+		this.simulatorsLoggingEnabled[deviceId] = false;
+		this.startLogProcess(deviceId, options);
+		this.simulatorsLoggingEnabled[deviceId] = false;
+	}
+
+	public dispose(signal?: any) {
+		if (this.shouldDispose) {
+			_.each(this.simulatorsLogProcess, (logProcess: ChildProcess, deviceId: string) => {
+				if (logProcess) {
+					logProcess.kill(signal);
+				}
+			});
 		}
 	}
 }

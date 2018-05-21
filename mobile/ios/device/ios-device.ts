@@ -59,9 +59,9 @@ export class IOSDevice implements Mobile.IiOSDevice {
 	@cache()
 	public async openDeviceLogStream(): Promise<void> {
 		if (this.deviceInfo.status !== constants.UNREACHABLE_STATUS) {
-			this.$iosDeviceOperations.startDeviceLog(this.deviceInfo.identifier);
 			this._deviceLogHandler = this.actionOnDeviceLog.bind(this);
 			this.$iosDeviceOperations.on(constants.DEVICE_LOG_EVENT_NAME, this._deviceLogHandler);
+			this.$iosDeviceOperations.startDeviceLog(this.deviceInfo.identifier);
 		}
 	}
 
