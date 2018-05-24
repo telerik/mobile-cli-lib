@@ -2,24 +2,30 @@ import { EOL } from "os";
 import * as shelljs from "shelljs";
 import { DeviceAndroidDebugBridge } from "../android/device-android-debug-bridge";
 import { TARGET_FRAMEWORK_IDENTIFIERS } from "../../constants";
-import { exported } from "../../decorators";
+import { exported, cache } from "../../decorators";
 
 export class AndroidProcessService implements Mobile.IAndroidProcessService {
 	private _devicesAdbs: IDictionary<Mobile.IDeviceAndroidDebugBridge>;
-	private _forwardedLocalPorts: number[];
+	private _forwardedLocalPorts: IDictionary<number>;
 
 	constructor(private $errors: IErrors,
 		private $injector: IInjector,
 		private $net: INet,
 		private $processService: IProcessService) {
 		this._devicesAdbs = {};
-		this._forwardedLocalPorts = [];
+		this._forwardedLocalPorts = {};
+	}
+
+	public async forwardFreeTcpToAbstractPort(portForwardInputData: Mobile.IPortForwardData): Promise<number> {
+		const adb = await this.setupForPortForwarding(portForwardInputData);
+		return this.forwardPort(portForwardInputData, adb);
 	}
 
 	public async mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string, framework: string): Promise<string> {
 		this.tryAttachToProcessExitSignals();
 
-		const adb = this.getAdb(deviceIdentifier);
+		const adb = await this.setupForPortForwarding({ deviceIdentifier, appIdentifier });
+
 		const processId = (await this.getProcessIds(adb, [appIdentifier]))[appIdentifier];
 		const applicationNotStartedErrorMessage = `The application is not started on the device with identifier ${deviceIdentifier}.`;
 
@@ -34,15 +40,8 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 			this.$errors.failWithoutHelp(applicationNotStartedErrorMessage);
 		}
 
-		let localPort = await this.getAlreadyMappedPort(adb, deviceIdentifier, abstractPort);
-
-		if (!localPort) {
-			localPort = await this.$net.getFreePort();
-			await adb.executeCommand(["forward", `tcp:${localPort}`, `localabstract:${abstractPort}`]);
-		}
-
-		this._forwardedLocalPorts.push(localPort);
-		return localPort && localPort.toString();
+		const forwardedTcpPort = await this.forwardPort({ deviceIdentifier, appIdentifier, abstractPort: `localabstract:${abstractPort}` }, adb);
+		return forwardedTcpPort && forwardedTcpPort.toString();
 	}
 
 	public async getMappedAbstractToTcpPorts(deviceIdentifier: string, appIdentifiers: string[], framework: string): Promise<IDictionary<number>> {
@@ -114,6 +113,26 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 		const processId = (await this.getProcessIds(adb, [appIdentifier]))[appIdentifier];
 
 		return processId ? processId.toString() : null;
+	}
+
+	private async forwardPort(portForwardInputData: Mobile.IPortForwardData, adb: Mobile.IDeviceAndroidDebugBridge): Promise<number> {
+		let localPort = await this.getAlreadyMappedPort(adb, portForwardInputData.deviceIdentifier, portForwardInputData.abstractPort);
+
+		if (!localPort) {
+			localPort = await this.$net.getFreePort();
+			await adb.executeCommand(["forward", `tcp:${localPort}`, portForwardInputData.abstractPort]);
+		}
+
+		this._forwardedLocalPorts[portForwardInputData.deviceIdentifier] = localPort;
+		return localPort && +localPort;
+	}
+
+	private async setupForPortForwarding(portForwardInputData?: Mobile.IPortForwardDataBase): Promise<Mobile.IDeviceAndroidDebugBridge> {
+		this.tryAttachToProcessExitSignals();
+
+		const adb = this.getAdb(portForwardInputData.deviceIdentifier);
+
+		return adb;
 	}
 
 	private async getApplicationInfoFromWebViewPortInformation(adb: Mobile.IDeviceAndroidDebugBridge, deviceIdentifier: string, information: string): Promise<Mobile.IDeviceApplicationInformation> {
@@ -261,13 +280,14 @@ export class AndroidProcessService implements Mobile.IAndroidProcessService {
 		return result;
 	}
 
+	@cache()
 	private tryAttachToProcessExitSignals(): void {
 		this.$processService.attachToProcessExitSignals(this, () => {
-			_.each(this._forwardedLocalPorts, (port: number) => {
+			_.each(this._forwardedLocalPorts, (port: number, deviceIdentifier: string) => {
 				// We need to use shelljs here instead of $adb because listener functions of exit, SIGINT and SIGTERM must only perform synchronous operations.
 				// The Node.js process will exit immediately after calling the 'exit' event listeners causing any additional work still queued in the event loop to be abandoned.
 				// See the official documentation for more information and examples - https://nodejs.org/dist/latest-v6.x/docs/api/process.html#process_event_exit.
-				shelljs.exec(`adb forward --remove tcp:${port}`);
+				shelljs.exec(`adb -s ${deviceIdentifier} forward --remove tcp:${port}`);
 			});
 		});
 	}
