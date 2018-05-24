@@ -45,7 +45,7 @@
     "minimatch": "2.0.4",
     "mkdirp": "0.3.5",
     "mute-stream": "0.0.4",
-    "nativescript-doctor": "0.12.0",
+    "nativescript-doctor": "1.1.0-rc.0",
     "open": "0.0.4",
     "osenv": "0.1.0",
     "parse5": "2.2.0",
