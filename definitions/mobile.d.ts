@@ -695,6 +695,7 @@ declare module Mobile {
 		waitForDebugger?: boolean;
 		captureStdin?: boolean;
 		skipInstall?: boolean;
+		device?: string;
 	}
 
 	interface IPlatformsCapabilities {

@@ -54,7 +54,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		const options: any = {
 			timeout: this.$options.timeout,
 			sdkVersion: this.$options.sdk,
-			device: this.$options.device,
+			device: (emulatorOptions && emulatorOptions.device) || this.$options.device,
 			args: emulatorOptions.args,
 			waitForDebugger: emulatorOptions.waitForDebugger,
 			skipInstall: emulatorOptions.skipInstall
