@@ -475,6 +475,15 @@ declare module Mobile {
 		getInstalledApplications(deviceIdentifier: string): Promise<string[]>;
 	}
 
+	interface IPortForwardDataBase {
+		deviceIdentifier: string;
+		appIdentifier: string;
+	}
+
+	interface IPortForwardData extends IPortForwardDataBase {
+		abstractPort: string;
+	}
+
 	/**
 	 * Describes methods for working with Android processes.
 	 */
@@ -511,6 +520,15 @@ declare module Mobile {
 		 * @return {string} Returns the process id matching the application identifier in the device process list.
 		 */
 		getAppProcessId(deviceIdentifier: string, appIdentifier: string): Promise<string>;
+
+		/**
+		 * Sets port forwarding to a specified abstract port.
+		 * First checks if there's already existing port forwarding and if yes, takes the TCP port from there and returns it to the result.
+		 * In case there's no port forwarding, gets a free TCP port and executes adb forward.
+		 * @param {IPortForwardData} portForwardInputData Data describing required information to setup port forwarding.
+		 * @returns {number} The TCP port that is used for the forwarding.
+		 */
+		forwardFreeTcpToAbstractPort(portForwardInputData: IPortForwardData): Promise<number>;
 	}
 
 	/**
