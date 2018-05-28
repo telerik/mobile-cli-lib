@@ -1363,7 +1363,7 @@ interface IDoctorService {
 	 * @param configOptions: defines if the result should be tracked by Analytics
 	 * @returns {Promise<void>}
 	 */
-	printWarnings(configOptions?: { trackResult: boolean, projectDir?: string }): Promise<void>;
+	printWarnings(configOptions?: { trackResult: boolean, projectDir?: string, runtimeVersion?: string }): Promise<void>;
 	/**
 	 * Runs the setup script on host machine
 	 * @returns {Promise<ISpawnResult>}
@@ -1374,7 +1374,7 @@ interface IDoctorService {
 	 * @param platform @optional The current platform
 	 * @returns {Promise<boolean>} true if the environment is properly configured for local builds
 	 */
-	canExecuteLocalBuild(platform?: string, projectDir?: string): Promise<boolean>;
+	canExecuteLocalBuild(platform?: string, projectDir?: string, runtimeVersion?: string): Promise<boolean>;
 }
 
 interface IUtils {
