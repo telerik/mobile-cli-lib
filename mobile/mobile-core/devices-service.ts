@@ -240,7 +240,7 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 			options = this.getDeviceLookingOptions();
 		}
 		if (!this._platform) {
-			await this.detectCurrentlyAttachedDevices(options);
+			// await this.detectCurrentlyAttachedDevices(options);
 			await this.startDeviceDetectionInterval();
 		} else {
 			if (this.$mobileHelper.isiOSPlatform(this._platform)) {
@@ -276,14 +276,13 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 	 * @param identifier parameter passed by the user to --device flag
 	 */
 	public async getDevice(deviceOption: string): Promise<Mobile.IDevice> {
-		const deviceLookingOptions = this.getDeviceLookingOptions();
-		await this.detectCurrentlyAttachedDevices(deviceLookingOptions);
+		// TODO: Assert is initialized
 		let device: Mobile.IDevice = null;
 
-		let emulatorIdentifier = null;
+		let emulatorIdentifier = deviceOption;
 		if (this._platform) {
 			const emulatorService = this.resolveEmulatorServices();
-			emulatorIdentifier = await emulatorService.getRunningEmulatorId(deviceOption);
+			emulatorIdentifier = await emulatorService.getRunningEmulatorId(deviceOption) || deviceOption;
 		}
 
 		if (this.hasRunningDevice(emulatorIdentifier)) {
@@ -477,12 +476,16 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 
 		if (platform && deviceOption) {
 			this._platform = this.getPlatform(data.platform);
+			const deviceLookingOptions = this.getDeviceLookingOptions(this._platform);
+			await this.detectCurrentlyAttachedDevices(deviceLookingOptions);
 			this._device = await this.getDevice(deviceOption);
 			if (this._device.deviceInfo.platform !== this._platform) {
 				this.$errors.fail(constants.ERROR_CANNOT_RESOLVE_DEVICE);
 			}
 			this.$logger.warn("Your application will be deployed only on the device specified by the provided index or identifier.");
 		} else if (!platform && deviceOption) {
+			const deviceLookingOptions = this.getDeviceLookingOptions();
+			await this.detectCurrentlyAttachedDevices(deviceLookingOptions);
 			this._device = await this.getDevice(deviceOption);
 			this._platform = this._device.deviceInfo.platform;
 		} else if (platform && !deviceOption) {
