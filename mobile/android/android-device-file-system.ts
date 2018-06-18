@@ -74,11 +74,8 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 
 		await executeActionByChunks<string>(_.uniq(directoriesToChmod), DEFAULT_CHUNK_SIZE, dirsChmodAction);
 
-		// Update hashes
 		const deviceHashService = this.getDeviceHashService(deviceAppData.appIdentifier);
-		if (! await deviceHashService.updateHashes(localToDevicePaths)) {
-			this.$logger.trace("Unable to find hash file on device. The next livesync command will create it.");
-		}
+		await deviceHashService.updateHashes(localToDevicePaths);
 
 		return transferredFiles;
 	}
@@ -160,6 +157,11 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 
 	public async deleteFile(deviceFilePath: string, appIdentifier: string): Promise<void> {
 		await this.adb.executeShellCommand(["rm", "-rf", deviceFilePath]);
+	}
+
+	public async updateHashesOnDevice(hashes: IStringDictionary, appIdentifier: string): Promise<void> {
+		const deviceHashService = this.getDeviceHashService(appIdentifier);
+		await deviceHashService.uploadHashFileToDevice(hashes);
 	}
 
 	private getTempDir(): string {

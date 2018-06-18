@@ -89,6 +89,7 @@ function createTestInjector(): IInjector {
 	injector.register("errors", Errors);
 	injector.register("mobilePlatformsCapabilities", MobilePlatformsCapabilitiesMock);
 	injector.register("devicePlatformsConstants", DevicePlatformsConstants);
+	injector.register("projectFilesManager", {});
 
 	return injector;
 }

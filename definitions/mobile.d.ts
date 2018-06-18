@@ -363,6 +363,12 @@ declare module Mobile {
 		transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): Promise<Mobile.ILocalToDevicePathData[]>;
 		transferFile?(localFilePath: string, deviceFilePath: string): Promise<void>;
 		createFileOnDevice?(deviceFilePath: string, fileContent: string): Promise<void>;
+		/**
+		 * Updates the hash file on device with the current hashes of files.
+		 * @param hashes - All file's hashes
+		 * @param appIdentifier - The identifier of the application.
+		 */
+		updateHashesOnDevice(hashes: IStringDictionary, appIdentifier: string): Promise<void>;
 	}
 
 	interface IAndroidDebugBridgeCommandOptions {
@@ -1066,7 +1072,7 @@ declare module Mobile {
 		/**
 		 * Computes the shasums of localToDevicePaths and updates hash file on device
 		 */
-		updateHashes(localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<boolean>;
+		updateHashes(localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void>;
 		/**
 		 * Computes the shasums of localToDevicePaths and removes them from hash file on device
 		 */
