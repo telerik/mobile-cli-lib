@@ -621,9 +621,10 @@ interface IQueue<T> {
 
 interface IChildProcess extends NodeJS.EventEmitter {
 	exec(command: string, options?: any, execOptions?: IExecOptions): Promise<any>;
-	execFile(command: string, args: string[]): Promise<any>;
+	execFile<T>(command: string, args: string[]): Promise<T>;
 	spawn(command: string, args?: string[], options?: any): any; // it returns child_process.ChildProcess you can safely cast to it
 	spawnFromEvent(command: string, args: string[], event: string, options?: any, spawnFromEventOptions?: ISpawnFromEventOptions): Promise<ISpawnResult>;
+	trySpawnFromCloseEvent(command: string, args: string[], options?: any, spawnFromEventOptions?: ISpawnFromEventOptions): Promise<ISpawnResult>;
 	tryExecuteApplication(command: string, args: string[], event: string, errorMessage: string, condition?: (childProcess: any) => boolean): Promise<any>;
 	/**
 	 * This is a special case of the child_process.spawn() functionality for spawning Node.js processes.

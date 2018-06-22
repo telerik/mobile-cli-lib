@@ -76,6 +76,13 @@ declare module Mobile {
 		 *  Available for iOS only - can be "armv7" or "arm64"
 		 */
 		activeArchitecture?: string;
+		/**
+		 * Available only for emulators. Should be null for devices.
+		 * The identifier of the image. For geny emulators - the vm's identifier
+		 * For avd emulators - the name of the .ini file
+		 * Currently null for iOS simulators
+		 */
+		imageIdentifier?: string;
 	}
 
 	interface IDeviceError extends Error, IDeviceIdentifier { }
@@ -362,6 +369,18 @@ declare module Mobile {
 		executeCommand(args: string[], options?: IAndroidDebugBridgeCommandOptions): Promise<any>;
 		executeShellCommand(args: string[], options?: IAndroidDebugBridgeCommandOptions): Promise<any>;
 		pushFile(localFilePath: string, deviceFilePath: string): Promise<void>;
+		/**
+		 * Gets the property value from device
+		 * @param deviceId The identifier of device
+		 * @param propertyName The name of the property
+		 * @returns {Promise<string>} Returns the property's value
+		 */
+		getPropertyValue(deviceId: string, propertyName: string): Promise<string>;
+		/**
+		 * Gets all connected android devices
+		 * @returns {Promise<string>} Returns all connected android devices
+		 */
+		getDevices(): Promise<string[]>;
 	}
 
 	interface IDeviceAndroidDebugBridge extends IAndroidDebugBridge {
@@ -413,6 +432,11 @@ declare module Mobile {
 		 * Defines if the initialization should await the whole iOS detection to finish or it can just start the detection.
 		 */
 		shouldReturnImmediateResult?: boolean;
+		/**
+		 * Currently available only for iOS. Specifies the sdk version of the iOS simulator.
+		 * In case when `tns run ios --device "iPhone 6"` command is executed, the user can specify the sdk of the simulator because it is possible to have more than one device with the same name but with different sdk versions.
+		 */
+		sdk?: string;
 	}
 
 	interface IDeviceActionResult<T> extends IDeviceIdentifier {
@@ -468,6 +492,33 @@ declare module Mobile {
 		 * @returns {Promise<string[]>} Array of all application identifiers of the apps installed on device.
 		 */
 		getInstalledApplications(deviceIdentifier: string): Promise<string[]>;
+
+		/**
+		 * Returns all available iOS and/or Android emulators.
+		 * @param input The options that can be passed to filter the result.
+		 * @returns {Promise<Mobile.IListEmulatorsOutput>} Dictionary with the following format: { ios: { devices: Mobile.IDeviceInfo[], errors: string[] }, android: { devices: Mobile.IDeviceInfo[], errors: string[]}}.
+		 */
+		getAvailableEmulators(input?: Mobile.IListEmulatorsOptions): Promise<Mobile.IListEmulatorsOutput>;
+
+		/**
+		 * Starts an emulator by provided options
+		 * @param option 
+		 */
+		startEmulator(options?: IStartEmulatorOptions): Promise<void>;
+	}
+
+	interface IListEmulatorsOptions {
+		platform?: string;
+	}
+
+	interface IListEmulatorsOutput extends IDictionary<IAvailableEmulatorsOutput> {
+		ios: IAvailableEmulatorsOutput;
+		android: IAvailableEmulatorsOutput;
+	}
+
+	interface IAvailableEmulatorsOutput {
+		devices: Mobile.IDeviceInfo[];
+		errors: string[];
 	}
 
 	interface IPortForwardDataBase {
@@ -605,40 +656,180 @@ declare module Mobile {
 		sdcard?: string;
 	}
 
-	interface IEmulatorPlatformServices {
-		checkDependencies(): Promise<void>;
-
-		/**
-		 * Checks if the current system can start emulator of the specified mobile platform and throws error in case it cannot.
-		 * @param {boolean} dependsOnProject Defines if the starting of emulator depends on the project configuration.
-		 * @returns void
-		 */
-		checkAvailability(dependsOnProject?: boolean): void;
-
-		startEmulator(emulatorImage?: string): Promise<string>
-		runApplicationOnEmulator(app: string, emulatorOptions?: IEmulatorOptions): Promise<any>;
-		getEmulatorId(): Promise<string>;
-		getRunningEmulatorId(image: string): Promise<string>;
+	interface IAvdManagerDeviceInfo extends IStringDictionary {
+		name: string;
+		device: string;
+		path: string;
+		target: string;
+		skin: string;
+		sdcard: string;
 	}
 
-	interface IAndroidEmulatorServices extends IEmulatorPlatformServices {
-		getAllRunningEmulators(): Promise<string[]>;
-		pathToEmulatorExecutable: string;
-		getInfoFromAvd(avdName: string): Mobile.IAvdInfo;
-		getAvds(): string[];
+	interface IEmulatorPlatformService {
+		/**
+		 * Gets all available emulators
+		 * @returns {Promise<Mobile.IAvailableEmulatorsOutput>}
+		 */
+		getAvailableEmulators(): Promise<Mobile.IAvailableEmulatorsOutput>;
+		/**
+		 * Gets the ids of all running emulators
+		 * @returns {Promise<string[]>}
+		 */
+		getRunningEmulatorIds(): Promise<string[]>;
+		/**
+		 * Gets the running emulator's data for provided emulatorId.
+		 * @param emulatorIdOrName - The identifier or the name of the emulator.
+		 * @param availableDevices - All available devices.
+		 * @returns {Promise<Mobile.IDeviceInfo>} The running emulator if such can be found by provided emulatorId or null otherwise
+		 */
+		getRunningEmulator(emulatorId: string, availableEmulators?: Mobile.IDeviceInfo[]): Promise<Mobile.IDeviceInfo>;
+		/**
+		 * Starts the emulator by provided options.
+		 * @param options
+		 * @returns {Promise<IStartEmulatorOutput>} Starts the emulator and returns the errors if some error occurs. 
+		 */
+		startEmulator(options: Mobile.IStartEmulatorOptions): Promise<IStartEmulatorOutput>;
+	}
+
+	interface IStartEmulatorOutput {
+		errors: string[];
+	}
+
+	interface IAndroidVirtualDeviceService {
+		/**
+		 * Gets all available emulators.
+		 * @returns {Promise<Mobile.IAvailableEmulatorsOutput>} - Dictionary in the following format: { devices: Mobile.IDevice[], errors: string[] }.
+		 * Returns array of all available android emulators - genymotion and native avd emulators and array of errors.
+		 */
+		getAvailableEmulators(adbDevicesOutput: string[]): Promise<Mobile.IAvailableEmulatorsOutput>;
+		/**
+		 * Gets all identifiers of all running android devices.
+		 * @param adbDevicesOutput The output from "adb devices" command
+		 */
+		getRunningEmulatorIds(adbDevicesOutput: string[]): Promise<string[]>;
+		/**
+		 * Starts the emulator by provided imageIdentifier.
+		 * In case when emulator is not running, identifier will be the imageIdentifier. In this case {N} CLI will starts the emulator and will wait the provided timeout (or 120 miliseconds  by default in case when no timeout is specified) to complete the boot of emulator.
+		 * @param imageIdentifier - The imagerIdentifier of device
+		 */
+		startEmulator(imageIdentifier: string): void;
+	}
+
+	interface IVirtualBoxService {
+		/**
+		 * Lists all virtual machines.
+		 * @returns {Promise<IVirtualBoxListVmsOutput>} - Returns a dictionary in the following format: { vms: IVirtualBoxVm[]; error?: string; }
+		 * where vms is an array of name and id for each virtual machine.
+		 */
+		listVms(): Promise<IVirtualBoxListVmsOutput>;
+		/**
+		 * Gets all propertier for the specified virtual machine.
+		 * @param id - The identifier of the virtual machine.
+		 * @returns {Promise<IVirtualBoxEnumerateGuestPropertiesOutput>} - Returns a dictionary in the following format: { properties: string; error?: string; }
+		 */
+		enumerateGuestProperties(id: string): Promise<IVirtualBoxEnumerateGuestPropertiesOutput>;
+	}
+
+	interface IVirtualBoxListVmsOutput {
+		/**
+		 * List of virtual machines
+		 */
+		vms: IVirtualBoxVm[];
+		/**
+		 * The error if something is not configured properly.
+		 */
+		error?: string;
+	}
+
+	interface IVirtualBoxEnumerateGuestPropertiesOutput {
+		/**
+		 * The output of `vboxmanage enumerate guestproperty <id>` command
+		 */
+		properties: string;
+		/**
+		 * The error if something is not configured properly.
+		 */
+		error?: string;
+	}
+
+	interface IVirtualBoxVm {
+		/**
+		 * The id of the virtual machine.
+		 */
+		id: string;
+		/**
+		 * The name of the virtual machine.
+		 */
+		name: string;
+	}
+
+	interface IAndroidIniFileParser {
+		/**
+		 * Returns avdInfo from provided .ini file.
+		 * @param avdIniFilePath - The full path to .ini file.
+		 * @param avdInfo - avdInfo from previously parsed .ini file in case there are such.
+		 */
+		parseAvdIniFile(avdIniFilePath: string, avdInfo?: Mobile.IAvdInfo): Mobile.IAvdInfo; 
 	}
 
 	interface IiSimDevice {
+		/**
+		 * The name of the simulator. For example: 'iPhone 4s', 'iPad Retina'
+		 */
 		name: string;
+		/**
+		 * The unique identifier of the simulator. For example: 'B2FD3FD3-5982-4B56-A7E8-285DBC74ECCB', '49AFB795-8B1B-4CD1-8399-690A1A9BC00D'
+		 */
 		id: string;
+		/**
+		 * The full identifier of the simulator. For example: 'com.apple.CoreSimulator.SimDeviceType.iPhone 5s', 'com.apple.CoreSimulator.SimDeviceType.iPad Retina'
+		 */
 		fullId: string;
+		/**
+		 * The sdk version of the simulator. For example: '8.4', '9.3', '11.3'
+		 */
 		runtimeVersion: string;
+		/**
+		 * The state of the simulator. Can be 'Shutdown' or 'Booted'
+		 */
 		state?: string;
 	}
 
 	interface IiOSSimResolver {
-		iOSSim: any;
+		iOSSim: IiOSSim;
 		iOSSimPath: string;
+	}
+
+	interface IiOSSim {
+		getApplicationPath(deviceId: string, appIdentifier: string): string;
+		getDeviceLogProcess(deviceId: string, options?: any): any;
+		getDevices(): Promise<Mobile.IiSimDevice[]>;
+		getRunningSimulators(): Promise<IiSimDevice[]>;
+		launchApplication(applicationPath: string, appIdentifier: string, options: IiOSSimLaunchApplicationOptions): Promise<any>;
+		printDeviceTypes(): Promise<any>;
+		sendNotification(notification: string, deviceId: string): Promise<void>;
+		startSimulator(data: IiOSSimStartSimulatorInput): Promise<string>;
+	}
+
+	interface IiOSSimStartSimulatorInput {
+		/**
+		 * The name or identifier of device that will be started.
+		 */
+		device: string;
+		/**
+		 * The sdk version of the device that will be started.
+		 */
+		sdkVersion: string;
+		state?: string;
+	}
+
+	interface IiOSSimLaunchApplicationOptions {
+		timeout: string;
+		sdkVersion: string;
+		device: string;
+		args: string[];
+		waitForDebugger: boolean;
+		skipInstall: boolean;
 	}
 
 	/**
@@ -658,7 +849,7 @@ declare module Mobile {
 		timeout?: number;
 	}
 
-	interface IiOSSimulatorService extends IEmulatorPlatformServices {
+	interface IiOSSimulatorService extends IEmulatorPlatformService {
 		postDarwinNotification(notification: string, deviceId: string): Promise<void>;
 
 		/**
@@ -669,6 +860,14 @@ declare module Mobile {
 		 * @returns {net.Socket} Returns instance of net.Socket when connection is successful, otherwise undefined is returned.
 		 */
 		connectToPort(connectToPortData: IConnectToPortData): Promise<any>;
+
+		/**
+		 * Runs an application on emulator
+		 * @param app The path to executable .app
+		 * @param emulatorOptions Emulator options that can be passed
+		 * @returns {Promise<any>} Returns the appId with the process of the running application on the simulator. For example: org.nativescript.myapp 55434
+		 */
+		runApplicationOnEmulator(app: string, emulatorOptions?: IRunApplicationOnEmulatorOptions): Promise<any>;
 	}
 
 	interface IEmulatorSettingsService {
@@ -681,38 +880,85 @@ declare module Mobile {
 		minVersion: number;
 	}
 
-	interface IEmulatorOptions {
-		stderrFilePath?: string;
-		stdoutFilePath?: string;
+	interface IRunApplicationOnEmulatorOptions {
+		/**
+		 * The identifier of the application that will be started on device.
+		 */
 		appId?: string;
+		/**
+		 * The args that will be passed to the application.
+		 */
 		args?: string;
-		deviceType?: string;
+		/**
+		 * The device identifier.
+		 */
+		device?: string;
+		/**
+		 * If provided, redirect the application's standard output to a file.
+		 */
+		stderrFilePath?: string;
+		/**
+		 * If provided, redirect the applications's standard error to a file.
+		 */
+		stdoutFilePath?: string;
+		/**
+		 * If provided, only run the app on device (will skip app installation).
+		 */
+		skipInstall?: boolean;
+		/**
+		 * If provided, wait for debugger to attach.
+		 */
 		waitForDebugger?: boolean;
 		captureStdin?: boolean;
-		skipInstall?: boolean;
-		device?: string;
+
+
+		/**
+		 * If provided, print all available devices
+		 */
+		availableDevices?: boolean;
+		
+		timeout?: string;
+		/**
+		 * The sdk version of the emulator.
+		 */
+		sdk?: string;
+	
+		justlaunch?: boolean;
+	}
+
+	interface IStartEmulatorOptions {
+		/**
+		 * The emulator's image identifier.
+		 */
+		imageIdentifier?: string;
+		/**
+		 * The identifier or name of the emulator.
+		 */
+		emulatorIdOrName?: string;
+		/**
+		 * The platform of the emulator.
+		 */
+		platform?: string;
+		/**
+		 * The sdk version of the emulator. Currently available only for iOS emulators.
+		 */
+		sdk?: string;
+		/**
+		 * The info about the emulator.
+		 */
+		emulator?: Mobile.IDeviceInfo;
+	}
+
+	interface IAndroidStartEmulatorOptions extends IStartEmulatorOptions {
+		/**
+		 * The timeout in miliseconds what will be passed to android emulator. If 0 - will await infinity to start the emulator.
+		 */
+		timeout?: number;
 	}
 
 	interface IPlatformsCapabilities {
 		getPlatformNames(): string[];
 		getAllCapabilities(): IDictionary<Mobile.IPlatformCapabilities>;
-	}
-
-	//todo: plamen5kov: this is a duplicate of an interface (IEmulatorPlatformService) fix after 3.0-RC. nativescript-cli/lib/definitions/emulator-platform-service.d.ts
-	interface IEmulatorImageService {
-		listAvailableEmulators(platform: string): Promise<void>;
-		getEmulatorInfo(platform: string, nameOfId: string): Promise<IEmulatorInfo>;
-		getiOSEmulators(): Promise<IEmulatorInfo[]>;
-		getAndroidEmulators(): IEmulatorInfo[];
-	}
-
-	//todo: plamen5kov: this is a duplicate of an interface (IEmulatorInfo) fix after 3.0-RC nativescript-cli/lib/definitions/emulator-platform-service.d.ts
-	interface IEmulatorInfo extends IPlatform {
-		name: string;
-		version: string;
-		id: string;
-		type: string;
-		isRunning?: boolean;
 	}
 
 	interface IMobileHelper {
@@ -726,6 +972,17 @@ declare module Mobile {
 		getPlatformCapabilities(platform: string): Mobile.IPlatformCapabilities;
 		buildDevicePath(...args: string[]): string;
 		correctDevicePath(filePath: string): string;
+		isiOSTablet(deviceName: string): boolean;
+	}
+
+	interface IEmulatorHelper {
+		getEmulatorsFromAvailableEmulatorsOutput(availableEmulatorsOutput: Mobile.IListEmulatorsOutput): Mobile.IDeviceInfo[];
+		getErrorsFromAvailableEmulatorsOutput(availableEmulatorsOutput: Mobile.IListEmulatorsOutput): string[];
+		getEmulatorByImageIdentifier(imageIdentifier: string, emulators: Mobile.IDeviceInfo[]): Mobile.IDeviceInfo;
+		getEmulatorByIdOrName(emulatorIdOrName: string, emulators: Mobile.IDeviceInfo[]): Mobile.IDeviceInfo;
+		getEmulatorByStartEmulatorOptions(options: Mobile.IStartEmulatorOptions, emulators: Mobile.IDeviceInfo[]): Mobile.IDeviceInfo;
+		isEmulatorRunning(emulator: Mobile.IDeviceInfo): boolean;
+		setRunningAndroidEmulatorProperties(emulatorId: string, emulator: Mobile.IDeviceInfo): void;
 	}
 
 	interface IDevicePlatformsConstants {

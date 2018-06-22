@@ -104,13 +104,16 @@ const iOSSimulator = {
 
 class AndroidEmulatorServices {
 	public isStartEmulatorCalled = false;
-	public async startEmulator(): Promise<void> {
+	public async startEmulator(options: Mobile.IStartEmulatorOptions): Promise<void> {
 		this.isStartEmulatorCalled = true;
 		androidDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, androidEmulatorDevice);
 		return Promise.resolve();
 	}
 	public async getRunningEmulatorId(identifier: string): Promise<string> {
 		return Promise.resolve(identifier);
+	}
+	public getRunningEmulator(emulatorId: string): Promise<Mobile.IDeviceInfo> {
+		return null;
 	}
 }
 
@@ -125,6 +128,9 @@ class IOSEmulatorServices {
 	}
 	public async getRunningEmulatorId(identifier: string): Promise<string> {
 		return Promise.resolve(identifier);
+	}
+	public async getRunningEmulator(): Promise<Mobile.IDeviceInfo> {
+		return null;
 	}
 }
 
@@ -166,6 +172,11 @@ function createTestInjector(): IInjector {
 	});
 
 	testInjector.register("androidProcessService", { /* no implementation required */ });
+	testInjector.register("androidEmulatorDiscovery", {
+		on: () => ({}),
+		startLookingForDevices: () => ({})
+	});
+	testInjector.register("emulatorHelper", {});
 
 	return testInjector;
 }

@@ -539,6 +539,23 @@ export function getValueFromNestedObject(obj: any, key: string): any {
 	return _.head(_getValueRecursive(obj, key));
 }
 
+export function getWinRegPropertyValue(key: string, propertyName: string): Promise<string> {
+	return new Promise((resolve, reject) => {
+		const Winreg = require("winreg");
+		const regKey = new Winreg({
+			hive: Winreg.HKLM,
+			key: key
+		});
+		regKey.get(propertyName, (err: Error, value: string) => {
+			if (err) {
+				reject(err);
+			} else {
+				resolve(value);
+			}
+		});
+	});
+}
+
 //--- begin part copied from AngularJS
 
 //The MIT License

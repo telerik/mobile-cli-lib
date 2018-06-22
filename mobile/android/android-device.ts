@@ -48,7 +48,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 
 	constructor(private identifier: string,
 		private status: string,
-		private $androidEmulatorServices: Mobile.IAndroidEmulatorServices,
+		private $androidEmulatorServices: Mobile.IEmulatorPlatformService,
 		private $logger: ILogger,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $logcatHelper: Mobile.ILogcatHelper,
@@ -144,8 +144,8 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 	}
 
 	private async getType(): Promise<string> {
-		const runningEmulators = await this.$androidEmulatorServices.getAllRunningEmulators();
-		if (_.includes(runningEmulators, this.identifier)) {
+		const runningEmulatorIds = await this.$androidEmulatorServices.getRunningEmulatorIds();
+		if (_.find(runningEmulatorIds, emulatorId => emulatorId === this.identifier)) {
 			return constants.DeviceTypes.Emulator;
 		}
 
