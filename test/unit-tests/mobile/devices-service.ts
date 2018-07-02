@@ -14,6 +14,20 @@ import { Messages } from "../../../messages/messages";
 import * as constants from "../../../constants";
 import { DevicePlatformsConstants } from "../../../mobile/device-platforms-constants";
 
+class DevicesServiceInheritor extends DevicesService {
+	public startEmulatorIfNecessary(data?: Mobile.IDevicesServicesInitializationOptions): Promise<void> {
+		return super.startEmulatorIfNecessary(data);
+	}
+
+	public startDeviceDetectionInterval(deviceInitOpts: Mobile.IDevicesServicesInitializationOptions = {}): Promise<void> {
+		return super.startDeviceDetectionInterval(deviceInitOpts);
+	}
+
+	public detectCurrentlyAttachedDevices(options?: Mobile.IDevicesServicesInitializationOptions): Promise<void> {
+		return super.detectCurrentlyAttachedDevices(options);
+	}
+}
+
 class IOSDeviceDiscoveryStub extends EventEmitter {
 	public count: number = 0;
 	public async startLookingForDevices(): Promise<void> {
@@ -247,7 +261,7 @@ describe("devicesService", () => {
 		}
 	};
 	let testInjector: IInjector;
-	let devicesService: Mobile.IDevicesService;
+	let devicesService: DevicesServiceInheritor;
 	let androidEmulatorServices: any;
 	let logger: CommonLoggerStub;
 
@@ -334,12 +348,12 @@ describe("devicesService", () => {
 				assert.deepEqual(devicesService.getDeviceInstances(), [androidDevice, androidEmulatorDevice]);
 				assert.equal(devicesService.getDeviceInstances().length, 2);
 			});
-			it("deviceid and emulator are not passed there are devices but not for the specified platform, assert NO devices are found", async () => {
+			it("deviceid and emulator are not passed there are devices but not for the specified platform, assert all device detections are fired", async () => {
 				assert.deepEqual(devicesService.getDeviceInstances(), [], "Initially getDevicesInstances must return empty array.");
 				await devicesService.startEmulatorIfNecessary({ platform: "android" });
 				assert.equal((<AndroidDeviceDiscoveryStub>androidDeviceDiscovery).count, 2);
-				assert.equal((<IOSDeviceDiscoveryStub>iOSDeviceDiscovery).count, 0);
-				assert.equal((<IOSSimulatorDiscoveryStub>iOSSimulatorDiscovery).count, 0);
+				assert.equal((<IOSDeviceDiscoveryStub>iOSDeviceDiscovery).count, 1);
+				assert.equal((<IOSSimulatorDiscoveryStub>iOSSimulatorDiscovery).count, 1);
 			});
 			it("deviceId is NOT passed, platform is passed and skipEmulatorStart is passed - should not start emulator", async () => {
 				assert.deepEqual(devicesService.getDeviceInstances(), [], "Initially getDevicesInstances must return empty array.");
@@ -541,6 +555,33 @@ describe("devicesService", () => {
 				await devicesService.initialize({ platform: "ios", deviceId: iOSDevice.deviceInfo.identifier });
 				assert.isTrue(logger.traceOutput.indexOf("my error") !== -1);
 			});
+		});
+
+		it("when initialize is called multiple times, only first execution does the actual work", async () => {
+			let initializeCoreCalledCounter = 0;
+			(<any>devicesService).initializeCore = async () => initializeCoreCalledCounter++;
+			for (let i = 0; i < 4; i++) {
+				await devicesService.initialize();
+			}
+
+			assert.equal(initializeCoreCalledCounter, 1);
+		});
+
+		it("when initialize is called multiple times and initializeCore fails, each execution tries to initialize the service", async () => {
+			const expectedError = new Error("err");
+			let initializeCoreCalledCounter = 0;
+
+			(<any>devicesService).initializeCore = async () => {
+				initializeCoreCalledCounter++;
+				throw expectedError;
+			};
+
+			const calledCounter = 4;
+			for (let i = 0; i < calledCounter; i++) {
+				await assert.isRejected(devicesService.initialize(), expectedError);
+			}
+
+			assert.equal(initializeCoreCalledCounter, calledCounter);
 		});
 
 		it("when initialize is called with platform and deviceId and such device cannot be found", async () => {

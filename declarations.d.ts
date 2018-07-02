@@ -1246,7 +1246,11 @@ interface IProfileDir {
 	profileDir: string;
 }
 
-interface ICommonOptions extends IRelease, IDeviceIdentifier, IJustLaunch, IAvd, IAvailableDevices, IProfileDir {
+interface IHasEmulatorOption {
+	emulator: boolean;
+}
+
+interface ICommonOptions extends IRelease, IDeviceIdentifier, IJustLaunch, IAvd, IAvailableDevices, IProfileDir, IHasEmulatorOption {
 	argv: IYargArgv;
 	validateOptions(commandSpecificDashedOptions?: IDictionary<IDashedOption>): void;
 	options: IDictionary<any>;
@@ -1276,7 +1280,6 @@ interface ICommonOptions extends IRelease, IDeviceIdentifier, IJustLaunch, IAvd,
 	analyticsClient: string;
 	force: boolean;
 	companion: boolean;
-	emulator: boolean;
 	sdk: string;
 	template: string;
 	certificate: string;

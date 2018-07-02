@@ -408,6 +408,10 @@ declare module Mobile {
 		 * Specifies whether we should skip the emulator starting.
 		 */
 		skipEmulatorStart?: boolean;
+		/**
+		 * Defines if the initialization should await the whole iOS detection to finish or it can just start the detection.
+		 */
+		shouldReturnImmediateResult?: boolean;
 	}
 
 	interface IDeviceActionResult<T> extends IDeviceIdentifier {
@@ -417,13 +421,6 @@ declare module Mobile {
 	interface IDevicesService extends NodeJS.EventEmitter, IPlatform {
 		hasDevices: boolean;
 		deviceCount: number;
-
-		/**
-		 * Optionally starts emulator depending on the passed options.
-		 * @param {IDevicesServicesInitializationOptions} data Defines wheather to start default or specific emulator.
-		 * @return {Promise<void>}
-		 */
-		startEmulatorIfNecessary(data?: Mobile.IDevicesServicesInitializationOptions): Promise<void>;
 
 		execute<T>(action: (device: Mobile.IDevice) => Promise<T>, canExecute?: (dev: Mobile.IDevice) => boolean, options?: { allowNoDevices?: boolean }): Promise<IDeviceActionResult<T>[]>;
 
@@ -458,11 +455,8 @@ declare module Mobile {
 		isAppInstalledOnDevices(deviceIdentifiers: string[], appIdentifier: string, framework: string): Promise<IAppInstalledInfo>[];
 		setLogLevel(logLevel: string, deviceIdentifier?: string): void;
 		deployOnDevices(deviceIdentifiers: string[], packageFile: string, packageName: string, framework: string): Promise<void>[];
-		startDeviceDetectionInterval(): Promise<void>;
 		getDeviceByIdentifier(identifier: string): Mobile.IDevice;
 		mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string, framework: string): Promise<string>;
-		detectCurrentlyAttachedDevices(options?: Mobile.IDeviceLookingOptions): Promise<void>;
-		startEmulator(platform?: string, emulatorImage?: string): Promise<void>;
 		isCompanionAppInstalledOnDevices(deviceIdentifiers: string[], framework: string): Promise<IAppInstalledInfo>[];
 		getDebuggableApps(deviceIdentifiers: string[]): Promise<Mobile.IDeviceApplicationInformation[]>[];
 		getDebuggableViews(deviceIdentifier: string, appIdentifier: string): Promise<Mobile.IDebugWebViewInfo[]>;
@@ -748,9 +742,9 @@ declare module Mobile {
 		resolveProductName(deviceType: string): string;
 	}
 
-	interface IDeviceLookingOptions {
+	interface IDeviceLookingOptions extends IHasEmulatorOption {
 		shouldReturnImmediateResult: boolean;
-		platform: string
+		platform: string;
 	}
 
 	interface IAndroidDeviceHashService {

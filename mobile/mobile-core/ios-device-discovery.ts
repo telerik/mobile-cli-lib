@@ -25,9 +25,12 @@ export class IOSDeviceDiscovery extends DeviceDiscovery {
 	}
 
 	public async startLookingForDevices(options?: Mobile.IDeviceLookingOptions): Promise<void> {
-		if (options && options.platform && !this.$mobileHelper.isiOSPlatform(options.platform)) {
+		this.$logger.trace("Options for ios-device-discovery", options);
+
+		if (options && options.platform && (!this.$mobileHelper.isiOSPlatform(options.platform) || options.emulator)) {
 			return;
 		}
+
 		if (this.validateiTunes()) {
 			await this.$iosDeviceOperations.startLookingForDevices((deviceInfo: IOSDeviceLib.IDeviceActionInfo) => {
 				this.createAndAddDevice(deviceInfo);
