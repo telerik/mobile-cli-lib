@@ -239,7 +239,7 @@ declare module Mobile {
 		 * @param {string} deviceId The unique identifier of the device.
 		 * @param {Mobile.IiOSLogStreamOptions} options Describes the options which can be passed
 		 */
-		startNewMutedLogProcess(deviceId: string, options?: Mobile.IiOSLogStreamOptions): void;
+		startNewMutedLogProcess(deviceId: string, options?: Mobile.IiOSLogStreamOptions): Promise<void>;
 	}
 
 	/**
