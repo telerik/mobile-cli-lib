@@ -53,11 +53,11 @@ export class IOSSimulatorLogProvider extends EventEmitter implements Mobile.IiOS
 		}
 	}
 
-	public startNewMutedLogProcess(deviceId: string, options?: Mobile.IiOSLogStreamOptions): void {
+	public async startNewMutedLogProcess(deviceId: string, options?: Mobile.IiOSLogStreamOptions): Promise<void> {
 		options = options || {};
 		options.muted = true;
 		this.simulatorsLoggingEnabled[deviceId] = false;
-		this.startLogProcess(deviceId, options);
+		await this.startLogProcess(deviceId, options);
 		this.simulatorsLoggingEnabled[deviceId] = false;
 	}
 
