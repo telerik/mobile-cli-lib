@@ -63,7 +63,7 @@ export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 		return output
 			.split(EOL)
 			.filter(device => !!device)
-			.filter(device => device !== "List of devices attached"); // TODO: Consider to move this to constants
+			.filter(device => device !== "List of devices attached");
 	}
 
 	protected async composeCommand(params: string[], identifier?: string): Promise<IComposeCommandResult> {

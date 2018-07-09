@@ -26,9 +26,11 @@ export class AndroidIniFileParser implements Mobile.IAndroidIniFileParser {
 					break;
 				case "path": result.path = parsedLine[1]; break;
 				case "hw.device.name": result.device = parsedLine[1]; break;
-				case "abi.type": result.abi = parsedLine[1]; break;
-				case "skin.name": result.skin = parsedLine[1]; break;
-				case "sdcard.size": result.sdcard = parsedLine[1]; break;
+				case "abi.type":
+				case "skin.name":
+				case "sdcard.size":
+					result[key.split(".")[0]] = parsedLine[1];
+					break;
 			}
 			return result;
 		}, avdInfo || <Mobile.IAvdInfo>Object.create(null));

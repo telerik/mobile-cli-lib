@@ -140,7 +140,7 @@ export class ChildProcess extends EventEmitter implements IChildProcess {
 		try {
 			return this.spawnFromEvent(command, args, "close", options, spawnFromEventOptions);
 		} catch (err) {
-			this.$logger.trace(`Error from trySpawnAwaitCloseEvent method. More info: ${err}`);
+			this.$logger.trace(`Error from trySpawnFromCloseEvent method. More info: ${err}`);
 			return Promise.resolve({ stderr: err && err.message ? err.message : err, stdout: null, exitCode: -1 });
 		}
 	}

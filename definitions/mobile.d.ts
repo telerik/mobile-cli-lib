@@ -495,10 +495,10 @@ declare module Mobile {
 
 		/**
 		 * Returns all available iOS and/or Android emulators.
-		 * @param input The options that can be passed to filter the result.
+		 * @param options The options that can be passed to filter the result.
 		 * @returns {Promise<Mobile.IListEmulatorsOutput>} Dictionary with the following format: { ios: { devices: Mobile.IDeviceInfo[], errors: string[] }, android: { devices: Mobile.IDeviceInfo[], errors: string[]}}.
 		 */
-		getAvailableEmulators(input?: Mobile.IListEmulatorsOptions): Promise<Mobile.IListEmulatorsOutput>;
+		getAvailableEmulators(options?: Mobile.IListEmulatorsOptions): Promise<Mobile.IListEmulatorsOutput>;
 
 		/**
 		 * Starts an emulator by provided options
@@ -645,7 +645,7 @@ declare module Mobile {
 		hostPlatformsForDeploy: string[];
 	}
 
-	interface IAvdInfo {
+	interface IAvdInfo extends IDictionary<string | number> {
 		target: string;
 		targetNum: number;
 		path: string;
@@ -678,8 +678,8 @@ declare module Mobile {
 		getRunningEmulatorIds(): Promise<string[]>;
 		/**
 		 * Gets the running emulator's data for provided emulatorId.
-		 * @param emulatorIdOrName - The identifier or the name of the emulator.
-		 * @param availableDevices - All available devices.
+		 * @param emulatorId - The identifier of the emulator.
+		 * @param availableEmulators - All available emulators.
 		 * @returns {Promise<Mobile.IDeviceInfo>} The running emulator if such can be found by provided emulatorId or null otherwise
 		 */
 		getRunningEmulator(emulatorId: string, availableEmulators?: Mobile.IDeviceInfo[]): Promise<Mobile.IDeviceInfo>;
