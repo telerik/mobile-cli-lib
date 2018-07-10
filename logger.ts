@@ -7,13 +7,9 @@ const chalk = require("chalk");
 
 export class Logger implements ILogger {
 	private log4jsLogger: log4js.ILogger = null;
-	private encodeRequestPaths: string[] = ['/appbuilder/api/itmstransporter/applications?username='];
-	private encodeBody: boolean = false;
-	private passwordRegex = /(password=).*?(['&,]|$)|(["']?.*?password["']?\s*:\s*["']).*?(["'])/i;
+	private passwordRegex = /(password=).*?(['&,]|$)|(password["']?\s*:\s*["']).*?(["'])/i;
 	private passwordReplacement = "$1$3*******$2$4";
-	private passwordBodyReplacement = "$1*******$2";
 	private static LABEL = "[WARNING]:";
-	private requestBodyRegex = /(^\").*?(\"$)/;
 
 	constructor($config: Config.IConfig,
 		private $options: ICommonOptions) {
@@ -151,22 +147,9 @@ export class Logger implements ILogger {
 
 	private getPasswordEncodedArguments(args: string[]): string[] {
 		return _.map(args, argument => {
-			if (typeof argument !== 'string') {
-				return argument;
+			if (typeof argument === 'string' && !!argument.match(/password/i)) {
+				argument = argument.replace(this.passwordRegex, this.passwordReplacement);
 			}
-
-			argument = argument.replace(this.passwordRegex, this.passwordReplacement);
-
-			if (this.encodeBody) {
-				argument = argument.replace(this.requestBodyRegex, this.passwordBodyReplacement);
-			}
-
-			_.each(this.encodeRequestPaths, path => {
-				if (argument.indexOf('path') > -1) {
-					this.encodeBody = argument.indexOf(path) > -1;
-					return false;
-				}
-			});
 
 			return argument;
 		});
