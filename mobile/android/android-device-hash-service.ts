@@ -70,9 +70,9 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 		return initialShasums;
 	}
 
-	public getDevicePaths(localToDevicePaths: Mobile.ILocalToDevicePathData[]): string[]{
+	public getDevicePaths(localToDevicePaths: Mobile.ILocalToDevicePathData[]): string[] {
 		return _.map(localToDevicePaths, (localToDevicePathData => {
-			return `"${localToDevicePathData.getDevicePath()}"`
+			return `"${localToDevicePathData.getDevicePath()}"`;
 		}));
 	}
 
