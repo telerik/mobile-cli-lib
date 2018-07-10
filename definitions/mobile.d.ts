@@ -359,10 +359,11 @@ declare module Mobile {
 	}
 
 	interface IAndroidDebugBridgeCommandOptions {
-		fromEvent?: string,
-		returnChildProcess?: boolean,
-		treatErrorsAsWarnings?: boolean,
-		childProcessOptions?: any
+		fromEvent?: string;
+		returnChildProcess?: boolean;
+		treatErrorsAsWarnings?: boolean;
+		childProcessOptions?: any;
+		deviceIdentifier?: string;
 	}
 
 	interface IAndroidDebugBridge {
