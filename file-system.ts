@@ -334,8 +334,12 @@ export class FileSystem implements IFileSystem {
 		const contents = this.readDirectory(directoryPath);
 		for (let i = 0; i < contents.length; ++i) {
 			const file = path.join(directoryPath, contents[i]);
-			const stat = this.getFsStats(file);
-			if (filterCallback && !filterCallback(file, stat)) {
+			let stat: fs.Stats = null;
+			if (this.exists(file)) {
+				stat = this.getFsStats(file);
+			}
+
+			if (!stat || (filterCallback && !filterCallback(file, stat))) {
 				continue;
 			}
 
