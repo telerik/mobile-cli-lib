@@ -33,54 +33,6 @@ export function regExpEscape(input: string): string {
 	return input.replace(/[|\\{}()[\]^$+*?.]/g, "\\$&");
 }
 
-// This function is a state of Art and that's why it has not been deleted.
-// However, its code uses some dependencies that are not used anywhere else, so the code is commented, as we decided to remove those dependencies.
-// export function trackDownloadProgress(destinationStream: NodeJS.WritableStream, url: string): NodeJS.ReadableStream {
-// 	// \r for carriage return doesn't work on windows in node for some reason so we have to use it's hex representation \x1B[0G
-// 	let lastMessageSize = 0;
-// 	const carriageReturn = "\x1B[0G";
-// 	let timeElapsed = 0;
-
-// 	const isInteractiveTerminal = isInteractive();
-// 	const progressStream = progress({ time: 1000 }, (progress: any) => {
-// 		timeElapsed = progress.runtime;
-
-// 		if (timeElapsed >= 1) {
-// 			if (isInteractiveTerminal) {
-// 				this.$logger.write("%s%s", carriageReturn, Array(lastMessageSize + 1).join(" "));
-
-// 				const message = util.format("%sDownload progress ... %s | %s | %s/s",
-// 					carriageReturn,
-// 					Math.floor(progress.percentage) + "%",
-// 					filesize(progress.transferred),
-// 					filesize(progress.speed));
-
-// 				this.$logger.write(message);
-// 				lastMessageSize = message.length;
-// 			}
-// 		}
-// 	});
-
-// 	progressStream.on("finish", () => {
-// 		if (timeElapsed >= 1) {
-// 			const msg = `Download of ${url} completed.`;
-// 			if (isInteractiveTerminal) {
-// 				this.$logger.out("%s%s%s%s", carriageReturn, Array(lastMessageSize + 1).join(" "), carriageReturn, msg);
-// 			} else {
-// 				this.$logger.out(msg);
-// 			}
-// 		}
-// 	});
-
-// 	progressStream.pipe(destinationStream);
-// 	return progressStream;
-// }
-
-export function isAllowedFinalFile(item: string): RegExpMatchArray {
-	return item.match(/.*\.aar/) ||
-		item.match(".*include.gradle");
-}
-
 export function isRecommendedAarFile(foundAarFile: string, packageJsonPluginName: string): boolean {
 	const filename = foundAarFile.replace(/^.*[\\\/]/, '');
 	packageJsonPluginName = getShortPluginName(packageJsonPluginName);
