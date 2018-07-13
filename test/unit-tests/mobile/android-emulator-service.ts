@@ -13,6 +13,7 @@ function createTestInjector() {
 	testInjector.register("androidGenymotionService", {});
 	testInjector.register("androidEmulatorServices", AndroidEmulatorServices);
 	testInjector.register("androidIniFileParser", {});
+	testInjector.register("childProcess", { spawn: () => ({unref: () => ({}), on: () => ({})})});
 	testInjector.register("emulatorHelper", EmulatorHelper);
 	testInjector.register("logger", {});
 	testInjector.register("utils", {
@@ -24,8 +25,8 @@ function createTestInjector() {
 
 const avdEmulatorIds = ["emulator-5554", "emulator-5556"];
 const genyEmulatorIds = ["192.168.56.101:5555", "192.168.56.102:5555"];
-const avdEmulatorId = "emulator-5554";
-const genyEmulatorId = "192.168.56.101:5555";
+const avdEmulatorName = "my avd emulator";
+const genyEmulatorName = "my geny emulator";
 
 const avdEmulator = {
 	identifier: "emulator-5554",
@@ -144,35 +145,47 @@ describe("androidEmulatorService", () => {
 		});
 	});
 
-	describe("getRunningEmulator", () => {
+	describe("getRunningEmulatorName", () => {
+		function mockGetRunningEmulatorName(data: {avd?: string, geny?: string}) {
+			androidVirtualDeviceService.getRunningEmulatorName = () => Promise.resolve(data.avd);
+			androidGenymotionService.getRunningEmulatorName = () => Promise.resolve(data.geny);
+		}
+
 		it("should return null when no emulators are available", async () => {
-			const emulator = await androidEmulatorServices.getRunningEmulator("invalid", []);
-			assert.deepEqual(emulator, null);
+			mockGetRunningEmulatorName({});
+			const emulatorName = await androidEmulatorServices.getRunningEmulatorName("");
+			assert.deepEqual(emulatorName, undefined);
 		});
 		it("should return null when there are available emulators but the provided emulatorId is not found", async () => {
-			const emulator = await androidEmulatorServices.getRunningEmulator("invalid", [genyEmulator]);
-			assert.deepEqual(emulator, null);
+			mockGetRunningEmulatorName({});
+			const emulatorName = await androidEmulatorServices.getRunningEmulatorName("my emulator Id");
+			assert.deepEqual(emulatorName, undefined);
 		});
 		it("should return avd emulator when the provided emulatorId is found", async () => {
-			const emulator = await androidEmulatorServices.getRunningEmulator(avdEmulatorId, [avdEmulator]);
-			assert.deepEqual(emulator, avdEmulator);
+			mockGetRunningEmulatorName({avd: avdEmulatorName});
+			const emulatorName = await androidEmulatorServices.getRunningEmulatorName(avdEmulatorName);
+			assert.deepEqual(emulatorName, avdEmulatorName);
 		});
 		it("should return geny emulator when the provided emulatorId is found", async () => {
-			const emulator = await androidEmulatorServices.getRunningEmulator(genyEmulatorId, [genyEmulator]);
-			assert.deepEqual(emulator, genyEmulator);
+			mockGetRunningEmulatorName({geny: genyEmulatorName});
+			const emulatorName = await androidEmulatorServices.getRunningEmulatorName(genyEmulatorName);
+			assert.deepEqual(emulatorName, genyEmulatorName);
 		});
 		it("should return avd emulator when there are avd and geny emulators", async () => {
-			const emulator = await androidEmulatorServices.getRunningEmulator(avdEmulatorId, [avdEmulator, genyEmulator]);
-			assert.deepEqual(emulator, avdEmulator);
+			mockGetRunningEmulatorName({avd: avdEmulatorName, geny: genyEmulatorName});
+			const emulatorName = await androidEmulatorServices.getRunningEmulatorName(avdEmulatorName);
+			assert.deepEqual(emulatorName, avdEmulatorName);
 		});
 	});
 
 	describe("startEmulator", () => {
 		function mockStartEmulator(deviceInfo: Mobile.IDeviceInfo): Mobile.IDeviceInfo {
 			if (deviceInfo.vendor === "Avd") {
-				androidVirtualDeviceService.startEmulator = () => ({});
+				androidVirtualDeviceService.startEmulatorArgs = () => [];
+				androidVirtualDeviceService.pathToEmulatorExecutable = "";
 			} else {
-				androidGenymotionService.startEmulator = () => ({});
+				androidGenymotionService.startEmulatorArgs = () => [];
+				androidGenymotionService.pathToEmulatorExecutable = "";
 			}
 
 			return deviceInfo;

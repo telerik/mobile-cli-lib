@@ -6,7 +6,8 @@ import { getWinRegPropertyValue } from "../../../helpers";
 export class VirtualBoxService implements Mobile.IVirtualBoxService {
 	constructor(private $childProcess: IChildProcess,
 		private $fs: IFileSystem,
-		private $hostInfo: IHostInfo) { }
+		private $hostInfo: IHostInfo,
+		private $logger: ILogger) { }
 
 	public async listVms(): Promise<Mobile.IVirtualBoxListVmsOutput> {
 		let result: ISpawnResult = null;
@@ -45,18 +46,18 @@ export class VirtualBoxService implements Mobile.IVirtualBoxService {
 
 	private async getvBoxManageSearchPaths(): Promise<IDictionary<string[]>> {
 		const searchPaths = {
-			darwin: ['/usr/local/bin'],
+			darwin: ["/usr/local/bin"],
 			linux: [
-				'/opt',
-				'/opt/local',
-				'/usr',
-				'/usr/local',
-				'~'
+				"/opt",
+				"/opt/local",
+				"/usr",
+				"/usr/local",
+				"~"
 			],
 			win32: [
-				'%ProgramFiles%\\Oracle\\VirtualBox',
-				'%ProgramFiles(x86)%\\Oracle\\VirtualBox'
-			] // Get path from registry key -> InstallDir// Get path from registry key -> InstallDir
+				"%ProgramFiles%\\Oracle\\VirtualBox",
+				"%ProgramFiles(x86)%\\Oracle\\VirtualBox"
+			]
 		};
 
 		if (this.$hostInfo.isWindows) {
@@ -64,17 +65,19 @@ export class VirtualBoxService implements Mobile.IVirtualBoxService {
 
 			try {
 				/* This can be used as interface!!!!
-				arch:null
-hive:"HKLM"
-host:""
-key:"\Software\Oracle\VirtualBox"
-name:"InstallDir"
-type:"REG_SZ"
-value:"C:\Program Files\Oracle\VirtualBox\"
+					arch:null
+					hive:"HKLM"
+					host:""
+					key:"\Software\Oracle\VirtualBox"
+					name:"InstallDir"
+					type:"REG_SZ"
+					value:"C:\Program Files\Oracle\VirtualBox\"
 				*/
 				const result: any = await getWinRegPropertyValue("\\Software\\Oracle\\VirtualBox", "InstallDir");
 				searchPath = result && result.value ? result.value : null;
-			} catch (err) { /* */ }
+			} catch (err) {
+				this.$logger.trace(`Error while trying to get InstallDir property for \\Software\\Oracle\\VirtualBox. More info: ${err}.`);
+			}
 
 			if (searchPath && !_.includes(searchPaths["win32"], searchPath)) {
 				searchPaths["win32"].unshift(searchPath);
@@ -87,7 +90,7 @@ value:"C:\Program Files\Oracle\VirtualBox\"
 	private get vBoxManageExecutableNames(): IDictionary<string> {
 		return {
 			darwin: "VBoxManage",
-			linux: "",
+			linux: "VBoxManage",
 			win32: "VBoxManage.exe"
 		};
 	}

@@ -46,8 +46,8 @@ export class DeviceDiscoveryEventNames {
 }
 
 export class EmulatorDiscoveryNames {
-	static AVAILABLE_EMULATOR_FOUND = "availableEmulatorFound";
-	static AVAILABLE_EMULATOR_LOST = "availableEmulatorLost";
+	static EMULATOR_IMAGES_FOUND = "emulatorImagesFound";
+	static EMULATOR_IMAGES_LOST = "emulatorImagesLost";
 }
 
 export const DEVICE_LOG_EVENT_NAME = "deviceLogData";

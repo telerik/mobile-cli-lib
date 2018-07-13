@@ -197,10 +197,12 @@ function createTestInjector(): IInjector {
 
 	testInjector.register("androidGenymotionService", AndroidGenymotionService);
 	testInjector.register("adb", {});
-	testInjector.register("childProcess", {});
+	testInjector.register("childProcess", { trySpawnFromCloseEvent: () => Promise.resolve({}) });
 	testInjector.register("devicePlatformsConstants", {Android: "android"});
 	testInjector.register("emulatorHelper", EmulatorHelper);
-	testInjector.register("fs", {});
+	testInjector.register("fs", {
+		exists: () => true
+	});
 	testInjector.register("hostInfo", {});
 	testInjector.register("logger", {});
 	testInjector.register("virtualBoxService", {});
@@ -311,7 +313,7 @@ describe("GenymotionService", () => {
 			};
 			mockVirtualBoxService({ vms, error: null }, mapEnumerateGuestPropertiesOutput);
 			(<any>androidGenymotionService).isGenymotionEmulator = (emulatorId: string) => Promise.resolve(true);
-			(<any>androidGenymotionService).getNameFromRunningEmulatorId = (emulatorId: string) => "test";
+			androidGenymotionService.getRunningEmulatorName = (emulatorId: string) => Promise.resolve("test");
 			const result = await androidGenymotionService.getAvailableEmulators(["192.168.56.101:5555	device"]);
 			assert.lengthOf(result.devices, 4);
 			assert.deepEqual(result.devices[0], getAvailableEmulatorData({ displayName: "Google Nexus 4 - 5.0.0 - API 21 - 768x1280", imageIdentifier: "9d9beef2-cc60-4a54-bcc0-cc1dbf89811f", version: "5.0" }));

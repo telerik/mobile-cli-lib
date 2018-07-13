@@ -36,6 +36,14 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		return [];
 	}
 
+	public async getRunningEmulatorName(): Promise<string> {
+		return "";
+	}
+
+	public async getRunningEmulatorImageIdentifier(emulatorId: string): Promise<string> {
+		return "";
+	}
+
 	public runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IRunApplicationOnEmulatorOptions): Promise<any> {
 		emulatorOptions = emulatorOptions || {};
 

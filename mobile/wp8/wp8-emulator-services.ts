@@ -19,6 +19,10 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformService {
 		return null;
 	}
 
+	public async getRunningEmulatorImageIdentifier(emulatorId: string): Promise<string> {
+		return null;
+	}
+
 	public async getRunningEmulatorIds(): Promise<string[]> {
 		return [];
 	}
@@ -39,6 +43,10 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformService {
 
 	public async getRunningEmulators(): Promise<Mobile.IDeviceInfo[]> {
 		return [];
+	}
+
+	public async getRunningEmulatorName(): Promise<string> {
+		return "";
 	}
 
 	private getPathToEmulatorStarter(): string {

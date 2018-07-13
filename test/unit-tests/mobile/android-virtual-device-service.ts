@@ -3,6 +3,7 @@ import { EmulatorHelper } from "../../../mobile/emulator-helper";
 import { Yok } from "../../../yok";
 
 import { assert } from "chai";
+import * as path from "path";
 
 const avdManagerOutput = `Parsing /Users/havaluova/Library/Android/sdk/build-tools/27.0.3/package.xmlParsing /Users/havaluova/Library/Android/sdk/build-tools/28.0.0/package.xmlParsing /Users/havaluova/Library/Android/sdk/emulator/package.xmlParsing /Users/havaluova/Library/Android/sdk/extras/android/m2repository/package.xmlParsing /Users/havaluova/Library/Android/sdk/extras/google/google_play_services/package.xmlParsing /Users/havaluova/Library/Android/sdk/extras/google/m2repository/package.xmlParsing /Users/havaluova/Library/Android/sdk/extras/intel/Hardware_Accelerated_Execution_Manager/package.xmlParsing /Users/havaluova/Library/Android/sdk/extras/m2repository/com/android/support/constraint/constraint-layout-solver/1.0.2/package.xmlParsing /Users/havaluova/Library/Android/sdk/extras/m2repository/com/android/support/constraint/constraint-layout/1.0.2/package.xmlParsing /Users/havaluova/Library/Android/sdk/patcher/v4/package.xmlParsing /Users/havaluova/Library/Android/sdk/platform-tools/package.xmlParsing /Users/havaluova/Library/Android/sdk/platforms/android-27/package.xmlParsing /Users/havaluova/Library/Android/sdk/platforms/android-28/package.xmlParsing /Users/havaluova/Library/Android/sdk/sources/android-27/package.xmlParsing /Users/havaluova/Library/Android/sdk/system-images/android-27/google_apis_playstore/x86/package.xmlParsing /Users/havaluova/Library/Android/sdk/system-images/android-28/google_apis/x86/package.xmlParsing /Users/havaluova/Library/Android/sdk/system-images/android-28/google_apis_playstore/x86/package.xmlParsing /Users/havaluova/Library/Android/sdk/tools/package.xmlAvailable Android Virtual Devices:
 	Name: Nexus_5_API_27
@@ -29,17 +30,24 @@ const avdManagerOutput = `Parsing /Users/havaluova/Library/Android/sdk/build-too
 	Skin: nexus_6p
 	Sdcard: 100M`;
 
+function getValueFromIniFilesData(propertyName: string, iniFilePath: string, iniFilesData: IDictionary<Mobile.IAvdInfo>) {
+	return iniFilesData && iniFilesData[path.dirname(iniFilePath)] && iniFilesData[path.dirname(iniFilePath)][propertyName];
+}
+
 function createTestInjector(data: {avdManagerOutput?: string, avdManagerError?: string, iniFilesData?: IDictionary<Mobile.IAvdInfo>}) {
 	const testInjector = new Yok();
 	testInjector.register("androidVirtualDeviceService", AndroidVirtualDeviceService);
 	testInjector.register("androidIniFileParser", {
-		parseAvdIniFile: (avdIniFilePath: string, avdInfo?: Mobile.IAvdInfo) => {
-			return avdInfo || {
-				target: data && data.iniFilesData && data.iniFilesData[avdIniFilePath] && data.iniFilesData[avdIniFilePath].target,
-				targetNum: 17,
-				path: avdIniFilePath,
-				device: data && data.iniFilesData && data.iniFilesData[avdIniFilePath] && data.iniFilesData[avdIniFilePath].device
-			};
+		parseIniFile: (iniFilePath: string) => {
+			if (path.basename(iniFilePath) === "config.ini") {
+				return {
+					avdId: getValueFromIniFilesData("avdId", iniFilePath, data && data.iniFilesData),
+					path: getValueFromIniFilesData("path", iniFilePath, data && data.iniFilesData),
+					device: getValueFromIniFilesData("device", iniFilePath, data && data.iniFilesData),
+					target: getValueFromIniFilesData("target", iniFilePath, data && data.iniFilesData),
+					targetNum: 17
+				};
+			}
 		}
 	});
 	testInjector.register("childProcess", {
@@ -125,64 +133,72 @@ describe("androidVirtualDeviceService", () => {
 			});
 			it("should return all emulators when there are available emulators and no running emulators", async () => {
 				const avdService = mockAvdService({avdManagerOutput, iniFilesData: {
-					"/fake/path/Nexus_5_API_27.ini": {
+					"/fake/path/Nexus_5_API_27.avd": {
 						target: "android-27",
 						targetNum: 8,
-						path: "/some/path",
-						device: "Nexus 5X"
+						path: null,
+						device: "Nexus 5X",
+						avdId: "Nexus_5_API_27"
 					},
-					"/fake/path/Nexus_5X_API_28.ini": {
+					"/fake/path/Nexus_5X_API_28.avd": {
 						target: "android-28",
 						targetNum: 9,
-						path: "/some/path",
-						device: "Nexus 5X"
+						path: null,
+						device: "Nexus 5X",
+						avdId: "Nexus_5X_API_28"
 					},
-					"/fake/path/Nexus_6P_API_28.ini": {
+					"/fake/path/Nexus_6P_API_28.avd": {
 						target: "android-28",
 						targetNum: 9,
-						path: "/some/path",
-						device: "Nexus 6P"
+						path: null,
+						device: "Nexus 6P",
+						avdId: "Nexus_6P_API_28"
 					}
 				}});
 
 				const result = await avdService.getAvailableEmulators([]);
 				assert.lengthOf(result.devices, 3);
-				assert.deepEqual(result.devices[0], getAvailableEmulatorData({ displayName: "Nexus 5X", imageIdentifier: "Nexus_5_API_27", version: "android-27" }));
-				assert.deepEqual(result.devices[1], getAvailableEmulatorData({ displayName: "Nexus 5X", imageIdentifier: "Nexus_5X_API_28", version: "android-28" }));
-				assert.deepEqual(result.devices[2], getAvailableEmulatorData({ displayName: "Nexus 6P", imageIdentifier: "Nexus_6P_API_28", version: "android-28" }));
+				assert.deepEqual(result.devices[0], getAvailableEmulatorData({ displayName: "Nexus 5X", imageIdentifier: "Nexus_5_API_27", version: "8.1.0" }));
+				assert.deepEqual(result.devices[1], getAvailableEmulatorData({ displayName: "Nexus 5X", imageIdentifier: "Nexus_5X_API_28", version: "9.0.0" }));
+				assert.deepEqual(result.devices[2], getAvailableEmulatorData({ displayName: "Nexus 6P", imageIdentifier: "Nexus_6P_API_28", version: "9.0.0" }));
 				assert.deepEqual(result.errors, []);
 			});
 			it("should return all emulators when there are available and running emulators", async () => {
 				const avdService = mockAvdService({avdManagerOutput, iniFilesData: {
-					"/fake/path/Nexus_5_API_27.ini": {
+					"/fake/path/Nexus_5_API_27.avd": {
 						target: "android-27",
 						targetNum: 8,
-						path: "/some/path",
-						device: "Nexus 5X"
+						path: null,
+						device: "Nexus 5X",
+						avdId: "Nexus_5_API_27"
 					},
-					"/fake/path/Nexus_5X_API_28.ini": {
+					"/fake/path/Nexus_5X_API_28.avd": {
 						target: "android-28",
 						targetNum: 9,
-						path: "/some/path",
-						device: "Nexus 5X"
+						path: null,
+						device: "Nexus 5X",
+						avdId: "Nexus_5X_API_28"
 					},
-					"/fake/path/Nexus_6P_API_28.ini": {
+					"/fake/path/Nexus_6P_API_28.avd": {
 						target: "android-28",
 						targetNum: 9,
-						path: "/some/path",
-						device: "Nexus 6P"
+						path: null,
+						device: "Nexus 6P",
+						avdId: "Nexus_6P_API_28"
 					}
 				}});
 
-				(<any>avdService).getImageIdentifierFromRunningEmulator = (runningEmulatorId: string, emulators: Mobile.IDeviceInfo[]) => {
-					if (runningEmulatorId === "emulator-5554") {
-						return "Nexus_5_API_27";
+				avdService.getRunningEmulatorImageIdentifier = (emulatorId: string) => {
+					if (emulatorId === "emulator-5554") {
+						return Promise.resolve("Nexus_5_API_27");
 					}
+
+					return Promise.resolve("");
 				};
 				const result = (await avdService.getAvailableEmulators(["emulator-5554	device"])).devices;
-				assert.deepEqual(result[0], getRunningEmulatorData({ displayName: "Nexus 5X", imageIdentifier: "Nexus_5_API_27", identifier: "emulator-5554", version: "android-27" }));
-				assert.deepEqual(result[1], getAvailableEmulatorData({ displayName: "Nexus 5X", imageIdentifier: "Nexus_5X_API_28", version: "android-28" }));
-				assert.deepEqual(result[2], getAvailableEmulatorData({ displayName: "Nexus 6P", imageIdentifier: "Nexus_6P_API_28", version: "android-28" }));
+				assert.deepEqual(result[0], getRunningEmulatorData({ displayName: "Nexus 5X", imageIdentifier: "Nexus_5_API_27", identifier: "emulator-5554", version: "8.1.0" }));
+				assert.deepEqual(result[1], getAvailableEmulatorData({ displayName: "Nexus 5X", imageIdentifier: "Nexus_5X_API_28", version: "9.0.0" }));
+				assert.deepEqual(result[2], getAvailableEmulatorData({ displayName: "Nexus 6P", imageIdentifier: "Nexus_6P_API_28", version: "9.0.0" }));
 			});
 		});
 

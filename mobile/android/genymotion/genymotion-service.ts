@@ -1,5 +1,9 @@
 import { AndroidVirtualDevice, DeviceTypes, NOT_RUNNING_EMULATOR_STATUS } from "../../../constants";
+import { settlePromises } from "../../../helpers";
 import { EOL } from "os";
+import * as path from "path";
+import * as osenv from "osenv";
+import { cache } from "../../../decorators";
 
 export class AndroidGenymotionService implements Mobile.IAndroidVirtualDeviceService {
 	constructor(private $adb: Mobile.IAndroidDebugBridge,
@@ -7,15 +11,13 @@ export class AndroidGenymotionService implements Mobile.IAndroidVirtualDeviceSer
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $emulatorHelper: Mobile.IEmulatorHelper,
 		private $fs: IFileSystem,
-		private $hostInfo: IHostInfo,
 		private $logger: ILogger,
 		private $virtualBoxService: Mobile.IVirtualBoxService) { }
 
 	public async getAvailableEmulators(adbDevicesOutput: string[]): Promise<Mobile.IAvailableEmulatorsOutput> {
 		const availableEmulatorsOutput = await this.getAvailableEmulatorsCore();
-		const genies = availableEmulatorsOutput.devices;
 		const runningEmulatorIds = await this.getRunningEmulatorIds(adbDevicesOutput);
-		const runningEmulators = await Promise.all(runningEmulatorIds.map(emulatorId => this.getRunningEmulatorData(emulatorId, genies)));
+		const runningEmulators = await settlePromises(_.map(runningEmulatorIds, emulatorId => this.getRunningEmulatorData(emulatorId, availableEmulatorsOutput.devices)));
 		const devices = availableEmulatorsOutput.devices.map(emulator => this.$emulatorHelper.getEmulatorByImageIdentifier(emulator.imageIdentifier, runningEmulators) || emulator);
 		return {
 			devices,
@@ -45,13 +47,14 @@ export class AndroidGenymotionService implements Mobile.IAndroidVirtualDeviceSer
 			.value();
 	}
 
-	public startEmulator(imageIdentifier: string): void {
-		const pathToPlayer = this.$fs.exists(this.defaultPlayerPath) ? this.defaultPlayerPath : "player";
-		try {
-			return this.$childProcess.spawn(pathToPlayer, ["--vm-name", imageIdentifier], { stdio: "ignore", detached: true }).unref();
-		} catch (err) {
-			this.$logger.trace(`error while starting emulator. More info: ${err}`);
-		}
+	public get pathToEmulatorExecutable(): string {
+		const searchPaths = this.playerSearchPaths[process.platform];
+		const searchPath = _.find(searchPaths, sPath => this.$fs.exists(sPath));
+		return searchPath || "player";
+	}
+
+	public startEmulatorArgs(imageIdentifier: string): string[] {
+		return ["--vm-name", imageIdentifier];
 	}
 
 	private async getAvailableEmulatorsCore(): Promise<Mobile.IAvailableEmulatorsOutput> {
@@ -64,8 +67,19 @@ export class AndroidGenymotionService implements Mobile.IAndroidVirtualDeviceSer
 		return { devices, errors: [] };
 	}
 
+	public async getRunningEmulatorName(emulatorId: string): Promise<string> {
+		const output = await this.$adb.getPropertyValue(emulatorId, "ro.product.model");
+		this.$logger.trace(output);
+		return (<string>_.first(output.split(EOL))).trim();
+	}
+
+	public async getRunningEmulatorImageIdentifier(emulatorId: string): Promise<string> {
+		const emulator = await this.getRunningEmulatorData(emulatorId, (await this.getAvailableEmulators(await this.$adb.getDevices())).devices);
+		return emulator ? emulator.imageIdentifier : null;
+	}
+
 	private async getRunningEmulatorData(runningEmulatorId: string, availableEmulators: Mobile.IDeviceInfo[]): Promise<Mobile.IDeviceInfo> {
-		const emulatorName = await this.getNameFromRunningEmulatorId(runningEmulatorId);
+		const emulatorName = await this.getRunningEmulatorName(runningEmulatorId);
 		const runningEmulator = this.$emulatorHelper.getEmulatorByIdOrName(emulatorName, availableEmulators);
 		if (!runningEmulator) {
 			return null;
@@ -76,40 +90,42 @@ export class AndroidGenymotionService implements Mobile.IAndroidVirtualDeviceSer
 		return runningEmulator;
 	}
 
-	private async getNameFromRunningEmulatorId(emulatorId: string): Promise<string> {
-		const output = await this.$adb.getPropertyValue(emulatorId, "ro.product.model");
-		this.$logger.trace(output);
-		return (<string>_.first(output.split(EOL))).trim();
-	}
-
-	private get defaultPlayerPath() {
-		if (this.$hostInfo.isDarwin) {
-			return "/Applications/Genymotion.app/Contents/MacOS/player.app/Contents/MacOS/player";
-		}
-
-		if (this.$hostInfo.isWindows) {
-			return "";
-		}
-
-		if (this.$hostInfo.isLinux) {
-			return "";
-		}
+	// https://wiki.appcelerator.org/display/guides2/Installing+Genymotion
+	private get playerSearchPaths(): IDictionary<string[]> {
+		return {
+			darwin: [
+				"/Applications/Genymotion.app/Contents/MacOS/player.app/Contents/MacOS/player",
+				"/Applications/Genymotion.app/Contents/MacOS/player"
+			],
+			linux: [
+				path.join(osenv.home(), "genymotion", "player")
+			],
+			win32: [
+				"%ProgramFiles%\\Genymobile\\Genymotion\\player.exe",
+				"%ProgramFiles(x86)%\\Genymobile\\Genymotion\\player.exe"
+			]
+		};
 	}
 
 	private async parseListVmsOutput(vms: Mobile.IVirtualBoxVm[]): Promise<Mobile.IDeviceInfo[]> {
+		const configurationError = await this.getConfigurationError();
 		const devices: Mobile.IDeviceInfo[] = [];
 
 		for (const vm of vms) {
-			const output = await this.$virtualBoxService.enumerateGuestProperties(vm.id);
-			if (output && output.properties && output.properties.indexOf("genymotion") !== -1) {
-				devices.push(this.convertToDeviceInfo(output.properties, vm.id, vm.name, output.error));
+			try {
+				const output = await this.$virtualBoxService.enumerateGuestProperties(vm.id);
+				if (output && output.properties && output.properties.indexOf("genymotion") !== -1) {
+					devices.push(this.convertToDeviceInfo(output.properties, vm.id, vm.name, output.error, configurationError));
+				}
+			} catch (err) {
+				this.$logger.trace(`Error while parsing vm ${vm.id}`);
 			}
 		}
 
 		return devices;
 	}
 
-	private convertToDeviceInfo(output: string, id: string, name: string, error: string): Mobile.IDeviceInfo {
+	private convertToDeviceInfo(output: string, id: string, name: string, error: string, configurationError: string): Mobile.IDeviceInfo {
 		return {
 			identifier: null,
 			imageIdentifier: id,
@@ -118,7 +134,7 @@ export class AndroidGenymotionService implements Mobile.IAndroidVirtualDeviceSer
 			version: this.getSdkVersion(output),
 			vendor: AndroidVirtualDevice.GENYMOTION_VENDOR_NAME,
 			status: NOT_RUNNING_EMULATOR_STATUS,
-			errorHelp: error || null,
+			errorHelp: [configurationError, error].filter(item => !!item).join(EOL) || null,
 			isTablet: false, //TODO: Consider how to populate this correctly when the device is not running
 			type: DeviceTypes.Emulator,
 			platform: this.$devicePlatformsConstants.Android
@@ -147,6 +163,17 @@ export class AndroidGenymotionService implements Mobile.IAndroidVirtualDeviceSer
 		}
 
 		return false;
+	}
+
+	@cache()
+	private async getConfigurationError(): Promise<string> {
+		const result = await this.$childProcess.trySpawnFromCloseEvent(this.pathToEmulatorExecutable, []);
+		// When player is spawned, it always prints message on stderr.
+		if (result && result.stderr && result.stderr.indexOf("Logging activities to file") === -1) {
+			return "Unable to find the path to genymotion player and will not be able to start the emulator.";
+		}
+
+		return null;
 	}
 }
 $injector.register("androidGenymotionService", AndroidGenymotionService);

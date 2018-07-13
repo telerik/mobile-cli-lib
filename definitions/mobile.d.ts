@@ -393,7 +393,10 @@ declare module Mobile {
 
 	interface IDeviceDiscovery extends NodeJS.EventEmitter {
 		startLookingForDevices(options?: IDeviceLookingOptions): Promise<void>;
-		checkForDevices(): Promise<void>;
+	}
+
+	interface IiOSSimulatorDiscovery extends IDeviceDiscovery {
+		checkForAvailableSimulators(): Promise<void>;
 	}
 
 	interface IAndroidDeviceDiscovery extends IDeviceDiscovery {
@@ -501,10 +504,11 @@ declare module Mobile {
 		getAvailableEmulators(options?: Mobile.IListEmulatorsOptions): Promise<Mobile.IListEmulatorsOutput>;
 
 		/**
-		 * Starts an emulator by provided options
-		 * @param option 
+		 * Starts an emulator by provided options.
+		 * @param options
+		 * @returns {Promise<string[]>} - Returns array of errors.
 		 */
-		startEmulator(options?: IStartEmulatorOptions): Promise<void>;
+		startEmulator(options?: IStartEmulatorOptions): Promise<string[]>;
 	}
 
 	interface IListEmulatorsOptions {
@@ -650,6 +654,8 @@ declare module Mobile {
 		targetNum: number;
 		path: string;
 		device?: string;
+		displayName?: string;
+		avdId?: string;
 		name?: string;
 		abi?: string;
 		skin?: string;
@@ -677,12 +683,17 @@ declare module Mobile {
 		 */
 		getRunningEmulatorIds(): Promise<string[]>;
 		/**
-		 * Gets the running emulator's data for provided emulatorId.
-		 * @param emulatorId - The identifier of the emulator.
-		 * @param availableEmulators - All available emulators.
-		 * @returns {Promise<Mobile.IDeviceInfo>} The running emulator if such can be found by provided emulatorId or null otherwise
+		 * Gets the name of the running emulator.
+		 * @param emulatorId - The identifier of the running emulator.
+		 * @returns {Promise<string>} - The name of the running emulator.
 		 */
-		getRunningEmulator(emulatorId: string, availableEmulators?: Mobile.IDeviceInfo[]): Promise<Mobile.IDeviceInfo>;
+		getRunningEmulatorName(emulatorId: string): Promise<string>;
+		/**
+		 * Gets the emulator image identifier of a running emulator specified by emulatorId parameter.
+		 * @param emulatorId - The identifier of the running emulator.
+		 * @returns {Promise<string>} - The image identifier ot the running emulator.
+		 */
+		getRunningEmulatorImageIdentifier(emulatorId: string): Promise<string>;
 		/**
 		 * Starts the emulator by provided options.
 		 * @param options
@@ -703,16 +714,34 @@ declare module Mobile {
 		 */
 		getAvailableEmulators(adbDevicesOutput: string[]): Promise<Mobile.IAvailableEmulatorsOutput>;
 		/**
-		 * Gets all identifiers of all running android devices.
+		 * Gets all identifiers of all running android emulators.
 		 * @param adbDevicesOutput The output from "adb devices" command
+		 * @returns {Promise<string[]>} - Array of ids of all running emulators.
 		 */
 		getRunningEmulatorIds(adbDevicesOutput: string[]): Promise<string[]>;
 		/**
-		 * Starts the emulator by provided imageIdentifier.
-		 * In case when emulator is not running, identifier will be the imageIdentifier. In this case {N} CLI will starts the emulator and will wait the provided timeout (or 120 miliseconds  by default in case when no timeout is specified) to complete the boot of emulator.
-		 * @param imageIdentifier - The imagerIdentifier of device
+		 * Gets the name of the running emulator specified by emulatorId parameter.
+		 * @param emulatorId - The identifier of the running emulator.
+		 * @returns {Promise<string>} - The name of the running emulator.
 		 */
-		startEmulator(imageIdentifier: string): void;
+		getRunningEmulatorName(emulatorId: string): Promise<string>;
+		/**
+		 * Gets the image identifier of the running emulator specified by emulatorId parameter.
+		 * @param emulatorId - The identifier of the running emulator.
+		 * @returns {Promise<string>} - The image identifier of the running emulator.
+		 */
+		getRunningEmulatorImageIdentifier(emulatorId: string): Promise<string>;
+		/**
+		 * Gets the path to emulator executable. It will be passed to spawn when starting the emulator.
+		 * For genymotion emulators - the path to player.
+		 * For avd emulators - the path to emulator executable. 
+		 */
+		pathToEmulatorExecutable: string;
+		/**
+		 * Gets the arguments that will be passed to spawn when starting the emulator.
+		 * @param imageIdentifier - The imagerIdentifier of the emulator.
+		 */
+		startEmulatorArgs(imageIdentifier: string): string[];
 	}
 
 	interface IVirtualBoxService {
@@ -766,10 +795,10 @@ declare module Mobile {
 	interface IAndroidIniFileParser {
 		/**
 		 * Returns avdInfo from provided .ini file.
-		 * @param avdIniFilePath - The full path to .ini file.
+		 * @param iniFilePath - The full path to .ini file.
 		 * @param avdInfo - avdInfo from previously parsed .ini file in case there are such.
 		 */
-		parseAvdIniFile(avdIniFilePath: string, avdInfo?: Mobile.IAvdInfo): Mobile.IAvdInfo; 
+		parseIniFile(iniFilePath: string, avdInfo?: Mobile.IAvdInfo): Mobile.IAvdInfo; 
 	}
 
 	interface IiSimDevice {
@@ -976,6 +1005,7 @@ declare module Mobile {
 	}
 
 	interface IEmulatorHelper {
+		mapAndroidApiLevelToVersion: IStringDictionary;
 		getEmulatorsFromAvailableEmulatorsOutput(availableEmulatorsOutput: Mobile.IListEmulatorsOutput): Mobile.IDeviceInfo[];
 		getErrorsFromAvailableEmulatorsOutput(availableEmulatorsOutput: Mobile.IListEmulatorsOutput): string[];
 		getEmulatorByImageIdentifier(imageIdentifier: string, emulators: Mobile.IDeviceInfo[]): Mobile.IDeviceInfo;

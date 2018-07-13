@@ -74,6 +74,10 @@ class IOSSimulatorDiscoveryStub extends EventEmitter {
 	public async checkForDevices(): Promise<void> {
 		return;
 	}
+
+	public async checkForAvailableSimulators(): Promise<void> {
+		return;
+	}
 }
 
 function getErrorMessage(injector: IInjector, message: string, ...args: string[]): string {
@@ -1273,7 +1277,7 @@ describe("devicesService", () => {
 			});
 
 			it("should not throw if ios device check fails throws an exception.", async () => {
-				$iOSDeviceDiscovery.checkForDevices = throwErrorFunction;
+				(<any>$iOSDeviceDiscovery).checkForDevices = throwErrorFunction;
 
 				await assert.isFulfilled(devicesService.startDeviceDetectionInterval());
 			});
@@ -1312,7 +1316,7 @@ describe("devicesService", () => {
 
 			beforeEach(() => {
 				$iOSSimulatorDiscovery = testInjector.resolve("iOSSimulatorDiscovery");
-				$iOSSimulatorDiscovery.checkForDevices = async (): Promise<void> => {
+				(<any>$iOSSimulatorDiscovery).checkForDevices = async (): Promise<void> => {
 					hasCheckedForIosSimulator = true;
 				};
 
@@ -1322,7 +1326,7 @@ describe("devicesService", () => {
 			});
 
 			it("should not throw if ios simulator check fails throws an exception.", async () => {
-				$iOSSimulatorDiscovery.checkForDevices = throwErrorFunction;
+				(<any>$iOSSimulatorDiscovery).checkForDevices = throwErrorFunction;
 
 				await assert.isFulfilled(devicesService.startDeviceDetectionInterval());
 			});

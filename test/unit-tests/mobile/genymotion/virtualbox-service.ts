@@ -9,8 +9,9 @@ function createTestInjector() {
 		trySpawnFromCloseEvent: () => ({})
 	});
 	testInjector.register("fs", {});
-	testInjector.register("virtualBoxService", VirtualBoxService);
+	testInjector.register("logger", {});
 	testInjector.register("hostInfo", {});
+	testInjector.register("virtualBoxService", VirtualBoxService);
 
 	return testInjector;
 }

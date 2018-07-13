@@ -8,7 +8,6 @@ export class DeviceEmitter extends EventEmitter {
 		super();
 
 		this.initialize();
-
 	}
 
 	private _companionAppIdentifiers: IDictionary<IStringDictionary>;
@@ -37,12 +36,12 @@ export class DeviceEmitter extends EventEmitter {
 			this.emit(DEVICE_LOG_EVENT_NAME, identifier, data.toString());
 		});
 
-		this.$devicesService.on(EmulatorDiscoveryNames.AVAILABLE_EMULATOR_FOUND, (emulator: Mobile.IDeviceInfo) => {
-			this.emit(EmulatorDiscoveryNames.AVAILABLE_EMULATOR_FOUND, emulator);
+		this.$devicesService.on(EmulatorDiscoveryNames.EMULATOR_IMAGES_FOUND, (emulator: Mobile.IDeviceInfo) => {
+			this.emit(EmulatorDiscoveryNames.EMULATOR_IMAGES_FOUND, emulator);
 		});
 
-		this.$devicesService.on(EmulatorDiscoveryNames.AVAILABLE_EMULATOR_LOST, (emulator: Mobile.IDeviceInfo) => {
-			this.emit(EmulatorDiscoveryNames.AVAILABLE_EMULATOR_LOST, emulator);
+		this.$devicesService.on(EmulatorDiscoveryNames.EMULATOR_IMAGES_LOST, (emulator: Mobile.IDeviceInfo) => {
+			this.emit(EmulatorDiscoveryNames.EMULATOR_IMAGES_LOST, emulator);
 		});
 	}
 

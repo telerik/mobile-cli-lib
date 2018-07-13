@@ -38,7 +38,7 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 		await this.checkForDevices();
 	}
 
-	public async checkForDevices(): Promise<void> {
+	private async checkForDevices(): Promise<void> {
 		const result = await this.$adb.executeCommand(["devices"], { returnChildProcess: true });
 		return new Promise<void>((resolve, reject) => {
 			let adbData = "";

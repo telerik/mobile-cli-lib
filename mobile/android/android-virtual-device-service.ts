@@ -4,6 +4,7 @@ import { EOL } from "os";
 import * as osenv from "osenv";
 import { AndroidVirtualDevice, DeviceTypes, NOT_RUNNING_EMULATOR_STATUS } from "../../constants";
 import { cache } from "../../decorators";
+import { settlePromises } from "../../helpers";
 
 export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDeviceService {
 	private androidHome: string;
@@ -21,7 +22,7 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 		const availableEmulatorsOutput = await this.getAvailableEmulatorsCore();
 		const avds = availableEmulatorsOutput.devices;
 		const runningEmulatorIds = await this.getRunningEmulatorIds(adbDevicesOutput);
-		const runningEmulators = await Promise.all(runningEmulatorIds.map(emulatorId => this.getRunningEmulatorData(emulatorId, avds)));
+		const runningEmulators = await settlePromises(_.map(runningEmulatorIds, emulatorId => this.getRunningEmulatorData(emulatorId, avds)));
 		const devices = availableEmulatorsOutput.devices.map(emulator => this.$emulatorHelper.getEmulatorByImageIdentifier(emulator.imageIdentifier, runningEmulators) || emulator);
 		return {
 			devices,
@@ -42,8 +43,80 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 		return emulatorIds;
 	}
 
-	public startEmulator(imageIdentifier: string): void {
-		this.$childProcess.spawn(this.pathToEmulatorExecutable, ['-avd', imageIdentifier], { stdio: "ignore", detached: true }).unref();
+	public  async getRunningEmulatorName(emulatorId: string): Promise<string> {
+		const imageIdentifier = await this.getRunningEmulatorImageIdentifier(emulatorId);
+		const iniFilePath = path.join(this.pathToAvdHomeDir, `${imageIdentifier}.ini`);
+		const iniFileInfo = this.$androidIniFileParser.parseIniFile(iniFilePath);
+		let result = imageIdentifier;
+
+		if (iniFileInfo && iniFileInfo.path) {
+			const configIniFileInfo = this.$androidIniFileParser.parseIniFile(path.join(iniFileInfo.path, AndroidVirtualDevice.CONFIG_INI_FILE_NAME));
+			result = (configIniFileInfo && configIniFileInfo.displayName) || imageIdentifier;
+		}
+
+		return result;
+	}
+
+	public startEmulatorArgs(imageIdentifier: string): string[] {
+		return ['-avd', imageIdentifier];
+	}
+
+	@cache()
+	public get pathToEmulatorExecutable(): string {
+		const emulatorExecutableName = "emulator";
+		if (this.androidHome) {
+			// Check https://developer.android.com/studio/releases/sdk-tools.html (25.3.0)
+			// Since this version of SDK tools, the emulator is a separate package.
+			// However the emulator executable still exists in the "tools" dir.
+			const pathToEmulatorFromAndroidStudio = path.join(this.androidHome, emulatorExecutableName, emulatorExecutableName);
+			const realFilePath = this.$hostInfo.isWindows ? `${pathToEmulatorFromAndroidStudio}.exe` : pathToEmulatorFromAndroidStudio;
+			if (this.$fs.exists(realFilePath)) {
+				return pathToEmulatorFromAndroidStudio;
+			}
+
+			return path.join(this.androidHome, "tools", emulatorExecutableName);
+		}
+
+		return emulatorExecutableName;
+	}
+
+	public getRunningEmulatorImageIdentifier(emulatorId: string): Promise<string> {
+		const match = emulatorId.match(/^emulator-(\d+)/);
+		const portNumber = match && match[1];
+		if (!portNumber) {
+			return Promise.resolve(null);
+		}
+
+		return new Promise<string>(resolve => {
+			let isResolved = false;
+			let output: string = "";
+			const client = net.connect(portNumber, () => {
+				client.write(`avd name${EOL}`);
+			});
+
+			client.on('data', data => {
+				output += data.toString();
+
+				const imageIdentifier = this.getImageIdentifierFromClientOutput(output);
+				// old output should look like:
+				// Android Console: type 'help' for a list of commands
+				// OK
+				// <Name of image>
+				// OK
+				// new output should look like:
+				// Android Console: type 'help' for a list of commands
+				// OK
+				// a\u001b[K\u001b[Dav\u001b[K\u001b[D\u001b[Davd\u001b...
+				// <Name of image>
+				// OK
+				if (imageIdentifier && !isResolved) {
+					isResolved = true;
+					resolve(imageIdentifier);
+				}
+
+				client.end();
+			});
+		});
 	}
 
 	private async getAvailableEmulatorsCore(): Promise<Mobile.IAvailableEmulatorsOutput> {
@@ -63,7 +136,7 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 	}
 
 	private async getRunningEmulatorData(runningEmulatorId: string, availableEmulators: Mobile.IDeviceInfo[]): Promise<Mobile.IDeviceInfo> {
-		const imageIdentifier = await this.getImageIdentifierFromRunningEmulator(runningEmulatorId);
+		const imageIdentifier = await this.getRunningEmulatorImageIdentifier(runningEmulatorId);
 		const runningEmulator = this.$emulatorHelper.getEmulatorByImageIdentifier(imageIdentifier, availableEmulators);
 		if (!runningEmulator) {
 			return null;
@@ -72,45 +145,6 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 		this.$emulatorHelper.setRunningAndroidEmulatorProperties(runningEmulatorId, runningEmulator);
 
 		return runningEmulator;
-	}
-
-	private getImageIdentifierFromRunningEmulator(emulatorId: string): Promise<string> {
-		const match = emulatorId.match(/^emulator-(\d+)/);
-		const portNumber = match && match[1];
-		if (!portNumber) {
-			return Promise.resolve(null);
-		}
-
-		return new Promise<string>(resolve => {
-			let isResolved = false;
-			let output: string = "";
-			const client = net.connect(portNumber, () => {
-				client.write(`avd name${EOL}`);
-			});
-
-			client.on('data', data => {
-				output += data.toString();
-
-				const name = this.getImageIdentifierFromClientOutput(output);
-				// old output should look like:
-				// Android Console: type 'help' for a list of commands
-				// OK
-				// <Name of image>
-				// OK
-				// new output should look like:
-				// Android Console: type 'help' for a list of commands
-				// OK
-				// a\u001b[K\u001b[Dav\u001b[K\u001b[D\u001b[Davd\u001b...
-				// <Name of image>
-				// OK
-				if (name && !isResolved) {
-					isResolved = true;
-					resolve(name);
-				}
-
-				client.end();
-			});
-		});
 	}
 
 	@cache()
@@ -130,55 +164,37 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 
 	@cache()
 	private get pathToAvdManagerExecutable(): string {
+		let avdManagerPath = null;
 		if (this.androidHome) {
-			const avdManagerPath = path.join(this.androidHome, "tools", "bin", "avdmanager");
-			if (this.$hostInfo.isWindows) {
-				return `${avdManagerPath}.exe`;
-			}
-
-			return avdManagerPath;
+			avdManagerPath = path.join(this.androidHome, "tools", "bin", "avdmanager");
 		}
 
-		return null;
+		return avdManagerPath;
 	}
 
 	@cache()
 	private get pathToAndroidExecutable(): string {
+		let androidPath = null;
 		if (this.androidHome) {
-			const androidPath = path.join(this.androidHome, "tools", "android");
-			if (this.$hostInfo.isWindows) {
-				return `${androidPath}.exe`;
-			}
-
-			return androidPath;
+			androidPath = path.join(this.androidHome, "tools", "android");
 		}
 
-		return null;
-	}
-
-	@cache()
-	private get pathToEmulatorExecutable(): string {
-		const emulatorExecutableName = "emulator";
-		if (this.androidHome) {
-			// Check https://developer.android.com/studio/releases/sdk-tools.html (25.3.0)
-			// Since this version of SDK tools, the emulator is a separate package.
-			// However the emulator executable still exists in the "tools" dir.
-			const pathToEmulatorFromAndroidStudio = path.join(this.androidHome, emulatorExecutableName, emulatorExecutableName);
-			const realFilePath = this.$hostInfo.isWindows ? `${pathToEmulatorFromAndroidStudio}.exe` : pathToEmulatorFromAndroidStudio;
-			if (this.$fs.exists(realFilePath)) {
-				return pathToEmulatorFromAndroidStudio;
-			}
-
-			return path.join(this.androidHome, "tools", emulatorExecutableName);
-		}
-
-		return emulatorExecutableName;
+		return androidPath;
 	}
 
 	@cache()
 	private get pathToAvdHomeDir(): string {
 		const searchPaths = [process.env.ANDROID_AVD_HOME, path.join(osenv.home(), AndroidVirtualDevice.ANDROID_DIR_NAME, AndroidVirtualDevice.AVD_DIR_NAME)];
 		return searchPaths.find(p => p && this.$fs.exists(p));
+	}
+
+	@cache()
+	private getConfigurationError(): string {
+		if (!this.$fs.exists(this.pathToEmulatorExecutable)) {
+			return "Unable to find the path to emulator executable and will not be able to start the emulator. Searched paths: [$ANDROID_HOME/tools/emulator, $ANDROID_HOME/emulator/emulator]";
+		}
+
+		return null;
 	}
 
 	private listAvdsFromDirectory(): Mobile.IDeviceInfo[] {
@@ -190,7 +206,8 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 				.map(e => e.match(AndroidVirtualDevice.INI_FILES_MASK)[1])
 				.map(avdName => path.join(this.pathToAvdHomeDir, `${avdName}.ini`))
 				.map(avdPath => this.getInfoFromAvd(avdPath))
-				.map(avd => this.convertAvdToDeviceInfo(avd));
+				.filter(avdInfo => !!avdInfo)
+				.map(avdInfo => this.convertAvdToDeviceInfo(avdInfo));
 		}
 
 		return devices;
@@ -201,10 +218,11 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 
 		const avialableDevices = output.split(AndroidVirtualDevice.AVAILABLE_AVDS_MESSAGE);
 		if (avialableDevices && avialableDevices[1]) {
-			devices = avialableDevices[1]
+			devices = avialableDevices[1].split(/(?:\r?\n){2}/)[0]
 				.split(AndroidVirtualDevice.AVD_LIST_DELIMITER)
 				.map(singleDeviceOutput => this.getAvdManagerDeviceInfo(singleDeviceOutput.trim()))
 				.map(avdManagerDeviceInfo => this.getInfoFromAvd(avdManagerDeviceInfo.path))
+				.filter(avdInfo => !!avdInfo)
 				.map(avdInfo => this.convertAvdToDeviceInfo(avdInfo));
 		}
 
@@ -235,28 +253,27 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 	}
 
 	private getInfoFromAvd(avdFilePath: string): Mobile.IAvdInfo {
-		const avdIniFilePath = path.join(path.dirname(avdFilePath), path.basename(avdFilePath).replace(AndroidVirtualDevice.AVD_FILE_EXTENSION, AndroidVirtualDevice.INI_FILE_EXTENSION));
-		let avdInfo = this.$androidIniFileParser.parseAvdIniFile(avdIniFilePath);
-		if (avdInfo.path && this.$fs.exists(avdInfo.path)) {
-			const configIniFilePath = path.join(avdInfo.path, AndroidVirtualDevice.CONFIG_INI_FILE_NAME);
-			avdInfo = this.$androidIniFileParser.parseAvdIniFile(configIniFilePath, avdInfo);
+		const configIniFilePath = path.join(avdFilePath, AndroidVirtualDevice.CONFIG_INI_FILE_NAME);
+		const configIniFileInfo = this.$androidIniFileParser.parseIniFile(configIniFilePath);
+
+		if (configIniFileInfo && configIniFileInfo.avdId) {
+			const iniFileInfo = this.$androidIniFileParser.parseIniFile(path.join(path.dirname(avdFilePath), `${configIniFileInfo.avdId}.ini`));
+			_.extend(configIniFileInfo, iniFileInfo);
 		}
 
-		avdInfo.name = path.basename(avdFilePath).replace(AndroidVirtualDevice.INI_FILE_EXTENSION, "");
-
-		return avdInfo;
+		return configIniFileInfo;
 	}
 
 	private convertAvdToDeviceInfo(avdInfo: Mobile.IAvdInfo): Mobile.IDeviceInfo {
 		return {
 			identifier: null,
-			imageIdentifier: avdInfo.name.replace(AndroidVirtualDevice.AVD_FILE_EXTENSION, ""),
-			displayName: avdInfo.device,
+			imageIdentifier: avdInfo.avdId || avdInfo.displayName,
+			displayName: avdInfo.displayName || avdInfo.device,
 			model: avdInfo.device,
-			version: avdInfo.target, // TODO: this API LEVEL version should be converted to android version
+			version: this.$emulatorHelper.mapAndroidApiLevelToVersion[avdInfo.target],
 			vendor: AndroidVirtualDevice.AVD_VENDOR_NAME,
 			status: NOT_RUNNING_EMULATOR_STATUS,
-			errorHelp: null,
+			errorHelp: this.getConfigurationError(),
 			isTablet: false,
 			type: DeviceTypes.Emulator,
 			platform: this.$devicePlatformsConstants.Android

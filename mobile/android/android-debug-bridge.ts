@@ -62,8 +62,7 @@ export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 		const output = await this.$childProcess.execFile<string>(this.adbFilePath, ['devices']);
 		return output
 			.split(EOL)
-			.filter(device => !!device)
-			.filter(device => device !== "List of devices attached");
+			.filter(line => !!line && line !== "List of devices attached");
 	}
 
 	protected async composeCommand(params: string[], identifier?: string): Promise<IComposeCommandResult> {

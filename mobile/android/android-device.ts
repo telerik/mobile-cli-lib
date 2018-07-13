@@ -69,6 +69,7 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 
 		this.$logger.trace(details);
 		const adbStatusInfo = AndroidDevice.ADB_DEVICE_STATUS_INFO[this.status];
+		const type = await this.getType();
 
 		this.deviceInfo = {
 			identifier: this.identifier,
@@ -80,8 +81,13 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 			status: adbStatusInfo ? adbStatusInfo.deviceStatus : this.status,
 			errorHelp: adbStatusInfo ? adbStatusInfo.errorHelp : "Unknown status",
 			isTablet: this.getIsTablet(details),
-			type: await this.getType()
+			type
 		};
+
+		if (this.isEmulator) {
+			this.deviceInfo.displayName = await this.$androidEmulatorServices.getRunningEmulatorName(this.identifier);
+			this.deviceInfo.imageIdentifier = await this.$androidEmulatorServices.getRunningEmulatorImageIdentifier(this.identifier);
+		}
 
 		this.$logger.trace(this.deviceInfo);
 	}

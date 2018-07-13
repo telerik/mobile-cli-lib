@@ -2,7 +2,7 @@ import { EventEmitter } from "events";
 import { EmulatorDiscoveryNames } from "../../constants";
 
 export class AndroidEmulatorDiscovery extends EventEmitter implements Mobile.IDeviceDiscovery {
-	private _emulators: Mobile.IDeviceInfo[] = [];
+	private _emulators: IDictionary<Mobile.IDeviceInfo> = {};
 
 	constructor(private $androidEmulatorServices: Mobile.IEmulatorPlatformService,
 		private $mobileHelper: Mobile.IMobileHelper) { super(); }
@@ -13,33 +13,40 @@ export class AndroidEmulatorDiscovery extends EventEmitter implements Mobile.IDe
 		}
 
 		const availableEmulatorsOutput = await this.$androidEmulatorServices.getAvailableEmulators();
-		const availableEmulators = availableEmulatorsOutput.devices;
+		const currentEmulators = availableEmulatorsOutput.devices;
+		const cachedEmulators = _.values(this._emulators);
 
-		// Raise emulator found event for all new emulators
-		for (const emulator of availableEmulators) {
-			if (!_.includes(this._emulators, emulator)) {
-				this.raiseOnEmulatorFound(emulator);
-			}
+		// Remove old emulators
+		const lostEmulators = _(cachedEmulators)
+			.reject(e => _.find(currentEmulators, emulator => emulator && e && emulator.imageIdentifier === e.imageIdentifier))
+			.value();
+
+		// Add new emulators
+		const foundEmulators = _(currentEmulators)
+			.reject(e => _.find(cachedEmulators, emulator => emulator && e && emulator.imageIdentifier === e.imageIdentifier))
+			.value();
+
+		if (lostEmulators.length) {
+			this.raiseOnEmulatorImagesLost(lostEmulators);
 		}
 
-		// Raise emulator lost event for all deleted emulators
-		for (const emulator of this._emulators) {
-			if (!_.includes(availableEmulators, emulator)) {
-				this.raiseOnEmulatorLost(emulator);
-			}
+		if (foundEmulators.length) {
+			this.raiseOnEmulatorImagesFound(foundEmulators);
 		}
 	}
 
-	public checkForDevices(): Promise<void> {
-		return;
+	public getDevices(): Mobile.IDeviceInfo[] {
+		return _.values(this._emulators);
 	}
 
-	private raiseOnEmulatorFound(emulator: Mobile.IDeviceInfo) {
-		this.emit(EmulatorDiscoveryNames.AVAILABLE_EMULATOR_FOUND, emulator);
+	private raiseOnEmulatorImagesFound(emulators: Mobile.IDeviceInfo[]) {
+		_.forEach(emulators, emulator => this._emulators[emulator.imageIdentifier] = emulator);
+		this.emit(EmulatorDiscoveryNames.EMULATOR_IMAGES_FOUND, emulators);
 	}
 
-	private raiseOnEmulatorLost(emulator: Mobile.IDeviceInfo) {
-		this.emit(EmulatorDiscoveryNames.AVAILABLE_EMULATOR_LOST, emulator);
+	private raiseOnEmulatorImagesLost(emulators: Mobile.IDeviceInfo[]) {
+		_.forEach(emulators, emulator => delete this._emulators[emulator.imageIdentifier]);
+		this.emit(EmulatorDiscoveryNames.EMULATOR_IMAGES_LOST, emulators);
 	}
 }
 $injector.register("androidEmulatorDiscovery", AndroidEmulatorDiscovery);

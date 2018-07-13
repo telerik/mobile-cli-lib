@@ -6,17 +6,17 @@ export class AndroidIniFileParser implements Mobile.IAndroidIniFileParser {
 		iconv.extendNodeEncodings();
 	}
 
-	public parseAvdIniFile(avdIniFilePath: string, avdInfo?: Mobile.IAvdInfo): Mobile.IAvdInfo {
-		if (!this.$fs.exists(avdIniFilePath)) {
+	public parseIniFile(iniFilePath: string): Mobile.IAvdInfo {
+		if (!this.$fs.exists(iniFilePath)) {
 			return null;
 		}
 
 		// avd files can have different encoding, defined on the first line.
 		// find which one it is (if any) and use it to correctly read the file contents
-		const encoding = this.getAvdEncoding(avdIniFilePath);
-		const contents = this.$fs.readText(avdIniFilePath, encoding).split("\n");
+		const encoding = this.getAvdEncoding(iniFilePath);
+		const contents = this.$fs.readText(iniFilePath, encoding).split("\n");
 
-		avdInfo = _.reduce(contents, (result: Mobile.IAvdInfo, line: string) => {
+		return _.reduce(contents, (result: Mobile.IAvdInfo, line: string) => {
 			const parsedLine = line.split("=");
 			const key = parsedLine[0];
 			switch (key) {
@@ -24,8 +24,16 @@ export class AndroidIniFileParser implements Mobile.IAndroidIniFileParser {
 					result.target = parsedLine[1];
 					result.targetNum = this.readTargetNum(result.target);
 					break;
-				case "path": result.path = parsedLine[1]; break;
-				case "hw.device.name": result.device = parsedLine[1]; break;
+				case "path":
+				case "AvdId":
+					result[_.lowerFirst(key)] = parsedLine[1];
+					break;
+				case "hw.device.name":
+					result.device = parsedLine[1];
+					break;
+				case "avd.ini.displayname":
+					result.displayName = parsedLine[1];
+					break;
 				case "abi.type":
 				case "skin.name":
 				case "sdcard.size":
@@ -33,9 +41,7 @@ export class AndroidIniFileParser implements Mobile.IAndroidIniFileParser {
 					break;
 			}
 			return result;
-		}, avdInfo || <Mobile.IAvdInfo>Object.create(null));
-
-		return avdInfo;
+		}, <Mobile.IAvdInfo>Object.create(null));
 	}
 
 	private getAvdEncoding(avdName: string): any {

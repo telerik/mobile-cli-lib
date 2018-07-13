@@ -20,7 +20,7 @@ export class ListDevicesCommand implements ICommand {
 
 			const availableEmulatorsOutput = await this.$devicesService.getAvailableEmulators({ platform });
 			const emulators = this.$emulatorHelper.getEmulatorsFromAvailableEmulatorsOutput(availableEmulatorsOutput);
-			this.outputEmulators("\nAvailable emulators", emulators);
+			this.printEmulators("\nAvailable emulators", emulators);
 		}
 
 		this.$logger.out("\nConnected devices & emulators");
@@ -49,11 +49,11 @@ export class ListDevicesCommand implements ICommand {
 		}
 	}
 
-	private outputEmulators(title: string, emulators: Mobile.IDeviceInfo[]) {
+	private printEmulators(title: string, emulators: Mobile.IDeviceInfo[]) {
 		this.$logger.out(title);
-		const table: any = createTable(["Device Name", "Platform", "Version", "Device Identifier"], []);
+		const table: any = createTable(["Device Name", "Platform", "Version", "Device Identifier", "Image Identifier", "Error Help"], []);
 		for (const info of emulators) {
-			table.push([info.displayName, info.platform, info.version, info.identifier || info.imageIdentifier]);
+			table.push([info.displayName, info.platform, info.version, info.identifier || "", info.imageIdentifier || "", info.errorHelp || ""]);
 		}
 
 		this.$logger.out(table.toString());

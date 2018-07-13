@@ -1,13 +1,16 @@
 import { DeviceDiscovery } from "./device-discovery";
 import { IOSSimulator } from "./../ios/simulator/ios-simulator-device";
+import { EmulatorDiscoveryNames } from "../../constants";
 
 export class IOSSimulatorDiscovery extends DeviceDiscovery {
 	private cachedSimulators: Mobile.IiSimDevice[] = [];
+	private availableSimulators: IDictionary<Mobile.IDeviceInfo> = {};
 
 	constructor(private $injector: IInjector,
 		private $iOSSimResolver: Mobile.IiOSSimResolver,
 		private $mobileHelper: Mobile.IMobileHelper,
-		private $hostInfo: IHostInfo) {
+		private $hostInfo: IHostInfo,
+		private $iOSEmulatorServices: Mobile.IiOSSimulatorService) {
 		super();
 	}
 
@@ -19,7 +22,7 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 		return this.checkForDevices();
 	}
 
-	public async checkForDevices(): Promise<void> {
+	private async checkForDevices(): Promise<void> {
 		if (this.$hostInfo.isDarwin) {
 			const currentSimulators: Mobile.IiSimDevice[] = await this.$iOSSimResolver.iOSSim.getRunningSimulators();
 
@@ -35,6 +38,35 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 		}
 	}
 
+	public async checkForAvailableSimulators() {
+		const simulators = (await this.$iOSEmulatorServices.getAvailableEmulators()).devices;
+		const currentSimulators = _.values(this.availableSimulators);
+		const lostSimulators: Mobile.IDeviceInfo[] = [];
+		const foundSimulators: Mobile.IDeviceInfo[] = [];
+
+		for (const simulator of currentSimulators) {
+			if (!_.find(this.availableSimulators, s => s.imageIdentifier === simulator.imageIdentifier)) {
+				lostSimulators.push(simulator);
+			}
+		}
+
+		for (const simulator of simulators) {
+			if (!this.availableSimulators[simulator.imageIdentifier]) {
+				foundSimulators.push(simulator);
+			}
+		}
+
+		if (lostSimulators.length) {
+			this.raiseOnEmulatorImagesLost(lostSimulators);
+		}
+
+		if (foundSimulators.length) {
+			this.raiseOnEmulatorImagesFound(foundSimulators);
+		}
+
+		return simulators;
+	}
+
 	private createAndAddDevice(simulator: Mobile.IiSimDevice): void {
 		this.cachedSimulators.push(_.cloneDeep(simulator));
 		this.addDevice(this.$injector.resolve(IOSSimulator, { simulator: simulator }));
@@ -43,6 +75,16 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 	private deleteAndRemoveDevice(simulator: Mobile.IiSimDevice): void {
 		_.remove(this.cachedSimulators, s => s && s.id === simulator.id);
 		this.removeDevice(simulator.id);
+	}
+
+	private raiseOnEmulatorImagesFound(simulators: Mobile.IDeviceInfo[]) {
+		_.forEach(simulators, simulator => this.availableSimulators[simulator.imageIdentifier] = simulator);
+		this.emit(EmulatorDiscoveryNames.EMULATOR_IMAGES_FOUND, simulators);
+	}
+
+	private raiseOnEmulatorImagesLost(simulators: Mobile.IDeviceInfo[]) {
+		_.forEach(simulators, simulator => delete this.availableSimulators[simulator.imageIdentifier]);
+		this.emit(EmulatorDiscoveryNames.EMULATOR_IMAGES_LOST, simulators);
 	}
 }
 
