@@ -70,18 +70,18 @@ export class AndroidEmulatorServices implements Mobile.IEmulatorPlatformService 
 			emulator = this.getBestFit(availableEmulators);
 		}
 
-		if (emulator.errorHelp) {
-			return {
-				runningEmulator: null,
-				errors: [emulator.errorHelp],
-				endTimeEpoch
-			};
-		}
-
 		if (!emulator) {
 			return {
 				runningEmulator: null,
 				errors: [`No emulator image available for emulator '${options.emulatorIdOrName || options.imageIdentifier}'.`],
+				endTimeEpoch
+			};
+		}
+
+		if (emulator.errorHelp) {
+			return {
+				runningEmulator: null,
+				errors: [emulator.errorHelp],
 				endTimeEpoch
 			};
 		}

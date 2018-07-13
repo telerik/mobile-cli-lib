@@ -218,12 +218,25 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 
 		const avialableDevices = output.split(AndroidVirtualDevice.AVAILABLE_AVDS_MESSAGE);
 		if (avialableDevices && avialableDevices[1]) {
-			devices = avialableDevices[1].split(/(?:\r?\n){2}/)[0]
-				.split(AndroidVirtualDevice.AVD_LIST_DELIMITER)
-				.map(singleDeviceOutput => this.getAvdManagerDeviceInfo(singleDeviceOutput.trim()))
-				.map(avdManagerDeviceInfo => this.getInfoFromAvd(avdManagerDeviceInfo.path))
-				.filter(avdInfo => !!avdInfo)
-				.map(avdInfo => this.convertAvdToDeviceInfo(avdInfo));
+			// In some cases `avdmanager list avds` command prints:
+			//	`The following Android Virtual Devices could not be loaded:
+			//	Name: Pixel_2_XL_API_28
+			//	Path: /Users/<username>/.android/avd/Pixel_2_XL_API_28.avd
+			//	Error: Google pixel_2_xl no longer exists as a device`
+			// These devices sometimes are valid so try to parse them.
+			// Also these devices are printed at the end of the output and are separated with 2 new lines from the valid devices output.
+			const parts = avialableDevices[1].split(/(?:\r?\n){2}/);
+			const items = [parts[0], parts[1]].filter(item => !!item);
+
+			for (const item of items) {
+				const result = item
+					.split(AndroidVirtualDevice.AVD_LIST_DELIMITER)
+					.map(singleDeviceOutput => this.getAvdManagerDeviceInfo(singleDeviceOutput.trim()))
+					.map(avdManagerDeviceInfo => this.getInfoFromAvd(avdManagerDeviceInfo.path))
+					.filter(avdInfo => !!avdInfo)
+					.map(avdInfo => this.convertAvdToDeviceInfo(avdInfo));
+				devices = devices.concat(result);
+			}
 		}
 
 		return devices;
