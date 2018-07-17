@@ -123,11 +123,14 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 		let result: ISpawnResult = null;
 		let devices: Mobile.IDeviceInfo[] = [];
 
-		if (this.pathToVirtualDeviceManagerExecutable && this.$fs.exists(this.pathToVirtualDeviceManagerExecutable)) {
-			result = await this.$childProcess.trySpawnFromCloseEvent(this.pathToVirtualDeviceManagerExecutable, ["list", "avds"]);
-			if (result && result.stdout) {
-				devices = this.parseListAvdsOutput(result.stdout);
-			}
+		if (this.pathToAvdManagerExecutable && this.$fs.exists(this.pathToAvdManagerExecutable)) {
+			result = await this.$childProcess.trySpawnFromCloseEvent(this.pathToAvdManagerExecutable, ["list", "avds"]);
+		} else if (this.pathToAndroidExecutable && this.$fs.exists(this.pathToAndroidExecutable)) {
+			result = await this.$childProcess.trySpawnFromCloseEvent(this.pathToAndroidExecutable, ["list", "avd"]);
+		}
+
+		if (result && result.stdout) {
+			devices = this.parseListAvdsOutput(result.stdout);
 		} else {
 			devices = this.listAvdsFromDirectory();
 		}
@@ -145,21 +148,6 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 		this.$emulatorHelper.setRunningAndroidEmulatorProperties(runningEmulatorId, runningEmulator);
 
 		return runningEmulator;
-	}
-
-	@cache()
-	private get pathToVirtualDeviceManagerExecutable(): string {
-		if (this.androidHome) {
-			if (this.$fs.exists(this.pathToAvdManagerExecutable)) {
-				return this.pathToAvdManagerExecutable;
-			}
-
-			if (this.$fs.exists(this.pathToAndroidExecutable)) {
-				return this.pathToAndroidExecutable;
-			}
-		}
-
-		return null;
 	}
 
 	@cache()
@@ -190,7 +178,8 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 
 	@cache()
 	private getConfigurationError(): string {
-		if (!this.$fs.exists(this.pathToEmulatorExecutable)) {
+		const pathToEmulatorExecutable = this.$hostInfo.isWindows ? `${this.pathToEmulatorExecutable}.exe` : this.pathToAndroidExecutable;
+		if (!this.$fs.exists(pathToEmulatorExecutable)) {
 			return "Unable to find the path to emulator executable and will not be able to start the emulator. Searched paths: [$ANDROID_HOME/tools/emulator, $ANDROID_HOME/emulator/emulator]";
 		}
 
@@ -202,9 +191,9 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 
 		if (this.pathToAvdHomeDir && this.$fs.exists(this.pathToAvdHomeDir)) {
 			const entries = this.$fs.readDirectory(this.pathToAvdHomeDir);
-			devices = _.filter(entries, (e: string) => e.match(AndroidVirtualDevice.INI_FILES_MASK) !== null)
-				.map(e => e.match(AndroidVirtualDevice.INI_FILES_MASK)[1])
-				.map(avdName => path.join(this.pathToAvdHomeDir, `${avdName}.ini`))
+			devices = _.filter(entries, (e: string) => e.match(AndroidVirtualDevice.AVD_FILES_MASK) !== null)
+				.map(e => e.match(AndroidVirtualDevice.AVD_FILES_MASK)[1])
+				.map(avdName => path.join(this.pathToAvdHomeDir, `${avdName}.avd`))
 				.map(avdPath => this.getInfoFromAvd(avdPath))
 				.filter(avdInfo => !!avdInfo)
 				.map(avdInfo => this.convertAvdToDeviceInfo(avdInfo));
@@ -269,9 +258,12 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 		const configIniFilePath = path.join(avdFilePath, AndroidVirtualDevice.CONFIG_INI_FILE_NAME);
 		const configIniFileInfo = this.$androidIniFileParser.parseIniFile(configIniFilePath);
 
-		if (configIniFileInfo && configIniFileInfo.avdId) {
-			const iniFileInfo = this.$androidIniFileParser.parseIniFile(path.join(path.dirname(avdFilePath), `${configIniFileInfo.avdId}.ini`));
-			_.extend(configIniFileInfo, iniFileInfo);
+		const iniFilePath = this.getIniFilePath(configIniFileInfo, avdFilePath);
+		const iniFileInfo = this.$androidIniFileParser.parseIniFile(iniFilePath);
+		_.extend(configIniFileInfo, iniFileInfo);
+
+		if (configIniFileInfo && !configIniFileInfo.avdId) {
+			configIniFileInfo.avdId = path.basename(avdFilePath).replace(AndroidVirtualDevice.AVD_FILE_EXTENSION, "");
 		}
 
 		return configIniFileInfo;
@@ -281,7 +273,7 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 		return {
 			identifier: null,
 			imageIdentifier: avdInfo.avdId || avdInfo.displayName,
-			displayName: avdInfo.displayName || avdInfo.device,
+			displayName: avdInfo.displayName || avdInfo.device || avdInfo.avdId,
 			model: avdInfo.device,
 			version: this.$emulatorHelper.mapAndroidApiLevelToVersion[avdInfo.target],
 			vendor: AndroidVirtualDevice.AVD_VENDOR_NAME,
@@ -308,6 +300,16 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 		}
 
 		return lines[secondIndexOfOk - 1].trim();
+	}
+
+	private getIniFilePath(configIniFileInfo: Mobile.IAvdInfo, avdFilePath: string): string {
+		let result = avdFilePath.replace(AndroidVirtualDevice.AVD_FILE_EXTENSION, AndroidVirtualDevice.INI_FILE_EXTENSION);
+
+		if (configIniFileInfo && configIniFileInfo.avdId) {
+			result = path.join(path.dirname(avdFilePath), `${configIniFileInfo.avdId}${AndroidVirtualDevice.INI_FILE_EXTENSION}`);
+		}
+
+		return result;
 	}
 }
 $injector.register("androidVirtualDeviceService", AndroidVirtualDeviceService);

@@ -126,6 +126,8 @@ export class AndroidEmulatorServices implements Mobile.IEmulatorPlatformService 
 			startEmulatorArgs = this.$androidGenymotionService.startEmulatorArgs(emulator.imageIdentifier);
 		}
 
+		this.$logger.info(`Starting Android emulator with image ${emulator.imageIdentifier}`);
+
 		const childProcess = this.$childProcess.spawn(pathToEmulatorExecutable, startEmulatorArgs, { stdio: "ignore", detached: true });
 		childProcess.unref();
 		childProcess.on("error", (err: Error) => {

@@ -12,7 +12,9 @@ export class EmulatorHelper implements Mobile.IEmulatorHelper {
 		"android-22": "5.1.0",
 		"android-21": "5.0.0",
 		"android-20": "4.4.0",
-		"android-19": "4.4.0"
+		"android-19": "4.4.0",
+		"android-18": "4.3.0",
+		"android-17": "4.2.2"
 	};
 
 	public getEmulatorsFromAvailableEmulatorsOutput(availableEmulatorsOutput: Mobile.IListEmulatorsOutput): Mobile.IDeviceInfo[] {

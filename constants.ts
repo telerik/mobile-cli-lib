@@ -120,6 +120,7 @@ export class AndroidVirtualDevice {
 	static AVD_DIR_NAME = "avd";
 	static ENCODING_MASK = /^avd\.ini\.encoding=(.*)$/;
 	static INI_FILES_MASK = /^(.*)\.ini$/i;
+	static AVD_FILES_MASK = /^(.*)\.avd$/i;
 	static MIN_ANDROID_APILEVEL = 17;
 	static MIN_ANDROID_VERSION = "4.2";
 	/**

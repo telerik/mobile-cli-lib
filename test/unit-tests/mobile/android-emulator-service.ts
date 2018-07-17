@@ -15,7 +15,7 @@ function createTestInjector() {
 	testInjector.register("androidIniFileParser", {});
 	testInjector.register("childProcess", { spawn: () => ({unref: () => ({}), on: () => ({})})});
 	testInjector.register("emulatorHelper", EmulatorHelper);
-	testInjector.register("logger", {});
+	testInjector.register("logger", { info: () => ({})});
 	testInjector.register("utils", {
 		getMilliSecondsTimeout: () => ({})
 	});
