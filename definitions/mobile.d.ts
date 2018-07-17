@@ -1084,9 +1084,9 @@ declare module Mobile {
 		 * Returns the changed shasums based on the provided 
 		 * @param {IStringDictionary} oldShasums The old shasums on the device
 		 * @param {IStringDictionary} currentShasums The current shasums on the local project
-		 * @returns {string[]} DevicePaths of all elements from the input localToDevicePaths.
+		 * @returns {string[]} Returns the shasums that changed
 		 */
-		getChnagedShasums(oldShasums: IStringDictionary, currentShasums: IStringDictionary): IStringDictionary
+		getChangedShasums(oldShasums: IStringDictionary, currentShasums: IStringDictionary): IStringDictionary
 	}
 
 	/**

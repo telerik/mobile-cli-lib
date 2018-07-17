@@ -98,7 +98,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 			transferredFiles = localToDevicePaths;
 		} else {
 			// Create or update file hashes on device
-			const changedShasums = deviceHashService.getChnagedShasums(oldShasums, currentShasums);
+			const changedShasums = deviceHashService.getChangedShasums(oldShasums, currentShasums);
 			this.$logger.trace("Changed file hashes are:", changedShasums);
 			filesToChmodOnDevice = [];
 
