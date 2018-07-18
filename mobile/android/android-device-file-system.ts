@@ -49,19 +49,18 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	}
 
 	public async putFile(localFilePath: string, deviceFilePath: string, appIdentifier: string): Promise<void> {
-		return this.adb.executeCommand(["push", localFilePath, deviceFilePath]);
+		await this.adb.pushFile(localFilePath, deviceFilePath);
 	}
 
 	public async transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<Mobile.ILocalToDevicePathData[]> {
 		const directoriesToChmod: string[] = [];
-		const transferedFiles: Mobile.ILocalToDevicePathData[] = [];
+		const transferredFiles: Mobile.ILocalToDevicePathData[] = [];
 		const action = async (localToDevicePathData: Mobile.ILocalToDevicePathData) => {
 			const fstat = this.$fs.getFsStats(localToDevicePathData.getLocalPath());
 			if (fstat.isFile()) {
 				const devicePath = localToDevicePathData.getDevicePath();
-				await this.adb.executeCommand(["push", localToDevicePathData.getLocalPath(), devicePath]);
-				await this.adb.executeShellCommand(["chmod", "0777", path.dirname(devicePath)]);
-				transferedFiles.push(localToDevicePathData);
+				await this.adb.pushFile(localToDevicePathData.getLocalPath(), devicePath);
+				transferredFiles.push(localToDevicePathData);
 			} else if (fstat.isDirectory()) {
 				const dirToChmod = localToDevicePathData.getDevicePath();
 				directoriesToChmod.push(dirToChmod);
@@ -80,7 +79,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 			this.$logger.trace("Unable to find hash file on device. The next livesync command will create it.");
 		}
 
-		return transferedFiles;
+		return transferredFiles;
 	}
 
 	public async transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): Promise<Mobile.ILocalToDevicePathData[]> {
@@ -91,12 +90,12 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		const commandsDeviceFilePath = this.$mobileHelper.buildDevicePath(await deviceAppData.getDeviceProjectRootPath(), "nativescript.commands.sh");
 
 		let filesToChmodOnDevice: string[] = devicePaths;
-		let tranferredFiles: Mobile.ILocalToDevicePathData[] = [];
+		let transferredFiles: Mobile.ILocalToDevicePathData[] = [];
 		const oldShasums = await deviceHashService.getShasumsFromDevice();
 		if (this.$options.force || !oldShasums) {
 			await this.adb.executeShellCommand(["rm", "-rf", deviceHashService.hashFileDevicePath]);
-			await this.adb.executeCommand(["push", projectFilesPath, await deviceAppData.getDeviceProjectRootPath()]);
-			tranferredFiles = localToDevicePaths;
+			await this.adb.pushFile(projectFilesPath, await deviceAppData.getDeviceProjectRootPath());
+			transferredFiles = localToDevicePaths;
 		} else {
 			// Create or update file hashes on device
 			const changedShasums: any = _.omitBy(currentShasums, (hash: string, pathToFile: string) => !!_.find(oldShasums, (oldHash: string, oldPath: string) => pathToFile === oldPath && hash === oldHash));
@@ -105,7 +104,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 
 			const transferFileAction = async (hash: string, filePath: string) => {
 				const localToDevicePathData = _.find(localToDevicePaths, ldp => ldp.getLocalPath() === filePath);
-				tranferredFiles.push(localToDevicePathData);
+				transferredFiles.push(localToDevicePathData);
 				filesToChmodOnDevice.push(`"${localToDevicePathData.getDevicePath()}"`);
 				return this.transferFile(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath());
 			};
@@ -120,7 +119,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 
 		await deviceHashService.uploadHashFileToDevice(currentShasums);
 
-		return tranferredFiles;
+		return transferredFiles;
 	}
 
 	public async transferFile(localPath: string, devicePath: string): Promise<void> {
@@ -129,7 +128,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		if (stats.isDirectory()) {
 			await this.adb.executeShellCommand(["mkdir", path.dirname(devicePath)]);
 		} else {
-			await this.adb.executeCommand(["push", localPath, devicePath]);
+			await this.adb.pushFile(localPath, devicePath);
 		}
 	}
 

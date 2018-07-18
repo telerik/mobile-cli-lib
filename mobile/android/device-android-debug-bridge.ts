@@ -15,11 +15,6 @@ export class DeviceAndroidDebugBridge extends AndroidDebugBridge implements Mobi
 		super($childProcess, $errors, $logger, $staticConfig, $androidDebugBridgeResultHandler);
 	}
 
-	public async executeShellCommand(args: string[], options?: Mobile.IAndroidDebugBridgeCommandOptions): Promise<any> {
-		args.unshift("shell");
-		return super.executeCommand(args, options);
-	}
-
 	public async sendBroadcastToDevice(action: string, extras?: IStringDictionary): Promise<number> {
 		extras = extras || {};
 		const broadcastCommand = ["am", "broadcast", "-a", `${action}`];

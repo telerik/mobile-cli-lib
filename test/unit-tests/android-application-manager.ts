@@ -54,6 +54,10 @@ class AndroidDebugBridgeStub {
 		AndroidDebugBridgeStub.methodCallCount++;
 	}
 
+	public async pushFile(localFilePath: string, deviceFilePath: string): Promise<void> {
+		await this.executeShellCommand(["push", localFilePath, deviceFilePath ]);
+	}
+
 	public getInputLength(): number {
 		return this.validTestInput.length;
 	}
