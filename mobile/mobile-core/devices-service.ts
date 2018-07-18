@@ -471,14 +471,14 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 
 		if (platform && deviceOption) {
 			this._platform = this.getPlatform(deviceInitOpts.platform);
-			this.detectCurrentlyAttachedDevices(deviceInitOpts);
+			await this.detectCurrentlyAttachedDevices(deviceInitOpts);
 			this._device = await this.getDevice(deviceOption);
 			if (this._device.deviceInfo.platform !== this._platform) {
 				this.$errors.fail(constants.ERROR_CANNOT_RESOLVE_DEVICE);
 			}
 			this.$logger.warn("Your application will be deployed only on the device specified by the provided index or identifier.");
 		} else if (!platform && deviceOption) {
-			this.detectCurrentlyAttachedDevices(deviceInitOpts);
+			await this.detectCurrentlyAttachedDevices(deviceInitOpts);
 			this._device = await this.getDevice(deviceOption);
 			this._platform = this._device.deviceInfo.platform;
 		} else if (platform && !deviceOption) {
