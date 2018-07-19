@@ -1,65 +1,65 @@
 import * as net from "net";
 import { connectEventuallyUntilTimeout } from "../../../helpers";
+import { CONNECTED_STATUS, DISCONNECTED_STATUS, APPLE_VENDOR_NAME, DeviceTypes } from "../../../constants";
 
 class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 	private static DEFAULT_TIMEOUT = 10000;
 
 	constructor(private $logger: ILogger,
-		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
-		private $errors: IErrors,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
-		private $hostInfo: IHostInfo,
-		private $options: ICommonOptions,
-		private $iOSSimResolver: Mobile.IiOSSimResolver) { }
+		private $iOSSimResolver: Mobile.IiOSSimResolver,
+		private $mobileHelper: Mobile.IMobileHelper) { }
 
-	public async getEmulatorId(): Promise<string> {
+	public async startEmulator(options: Mobile.IStartEmulatorOptions): Promise<Mobile.IStartEmulatorOutput> {
+		let error = null;
+
+		try {
+			await this.$iOSSimResolver.iOSSim.startSimulator({
+				device: options.imageIdentifier || options.emulatorIdOrName,
+				state: "None",
+				sdkVersion: options.sdk
+			});
+		} catch (err) {
+			error = err && err.message;
+		}
+
+		return {
+			errors: error ? [error] : []
+		};
+	}
+
+	public async getRunningEmulator(): Promise<Mobile.IDeviceInfo> {
+		return null;
+	}
+
+	public async getRunningEmulatorIds(): Promise<string[]> {
+		return [];
+	}
+
+	public async getRunningEmulatorName(): Promise<string> {
 		return "";
 	}
 
-	public async getRunningEmulatorId(image: string): Promise<string> {
-		//todo: plamen5kov: fix later if necessary
+	public async getRunningEmulatorImageIdentifier(emulatorId: string): Promise<string> {
 		return "";
 	}
 
-	public async checkDependencies(): Promise<void> {
-		return;
-	}
+	public runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IRunApplicationOnEmulatorOptions): Promise<any> {
+		emulatorOptions = emulatorOptions || {};
 
-	public checkAvailability(dependsOnProject?: boolean): void {
-		dependsOnProject = dependsOnProject === undefined ? true : dependsOnProject;
-
-		if (!this.$hostInfo.isDarwin) {
-			this.$errors.failWithoutHelp("iOS Simulator is available only on Mac OS X.");
-		}
-
-		const platform = this.$devicePlatformsConstants.iOS;
-		if (dependsOnProject && !this.$emulatorSettingsService.canStart(platform)) {
-			this.$errors.failWithoutHelp("The current project does not target iOS and cannot be run in the iOS Simulator.");
-		}
-	}
-
-	public async startEmulator(emulatorImage?: string): Promise<string> {
-		return this.$iOSSimResolver.iOSSim.startSimulator({
-			device: emulatorImage,
-			state: "None",
-			sdkVersion: this.$options.sdk
-		});
-	}
-
-	public runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): Promise<any> {
-		if (this.$options.availableDevices) {
+		if (emulatorOptions.availableDevices) {
 			return this.$iOSSimResolver.iOSSim.printDeviceTypes();
 		}
 
 		const options: any = {
-			sdkVersion: this.$options.sdk,
-			device: (emulatorOptions && emulatorOptions.device) || this.$options.device,
+			sdkVersion: emulatorOptions.sdk,
+			device: emulatorOptions.device,
 			args: emulatorOptions.args,
 			waitForDebugger: emulatorOptions.waitForDebugger,
 			skipInstall: emulatorOptions.skipInstall
 		};
 
-		if (this.$options.justlaunch) {
+		if (emulatorOptions.justlaunch) {
 			options.exit = true;
 		}
 
@@ -77,6 +77,57 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		} catch (e) {
 			this.$logger.debug(e);
 		}
+	}
+
+	public async getAvailableEmulators(): Promise<Mobile.IAvailableEmulatorsOutput> {
+		let devices: Mobile.IDeviceInfo[] = [];
+		const errors: string[] = [];
+
+		const output = await this.tryGetiOSSimDevices();
+		if (output.devices && output.devices.length) {
+			devices =  _(output.devices)
+				.map(simDevice => this.convertSimDeviceToDeviceInfo(simDevice))
+				.sortBy(deviceInfo => deviceInfo.version)
+				.value();
+		}
+
+		if (output.error) {
+			errors.push(output.error);
+		}
+
+		return { devices, errors };
+	}
+
+	public async getRunningEmulators(): Promise<Mobile.IDeviceInfo[]> {
+		return [];
+	}
+
+	private async tryGetiOSSimDevices(): Promise<{devices: Mobile.IiSimDevice[], error: string}> {
+		let devices: Mobile.IiSimDevice[] = [];
+		let error: string = null;
+
+		try {
+			devices = await this.$iOSSimResolver.iOSSim.getDevices();
+		} catch (err) {
+			error = err;
+		}
+
+		return { devices, error };
+	}
+
+	private convertSimDeviceToDeviceInfo(simDevice: Mobile.IiSimDevice): Mobile.IDeviceInfo {
+		return {
+			identifier: simDevice.id,
+			displayName: simDevice.name,
+			model: simDevice.name,
+			version: simDevice.runtimeVersion,
+			vendor: APPLE_VENDOR_NAME,
+			status: simDevice.state && simDevice.state.toLowerCase() === "booted" ? CONNECTED_STATUS : DISCONNECTED_STATUS,
+			errorHelp: null,
+			isTablet: this.$mobileHelper.isiOSTablet(simDevice.name),
+			type: DeviceTypes.Emulator,
+			platform: this.$devicePlatformsConstants.iOS
+		};
 	}
 }
 $injector.register("iOSEmulatorServices", IosEmulatorServices);

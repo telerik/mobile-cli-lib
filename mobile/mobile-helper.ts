@@ -73,5 +73,9 @@ export class MobileHelper implements Mobile.IMobileHelper {
 	public correctDevicePath(filePath: string): string {
 		return helpers.stringReplaceAll(filePath, '\\', '/');
 	}
+
+	public isiOSTablet(deviceName: string): boolean {
+		return deviceName && deviceName.toLowerCase().indexOf("ipad") !== -1;
+	}
 }
 $injector.register("mobileHelper", MobileHelper);

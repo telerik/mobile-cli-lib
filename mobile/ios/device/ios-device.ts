@@ -18,13 +18,14 @@ export class IOSDevice implements Mobile.IiOSDevice {
 		private $deviceLogProvider: Mobile.IDeviceLogProvider,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $iOSDeviceProductNameMapper: Mobile.IiOSDeviceProductNameMapper,
-		private $iosDeviceOperations: IIOSDeviceOperations) {
+		private $iosDeviceOperations: IIOSDeviceOperations,
+		private $mobileHelper: Mobile.IMobileHelper) {
 
 		this.applicationManager = this.$injector.resolve(applicationManagerPath.IOSApplicationManager, { device: this, devicePointer: this.deviceActionInfo });
 		this.fileSystem = this.$injector.resolve(fileSystemPath.IOSDeviceFileSystem, { device: this, devicePointer: this.deviceActionInfo });
 
 		const productType = deviceActionInfo.productType;
-		const isTablet = productType && productType.toLowerCase().indexOf("ipad") !== -1;
+		const isTablet = this.$mobileHelper.isiOSTablet(productType);
 		const deviceStatus = deviceActionInfo.status || constants.UNREACHABLE_STATUS;
 		this.deviceInfo = {
 			identifier: deviceActionInfo.deviceId,

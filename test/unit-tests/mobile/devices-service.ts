@@ -74,6 +74,10 @@ class IOSSimulatorDiscoveryStub extends EventEmitter {
 	public async checkForDevices(): Promise<void> {
 		return;
 	}
+
+	public async checkForAvailableSimulators(): Promise<void> {
+		return;
+	}
 }
 
 function getErrorMessage(injector: IInjector, message: string, ...args: string[]): string {
@@ -104,13 +108,16 @@ const iOSSimulator = {
 
 class AndroidEmulatorServices {
 	public isStartEmulatorCalled = false;
-	public async startEmulator(): Promise<void> {
+	public async startEmulator(options: Mobile.IStartEmulatorOptions): Promise<void> {
 		this.isStartEmulatorCalled = true;
 		androidDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, androidEmulatorDevice);
 		return Promise.resolve();
 	}
 	public async getRunningEmulatorId(identifier: string): Promise<string> {
 		return Promise.resolve(identifier);
+	}
+	public getRunningEmulator(emulatorId: string): Promise<Mobile.IDeviceInfo> {
+		return null;
 	}
 }
 
@@ -125,6 +132,9 @@ class IOSEmulatorServices {
 	}
 	public async getRunningEmulatorId(identifier: string): Promise<string> {
 		return Promise.resolve(identifier);
+	}
+	public async getRunningEmulator(): Promise<Mobile.IDeviceInfo> {
+		return null;
 	}
 }
 
@@ -166,6 +176,11 @@ function createTestInjector(): IInjector {
 	});
 
 	testInjector.register("androidProcessService", { /* no implementation required */ });
+	testInjector.register("androidEmulatorDiscovery", {
+		on: () => ({}),
+		startLookingForDevices: () => ({})
+	});
+	testInjector.register("emulatorHelper", {});
 
 	return testInjector;
 }
@@ -1262,7 +1277,7 @@ describe("devicesService", () => {
 			});
 
 			it("should not throw if ios device check fails throws an exception.", async () => {
-				$iOSDeviceDiscovery.checkForDevices = throwErrorFunction;
+				(<any>$iOSDeviceDiscovery).checkForDevices = throwErrorFunction;
 
 				await assert.isFulfilled(devicesService.startDeviceDetectionInterval());
 			});
@@ -1301,7 +1316,7 @@ describe("devicesService", () => {
 
 			beforeEach(() => {
 				$iOSSimulatorDiscovery = testInjector.resolve("iOSSimulatorDiscovery");
-				$iOSSimulatorDiscovery.checkForDevices = async (): Promise<void> => {
+				(<any>$iOSSimulatorDiscovery).checkForDevices = async (): Promise<void> => {
 					hasCheckedForIosSimulator = true;
 				};
 
@@ -1311,7 +1326,7 @@ describe("devicesService", () => {
 			});
 
 			it("should not throw if ios simulator check fails throws an exception.", async () => {
-				$iOSSimulatorDiscovery.checkForDevices = throwErrorFunction;
+				(<any>$iOSSimulatorDiscovery).checkForDevices = throwErrorFunction;
 
 				await assert.isFulfilled(devicesService.startDeviceDetectionInterval());
 			});

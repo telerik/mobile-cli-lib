@@ -22,6 +22,12 @@ export const ERROR_NO_VALID_SUBCOMMAND_FORMAT = "The input is not valid sub-comm
 
 export const UNREACHABLE_STATUS = "Unreachable";
 export const CONNECTED_STATUS = "Connected";
+export const DISCONNECTED_STATUS = "Disconnected";
+
+export const RUNNING_EMULATOR_STATUS = "Running";
+export const NOT_RUNNING_EMULATOR_STATUS = "Not running";
+
+export const APPLE_VENDOR_NAME = "Apple";
 
 export class LiveSyncConstants {
 	static VERSION_2 = 2;
@@ -37,6 +43,11 @@ export class LiveSyncConstants {
 export class DeviceDiscoveryEventNames {
 	static DEVICE_FOUND = "deviceFound";
 	static DEVICE_LOST = "deviceLost";
+}
+
+export class EmulatorDiscoveryNames {
+	static EMULATOR_IMAGES_FOUND = "emulatorImagesFound";
+	static EMULATOR_IMAGES_LOST = "emulatorImagesLost";
 }
 
 export const DEVICE_LOG_EVENT_NAME = "deviceLogData";
@@ -103,3 +114,31 @@ export const enum CommandsDelimiters {
 
 export const DEBUGGER_PORT_FOUND_EVENT_NAME = "DEBUGGER_PORT_FOUND";
 export const ATTACH_REQUEST_EVENT_NAME = "ATTACH_REQUEST";
+
+export class AndroidVirtualDevice {
+	static ANDROID_DIR_NAME = ".android";
+	static AVD_DIR_NAME = "avd";
+	static ENCODING_MASK = /^avd\.ini\.encoding=(.*)$/;
+	static INI_FILES_MASK = /^(.*)\.ini$/i;
+	static AVD_FILES_MASK = /^(.*)\.avd$/i;
+	static MIN_ANDROID_APILEVEL = 17;
+	static MIN_ANDROID_VERSION = "4.2";
+	/**
+	 * The message that is printed from `avdmanager list avds`
+	 */
+	static AVAILABLE_AVDS_MESSAGE = "Available Android Virtual Devices:";
+	/**
+	 * The delimiter between devices that is used from `avdmanager list avds`
+	 */
+	static AVD_LIST_DELIMITER = "---------";
+	static CONFIG_INI_FILE_NAME = "config.ini";
+	static INI_FILE_EXTENSION = ".ini";
+	static AVD_FILE_EXTENSION = ".avd";
+	static RUNNING_AVD_EMULATOR_REGEX = /^(emulator-\d+)\s+device$/;
+	static RUNNING_GENY_EMULATOR_REGEX = /^(.+?)\s+device$/;
+	static GENYMOTION_VENDOR_NAME = "Genymotion";
+	static AVD_VENDOR_NAME = "Avd";
+	static TIMEOUT_SECONDS = 120;
+
+	static UNABLE_TO_START_EMULATOR_MESSAGE = "Cannot run your app in the native emulator. Increase the timeout of the operation with the --timeout option or try to restart your adb server with 'adb kill-server' command. Alternatively, run the Android Virtual Device manager and increase the allocated RAM for the virtual device.";
+}

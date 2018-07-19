@@ -136,6 +136,16 @@ export class ChildProcess extends EventEmitter implements IChildProcess {
 		});
 	}
 
+	public async trySpawnFromCloseEvent(command: string, args: string[], options?: any, spawnFromEventOptions?: ISpawnFromEventOptions): Promise<ISpawnResult> {
+		try {
+			const childProcess = await this.spawnFromEvent(command, args, "close", options, spawnFromEventOptions);
+			return childProcess;
+		} catch (err) {
+			this.$logger.trace(`Error from trySpawnFromCloseEvent method. More info: ${err}`);
+			return Promise.resolve({ stderr: err && err.message ? err.message : err, stdout: null, exitCode: -1 });
+		}
+	}
+
 	public async tryExecuteApplication(command: string, args: string[], event: string,
 		errorMessage: string, condition: (_childProcess: any) => boolean): Promise<any> {
 		const childProcess = await this.tryExecuteApplicationCore(command, args, event, errorMessage);

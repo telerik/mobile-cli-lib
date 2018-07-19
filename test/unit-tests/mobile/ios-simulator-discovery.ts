@@ -31,6 +31,7 @@ function createTestInjector(): IInjector {
 
 	injector.register("iOSSimulatorLogProvider", {});
 	injector.register("deviceLogProvider", {});
+	injector.register("iOSEmulatorServices", {});
 
 	return injector;
 }
@@ -182,7 +183,7 @@ describe("ios-simulator-discovery", () => {
 		iOSSimulatorDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
 			throw new Error("Device found should not be raised when OS is not OS X.");
 		});
-		await iOSSimulatorDiscovery.checkForDevices();
+		await (<any>iOSSimulatorDiscovery).checkForDevices();
 	});
 
 	it('find correctly two simulators', async () => {

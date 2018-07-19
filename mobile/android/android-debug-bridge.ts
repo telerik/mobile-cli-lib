@@ -1,4 +1,6 @@
 import * as path from "path";
+import { cache, invokeInit } from "../../decorators";
+import { EOL } from "os";
 
 interface IComposeCommandResult {
 	command: string;
@@ -6,11 +8,18 @@ interface IComposeCommandResult {
 }
 
 export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
+	private adbFilePath: string = null;
+
 	constructor(protected $childProcess: IChildProcess,
 		protected $errors: IErrors,
 		protected $logger: ILogger,
 		protected $staticConfig: Config.IStaticConfig,
 		protected $androidDebugBridgeResultHandler: Mobile.IAndroidDebugBridgeResultHandler) { }
+
+	@cache()
+	protected async init(): Promise<void> {
+		this.adbFilePath = await this.$staticConfig.getAdbFilePath();
+	}
 
 	public async executeCommand(args: string[], options?: Mobile.IAndroidDebugBridgeCommandOptions): Promise<any> {
 		let event = "close";
@@ -41,6 +50,19 @@ export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 
 		// Some adb commands returns array of strings instead of object with stdout and stderr. (adb start-server)
 		return (result.stdout === undefined || result.stdout === null) ? result : result.stdout;
+	}
+
+	@invokeInit()
+	public getPropertyValue(deviceId: string, propertyName: string): Promise<string> {
+		return this.$childProcess.execFile(this.adbFilePath, ["-s", deviceId, "shell", "getprop", propertyName]);
+	}
+
+	@invokeInit()
+	public async getDevices(): Promise<string[]> {
+		const output = await this.$childProcess.execFile<string>(this.adbFilePath, ['devices']);
+		return output
+			.split(EOL)
+			.filter(line => !!line && line !== "List of devices attached");
 	}
 
 	protected async composeCommand(params: string[], identifier?: string): Promise<IComposeCommandResult> {

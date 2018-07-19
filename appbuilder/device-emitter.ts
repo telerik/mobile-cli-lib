@@ -1,5 +1,5 @@
 import { EventEmitter } from "events";
-import { DeviceDiscoveryEventNames, DEVICE_LOG_EVENT_NAME } from "../constants";
+import { DeviceDiscoveryEventNames, EmulatorDiscoveryNames, DEVICE_LOG_EVENT_NAME } from "../constants";
 
 export class DeviceEmitter extends EventEmitter {
 	constructor(private $deviceLogProvider: EventEmitter,
@@ -8,7 +8,6 @@ export class DeviceEmitter extends EventEmitter {
 		super();
 
 		this.initialize();
-
 	}
 
 	private _companionAppIdentifiers: IDictionary<IStringDictionary>;
@@ -35,6 +34,14 @@ export class DeviceEmitter extends EventEmitter {
 
 		this.$deviceLogProvider.on("data", (identifier: string, data: any) => {
 			this.emit(DEVICE_LOG_EVENT_NAME, identifier, data.toString());
+		});
+
+		this.$devicesService.on(EmulatorDiscoveryNames.EMULATOR_IMAGES_FOUND, (emulator: Mobile.IDeviceInfo) => {
+			this.emit(EmulatorDiscoveryNames.EMULATOR_IMAGES_FOUND, emulator);
+		});
+
+		this.$devicesService.on(EmulatorDiscoveryNames.EMULATOR_IMAGES_LOST, (emulator: Mobile.IDeviceInfo) => {
+			this.emit(EmulatorDiscoveryNames.EMULATOR_IMAGES_LOST, emulator);
 		});
 	}
 

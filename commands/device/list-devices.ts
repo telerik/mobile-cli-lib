@@ -1,18 +1,26 @@
-import { createTable } from "../../helpers";
+import { createTable, formatListOfNames } from "../../helpers";
 
 export class ListDevicesCommand implements ICommand {
 	constructor(private $devicesService: Mobile.IDevicesService,
+		private $errors: IErrors,
+		private $emulatorHelper: Mobile.IEmulatorHelper,
 		private $logger: ILogger,
 		private $stringParameter: ICommandParameter,
 		private $mobileHelper: Mobile.IMobileHelper,
-		private $emulatorImageService: Mobile.IEmulatorImageService,
 		private $options: ICommonOptions) { }
 
 	public allowedParameters = [this.$stringParameter];
 
 	public async execute(args: string[]): Promise<void> {
 		if (this.$options.availableDevices) {
-			await this.$emulatorImageService.listAvailableEmulators(this.$mobileHelper.validatePlatformName(args[0]));
+			const platform = this.$mobileHelper.normalizePlatformName(args[0]);
+			if (!platform && args[0]) {
+				this.$errors.failWithoutHelp(`${args[0]} is not a valid device platform. The valid platforms are ${formatListOfNames(this.$mobileHelper.platformNames)}`);
+			}
+
+			const availableEmulatorsOutput = await this.$devicesService.getAvailableEmulators({ platform });
+			const emulators = this.$emulatorHelper.getEmulatorsFromAvailableEmulatorsOutput(availableEmulatorsOutput);
+			this.printEmulators("\nAvailable emulators", emulators);
 		}
 
 		this.$logger.out("\nConnected devices & emulators");
@@ -39,6 +47,16 @@ export class ListDevicesCommand implements ICommand {
 		if (!this.$options.json && table.length) {
 			this.$logger.out(table.toString());
 		}
+	}
+
+	private printEmulators(title: string, emulators: Mobile.IDeviceInfo[]) {
+		this.$logger.out(title);
+		const table: any = createTable(["Device Name", "Platform", "Version", "Device Identifier", "Image Identifier", "Error Help"], []);
+		for (const info of emulators) {
+			table.push([info.displayName, info.platform, info.version, info.identifier || "", info.imageIdentifier || "", info.errorHelp || ""]);
+		}
+
+		this.$logger.out(table.toString());
 	}
 }
 

@@ -122,7 +122,7 @@ describe("androidDeviceDiscovery", () => {
 		});
 	});
 
-	describe("checkForDevices", () => {
+	describe("startLookingForDevices", () => {
 		it("finds correctly one device", async () => {
 			let promise: Promise<void>;
 			androidDeviceDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
@@ -138,7 +138,7 @@ describe("androidDeviceDiscovery", () => {
 				mockChildProcess.emit('close', 0);
 			}, 0);
 
-			await androidDeviceDiscovery.checkForDevices();
+			await androidDeviceDiscovery.startLookingForDevices();
 			await promise;
 			assert.isTrue(devicesFound.length === 1, "We should have found ONE device.");
 			assert.deepEqual(devicesFound[0].deviceInfo.identifier, androidDeviceIdentifier);
@@ -162,7 +162,7 @@ describe("androidDeviceDiscovery", () => {
 				mockChildProcess.emit('close', 0);
 			}, 0);
 
-			await androidDeviceDiscovery.checkForDevices();
+			await androidDeviceDiscovery.startLookingForDevices();
 			await promise;
 			assert.isTrue(devicesFound.length === 2, "We should have found two devices.");
 			assert.deepEqual(devicesFound[0].deviceInfo.identifier, androidDeviceIdentifier);
@@ -182,7 +182,7 @@ describe("androidDeviceDiscovery", () => {
 				mockChildProcess.emit('close', 0);
 			}, 0);
 
-			await androidDeviceDiscovery.checkForDevices();
+			await androidDeviceDiscovery.startLookingForDevices();
 			assert.isTrue(devicesFound.length === 0, "We should have NOT found devices.");
 		});
 
@@ -201,7 +201,7 @@ describe("androidDeviceDiscovery", () => {
 				mockChildProcess.emit('close', 0);
 			}, 0);
 
-			await androidDeviceDiscovery.checkForDevices();
+			await androidDeviceDiscovery.startLookingForDevices();
 			await promise;
 			assert.isTrue(devicesFound.length === 1, "We should have found ONE device.");
 			assert.deepEqual(devicesFound[0].deviceInfo.identifier, androidDeviceIdentifier);
@@ -242,12 +242,12 @@ describe("androidDeviceDiscovery", () => {
 					mockChildProcess.emit('close', 0);
 				}, 0);
 
-				await androidDeviceDiscovery.checkForDevices();
+				await androidDeviceDiscovery.startLookingForDevices();
 				await promise;
 				androidDeviceDiscovery.removeAllListeners(DeviceDiscoveryEventNames.DEVICE_FOUND);
 			});
 
-			it("does not report it as found next time when checkForDevices is called and same device is still connected", async () => {
+			it("does not report it as found next time when startLookingForDevices is called and same device is still connected", async () => {
 				androidDeviceDiscovery.on(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
 					throw new Error("Should not report same device as found");
 				});
@@ -257,7 +257,7 @@ describe("androidDeviceDiscovery", () => {
 					mockChildProcess.emit('close', 0);
 				}, 0);
 
-				await androidDeviceDiscovery.checkForDevices();
+				await androidDeviceDiscovery.startLookingForDevices();
 				assert.isTrue(devicesFound.length === 1, "We should have found ONE device.");
 				assert.deepEqual(devicesFound[0].deviceInfo.identifier, androidDeviceIdentifier);
 				assert.deepEqual(devicesFound[0].status, androidDeviceStatus);
@@ -275,7 +275,7 @@ describe("androidDeviceDiscovery", () => {
 					mockStdoutEmitter.emit('data', output);
 					mockChildProcess.emit('close', 0);
 				}, 0);
-				await androidDeviceDiscovery.checkForDevices();
+				await androidDeviceDiscovery.startLookingForDevices();
 				const lostDevice = await promise;
 				assert.deepEqual(lostDevice.deviceInfo.identifier, androidDeviceIdentifier);
 				assert.deepEqual(lostDevice.deviceInfo.status, androidDeviceStatus);
@@ -294,7 +294,7 @@ describe("androidDeviceDiscovery", () => {
 					mockChildProcess.emit('close', 0);
 				}, 0);
 
-				await androidDeviceDiscovery.checkForDevices();
+				await androidDeviceDiscovery.startLookingForDevices();
 
 				const lostDevice = await promise;
 				assert.deepEqual(lostDevice.deviceInfo.identifier, androidDeviceIdentifier);
@@ -309,7 +309,7 @@ describe("androidDeviceDiscovery", () => {
 					mockChildProcess.emit('close', 0);
 				}, 0);
 
-				await androidDeviceDiscovery.checkForDevices();
+				await androidDeviceDiscovery.startLookingForDevices();
 			});
 
 			it("reports it as removed and added after that next time when called and device's status is changed", async () => {
@@ -332,7 +332,7 @@ describe("androidDeviceDiscovery", () => {
 					mockChildProcess.emit('close', 0);
 				}, 0);
 
-				await androidDeviceDiscovery.checkForDevices();
+				await androidDeviceDiscovery.startLookingForDevices();
 
 				const lostDevice = await deviceLostPromise;
 				assert.deepEqual(lostDevice.deviceInfo.identifier, androidDeviceIdentifier);
@@ -349,7 +349,7 @@ describe("androidDeviceDiscovery", () => {
 					mockStdoutEmitter.emit('data', output);
 					mockChildProcess.emit('close', 0);
 				}, 0);
-				await androidDeviceDiscovery.checkForDevices();
+				await androidDeviceDiscovery.startLookingForDevices();
 				assert.isTrue(devicesFound.length === 1, "We should have found ONE device.");
 			});
 		});
@@ -367,7 +367,7 @@ describe("androidDeviceDiscovery", () => {
 					mockChildProcess.emit('close', 1);
 				}, 0);
 
-				await androidDeviceDiscovery.checkForDevices();
+				await androidDeviceDiscovery.startLookingForDevices();
 			} catch (err) {
 				assert.deepEqual(err, error.toString());
 			}
@@ -385,7 +385,7 @@ describe("androidDeviceDiscovery", () => {
 					mockChildProcess.emit("close", 1);
 				}, 0);
 
-				await androidDeviceDiscovery.checkForDevices();
+				await androidDeviceDiscovery.startLookingForDevices();
 
 			} catch (err) {
 				assert.deepEqual(err, error1.toString() + error2.toString());
@@ -403,7 +403,7 @@ describe("androidDeviceDiscovery", () => {
 					mockChildProcess.emit('error', error);
 				}, 0);
 
-				await androidDeviceDiscovery.checkForDevices();
+				await androidDeviceDiscovery.startLookingForDevices();
 			} catch (err) {
 				assert.deepEqual(err, error);
 			}

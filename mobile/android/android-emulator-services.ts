@@ -1,533 +1,171 @@
-import * as iconv from "iconv-lite";
+import { AndroidVirtualDevice } from "../../constants";
+import { getCurrentEpochTime, sleep } from "../../helpers";
 import { EOL } from "os";
-import * as osenv from "osenv";
-import * as path from "path";
-import * as helpers from "../../helpers";
-import * as net from "net";
-import { DeviceAndroidDebugBridge } from "./device-android-debug-bridge";
-import { cache, invokeInit } from "../../decorators";
 
-class AndroidEmulatorServices implements Mobile.IAndroidEmulatorServices {
-	private static ANDROID_DIR_NAME = ".android";
-	private static AVD_DIR_NAME = "avd";
-	private static INI_FILES_MASK = /^(.*)\.ini$/i;
-	private static ENCODING_MASK = /^avd\.ini\.encoding=(.*)$/;
-	private static TIMEOUT_SECONDS = 120;
-	private static UNABLE_TO_START_EMULATOR_MESSAGE = "Cannot run your app in the native emulator. Increase the timeout of the operation with the --timeout option or try to restart your adb server with 'adb kill-server' command. Alternatively, run the Android Virtual Device manager and increase the allocated RAM for the virtual device.";
-	private static RUNNING_ANDROID_EMULATOR_REGEX = /^(emulator-\d+)\s+device$/;
-
-	private static MISSING_SDK_MESSAGE = "The Android SDK is not configured properly. " +
-	"Verify that you have installed the Android SDK and that you have configured it as described in System Requirements.";
-	private static MISSING_GENYMOTION_MESSAGE = "Genymotion is not configured properly. " +
-	"Verify that you have installed Genymotion and that you have added its installation directory to your PATH environment variable.";
-
-	private endTimeEpoch: number;
-	private adbFilePath: string;
-	private _pathToEmulatorExecutable: string;
-
-	constructor(private $logger: ILogger,
-		private $emulatorSettingsService: Mobile.IEmulatorSettingsService,
-		private $errors: IErrors,
+export class AndroidEmulatorServices implements Mobile.IEmulatorPlatformService {
+	constructor(private $androidGenymotionService: Mobile.IAndroidVirtualDeviceService,
+		private $androidVirtualDeviceService: Mobile.IAndroidVirtualDeviceService,
+		private $adb: Mobile.IAndroidDebugBridge,
 		private $childProcess: IChildProcess,
-		private $fs: IFileSystem,
-		private $staticConfig: Config.IStaticConfig,
-		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
-		private $logcatHelper: Mobile.ILogcatHelper,
-		private $options: ICommonOptions,
-		private $utils: IUtils,
-		private $injector: IInjector,
-		private $hostInfo: IHostInfo,
-		private $messages: IMessages) {
-		iconv.extendNodeEncodings();
-	}
+		private $emulatorHelper: Mobile.IEmulatorHelper,
+		private $logger: ILogger,
+		private $utils: IUtils) { }
 
-	@cache()
-	protected async init(): Promise<void> {
-		this.adbFilePath = await this.$staticConfig.getAdbFilePath();
-	}
+	public async getAvailableEmulators(): Promise<Mobile.IAvailableEmulatorsOutput> {
+		const adbDevicesOutput = await this.$adb.getDevices();
+		const avdAvailableEmulatorsOutput = await this.$androidVirtualDeviceService.getAvailableEmulators(adbDevicesOutput);
+		const genyAvailableDevicesOutput = await this.$androidGenymotionService.getAvailableEmulators(adbDevicesOutput);
 
-	public get pathToEmulatorExecutable(): string {
-		if (!this._pathToEmulatorExecutable) {
-			const androidHome = process.env.ANDROID_HOME;
-			const emulatorExecutableName = "emulator";
-
-			this._pathToEmulatorExecutable = emulatorExecutableName;
-
-			if (androidHome) {
-				// Check https://developer.android.com/studio/releases/sdk-tools.html (25.3.0)
-				// Since this version of SDK tools, the emulator is a separate package.
-				// However the emulator executable still exists in the "tools" dir.
-				const pathToEmulatorFromAndroidStudio = path.join(androidHome, emulatorExecutableName, emulatorExecutableName);
-
-				const realFilePath = this.$hostInfo.isWindows ? `${pathToEmulatorFromAndroidStudio}.exe` : pathToEmulatorFromAndroidStudio;
-
-				if (this.$fs.exists(realFilePath)) {
-					this._pathToEmulatorExecutable = pathToEmulatorFromAndroidStudio;
-				} else {
-					this._pathToEmulatorExecutable = path.join(androidHome, "tools", emulatorExecutableName);
-				}
-			}
-		}
-
-		return this._pathToEmulatorExecutable;
-	}
-
-	public async getEmulatorId(): Promise<string> {
-		const image = this.getEmulatorImage();
-		if (!image) {
-			this.$errors.fail("Could not find an emulator image to run your project.");
-		}
-
-		const emulatorId = await this.startEmulatorInstance(image);
-		return emulatorId;
-	}
-
-	public async checkDependencies(): Promise<void> {
-		await this.checkAndroidSDKConfiguration();
-		if (this.$options.geny) {
-			await this.checkGenymotionConfiguration();
-		}
-	}
-
-	public checkAvailability(): void {
-		if (!this.getEmulatorImage()) {
-			this.$errors.failWithoutHelp("You do not have any Android emulators installed. Please install at least one.");
-		}
-
-		const platform = this.$devicePlatformsConstants.Android;
-		if (!this.$emulatorSettingsService.canStart(platform)) {
-			this.$errors.fail("The current project does not target Android and cannot be run in the Android emulator.");
-		}
-	}
-
-	public async startEmulator(emulatorImage?: string): Promise<string> {
-		if (this.$options.avd && this.$options.geny) {
-			this.$errors.fail("You cannot specify both --avd and --geny options. Please use only one of them.");
-		}
-
-		let emulatorId: string = null;
-
-		const image = this.getEmulatorImage(emulatorImage);
-		if (image) {
-			// start the emulator, if needed
-			emulatorId = await this.startEmulatorInstance(image);
-
-			// waits for the boot animation property of the emulator to switch to 'stopped'
-			await this.waitForEmulatorBootToComplete(emulatorId);
-
-			// unlock screen
-			await this.unlockScreen(emulatorId);
-		} else {
-			if (emulatorImage) {
-				this.$errors.fail(`No emulator image available for device identifier '${emulatorImage}'.`);
-			} else {
-				this.$errors.fail(this.$messages.Devices.NotFoundDeviceByIdentifierErrorMessage, this.$staticConfig.CLIENT_NAME.toLowerCase());
-			}
-		}
-
-		return emulatorId;
-	}
-
-	public async runApplicationOnEmulator(app: string, emulatorOptions?: Mobile.IEmulatorOptions): Promise<void> {
-		const emulatorId = await this.startEmulator();
-		await this.runApplicationOnEmulatorCore(app, emulatorOptions.appId, emulatorId);
-	}
-
-	private async checkAndroidSDKConfiguration(): Promise<void> {
-		try {
-			await this.$childProcess.tryExecuteApplication(this.pathToEmulatorExecutable, ['-help'], "exit", AndroidEmulatorServices.MISSING_SDK_MESSAGE);
-		} catch (err) {
-			this.$logger.trace(`Error while checking Android SDK configuration: ${err}`);
-			this.$errors.failWithoutHelp("Android SDK is not configured properly. Make sure you have added tools and platform-tools to your PATH environment variable.");
-		}
-	}
-
-	private getDeviceAndroidDebugBridge(deviceIdentifier: string): Mobile.IDeviceAndroidDebugBridge {
-		return this.$injector.resolve(DeviceAndroidDebugBridge, { identifier: deviceIdentifier });
-	}
-
-	private async checkGenymotionConfiguration(): Promise<void> {
-		try {
-			const condition = (childProcess: any) => childProcess.stderr && !_.startsWith(childProcess.stderr, "Usage:");
-			await this.$childProcess.tryExecuteApplication("player", [], "exit", AndroidEmulatorServices.MISSING_GENYMOTION_MESSAGE, condition);
-		} catch (err) {
-			this.$logger.trace(`Error while checking Genymotion configuration: ${err}`);
-			this.$errors.failWithoutHelp("Genymotion is not configured properly. Make sure you have added its installation directory to your PATH environment variable.");
-		}
-	}
-
-	private getEmulatorImage(suggestedImage?: string): string {
-		const image = this.$options.avd || this.$options.geny || this.getBestFit(suggestedImage);
-		return image;
-	}
-
-	private async runApplicationOnEmulatorCore(app: string, appId: string, emulatorId: string): Promise<void> {
-		// install the app
-		this.$logger.info("installing %s through adb", app);
-		const adb = this.getDeviceAndroidDebugBridge(emulatorId);
-		let childProcess = await adb.executeCommand(["install", "-r", app], { returnChildProcess: true });
-		await this.$fs.futureFromEvent(childProcess, "close");
-
-		// unlock screen again in cases when the installation is slow
-		await this.unlockScreen(emulatorId);
-
-		// run the installed app
-		this.$logger.info("running %s through adb", app);
-
-		const androidDebugBridgeCommandOptions: Mobile.IAndroidDebugBridgeCommandOptions = {
-			childProcessOptions: { stdio: "ignore", detached: true },
-			returnChildProcess: true
+		return {
+			devices: avdAvailableEmulatorsOutput.devices.concat(genyAvailableDevicesOutput.devices),
+			errors: avdAvailableEmulatorsOutput.errors.concat(genyAvailableDevicesOutput.errors)
 		};
-		childProcess = await adb.executeShellCommand(["monkey", "-p", appId, "-c", "android.intent.category.LAUNCHER", "1"], androidDebugBridgeCommandOptions);
-		await this.$fs.futureFromEvent(childProcess, "close");
-
-		if (!this.$options.justlaunch) {
-			await this.$logcatHelper.start(emulatorId);
-		}
 	}
 
-	private async unlockScreen(emulatorId: string): Promise<void> {
-		const adb = this.getDeviceAndroidDebugBridge(emulatorId);
-		const childProcess = await adb.executeShellCommand(["input", "keyevent", "82"], { returnChildProcess: true });
-		return this.$fs.futureFromEvent(childProcess, "close");
+	public async getRunningEmulatorIds(): Promise<string[]> {
+		const adbDevicesOutput = await this.$adb.getDevices();
+		const avds = await this.$androidVirtualDeviceService.getRunningEmulatorIds(adbDevicesOutput);
+		const genies = await this.$androidGenymotionService.getRunningEmulatorIds(adbDevicesOutput);
+		return avds.concat(genies);
 	}
 
-	private sleep(ms: number): Promise<void> {
-		return new Promise<void>((resolve, reject) => {
-			setTimeout(async () => resolve(), ms);
-		});
-	}
-
-	public async getRunningEmulatorId(image: string): Promise<string> {
-		const runningEmulators = await this.getRunningEmulators();
-		if (runningEmulators.length === 0) {
-			return "";
+	public async getRunningEmulatorName(emulatorId: string): Promise<string> {
+		let result = await this.$androidVirtualDeviceService.getRunningEmulatorName(emulatorId);
+		if (!result) {
+			result = await this.$androidGenymotionService.getRunningEmulatorName(emulatorId);
 		}
 
-		// if we get here, there's at least one running emulator
-		const getNameFunction = this.$options.geny ? this.getNameFromGenymotionEmulatorId : this.getNameFromSDKEmulatorId;
-		for (const emulatorId of runningEmulators) {
-			const currentEmulatorName = await getNameFunction.apply(this, [emulatorId]);
-			if (currentEmulatorName === image) {
-				return emulatorId;
-			}
-		}
-	}
-
-	@invokeInit()
-	private async getNameFromGenymotionEmulatorId(emulatorId: string): Promise<string> {
-		const modelOutputLines: string = await this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.model"]);
-		this.$logger.trace(modelOutputLines);
-		const model = (<string>_.first(modelOutputLines.split(EOL))).trim();
-		return model;
-	}
-
-	private getNameFromSDKEmulatorId(emulatorId: string): Promise<string> {
-		const match = emulatorId.match(/^emulator-(\d+)/);
-		let portNumber: string;
-		if (match && match[1]) {
-			portNumber = match[1];
-		} else {
-			return Promise.resolve("");
-		}
-
-		return new Promise<string>((resolve, reject) => {
-			let isResolved = false;
-			let output: string = "";
-			const client = net.connect(portNumber, () => {
-				client.write(`avd name${EOL}`);
-			});
-
-			client.on('data', (data: any) => {
-				output += data.toString();
-
-				const name = this.getEmulatorNameFromClientOutput(output);
-				// old output should look like:
-				// Android Console: type 'help' for a list of commands
-				// OK
-				// <Name of image>
-				// OK
-
-				// new output should look like:
-				// Android Console: type 'help' for a list of commands
-				// OK
-				// a\u001b[K\u001b[Dav\u001b[K\u001b[D\u001b[Davd\u001b...
-				// <Name of image>
-				// OK
-
-				if (name && !isResolved) {
-					isResolved = true;
-					resolve(name);
-				}
-
-				client.end();
-			});
-
-		});
-	}
-
-	private getEmulatorNameFromClientOutput(output: string): string {
-		// The lines should be trimmed after the split because the output has \r\n and when using split(EOL) on mac each line ends with \r.
-		const lines: string[] = _.map(output.split(EOL), (line: string) => line.trim());
-		let name: string;
-
-		const firstIndexOfOk = _.indexOf(lines, "OK");
-
-		if (firstIndexOfOk < 0) {
-			return null;
-		}
-
-		const secondIndexOfOk = _.indexOf(lines, "OK", firstIndexOfOk + 1);
-
-		if (secondIndexOfOk < 0) {
-			return null;
-		}
-
-		name = lines[secondIndexOfOk - 1].trim();
-
-		return name;
-	}
-
-	private async startEmulatorInstance(image: string): Promise<string> {
-		let emulatorId = await this.getRunningEmulatorId(image);
-		this.endTimeEpoch = helpers.getCurrentEpochTime() + this.$utils.getMilliSecondsTimeout(AndroidEmulatorServices.TIMEOUT_SECONDS);
-		if (emulatorId) {
-			// If there's already a running instance of this image, we'll just return the emulatorId.
-			return emulatorId;
-		}
-
-		// have to start new emulator
-		this.$logger.info("Starting Android emulator with image %s", image);
-		if (this.$options.geny) {
-			//player is part of Genymotion, it should be part of the PATH.
-			this.$childProcess.spawn("player", ["--vm-name", image],
-				{ stdio: "ignore", detached: true }).unref();
-		} else {
-			this.$childProcess.spawn(this.pathToEmulatorExecutable, ['-avd', image],
-				{ stdio: "ignore", detached: true }).unref();
-		}
-
-		const isInfiniteWait = this.$utils.getMilliSecondsTimeout(AndroidEmulatorServices.TIMEOUT_SECONDS) === 0;
-		let hasTimeLeft = helpers.getCurrentEpochTime() < this.endTimeEpoch;
-
-		while (hasTimeLeft || isInfiniteWait) {
-			emulatorId = await this.getRunningEmulatorId(image);
-			if (emulatorId) {
-				return emulatorId;
-			}
-
-			await this.sleep(10000); // the emulator definitely takes its time to wake up
-			hasTimeLeft = helpers.getCurrentEpochTime() < this.endTimeEpoch;
-		}
-
-		if (!hasTimeLeft && !isInfiniteWait) {
-			this.$errors.fail(AndroidEmulatorServices.UNABLE_TO_START_EMULATOR_MESSAGE);
-		}
-
-		return emulatorId;
-	}
-
-	private async getRunningGenymotionEmulators(adbDevicesOutput: string[]): Promise<string[]> {
-		const results = await Promise.all<string>(
-			<Promise<string>[]>(_(adbDevicesOutput)
-				.filter(r => !r.match(AndroidEmulatorServices.RUNNING_ANDROID_EMULATOR_REGEX))
-				.map(async row => {
-					const match = row.match(/^(.+?)\s+device$/);
-					if (match && match[1]) {
-						// possible genymotion emulator
-						const emulatorId = match[1];
-						const result = await this.isGenymotionEmulator(emulatorId) ? emulatorId : undefined;
-						return Promise.resolve(result);
-					}
-
-					return Promise.resolve(undefined);
-				}).value())
-		);
-
-		return _(results).filter(r => !!r)
-			.map(r => r.toString())
-			.value();
-	}
-
-	private async getRunningAvdEmulators(adbDevicesOutput: string[]): Promise<string[]> {
-		const emulatorDevices: string[] = [];
-		_.each(adbDevicesOutput, (device: string) => {
-			const rx = device.match(AndroidEmulatorServices.RUNNING_ANDROID_EMULATOR_REGEX);
-
-			if (rx && rx[1]) {
-				emulatorDevices.push(rx[1]);
-			}
-		});
-		return emulatorDevices;
-	}
-
-	@invokeInit()
-	private async isGenymotionEmulator(emulatorId: string): Promise<boolean> {
-		const manufacturer = await this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.product.manufacturer"]);
-		if (manufacturer.match(/^Genymotion/i)) {
-			return true;
-		}
-
-		const buildProduct = await this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "ro.build.product"]);
-		if (buildProduct && _.includes(buildProduct.toLowerCase(), "vbox")) {
-			return true;
-		}
-
-		return false;
-	}
-
-	@invokeInit()
-	public async getAllRunningEmulators(): Promise<string[]> {
-		const outputRaw: string[] = (await this.$childProcess.execFile(this.adbFilePath, ['devices'])).split(EOL);
-		const emulators = (await this.getRunningAvdEmulators(outputRaw)).concat(await this.getRunningGenymotionEmulators(outputRaw));
-		return emulators;
-	}
-
-	@invokeInit()
-	private async getRunningEmulators(): Promise<string[]> {
-		const outputRaw: string[] = (await this.$childProcess.execFile(this.adbFilePath, ['devices'])).split(EOL);
-		if (this.$options.geny) {
-			return await this.getRunningGenymotionEmulators(outputRaw);
-		} else {
-			return await this.getRunningAvdEmulators(outputRaw);
-		}
-	}
-
-	public getInfoFromAvd(avdName: string): Mobile.IAvdInfo {
-		let iniFile = path.join(this.avdDir, avdName + ".ini");
-		let avdInfo: Mobile.IAvdInfo = this.parseAvdFile(avdName, iniFile);
-
-		if (avdInfo.path && this.$fs.exists(avdInfo.path)) {
-			iniFile = path.join(avdInfo.path, "config.ini");
-			avdInfo = this.parseAvdFile(avdName, iniFile, avdInfo);
-		}
-
-		return avdInfo;
-	}
-
-	public getAvds(): string[] {
-		let result: string[] = [];
-		if (this.$fs.exists(this.avdDir)) {
-			const entries = this.$fs.readDirectory(this.avdDir);
-			result = _.filter(entries, (e: string) => e.match(AndroidEmulatorServices.INI_FILES_MASK) !== null)
-				.map((e) => e.match(AndroidEmulatorServices.INI_FILES_MASK)[1]);
-		}
 		return result;
 	}
 
-	private getBestFit(suggestedImage?: string): string {
-		const minVersion = this.$emulatorSettingsService.minVersion;
-
-		let avdResults = this.getAvds();
-		if (suggestedImage) {
-			avdResults = avdResults.filter(avd => avd === suggestedImage);
+	public async getRunningEmulatorImageIdentifier(emulatorId: string): Promise<string> {
+		let result = await this.$androidVirtualDeviceService.getRunningEmulatorImageIdentifier(emulatorId);
+		if (!result) {
+			result = await this.$androidGenymotionService.getRunningEmulatorImageIdentifier(emulatorId);
 		}
 
-		const best = _(avdResults)
-			.map(avd => this.getInfoFromAvd(avd))
-			.filter(avd => !!avd)
-			.maxBy(avd => avd.targetNum);
-
-		return (best && best.targetNum >= minVersion) ? best.name : null;
+		return result;
 	}
 
-	private parseAvdFile(avdName: string, avdFileName: string, avdInfo?: Mobile.IAvdInfo): Mobile.IAvdInfo {
-		if (!this.$fs.exists(avdFileName)) {
-			return null;
+	public async startEmulator(options: Mobile.IAndroidStartEmulatorOptions): Promise<Mobile.IStartEmulatorOutput> {
+		const output = await this.startEmulatorCore(options);
+		let bootToCompleteOutput = null;
+		if (output && output.runningEmulator) {
+			bootToCompleteOutput = await this.waitForEmulatorBootToComplete(output.runningEmulator, output.endTimeEpoch, options.timeout);
 		}
 
-		// avd files can have different encoding, defined on the first line.
-		// find which one it is (if any) and use it to correctly read the file contents
-		const encoding = this.getAvdEncoding(avdFileName);
-		const contents = this.$fs.readText(avdFileName, encoding).split("\n");
+		return {
+			errors: ((output && output.errors) || []).concat((bootToCompleteOutput && bootToCompleteOutput.errors) || [])
+		};
+	}
 
-		avdInfo = _.reduce(contents, (result: Mobile.IAvdInfo, line: string) => {
-			const parsedLine = line.split("=");
-			const key = parsedLine[0];
-			switch (key) {
-				case "target":
-					result.target = parsedLine[1];
-					result.targetNum = this.readTargetNum(result.target);
-					break;
-				case "path": result.path = parsedLine[1]; break;
-				case "hw.device.name": result.device = parsedLine[1]; break;
-				case "abi.type": result.abi = parsedLine[1]; break;
-				case "skin.name": result.skin = parsedLine[1]; break;
-				case "sdcard.size": result.sdcard = parsedLine[1]; break;
+	private async startEmulatorCore(options: Mobile.IAndroidStartEmulatorOptions): Promise<{runningEmulator: Mobile.IDeviceInfo, errors: string[], endTimeEpoch: number}> {
+		const timeout = options.timeout || AndroidVirtualDevice.TIMEOUT_SECONDS;
+		const endTimeEpoch = getCurrentEpochTime() + this.$utils.getMilliSecondsTimeout(timeout);
+
+		const availableEmulators = (await this.getAvailableEmulators()).devices;
+
+		let emulator = this.$emulatorHelper.getEmulatorByStartEmulatorOptions(options, availableEmulators);
+		if (!emulator && !options.emulatorIdOrName && !options.imageIdentifier && !options.emulator) {
+			emulator = this.getBestFit(availableEmulators);
+		}
+
+		if (!emulator) {
+			return {
+				runningEmulator: null,
+				errors: [`No emulator image available for emulator '${options.emulatorIdOrName || options.imageIdentifier}'.`],
+				endTimeEpoch
+			};
+		}
+
+		if (emulator.errorHelp) {
+			return {
+				runningEmulator: null,
+				errors: [emulator.errorHelp],
+				endTimeEpoch
+			};
+		}
+
+		this.spawnEmulator(emulator);
+
+		const isInfiniteWait = this.$utils.getMilliSecondsTimeout(timeout) === 0;
+		let hasTimeLeft = getCurrentEpochTime() < endTimeEpoch;
+
+		while (hasTimeLeft || isInfiniteWait) {
+			const emulators = (await this.getAvailableEmulators()).devices;
+			emulator = _.find(emulators, e => e.imageIdentifier === emulator.imageIdentifier);
+			if (emulator && this.$emulatorHelper.isEmulatorRunning(emulator)) {
+				return {
+					runningEmulator: emulator,
+					errors: [],
+					endTimeEpoch
+				};
 			}
-			return result;
-		},
-			avdInfo || <Mobile.IAvdInfo>Object.create(null));
-		avdInfo.name = avdName;
-		return avdInfo;
-	}
 
-	// Android L is not written as a number in the .ini files, and we need to convert it
-	private readTargetNum(target: string): number {
-		const platform = target.replace('android-', '');
-		let platformNumber = +platform;
-		if (isNaN(platformNumber)) {
-			// this may be a google image
-			const googlePlatform = target.split(":")[2];
-			if (googlePlatform) {
-				platformNumber = +googlePlatform;
-			} else if (platform === "L") { // Android SDK 20 preview
-				platformNumber = 20;
-			} else if (platform === "MNC") { // Android M preview
-				platformNumber = 22;
-			}
+			await sleep(10000); // the emulator definitely takes its time to wake up
+			hasTimeLeft = getCurrentEpochTime() < endTimeEpoch;
 		}
-		return platformNumber;
-	}
 
-	private getAvdEncoding(avdName: string): any {
-		// avd files can have different encoding, defined on the first line.
-		// find which one it is (if any) and use it to correctly read the file contents
-		let encoding = "utf8";
-		let contents = this.$fs.readText(avdName, "ascii");
-		if (contents.length > 0) {
-			contents = contents.split("\n", 1)[0];
-			if (contents.length > 0) {
-				const matches = contents.match(AndroidEmulatorServices.ENCODING_MASK);
-				if (matches) {
-					encoding = matches[1];
-				}
-			}
+		if (!hasTimeLeft && !isInfiniteWait) {
+			return {
+				runningEmulator: null,
+				errors: [AndroidVirtualDevice.UNABLE_TO_START_EMULATOR_MESSAGE],
+				endTimeEpoch
+			};
 		}
-		return encoding;
 	}
 
-	private get androidHomeDir(): string {
-		return path.join(osenv.home(), AndroidEmulatorServices.ANDROID_DIR_NAME);
+	private spawnEmulator(emulator: Mobile.IDeviceInfo): void {
+		let pathToEmulatorExecutable = null;
+		let startEmulatorArgs = null;
+		if (emulator.vendor === AndroidVirtualDevice.AVD_VENDOR_NAME) {
+			pathToEmulatorExecutable = this.$androidVirtualDeviceService.pathToEmulatorExecutable;
+			startEmulatorArgs = this.$androidVirtualDeviceService.startEmulatorArgs(emulator.imageIdentifier);
+		} else if (emulator.vendor === AndroidVirtualDevice.GENYMOTION_VENDOR_NAME) {
+			pathToEmulatorExecutable = this.$androidGenymotionService.pathToEmulatorExecutable;
+			startEmulatorArgs = this.$androidGenymotionService.startEmulatorArgs(emulator.imageIdentifier);
+		}
+
+		this.$logger.info(`Starting Android emulator with image ${emulator.imageIdentifier}`);
+
+		const childProcess = this.$childProcess.spawn(pathToEmulatorExecutable, startEmulatorArgs, { stdio: "ignore", detached: true });
+		childProcess.unref();
+		childProcess.on("error", (err: Error) => {
+			this.$logger.trace(`Error when starting emulator. More info: ${err}`);
+		});
 	}
 
-	private get avdDir(): string {
-		return path.join(this.androidHomeDir, AndroidEmulatorServices.AVD_DIR_NAME);
+	private getBestFit(emulators: Mobile.IDeviceInfo[]) {
+		const best = _(emulators).maxBy(emulator => emulator.version);
+		return (best && best.version >= AndroidVirtualDevice.MIN_ANDROID_VERSION) ? best : null;
 	}
 
-	private async waitForEmulatorBootToComplete(emulatorId: string): Promise<void> {
+	private async waitForEmulatorBootToComplete(emulator: Mobile.IDeviceInfo, endTimeEpoch: number, timeout: number): Promise<{runningEmulator: Mobile.IDeviceInfo, errors: string[]}> {
 		this.$logger.printInfoMessageOnSameLine("Waiting for emulator device initialization...");
 
-		const isInfiniteWait = this.$utils.getMilliSecondsTimeout(AndroidEmulatorServices.TIMEOUT_SECONDS) === 0;
-		while (helpers.getCurrentEpochTime() < this.endTimeEpoch || isInfiniteWait) {
-			const isEmulatorBootCompleted = await this.isEmulatorBootCompleted(emulatorId);
-
+		const isInfiniteWait = this.$utils.getMilliSecondsTimeout(timeout || AndroidVirtualDevice.TIMEOUT_SECONDS) === 0;
+		while (getCurrentEpochTime() < endTimeEpoch || isInfiniteWait) {
+			const isEmulatorBootCompleted = await this.isEmulatorBootCompleted(emulator.identifier);
 			if (isEmulatorBootCompleted) {
 				this.$logger.printInfoMessageOnSameLine(EOL);
-				return;
+				return {
+					runningEmulator: emulator,
+					errors: []
+				};
 			}
 
 			this.$logger.printInfoMessageOnSameLine(".");
-			await this.sleep(10000);
+			await sleep(10000);
 		}
 
-		this.$logger.printInfoMessageOnSameLine(EOL);
-		this.$errors.fail(AndroidEmulatorServices.UNABLE_TO_START_EMULATOR_MESSAGE);
+		return {
+			runningEmulator: null,
+			errors: [AndroidVirtualDevice.UNABLE_TO_START_EMULATOR_MESSAGE]
+		};
 	}
 
-	@invokeInit()
 	private async isEmulatorBootCompleted(emulatorId: string): Promise<boolean> {
-		const output = await this.$childProcess.execFile(this.adbFilePath, ["-s", emulatorId, "shell", "getprop", "dev.bootcomplete"]);
+		const output = await this.$adb.getPropertyValue(emulatorId, "dev.bootcomplete");
 		const matches = output.match("1");
 		return matches && matches.length > 0;
 	}

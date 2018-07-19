@@ -22,10 +22,6 @@ export class DeviceDiscovery extends EventEmitter implements Mobile.IDeviceDisco
 		return;
 	}
 
-	public async checkForDevices(): Promise<void> {
-		return;
-	}
-
 	private raiseOnDeviceFound(device: Mobile.IDevice) {
 		this.emit(DeviceDiscoveryEventNames.DEVICE_FOUND, device);
 	}
