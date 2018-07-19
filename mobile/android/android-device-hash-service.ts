@@ -36,7 +36,7 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 
 	public async uploadHashFileToDevice(data: IStringDictionary): Promise<void> {
 		this.$fs.writeJson(this.hashFileLocalPath, data);
-		await this.adb.executeCommand(["push", this.hashFileLocalPath, this.hashFileDevicePath]);
+		await this.adb.pushFile(this.hashFileLocalPath, this.hashFileDevicePath);
 	}
 
 	public async updateHashes(localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<boolean> {

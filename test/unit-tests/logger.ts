@@ -60,7 +60,7 @@ describe("logger", () => {
 				console.log(after - before);
 
 				assert.notEqual(outputs[methodName].indexOf("password:'*******'"), -1);
-				assert.isTrue(after - before < 10);
+				assert.isTrue(after - before < 50);
 			});
 
 			it(`${methodName} should not get slower when the string is really large`, () => {
@@ -71,7 +71,7 @@ describe("logger", () => {
 				const after = Date.now();
 
 				assert.notEqual(outputs[methodName].indexOf("https://github.com/NativeScript/android-runtime"), -1);
-				assert.isTrue(after - before < 10);
+				assert.isTrue(after - before < 50);
 			});
 
 			_.each(passwordPair, passwordString => {

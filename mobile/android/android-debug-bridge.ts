@@ -1,3 +1,5 @@
+import * as path from "path";
+
 interface IComposeCommandResult {
 	command: string;
 	args: string[];
@@ -50,6 +52,21 @@ export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 
 		const args: string[] = deviceIdentifier.concat(params);
 		return { command, args };
+	}
+
+	public async executeShellCommand(args: string[], options?: Mobile.IAndroidDebugBridgeCommandOptions): Promise<any> {
+		args.unshift("shell");
+		const result = await this.executeCommand(args, options);
+
+		return result;
+	}
+
+	public async pushFile(localFilePath: string, deviceFilePath: string): Promise<void> {
+		const fileDirectory = path.normalize(path.dirname(deviceFilePath));
+		// starting from API level 28, the push command is returning an error if the directory does not exist
+		await this.executeShellCommand(["mkdir", "-p", fileDirectory]);
+		await this.executeCommand(["push", localFilePath, deviceFilePath]);
+		await this.executeShellCommand(["chmod", "0777", fileDirectory]);
 	}
 }
 

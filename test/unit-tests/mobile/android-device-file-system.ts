@@ -24,6 +24,10 @@ class AndroidDebugBridgeMock {
 	public executeShellCommand() {
 		return Promise.resolve();
 	}
+
+	public async pushFile(localFilePath: string, deviceFilePath: string): Promise<void> {
+		await this.executeCommand(['push', localFilePath, deviceFilePath]);
+	}
 }
 
 class LocalToDevicePathDataMock {

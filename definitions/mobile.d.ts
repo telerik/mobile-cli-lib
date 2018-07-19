@@ -360,10 +360,11 @@ declare module Mobile {
 
 	interface IAndroidDebugBridge {
 		executeCommand(args: string[], options?: IAndroidDebugBridgeCommandOptions): Promise<any>;
+		executeShellCommand(args: string[], options?: IAndroidDebugBridgeCommandOptions): Promise<any>;
+		pushFile(localFilePath: string, deviceFilePath: string): Promise<void>;
 	}
 
 	interface IDeviceAndroidDebugBridge extends IAndroidDebugBridge {
-		executeShellCommand(args: string[], options?: IAndroidDebugBridgeCommandOptions): Promise<any>;
 		sendBroadcastToDevice(action: string, extras?: IStringDictionary): Promise<number>;
 	}
 
