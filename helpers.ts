@@ -116,10 +116,10 @@ export function settlePromises<T>(promises: Promise<T>[]): Promise<T[]> {
 			resolve();
 		}
 
-		_.forEach(promises, currentPromise => {
+		_.forEach(promises, (currentPromise, index) => {
 			currentPromise
 				.then(result => {
-					results.push(result);
+					results[index] = result;
 				})
 				.catch(err => {
 					// Accumulate all errors.
