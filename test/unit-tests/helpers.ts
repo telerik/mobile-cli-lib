@@ -450,19 +450,22 @@ describe("helpers", () => {
 				input: [Promise.resolve(1), getRejectedPromise(2), Promise.resolve(3), getRejectedPromise(new Error("4"))],
 				expectedResult: null,
 				expectedError: getErrorMessage([2, 4])
+			},
+			{
+				input: [Promise.resolve(1), new Promise(resolve => setTimeout(() => resolve(2), 10)), Promise.resolve(3), Promise.resolve(4), Promise.resolve(5)],
+				expectedResult: [1, 2, 3, 4, 5]
 			}
 		];
 
 		_.each(settlePromisesTestData, (testData, inputNumber) => {
-			it(`returns correct data, test case ${inputNumber}`, (done: mocha.Done) => {
-				const invokeDoneCallback = () => done();
+			it(`returns correct data, test case ${inputNumber}`, (done: any) => {
 				helpers.settlePromises<any>(testData.input)
 					.then(res => {
 						assert.deepEqual(res, testData.expectedResult);
 					}, err => {
 						assert.deepEqual(err.message, testData.expectedError);
 					})
-					.then(invokeDoneCallback, invokeDoneCallback);
+					.then(done, done);
 			});
 		});
 
