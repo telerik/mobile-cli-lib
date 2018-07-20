@@ -83,11 +83,82 @@ export class HooksServiceStub implements IHooksService {
 }
 
 export class SettingsService implements ISettingsService {
-	public setSettings (settings: IConfigurationSettings) {
+	public setSettings(settings: IConfigurationSettings) {
 		// Intentionally left blank
 	}
 
 	public getProfileDir() {
 		return "profileDir";
+	}
+}
+
+export class AndroidProcessServiceStub implements Mobile.IAndroidProcessService {
+	public MapAbstractToTcpPortResult = "stub";
+	public GetDebuggableAppsResult: Mobile.IDeviceApplicationInformation[] = [];
+	public GetMappedAbstractToTcpPortsResult: IDictionary<number> = {};
+	public GetAppProcessIdResult = "stub";
+	public GetAppProcessIdFailAttempts = 0;
+	public ForwardFreeTcpToAbstractPortResult = 0;
+
+	async mapAbstractToTcpPort(deviceIdentifier: string, appIdentifier: string, framework: string): Promise<string> {
+		return this.MapAbstractToTcpPortResult;
+	}
+	async getDebuggableApps(deviceIdentifier: string): Promise<Mobile.IDeviceApplicationInformation[]> {
+		return this.GetDebuggableAppsResult;
+	}
+	async getMappedAbstractToTcpPorts(deviceIdentifier: string, appIdentifiers: string[], framework: string): Promise<IDictionary<number>> {
+		return this.GetMappedAbstractToTcpPortsResult;
+	}
+	async getAppProcessId(deviceIdentifier: string, appIdentifier: string): Promise<string> {
+		while (this.GetAppProcessIdFailAttempts) {
+			this.GetAppProcessIdFailAttempts--;
+			return null;
+		}
+
+		return this.GetAppProcessIdResult;
+	}
+	async forwardFreeTcpToAbstractPort(portForwardInputData: Mobile.IPortForwardData): Promise<number> {
+		return this.ForwardFreeTcpToAbstractPortResult;
+	}
+}
+
+export class LogcatHelperStub implements Mobile.ILogcatHelper {
+	public StopCallCount = 0;
+	public StartCallCount = 0;
+	public LastStartCallOptions: Mobile.ILogcatStartOptions = {
+		deviceIdentifier: ""
+	};
+	public LastStopDeviceId = "";
+
+	async start(options: Mobile.ILogcatStartOptions): Promise<void> {
+		this.LastStartCallOptions = options;
+		this.StartCallCount++;
+	}
+
+	stop(deviceIdentifier: string): void {
+		this.LastStopDeviceId = deviceIdentifier;
+		this.StopCallCount++;
+	}
+}
+
+export class DeviceLogProviderStub implements Mobile.IDeviceLogProvider {
+	public logger = new CommonLoggerStub();
+	public currentDevicePids: IStringDictionary = {};
+	public currentDeviceProjectNames: IStringDictionary = {};
+
+	logData(line: string, platform: string, deviceIdentifier: string): void {
+		this.logger.write(line, platform, deviceIdentifier);
+	}
+
+	setLogLevel(level: string, deviceIdentifier?: string): void {
+		this.logger.setLevel(level);
+	}
+
+	setApplicationPidForDevice(deviceIdentifier: string, pid: string): void {
+		this.currentDevicePids[deviceIdentifier] = pid;
+	}
+
+	setProjectNameForDevice(deviceIdentifier: string, projectName: string): void {
+		this.currentDeviceProjectNames[deviceIdentifier] = projectName;
 	}
 }
