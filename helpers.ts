@@ -132,7 +132,8 @@ export function settlePromises<T>(promises: Promise<T>[]): Promise<T[]> {
 					if (settledPromisesCount === length) {
 						errors.length ? reject(new Error(`Multiple errors were thrown:${EOL}${errors.map(e => e.message || e).join(EOL)}`)) : resolve(results);
 					}
-				});
+				})
+				.catch();
 		});
 	});
 }

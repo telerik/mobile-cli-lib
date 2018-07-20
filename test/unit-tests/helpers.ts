@@ -462,10 +462,12 @@ describe("helpers", () => {
 				helpers.settlePromises<any>(testData.input)
 					.then(res => {
 						assert.deepEqual(res, testData.expectedResult);
-					}, err => {
+					})
+					.catch(err => {
 						assert.deepEqual(err.message, testData.expectedError);
 					})
-					.then(done, done);
+					.then(done)
+					.catch(done);
 			});
 		});
 

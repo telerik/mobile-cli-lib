@@ -9,13 +9,15 @@ export class ProgressIndicator implements IProgressIndicator {
 		let isFulfilled = false;
 
 		const tempPromise = new Promise<T>((resolve, reject) => {
-			promise.then((res) => {
-				isFulfilled = true;
-				resolve(res);
-			}, (err) => {
-				isFulfilled = true;
-				reject(err);
-			});
+			promise
+				.then(res => {
+					isFulfilled = true;
+					resolve(res);
+				})
+				.catch(err => {
+					isFulfilled = true;
+					reject(err);
+				});
 		});
 
 		if (!isInteractive()) {
