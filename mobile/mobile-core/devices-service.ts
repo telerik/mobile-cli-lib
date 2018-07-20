@@ -244,6 +244,20 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 		}
 	}
 
+	protected async detectCurrentlyAvailableEmulators() {
+		try {
+			await this.$androidEmulatorDiscovery.startLookingForDevices();
+		} catch (err) {
+			this.$logger.trace(`Error while checking for android emulators. ${err}`);
+		}
+
+		try {
+			await this.$iOSSimulatorDiscovery.checkForAvailableSimulators();
+		} catch (err) {
+			this.$logger.trace(`Error while checking for iOS simulators. ${err}`);
+		}
+	}
+
 	protected async startDeviceDetectionInterval(deviceInitOpts: Mobile.IDevicesServicesInitializationOptions = {}): Promise<void> {
 		this.$processService.attachToProcessExitSignals(this, this.clearDeviceDetectionInterval);
 
@@ -262,8 +276,7 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 				this.isDeviceDetectionIntervalInProgress = true;
 
 				await this.detectCurrentlyAttachedDevices(deviceInitOpts);
-				await this.$androidEmulatorDiscovery.startLookingForDevices();
-				await this.$iOSSimulatorDiscovery.checkForAvailableSimulators();
+				await this.detectCurrentlyAvailableEmulators();
 
 				try {
 					const trustedDevices = _.filter(this._devices, device => device.deviceInfo.status === constants.CONNECTED_STATUS);
