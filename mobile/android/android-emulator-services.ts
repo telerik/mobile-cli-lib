@@ -73,7 +73,7 @@ export class AndroidEmulatorServices implements Mobile.IEmulatorPlatformService 
 		if (!emulator) {
 			return {
 				runningEmulator: null,
-				errors: [`No emulator image available for emulator '${options.emulatorIdOrName || options.imageIdentifier}'.`],
+				errors: [`No emulator image available for device identifier '${options.emulatorIdOrName || options.imageIdentifier}'.`],
 				endTimeEpoch
 			};
 		}
