@@ -23,7 +23,8 @@ export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 
 	public async executeCommand(args: string[], options?: Mobile.IAndroidDebugBridgeCommandOptions): Promise<any> {
 		let event = "close";
-		const command = await this.composeCommand(args);
+		const deviceIdentifier = options && options.deviceIdentifier;
+		const command = await this.composeCommand(args, deviceIdentifier);
 		let treatErrorsAsWarnings = false;
 		let childProcessOptions: any = undefined;
 

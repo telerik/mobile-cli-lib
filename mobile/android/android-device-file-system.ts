@@ -83,9 +83,9 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	}
 
 	public async transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): Promise<Mobile.ILocalToDevicePathData[]> {
-		const currentShasums: IStringDictionary = {};
 		const deviceHashService = this.getDeviceHashService(deviceAppData.appIdentifier);
-		const devicePaths: string[] = await deviceHashService.generateHashesFromLocalToDevicePaths(localToDevicePaths, currentShasums);
+		const currentShasums: IStringDictionary = await deviceHashService.generateHashesFromLocalToDevicePaths(localToDevicePaths);
+		const devicePaths: string[] = await deviceHashService.getDevicePaths(localToDevicePaths);
 
 		const commandsDeviceFilePath = this.$mobileHelper.buildDevicePath(await deviceAppData.getDeviceProjectRootPath(), "nativescript.commands.sh");
 
@@ -98,7 +98,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 			transferredFiles = localToDevicePaths;
 		} else {
 			// Create or update file hashes on device
-			const changedShasums: any = _.omitBy(currentShasums, (hash: string, pathToFile: string) => !!_.find(oldShasums, (oldHash: string, oldPath: string) => pathToFile === oldPath && hash === oldHash));
+			const changedShasums = deviceHashService.getChangedShasums(oldShasums, currentShasums);
 			this.$logger.trace("Changed file hashes are:", changedShasums);
 			filesToChmodOnDevice = [];
 

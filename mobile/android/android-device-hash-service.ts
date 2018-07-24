@@ -52,22 +52,29 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 		return false;
 	}
 
-	public async generateHashesFromLocalToDevicePaths(localToDevicePaths: Mobile.ILocalToDevicePathData[], shasums: IStringDictionary): Promise<string[]> {
-		const devicePaths: string[] = [];
+	public async generateHashesFromLocalToDevicePaths(localToDevicePaths: Mobile.ILocalToDevicePathData[], initialShasums: IStringDictionary = {}): Promise<IStringDictionary> {
 		const action = async (localToDevicePathData: Mobile.ILocalToDevicePathData) => {
 			const localPath = localToDevicePathData.getLocalPath();
 			if (this.$fs.getFsStats(localPath).isFile()) {
 				// TODO: Use relative to project path for key
 				// This will speed up livesync on the same device for the same project on different PCs.
-				shasums[localPath] = await this.$fs.getFileShasum(localPath);
+				initialShasums[localPath] = await this.$fs.getFileShasum(localPath);
 			}
-
-			devicePaths.push(`"${localToDevicePathData.getDevicePath()}"`);
 		};
 
 		await executeActionByChunks<Mobile.ILocalToDevicePathData>(localToDevicePaths, DEFAULT_CHUNK_SIZE, action);
 
-		return devicePaths;
+		return initialShasums;
+	}
+
+	public getDevicePaths(localToDevicePaths: Mobile.ILocalToDevicePathData[]): string[] {
+		return _.map(localToDevicePaths, (localToDevicePathData => {
+			return `"${localToDevicePathData.getDevicePath()}"`;
+		}));
+	}
+
+	public getChangedShasums(oldShasums: IStringDictionary, currentShasums: IStringDictionary): IStringDictionary {
+		return _.omitBy(currentShasums, (hash: string, pathToFile: string) => !!_.find(oldShasums, (oldHash: string, oldPath: string) => pathToFile === oldPath && hash === oldHash));
 	}
 
 	public async removeHashes(localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<boolean> {

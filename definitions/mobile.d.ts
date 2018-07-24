@@ -359,10 +359,11 @@ declare module Mobile {
 	}
 
 	interface IAndroidDebugBridgeCommandOptions {
-		fromEvent?: string,
-		returnChildProcess?: boolean,
-		treatErrorsAsWarnings?: boolean,
-		childProcessOptions?: any
+		fromEvent?: string;
+		returnChildProcess?: boolean;
+		treatErrorsAsWarnings?: boolean;
+		childProcessOptions?: any;
+		deviceIdentifier?: string;
 	}
 
 	interface IAndroidDebugBridge {
@@ -1068,9 +1069,24 @@ declare module Mobile {
 		 * Generates hashes of specified localToDevicePaths by chunks and persists them in the passed @shasums argument.
 		 * @param {Mobile.ILocalToDevicePathData[]} localToDevicePaths The localToDevicePaths objects for which the hashes should be generated.
 		 * @param {IStringDicitionary} shasums Object in which the shasums will be persisted.
-		 * @returns {Promise<string>[]} DevicePaths of all elements from the input localToDevicePaths.
+		 * @returns {Promise<IStringDictionary>} The generated/updated shasums.
 		 */
-		generateHashesFromLocalToDevicePaths(localToDevicePaths: Mobile.ILocalToDevicePathData[], shasums: IStringDictionary): Promise<string[]>;
+		generateHashesFromLocalToDevicePaths(localToDevicePaths: Mobile.ILocalToDevicePathData[], initialShasums?: IStringDictionary): Promise<IStringDictionary>;
+
+		/**
+		 * Generates DevicePaths of all elements from the input localToDevicePaths.
+		 * @param {Mobile.ILocalToDevicePathData[]} localToDevicePaths The localToDevicePaths objects for which the DevicePaths should be generated.
+		 * @returns {string[]} DevicePaths of all elements from the input localToDevicePaths.
+		 */
+		getDevicePaths(localToDevicePaths: Mobile.ILocalToDevicePathData[]): string[];
+
+		/**
+		 * Returns the changed shasums based on the provided 
+		 * @param {IStringDictionary} oldShasums The old shasums on the device
+		 * @param {IStringDictionary} currentShasums The current shasums on the local project
+		 * @returns {string[]} Returns the shasums that changed
+		 */
+		getChangedShasums(oldShasums: IStringDictionary, currentShasums: IStringDictionary): IStringDictionary
 	}
 
 	/**
