@@ -178,4 +178,32 @@ describe('androidDebugBridge', () => {
 			assert.deepEqual(allSpawnedEventsArgs[2], [ 'shell', 'chmod', '0777', sampleDeviceFolder ]);
 		});
 	});
+
+	describe("pushDir", () => {
+		it("should ensure directory is pushed with correct permissions", async () => {
+			const localDirPath = "myLocalDirRoot/dirName";
+			const deviceDirPath = "myDeviceDirRoot";
+			setup();
+
+			await adb.pushDir(localDirPath, deviceDirPath);
+
+			assert.isTrue(isAdbSpawnedFromEvent);
+			assert.equal(allSpawnedEventsArgs.length, 2);
+			assert.deepEqual(allSpawnedEventsArgs[0], ["push", localDirPath, deviceDirPath]);
+			assert.deepEqual(allSpawnedEventsArgs[1], ["shell", "chmod", "0777", deviceDirPath]);
+		});
+	});
+
+	describe("removeFile", () => {
+		it("should remove file from device", async () => {
+			const deviceFilePath = "myDeviceDirRoot/myFile.js";
+			setup();
+
+			await adb.removeFile(deviceFilePath);
+
+			assert.isTrue(isAdbSpawnedFromEvent);
+			assert.equal(allSpawnedEventsArgs.length, 1);
+			assert.deepEqual(allSpawnedEventsArgs[0], ["shell", "rm", "-rf", deviceFilePath]);
+		});
+	});
 });
