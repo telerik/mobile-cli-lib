@@ -38,7 +38,11 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 		}
 	}
 
-	public async checkForAvailableSimulators() {
+	public async checkForAvailableSimulators(): Promise<Mobile.IDeviceInfo[]> {
+		if (!this.$hostInfo.isDarwin) {
+			return [];
+		}
+
 		const simulators = (await this.$iOSEmulatorServices.getAvailableEmulators()).devices;
 		const currentSimulators = _.values(this.availableSimulators);
 		const lostSimulators: Mobile.IDeviceInfo[] = [];
