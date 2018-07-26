@@ -117,6 +117,7 @@ export class Logger implements ILogger {
 	public printMsgWithTimeout(message: string, timeout: number): Promise<void> {
 		return new Promise<void>((resolve, reject) => {
 			setTimeout(() => {
+				console.log("print logger");
 				this.printInfoMessageOnSameLine(message);
 				resolve();
 			}, timeout);

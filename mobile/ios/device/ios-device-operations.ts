@@ -56,6 +56,7 @@ export class IOSDeviceOperations extends EventEmitter implements IIOSDeviceOpera
 				const maxIterationsCount = 3;
 
 				const intervalHandle: NodeJS.Timer = setInterval(() => {
+					console.log("ios looking for devices")
 					if (foundDevice) {
 						resolve();
 						return clearInterval(intervalHandle);

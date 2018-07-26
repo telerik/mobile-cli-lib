@@ -284,7 +284,10 @@ export function getCurrentEpochTime(): number {
 
 export async function sleep(ms: number): Promise<void> {
 	return new Promise<void>((resolve, reject) => {
-		setTimeout(async () => resolve(), ms);
+		setTimeout(async () => {
+			console.log("sleep");
+			resolve()
+		}, ms);
 	});
 }
 
@@ -465,6 +468,7 @@ export async function connectEventuallyUntilTimeout(factory: () => net.Socket, t
 		let isResolved = false;
 
 		setTimeout(function () {
+			console.log("connect eventually");
 			if (!isResolved) {
 				isResolved = true;
 				reject(lastKnownError);
@@ -472,6 +476,7 @@ export async function connectEventuallyUntilTimeout(factory: () => net.Socket, t
 		}, timeout);
 
 		function tryConnect() {
+			console.log("try connect");
 			const tryConnectAfterTimeout = (error: Error) => {
 				if (isResolved) {
 					return;

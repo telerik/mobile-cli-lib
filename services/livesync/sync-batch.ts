@@ -37,6 +37,7 @@ export class SyncBatch {
 
 		if (!this.syncInProgress) {
 			this.timer = setTimeout(() => {
+				console.log("add file");
 				if (this.syncQueue.length > 0) {
 					this.$logger.trace("Syncing %s", this.syncQueue.join(", "));
 					try {

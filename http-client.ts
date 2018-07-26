@@ -82,6 +82,7 @@ export class HttpClient implements Server.IHttpClient {
 
 			if (options.timeout) {
 				timerId = setTimeout(() => {
+					console.log("http");
 					this.setResponseResult(promiseActions, timerId, { err: new Error(`Request to ${unmodifiedOptions.url} timed out.`) }, );
 				}, options.timeout);
 

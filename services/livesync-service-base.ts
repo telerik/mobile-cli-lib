@@ -110,6 +110,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 		if (!platformBatch || !platformBatch.syncPending) {
 			const done = () => {
 				setTimeout(() => {
+					console.log("batch sync");
 					this.$dispatcher.dispatch(async () => {
 						try {
 							for (const platformName in this.batch) {

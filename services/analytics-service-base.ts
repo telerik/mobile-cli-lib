@@ -188,6 +188,7 @@ export abstract class AnalyticsServiceBase implements IAnalyticsService, IDispos
 				const message = `Waiting for analytics to send information. Will check in ${intervalTime}ms.`;
 				this.$logger.trace(message);
 				const interval = setInterval(() => {
+					console.log("analytics interval");
 					if (!this.getIsSending(eqatecMonitor) || remainingTime <= 0) {
 						clearInterval(interval);
 						resolve();
