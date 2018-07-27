@@ -1,3 +1,5 @@
+// const wtf = require('wtfnode');
+
 export class ProcessService implements IProcessService {
 	private static PROCESS_EXIT_SIGNALS = ["exit", "SIGINT", "SIGTERM"];
 	private _listeners: IListener[];
@@ -15,7 +17,12 @@ export class ProcessService implements IProcessService {
 
 		if (this._listeners.length === 0) {
 			_.each(ProcessService.PROCESS_EXIT_SIGNALS, (signal: string) => {
-				process.on(signal, () => this.executeAllCallbacks.apply(this));
+				process.on(signal, () => {
+					// wtf.dump();
+					console.log("HANDLERS: " + (<any>process)._getActiveHandles());
+					console.log("REQUESTS: " + (<any>process)._getActiveRequests());
+					this.executeAllCallbacks.apply(this);
+				});
 			});
 		}
 

@@ -45,7 +45,7 @@ export class ChildProcess extends EventEmitter implements IChildProcess {
 	}
 
 	public spawn(command: string, args?: string[], options?: any): child_process.ChildProcess {
-		this.$logger.debug("spawn: %s %s", command, this.getArgumentsAsQuotedString(args));
+		// this.$logger.info("spawn: %s %s", command, this.getArgumentsAsQuotedString(args));
 		return child_process.spawn(command, args, options);
 	}
 

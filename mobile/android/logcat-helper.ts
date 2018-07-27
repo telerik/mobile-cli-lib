@@ -49,13 +49,14 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 				this.$deviceLogProvider.logData(lineText, this.$devicePlatformsConstants.Android, deviceIdentifier);
 			});
 
-			this.$processService.attachToProcessExitSignals(this, logcatStream.kill);
+			this.$processService.attachToProcessExitSignals(this, () => this.stop(deviceIdentifier));
 		}
 	}
 
 	public stop(deviceIdentifier: string): void {
 		if (this.mapDevicesLoggingData[deviceIdentifier]) {
 			this.mapDevicesLoggingData[deviceIdentifier].loggingProcess.removeAllListeners();
+			this.mapDevicesLoggingData[deviceIdentifier].loggingProcess.kill("SIGINT");
 			this.mapDevicesLoggingData[deviceIdentifier].lineStream.removeAllListeners();
 		}
 		delete this.mapDevicesLoggingData[deviceIdentifier];

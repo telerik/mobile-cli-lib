@@ -58,6 +58,7 @@ export class HooksService implements IHooksService {
 	}
 
 	public executeAfterHooks(commandName: string, hookArguments?: IDictionary<any>): Promise<void> {
+		// console.trace(">>>> EXECUTING AFTER HOOKS: " + commandName);
 		const afterHookName = `after-${HooksService.formatHookName(commandName)}`;
 		const traceMessage = `AfterHookName for command ${commandName} is ${afterHookName}`;
 		return this.executeHooks(afterHookName, traceMessage, hookArguments);
@@ -99,7 +100,7 @@ export class HooksService implements IHooksService {
 		const hooks = this.getHooksByName(directoryPath, hookName);
 		for (let i = 0; i < hooks.length; ++i) {
 			const hook = hooks[i];
-			this.$logger.info("Executing %s hook from %s", hookName, hook.fullPath);
+			// console.trace("Executing %s hook from %s", hookName, hook.fullPath);
 			let command = this.getSheBangInterpreter(hook);
 			let inProc = false;
 			if (!command) {
