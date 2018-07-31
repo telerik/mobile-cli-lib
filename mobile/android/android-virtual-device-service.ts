@@ -8,13 +8,15 @@ import { settlePromises } from "../../helpers";
 
 export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDeviceService {
 	private androidHome: string;
+	private mapEmulatorIdToImageIdentifier: IStringDictionary = {};
 
 	constructor(private $androidIniFileParser: Mobile.IAndroidIniFileParser,
 		private $childProcess: IChildProcess,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $emulatorHelper: Mobile.IEmulatorHelper,
 		private $fs: IFileSystem,
-		private $hostInfo: IHostInfo) {
+		private $hostInfo: IHostInfo,
+		private $logger: ILogger) {
 			this.androidHome = process.env.ANDROID_HOME;
 		}
 
@@ -43,7 +45,7 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 		return emulatorIds;
 	}
 
-	public  async getRunningEmulatorName(emulatorId: string): Promise<string> {
+	public async getRunningEmulatorName(emulatorId: string): Promise<string> {
 		const imageIdentifier = await this.getRunningEmulatorImageIdentifier(emulatorId);
 		const iniFilePath = path.join(this.pathToAvdHomeDir, `${imageIdentifier}.ini`);
 		const iniFileInfo = this.$androidIniFileParser.parseIniFile(iniFilePath);
@@ -81,6 +83,10 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 	}
 
 	public getRunningEmulatorImageIdentifier(emulatorId: string): Promise<string> {
+		if (this.mapEmulatorIdToImageIdentifier[emulatorId]) {
+			return Promise.resolve(this.mapEmulatorIdToImageIdentifier[emulatorId]);
+		}
+
 		const match = emulatorId.match(/^emulator-(\d+)/);
 		const portNumber = match && match[1];
 		if (!portNumber) {
@@ -115,6 +121,11 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 				}
 
 				client.end();
+			});
+
+			client.on('error', error => {
+				this.$logger.trace(`Error while checking emulator identifier for ${emulatorId}. More info: ${error}.`);
+				resolve(null);
 			});
 		});
 	}
