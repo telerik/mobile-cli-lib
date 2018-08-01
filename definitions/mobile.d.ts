@@ -369,7 +369,29 @@ declare module Mobile {
 	interface IAndroidDebugBridge {
 		executeCommand(args: string[], options?: IAndroidDebugBridgeCommandOptions): Promise<any>;
 		executeShellCommand(args: string[], options?: IAndroidDebugBridgeCommandOptions): Promise<any>;
+		/**
+		 * Transfers file from local machine to device.
+		 * @param localFilePath - The path to file on local machine.
+		 * @param deviceFilePath - The path to file on device.
+		 */
 		pushFile(localFilePath: string, deviceFilePath: string): Promise<void>;
+		/**
+		 * Transfers directory from local machine to device.
+		 * @param localDirPath - The path to directory on local machine.
+		 * @param deviceDirPath - The path to directory on device.
+		 */
+		pushDir(localDirPath: string, deviceDirPath: string): Promise<void>;
+		/**
+		 * Removes the provided file from device.
+		 * @param deviceFilePath - The path to file on device.
+		 */
+		removeFile(deviceFilePath: string): Promise<void>;
+		/**
+		 * Changes file mode bits for the provided device path as specified by mode parameter. 
+		 * @param devicePath - The path to file on device.
+		 * @param mode - The new mode bits of the device path. Defaults to 0777 in case when is not provided.
+		 */
+		chmod(devicePath: string, mode?: string): Promise<void>;
 		/**
 		 * Gets the property value from device
 		 * @param deviceId The identifier of device

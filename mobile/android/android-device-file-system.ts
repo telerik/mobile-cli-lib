@@ -69,7 +69,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 
 		await executeActionByChunks<Mobile.ILocalToDevicePathData>(localToDevicePaths, DEFAULT_CHUNK_SIZE, action);
 
-		const dirsChmodAction = (directoryToChmod: string) => this.adb.executeShellCommand(["chmod", "0777", directoryToChmod]);
+		const dirsChmodAction = (directoryToChmod: string) => this.adb.chmod(directoryToChmod);
 
 		await executeActionByChunks<string>(_.uniq(directoriesToChmod), DEFAULT_CHUNK_SIZE, dirsChmodAction);
 
@@ -93,8 +93,8 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		let transferredFiles: Mobile.ILocalToDevicePathData[] = [];
 		const oldShasums = await deviceHashService.getShasumsFromDevice();
 		if (this.$options.force || !oldShasums) {
-			await this.adb.executeShellCommand(["rm", "-rf", deviceHashService.hashFileDevicePath]);
-			await this.adb.pushFile(projectFilesPath, await deviceAppData.getDeviceProjectRootPath());
+			await this.adb.removeFile(deviceHashService.hashFileDevicePath);
+			await this.adb.pushDir(projectFilesPath, await deviceAppData.getDeviceProjectRootPath());
 			transferredFiles = localToDevicePaths;
 		} else {
 			// Create or update file hashes on device
@@ -139,7 +139,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 
 		// copy it to the device
 		await this.transferFile(commandsFileHostPath, deviceFilePath);
-		await this.adb.executeShellCommand(["chmod", "0777", deviceFilePath]);
+		await this.adb.chmod(deviceFilePath);
 	}
 
 	private getTempDir(): string {

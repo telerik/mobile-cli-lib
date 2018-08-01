@@ -87,9 +87,30 @@ export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 	public async pushFile(localFilePath: string, deviceFilePath: string): Promise<void> {
 		const fileDirectory = path.normalize(path.dirname(deviceFilePath));
 		// starting from API level 28, the push command is returning an error if the directory does not exist
-		await this.executeShellCommand(["mkdir", "-p", fileDirectory]);
-		await this.executeCommand(["push", localFilePath, deviceFilePath]);
-		await this.executeShellCommand(["chmod", "0777", fileDirectory]);
+		await this.mkDir(fileDirectory);
+		await this.push(localFilePath, deviceFilePath);
+		await this.chmod(fileDirectory);
+	}
+
+	public async pushDir(localDirPath: string, deviceDirPath: string): Promise<void> {
+		await this.push(localDirPath, deviceDirPath);
+		await this.chmod(deviceDirPath);
+	}
+
+	public async removeFile(deviceFilePath: string): Promise<void> {
+		await this.executeShellCommand(["rm", "-rf", deviceFilePath]);
+	}
+
+	public async chmod(devicePath: string, mode?: string): Promise<void> {
+		await this.executeShellCommand(["chmod", mode || "0777", devicePath]);
+	}
+
+	private async push(localPath: string, devicePath: string): Promise<void> {
+		await this.executeCommand(["push", localPath, devicePath]);
+	}
+
+	private async mkDir(devicePath: string): Promise<void> {
+		await this.executeShellCommand(["mkdir", "-p", devicePath]);
 	}
 }
 
