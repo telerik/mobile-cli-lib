@@ -11,11 +11,15 @@ import { assert } from "chai";
 
 const myTestAppIdentifier = "org.nativescript.myApp";
 let isAdbPushExecuted = false;
+let isAdbPushDirCalled = false;
 
 class AndroidDebugBridgeMock {
 	public executeCommand(args: string[]) {
 		if (args[0] === "push") {
 			isAdbPushExecuted = true;
+			if (args.length >= 3 && args[2] === "/data/local/tmp/sync") {
+				isAdbPushDirCalled = true;
+			}
 		}
 
 		return Promise.resolve();
@@ -93,12 +97,25 @@ function createAndroidDeviceFileSystem(injector: IInjector) {
 	return androidDeviceFileSystem;
 }
 
-function createDeviceAppData() {
-	return { getDeviceProjectRootPath: async () => "/data/local/tmp/sync", appIdentifier: myTestAppIdentifier };
+function createDeviceAppData(androidVersion?: string) {
+	return {
+		getDeviceProjectRootPath: async () => "/data/local/tmp/sync", appIdentifier: myTestAppIdentifier,
+		device: {
+			deviceInfo: {
+				version: androidVersion || "8.1.2"
+			}
+		}
+	};
 }
 
-describe("Android device file system tests", () => {
-	describe("Transfer directory unit tests", () => {
+describe("AndroidDeviceFileSystem", () => {
+
+	beforeEach(() => {
+		isAdbPushExecuted = false;
+		isAdbPushDirCalled = false;
+	});
+
+	describe("transferDirectory", () => {
 		it("pushes the whole directory when hash file doesn't exist on device", async () => {
 			const injector = createTestInjector();
 			const deviceAppData = createDeviceAppData();
@@ -118,7 +135,29 @@ describe("Android device file system tests", () => {
 			await androidDeviceFileSystem.transferDirectory(deviceAppData, localToDevicePaths, "~/TestApp/app");
 
 			assert.isTrue(isAdbPushExecuted);
-			isAdbPushExecuted = false;
+			assert.isTrue(isAdbPushDirCalled);
+		});
+
+		it("pushes the whole directory file by file on android P when hash file doesn't exist on device", async () => {
+			const injector = createTestInjector();
+			const deviceAppData = createDeviceAppData("9");
+
+			const fileToShasumDictionary: IStringDictionary = {
+				"~/TestApp/app/test.js": "1",
+				"~/TestApp/app/myfile.js": "2"
+			};
+			const localToDevicePaths = _.keys(fileToShasumDictionary).map(file => injector.resolve(LocalToDevicePathDataMock, { filePath: file }));
+
+			const fs = injector.resolve("fs");
+			fs.getFileShasum = async (filePath: string) => fileToShasumDictionary[filePath];
+			fs.exists = (filePath: string) => false;
+			fs.getFsStats = mockFsStats({ isDirectory: false, isFile: true });
+
+			const androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
+			await androidDeviceFileSystem.transferDirectory(deviceAppData, localToDevicePaths, "~/TestApp/app");
+
+			assert.isTrue(isAdbPushExecuted);
+			assert.isFalse(isAdbPushDirCalled);
 		});
 
 		it("pushes the whole directory when force option is specified", async () => {
@@ -134,7 +173,23 @@ describe("Android device file system tests", () => {
 			await androidDeviceFileSystem.transferDirectory(createDeviceAppData(), [], "~/TestApp/app");
 
 			assert.isTrue(isAdbPushExecuted);
-			isAdbPushExecuted = false;
+			assert.isTrue(isAdbPushDirCalled);
+		});
+
+		it("pushes the whole directory file by file when force option is specified", async () => {
+			const injector = createTestInjector();
+
+			const options = injector.resolve("options");
+			options.force = true;
+
+			const fs = injector.resolve("fs");
+			fs.getFileShasum = async (filePath: string) => "0";
+
+			const androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
+			await androidDeviceFileSystem.transferDirectory(createDeviceAppData("9"), [], "~/TestApp/app");
+
+			assert.isTrue(isAdbPushExecuted);
+			assert.isFalse(isAdbPushDirCalled);
 		});
 
 		it("pushes only changed file when hash file exists on device", async () => {
@@ -164,6 +219,7 @@ describe("Android device file system tests", () => {
 
 			await androidDeviceFileSystem.transferDirectory(deviceAppData, localToDevicePaths, "~/TestApp/app");
 			await promise;
+			assert.isFalse(isAdbPushDirCalled);
 		});
 
 		it("pushes only changed files when hashes file exists on device", async () => {
@@ -185,17 +241,18 @@ describe("Android device file system tests", () => {
 			fs.readText = () => "";
 
 			const androidDeviceFileSystem = createAndroidDeviceFileSystem(injector);
-			const transferedFilesOnDevice: string[] = [];
+			const transferredFilesOnDevice: string[] = [];
 			androidDeviceFileSystem.transferFile = (localPath: string, devicePath: string) => {
-				transferedFilesOnDevice.push(localPath);
+				transferredFilesOnDevice.push(localPath);
 				return Promise.resolve();
 			};
 			await androidDeviceFileSystem.transferDirectory(deviceAppData, localToDevicePaths, "~/TestApp/app");
 
-			assert.equal(transferedFilesOnDevice.length, 2);
-			assert.isTrue(_.includes(transferedFilesOnDevice, "~/TestApp/app/test.js"));
-			assert.isTrue(_.includes(transferedFilesOnDevice, "~/TestApp/app/myfile.js"));
-			assert.isFalse(_.includes(transferedFilesOnDevice, "~/TestApp/app/notchangedFile.js"));
+			assert.equal(transferredFilesOnDevice.length, 2);
+			assert.isTrue(_.includes(transferredFilesOnDevice, "~/TestApp/app/test.js"));
+			assert.isTrue(_.includes(transferredFilesOnDevice, "~/TestApp/app/myfile.js"));
+			assert.isFalse(_.includes(transferredFilesOnDevice, "~/TestApp/app/notchangedFile.js"));
+			assert.isFalse(isAdbPushDirCalled);
 		});
 
 		it("pushes files which has different location when hash file exists on device", async () => {
@@ -221,6 +278,7 @@ describe("Android device file system tests", () => {
 				return Promise.resolve();
 			};
 			await androidDeviceFileSystem.transferDirectory(deviceAppData, localToDevicePaths, "~/TestApp/app");
+			assert.isFalse(isAdbPushDirCalled);
 		});
 
 		it("pushes files which has different location and different shasum when hash file exists on device", async () => {
@@ -246,6 +304,7 @@ describe("Android device file system tests", () => {
 				return Promise.resolve();
 			};
 			await androidDeviceFileSystem.transferDirectory(deviceAppData, localToDevicePaths, "~/TestApp/app");
+			assert.isFalse(isAdbPushDirCalled);
 		});
 	});
 });
