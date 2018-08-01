@@ -115,7 +115,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 
 	private async chmodFiles(deviceProjectRoot: string, filesToChmodOnDevice: string[]) {
 		const commandsDeviceFilePath = this.$mobileHelper.buildDevicePath(deviceProjectRoot, "nativescript.commands.sh");
-		await this.createFileOnDevice(commandsDeviceFilePath, "chmod 0777 " + filesToChmodOnDevice.join(" "));
+		await this.createFileOnDevice(commandsDeviceFilePath, `chmod 0777 ${filesToChmodOnDevice.join(" ")}`);
 		await this.adb.executeShellCommand([commandsDeviceFilePath]);
 	}
 
