@@ -8,6 +8,7 @@ import { DevicePlatformsConstants } from "../../../mobile/device-platforms-const
 
 import * as path from "path";
 import { assert } from "chai";
+import { LiveSyncPaths } from "../../../constants";
 
 const myTestAppIdentifier = "org.nativescript.myApp";
 let isAdbPushExecuted = false;
@@ -44,7 +45,7 @@ class LocalToDevicePathDataMock {
 	}
 
 	public getDevicePath(): string {
-		return "/data/local/tmp/" + path.basename(this.filePath);
+		return  `${LiveSyncPaths.ANDROID_TMP_DIR_NAME}/${path.basename(this.filePath)}`;
 	}
 }
 
@@ -101,7 +102,7 @@ function createAndroidDeviceFileSystem(injector: IInjector) {
 
 function createDeviceAppData(androidVersion?: string) {
 	return {
-		getDeviceProjectRootPath: async () => "/data/local/tmp/sync", appIdentifier: myTestAppIdentifier,
+		getDeviceProjectRootPath: async () => `${LiveSyncPaths.ANDROID_TMP_DIR_NAME}/${LiveSyncPaths.SYNC_DIR_NAME}`, appIdentifier: myTestAppIdentifier,
 		device: {
 			deviceInfo: {
 				version: androidVersion || "8.1.2"

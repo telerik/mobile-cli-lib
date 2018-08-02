@@ -29,11 +29,20 @@ export const NOT_RUNNING_EMULATOR_STATUS = "Not running";
 
 export const APPLE_VENDOR_NAME = "Apple";
 
+export class LiveSyncPaths {
+	static SYNC_DIR_NAME = "sync";
+	static REMOVEDSYNC_DIR_NAME = "removedsync";
+	static FULLSYNC_DIR_NAME = "fullsync";
+	static IOS_DEVICE_PROJECT_ROOT_PATH = "Library/Application Support/LiveSync";
+	static IOS_DEVICE_SYNC_ZIP_PATH = "Library/Application Support/LiveSync/sync.zip";
+	static ANDROID_TMP_DIR_NAME = "/data/local/tmp";
+}
+
 export class LiveSyncConstants {
 	static VERSION_2 = 2;
 	static VERSION_3 = 3;
 	static GUID = "12590FAA-5EDD-4B12-856D-F52A0A1599F2";
-	static DEVICE_TMP_DIR_FORMAT_V2 = `/data/local/tmp/${LiveSyncConstants.GUID}/%s`;
+	static DEVICE_TMP_DIR_FORMAT_V2 = `${LiveSyncPaths.ANDROID_TMP_DIR_NAME}/${LiveSyncConstants.GUID}/%s`;
 	static ANDROID_FILES_PATH = `files/${LiveSyncConstants.GUID}`;
 	static DEVICE_TMP_DIR_FORMAT_V3 = `/mnt/sdcard/Android/data/%s/${LiveSyncConstants.ANDROID_FILES_PATH}`;
 	static CHECK_LIVESYNC_INTENT_NAME = "com.telerik.IsLiveSyncSupported";

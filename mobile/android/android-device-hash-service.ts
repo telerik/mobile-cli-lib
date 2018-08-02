@@ -2,11 +2,10 @@ import * as path from "path";
 import * as temp from "temp";
 import { cache } from "../../decorators";
 import { executeActionByChunks } from "../../helpers";
-import { DEFAULT_CHUNK_SIZE } from "../../constants";
+import { DEFAULT_CHUNK_SIZE, LiveSyncPaths } from "../../constants";
 
 export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashService {
 	private static HASH_FILE_NAME = "hashes";
-	private static DEVICE_ROOT_PATH = "/data/local/tmp";
 
 	constructor(private adb: Mobile.IDeviceAndroidDebugBridge,
 		private appIdentifier: string,
@@ -16,7 +15,7 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 
 	@cache()
 	public get hashFileDevicePath(): string {
-		return this.$mobileHelper.buildDevicePath(AndroidDeviceHashService.DEVICE_ROOT_PATH, this.appIdentifier, AndroidDeviceHashService.HASH_FILE_NAME);
+		return this.$mobileHelper.buildDevicePath(LiveSyncPaths.ANDROID_TMP_DIR_NAME, this.appIdentifier, AndroidDeviceHashService.HASH_FILE_NAME);
 	}
 
 	public async doesShasumFileExistsOnDevice(): Promise<boolean> {
