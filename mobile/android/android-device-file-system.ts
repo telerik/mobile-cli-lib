@@ -158,6 +158,10 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		await this.adb.executeShellCommand(["chmod", "0777", deviceFilePath]);
 	}
 
+	public async deleteFile(deviceFilePath: string, appIdentifier: string): Promise<void> {
+		await this.adb.executeShellCommand(["rm", "-rf", deviceFilePath]);
+	}
+
 	private getTempDir(): string {
 		temp.track();
 		return temp.mkdirSync("application-");
