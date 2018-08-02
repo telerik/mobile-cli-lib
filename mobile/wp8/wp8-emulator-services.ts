@@ -37,7 +37,7 @@ class Wp8EmulatorServices implements Mobile.IEmulatorPlatformService {
 		this.$childProcess.spawn(emulatorStarter, ["/installlaunch", app, "/targetdevice:xd"], { stdio: "ignore", detached: true }).unref();
 	}
 
-	public async getAvailableEmulators(): Promise<Mobile.IAvailableEmulatorsOutput> {
+	public async getEmulatorImages(): Promise<Mobile.IEmulatorImagesOutput> {
 		return { devices: [], errors: []};
 	}
 

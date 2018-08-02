@@ -502,7 +502,7 @@ declare module Mobile {
 		 * @param options The options that can be passed to filter the result.
 		 * @returns {Promise<Mobile.IListEmulatorsOutput>} Dictionary with the following format: { ios: { devices: Mobile.IDeviceInfo[], errors: string[] }, android: { devices: Mobile.IDeviceInfo[], errors: string[]}}.
 		 */
-		getAvailableEmulators(options?: Mobile.IListEmulatorsOptions): Promise<Mobile.IListEmulatorsOutput>;
+		getEmulatorImages(options?: Mobile.IListEmulatorsOptions): Promise<Mobile.IListEmulatorsOutput>;
 
 		/**
 		 * Starts an emulator by provided options.
@@ -516,12 +516,12 @@ declare module Mobile {
 		platform?: string;
 	}
 
-	interface IListEmulatorsOutput extends IDictionary<IAvailableEmulatorsOutput> {
-		ios: IAvailableEmulatorsOutput;
-		android: IAvailableEmulatorsOutput;
+	interface IListEmulatorsOutput extends IDictionary<IEmulatorImagesOutput> {
+		ios: IEmulatorImagesOutput;
+		android: IEmulatorImagesOutput;
 	}
 
-	interface IAvailableEmulatorsOutput {
+	interface IEmulatorImagesOutput {
 		devices: Mobile.IDeviceInfo[];
 		errors: string[];
 	}
@@ -675,9 +675,9 @@ declare module Mobile {
 	interface IEmulatorPlatformService {
 		/**
 		 * Gets all available emulators
-		 * @returns {Promise<Mobile.IAvailableEmulatorsOutput>}
+		 * @returns {Promise<Mobile.IEmulatorImagesOutput>}
 		 */
-		getAvailableEmulators(): Promise<Mobile.IAvailableEmulatorsOutput>;
+		getEmulatorImages(): Promise<Mobile.IEmulatorImagesOutput>;
 		/**
 		 * Gets the ids of all running emulators
 		 * @returns {Promise<string[]>}
@@ -710,10 +710,10 @@ declare module Mobile {
 	interface IAndroidVirtualDeviceService {
 		/**
 		 * Gets all available emulators.
-		 * @returns {Promise<Mobile.IAvailableEmulatorsOutput>} - Dictionary in the following format: { devices: Mobile.IDevice[], errors: string[] }.
+		 * @returns {Promise<Mobile.IEmulatorImagesOutput>} - Dictionary in the following format: { devices: Mobile.IDevice[], errors: string[] }.
 		 * Returns array of all available android emulators - genymotion and native avd emulators and array of errors.
 		 */
-		getAvailableEmulators(adbDevicesOutput: string[]): Promise<Mobile.IAvailableEmulatorsOutput>;
+		getEmulatorImages(adbDevicesOutput: string[]): Promise<Mobile.IEmulatorImagesOutput>;
 		/**
 		 * Gets all identifiers of all running android emulators.
 		 * @param adbDevicesOutput The output from "adb devices" command

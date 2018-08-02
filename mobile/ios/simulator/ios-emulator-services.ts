@@ -79,7 +79,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 		}
 	}
 
-	public async getAvailableEmulators(): Promise<Mobile.IAvailableEmulatorsOutput> {
+	public async getEmulatorImages(): Promise<Mobile.IEmulatorImagesOutput> {
 		let devices: Mobile.IDeviceInfo[] = [];
 		const errors: string[] = [];
 

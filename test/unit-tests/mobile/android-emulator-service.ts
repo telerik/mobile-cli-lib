@@ -67,9 +67,9 @@ describe("androidEmulatorService", () => {
 		androidGenymotionService = testInjector.resolve("androidGenymotionService");
 	});
 
-	function mockGetAvailableEmulators(avds: Mobile.IAvailableEmulatorsOutput, genies: Mobile.IAvailableEmulatorsOutput) {
-		androidVirtualDeviceService.getAvailableEmulators = () => Promise.resolve(avds);
-		androidGenymotionService.getAvailableEmulators = () => Promise.resolve(genies);
+	function mockGetEmulatorImages(avds: Mobile.IEmulatorImagesOutput, genies: Mobile.IEmulatorImagesOutput) {
+		androidVirtualDeviceService.getEmulatorImages = () => Promise.resolve(avds);
+		androidGenymotionService.getEmulatorImages = () => Promise.resolve(genies);
 	}
 
 	function mockGetRunningEmulatorIds(avds: string[], genies: string[]) {
@@ -77,46 +77,46 @@ describe("androidEmulatorService", () => {
 		androidGenymotionService.getRunningEmulatorIds = () => Promise.resolve(genies);
 	}
 
-	describe("getAvailableEmulators", () => {
+	describe("getEmulatorImages", () => {
 		it("should return [] when there are no emulators are available", async () => {
-			mockGetAvailableEmulators({devices: [], errors: []}, {devices: [], errors: []});
-			const output = await androidEmulatorServices.getAvailableEmulators();
+			mockGetEmulatorImages({devices: [], errors: []}, {devices: [], errors: []});
+			const output = await androidEmulatorServices.getEmulatorImages();
 			assert.deepEqual(output.devices, []);
 			assert.deepEqual(output.errors, []);
 		});
 		it("should return avd emulators when only avd emulators are available", async () => {
-			mockGetAvailableEmulators({devices: [avdEmulator], errors: []}, {devices: [], errors: []});
-			const output = await androidEmulatorServices.getAvailableEmulators();
+			mockGetEmulatorImages({devices: [avdEmulator], errors: []}, {devices: [], errors: []});
+			const output = await androidEmulatorServices.getEmulatorImages();
 			assert.deepEqual(output.devices, [avdEmulator]);
 			assert.deepEqual(output.errors, []);
 		});
 		it("should return geny emulators when only geny emulators are available", async () => {
-			mockGetAvailableEmulators({devices: [], errors: []}, {devices: [genyEmulator], errors: []});
-			const output = await androidEmulatorServices.getAvailableEmulators();
+			mockGetEmulatorImages({devices: [], errors: []}, {devices: [genyEmulator], errors: []});
+			const output = await androidEmulatorServices.getEmulatorImages();
 			assert.deepEqual(output.devices, [genyEmulator]);
 			assert.deepEqual(output.errors, []);
 		});
 		it("should return avd and geny emulators when avd and geny emulators are available", async () => {
-			mockGetAvailableEmulators({devices: [avdEmulator], errors: []}, {devices: [genyEmulator], errors: []});
-			const output = await androidEmulatorServices.getAvailableEmulators();
+			mockGetEmulatorImages({devices: [avdEmulator], errors: []}, {devices: [genyEmulator], errors: []});
+			const output = await androidEmulatorServices.getEmulatorImages();
 			assert.deepEqual(output.devices, [avdEmulator].concat([genyEmulator]));
 			assert.deepEqual(output.errors, []);
 		});
 		it("should return an error when avd error is thrown", async () => {
-			mockGetAvailableEmulators({devices: [], errors: [mockError]}, {devices: [], errors: []});
-			const output = await androidEmulatorServices.getAvailableEmulators();
+			mockGetEmulatorImages({devices: [], errors: [mockError]}, {devices: [], errors: []});
+			const output = await androidEmulatorServices.getEmulatorImages();
 			assert.deepEqual(output.devices, []);
 			assert.deepEqual(output.errors, [mockError]);
 		});
 		it("should return an error when geny error is thrown", async () => {
-			mockGetAvailableEmulators({devices: [], errors: []}, {devices: [], errors: [mockError]});
-			const output = await androidEmulatorServices.getAvailableEmulators();
+			mockGetEmulatorImages({devices: [], errors: []}, {devices: [], errors: [mockError]});
+			const output = await androidEmulatorServices.getEmulatorImages();
 			assert.deepEqual(output.devices, []);
 			assert.deepEqual(output.errors, [mockError]);
 		});
 		it("should return an error when avd and geny errors are thrown", async () => {
-			mockGetAvailableEmulators({devices: [], errors: [mockError]}, {devices: [], errors: [mockError]});
-			const output = await androidEmulatorServices.getAvailableEmulators();
+			mockGetEmulatorImages({devices: [], errors: [mockError]}, {devices: [], errors: [mockError]});
+			const output = await androidEmulatorServices.getEmulatorImages();
 			assert.deepEqual(output.devices, []);
 			assert.deepEqual(output.errors, [mockError, mockError]);
 		});
@@ -193,14 +193,14 @@ describe("androidEmulatorService", () => {
 
 		it("should start avd emulator", async () => {
 			mockGetRunningEmulatorIds([], []);
-			mockGetAvailableEmulators({devices: [avdEmulator], errors: []}, {devices: [], errors: []});
+			mockGetEmulatorImages({devices: [avdEmulator], errors: []}, {devices: [], errors: []});
 			const deviceInfo = mockStartEmulator(avdEmulator);
 			await androidEmulatorServices.startEmulator(avdEmulator);
 			assert.deepEqual(deviceInfo, avdEmulator);
 		});
 		it("should start geny emulator", async () => {
 			mockGetRunningEmulatorIds([], []);
-			mockGetAvailableEmulators({devices: [], errors: []}, {devices: [genyEmulator], errors: []});
+			mockGetEmulatorImages({devices: [], errors: []}, {devices: [genyEmulator], errors: []});
 			const deviceInfo = mockStartEmulator(genyEmulator);
 			assert.deepEqual(deviceInfo, genyEmulator);
 		});

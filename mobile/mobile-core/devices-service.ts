@@ -50,15 +50,15 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 	}
 
 	@exported("devicesService")
-	public async getAvailableEmulators(options?: Mobile.IListEmulatorsOptions): Promise<Mobile.IListEmulatorsOutput> {
+	public async getEmulatorImages(options?: Mobile.IListEmulatorsOptions): Promise<Mobile.IListEmulatorsOutput> {
 		const result = Object.create(null);
 
 		if (this.$hostInfo.isDarwin && (!options || !options.platform || this.$mobileHelper.isiOSPlatform(options.platform))) {
-			result.ios = await this.$iOSEmulatorServices.getAvailableEmulators();
+			result.ios = await this.$iOSEmulatorServices.getEmulatorImages();
 		}
 
 		if (!options || !options.platform || this.$mobileHelper.isAndroidPlatform(options.platform)) {
-			result.android = await this.$androidEmulatorServices.getAvailableEmulators();
+			result.android = await this.$androidEmulatorServices.getEmulatorImages();
 		}
 
 		return result;
@@ -72,7 +72,7 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 			return ["Missing mandatory image identifier or name option."];
 		}
 
-		const availableEmulatorsOutput = await this.getAvailableEmulators({platform: options.platform});
+		const availableEmulatorsOutput = await this.getEmulatorImages({platform: options.platform});
 		const emulators = this.$emulatorHelper.getEmulatorsFromAvailableEmulatorsOutput(availableEmulatorsOutput);
 		const errors = this.$emulatorHelper.getErrorsFromAvailableEmulatorsOutput(availableEmulatorsOutput);
 		if (errors.length) {
@@ -191,8 +191,8 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 	}
 
 	private attachToKnownEmulatorDiscoveryEvents(): void {
-		this.$androidEmulatorDiscovery.on(constants.EmulatorDiscoveryNames.EMULATOR_IMAGES_FOUND, (emulators: Mobile.IDeviceInfo[]) => this.onEmulatorImagesFound(emulators));
-		this.$androidEmulatorDiscovery.on(constants.EmulatorDiscoveryNames.EMULATOR_IMAGES_LOST, (emulators: Mobile.IDeviceInfo[]) => this.onEmulatorImagesLost(emulators));
+		this.$androidEmulatorDiscovery.on(constants.EmulatorDiscoveryNames.EMULATOR_IMAGE_FOUND, (emulators: Mobile.IDeviceInfo[]) => this.onEmulatorImagesFound(emulators));
+		this.$androidEmulatorDiscovery.on(constants.EmulatorDiscoveryNames.EMULATOR_IMAGE_LOST, (emulators: Mobile.IDeviceInfo[]) => this.onEmulatorImagesLost(emulators));
 	}
 
 	private attachToDeviceDiscoveryEvents(deviceDiscovery: Mobile.IDeviceDiscovery): void {
@@ -220,13 +220,13 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 	private onEmulatorImagesFound(emulators: Mobile.IDeviceInfo[]): void {
 		this.$logger.trace(`Found emulators with the following image identifiers: ${emulators.map(emulator => emulator.imageIdentifier).join(", ")}`);
 		_.forEach(emulators, emulator => this._availableEmulators[emulator.imageIdentifier] = emulator);
-		this.emit(constants.EmulatorDiscoveryNames.EMULATOR_IMAGES_FOUND, emulators);
+		this.emit(constants.EmulatorDiscoveryNames.EMULATOR_IMAGE_FOUND, emulators);
 	}
 
 	private onEmulatorImagesLost(emulators: Mobile.IDeviceInfo[]): void {
 		this.$logger.trace(`Lost emulators with the following image identifier ${emulators.map(emulator => emulator.imageIdentifier).join(", ")}`);
 		_.forEach(emulators, emulator => delete this._availableEmulators[emulator.imageIdentifier]);
-		this.emit(constants.EmulatorDiscoveryNames.EMULATOR_IMAGES_LOST, emulators);
+		this.emit(constants.EmulatorDiscoveryNames.EMULATOR_IMAGE_LOST, emulators);
 	}
 
 	/**
