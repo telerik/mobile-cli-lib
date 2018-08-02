@@ -93,12 +93,25 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 			return Promise.resolve(null);
 		}
 
-		return new Promise<string>(resolve => {
+		return new Promise<string>(resolveBase => {
 			let isResolved = false;
 			let output: string = "";
+
+			const resolve = (result: string) => {
+				if (!isResolved) {
+					isResolved = true;
+					resolveBase(result);
+				}
+			};
+
 			const client = net.connect(portNumber, () => {
 				client.write(`avd name${EOL}`);
 			});
+
+			const timer = setTimeout(() => {
+				this.clearNetConnection(client, timer);
+				resolve(null);
+			}, 5000);
 
 			client.on('data', data => {
 				output += data.toString();
@@ -116,11 +129,10 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 				// <Name of image>
 				// OK
 				if (imageIdentifier && !isResolved) {
-					isResolved = true;
+					this.mapEmulatorIdToImageIdentifier[emulatorId] = imageIdentifier;
+					this.clearNetConnection(client, timer);
 					resolve(imageIdentifier);
 				}
-
-				client.end();
 			});
 
 			client.on('error', error => {
@@ -321,6 +333,17 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 		}
 
 		return result;
+	}
+
+	private clearNetConnection(client: net.Socket, timer: NodeJS.Timer) {
+		if (client) {
+			client.removeAllListeners();
+			client.destroy();
+		}
+
+		if (timer) {
+			clearTimeout(timer);
+		}
 	}
 }
 $injector.register("androidVirtualDeviceService", AndroidVirtualDeviceService);
