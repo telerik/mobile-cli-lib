@@ -14,8 +14,8 @@ export class AndroidGenymotionService implements Mobile.IAndroidVirtualDeviceSer
 		private $logger: ILogger,
 		private $virtualBoxService: Mobile.IVirtualBoxService) { }
 
-	public async getAvailableEmulators(adbDevicesOutput: string[]): Promise<Mobile.IAvailableEmulatorsOutput> {
-		const availableEmulatorsOutput = await this.getAvailableEmulatorsCore();
+	public async getEmulatorImages(adbDevicesOutput: string[]): Promise<Mobile.IEmulatorImagesOutput> {
+		const availableEmulatorsOutput = await this.getEmulatorImagesCore();
 		const runningEmulatorIds = await this.getRunningEmulatorIds(adbDevicesOutput);
 		const runningEmulators = await settlePromises(_.map(runningEmulatorIds, emulatorId => this.getRunningEmulatorData(emulatorId, availableEmulatorsOutput.devices)));
 		const devices = availableEmulatorsOutput.devices.map(emulator => this.$emulatorHelper.getEmulatorByImageIdentifier(emulator.imageIdentifier, runningEmulators) || emulator);
@@ -57,7 +57,7 @@ export class AndroidGenymotionService implements Mobile.IAndroidVirtualDeviceSer
 		return ["--vm-name", imageIdentifier];
 	}
 
-	private async getAvailableEmulatorsCore(): Promise<Mobile.IAvailableEmulatorsOutput> {
+	private async getEmulatorImagesCore(): Promise<Mobile.IEmulatorImagesOutput> {
 		const output = await this.$virtualBoxService.listVms();
 		if (output.error) {
 			return { devices: [], errors: output.error ? [output.error] : [] };
@@ -74,7 +74,7 @@ export class AndroidGenymotionService implements Mobile.IAndroidVirtualDeviceSer
 	}
 
 	public async getRunningEmulatorImageIdentifier(emulatorId: string): Promise<string> {
-		const emulator = await this.getRunningEmulatorData(emulatorId, (await this.getAvailableEmulators(await this.$adb.getDevices())).devices);
+		const emulator = await this.getRunningEmulatorData(emulatorId, (await this.getEmulatorImages(await this.$adb.getDevices())).devices);
 		return emulator ? emulator.imageIdentifier : null;
 	}
 

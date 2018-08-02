@@ -20,8 +20,8 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 			this.androidHome = process.env.ANDROID_HOME;
 		}
 
-	public async getAvailableEmulators(adbDevicesOutput: string[]): Promise<Mobile.IAvailableEmulatorsOutput> {
-		const availableEmulatorsOutput = await this.getAvailableEmulatorsCore();
+	public async getEmulatorImages(adbDevicesOutput: string[]): Promise<Mobile.IEmulatorImagesOutput> {
+		const availableEmulatorsOutput = await this.getEmulatorImagesCore();
 		const avds = availableEmulatorsOutput.devices;
 		const runningEmulatorIds = await this.getRunningEmulatorIds(adbDevicesOutput);
 		const runningEmulators = await settlePromises(_.map(runningEmulatorIds, emulatorId => this.getRunningEmulatorData(emulatorId, avds)));
@@ -142,7 +142,7 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 		});
 	}
 
-	private async getAvailableEmulatorsCore(): Promise<Mobile.IAvailableEmulatorsOutput> {
+	private async getEmulatorImagesCore(): Promise<Mobile.IEmulatorImagesOutput> {
 		let result: ISpawnResult = null;
 		let devices: Mobile.IDeviceInfo[] = [];
 

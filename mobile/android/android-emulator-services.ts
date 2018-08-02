@@ -11,10 +11,10 @@ export class AndroidEmulatorServices implements Mobile.IEmulatorPlatformService 
 		private $logger: ILogger,
 		private $utils: IUtils) { }
 
-	public async getAvailableEmulators(): Promise<Mobile.IAvailableEmulatorsOutput> {
+	public async getEmulatorImages(): Promise<Mobile.IEmulatorImagesOutput> {
 		const adbDevicesOutput = await this.$adb.getDevices();
-		const avdAvailableEmulatorsOutput = await this.$androidVirtualDeviceService.getAvailableEmulators(adbDevicesOutput);
-		const genyAvailableDevicesOutput = await this.$androidGenymotionService.getAvailableEmulators(adbDevicesOutput);
+		const avdAvailableEmulatorsOutput = await this.$androidVirtualDeviceService.getEmulatorImages(adbDevicesOutput);
+		const genyAvailableDevicesOutput = await this.$androidGenymotionService.getEmulatorImages(adbDevicesOutput);
 
 		return {
 			devices: avdAvailableEmulatorsOutput.devices.concat(genyAvailableDevicesOutput.devices),
@@ -63,7 +63,7 @@ export class AndroidEmulatorServices implements Mobile.IEmulatorPlatformService 
 		const timeout = options.timeout || AndroidVirtualDevice.TIMEOUT_SECONDS;
 		const endTimeEpoch = getCurrentEpochTime() + this.$utils.getMilliSecondsTimeout(timeout);
 
-		const availableEmulators = (await this.getAvailableEmulators()).devices;
+		const availableEmulators = (await this.getEmulatorImages()).devices;
 
 		let emulator = this.$emulatorHelper.getEmulatorByStartEmulatorOptions(options, availableEmulators);
 		if (!emulator && !options.emulatorIdOrName && !options.imageIdentifier && !options.emulator) {
@@ -92,7 +92,7 @@ export class AndroidEmulatorServices implements Mobile.IEmulatorPlatformService 
 		let hasTimeLeft = getCurrentEpochTime() < endTimeEpoch;
 
 		while (hasTimeLeft || isInfiniteWait) {
-			const emulators = (await this.getAvailableEmulators()).devices;
+			const emulators = (await this.getEmulatorImages()).devices;
 			emulator = _.find(emulators, e => e.imageIdentifier === emulator.imageIdentifier);
 			if (emulator && this.$emulatorHelper.isEmulatorRunning(emulator)) {
 				return {

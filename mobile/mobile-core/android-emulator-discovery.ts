@@ -12,7 +12,7 @@ export class AndroidEmulatorDiscovery extends EventEmitter implements Mobile.IDe
 			return;
 		}
 
-		const availableEmulatorsOutput = await this.$androidEmulatorServices.getAvailableEmulators();
+		const availableEmulatorsOutput = await this.$androidEmulatorServices.getEmulatorImages();
 		const currentEmulators = availableEmulatorsOutput.devices;
 		const cachedEmulators = _.values(this._emulators);
 
@@ -40,13 +40,17 @@ export class AndroidEmulatorDiscovery extends EventEmitter implements Mobile.IDe
 	}
 
 	private raiseOnEmulatorImagesFound(emulators: Mobile.IDeviceInfo[]) {
-		_.forEach(emulators, emulator => this._emulators[emulator.imageIdentifier] = emulator);
-		this.emit(EmulatorDiscoveryNames.EMULATOR_IMAGES_FOUND, emulators);
+		_.forEach(emulators, emulator => {
+			this._emulators[emulator.imageIdentifier] = emulator;
+			this.emit(EmulatorDiscoveryNames.EMULATOR_IMAGE_FOUND, emulator);
+		});
 	}
 
 	private raiseOnEmulatorImagesLost(emulators: Mobile.IDeviceInfo[]) {
-		_.forEach(emulators, emulator => delete this._emulators[emulator.imageIdentifier]);
-		this.emit(EmulatorDiscoveryNames.EMULATOR_IMAGES_LOST, emulators);
+		_.forEach(emulators, emulator => {
+			delete this._emulators[emulator.imageIdentifier];
+			this.emit(EmulatorDiscoveryNames.EMULATOR_IMAGE_LOST, emulator);
+		});
 	}
 }
 $injector.register("androidEmulatorDiscovery", AndroidEmulatorDiscovery);

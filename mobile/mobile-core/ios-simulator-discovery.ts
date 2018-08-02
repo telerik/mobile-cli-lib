@@ -43,7 +43,7 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 			return [];
 		}
 
-		const simulators = (await this.$iOSEmulatorServices.getAvailableEmulators()).devices;
+		const simulators = (await this.$iOSEmulatorServices.getEmulatorImages()).devices;
 		const currentSimulators = _.values(this.availableSimulators);
 		const lostSimulators: Mobile.IDeviceInfo[] = [];
 		const foundSimulators: Mobile.IDeviceInfo[] = [];
@@ -82,13 +82,17 @@ export class IOSSimulatorDiscovery extends DeviceDiscovery {
 	}
 
 	private raiseOnEmulatorImagesFound(simulators: Mobile.IDeviceInfo[]) {
-		_.forEach(simulators, simulator => this.availableSimulators[simulator.imageIdentifier] = simulator);
-		this.emit(EmulatorDiscoveryNames.EMULATOR_IMAGES_FOUND, simulators);
+		_.forEach(simulators, simulator => {
+			this.availableSimulators[simulator.imageIdentifier] = simulator;
+			this.emit(EmulatorDiscoveryNames.EMULATOR_IMAGE_FOUND, simulator);
+		});
 	}
 
 	private raiseOnEmulatorImagesLost(simulators: Mobile.IDeviceInfo[]) {
-		_.forEach(simulators, simulator => delete this.availableSimulators[simulator.imageIdentifier]);
-		this.emit(EmulatorDiscoveryNames.EMULATOR_IMAGES_LOST, simulators);
+		_.forEach(simulators, simulator => {
+			delete this.availableSimulators[simulator.imageIdentifier];
+			this.emit(EmulatorDiscoveryNames.EMULATOR_IMAGE_LOST, simulator);
+		});
 	}
 }
 

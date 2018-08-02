@@ -18,7 +18,7 @@ export class ListDevicesCommand implements ICommand {
 				this.$errors.failWithoutHelp(`${args[0]} is not a valid device platform. The valid platforms are ${formatListOfNames(this.$mobileHelper.platformNames)}`);
 			}
 
-			const availableEmulatorsOutput = await this.$devicesService.getAvailableEmulators({ platform });
+			const availableEmulatorsOutput = await this.$devicesService.getEmulatorImages({ platform });
 			const emulators = this.$emulatorHelper.getEmulatorsFromAvailableEmulatorsOutput(availableEmulatorsOutput);
 			this.printEmulators("\nAvailable emulators", emulators);
 		}
