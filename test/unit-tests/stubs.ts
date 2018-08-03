@@ -49,6 +49,10 @@ export class ErrorsStub implements IErrors {
 	fail(opts: { formatStr?: string; errorCode?: number; suppressCommandHelp?: boolean }, ...args: any[]): never;
 
 	fail(...args: any[]): never {
+		if (_.isObject(args) && (<any>args).formatStr) {
+			throw new Error((<any>args).formatStr);
+		}
+
 		throw new Error(util.format.apply(null, args));
 	}
 
