@@ -272,17 +272,17 @@ describe("GenymotionService", () => {
 		}
 	}
 
-	describe("getAvailableEmulators", () => {
+	describe("getEmulatorImages", () => {
 		it("should return [] when no emulators are available", async () => {
 			mockVirtualBoxService({ vms: [], error: null });
-			const result = await androidGenymotionService.getAvailableEmulators([]);
+			const result = await androidGenymotionService.getEmulatorImages([]);
 			assert.lengthOf(result.devices, 0);
 			assert.deepEqual(result.devices, []);
 			assert.deepEqual(result.errors, []);
 		});
 		it("should return an empty array when an error is thrown", async () => {
 			mockVirtualBoxService({ vms: [], error });
-			const result = await androidGenymotionService.getAvailableEmulators([]);
+			const result = await androidGenymotionService.getEmulatorImages([]);
 			assert.lengthOf(result.devices, 0);
 			assert.deepEqual(result.devices, []);
 			assert.deepEqual(result.errors, [error]);
@@ -296,7 +296,7 @@ describe("GenymotionService", () => {
 			};
 
 			mockVirtualBoxService({ vms, error: null }, mapEnumerateGuestPropertiesOutput);
-			const result = await androidGenymotionService.getAvailableEmulators([]);
+			const result = await androidGenymotionService.getEmulatorImages([]);
 			assert.lengthOf(result.devices, 4);
 			assert.deepEqual(result.devices[0], getAvailableEmulatorData({ displayName: "Google Nexus 4 - 5.0.0 - API 21 - 768x1280", imageIdentifier: "9d9beef2-cc60-4a54-bcc0-cc1dbf89811f", version: "5.0" }));
 			assert.deepEqual(result.devices[1], getAvailableEmulatorData({ displayName: "Custom Tablet - 6.0.0 - API 23 - 1536x2048", imageIdentifier: "da83e290-4d54-4b94-8654-540cf0c96604", version: "5.0" }));
@@ -314,7 +314,7 @@ describe("GenymotionService", () => {
 			mockVirtualBoxService({ vms, error: null }, mapEnumerateGuestPropertiesOutput);
 			(<any>androidGenymotionService).isGenymotionEmulator = (emulatorId: string) => Promise.resolve(true);
 			androidGenymotionService.getRunningEmulatorName = (emulatorId: string) => Promise.resolve("test");
-			const result = await androidGenymotionService.getAvailableEmulators(["192.168.56.101:5555	device"]);
+			const result = await androidGenymotionService.getEmulatorImages(["192.168.56.101:5555	device"]);
 			assert.lengthOf(result.devices, 4);
 			assert.deepEqual(result.devices[0], getAvailableEmulatorData({ displayName: "Google Nexus 4 - 5.0.0 - API 21 - 768x1280", imageIdentifier: "9d9beef2-cc60-4a54-bcc0-cc1dbf89811f", version: "5.0" }));
 			assert.deepEqual(result.devices[1], getAvailableEmulatorData({ displayName: "Custom Tablet - 6.0.0 - API 23 - 1536x2048", imageIdentifier: "da83e290-4d54-4b94-8654-540cf0c96604", version: "5.0" }));

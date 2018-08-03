@@ -14,12 +14,13 @@ import { Yok } from "../../../yok";
 import { ProjectFilesProviderBase } from "../../../services/project-files-provider-base";
 
 import temp = require("temp");
+import { LiveSyncPaths } from "../../../constants";
 temp.track();
 
 const testedApplicationIdentifier = "com.telerik.myApp";
 const iOSDeviceProjectRootPath = "/Documents/AppBuilder/LiveSync/app";
 const iOSDeviceSyncZipPath = "/Documents/AppBuilder/LiveSync/sync.zip";
-const androidDeviceProjectRootPath = "/data/local/tmp/sync";
+const androidDeviceProjectRootPath = `${LiveSyncPaths.ANDROID_TMP_DIR_NAME}/${LiveSyncPaths.SYNC_DIR_NAME}`;
 
 class IOSAppIdentifierMock implements Mobile.IDeviceAppData {
 	public platform = "iOS";

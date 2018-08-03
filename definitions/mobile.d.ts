@@ -351,7 +351,7 @@ declare module Mobile {
 		listFiles(devicePath: string, appIdentifier?: string): Promise<any>;
 		getFile(deviceFilePath: string, appIdentifier: string, outputFilePath?: string): Promise<void>;
 		putFile(localFilePath: string, deviceFilePath: string, appIdentifier: string): Promise<void>;
-		deleteFile?(deviceFilePath: string, appIdentifier: string): Promise<void>;
+		deleteFile(deviceFilePath: string, appIdentifier: string): Promise<void>;
 		transferFiles(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<Mobile.ILocalToDevicePathData[]>;
 		transferDirectory(deviceAppData: Mobile.IDeviceAppData, localToDevicePaths: Mobile.ILocalToDevicePathData[], projectFilesPath: string): Promise<Mobile.ILocalToDevicePathData[]>;
 		transferFile?(localFilePath: string, deviceFilePath: string): Promise<void>;
@@ -502,7 +502,7 @@ declare module Mobile {
 		 * @param options The options that can be passed to filter the result.
 		 * @returns {Promise<Mobile.IListEmulatorsOutput>} Dictionary with the following format: { ios: { devices: Mobile.IDeviceInfo[], errors: string[] }, android: { devices: Mobile.IDeviceInfo[], errors: string[]}}.
 		 */
-		getAvailableEmulators(options?: Mobile.IListEmulatorsOptions): Promise<Mobile.IListEmulatorsOutput>;
+		getEmulatorImages(options?: Mobile.IListEmulatorsOptions): Promise<Mobile.IListEmulatorsOutput>;
 
 		/**
 		 * Starts an emulator by provided options.
@@ -516,12 +516,12 @@ declare module Mobile {
 		platform?: string;
 	}
 
-	interface IListEmulatorsOutput extends IDictionary<IAvailableEmulatorsOutput> {
-		ios: IAvailableEmulatorsOutput;
-		android: IAvailableEmulatorsOutput;
+	interface IListEmulatorsOutput extends IDictionary<IEmulatorImagesOutput> {
+		ios: IEmulatorImagesOutput;
+		android: IEmulatorImagesOutput;
 	}
 
-	interface IAvailableEmulatorsOutput {
+	interface IEmulatorImagesOutput {
 		devices: Mobile.IDeviceInfo[];
 		errors: string[];
 	}
@@ -675,9 +675,9 @@ declare module Mobile {
 	interface IEmulatorPlatformService {
 		/**
 		 * Gets all available emulators
-		 * @returns {Promise<Mobile.IAvailableEmulatorsOutput>}
+		 * @returns {Promise<Mobile.IEmulatorImagesOutput>}
 		 */
-		getAvailableEmulators(): Promise<Mobile.IAvailableEmulatorsOutput>;
+		getEmulatorImages(): Promise<Mobile.IEmulatorImagesOutput>;
 		/**
 		 * Gets the ids of all running emulators
 		 * @returns {Promise<string[]>}
@@ -698,7 +698,7 @@ declare module Mobile {
 		/**
 		 * Starts the emulator by provided options.
 		 * @param options
-		 * @returns {Promise<IStartEmulatorOutput>} Starts the emulator and returns the errors if some error occurs. 
+		 * @returns {Promise<IStartEmulatorOutput>} Starts the emulator and returns the errors if some error occurs.
 		 */
 		startEmulator(options: Mobile.IStartEmulatorOptions): Promise<IStartEmulatorOutput>;
 	}
@@ -710,10 +710,10 @@ declare module Mobile {
 	interface IAndroidVirtualDeviceService {
 		/**
 		 * Gets all available emulators.
-		 * @returns {Promise<Mobile.IAvailableEmulatorsOutput>} - Dictionary in the following format: { devices: Mobile.IDevice[], errors: string[] }.
+		 * @returns {Promise<Mobile.IEmulatorImagesOutput>} - Dictionary in the following format: { devices: Mobile.IDevice[], errors: string[] }.
 		 * Returns array of all available android emulators - genymotion and native avd emulators and array of errors.
 		 */
-		getAvailableEmulators(adbDevicesOutput: string[]): Promise<Mobile.IAvailableEmulatorsOutput>;
+		getEmulatorImages(adbDevicesOutput: string[]): Promise<Mobile.IEmulatorImagesOutput>;
 		/**
 		 * Gets all identifiers of all running android emulators.
 		 * @param adbDevicesOutput The output from "adb devices" command
@@ -735,7 +735,7 @@ declare module Mobile {
 		/**
 		 * Gets the path to emulator executable. It will be passed to spawn when starting the emulator.
 		 * For genymotion emulators - the path to player.
-		 * For avd emulators - the path to emulator executable. 
+		 * For avd emulators - the path to emulator executable.
 		 */
 		pathToEmulatorExecutable: string;
 		/**
@@ -799,7 +799,7 @@ declare module Mobile {
 		 * @param iniFilePath - The full path to .ini file.
 		 * @param avdInfo - avdInfo from previously parsed .ini file in case there are such.
 		 */
-		parseIniFile(iniFilePath: string, avdInfo?: Mobile.IAvdInfo): Mobile.IAvdInfo; 
+		parseIniFile(iniFilePath: string, avdInfo?: Mobile.IAvdInfo): Mobile.IAvdInfo;
 	}
 
 	interface IiSimDevice {
@@ -946,13 +946,13 @@ declare module Mobile {
 		 * If provided, print all available devices
 		 */
 		availableDevices?: boolean;
-		
+
 		timeout?: string;
 		/**
 		 * The sdk version of the emulator.
 		 */
 		sdk?: string;
-	
+
 		justlaunch?: boolean;
 	}
 
@@ -1081,7 +1081,7 @@ declare module Mobile {
 		getDevicePaths(localToDevicePaths: Mobile.ILocalToDevicePathData[]): string[];
 
 		/**
-		 * Returns the changed shasums based on the provided 
+		 * Returns the changed shasums based on the provided
 		 * @param {IStringDictionary} oldShasums The old shasums on the device
 		 * @param {IStringDictionary} currentShasums The current shasums on the local project
 		 * @returns {string[]} Returns the shasums that changed

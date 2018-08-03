@@ -8,18 +8,20 @@ import { settlePromises } from "../../helpers";
 
 export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDeviceService {
 	private androidHome: string;
+	private mapEmulatorIdToImageIdentifier: IStringDictionary = {};
 
 	constructor(private $androidIniFileParser: Mobile.IAndroidIniFileParser,
 		private $childProcess: IChildProcess,
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $emulatorHelper: Mobile.IEmulatorHelper,
 		private $fs: IFileSystem,
-		private $hostInfo: IHostInfo) {
+		private $hostInfo: IHostInfo,
+		private $logger: ILogger) {
 			this.androidHome = process.env.ANDROID_HOME;
 		}
 
-	public async getAvailableEmulators(adbDevicesOutput: string[]): Promise<Mobile.IAvailableEmulatorsOutput> {
-		const availableEmulatorsOutput = await this.getAvailableEmulatorsCore();
+	public async getEmulatorImages(adbDevicesOutput: string[]): Promise<Mobile.IEmulatorImagesOutput> {
+		const availableEmulatorsOutput = await this.getEmulatorImagesCore();
 		const avds = availableEmulatorsOutput.devices;
 		const runningEmulatorIds = await this.getRunningEmulatorIds(adbDevicesOutput);
 		const runningEmulators = await settlePromises(_.map(runningEmulatorIds, emulatorId => this.getRunningEmulatorData(emulatorId, avds)));
@@ -43,7 +45,7 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 		return emulatorIds;
 	}
 
-	public  async getRunningEmulatorName(emulatorId: string): Promise<string> {
+	public async getRunningEmulatorName(emulatorId: string): Promise<string> {
 		const imageIdentifier = await this.getRunningEmulatorImageIdentifier(emulatorId);
 		const iniFilePath = path.join(this.pathToAvdHomeDir, `${imageIdentifier}.ini`);
 		const iniFileInfo = this.$androidIniFileParser.parseIniFile(iniFilePath);
@@ -81,18 +83,35 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 	}
 
 	public getRunningEmulatorImageIdentifier(emulatorId: string): Promise<string> {
+		if (this.mapEmulatorIdToImageIdentifier[emulatorId]) {
+			return Promise.resolve(this.mapEmulatorIdToImageIdentifier[emulatorId]);
+		}
+
 		const match = emulatorId.match(/^emulator-(\d+)/);
 		const portNumber = match && match[1];
 		if (!portNumber) {
 			return Promise.resolve(null);
 		}
 
-		return new Promise<string>(resolve => {
+		return new Promise<string>(resolveBase => {
 			let isResolved = false;
 			let output: string = "";
+
+			const resolve = (result: string) => {
+				if (!isResolved) {
+					isResolved = true;
+					resolveBase(result);
+				}
+			};
+
 			const client = net.connect(portNumber, () => {
 				client.write(`avd name${EOL}`);
 			});
+
+			const timer = setTimeout(() => {
+				this.clearNetConnection(client, timer);
+				resolve(null);
+			}, 5000);
 
 			client.on('data', data => {
 				output += data.toString();
@@ -110,16 +129,20 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 				// <Name of image>
 				// OK
 				if (imageIdentifier && !isResolved) {
-					isResolved = true;
+					this.mapEmulatorIdToImageIdentifier[emulatorId] = imageIdentifier;
+					this.clearNetConnection(client, timer);
 					resolve(imageIdentifier);
 				}
+			});
 
-				client.end();
+			client.on('error', error => {
+				this.$logger.trace(`Error while checking emulator identifier for ${emulatorId}. More info: ${error}.`);
+				resolve(null);
 			});
 		});
 	}
 
-	private async getAvailableEmulatorsCore(): Promise<Mobile.IAvailableEmulatorsOutput> {
+	private async getEmulatorImagesCore(): Promise<Mobile.IEmulatorImagesOutput> {
 		let result: ISpawnResult = null;
 		let devices: Mobile.IDeviceInfo[] = [];
 
@@ -310,6 +333,17 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 		}
 
 		return result;
+	}
+
+	private clearNetConnection(client: net.Socket, timer: NodeJS.Timer) {
+		if (client) {
+			client.removeAllListeners();
+			client.destroy();
+		}
+
+		if (timer) {
+			clearTimeout(timer);
+		}
 	}
 }
 $injector.register("androidVirtualDeviceService", AndroidVirtualDeviceService);

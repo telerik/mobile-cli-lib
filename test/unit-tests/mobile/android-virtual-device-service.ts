@@ -52,7 +52,7 @@ function mockParseIniFile(iniFilePath: string, data: any) {
 	}
 }
 
-function createTestInjector(data: {avdManagerOutput?: string, avdManagerError?: string, iniFilesData?: IDictionary<Mobile.IAvdInfo>}) {
+function createTestInjector(data: {avdManagerOutput?: string, avdManagerError?: string, iniFilesData?: IDictionary<Mobile.IAvdInfo>}): IInjector {
 	const testInjector = new Yok();
 	testInjector.register("androidVirtualDeviceService", AndroidVirtualDeviceService);
 	testInjector.register("androidIniFileParser", {
@@ -117,7 +117,7 @@ describe("androidVirtualDeviceService", () => {
 		return testInjector.resolve("androidVirtualDeviceService");
 	}
 
-	describe("getAvailableEmulators", () => {
+	describe("getEmulatorImages", () => {
 		describe("when avdmanager is found", () => {
 			beforeEach(() => {
 				process.env.ANDROID_HOME = "fake/android/home/path";
@@ -125,7 +125,7 @@ describe("androidVirtualDeviceService", () => {
 
 			it("should return an empty array when no emulators are available", async () => {
 				const avdService = mockAvdService({avdManagerOutput: ""});
-				const result = await avdService.getAvailableEmulators([]);
+				const result = await avdService.getEmulatorImages([]);
 				assert.lengthOf(result.devices, 0);
 				assert.deepEqual(result.devices, []);
 				assert.deepEqual(result.errors, []);
@@ -133,7 +133,7 @@ describe("androidVirtualDeviceService", () => {
 			it("should return an empty array when `avdmanager list avds` command fails", async () => {
 				const avdManagerError = "some error while executing avdmanager list avds";
 				const avdService = mockAvdService({ avdManagerError });
-				const result = await avdService.getAvailableEmulators([]);
+				const result = await avdService.getEmulatorImages([]);
 				assert.lengthOf(result.devices, 0);
 				assert.deepEqual(result.devices, []);
 				assert.lengthOf(result.errors, 1);
@@ -164,7 +164,7 @@ describe("androidVirtualDeviceService", () => {
 					}
 				}});
 
-				const result = await avdService.getAvailableEmulators([]);
+				const result = await avdService.getEmulatorImages([]);
 				assert.lengthOf(result.devices, 3);
 				assert.deepEqual(result.devices[0], getAvailableEmulatorData({ displayName: "Nexus 5X", imageIdentifier: "Nexus_5_API_27", version: "8.1.0" }));
 				assert.deepEqual(result.devices[1], getAvailableEmulatorData({ displayName: "Nexus 5X", imageIdentifier: "Nexus_5X_API_28", version: "9.0.0" }));
@@ -203,7 +203,7 @@ describe("androidVirtualDeviceService", () => {
 
 					return Promise.resolve("");
 				};
-				const result = (await avdService.getAvailableEmulators(["emulator-5554	device"])).devices;
+				const result = (await avdService.getEmulatorImages(["emulator-5554	device"])).devices;
 				assert.deepEqual(result[0], getRunningEmulatorData({ displayName: "Nexus 5X", imageIdentifier: "Nexus_5_API_27", identifier: "emulator-5554", version: "8.1.0" }));
 				assert.deepEqual(result[1], getAvailableEmulatorData({ displayName: "Nexus 5X", imageIdentifier: "Nexus_5X_API_28", version: "9.0.0" }));
 				assert.deepEqual(result[2], getAvailableEmulatorData({ displayName: "Nexus 6P", imageIdentifier: "Nexus_6P_API_28", version: "9.0.0" }));
@@ -215,7 +215,7 @@ describe("androidVirtualDeviceService", () => {
 				const androidHomeDir = process.env.ANDROID_HOME;
 				process.env.ANDROID_HOME = undefined;
 				const avdService = mockAvdService();
-				const result = (await avdService.getAvailableEmulators([])).devices;
+				const result = (await avdService.getEmulatorImages([])).devices;
 				assert.lengthOf(result, 0);
 				assert.deepEqual(result, []);
 				process.env.ANDROID_HOME = androidHomeDir;
@@ -255,7 +255,7 @@ describe("androidVirtualDeviceService", () => {
 					}
 				}});
 
-				const result = await avdService.getAvailableEmulators([]);
+				const result = await avdService.getEmulatorImages([]);
 
 				assert.lengthOf(result.devices, 4);
 				assert.deepEqual(result.devices[0], getAvailableEmulatorData({ displayName: "Nexus 5X", imageIdentifier: "Nexus_5_API_27", version: "8.1.0" }));
@@ -298,7 +298,7 @@ describe("androidVirtualDeviceService", () => {
 					}
 				};
 				const testInjector = createTestInjector(mockData);
-				const avdService = testInjector.resolve("androidVirtualDeviceService");
+				const avdService = testInjector.resolve<Mobile.IAndroidVirtualDeviceService>("androidVirtualDeviceService");
 				const androidIniFileParser = testInjector.resolve("androidIniFileParser");
 				androidIniFileParser.parseIniFile = (iniFilePath: string) => {
 					if (iniFilePath.indexOf("Pixel_2_XL_API_28") !== -1) {
@@ -308,7 +308,7 @@ describe("androidVirtualDeviceService", () => {
 					return mockParseIniFile(iniFilePath, mockData);
 				};
 
-				const result = await avdService.getAvailableEmulators([]);
+				const result = await avdService.getEmulatorImages([]);
 
 				assert.lengthOf(result.devices, 3);
 				assert.deepEqual(result.devices[0], getAvailableEmulatorData({ displayName: "Nexus 5X", imageIdentifier: "Nexus_5_API_27", version: "8.1.0" }));

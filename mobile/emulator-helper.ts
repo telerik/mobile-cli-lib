@@ -20,7 +20,7 @@ export class EmulatorHelper implements Mobile.IEmulatorHelper {
 	public getEmulatorsFromAvailableEmulatorsOutput(availableEmulatorsOutput: Mobile.IListEmulatorsOutput): Mobile.IDeviceInfo[] {
 		return <Mobile.IDeviceInfo[]>(_(availableEmulatorsOutput)
 			.valuesIn()
-			.map((value: Mobile.IAvailableEmulatorsOutput) => value.devices)
+			.map((value: Mobile.IEmulatorImagesOutput) => value.devices)
 			.concat()
 			.flatten()
 			.value());
@@ -29,7 +29,7 @@ export class EmulatorHelper implements Mobile.IEmulatorHelper {
 	public getErrorsFromAvailableEmulatorsOutput(availableEmulatorsOutput: Mobile.IListEmulatorsOutput): string[] {
 		return <string[]>(_(availableEmulatorsOutput)
 			.valuesIn()
-			.map((value: Mobile.IAvailableEmulatorsOutput) => value.errors)
+			.map((value: Mobile.IEmulatorImagesOutput) => value.errors)
 			.concat()
 			.flatten()
 			.value());

@@ -1,6 +1,6 @@
 import { EOL } from "os";
 import { ApplicationManagerBase } from "../application-manager-base";
-import { LiveSyncConstants, TARGET_FRAMEWORK_IDENTIFIERS } from "../../constants";
+import { LiveSyncConstants, TARGET_FRAMEWORK_IDENTIFIERS, LiveSyncPaths } from "../../constants";
 import { hook } from "../../helpers";
 import { cache } from "../../decorators";
 
@@ -32,7 +32,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 	@hook('install')
 	public async installApplication(packageFilePath: string, appIdentifier?: string): Promise<void> {
 		if (appIdentifier) {
-			const deviceRootPath = `/data/local/tmp/${appIdentifier}`;
+			const deviceRootPath = `${LiveSyncPaths.ANDROID_TMP_DIR_NAME}/${appIdentifier}`;
 			await this.adb.executeShellCommand(["rm", "-rf", deviceRootPath]);
 		}
 
