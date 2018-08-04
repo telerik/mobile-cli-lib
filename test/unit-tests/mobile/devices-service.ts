@@ -850,7 +850,7 @@ describe("devicesService", () => {
 					platform: "invalid-platform"
 				}
 			});
-			await assert.isRejected(devicesService.initialize(), "{ formatStr: \'Cannot find connected devices. Reconnect any connected devices, verify that your system recognizes them, and run this command again.\',\n  suppressCommandHelp: true }");
+			await assert.isRejected(devicesService.initialize(), constants.ERROR_NO_DEVICES);
 		});
 
 		it("caches execution result and does not execute next time when called", async () => {
