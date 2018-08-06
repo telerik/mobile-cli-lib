@@ -1053,7 +1053,7 @@ declare module Mobile {
 		/**
 		 * Computes the shasums of localToDevicePaths and updates hash file on device
 		 */
-		updateHashes(localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<boolean>;
+		updateHashes(localToDevicePaths: Mobile.ILocalToDevicePathData[], shouldCreate?: boolean): Promise<boolean>;
 		/**
 		 * Computes the shasums of localToDevicePaths and removes them from hash file on device
 		 */
@@ -1087,6 +1087,14 @@ declare module Mobile {
 		 * @returns {string[]} Returns the shasums that changed
 		 */
 		getChangedShasums(oldShasums: IStringDictionary, currentShasums: IStringDictionary): IStringDictionary
+
+		/**
+		 * Returns the missing shasums that exist in oldShasums, but are missing in currentShasums - indicates removed files
+		 * @param {IStringDictionary} oldShasums The old shasums on the device
+		 * @param {IStringDictionary} currentShasums The current shasums on the local project
+		 * @returns {string[]} Returns the shasums that changed
+		 */
+		getMissingShasums(oldShasums: IStringDictionary, currentShasums: IStringDictionary): IStringDictionary
 	}
 
 	/**

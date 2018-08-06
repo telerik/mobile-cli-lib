@@ -29,8 +29,6 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 		if (this.$fs.exists(hashFileLocalPath)) {
 			return this.$fs.readJson(hashFileLocalPath);
 		}
-
-		return null;
 	}
 
 	public async uploadHashFileToDevice(data: IStringDictionary): Promise<void> {
@@ -38,12 +36,12 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 		await this.adb.pushFile(this.hashFileLocalPath, this.hashFileDevicePath);
 	}
 
-	public async updateHashes(localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<boolean> {
+	public async updateHashes(localToDevicePaths: Mobile.ILocalToDevicePathData[], shouldCreate?: boolean): Promise<boolean> {
 		const oldShasums = await this.getShasumsFromDevice();
-		if (oldShasums) {
-			await this.generateHashesFromLocalToDevicePaths(localToDevicePaths, oldShasums);
+		if (oldShasums || shouldCreate) {
+			const newShasums = await this.generateHashesFromLocalToDevicePaths(localToDevicePaths, oldShasums);
 
-			await this.uploadHashFileToDevice(oldShasums);
+			await this.uploadHashFileToDevice(newShasums);
 
 			return true;
 		}
@@ -54,7 +52,9 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 	public async generateHashesFromLocalToDevicePaths(localToDevicePaths: Mobile.ILocalToDevicePathData[], initialShasums: IStringDictionary = {}): Promise<IStringDictionary> {
 		const action = async (localToDevicePathData: Mobile.ILocalToDevicePathData) => {
 			const localPath = localToDevicePathData.getLocalPath();
-			if (this.$fs.getFsStats(localPath).isFile()) {
+			if (!this.$fs.exists(localPath) && initialShasums[localPath]) {
+				delete initialShasums[localPath];
+			} else if (this.$fs.getFsStats(localPath).isFile()) {
 				// TODO: Use relative to project path for key
 				// This will speed up livesync on the same device for the same project on different PCs.
 				initialShasums[localPath] = await this.$fs.getFileShasum(localPath);
@@ -74,6 +74,10 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 
 	public getChangedShasums(oldShasums: IStringDictionary, currentShasums: IStringDictionary): IStringDictionary {
 		return _.omitBy(currentShasums, (hash: string, pathToFile: string) => !!_.find(oldShasums, (oldHash: string, oldPath: string) => pathToFile === oldPath && hash === oldHash));
+	}
+
+	public getMissingShasums(oldHashes: IStringDictionary, newHashes: IStringDictionary): IStringDictionary {
+		return _.omitBy(oldHashes, ( hash: string, pathToFile: string) => !!newHashes[pathToFile]);
 	}
 
 	public async removeHashes(localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<boolean> {
