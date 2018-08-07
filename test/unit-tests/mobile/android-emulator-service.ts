@@ -7,7 +7,7 @@ function createTestInjector() {
 	const testInjector = new Yok();
 
 	testInjector.register("adb", {
-		getDevices: () => Promise.resolve()
+		getDevicesSafe: () => Promise.resolve()
 	});
 	testInjector.register("androidVirtualDeviceService", {});
 	testInjector.register("androidGenymotionService", {});

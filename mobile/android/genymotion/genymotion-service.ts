@@ -74,7 +74,9 @@ export class AndroidGenymotionService implements Mobile.IAndroidVirtualDeviceSer
 	}
 
 	public async getRunningEmulatorImageIdentifier(emulatorId: string): Promise<string> {
-		const emulator = await this.getRunningEmulatorData(emulatorId, (await this.getEmulatorImages(await this.$adb.getDevices())).devices);
+		const adbDevices = await this.$adb.getDevicesSafe();
+		const emulatorImages = (await this.getEmulatorImages(adbDevices)).devices;
+		const emulator = await this.getRunningEmulatorData(emulatorId, emulatorImages);
 		return emulator ? emulator.imageIdentifier : null;
 	}
 
