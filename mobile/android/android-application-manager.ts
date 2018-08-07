@@ -1,10 +1,12 @@
 import { EOL } from "os";
 import { ApplicationManagerBase } from "../application-manager-base";
 import { LiveSyncConstants, TARGET_FRAMEWORK_IDENTIFIERS, LiveSyncPaths } from "../../constants";
-import { hook } from "../../helpers";
+import { hook, sleep } from "../../helpers";
 import { cache } from "../../decorators";
 
 export class AndroidApplicationManager extends ApplicationManagerBase {
+	public PID_CHECK_INTERVAL = 100;
+	public PID_CHECK_TIMEOUT = 10000; // 10 secs
 
 	constructor(private adb: Mobile.IDeviceAndroidDebugBridge,
 		private identifier: string,
@@ -73,17 +75,42 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 
 		if (!this.$options.justlaunch) {
 			const deviceIdentifier = this.identifier;
-			const processIdentifier = await this.$androidProcessService.getAppProcessId(deviceIdentifier, appIdentifier);
+			const processIdentifier = await this.getAppProcessId(deviceIdentifier, appIdentifier);
 			if (processIdentifier) {
 				this.$deviceLogProvider.setApplicationPidForDevice(deviceIdentifier, processIdentifier);
 			}
 
-			await this.$logcatHelper.start(this.identifier);
+			await this.$logcatHelper.start({
+				deviceIdentifier: this.identifier,
+				pid: processIdentifier
+			});
 		}
+	}
+
+	private async getAppProcessId(deviceIdentifier: string, appIdentifier: string) {
+		const appIdCheckStartTime = new Date().getTime();
+		let processIdentifier = "";
+		let hasTimedOut = false;
+
+		while (!processIdentifier && !hasTimedOut) {
+			processIdentifier = await this.$androidProcessService.getAppProcessId(deviceIdentifier, appIdentifier);
+			if (!processIdentifier) {
+				this.$logger.trace(`Wasn't able to get pid of the app. Sleeping for "${this.PID_CHECK_INTERVAL}ms".`);
+				await sleep(this.PID_CHECK_INTERVAL);
+				hasTimedOut = new Date().getTime() - appIdCheckStartTime > this.PID_CHECK_TIMEOUT;
+			}
+		}
+
+		if (!processIdentifier) {
+			this.$logger.warn(`Unable to find running "${appIdentifier}" application on device "${deviceIdentifier}".`);
+		}
+
+		return processIdentifier;
 	}
 
 	public stopApplication(appData: Mobile.IApplicationData): Promise<void> {
 		this.$logcatHelper.stop(this.identifier);
+		this.$deviceLogProvider.setApplicationPidForDevice(this.identifier, null);
 		return this.adb.executeShellCommand(["am", "force-stop", `${appData.appId}`]);
 	}
 

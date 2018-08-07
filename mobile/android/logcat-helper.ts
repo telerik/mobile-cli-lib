@@ -5,6 +5,7 @@ import { ChildProcess } from "child_process";
 interface IDeviceLoggingData {
 	loggingProcess: ChildProcess;
 	lineStream: any;
+	keepSingleProcess: boolean;
 }
 
 export class LogcatHelper implements Mobile.ILogcatHelper {
@@ -18,17 +19,19 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 		this.mapDevicesLoggingData = Object.create(null);
 	}
 
-	public async start(deviceIdentifier: string): Promise<void> {
+	public async start(options: Mobile.ILogcatStartOptions): Promise<void> {
+		const deviceIdentifier = options.deviceIdentifier;
 		if (deviceIdentifier && !this.mapDevicesLoggingData[deviceIdentifier]) {
-			const adb: Mobile.IDeviceAndroidDebugBridge = this.$injector.resolve(DeviceAndroidDebugBridge, { identifier: deviceIdentifier });
-
-			const logcatStream = await adb.executeCommand(["logcat"], { returnChildProcess: true });
-			const lineStream = byline(logcatStream.stdout);
 			this.mapDevicesLoggingData[deviceIdentifier] = {
-				loggingProcess: logcatStream,
-				lineStream: lineStream
+				loggingProcess: null,
+				lineStream: null,
+				keepSingleProcess: options.keepSingleProcess
 			};
 
+			const logcatStream = await this.getLogcatStream(deviceIdentifier, options.pid);
+			const lineStream = byline(logcatStream.stdout);
+			this.mapDevicesLoggingData[deviceIdentifier].loggingProcess = logcatStream;
+			this.mapDevicesLoggingData[deviceIdentifier].lineStream = lineStream;
 			logcatStream.stderr.on("data", (data: NodeBuffer) => {
 				this.$logger.trace("ADB logcat stderr: " + data.toString());
 			});
@@ -53,12 +56,26 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 		}
 	}
 
-	public stop(deviceIdentifier: string): void {
-		if (this.mapDevicesLoggingData[deviceIdentifier]) {
-			this.mapDevicesLoggingData[deviceIdentifier].loggingProcess.removeAllListeners();
-			this.mapDevicesLoggingData[deviceIdentifier].lineStream.removeAllListeners();
+	private async getLogcatStream(deviceIdentifier: string, pid?: string) {
+		const adb: Mobile.IDeviceAndroidDebugBridge = this.$injector.resolve(DeviceAndroidDebugBridge, { identifier: deviceIdentifier });
+		const logcatCommand = ["logcat"];
+		if (pid) {
+			logcatCommand.push(`--pid=${pid}`);
 		}
-		delete this.mapDevicesLoggingData[deviceIdentifier];
+		const logcatStream = await adb.executeCommand(logcatCommand, { returnChildProcess: true });
+		return logcatStream;
+	}
+
+	/**
+	 * Stops the logcat process for the specified device if keepSingleProcess is not passed on start
+	 */
+	public stop(deviceIdentifier: string): void {
+		if (this.mapDevicesLoggingData[deviceIdentifier] && !this.mapDevicesLoggingData[deviceIdentifier].keepSingleProcess) {
+			this.mapDevicesLoggingData[deviceIdentifier].loggingProcess.removeAllListeners();
+			this.mapDevicesLoggingData[deviceIdentifier].loggingProcess.kill("SIGINT");
+			this.mapDevicesLoggingData[deviceIdentifier].lineStream.removeAllListeners();
+			delete this.mapDevicesLoggingData[deviceIdentifier];
+		}
 	}
 }
 

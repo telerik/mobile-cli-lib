@@ -1,13 +1,17 @@
 import { AndroidApplicationManager } from "../../mobile/android/android-application-manager";
 import { Yok } from "../../yok";
 import { assert } from "chai";
-import { CommonLoggerStub } from "./stubs";
-const invalidIdentifier: string = "invalid.identifier";
+import { CommonLoggerStub, LogcatHelperStub, AndroidProcessServiceStub, DeviceLogProviderStub } from "./stubs";
+const invalidIdentifier = "invalid.identifier";
+const validDeviceIdentifier = "device.identifier";
+const validIdentifier = "valid.identifier";
+const validStartOptions = { appId: validIdentifier, projectName: "" };
 
 class AndroidDebugBridgeStub {
-	public startedWithActivityManager: Boolean = false;
-	public validIdentifierPassed: Boolean = false;
-	public static methodCallCount: number = 0;
+	public calledStopApplication = false;
+	public startedWithActivityManager = false;
+	public validIdentifierPassed = false;
+	public static methodCallCount = 0;
 	private expectedValidTestInput: string[] = [
 		"org.nativescript.testApp/com.tns.TestClass",
 		"org.nativescript.testApp/com.tns.$TestClass",
@@ -50,34 +54,37 @@ class AndroidDebugBridgeStub {
 					this.validIdentifierPassed = this.checkIfValidIdentifierPassed(args);
 				}
 			}
+
+			if (this.startedWithActivityManager && args[1] === "force-stop") {
+				this.calledStopApplication = true;
+			}
 		}
+
 		AndroidDebugBridgeStub.methodCallCount++;
 	}
 
 	public async pushFile(localFilePath: string, deviceFilePath: string): Promise<void> {
-		await this.executeShellCommand(["push", localFilePath, deviceFilePath ]);
+		await this.executeShellCommand(["push", localFilePath, deviceFilePath]);
 	}
 
 	public getInputLength(): number {
 		return this.validTestInput.length;
 	}
 
-	private checkIfStartedWithActivityManager(args: string[]): Boolean {
+	private checkIfStartedWithActivityManager(args: string[]): boolean {
 		const firstArgument = args[0].trim();
-		switch (firstArgument) {
-			case "am": return true;
-			case "monkey": return false;
-			default: return false;
-		}
+
+		return firstArgument === "am";
 	}
 
-	private checkIfValidIdentifierPassed(args: string[]): Boolean {
+	private checkIfValidIdentifierPassed(args: string[]): boolean {
 		if (args && args.length) {
 			const possibleIdentifier = args[args.length - 1];
 			const validTestString = this.expectedValidTestInput[AndroidDebugBridgeStub.methodCallCount];
 
 			return possibleIdentifier === validTestString;
 		}
+
 		return false;
 	}
 }
@@ -91,13 +98,13 @@ function createTestInjector(): IInjector {
 	testInjector.register("config", {});
 	testInjector.register("staticConfig", {});
 	testInjector.register("androidDebugBridgeResultHandler", {});
-	testInjector.register("options", { justlaunch: true });
+	testInjector.register("options", { justlaunch: false });
 	testInjector.register("errors", {});
-	testInjector.register("identifier", {});
-	testInjector.register("logcatHelper", {});
-	testInjector.register("androidProcessService", {});
+	testInjector.register("identifier", validDeviceIdentifier);
+	testInjector.register("logcatHelper", LogcatHelperStub);
+	testInjector.register("androidProcessService", AndroidProcessServiceStub);
 	testInjector.register("httpClient", {});
-	testInjector.register("deviceLogProvider", {});
+	testInjector.register("deviceLogProvider", DeviceLogProviderStub);
 	testInjector.register("hooksService", {});
 	return testInjector;
 }
@@ -107,25 +114,100 @@ describe("android-application-manager", () => {
 	let testInjector: IInjector;
 	let androidApplicationManager: AndroidApplicationManager;
 	let androidDebugBridge: AndroidDebugBridgeStub;
+	let logcatHelper: LogcatHelperStub;
+	let androidProcessService: AndroidProcessServiceStub;
+	let deviceLogProvider: DeviceLogProviderStub;
+	let logger: CommonLoggerStub;
 
 	beforeEach(() => {
 		testInjector = createTestInjector();
 		androidApplicationManager = testInjector.resolve("androidApplicationManager");
 		androidDebugBridge = testInjector.resolve("adb");
+		logcatHelper = testInjector.resolve("logcatHelper");
+		androidProcessService = testInjector.resolve("androidProcessService");
+		deviceLogProvider = testInjector.resolve("deviceLogProvider");
+		logger = testInjector.resolve("logger");
 	});
 	describe("startApplication", () => {
 		it("fires up the right application", async () => {
 			for (let i = 0; i < androidDebugBridge.getInputLength(); i++) {
 				androidDebugBridge.validIdentifierPassed = false;
 
-				await androidApplicationManager.startApplication({ appId: "valid.identifier", projectName: "" });
+				await androidApplicationManager.startApplication(validStartOptions);
+
 				assert.isTrue(androidDebugBridge.validIdentifierPassed);
 				assert.isTrue(androidDebugBridge.startedWithActivityManager);
 			}
 		});
-		it("if regex fails monkey is called to start application", async () => {
+
+		it("is calling monkey to start the application when invalid identifier is passed", async () => {
 			await androidApplicationManager.startApplication({ appId: invalidIdentifier, projectName: "" });
+
 			assert.isFalse(androidDebugBridge.startedWithActivityManager);
+		});
+
+		it("passes the pid to the logcat helper", async () => {
+			const expectedPid = "pid";
+			androidProcessService.GetAppProcessIdResult = expectedPid;
+
+			await androidApplicationManager.startApplication(validStartOptions);
+
+			assert.equal(logcatHelper.LastStartCallOptions.pid, expectedPid);
+		});
+
+		it("sets the current device pid", async () => {
+			const expectedPid = "pid";
+			androidProcessService.GetAppProcessIdResult = expectedPid;
+
+			await androidApplicationManager.startApplication(validStartOptions);
+
+			assert.equal(deviceLogProvider.currentDevicePids[validDeviceIdentifier], expectedPid);
+		});
+
+		it("polls for pid when not available initially and passes it to the logcat helper", async () => {
+			const expectedPid = "pid";
+			androidProcessService.GetAppProcessIdResult = expectedPid;
+			androidProcessService.GetAppProcessIdFailAttempts = 1;
+			androidApplicationManager.PID_CHECK_INTERVAL = 10;
+
+			await androidApplicationManager.startApplication(validStartOptions);
+
+			assert.equal(logcatHelper.LastStartCallOptions.pid, expectedPid);
+			assert.isTrue(logger.traceOutput.indexOf("Wasn't able to get pid") > -1);
+			assert.isTrue(logger.output.indexOf(`Unable to find running "${validIdentifier}" application on device `) === -1);
+		});
+
+		it("starts the logcat helper without pid after a timeout, when pid not available", async () => {
+			const expectedPidTimeout = 100;
+			androidApplicationManager.PID_CHECK_INTERVAL = 10;
+			androidApplicationManager.PID_CHECK_TIMEOUT = expectedPidTimeout;
+			androidProcessService.GetAppProcessIdResult = null;
+
+			await androidApplicationManager.startApplication(validStartOptions);
+
+			assert.equal(logcatHelper.LastStartCallOptions.pid, null);
+			assert.isTrue(logger.traceOutput.indexOf("Wasn't able to get pid") > -1);
+			assert.isTrue(logger.output.indexOf(`Unable to find running "${validIdentifier}" application on device `) > -1);
+		});
+	});
+
+	describe("stopApplication", () => {
+		it("should stop the logcat helper", async () => {
+			androidApplicationManager.stopApplication(validStartOptions);
+
+			assert.equal(logcatHelper.StopCallCount, 1);
+		});
+
+		it("should stop the application", async () => {
+			androidApplicationManager.stopApplication(validStartOptions);
+
+			assert.isTrue(androidDebugBridge.calledStopApplication);
+		});
+
+		it("should reset the current pid", async () => {
+			androidApplicationManager.stopApplication(validStartOptions);
+
+			assert.equal(deviceLogProvider.currentDevicePids[validDeviceIdentifier], null);
 		});
 	});
 });

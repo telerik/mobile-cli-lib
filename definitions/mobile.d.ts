@@ -171,8 +171,14 @@ declare module Mobile {
 		createCommandsFileOnDevice(commandsFileDevicePath: string, commands: string[]): Promise<void>;
 	}
 
+	interface ILogcatStartOptions {
+		deviceIdentifier: string;
+		pid?: string;
+		keepSingleProcess?: boolean;
+	}
+
 	interface ILogcatHelper {
-		start(deviceIdentifier: string): Promise<void>;
+		start(options: ILogcatStartOptions): Promise<void>;
 		stop(deviceIdentifier: string): void;
 	}
 
