@@ -12,7 +12,7 @@ export class AndroidEmulatorServices implements Mobile.IEmulatorPlatformService 
 		private $utils: IUtils) { }
 
 	public async getEmulatorImages(): Promise<Mobile.IEmulatorImagesOutput> {
-		const adbDevicesOutput = await this.$adb.getDevices();
+		const adbDevicesOutput = await this.$adb.getDevicesSafe();
 		const avdAvailableEmulatorsOutput = await this.$androidVirtualDeviceService.getEmulatorImages(adbDevicesOutput);
 		const genyAvailableDevicesOutput = await this.$androidGenymotionService.getEmulatorImages(adbDevicesOutput);
 
@@ -23,7 +23,7 @@ export class AndroidEmulatorServices implements Mobile.IEmulatorPlatformService 
 	}
 
 	public async getRunningEmulatorIds(): Promise<string[]> {
-		const adbDevicesOutput = await this.$adb.getDevices();
+		const adbDevicesOutput = await this.$adb.getDevicesSafe();
 		const avds = await this.$androidVirtualDeviceService.getRunningEmulatorIds(adbDevicesOutput);
 		const genies = await this.$androidGenymotionService.getRunningEmulatorIds(adbDevicesOutput);
 		return avds.concat(genies);

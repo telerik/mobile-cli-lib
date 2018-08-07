@@ -388,6 +388,12 @@ declare module Mobile {
 		 * @returns {Promise<string>} Returns all connected android devices
 		 */
 		getDevices(): Promise<string[]>;
+
+		/**
+		 * Returns current Android devices or empty array in case of an error.
+		 * @returns {Promise<string[]>} Array of currently running devices.
+		 */
+		getDevicesSafe(): Promise<string[]>;
 	}
 
 	interface IDeviceAndroidDebugBridge extends IAndroidDebugBridge {
