@@ -4,6 +4,7 @@ import { AndroidGenymotionService } from "../../../../mobile/android/genymotion/
 import { EmulatorHelper } from "../../../../mobile/emulator-helper";
 
 import { assert } from "chai";
+import { NOT_RUNNING_EMULATOR_STATUS, RUNNING_EMULATOR_STATUS } from '../../../../constants';
 
 const error = "some test error";
 const enumerateGuestPropertiesOutput = `Name: hardware_opengl, value: 1, timestamp: 1519225339826058000, flags:
@@ -219,7 +220,7 @@ function getAvailableEmulatorData(data: {displayName: string, imageIdentifier: s
 		isTablet: false,
 		model: data.displayName,
 		platform: "android",
-		status: "Not running",
+		status: NOT_RUNNING_EMULATOR_STATUS,
 		type: "Emulator",
 		vendor: "Genymotion",
 		version: data.version
@@ -234,7 +235,7 @@ function getRunningEmulatorData(data: {displayName: string, imageIdentifier: str
 		model: data.displayName,
 		version: data.version,
 		vendor: 'Genymotion',
-		status: 'Running',
+		status: RUNNING_EMULATOR_STATUS,
 		errorHelp: null,
 		isTablet: false,
 		type: 'Device',

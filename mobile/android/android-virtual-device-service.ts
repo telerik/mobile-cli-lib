@@ -266,7 +266,8 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 	private getAvdManagerDeviceInfo(output: string): Mobile.IAvdManagerDeviceInfo {
 		const avdManagerDeviceInfo: Mobile.IAvdManagerDeviceInfo = Object.create(null);
 
-		_.reduce(output.split(EOL), (result: Mobile.IAvdManagerDeviceInfo, row: string) => {
+		// Split by `\n`, not EOL as the avdmanager and android executables print results with `\n` only even on Windows
+		_.reduce(output.split("\n"), (result: Mobile.IAvdManagerDeviceInfo, row: string) => {
 			const [key, value] = row.split(": ").map(part => part.trim());
 
 			switch (key) {

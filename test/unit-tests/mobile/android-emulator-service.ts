@@ -2,6 +2,7 @@ import { Yok } from "../../../yok";
 import { AndroidEmulatorServices } from "../../../mobile/android/android-emulator-services";
 import { EmulatorHelper } from "../../../mobile/emulator-helper";
 import { assert } from "chai";
+import { RUNNING_EMULATOR_STATUS } from "../../../constants";
 
 function createTestInjector() {
 	const testInjector = new Yok();
@@ -34,7 +35,7 @@ const avdEmulator = {
 	model: "model",
 	version: "version",
 	vendor: "Avd",
-	status: "Running",
+	status: RUNNING_EMULATOR_STATUS,
 	errorHelp: "",
 	isTablet: false,
 	type: "type",
@@ -47,7 +48,7 @@ const genyEmulator = {
 	model: "model",
 	version: "version",
 	vendor: "Genymotion",
-	status: "Running",
+	status: RUNNING_EMULATOR_STATUS,
 	errorHelp: "",
 	isTablet: false,
 	type: "type",

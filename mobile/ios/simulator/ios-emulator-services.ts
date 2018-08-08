@@ -1,6 +1,6 @@
 import * as net from "net";
 import { connectEventuallyUntilTimeout } from "../../../helpers";
-import { CONNECTED_STATUS, DISCONNECTED_STATUS, APPLE_VENDOR_NAME, DeviceTypes } from "../../../constants";
+import { APPLE_VENDOR_NAME, DeviceTypes, RUNNING_EMULATOR_STATUS, NOT_RUNNING_EMULATOR_STATUS } from "../../../constants";
 
 class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 	private static DEFAULT_TIMEOUT = 10000;
@@ -117,12 +117,13 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 
 	private convertSimDeviceToDeviceInfo(simDevice: Mobile.IiSimDevice): Mobile.IDeviceInfo {
 		return {
+			imageIdentifier: simDevice.id,
 			identifier: simDevice.id,
 			displayName: simDevice.name,
 			model: simDevice.name,
 			version: simDevice.runtimeVersion,
 			vendor: APPLE_VENDOR_NAME,
-			status: simDevice.state && simDevice.state.toLowerCase() === "booted" ? CONNECTED_STATUS : DISCONNECTED_STATUS,
+			status: simDevice.state && simDevice.state.toLowerCase() === "booted" ? RUNNING_EMULATOR_STATUS : NOT_RUNNING_EMULATOR_STATUS,
 			errorHelp: null,
 			isTablet: this.$mobileHelper.isiOSTablet(simDevice.name),
 			type: DeviceTypes.Emulator,

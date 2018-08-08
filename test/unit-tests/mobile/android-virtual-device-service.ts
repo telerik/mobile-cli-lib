@@ -4,12 +4,12 @@ import { Yok } from "../../../yok";
 
 import { assert } from "chai";
 import * as path from "path";
-import { AndroidVirtualDevice } from "../../../constants";
+import { AndroidVirtualDevice, NOT_RUNNING_EMULATOR_STATUS, RUNNING_EMULATOR_STATUS } from '../../../constants';
 
 const avdManagerOutput = `Parsing /Users/havaluova/Library/Android/sdk/build-tools/27.0.3/package.xmlParsing /Users/havaluova/Library/Android/sdk/build-tools/28.0.0/package.xmlParsing /Users/havaluova/Library/Android/sdk/emulator/package.xmlParsing /Users/havaluova/Library/Android/sdk/extras/android/m2repository/package.xmlParsing /Users/havaluova/Library/Android/sdk/extras/google/google_play_services/package.xmlParsing /Users/havaluova/Library/Android/sdk/extras/google/m2repository/package.xmlParsing /Users/havaluova/Library/Android/sdk/extras/intel/Hardware_Accelerated_Execution_Manager/package.xmlParsing /Users/havaluova/Library/Android/sdk/extras/m2repository/com/android/support/constraint/constraint-layout-solver/1.0.2/package.xmlParsing /Users/havaluova/Library/Android/sdk/extras/m2repository/com/android/support/constraint/constraint-layout/1.0.2/package.xmlParsing /Users/havaluova/Library/Android/sdk/patcher/v4/package.xmlParsing /Users/havaluova/Library/Android/sdk/platform-tools/package.xmlParsing /Users/havaluova/Library/Android/sdk/platforms/android-27/package.xmlParsing /Users/havaluova/Library/Android/sdk/platforms/android-28/package.xmlParsing /Users/havaluova/Library/Android/sdk/sources/android-27/package.xmlParsing /Users/havaluova/Library/Android/sdk/system-images/android-27/google_apis_playstore/x86/package.xmlParsing /Users/havaluova/Library/Android/sdk/system-images/android-28/google_apis/x86/package.xmlParsing /Users/havaluova/Library/Android/sdk/system-images/android-28/google_apis_playstore/x86/package.xmlParsing /Users/havaluova/Library/Android/sdk/tools/package.xmlAvailable Android Virtual Devices:
 	Name: Nexus_5_API_27
 	Device: Nexus 5 (Google)
-	Path: /fake/path/Nexus_5_API_27.avd
+	Path: ${path.join("/fake", "path", "Nexus_5_API_27.avd")}
 	Target: Google Play (Google Inc.)
 			Based on: Android API 27 Tag/ABI: google_apis_playstore/x86
 	Skin: nexus_5
@@ -17,7 +17,7 @@ const avdManagerOutput = `Parsing /Users/havaluova/Library/Android/sdk/build-too
 	---------
 	Name: Nexus_5X_API_28
 	Device: Nexus 5X (Google)
-	Path: /fake/path/Nexus_5X_API_28.avd
+	Path: ${path.join("/fake", "path", "Nexus_5X_API_28.avd")}
 	Target: Google Play (Google Inc.)
 			Based on: Android API 28 Tag/ABI: google_apis_playstore/x86
 	Skin: nexus_5x
@@ -25,7 +25,7 @@ const avdManagerOutput = `Parsing /Users/havaluova/Library/Android/sdk/build-too
 	---------
 	Name: Nexus_6P_API_28
 	Device: Nexus 6P (Google)
-	Path: /fake/path/Nexus_6P_API_28.avd
+	Path: ${path.join("/fake", "path", "Nexus_6P_API_28.avd")}
 	Target: Google APIs (Google Inc.)
 			Based on: Android API 28 Tag/ABI: google_apis/x86
 	Skin: nexus_6p
@@ -34,7 +34,7 @@ const avdManagerOutput = `Parsing /Users/havaluova/Library/Android/sdk/build-too
 const avdManagerOutputWithInvalidDevice = `${avdManagerOutput} \n` + `
 	The following Android Virtual Devices could not be loaded:
 	Name: Pixel_2_XL_API_28
-	Path: /fake/path/Pixel_2_XL_API_28.avd
+	Path: ${path.join("/fake", "path", "Pixel_2_XL_API_28.avd")}
 	Error: Google pixel_2_xl no longer exists as a device`;
 
 function getValueFromIniFilesData(propertyName: string, iniFilePath: string, iniFilesData: IDictionary<Mobile.IAvdInfo>) {
@@ -89,7 +89,7 @@ function getAvailableEmulatorData(data: { displayName: string, imageIdentifier: 
 		isTablet: false,
 		model: data.displayName,
 		platform: "android",
-		status: "Not running",
+		status: NOT_RUNNING_EMULATOR_STATUS,
 		type: "Emulator",
 		vendor: "Avd",
 		version: data.version
@@ -104,7 +104,7 @@ function getRunningEmulatorData(data: { displayName: string, imageIdentifier: st
 		model: data.displayName,
 		version: data.version,
 		vendor: 'Avd',
-		status: 'Running',
+		status: RUNNING_EMULATOR_STATUS,
 		errorHelp: null,
 		isTablet: false,
 		type: 'Device',
@@ -118,6 +118,43 @@ describe("androidVirtualDeviceService", () => {
 		return testInjector.resolve("androidVirtualDeviceService");
 	}
 
+	function getIniFilesData(opts?: { includePixel: boolean }): any {
+		const data: any = {
+			[path.join("/fake", "path", "Nexus_5_API_27.avd")]: {
+				target: "android-27",
+				targetNum: 8,
+				path: null,
+				device: "Nexus 5X",
+				avdId: "Nexus_5_API_27"
+			},
+			[path.join("/fake", "path", "Nexus_5X_API_28.avd")]: {
+				target: "android-28",
+				targetNum: 9,
+				path: null,
+				device: "Nexus 5X",
+				avdId: "Nexus_5X_API_28"
+			},
+			[path.join("/fake", "path", "Nexus_6P_API_28.avd")]: {
+				target: "android-28",
+				targetNum: 9,
+				path: null,
+				device: "Nexus 6P",
+				avdId: "Nexus_6P_API_28"
+			},
+		};
+
+		if (opts && opts.includePixel) {
+			data[path.join("/fake", "path", "Pixel_2_XL_API_28.avd")] = {
+				target: "android-28",
+				targetNum: 9,
+				path: null,
+				device: "Pixel 2 XL",
+				avdId: "Pixel_2_XL_API_28"
+			};
+		}
+
+		return data;
+	}
 	describe("getEmulatorImages", () => {
 		describe("when avdmanager is found", () => {
 			beforeEach(() => {
@@ -150,29 +187,7 @@ describe("androidVirtualDeviceService", () => {
 			});
 			it("should return all emulators when there are available emulators and no running emulators", async () => {
 				const avdService = mockAvdService({
-					avdManagerOutput, iniFilesData: {
-						"/fake/path/Nexus_5_API_27.avd": {
-							target: "android-27",
-							targetNum: 8,
-							path: null,
-							device: "Nexus 5X",
-							avdId: "Nexus_5_API_27"
-						},
-						"/fake/path/Nexus_5X_API_28.avd": {
-							target: "android-28",
-							targetNum: 9,
-							path: null,
-							device: "Nexus 5X",
-							avdId: "Nexus_5X_API_28"
-						},
-						"/fake/path/Nexus_6P_API_28.avd": {
-							target: "android-28",
-							targetNum: 9,
-							path: null,
-							device: "Nexus 6P",
-							avdId: "Nexus_6P_API_28"
-						}
-					}
+					avdManagerOutput, iniFilesData: getIniFilesData()
 				});
 
 				const result = await avdService.getEmulatorImages([]);
@@ -184,29 +199,7 @@ describe("androidVirtualDeviceService", () => {
 			});
 			it("should return all emulators when there are available and running emulators", async () => {
 				const avdService = mockAvdService({
-					avdManagerOutput, iniFilesData: {
-						"/fake/path/Nexus_5_API_27.avd": {
-							target: "android-27",
-							targetNum: 8,
-							path: null,
-							device: "Nexus 5X",
-							avdId: "Nexus_5_API_27"
-						},
-						"/fake/path/Nexus_5X_API_28.avd": {
-							target: "android-28",
-							targetNum: 9,
-							path: null,
-							device: "Nexus 5X",
-							avdId: "Nexus_5X_API_28"
-						},
-						"/fake/path/Nexus_6P_API_28.avd": {
-							target: "android-28",
-							targetNum: 9,
-							path: null,
-							device: "Nexus 6P",
-							avdId: "Nexus_6P_API_28"
-						}
-					}
+					avdManagerOutput, iniFilesData: getIniFilesData()
 				});
 
 				avdService.getRunningEmulatorImageIdentifier = (emulatorId: string) => {
@@ -238,36 +231,7 @@ describe("androidVirtualDeviceService", () => {
 		describe("when avdmanager reports some device no longer exists", () => {
 			it("should return the emulator when it actually exists", async () => {
 				const avdService = mockAvdService({
-					avdManagerOutput: avdManagerOutputWithInvalidDevice, iniFilesData: {
-						"/fake/path/Nexus_5_API_27.avd": {
-							target: "android-27",
-							targetNum: 8,
-							path: null,
-							device: "Nexus 5X",
-							avdId: "Nexus_5_API_27"
-						},
-						"/fake/path/Nexus_5X_API_28.avd": {
-							target: "android-28",
-							targetNum: 9,
-							path: null,
-							device: "Nexus 5X",
-							avdId: "Nexus_5X_API_28"
-						},
-						"/fake/path/Nexus_6P_API_28.avd": {
-							target: "android-28",
-							targetNum: 9,
-							path: null,
-							device: "Nexus 6P",
-							avdId: "Nexus_6P_API_28"
-						},
-						"/fake/path/Pixel_2_XL_API_28.avd": {
-							target: "android-28",
-							targetNum: 9,
-							path: null,
-							device: "Pixel 2 XL",
-							avdId: "Pixel_2_XL_API_28"
-						}
-					}
+					avdManagerOutput: avdManagerOutputWithInvalidDevice, iniFilesData: getIniFilesData({ includePixel: true })
 				});
 
 				const result = await avdService.getEmulatorImages([]);
@@ -282,36 +246,7 @@ describe("androidVirtualDeviceService", () => {
 			it("shouldn't return the emulator when it actually does not exist", async () => {
 				const mockData = {
 					avdManagerOutput: avdManagerOutputWithInvalidDevice,
-					iniFilesData: {
-						"/fake/path/Nexus_5_API_27.avd": {
-							target: "android-27",
-							targetNum: 8,
-							path: "",
-							device: "Nexus 5X",
-							avdId: "Nexus_5_API_27"
-						},
-						"/fake/path/Nexus_5X_API_28.avd": {
-							target: "android-28",
-							targetNum: 9,
-							path: "",
-							device: "Nexus 5X",
-							avdId: "Nexus_5X_API_28"
-						},
-						"/fake/path/Nexus_6P_API_28.avd": {
-							target: "android-28",
-							targetNum: 9,
-							path: "",
-							device: "Nexus 6P",
-							avdId: "Nexus_6P_API_28"
-						},
-						"/fake/path/Pixel_2_XL_API_28.avd": {
-							target: "android-28",
-							targetNum: 9,
-							path: "",
-							device: "Pixel 2 XL",
-							avdId: "Pixel_2_XL_API_28"
-						}
-					}
+					iniFilesData: getIniFilesData({ includePixel: true })
 				};
 				const testInjector = createTestInjector(mockData);
 				const avdService = testInjector.resolve<Mobile.IAndroidVirtualDeviceService>("androidVirtualDeviceService");
