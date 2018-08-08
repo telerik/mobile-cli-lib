@@ -1,6 +1,7 @@
 import byline = require("byline");
 import { DeviceAndroidDebugBridge } from "./device-android-debug-bridge";
 import { ChildProcess } from "child_process";
+import * as semver from "semver";
 
 interface IDeviceLoggingData {
 	loggingProcess: ChildProcess;
@@ -15,7 +16,8 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 		private $devicePlatformsConstants: Mobile.IDevicePlatformsConstants,
 		private $logger: ILogger,
 		private $injector: IInjector,
-		private $processService: IProcessService) {
+		private $processService: IProcessService,
+		private $devicesService: Mobile.IDevicesService) {
 		this.mapDevicesLoggingData = Object.create(null);
 	}
 
@@ -57,9 +59,13 @@ export class LogcatHelper implements Mobile.ILogcatHelper {
 	}
 
 	private async getLogcatStream(deviceIdentifier: string, pid?: string) {
+		const device = await this.$devicesService.getDevice(deviceIdentifier);
+		const minAndroidWithLogcatPidSupport = "7.0.0";
+		const isLogcatPidSupported =  semver.gte(semver.coerce(device.deviceInfo.version), minAndroidWithLogcatPidSupport);
 		const adb: Mobile.IDeviceAndroidDebugBridge = this.$injector.resolve(DeviceAndroidDebugBridge, { identifier: deviceIdentifier });
 		const logcatCommand = ["logcat"];
-		if (pid) {
+
+		if (pid && isLogcatPidSupported) {
 			logcatCommand.push(`--pid=${pid}`);
 		}
 		const logcatStream = await adb.executeCommand(logcatCommand, { returnChildProcess: true });
