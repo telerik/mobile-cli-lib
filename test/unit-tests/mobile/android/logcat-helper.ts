@@ -50,6 +50,15 @@ function createTestInjector(): IInjector {
 		}
 	});
 	injector.register("errors", {});
+	injector.register("devicesService", {
+		getDevice: (): Mobile.IDevice => {
+			return <Mobile.IDevice>{
+					deviceInfo: {
+						version: "9.0.0"
+					}
+				} ;
+		}
+	});
 	injector.register("devicePlatformsConstants", { Android: "Android" });
 	injector.register("processService", {
 		attachToProcessExitSignals(context: any, callback: () => void): void {
@@ -109,6 +118,35 @@ describe("logcat-helper", () => {
 					loggedData.push(line);
 					if (line === "end") {
 						assert.include(ChildProcessStub.adbProcessArgs, `--pid=${expectedPid}`);
+						done();
+					}
+				}
+			});
+
+			const logcatHelper = injector.resolve<LogcatHelper>("logcatHelper");
+			logcatHelper.start({
+				deviceIdentifier: validIdentifier,
+				pid: expectedPid
+			});
+		});
+
+		it("should not pass the pid filter to the adb process when Android version is less than 7", (done: mocha.Done) => {
+			const expectedPid = "MyCoolPid";
+			injector.register("devicesService", {
+				getDevice: (): Mobile.IDevice => {
+					return <Mobile.IDevice>{
+							deviceInfo: {
+								version: "6.0.0"
+							}
+						} ;
+				}
+			});
+
+			injector.register("deviceLogProvider", {
+				logData(line: string, platform: string, deviceIdentifier: string): void {
+					loggedData.push(line);
+					if (line === "end") {
+						assert.notInclude(ChildProcessStub.adbProcessArgs, `--pid=${expectedPid}`);
 						done();
 					}
 				}
