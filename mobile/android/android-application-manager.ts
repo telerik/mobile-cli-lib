@@ -73,7 +73,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 			await this.adb.executeShellCommand(["monkey", "-p", appIdentifier, "-c", "android.intent.category.LAUNCHER", "1"]);
 		}
 
-		if (!this.$options.justlaunch) {
+		if (!this.$options.justlaunch && !appData.justLaunch) {
 			const deviceIdentifier = this.identifier;
 			const processIdentifier = await this.getAppProcessId(deviceIdentifier, appIdentifier);
 			if (processIdentifier) {

@@ -89,7 +89,9 @@ class AndroidDebugBridgeStub {
 	}
 }
 
-function createTestInjector(): IInjector {
+function createTestInjector(options?: {
+	justLaunch?: boolean
+}): IInjector {
 	const testInjector = new Yok();
 	testInjector.register("androidApplicationManager", AndroidApplicationManager);
 	testInjector.register("adb", AndroidDebugBridgeStub);
@@ -98,7 +100,7 @@ function createTestInjector(): IInjector {
 	testInjector.register("config", {});
 	testInjector.register("staticConfig", {});
 	testInjector.register("androidDebugBridgeResultHandler", {});
-	testInjector.register("options", { justlaunch: false });
+	testInjector.register("options", { justlaunch: options && options.justLaunch || false });
 	testInjector.register("errors", {});
 	testInjector.register("identifier", validDeviceIdentifier);
 	testInjector.register("logcatHelper", LogcatHelperStub);
@@ -119,17 +121,21 @@ describe("android-application-manager", () => {
 	let deviceLogProvider: DeviceLogProviderStub;
 	let logger: CommonLoggerStub;
 
-	beforeEach(() => {
-		testInjector = createTestInjector();
+	function setup(options?: {
+		justLaunch?: boolean
+	}) {
+		testInjector = createTestInjector(options);
 		androidApplicationManager = testInjector.resolve("androidApplicationManager");
 		androidDebugBridge = testInjector.resolve("adb");
 		logcatHelper = testInjector.resolve("logcatHelper");
 		androidProcessService = testInjector.resolve("androidProcessService");
 		deviceLogProvider = testInjector.resolve("deviceLogProvider");
 		logger = testInjector.resolve("logger");
-	});
+	}
+
 	describe("startApplication", () => {
 		it("fires up the right application", async () => {
+			setup();
 			for (let i = 0; i < androidDebugBridge.getInputLength(); i++) {
 				androidDebugBridge.validIdentifierPassed = false;
 
@@ -141,12 +147,47 @@ describe("android-application-manager", () => {
 		});
 
 		it("is calling monkey to start the application when invalid identifier is passed", async () => {
+			setup();
+
 			await androidApplicationManager.startApplication({ appId: invalidIdentifier, projectName: "" });
 
 			assert.isFalse(androidDebugBridge.startedWithActivityManager);
 		});
 
+		it("starts the logcat helper", async () => {
+			setup();
+
+			await androidApplicationManager.startApplication(validStartOptions);
+
+			assert.equal(logcatHelper.StartCallCount, 1);
+		});
+
+		it("do not start the logcat helper with justLaunch param", async () => {
+			setup();
+
+			await androidApplicationManager.startApplication(_.extend({}, validStartOptions, { justLaunch: true }));
+
+			assert.equal(logcatHelper.StartCallCount, 0);
+		});
+
+		it("do not start the logcat helper with justLaunch user option", async () => {
+			setup({ justLaunch: true });
+
+			await androidApplicationManager.startApplication(_.extend({}, validStartOptions, { justLaunch: false }));
+
+			assert.equal(logcatHelper.StartCallCount, 0);
+		});
+
+		it("do not start the logcat helper with both justLaunch argument and user option", async () => {
+			setup({ justLaunch: true });
+
+			await androidApplicationManager.startApplication(_.extend({}, validStartOptions, { justLaunch: true }));
+
+			assert.equal(logcatHelper.StartCallCount, 0);
+		});
+
 		it("passes the pid to the logcat helper", async () => {
+			setup();
 			const expectedPid = "pid";
 			androidProcessService.GetAppProcessIdResult = expectedPid;
 
@@ -156,6 +197,7 @@ describe("android-application-manager", () => {
 		});
 
 		it("sets the current device pid", async () => {
+			setup();
 			const expectedPid = "pid";
 			androidProcessService.GetAppProcessIdResult = expectedPid;
 
@@ -165,6 +207,7 @@ describe("android-application-manager", () => {
 		});
 
 		it("polls for pid when not available initially and passes it to the logcat helper", async () => {
+			setup();
 			const expectedPid = "pid";
 			androidProcessService.GetAppProcessIdResult = expectedPid;
 			androidProcessService.GetAppProcessIdFailAttempts = 1;
@@ -178,6 +221,7 @@ describe("android-application-manager", () => {
 		});
 
 		it("starts the logcat helper without pid after a timeout, when pid not available", async () => {
+			setup();
 			const expectedPidTimeout = 100;
 			androidApplicationManager.PID_CHECK_INTERVAL = 10;
 			androidApplicationManager.PID_CHECK_TIMEOUT = expectedPidTimeout;
@@ -193,18 +237,24 @@ describe("android-application-manager", () => {
 
 	describe("stopApplication", () => {
 		it("should stop the logcat helper", async () => {
+			setup();
+
 			androidApplicationManager.stopApplication(validStartOptions);
 
 			assert.equal(logcatHelper.StopCallCount, 1);
 		});
 
 		it("should stop the application", async () => {
+			setup();
+
 			androidApplicationManager.stopApplication(validStartOptions);
 
 			assert.isTrue(androidDebugBridge.calledStopApplication);
 		});
 
 		it("should reset the current pid", async () => {
+			setup();
+
 			androidApplicationManager.stopApplication(validStartOptions);
 
 			assert.equal(deviceLogProvider.currentDevicePids[validDeviceIdentifier], null);
