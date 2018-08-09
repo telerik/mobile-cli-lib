@@ -22,7 +22,6 @@ export const ERROR_NO_VALID_SUBCOMMAND_FORMAT = "The input is not valid sub-comm
 
 export const UNREACHABLE_STATUS = "Unreachable";
 export const CONNECTED_STATUS = "Connected";
-export const DISCONNECTED_STATUS = "Disconnected";
 
 export const RUNNING_EMULATOR_STATUS = "Running";
 export const NOT_RUNNING_EMULATOR_STATUS = "Not running";

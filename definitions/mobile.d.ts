@@ -80,7 +80,7 @@ declare module Mobile {
 		 * Available only for emulators. Should be null for devices.
 		 * The identifier of the image. For geny emulators - the vm's identifier
 		 * For avd emulators - the name of the .ini file
-		 * Currently null for iOS simulators
+		 * For iOS simulators - same as the identifier.
 		 */
 		imageIdentifier?: string;
 	}
