@@ -297,6 +297,7 @@ declare module Mobile {
 	interface IApplicationData {
 		appId: string;
 		projectName: string;
+		justLaunch?: boolean;
 	}
 
 	interface IInstallAppData extends IApplicationData {
