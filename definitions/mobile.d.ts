@@ -383,6 +383,7 @@ declare module Mobile {
 		executeCommand(args: string[], options?: IAndroidDebugBridgeCommandOptions): Promise<any>;
 		executeShellCommand(args: string[], options?: IAndroidDebugBridgeCommandOptions): Promise<any>;
 		pushFile(localFilePath: string, deviceFilePath: string): Promise<void>;
+		removeFile(deviceFilePath: string): Promise<void>;
 		/**
 		 * Gets the property value from device
 		 * @param deviceId The identifier of device
