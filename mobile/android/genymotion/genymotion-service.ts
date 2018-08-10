@@ -74,7 +74,9 @@ export class AndroidGenymotionService implements Mobile.IAndroidVirtualDeviceSer
 	}
 
 	public async getRunningEmulatorImageIdentifier(emulatorId: string): Promise<string> {
-		const emulator = await this.getRunningEmulatorData(emulatorId, (await this.getEmulatorImages(await this.$adb.getDevices())).devices);
+		const adbDevices = await this.$adb.getDevicesSafe();
+		const emulatorImages = (await this.getEmulatorImages(adbDevices)).devices;
+		const emulator = await this.getRunningEmulatorData(emulatorId, emulatorImages);
 		return emulator ? emulator.imageIdentifier : null;
 	}
 
@@ -166,11 +168,21 @@ export class AndroidGenymotionService implements Mobile.IAndroidVirtualDeviceSer
 	}
 
 	@cache()
+	private getConfigurationPlatformSpecficErrorMessage(): string {
+		const searchPaths = this.playerSearchPaths[process.platform];
+		return `Unable to find the Genymotion player in the following location${searchPaths.length > 1 ? "s" : ""}:
+${searchPaths.join(EOL)}
+In case you have installed Genymotion in a different location, please add the path to player executable to your PATH environment variable.`;
+
+	}
+
+	@cache()
 	private async getConfigurationError(): Promise<string> {
-		const result = await this.$childProcess.trySpawnFromCloseEvent(this.pathToEmulatorExecutable, []);
+		const result = await this.$childProcess.trySpawnFromCloseEvent(this.pathToEmulatorExecutable, [], {}, { throwError: false });
 		// When player is spawned, it always prints message on stderr.
-		if (result && result.stderr && result.stderr.indexOf("Logging activities to file") === -1) {
-			return "Unable to find the path to genymotion player and will not be able to start the emulator.";
+		if (result && result.stderr && result.stderr.indexOf(AndroidVirtualDevice.GENYMOTION_DEFAULT_STDERR_STRING) === -1) {
+			this.$logger.trace("Configuration error for Genymotion", result);
+			return this.getConfigurationPlatformSpecficErrorMessage();
 		}
 
 		return null;

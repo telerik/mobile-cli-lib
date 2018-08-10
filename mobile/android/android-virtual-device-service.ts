@@ -17,8 +17,8 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 		private $fs: IFileSystem,
 		private $hostInfo: IHostInfo,
 		private $logger: ILogger) {
-			this.androidHome = process.env.ANDROID_HOME;
-		}
+		this.androidHome = process.env.ANDROID_HOME;
+	}
 
 	public async getEmulatorImages(adbDevicesOutput: string[]): Promise<Mobile.IEmulatorImagesOutput> {
 		const availableEmulatorsOutput = await this.getEmulatorImagesCore();
@@ -177,7 +177,7 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 	private get pathToAvdManagerExecutable(): string {
 		let avdManagerPath = null;
 		if (this.androidHome) {
-			avdManagerPath = path.join(this.androidHome, "tools", "bin", "avdmanager");
+			avdManagerPath = path.join(this.androidHome, "tools", "bin", this.getExecutableName("avdmanager"));
 		}
 
 		return avdManagerPath;
@@ -187,7 +187,7 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 	private get pathToAndroidExecutable(): string {
 		let androidPath = null;
 		if (this.androidHome) {
-			androidPath = path.join(this.androidHome, "tools", "android");
+			androidPath = path.join(this.androidHome, "tools", this.getExecutableName("android"));
 		}
 
 		return androidPath;
@@ -209,6 +209,14 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 		return null;
 	}
 
+	private getExecutableName(executable: string): string {
+		if (this.$hostInfo.isWindows) {
+			return `${executable}.bat`;
+		}
+
+		return executable;
+	}
+
 	private listAvdsFromDirectory(): Mobile.IDeviceInfo[] {
 		let devices: Mobile.IDeviceInfo[] = [];
 
@@ -228,8 +236,9 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 	private parseListAvdsOutput(output: string): Mobile.IDeviceInfo[] {
 		let devices: Mobile.IDeviceInfo[] = [];
 
-		const avialableDevices = output.split(AndroidVirtualDevice.AVAILABLE_AVDS_MESSAGE);
-		if (avialableDevices && avialableDevices[1]) {
+		const avdOutput = output.split(AndroidVirtualDevice.AVAILABLE_AVDS_MESSAGE);
+		const availableDevices = avdOutput && avdOutput[1] && avdOutput[1].trim();
+		if (availableDevices) {
 			// In some cases `avdmanager list avds` command prints:
 			//	`The following Android Virtual Devices could not be loaded:
 			//	Name: Pixel_2_XL_API_28
@@ -237,7 +246,7 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 			//	Error: Google pixel_2_xl no longer exists as a device`
 			// These devices sometimes are valid so try to parse them.
 			// Also these devices are printed at the end of the output and are separated with 2 new lines from the valid devices output.
-			const parts = avialableDevices[1].split(/(?:\r?\n){2}/);
+			const parts = availableDevices.split(/(?:\r?\n){2}/);
 			const items = [parts[0], parts[1]].filter(item => !!item);
 
 			for (const item of items) {
@@ -257,7 +266,8 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 	private getAvdManagerDeviceInfo(output: string): Mobile.IAvdManagerDeviceInfo {
 		const avdManagerDeviceInfo: Mobile.IAvdManagerDeviceInfo = Object.create(null);
 
-		_.reduce(output.split(EOL), (result: Mobile.IAvdManagerDeviceInfo, row: string) => {
+		// Split by `\n`, not EOL as the avdmanager and android executables print results with `\n` only even on Windows
+		_.reduce(output.split("\n"), (result: Mobile.IAvdManagerDeviceInfo, row: string) => {
 			const [key, value] = row.split(": ").map(part => part.trim());
 
 			switch (key) {

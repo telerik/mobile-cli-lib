@@ -17,6 +17,7 @@ export class IOSSimulator implements Mobile.IiOSSimulator {
 
 	public get deviceInfo(): Mobile.IDeviceInfo {
 		return {
+			imageIdentifier: this.simulator.id,
 			identifier: this.simulator.id,
 			displayName: this.simulator.name,
 			model: _.last(this.simulator.fullId.split(".")),

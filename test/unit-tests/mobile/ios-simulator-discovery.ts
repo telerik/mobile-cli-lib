@@ -2,7 +2,7 @@ import { IOSSimulatorDiscovery } from "../../../mobile/mobile-core/ios-simulator
 import { Yok } from "../../../yok";
 
 import { assert } from "chai";
-import { DeviceDiscoveryEventNames } from "../../../constants";
+import { DeviceDiscoveryEventNames, CONNECTED_STATUS } from "../../../constants";
 import { DevicePlatformsConstants } from "../../../mobile/device-platforms-constants";
 
 let currentlyRunningSimulators: Mobile.IiSimDevice[];
@@ -38,13 +38,14 @@ function createTestInjector(): IInjector {
 
 function getDeviceInfo(simulator: Mobile.IiSimDevice): Mobile.IDeviceInfo {
 	return {
+		imageIdentifier: simulator.id,
 		identifier: simulator.id,
 		displayName: simulator.name,
 		model: 'c',
 		version: simulator.runtimeVersion,
 		vendor: 'Apple',
 		platform: 'iOS',
-		status: 'Connected',
+		status: CONNECTED_STATUS,
 		errorHelp: null,
 		isTablet: false,
 		type: 'Emulator'
@@ -106,13 +107,14 @@ describe("ios-simulator-discovery", () => {
 		testInjector = createTestInjector();
 		iOSSimulatorDiscovery = testInjector.resolve("iOSSimulatorDiscovery");
 		expectedDeviceInfo = {
+			imageIdentifier: "id",
 			identifier: "id",
 			displayName: 'name',
 			model: 'c',
 			version: '9.2.1',
 			vendor: 'Apple',
 			platform: 'iOS',
-			status: 'Connected',
+			status: CONNECTED_STATUS,
 			errorHelp: null,
 			isTablet: false,
 			type: 'Emulator'
@@ -139,13 +141,14 @@ describe("ios-simulator-discovery", () => {
 	});
 
 	it("raises deviceLost and deviceFound when device's id has changed (change simulator type)", async () => {
-		const device = await detectNewSimulatorAttached(defaultRunningSimulator),
-			newId = "newId";
+		const device = await detectNewSimulatorAttached(defaultRunningSimulator);
+		const newId = "newId";
 		assert.deepEqual(device.deviceInfo, expectedDeviceInfo);
 
 		const devices = await detectSimulatorChanged(device.deviceInfo.identifier, newId);
 		assert.deepEqual(devices.deviceLost, device);
 		expectedDeviceInfo.identifier = newId;
+		expectedDeviceInfo.imageIdentifier = newId;
 		assert.deepEqual(devices.deviceFound.deviceInfo, expectedDeviceInfo);
 	});
 

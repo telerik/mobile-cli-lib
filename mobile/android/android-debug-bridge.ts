@@ -1,7 +1,6 @@
 import * as path from "path";
 import { cache, invokeInit } from "../../decorators";
 import { EOL } from "os";
-
 interface IComposeCommandResult {
 	command: string;
 	args: string[];
@@ -60,10 +59,55 @@ export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 
 	@invokeInit()
 	public async getDevices(): Promise<string[]> {
-		const output = await this.$childProcess.execFile<string>(this.adbFilePath, ['devices']);
-		return output
-			.split(EOL)
-			.filter(line => !!line && line !== "List of devices attached");
+		const result = await this.executeCommand(["devices"], { returnChildProcess: true });
+		return new Promise<string[]>((resolve, reject) => {
+			let adbData = "";
+			let errorData = "";
+			let isSettled = false;
+
+			result.stdout.on("data", (data: NodeBuffer) => {
+				adbData += data.toString();
+			});
+
+			result.stderr.on("data", (data: NodeBuffer) => {
+				errorData += (data || "").toString();
+			});
+
+			result.on("error", (error: Error) => {
+				if (reject && !isSettled) {
+					isSettled = true;
+					reject(error);
+				}
+			});
+
+			result.on("close", async (exitCode: any) => {
+				if (errorData && !isSettled) {
+					isSettled = true;
+					reject(errorData);
+					return;
+				}
+
+				if (!isSettled) {
+					isSettled = true;
+					const adbDevices = adbData
+						.split(EOL)
+						.filter(line => !!line && line.indexOf("List of devices attached") === -1 && line.indexOf("* daemon ") === -1 && line.indexOf("adb server") === -1);
+
+					resolve(adbDevices);
+				}
+			});
+		});
+	}
+
+	public async getDevicesSafe(): Promise<string[]> {
+		let adbDevices: string[] = [];
+		try {
+			adbDevices = await this.getDevices();
+		} catch (err) {
+			this.$logger.trace(`Getting adb devices failed with error: ${err}`);
+		}
+
+		return adbDevices;
 	}
 
 	protected async composeCommand(params: string[], identifier?: string): Promise<IComposeCommandResult> {

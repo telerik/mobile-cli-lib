@@ -5,11 +5,14 @@ import * as path from "path";
 import * as childProcess from "child_process";
 
 class ChildProcessStub {
-	public static methodCallCount = 0;
+	public static processSpawnCallCount = 0;
+	public static processKillCallCount = 0;
+	public static adbProcessArgs: string[] = [];
 	private isWin = /^win/.test(process.platform);
 
 	public spawn(command: string, args?: string[], options?: any): childProcess.ChildProcess {
-		ChildProcessStub.methodCallCount++;
+		ChildProcessStub.adbProcessArgs = args;
+		ChildProcessStub.processSpawnCallCount++;
 		let pathToExecutable = "";
 		let shell = "";
 		if (this.isWin) {
@@ -20,8 +23,14 @@ class ChildProcessStub {
 		}
 		pathToExecutable = path.join(pathToExecutable);
 		const pathToSample = path.join(__dirname, "valid-sample.txt");
+		const spawnedProcess = childProcess.spawn(pathToExecutable, [pathToSample], { shell });
+		const spawnedProcessKill = spawnedProcess.kill;
+		spawnedProcess.kill = function (signal: string) {
+			ChildProcessStub.processKillCallCount++;
+			spawnedProcessKill.call(spawnedProcessKill, signal);
+		};
 
-		return childProcess.spawn(pathToExecutable, [pathToSample], { shell });
+		return spawnedProcess;
 	}
 }
 
@@ -41,6 +50,15 @@ function createTestInjector(): IInjector {
 		}
 	});
 	injector.register("errors", {});
+	injector.register("devicesService", {
+		getDevice: (): Mobile.IDevice => {
+			return <Mobile.IDevice>{
+					deviceInfo: {
+						version: "9.0.0"
+					}
+				} ;
+		}
+	});
 	injector.register("devicePlatformsConstants", { Android: "Android" });
 	injector.register("processService", {
 		attachToProcessExitSignals(context: any, callback: () => void): void {
@@ -64,19 +82,19 @@ function createTestInjector(): IInjector {
 }
 
 describe("logcat-helper", () => {
+	const validIdentifier = "valid-identifier";
 	let injector: IInjector;
-	let adbLogcatCrashedOrClosed: boolean;
 	let loggedData: string[];
 
 	beforeEach(() => {
-		adbLogcatCrashedOrClosed = false;
 		injector = createTestInjector();
 		loggedData = [];
-		ChildProcessStub.methodCallCount = 0;
+		ChildProcessStub.processSpawnCallCount = 0;
+		ChildProcessStub.processKillCallCount = 0;
 	});
 
 	describe("start", () => {
-		it("whole logcat is read correctly", (done: mocha.Done) => {
+		it("should read the whole logcat correctly", (done: mocha.Done) => {
 			injector.register("deviceLogProvider", {
 				logData(line: string, platform: string, deviceIdentifier: string): void {
 					loggedData.push(line);
@@ -88,41 +106,139 @@ describe("logcat-helper", () => {
 			});
 
 			const logcatHelper = injector.resolve<LogcatHelper>("logcatHelper");
-			logcatHelper.start("valid-identifier");
+			logcatHelper.start({
+				deviceIdentifier: validIdentifier
+			});
 		});
-		it("if loghelper start is called multiple times with the same identifier it's a noop the second time", async () => {
+
+		it("should pass the pid filter to the adb process", (done: mocha.Done) => {
+			const expectedPid = "MyCoolPid";
+			injector.register("deviceLogProvider", {
+				logData(line: string, platform: string, deviceIdentifier: string): void {
+					loggedData.push(line);
+					if (line === "end") {
+						assert.include(ChildProcessStub.adbProcessArgs, `--pid=${expectedPid}`);
+						done();
+					}
+				}
+			});
+
 			const logcatHelper = injector.resolve<LogcatHelper>("logcatHelper");
-			await logcatHelper.start("valid-identifier");
-			assert.equal(ChildProcessStub.methodCallCount, 1);
-			await logcatHelper.start("valid-identifier");
-			assert.equal(ChildProcessStub.methodCallCount, 1);
-			await logcatHelper.start("valid-identifier");
-			assert.equal(ChildProcessStub.methodCallCount, 1);
+			logcatHelper.start({
+				deviceIdentifier: validIdentifier,
+				pid: expectedPid
+			});
 		});
-		it("if loghelper start works when it's called multiple times with different identifiers", async () => {
+
+		it("should not pass the pid filter to the adb process when Android version is less than 7", (done: mocha.Done) => {
+			const expectedPid = "MyCoolPid";
+			injector.register("devicesService", {
+				getDevice: (): Mobile.IDevice => {
+					return <Mobile.IDevice>{
+							deviceInfo: {
+								version: "6.0.0"
+							}
+						} ;
+				}
+			});
+
+			injector.register("deviceLogProvider", {
+				logData(line: string, platform: string, deviceIdentifier: string): void {
+					loggedData.push(line);
+					if (line === "end") {
+						assert.notInclude(ChildProcessStub.adbProcessArgs, `--pid=${expectedPid}`);
+						done();
+					}
+				}
+			});
+
 			const logcatHelper = injector.resolve<LogcatHelper>("logcatHelper");
-			await logcatHelper.start("valid-identifier1");
-			assert.equal(ChildProcessStub.methodCallCount, 1);
-			await logcatHelper.start("valid-identifier2");
-			assert.equal(ChildProcessStub.methodCallCount, 2);
-			await logcatHelper.start("valid-identifier3");
-			assert.equal(ChildProcessStub.methodCallCount, 3);
+			logcatHelper.start({
+				deviceIdentifier: validIdentifier,
+				pid: expectedPid
+			});
+		});
+
+		it("should start a single adb process when called multiple times with the same identifier", async () => {
+			const logcatHelper = injector.resolve<LogcatHelper>("logcatHelper");
+
+			await logcatHelper.start({
+				deviceIdentifier: validIdentifier
+			});
+			await logcatHelper.start({
+				deviceIdentifier: validIdentifier
+			});
+			await logcatHelper.start({
+				deviceIdentifier: validIdentifier
+			});
+
+			assert.equal(ChildProcessStub.processSpawnCallCount, 1);
+		});
+
+		it("should start multiple logcat processes when called multiple times with different identifiers", async () => {
+			const logcatHelper = injector.resolve<LogcatHelper>("logcatHelper");
+
+			await logcatHelper.start({
+				deviceIdentifier: `${validIdentifier}1`
+			});
+			await logcatHelper.start({
+				deviceIdentifier: `${validIdentifier}2`
+			});
+			await logcatHelper.start({
+				deviceIdentifier: `${validIdentifier}3`
+			});
+
+			assert.equal(ChildProcessStub.processSpawnCallCount, 3);
 		});
 	});
 	describe("stop", () => {
-		it("device identifier is cleared on stop", async () => {
+		it("should clear the device identifier", async () => {
 			const logcatHelper = injector.resolve<LogcatHelper>("logcatHelper");
-			await logcatHelper.start("valid-identifier");
-			assert.equal(ChildProcessStub.methodCallCount, 1);
-			await logcatHelper.stop("valid-identifier");
-			await logcatHelper.start("valid-identifier");
-			assert.equal(ChildProcessStub.methodCallCount, 2);
+
+			await logcatHelper.start({
+				deviceIdentifier: validIdentifier
+			});
+			assert.equal(ChildProcessStub.processSpawnCallCount, 1);
+			await logcatHelper.stop(validIdentifier);
+			await logcatHelper.start({
+				deviceIdentifier: validIdentifier
+			});
+
+			assert.equal(ChildProcessStub.processSpawnCallCount, 2);
 		});
-		it("stop doesn't blow up if called multiple times", async () => {
+
+		it("should kill the process just once if called multiple times", async () => {
 			const logcatHelper = injector.resolve<LogcatHelper>("logcatHelper");
-			await logcatHelper.stop("valid-identifier");
-			await logcatHelper.stop("valid-identifier");
-			assert.isTrue(true);
+
+			await logcatHelper.start({
+				deviceIdentifier: validIdentifier
+			});
+			await logcatHelper.stop(validIdentifier);
+			await logcatHelper.stop(validIdentifier);
+
+			assert.equal(ChildProcessStub.processKillCallCount, 1);
+		});
+
+		it("should not kill the process if started with keepSingleProcess", async () => {
+			const logcatHelper = injector.resolve<LogcatHelper>("logcatHelper");
+
+			await logcatHelper.start({
+				deviceIdentifier: validIdentifier,
+				keepSingleProcess: true
+			});
+
+			await logcatHelper.stop(validIdentifier);
+			await logcatHelper.stop(validIdentifier);
+			assert.equal(ChildProcessStub.processKillCallCount, 0);
+		});
+
+		it("should do nothing if called without start", async () => {
+			const logcatHelper = injector.resolve<LogcatHelper>("logcatHelper");
+
+			await logcatHelper.stop(validIdentifier);
+
+			assert.equal(ChildProcessStub.processSpawnCallCount, 0);
+			assert.equal(ChildProcessStub.processKillCallCount, 0);
 		});
 	});
 });
