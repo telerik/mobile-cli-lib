@@ -1,7 +1,5 @@
 import { DeviceDiscovery } from "./device-discovery";
-import * as helpers from "../../helpers";
 import { AndroidDevice } from "../android/android-device";
-import { EOL } from "os";
 
 interface IAdbAndroidDeviceInfo {
 	identifier: string;
@@ -39,61 +37,23 @@ export class AndroidDeviceDiscovery extends DeviceDiscovery implements Mobile.IA
 	}
 
 	private async checkForDevices(): Promise<void> {
-		const result = await this.$adb.executeCommand(["devices"], { returnChildProcess: true });
-		return new Promise<void>((resolve, reject) => {
-			let adbData = "";
-			let errorData = "";
-			let isSettled = false;
+		const devices = await this.$adb.getDevices();
 
-			result.stdout.on("data", (data: NodeBuffer) => {
-				adbData += data.toString();
-			});
-
-			result.stderr.on("data", (data: NodeBuffer) => {
-				errorData += (data || "").toString();
-			});
-
-			result.on("error", (error: Error) => {
-				if (reject && !isSettled) {
-					isSettled = true;
-					reject(error);
-				}
-			});
-
-			result.on("close", async (exitCode: any) => {
-				if (errorData && !isSettled) {
-					isSettled = true;
-					reject(errorData);
-					return;
-				}
-
-				await this.checkCurrentData(adbData);
-
-				if (!isSettled) {
-					isSettled = true;
-					resolve();
-				}
-			});
-		});
+		await this.checkCurrentData(devices);
 	}
 
-	private async checkCurrentData(result: any): Promise<void> {
-		const currentData = result.toString();
+	private async checkCurrentData(result: string[]): Promise<void> {
+		const currentDevices: IAdbAndroidDeviceInfo[] = result.map((element: string) => {
+			// http://developer.android.com/tools/help/adb.html#devicestatus
+			const data = element.split('\t');
+			const identifier = data[0];
+			const status = data[1];
 
-		const currentDevices: IAdbAndroidDeviceInfo[] = currentData
-			.split(EOL)
-			.slice(1)
-			.filter((element: string) => !helpers.isNullOrWhitespace(element) && element.indexOf("* daemon ") === -1 && element.indexOf("adb server") === -1)
-			.map((element: string) => {
-				// http://developer.android.com/tools/help/adb.html#devicestatus
-				const data = element.split('\t'),
-					identifier = data[0],
-					status = data[1];
-				return {
-					identifier: identifier,
-					status: status
-				};
-			});
+			return {
+				identifier: identifier,
+				status: status
+			};
+		});
 
 		_(this._devices)
 			.reject(d => _.find(currentDevices, device => device.identifier === d.identifier && device.status === d.status))

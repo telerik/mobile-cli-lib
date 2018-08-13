@@ -3,9 +3,15 @@ import { assert } from "chai";
 import { Yok } from "../../../yok";
 import { CommonLoggerStub, ErrorsStub } from "../stubs";
 import { AndroidDebugBridgeResultHandler } from "../../../mobile/android/android-debug-bridge-result-handler";
+import { EventEmitter } from "events";
 const adbPath = "testAdb";
 const adbError = "No space left on device.";
 const adbResponse = "My Cool Response";
+
+class MockChildProcessEventEmitter extends EventEmitter {
+	public stdout = new EventEmitter();
+	public stderr = new EventEmitter();
+}
 
 describe('androidDebugBridge', () => {
 	let logger: CommonLoggerStub;
@@ -63,10 +69,18 @@ describe('androidDebugBridge', () => {
 				isAdbSpawnedFromChildProcess = command.indexOf(adbPath) !== -1;
 				spawnedArgs = args;
 
-				return {
-					stderr: options.returnError ? adbError : "",
-					stdout: options.returnError ? "" : adbResponse,
-				};
+				const childProcessResult = new MockChildProcessEventEmitter();
+				process.nextTick(() => {
+					if (options.returnError) {
+						childProcessResult.stderr.emit("data", adbError);
+					} else {
+						childProcessResult.stdout.emit("data", adbResponse);
+					}
+
+					childProcessResult.emit("close");
+				});
+
+				return childProcessResult;
 			}
 		});
 		adb = injector.resolve(AndroidDebugBridge);
@@ -153,7 +167,7 @@ describe('androidDebugBridge', () => {
 		});
 
 		function getArgs(): string[] {
-			const expectedArgs = [ 'MyCoolArg' ];
+			const expectedArgs = ['MyCoolArg'];
 			if (methodName === 'executeShellCommand') {
 				expectedArgs.unshift('shell');
 			}
@@ -166,16 +180,25 @@ describe('androidDebugBridge', () => {
 		it('should ensure its folder, push and set permissions', async () => {
 			const sampleLocalFilePath = "MyCoolLocalFolder/MyCoolLocalFile";
 			const sampleDeviceFolder = "MyCoolDeviceFolder";
-			const deviceFilePath =  `${sampleDeviceFolder}/myDevicePath`;
+			const deviceFilePath = `${sampleDeviceFolder}/myDevicePath`;
 			setup();
 
 			await adb.pushFile(sampleLocalFilePath, deviceFilePath);
 
 			assert.isTrue(isAdbSpawnedFromEvent);
 			assert.equal(allSpawnedEventsArgs.length, 3);
-			assert.deepEqual(allSpawnedEventsArgs[0], [ 'shell', 'mkdir', '-p', sampleDeviceFolder ]);
-			assert.deepEqual(allSpawnedEventsArgs[1], [ 'push', sampleLocalFilePath, deviceFilePath ]);
-			assert.deepEqual(allSpawnedEventsArgs[2], [ 'shell', 'chmod', '0777', sampleDeviceFolder ]);
+			assert.deepEqual(allSpawnedEventsArgs[0], ['shell', 'mkdir', '-p', sampleDeviceFolder]);
+			assert.deepEqual(allSpawnedEventsArgs[1], ['push', sampleLocalFilePath, deviceFilePath]);
+			assert.deepEqual(allSpawnedEventsArgs[2], ['shell', 'chmod', '0777', sampleDeviceFolder]);
+		});
+	});
+
+	describe("getDevicesSafe", () => {
+		it("does not fail when `adb devices` fail", async () => {
+			setup({ returnError: true });
+			const result = await adb.getDevicesSafe();
+			assert.deepEqual(result, [], "When adb get devices fail, getDevicesSafe must return empty array");
+			assert.isTrue(logger.traceOutput.indexOf("Getting adb devices failed with error") !== -1);
 		});
 	});
 });

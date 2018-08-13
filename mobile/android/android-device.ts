@@ -114,7 +114,10 @@ export class AndroidDevice implements Mobile.IAndroidDevice {
 
 	public async openDeviceLogStream(): Promise<void> {
 		if (this.deviceInfo.status === constants.CONNECTED_STATUS) {
-			await this.$logcatHelper.start(this.identifier);
+			await this.$logcatHelper.start({
+				deviceIdentifier: this.identifier,
+				keepSingleProcess: true
+			});
 		}
 	}
 

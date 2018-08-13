@@ -22,7 +22,6 @@ export const ERROR_NO_VALID_SUBCOMMAND_FORMAT = "The input is not valid sub-comm
 
 export const UNREACHABLE_STATUS = "Unreachable";
 export const CONNECTED_STATUS = "Connected";
-export const DISCONNECTED_STATUS = "Disconnected";
 
 export const RUNNING_EMULATOR_STATUS = "Running";
 export const NOT_RUNNING_EMULATOR_STATUS = "Not running";
@@ -148,6 +147,7 @@ export class AndroidVirtualDevice {
 	static GENYMOTION_VENDOR_NAME = "Genymotion";
 	static AVD_VENDOR_NAME = "Avd";
 	static TIMEOUT_SECONDS = 120;
+	static GENYMOTION_DEFAULT_STDERR_STRING = "Logging activities to file";
 
 	static UNABLE_TO_START_EMULATOR_MESSAGE = "Cannot run your app in the native emulator. Increase the timeout of the operation with the --timeout option or try to restart your adb server with 'adb kill-server' command. Alternatively, run the Android Virtual Device manager and increase the allocated RAM for the virtual device.";
 }

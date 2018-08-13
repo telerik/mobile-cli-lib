@@ -80,7 +80,7 @@ declare module Mobile {
 		 * Available only for emulators. Should be null for devices.
 		 * The identifier of the image. For geny emulators - the vm's identifier
 		 * For avd emulators - the name of the .ini file
-		 * Currently null for iOS simulators
+		 * For iOS simulators - same as the identifier.
 		 */
 		imageIdentifier?: string;
 	}
@@ -171,8 +171,14 @@ declare module Mobile {
 		createCommandsFileOnDevice(commandsFileDevicePath: string, commands: string[]): Promise<void>;
 	}
 
+	interface ILogcatStartOptions {
+		deviceIdentifier: string;
+		pid?: string;
+		keepSingleProcess?: boolean;
+	}
+
 	interface ILogcatHelper {
-		start(deviceIdentifier: string): Promise<void>;
+		start(options: ILogcatStartOptions): Promise<void>;
 		stop(deviceIdentifier: string): void;
 	}
 
@@ -291,6 +297,7 @@ declare module Mobile {
 	interface IApplicationData {
 		appId: string;
 		projectName: string;
+		justLaunch?: boolean;
 	}
 
 	interface IInstallAppData extends IApplicationData {
@@ -382,6 +389,12 @@ declare module Mobile {
 		 * @returns {Promise<string>} Returns all connected android devices
 		 */
 		getDevices(): Promise<string[]>;
+
+		/**
+		 * Returns current Android devices or empty array in case of an error.
+		 * @returns {Promise<string[]>} Array of currently running devices.
+		 */
+		getDevicesSafe(): Promise<string[]>;
 	}
 
 	interface IDeviceAndroidDebugBridge extends IAndroidDebugBridge {
