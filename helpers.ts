@@ -30,7 +30,8 @@ export function createRegExp(input: string, opts?: string): RegExp {
  * @returns {string} A string in which all regex symbols are escaped.
  */
 export function regExpEscape(input: string): string {
-	return input.replace(/[|\\{}()[\]^$+*?.]/g, "\\$&");
+	// https://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
+	return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 export function isRecommendedAarFile(foundAarFile: string, packageJsonPluginName: string): boolean {
