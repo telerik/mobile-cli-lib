@@ -912,7 +912,7 @@ interface IRejectUnauthorized {
 /**
  * Proxy settings required for http request.
  */
-interface IProxySettings extends IRejectUnauthorized, ICredentials {
+interface IProxySettings extends IRejectUnauthorized, ICredentials, IProxySettingsBase {
 	/**
 	 * Hostname of the machine used for proxy.
 	 */
@@ -927,8 +927,13 @@ interface IProxySettings extends IRejectUnauthorized, ICredentials {
 	 * Protocol of the proxy - http or https
 	 */
 	protocol?: string;
+}
 
-
+interface IProxySettingsBase {
+	/**
+	 * The url that should be passed to the request module in order to use the proxy.
+	 * As request expects the property to be called `proxy` reuse the same name, so the IProxySettings object can be passed directly to request.
+	 */
 	proxy?: string;
 }
 
