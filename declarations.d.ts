@@ -1372,7 +1372,7 @@ interface IDoctorService {
 	 * @param configOptions: defines if the result should be tracked by Analytics
 	 * @returns {Promise<void>}
 	 */
-	printWarnings(configOptions?: { trackResult: boolean, projectDir?: string, runtimeVersion?: string }): Promise<void>;
+	printWarnings(configOptions?: { trackResult: boolean, projectDir?: string, runtimeVersion?: string, options?: IOptions }): Promise<void>;
 	/**
 	 * Runs the setup script on host machine
 	 * @returns {Promise<ISpawnResult>}
