@@ -72,7 +72,7 @@ class IosEmulatorServices implements Mobile.IiOSSimulatorService {
 
 	public async connectToPort(data: Mobile.IConnectToPortData): Promise<net.Socket> {
 		try {
-			const socket = await connectEventuallyUntilTimeout(() => net.connect(data.port), data.timeout || IosEmulatorServices.DEFAULT_TIMEOUT);
+			const socket = await connectEventuallyUntilTimeout(async () => net.connect(data.port), data.timeout || IosEmulatorServices.DEFAULT_TIMEOUT);
 			return socket;
 		} catch (e) {
 			this.$logger.debug(e);

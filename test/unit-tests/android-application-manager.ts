@@ -4,7 +4,7 @@ import { assert } from "chai";
 import { CommonLoggerStub, LogcatHelperStub, AndroidProcessServiceStub, DeviceLogProviderStub } from "./stubs";
 const invalidIdentifier = "invalid.identifier";
 const validDeviceIdentifier = "device.identifier";
-const validIdentifier = "valid.identifier";
+const validIdentifier = "org.nativescript.testApp";
 const validStartOptions = { appId: validIdentifier, projectName: "" };
 
 class AndroidDebugBridgeStub {
@@ -14,6 +14,8 @@ class AndroidDebugBridgeStub {
 	public static methodCallCount = 0;
 	private expectedValidTestInput: string[] = [
 		"org.nativescript.testApp/com.tns.TestClass",
+		"org.nativescript.testApp/org.MyCoolApp.MyCoolActivity",
+		"org.nativescript.testApp/org.myCoolApp.MyCoolActivity",
 		"org.nativescript.testApp/com.tns.$TestClass",
 		"org.nativescript.testApp/com.tns._TestClass",
 		"org.nativescript.testApp/com.tns.$_TestClass",
@@ -22,6 +24,8 @@ class AndroidDebugBridgeStub {
 	];
 	private validTestInput: string[] = [
 		"other.stuff/ org.nativescript.testApp/com.tns.TestClass asdaas.dasdh2",
+		"other.stuff/ org.nativescript.testApp/org.MyCoolApp.MyCoolActivity asdaas.dasdh2",
+		"other.stuff/ org.nativescript.testApp/org.myCoolApp.MyCoolActivity asdaas.dasdh2",
 		"other.stuff.the.regex.might.fail.on org.nativescript.testApp/com.tns.$TestClass other.stuff.the.regex.might.fail.on",
 		"/might.fail.on  org.nativescript.testApp/com.tns._TestClass /might.fail.on",
 		"might.fail.on/ org.nativescript.testApp/com.tns.$_TestClass might.fail.on//",

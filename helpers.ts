@@ -30,7 +30,8 @@ export function createRegExp(input: string, opts?: string): RegExp {
  * @returns {string} A string in which all regex symbols are escaped.
  */
 export function regExpEscape(input: string): string {
-	return input.replace(/[|\\{}()[\]^$+*?.]/g, "\\$&");
+	// https://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex
+	return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 export function isRecommendedAarFile(foundAarFile: string, packageJsonPluginName: string): boolean {
@@ -459,8 +460,8 @@ export function getHash(str: string, options?: { algorithm?: string, encoding?: 
 	return crypto.createHash(options && options.algorithm || 'sha256').update(str).digest(options && options.encoding || 'hex');
 }
 
-export async function connectEventuallyUntilTimeout(factory: () => net.Socket, timeout: number): Promise<net.Socket> {
-	return new Promise<net.Socket>((resolve, reject) => {
+export async function connectEventuallyUntilTimeout(factory: () => Promise<net.Socket>, timeout: number): Promise<net.Socket> {
+	return new Promise<net.Socket>(async(resolve, reject) => {
 		let lastKnownError: Error;
 		let isResolved = false;
 
@@ -471,7 +472,7 @@ export async function connectEventuallyUntilTimeout(factory: () => net.Socket, t
 			}
 		}, timeout);
 
-		function tryConnect() {
+		async function tryConnect() {
 			const tryConnectAfterTimeout = (error: Error) => {
 				if (isResolved) {
 					return;
@@ -481,7 +482,7 @@ export async function connectEventuallyUntilTimeout(factory: () => net.Socket, t
 				setTimeout(tryConnect, 1000);
 			};
 
-			const socket = factory();
+			const socket = await factory();
 			socket.on("connect", () => {
 				socket.removeListener("error", tryConnectAfterTimeout);
 				isResolved = true;
@@ -490,8 +491,7 @@ export async function connectEventuallyUntilTimeout(factory: () => net.Socket, t
 			socket.on("error", tryConnectAfterTimeout);
 		}
 
-		tryConnect();
-
+		await tryConnect();
 	});
 }
 

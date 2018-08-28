@@ -1,7 +1,7 @@
 import { EOL } from "os";
 import { ApplicationManagerBase } from "../application-manager-base";
 import { LiveSyncConstants, TARGET_FRAMEWORK_IDENTIFIERS, LiveSyncPaths } from "../../constants";
-import { hook, sleep } from "../../helpers";
+import { hook, sleep, regExpEscape } from "../../helpers";
 import { cache } from "../../decorators";
 
 export class AndroidApplicationManager extends ApplicationManagerBase {
@@ -62,7 +62,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		*/
 		const appIdentifier = appData.appId;
 		const pmDumpOutput = await this.adb.executeShellCommand(["pm", "dump", appIdentifier, "|", "grep", "-A", "1", "MAIN"]);
-		const activityMatch = this.getFullyQualifiedActivityRegex();
+		const activityMatch = this.getFullyQualifiedActivityRegex(appIdentifier);
 		const match = activityMatch.exec(pmDumpOutput);
 		const possibleIdentifier = match && match[0];
 
@@ -150,11 +150,10 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 	}
 
 	@cache()
-	private getFullyQualifiedActivityRegex(): RegExp {
-		const androidPackageName = "([A-Za-z]{1}[A-Za-z\\d_]*\\.)*[A-Za-z][A-Za-z\\d_]*";
+	private getFullyQualifiedActivityRegex(appIdentifier: string): RegExp {
 		const packageActivitySeparator = "\\/";
-		const fullJavaClassName = "([a-z][a-z_0-9]*\\.)*[A-Z_$]($[A-Z_$]|[$_\\w_])*";
+		const fullJavaClassName = "([a-zA-Z_0-9]*\\.)*[A-Z_$]($[A-Z_$]|[$_\\w_])*";
 
-		return new RegExp(`${androidPackageName}${packageActivitySeparator}${fullJavaClassName}`, `m`);
+		return new RegExp(`${regExpEscape(appIdentifier)}${packageActivitySeparator}${fullJavaClassName}`, `m`);
 	}
 }
