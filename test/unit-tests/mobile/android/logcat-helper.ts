@@ -81,6 +81,13 @@ function createTestInjector(): IInjector {
 	return injector;
 }
 
+function startLogcatHelper(injector: IInjector, startOptions: { deviceIdentifier: string, pid?: string }) {
+	const logcatHelper = injector.resolve<LogcatHelper>("logcatHelper");
+	/* tslint:disable:no-floating-promises */
+	logcatHelper.start(startOptions);
+	/* tslint:enable:no-floating-promises */
+}
+
 describe("logcat-helper", () => {
 	const validIdentifier = "valid-identifier";
 	let injector: IInjector;
@@ -105,10 +112,7 @@ describe("logcat-helper", () => {
 				}
 			});
 
-			const logcatHelper = injector.resolve<LogcatHelper>("logcatHelper");
-			logcatHelper.start({
-				deviceIdentifier: validIdentifier
-			});
+			startLogcatHelper(injector, { deviceIdentifier: validIdentifier });
 		});
 
 		it("should pass the pid filter to the adb process", (done: mocha.Done) => {
@@ -123,11 +127,7 @@ describe("logcat-helper", () => {
 				}
 			});
 
-			const logcatHelper = injector.resolve<LogcatHelper>("logcatHelper");
-			logcatHelper.start({
-				deviceIdentifier: validIdentifier,
-				pid: expectedPid
-			});
+			startLogcatHelper(injector, { deviceIdentifier: validIdentifier, pid: expectedPid });
 		});
 
 		it("should not pass the pid filter to the adb process when Android version is less than 7", (done: mocha.Done) => {
@@ -152,11 +152,7 @@ describe("logcat-helper", () => {
 				}
 			});
 
-			const logcatHelper = injector.resolve<LogcatHelper>("logcatHelper");
-			logcatHelper.start({
-				deviceIdentifier: validIdentifier,
-				pid: expectedPid
-			});
+			startLogcatHelper(injector, { deviceIdentifier: validIdentifier, pid: expectedPid });
 		});
 
 		it("should start a single adb process when called multiple times with the same identifier", async () => {
