@@ -25,7 +25,9 @@ export class DeviceEmitter extends EventEmitter {
 			this.attachApplicationChangedHandlers(device);
 
 			// await: Do not await as this will require to mark the lambda with async keyword, but there's no way to await the lambda itself.
+			/* tslint:disable:no-floating-promises */
 			device.openDeviceLogStream();
+			/* tslint:enable:no-floating-promises */
 		});
 
 		this.$devicesService.on(DeviceDiscoveryEventNames.DEVICE_LOST, (device: Mobile.IDevice) => {

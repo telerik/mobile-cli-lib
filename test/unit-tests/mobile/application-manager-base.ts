@@ -249,7 +249,9 @@ describe("ApplicationManagerBase", () => {
 					}
 				});
 
+				/* tslint:disable:no-floating-promises */
 				applicationManager.checkForApplicationUpdates();
+				/* tslint:enable:no-floating-promises */
 			});
 
 			it("emits debuggableViewLost when views for debug are removed", (done: mocha.Done) => {
@@ -259,27 +261,29 @@ describe("ApplicationManagerBase", () => {
 				const expectedResults = _.cloneDeep(currentlyAvailableAppWebViewsForDebugging);
 				const currentDebuggableViews: IDictionary<Mobile.IDebugWebViewInfo[]> = {};
 
-				applicationManager.checkForApplicationUpdates().then(() => {
-					applicationManager.on("debuggableViewLost", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
-						currentDebuggableViews[appIdentifier] = currentDebuggableViews[appIdentifier] || [];
-						currentDebuggableViews[appIdentifier].push(d);
-						const numberOfFoundViewsPerApp = _.uniq(_.values(currentDebuggableViews).map(arr => arr.length));
-						if (_.keys(currentDebuggableViews).length === currentlyAvailableAppsForDebugging.length
-							&& numberOfFoundViewsPerApp.length === 1 // for all apps we've found exactly two apps.
-							&& numberOfFoundViewsPerApp[0] === numberOfViewsPerApp) {
-							_.each(currentDebuggableViews, (webViews, appId) => {
-								_.each(webViews, webView => {
-									const expectedWebView = _.find(expectedResults[appId], c => c.id === webView.id);
-									assert.isTrue(_.isEqual(webView, expectedWebView));
+				applicationManager.checkForApplicationUpdates()
+					.then(() => {
+						applicationManager.on("debuggableViewLost", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
+							currentDebuggableViews[appIdentifier] = currentDebuggableViews[appIdentifier] || [];
+							currentDebuggableViews[appIdentifier].push(d);
+							const numberOfFoundViewsPerApp = _.uniq(_.values(currentDebuggableViews).map(arr => arr.length));
+							if (_.keys(currentDebuggableViews).length === currentlyAvailableAppsForDebugging.length
+								&& numberOfFoundViewsPerApp.length === 1 // for all apps we've found exactly two apps.
+								&& numberOfFoundViewsPerApp[0] === numberOfViewsPerApp) {
+								_.each(currentDebuggableViews, (webViews, appId) => {
+									_.each(webViews, webView => {
+										const expectedWebView = _.find(expectedResults[appId], c => c.id === webView.id);
+										assert.isTrue(_.isEqual(webView, expectedWebView));
+									});
 								});
-							});
-							setTimeout(done, 0);
-						}
-					});
+								setTimeout(done, 0);
+							}
+						});
 
-					currentlyAvailableAppWebViewsForDebugging = _.mapValues(currentlyAvailableAppWebViewsForDebugging, (a) => []);
-					return applicationManager.checkForApplicationUpdates();
-				});
+						currentlyAvailableAppWebViewsForDebugging = _.mapValues(currentlyAvailableAppWebViewsForDebugging, (a) => []);
+						return applicationManager.checkForApplicationUpdates();
+					})
+					.catch();
 			});
 
 			it("emits debuggableViewFound when new views are available for debug", (done: mocha.Done) => {
@@ -290,30 +294,36 @@ describe("ApplicationManagerBase", () => {
 				let expectedAppIdentifier = currentlyAvailableAppsForDebugging[0].appIdentifier;
 				let isLastCheck = false;
 
-				applicationManager.checkForApplicationUpdates().then(() => {
-					applicationManager.on("debuggableViewFound", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
-						assert.deepEqual(appIdentifier, expectedAppIdentifier);
-						assert.isTrue(_.isEqual(d, expectedViewToBeFound));
+				applicationManager.checkForApplicationUpdates()
+					.then(() => {
+						applicationManager.on("debuggableViewFound", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
+							assert.deepEqual(appIdentifier, expectedAppIdentifier);
+							assert.isTrue(_.isEqual(d, expectedViewToBeFound));
 
-						if (isLastCheck) {
-							setTimeout(done, 0);
-						}
-					});
+							if (isLastCheck) {
+								setTimeout(done, 0);
+							}
+						});
 
-					currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].push(_.cloneDeep(expectedViewToBeFound));
-					return applicationManager.checkForApplicationUpdates();
-				}).then(() => {
-					expectedViewToBeFound = createDebuggableWebView("uniqueId1");
-					currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].push(_.cloneDeep(expectedViewToBeFound));
-					return applicationManager.checkForApplicationUpdates();
-				}).then(() => {
-					expectedViewToBeFound = createDebuggableWebView("uniqueId2");
-					expectedAppIdentifier = currentlyAvailableAppsForDebugging[1].appIdentifier;
-					isLastCheck = true;
+						currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].push(_.cloneDeep(expectedViewToBeFound));
+						return applicationManager.checkForApplicationUpdates();
+					})
+					.catch()
+					.then(() => {
+						expectedViewToBeFound = createDebuggableWebView("uniqueId1");
+						currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].push(_.cloneDeep(expectedViewToBeFound));
+						return applicationManager.checkForApplicationUpdates();
+					})
+					.catch()
+					.then(() => {
+						expectedViewToBeFound = createDebuggableWebView("uniqueId2");
+						expectedAppIdentifier = currentlyAvailableAppsForDebugging[1].appIdentifier;
+						isLastCheck = true;
 
-					currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].push(_.cloneDeep(expectedViewToBeFound));
-					return applicationManager.checkForApplicationUpdates();
-				});
+						currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].push(_.cloneDeep(expectedViewToBeFound));
+						return applicationManager.checkForApplicationUpdates();
+					})
+					.catch();
 			});
 
 			it("emits debuggableViewLost when views for debug are not available anymore", (done: mocha.Done) => {
@@ -324,27 +334,33 @@ describe("ApplicationManagerBase", () => {
 				let expectedViewToBeLost = currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].splice(0, 1)[0];
 				let isLastCheck = false;
 
-				applicationManager.checkForApplicationUpdates().then(() => {
-					applicationManager.on("debuggableViewLost", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
-						assert.deepEqual(appIdentifier, expectedAppIdentifier);
-						assert.isTrue(_.isEqual(d, expectedViewToBeLost));
+				applicationManager.checkForApplicationUpdates()
+					.then(() => {
+						applicationManager.on("debuggableViewLost", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
+							assert.deepEqual(appIdentifier, expectedAppIdentifier);
+							assert.isTrue(_.isEqual(d, expectedViewToBeLost));
 
-						if (isLastCheck) {
-							setTimeout(done, 0);
-						}
-					});
+							if (isLastCheck) {
+								setTimeout(done, 0);
+							}
+						});
 
-					return applicationManager.checkForApplicationUpdates();
-				}).then(() => {
-					expectedViewToBeLost = currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].splice(0, 1)[0];
-					return applicationManager.checkForApplicationUpdates();
-				}).then(() => {
-					expectedAppIdentifier = currentlyAvailableAppsForDebugging[1].appIdentifier;
-					expectedViewToBeLost = currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].splice(0, 1)[0];
+						return applicationManager.checkForApplicationUpdates();
+					})
+					.catch()
+					.then(() => {
+						expectedViewToBeLost = currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].splice(0, 1)[0];
+						return applicationManager.checkForApplicationUpdates();
+					})
+					.catch()
+					.then(() => {
+						expectedAppIdentifier = currentlyAvailableAppsForDebugging[1].appIdentifier;
+						expectedViewToBeLost = currentlyAvailableAppWebViewsForDebugging[expectedAppIdentifier].splice(0, 1)[0];
 
-					isLastCheck = true;
-					return applicationManager.checkForApplicationUpdates();
-				});
+						isLastCheck = true;
+						return applicationManager.checkForApplicationUpdates();
+					})
+					.catch();
 			});
 
 			it("emits debuggableViewChanged when view's property is modified (each one except id)", (done: mocha.Done) => {
@@ -359,10 +375,12 @@ describe("ApplicationManagerBase", () => {
 					setTimeout(done, 0);
 				});
 
-				applicationManager.checkForApplicationUpdates().then(() => {
-					viewToChange.title = "new title";
-					return applicationManager.checkForApplicationUpdates();
-				});
+				applicationManager.checkForApplicationUpdates()
+					.then(() => {
+						viewToChange.title = "new title";
+						return applicationManager.checkForApplicationUpdates();
+					})
+					.catch();
 			});
 
 			it("does not emit debuggableViewChanged when id is modified", (done: mocha.Done) => {
@@ -371,23 +389,27 @@ describe("ApplicationManagerBase", () => {
 				const viewToChange = currentlyAvailableAppWebViewsForDebugging[currentlyAvailableAppsForDebugging[0].appIdentifier][0];
 				const expectedView = _.cloneDeep(viewToChange);
 
-				applicationManager.checkForApplicationUpdates().then(() => {
-					applicationManager.on("debuggableViewChanged", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
-						setTimeout(() => done(new Error("When id is changed, debuggableViewChanged must not be emitted.")), 0);
-					});
+				applicationManager.checkForApplicationUpdates()
+					.then(() => {
+						applicationManager.on("debuggableViewChanged", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
+							setTimeout(() => done(new Error("When id is changed, debuggableViewChanged must not be emitted.")), 0);
+						});
 
-					applicationManager.on("debuggableViewLost", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
-						assert.isTrue(_.isEqual(d, expectedView));
-					});
+						applicationManager.on("debuggableViewLost", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
+							assert.isTrue(_.isEqual(d, expectedView));
+						});
 
-					applicationManager.on("debuggableViewFound", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
-						expectedView.id = "new id";
-						assert.isTrue(_.isEqual(d, expectedView));
-						setTimeout(done, 0);
-					});
+						applicationManager.on("debuggableViewFound", (appIdentifier: string, d: Mobile.IDebugWebViewInfo) => {
+							expectedView.id = "new id";
+							assert.isTrue(_.isEqual(d, expectedView));
+							setTimeout(done, 0);
+						});
 
-					viewToChange.id = "new id";
-				}).then(() => applicationManager.checkForApplicationUpdates());
+						viewToChange.id = "new id";
+					})
+					.catch()
+					.then(() => applicationManager.checkForApplicationUpdates())
+					.catch();
 			});
 		});
 

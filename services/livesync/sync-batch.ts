@@ -27,7 +27,7 @@ export class SyncBatch {
 		}
 	}
 
-	public addFile(file: string): void {
+	public async addFile(file: string): Promise<void> {
 		if (this.timer) {
 			clearTimeout(this.timer);
 			this.timer = null;
@@ -36,12 +36,12 @@ export class SyncBatch {
 		this.syncQueue.push(file);
 
 		if (!this.syncInProgress) {
-			this.timer = setTimeout(() => {
+			this.timer = setTimeout(async () => {
 				if (this.syncQueue.length > 0) {
 					this.$logger.trace("Syncing %s", this.syncQueue.join(", "));
 					try {
 						this.syncInProgress = true;
-						this.done();
+						await this.done();
 					} finally {
 						this.syncInProgress = false;
 					}

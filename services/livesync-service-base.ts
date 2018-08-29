@@ -117,7 +117,7 @@ class LiveSyncServiceBase implements ILiveSyncServiceBase {
 								const livesyncData = this.livesyncData[platformName];
 								await batch.syncFiles(async (filesToSync: string[]) => {
 									await this.$liveSyncProvider.preparePlatformForSync(platformName, projectId);
-									this.syncCore([livesyncData], filesToSync);
+									await this.syncCore([livesyncData], filesToSync);
 								});
 							}
 						} catch (err) {

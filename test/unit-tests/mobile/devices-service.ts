@@ -784,7 +784,7 @@ describe("devicesService", () => {
 			androidDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_LOST, tempDevice);
 			iOSDeviceDiscovery.emit(DeviceDiscoveryEventNames.DEVICE_LOST, iOSDevice);
 			counter = 0;
-			devicesService.execute(() => { counter++; return Promise.resolve(); }, () => true, { allowNoDevices: true });
+			await devicesService.execute(() => { counter++; return Promise.resolve(); }, () => true, { allowNoDevices: true });
 			assert.deepEqual(counter, 0, "The action must not be executed when there are no devices.");
 			assert.isTrue(logger.output.indexOf(constants.ERROR_NO_DEVICES) !== -1);
 		});

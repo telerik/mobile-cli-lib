@@ -59,25 +59,22 @@ describe("ios-simulator-discovery", () => {
 	let expectedDeviceInfo: Mobile.IDeviceInfo = null;
 
 	const detectNewSimulatorAttached = async (runningSimulator: any): Promise<Mobile.IiOSSimulator> => {
-		return new Promise<Mobile.IiOSSimulator>((resolve, reject) => {
+		return new Promise<Mobile.IiOSSimulator>(async (resolve, reject) => {
 			currentlyRunningSimulators.push(_.cloneDeep(runningSimulator));
 			iOSSimulatorDiscovery.once(DeviceDiscoveryEventNames.DEVICE_FOUND, (device: Mobile.IDevice) => {
 				resolve(device);
 			});
-			// no need to await startLookingForDevices, current promise will be resolved after execution of startLookingForDevices is completed.
-			iOSSimulatorDiscovery.startLookingForDevices();
+			await iOSSimulatorDiscovery.startLookingForDevices();
 		});
 	};
 
 	const detectSimulatorDetached = async (simulatorId: string): Promise<Mobile.IiOSSimulator> => {
 		_.remove(currentlyRunningSimulators, simulator => simulator.id === simulatorId);
-		return new Promise<Mobile.IDevice>((resolve, reject) => {
+		return new Promise<Mobile.IDevice>(async (resolve, reject) => {
 			iOSSimulatorDiscovery.once(DeviceDiscoveryEventNames.DEVICE_LOST, (device: Mobile.IDevice) => {
 				resolve(device);
 			});
-
-			// no need to await startLookingForDevices, current promise will be resolved after execution of startLookingForDevices is completed.
-			iOSSimulatorDiscovery.startLookingForDevices();
+			await iOSSimulatorDiscovery.startLookingForDevices();
 		});
 	};
 

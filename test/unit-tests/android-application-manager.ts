@@ -243,7 +243,7 @@ describe("android-application-manager", () => {
 		it("should stop the logcat helper", async () => {
 			setup();
 
-			androidApplicationManager.stopApplication(validStartOptions);
+			await androidApplicationManager.stopApplication(validStartOptions);
 
 			assert.equal(logcatHelper.StopCallCount, 1);
 		});
@@ -251,7 +251,7 @@ describe("android-application-manager", () => {
 		it("should stop the application", async () => {
 			setup();
 
-			androidApplicationManager.stopApplication(validStartOptions);
+			await androidApplicationManager.stopApplication(validStartOptions);
 
 			assert.isTrue(androidDebugBridge.calledStopApplication);
 		});
@@ -259,7 +259,7 @@ describe("android-application-manager", () => {
 		it("should reset the current pid", async () => {
 			setup();
 
-			androidApplicationManager.stopApplication(validStartOptions);
+			await androidApplicationManager.stopApplication(validStartOptions);
 
 			assert.equal(deviceLogProvider.currentDevicePids[validDeviceIdentifier], null);
 		});
