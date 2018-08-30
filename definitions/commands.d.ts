@@ -10,7 +10,7 @@ interface ICommand extends ICommandOptions {
 	// One possible case where you can use this method is when you have two commandParameters, neither of them is mandatory,
 	// but at least one of them is required. Used in prop|add, prop|set, etc. commands as their logic is complicated and
 	// default validation in CommandsService is not applicable.
-	canExecute?(args: string[]): Promise<boolean>;
+	canExecute?(args: string[]): Promise<boolean | ICanExecuteCommandOutput>;
 	completionData?: string[];
 	dashedOptions?: IDictionary<IDashedOption>;
 	isHierarchicalCommand?: boolean;
@@ -21,6 +21,29 @@ interface ICommand extends ICommandOptions {
 	 * @returns {Promise<void>}
 	 */
 	postCommandAction?(args: string[]): Promise<void>;
+}
+
+interface ICommandBase extends ICommand {
+	canExecuteCommandBase(platform: string, options?: ICanExecuteCommandOptions): Promise<ICanExecuteCommandOutput>;
+}
+
+interface ICanExecuteCommandOutput {
+	canExecute: boolean;
+	/**
+	 * In case when canExecute method returns false, the help of the command is printed.
+	 * In case when canExecute method returns false and suppressCommandHelp is true, the command's help will not be printed.
+	 */
+	suppressCommandHelp?: boolean;
+}
+
+interface ICanExecuteCommandOptions {
+	validateOptions?: boolean;
+	notConfiguredEnvOptions?: INotConfiguredEnvOptions;
+}
+
+interface INotConfiguredEnvOptions {
+	hideSyncToPreviewAppOption?: boolean;
+	hideCloudBuildOption?: boolean;
 }
 
 interface IDynamicCommand extends ICommand { }
