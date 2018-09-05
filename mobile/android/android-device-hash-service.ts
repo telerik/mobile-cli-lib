@@ -73,7 +73,11 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 	}
 
 	public getChangedShasums(oldShasums: IStringDictionary, currentShasums: IStringDictionary): IStringDictionary {
-		return _.omitBy(currentShasums, (hash: string, pathToFile: string) => !!_.find(oldShasums, (oldHash: string, oldPath: string) => pathToFile === oldPath && hash === oldHash));
+		if (!oldShasums) {
+			return currentShasums;
+		}
+
+		return _.omitBy(currentShasums, (hash: string, pathToFile: string) => !!oldShasums[pathToFile] && oldShasums[pathToFile] === hash);
 	}
 
 	public async removeHashes(localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<boolean> {
