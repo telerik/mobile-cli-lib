@@ -106,7 +106,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 	}
 
 	private async pushFiles(localToDevicePaths: Mobile.ILocalToDevicePathData[]) {
-		this.$logger.trace("Changed file hashes are:", localToDevicePaths);
+		this.$logger.trace("Changed hashes are:", localToDevicePaths);
 		const transferredFiles: Mobile.ILocalToDevicePathData[] = [];
 		const transferFileAction = async (localToDevicePathData: Mobile.ILocalToDevicePathData) => {
 			transferredFiles.push(localToDevicePathData);
