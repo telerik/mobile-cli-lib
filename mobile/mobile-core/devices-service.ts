@@ -558,19 +558,19 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 
 		if (platform && deviceOption) {
 			this._platform = this.getPlatform(deviceInitOpts.platform);
-			await this.detectCurrentlyAttachedDevices(deviceInitOpts);
+			await this.startLookingForDevices(deviceInitOpts);
 			this._device = await this.getDevice(deviceOption);
 			if (this._device.deviceInfo.platform !== this._platform) {
 				this.$errors.fail(constants.ERROR_CANNOT_RESOLVE_DEVICE);
 			}
 			this.$logger.warn("Your application will be deployed only on the device specified by the provided index or identifier.");
 		} else if (!platform && deviceOption) {
-			await this.detectCurrentlyAttachedDevices(deviceInitOpts);
+			await this.startLookingForDevices(deviceInitOpts);
 			this._device = await this.getDevice(deviceOption);
 			this._platform = this._device.deviceInfo.platform;
 		} else if (platform && !deviceOption) {
 			this._platform = this.getPlatform(platform);
-			await this.detectCurrentlyAttachedDevices(deviceInitOpts);
+			await this.startLookingForDevices(deviceInitOpts);
 		} else {
 			// platform and deviceId are not specified
 			if (deviceInitOpts.skipInferPlatform) {
@@ -581,7 +581,7 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 					await this.startLookingForDevices(deviceInitOpts);
 				}
 			} else {
-				await this.detectCurrentlyAttachedDevices(deviceInitOpts);
+				await this.startLookingForDevices(deviceInitOpts);
 
 				const devices = this.getDeviceInstances();
 				const platforms = _(devices)
