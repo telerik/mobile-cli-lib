@@ -23,10 +23,6 @@ interface ICommand extends ICommandOptions {
 	postCommandAction?(args: string[]): Promise<void>;
 }
 
-interface ICommandBase extends ICommand {
-	canExecuteCommandBase(platform: string, options?: ICanExecuteCommandOptions): Promise<ICanExecuteCommandOutput>;
-}
-
 interface ICanExecuteCommandOutput {
 	canExecute: boolean;
 	/**
