@@ -1,6 +1,7 @@
 import * as path from "path";
 import { cache, invokeInit } from "../../decorators";
 import { EOL } from "os";
+import { fromWindowsRelativePathToUnix } from "../../helpers";
 interface IComposeCommandResult {
 	command: string;
 	args: string[];
@@ -129,7 +130,7 @@ export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 	}
 
 	public async pushFile(localFilePath: string, deviceFilePath: string): Promise<void> {
-		const fileDirectory = path.normalize(path.dirname(deviceFilePath));
+		const fileDirectory = fromWindowsRelativePathToUnix(path.dirname(deviceFilePath));
 		// starting from API level 28, the push command is returning an error if the directory does not exist
 		await this.executeShellCommand(["mkdir", "-p", fileDirectory]);
 		await this.executeCommand(["push", localFilePath, deviceFilePath]);
