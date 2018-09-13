@@ -80,14 +80,14 @@ function createTestInjector(data: { avdManagerOutput?: string, avdManagerError?:
 	return testInjector;
 }
 
-function getAvailableEmulatorData(data: { displayName: string, imageIdentifier: string, version: string }): Mobile.IDeviceInfo {
+function getAvailableEmulatorData(data: { displayName: string, imageIdentifier: string, version: string, model: string }): Mobile.IDeviceInfo {
 	return {
 		displayName: data.displayName,
 		errorHelp: null,
 		identifier: null,
 		imageIdentifier: data.imageIdentifier,
 		isTablet: false,
-		model: data.displayName,
+		model: data.model,
 		platform: "android",
 		status: NOT_RUNNING_EMULATOR_STATUS,
 		type: "Emulator",
@@ -96,12 +96,12 @@ function getAvailableEmulatorData(data: { displayName: string, imageIdentifier: 
 	};
 }
 
-function getRunningEmulatorData(data: { displayName: string, imageIdentifier: string, identifier: string, version: string }): Mobile.IDeviceInfo {
+function getRunningEmulatorData(data: { displayName: string, imageIdentifier: string, identifier: string, version: string, model: string }): Mobile.IDeviceInfo {
 	return {
 		identifier: data.identifier,
 		imageIdentifier: data.imageIdentifier,
 		displayName: data.displayName,
-		model: data.displayName,
+		model: data.model,
 		version: data.version,
 		vendor: 'Avd',
 		status: RUNNING_EMULATOR_STATUS,
@@ -192,9 +192,9 @@ describe("androidVirtualDeviceService", () => {
 
 				const result = await avdService.getEmulatorImages([]);
 				assert.lengthOf(result.devices, 3);
-				assert.deepEqual(result.devices[0], getAvailableEmulatorData({ displayName: "Nexus 5X", imageIdentifier: "Nexus_5_API_27", version: "8.1.0" }));
-				assert.deepEqual(result.devices[1], getAvailableEmulatorData({ displayName: "Nexus 5X", imageIdentifier: "Nexus_5X_API_28", version: "9.0.0" }));
-				assert.deepEqual(result.devices[2], getAvailableEmulatorData({ displayName: "Nexus 6P", imageIdentifier: "Nexus_6P_API_28", version: "9.0.0" }));
+				assert.deepEqual(result.devices[0], getAvailableEmulatorData({ displayName: "Nexus_5_API_27", imageIdentifier: "Nexus_5_API_27", version: "8.1.0", model: "Nexus 5X" }));
+				assert.deepEqual(result.devices[1], getAvailableEmulatorData({ displayName: "Nexus_5X_API_28", imageIdentifier: "Nexus_5X_API_28", version: "9.0.0", model: "Nexus 5X" }));
+				assert.deepEqual(result.devices[2], getAvailableEmulatorData({ displayName: "Nexus_6P_API_28", imageIdentifier: "Nexus_6P_API_28", version: "9.0.0", model: "Nexus 6P" }));
 				assert.deepEqual(result.errors, []);
 			});
 			it("should return all emulators when there are available and running emulators", async () => {
@@ -210,9 +210,9 @@ describe("androidVirtualDeviceService", () => {
 					return Promise.resolve("");
 				};
 				const result = (await avdService.getEmulatorImages(["emulator-5554	device"])).devices;
-				assert.deepEqual(result[0], getRunningEmulatorData({ displayName: "Nexus 5X", imageIdentifier: "Nexus_5_API_27", identifier: "emulator-5554", version: "8.1.0" }));
-				assert.deepEqual(result[1], getAvailableEmulatorData({ displayName: "Nexus 5X", imageIdentifier: "Nexus_5X_API_28", version: "9.0.0" }));
-				assert.deepEqual(result[2], getAvailableEmulatorData({ displayName: "Nexus 6P", imageIdentifier: "Nexus_6P_API_28", version: "9.0.0" }));
+				assert.deepEqual(result[0], getRunningEmulatorData({ displayName: "Nexus_5_API_27", imageIdentifier: "Nexus_5_API_27", identifier: "emulator-5554", version: "8.1.0", model: "Nexus 5X" }));
+				assert.deepEqual(result[1], getAvailableEmulatorData({ displayName: "Nexus_5X_API_28", imageIdentifier: "Nexus_5X_API_28", version: "9.0.0", model: "Nexus 5X" }));
+				assert.deepEqual(result[2], getAvailableEmulatorData({ displayName: "Nexus_6P_API_28", imageIdentifier: "Nexus_6P_API_28", version: "9.0.0", model: "Nexus 6P" }));
 			});
 		});
 
@@ -237,10 +237,10 @@ describe("androidVirtualDeviceService", () => {
 				const result = await avdService.getEmulatorImages([]);
 
 				assert.lengthOf(result.devices, 4);
-				assert.deepEqual(result.devices[0], getAvailableEmulatorData({ displayName: "Nexus 5X", imageIdentifier: "Nexus_5_API_27", version: "8.1.0" }));
-				assert.deepEqual(result.devices[1], getAvailableEmulatorData({ displayName: "Nexus 5X", imageIdentifier: "Nexus_5X_API_28", version: "9.0.0" }));
-				assert.deepEqual(result.devices[2], getAvailableEmulatorData({ displayName: "Nexus 6P", imageIdentifier: "Nexus_6P_API_28", version: "9.0.0" }));
-				assert.deepEqual(result.devices[3], getAvailableEmulatorData({ displayName: "Pixel 2 XL", imageIdentifier: "Pixel_2_XL_API_28", version: "9.0.0" }));
+				assert.deepEqual(result.devices[0], getAvailableEmulatorData({ displayName: "Nexus_5_API_27", model: "Nexus 5X", imageIdentifier: "Nexus_5_API_27", version: "8.1.0" }));
+				assert.deepEqual(result.devices[1], getAvailableEmulatorData({ displayName: "Nexus_5X_API_28", model: "Nexus 5X", imageIdentifier: "Nexus_5X_API_28", version: "9.0.0" }));
+				assert.deepEqual(result.devices[2], getAvailableEmulatorData({ displayName: "Nexus_6P_API_28", model: "Nexus 6P", imageIdentifier: "Nexus_6P_API_28", version: "9.0.0" }));
+				assert.deepEqual(result.devices[3], getAvailableEmulatorData({ displayName: "Pixel_2_XL_API_28", model: "Pixel 2 XL", imageIdentifier: "Pixel_2_XL_API_28", version: "9.0.0" }));
 				assert.deepEqual(result.errors, []);
 			});
 			it("shouldn't return the emulator when it actually does not exist", async () => {
@@ -262,9 +262,9 @@ describe("androidVirtualDeviceService", () => {
 				const result = await avdService.getEmulatorImages([]);
 
 				assert.lengthOf(result.devices, 3);
-				assert.deepEqual(result.devices[0], getAvailableEmulatorData({ displayName: "Nexus 5X", imageIdentifier: "Nexus_5_API_27", version: "8.1.0" }));
-				assert.deepEqual(result.devices[1], getAvailableEmulatorData({ displayName: "Nexus 5X", imageIdentifier: "Nexus_5X_API_28", version: "9.0.0" }));
-				assert.deepEqual(result.devices[2], getAvailableEmulatorData({ displayName: "Nexus 6P", imageIdentifier: "Nexus_6P_API_28", version: "9.0.0" }));
+				assert.deepEqual(result.devices[0], getAvailableEmulatorData({ displayName: "Nexus_5_API_27", model: "Nexus 5X", imageIdentifier: "Nexus_5_API_27", version: "8.1.0" }));
+				assert.deepEqual(result.devices[1], getAvailableEmulatorData({ displayName: "Nexus_5X_API_28", model: "Nexus 5X", imageIdentifier: "Nexus_5X_API_28", version: "9.0.0" }));
+				assert.deepEqual(result.devices[2], getAvailableEmulatorData({ displayName: "Nexus_6P_API_28", model: "Nexus 6P", imageIdentifier: "Nexus_6P_API_28", version: "9.0.0" }));
 				assert.deepEqual(result.errors, []);
 			});
 		});
