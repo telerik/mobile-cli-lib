@@ -191,8 +191,10 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 	}
 
 	private attachToKnownEmulatorDiscoveryEvents(): void {
-		this.$androidEmulatorDiscovery.on(constants.EmulatorDiscoveryNames.EMULATOR_IMAGE_FOUND, (emulators: Mobile.IDeviceInfo[]) => this.onEmulatorImagesFound(emulators));
-		this.$androidEmulatorDiscovery.on(constants.EmulatorDiscoveryNames.EMULATOR_IMAGE_LOST, (emulators: Mobile.IDeviceInfo[]) => this.onEmulatorImagesLost(emulators));
+		this.$androidEmulatorDiscovery.on(constants.EmulatorDiscoveryNames.EMULATOR_IMAGE_FOUND, (emulator: Mobile.IDeviceInfo) => this.onEmulatorImageFound(emulator));
+		this.$androidEmulatorDiscovery.on(constants.EmulatorDiscoveryNames.EMULATOR_IMAGE_LOST, (emulator: Mobile.IDeviceInfo) => this.onEmulatorImageLost(emulator));
+		this.$iOSSimulatorDiscovery.on(constants.EmulatorDiscoveryNames.EMULATOR_IMAGE_FOUND, (emulator: Mobile.IDeviceInfo) => this.onEmulatorImageFound(emulator));
+		this.$iOSSimulatorDiscovery.on(constants.EmulatorDiscoveryNames.EMULATOR_IMAGE_LOST, (emulator: Mobile.IDeviceInfo) => this.onEmulatorImageLost(emulator));
 	}
 
 	private attachToDeviceDiscoveryEvents(deviceDiscovery: Mobile.IDeviceDiscovery): void {
@@ -217,16 +219,16 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 		this.emit(constants.DeviceDiscoveryEventNames.DEVICE_LOST, device);
 	}
 
-	private onEmulatorImagesFound(emulators: Mobile.IDeviceInfo[]): void {
-		this.$logger.trace(`Found emulators with the following image identifiers: ${emulators.map(emulator => emulator.imageIdentifier).join(", ")}`);
-		_.forEach(emulators, emulator => this._availableEmulators[emulator.imageIdentifier] = emulator);
-		this.emit(constants.EmulatorDiscoveryNames.EMULATOR_IMAGE_FOUND, emulators);
+	private onEmulatorImageFound(emulator: Mobile.IDeviceInfo): void {
+		this.$logger.trace(`Found emulator with image identifier: ${emulator.imageIdentifier}`);
+		this._availableEmulators[emulator.imageIdentifier] = emulator;
+		this.emit(constants.EmulatorDiscoveryNames.EMULATOR_IMAGE_FOUND, emulator);
 	}
 
-	private onEmulatorImagesLost(emulators: Mobile.IDeviceInfo[]): void {
-		this.$logger.trace(`Lost emulators with the following image identifier ${emulators.map(emulator => emulator.imageIdentifier).join(", ")}`);
-		_.forEach(emulators, emulator => delete this._availableEmulators[emulator.imageIdentifier]);
-		this.emit(constants.EmulatorDiscoveryNames.EMULATOR_IMAGE_LOST, emulators);
+	private onEmulatorImageLost(emulator: Mobile.IDeviceInfo): void {
+		this.$logger.trace(`Lost emulator with image identifier ${emulator.imageIdentifier}`);
+		delete this._availableEmulators[emulator.imageIdentifier];
+		this.emit(constants.EmulatorDiscoveryNames.EMULATOR_IMAGE_LOST, emulator);
 	}
 
 	/**
