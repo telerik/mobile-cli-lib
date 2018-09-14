@@ -48,4 +48,6 @@ export class IOSSimulatorFileSystem implements Mobile.IDeviceFileSystem {
 			shelljs.cp("-f", localFilePath, deviceFilePath);
 		}
 	}
+
+	public updateHashesOnDevice(hashes: IStringDictionary, appIdentifier: string): Promise<void> { return; }
 }

@@ -12,8 +12,7 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		private $fs: IFileSystem,
 		private $logger: ILogger,
 		private $mobileHelper: Mobile.IMobileHelper,
-		private $injector: IInjector,
-		private $options: ICommonOptions) { }
+		private $injector: IInjector) { }
 
 	public async listFiles(devicePath: string, appIdentifier?: string): Promise<any> {
 		let listCommandArgs = ["ls", "-a", devicePath];
@@ -74,12 +73,6 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 
 		await executeActionByChunks<string>(_.uniq(directoriesToChmod), DEFAULT_CHUNK_SIZE, dirsChmodAction);
 
-		// Update hashes
-		const deviceHashService = this.getDeviceHashService(deviceAppData.appIdentifier);
-		if (! await deviceHashService.updateHashes(localToDevicePaths)) {
-			this.$logger.trace("Unable to find hash file on device. The next livesync command will create it.");
-		}
-
 		return transferredFiles;
 	}
 
@@ -87,28 +80,21 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		// starting from Android 9, adb push is throwing an exception when there are subfolders
 		// the check could be removed when we start supporting only runtime versions with sockets
 		const minAndroidWithoutAdbPushDir = "9.0.0";
-		const isAdbPushDirSupported =  semver.lt(semver.coerce(deviceAppData.device.deviceInfo.version), minAndroidWithoutAdbPushDir);
-		const deviceHashService = this.getDeviceHashService(deviceAppData.appIdentifier);
-		const oldShasums = this.$options.force ? null : await deviceHashService.getShasumsFromDevice();
-		const currentShasums: IStringDictionary = await deviceHashService.generateHashesFromLocalToDevicePaths(localToDevicePaths);
+		const isAdbPushDirSupported = semver.lt(semver.coerce(deviceAppData.device.deviceInfo.version), minAndroidWithoutAdbPushDir);
+		const deviceProjectDir = await deviceAppData.getDeviceProjectRootPath();
 		let transferredLocalToDevicePaths: Mobile.ILocalToDevicePathData[] = [];
 
-		if (isAdbPushDirSupported && !oldShasums) {
+		if (isAdbPushDirSupported) {
+			await this.adb.pushFile(projectFilesPath, deviceProjectDir);
 			transferredLocalToDevicePaths = localToDevicePaths;
-			const deviceProjectDir = await deviceAppData.getDeviceProjectRootPath();
-			await this.pushProjectDir(deviceHashService.hashFileDevicePath, projectFilesPath, deviceProjectDir);
 		} else {
-			const changedShasums = deviceHashService.getChangedShasums(oldShasums, currentShasums);
-			transferredLocalToDevicePaths = await this.pushFiles(changedShasums, localToDevicePaths);
+			transferredLocalToDevicePaths = await this.pushFiles(localToDevicePaths);
 		}
 
 		if (transferredLocalToDevicePaths.length) {
-			const deviceProjectDir = await deviceAppData.getDeviceProjectRootPath();
-			const filesToChmodOnDevice = await deviceHashService.getDevicePaths(transferredLocalToDevicePaths);
+			const filesToChmodOnDevice = transferredLocalToDevicePaths.map(localToDevicePath => localToDevicePath.getDevicePath());
 			await this.chmodFiles(deviceProjectDir, filesToChmodOnDevice);
 		}
-
-		await deviceHashService.uploadHashFileToDevice(currentShasums);
 
 		return transferredLocalToDevicePaths;
 	}
@@ -119,23 +105,17 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		await this.adb.executeShellCommand([commandsDeviceFilePath]);
 	}
 
-	private async pushFiles(changedShasums: IStringDictionary, localToDevicePaths: Mobile.ILocalToDevicePathData[]) {
-		this.$logger.trace("Changed file hashes are:", changedShasums);
+	private async pushFiles(localToDevicePaths: Mobile.ILocalToDevicePathData[]) {
+		this.$logger.trace("Changed hashes are:", localToDevicePaths);
 		const transferredFiles: Mobile.ILocalToDevicePathData[] = [];
-		const transferFileAction = async (hash: string, filePath: string) => {
-			const localToDevicePathData = _.find(localToDevicePaths, ldp => ldp.getLocalPath() === filePath);
+		const transferFileAction = async (localToDevicePathData: Mobile.ILocalToDevicePathData) => {
 			transferredFiles.push(localToDevicePathData);
-			return this.transferFile(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath());
+			await this.transferFile(localToDevicePathData.getLocalPath(), localToDevicePathData.getDevicePath());
 		};
 
-		await executeActionByChunks<string>(changedShasums, DEFAULT_CHUNK_SIZE, transferFileAction);
+		await executeActionByChunks<Mobile.ILocalToDevicePathData>(localToDevicePaths, DEFAULT_CHUNK_SIZE, transferFileAction);
 
 		return transferredFiles;
-	}
-
-	private async pushProjectDir(hashFileDevicePath: string, projectDir: string, deviceProjectDir: string) {
-		await this.adb.executeShellCommand(["rm", "-rf", hashFileDevicePath]);
-		await this.adb.pushFile(projectDir, deviceProjectDir);
 	}
 
 	public async transferFile(localPath: string, devicePath: string): Promise<void> {
@@ -160,6 +140,11 @@ export class AndroidDeviceFileSystem implements Mobile.IDeviceFileSystem {
 
 	public async deleteFile(deviceFilePath: string, appIdentifier: string): Promise<void> {
 		await this.adb.executeShellCommand(["rm", "-rf", deviceFilePath]);
+	}
+
+	public async updateHashesOnDevice(hashes: IStringDictionary, appIdentifier: string): Promise<void> {
+		const deviceHashService = this.getDeviceHashService(appIdentifier);
+		await deviceHashService.uploadHashFileToDevice(hashes);
 	}
 
 	private getTempDir(): string {

@@ -135,6 +135,10 @@ export class AndroidDebugBridge implements Mobile.IAndroidDebugBridge {
 		await this.executeCommand(["push", localFilePath, deviceFilePath]);
 		await this.executeShellCommand(["chmod", "0777", fileDirectory]);
 	}
+
+	public async removeFile(deviceFilePath: string): Promise<void> {
+		await this.executeShellCommand(["rm", "-rf", deviceFilePath]);
+	}
 }
 
 $injector.register("adb", AndroidDebugBridge);

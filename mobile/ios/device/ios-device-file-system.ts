@@ -66,6 +66,8 @@ export class IOSDeviceFileSystem implements Mobile.IDeviceFileSystem {
 		return localToDevicePaths;
 	}
 
+	public async updateHashesOnDevice(hashes: IStringDictionary, appIdentifier: string): Promise<void> { return; }
+
 	private async uploadFilesCore(filesToUpload: IOSDeviceLib.IUploadFilesData[]): Promise<void> {
 		await this.$iosDeviceOperations.uploadFiles(filesToUpload, (err: IOSDeviceLib.IDeviceError) => {
 			if (err.deviceId === this.device.deviceInfo.identifier) {

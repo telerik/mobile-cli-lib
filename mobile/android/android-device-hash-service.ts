@@ -38,17 +38,11 @@ export class AndroidDeviceHashService implements Mobile.IAndroidDeviceHashServic
 		await this.adb.pushFile(this.hashFileLocalPath, this.hashFileDevicePath);
 	}
 
-	public async updateHashes(localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<boolean> {
-		const oldShasums = await this.getShasumsFromDevice();
-		if (oldShasums) {
-			await this.generateHashesFromLocalToDevicePaths(localToDevicePaths, oldShasums);
+	public async updateHashes(localToDevicePaths: Mobile.ILocalToDevicePathData[]): Promise<void> {
+		const oldShasums = await this.getShasumsFromDevice() || {};
+		await this.generateHashesFromLocalToDevicePaths(localToDevicePaths, oldShasums);
 
-			await this.uploadHashFileToDevice(oldShasums);
-
-			return true;
-		}
-
-		return false;
+		await this.uploadHashFileToDevice(oldShasums);
 	}
 
 	public async generateHashesFromLocalToDevicePaths(localToDevicePaths: Mobile.ILocalToDevicePathData[], initialShasums: IStringDictionary = {}): Promise<IStringDictionary> {
