@@ -105,13 +105,13 @@ export class CommandsService implements ICommandsService {
 		return this.$helpService.showCommandLineHelp({ commandName: this.beautifyCommandName(commandName), commandArguments });
 	}
 
-	private async executeCommandAction(commandName: string, commandArguments: string[], action: (_commandName: string, _commandArguments: string[]) => Promise<boolean>): Promise<boolean> {
+	private async executeCommandAction(commandName: string, commandArguments: string[], action: (_commandName: string, _commandArguments: string[]) => Promise<boolean | ICanExecuteCommandOutput>): Promise<boolean> {
 		return this.$errors.beginCommand(
 			() => action.apply(this, [commandName, commandArguments]),
 			() => this.printHelp(commandName, commandArguments));
 	}
 
-	private async tryExecuteCommandAction(commandName: string, commandArguments: string[]): Promise<boolean> {
+	private async tryExecuteCommandAction(commandName: string, commandArguments: string[]): Promise<boolean | ICanExecuteCommandOutput> {
 		const command = this.$injector.resolveCommand(commandName);
 		if (!command || (command && !command.isHierarchicalCommand)) {
 			this.$options.validateOptions(command ? command.dashedOptions : null);
@@ -125,19 +125,25 @@ export class CommandsService implements ICommandsService {
 	}
 
 	public async tryExecuteCommand(commandName: string, commandArguments: string[]): Promise<void> {
-		if (await this.executeCommandAction(commandName, commandArguments, this.tryExecuteCommandAction)) {
+		const canExecuteResult: any = await this.executeCommandAction(commandName, commandArguments, this.tryExecuteCommandAction);
+		const canExecute = typeof canExecuteResult === "object" ? canExecuteResult.canExecute : canExecuteResult;
+		const suppressCommandHelp = typeof canExecuteResult === "object" ? canExecuteResult.suppressCommandHelp : false;
+
+		if (canExecute) {
 			await this.executeCommandAction(commandName, commandArguments, this.executeCommandUnchecked);
 		} else {
 			// If canExecuteCommand returns false, the command cannot be executed or there's no such command at all.
 			const command = this.$injector.resolveCommand(commandName);
 			if (command) {
-				// If command cannot be executed we should print its help.
-				await this.printHelp(commandName, commandArguments);
+				if (!suppressCommandHelp) {
+					// If command cannot be executed we should print its help.
+					await this.printHelp(commandName, commandArguments);
+				}
 			}
 		}
 	}
 
-	private async canExecuteCommand(commandName: string, commandArguments: string[], isDynamicCommand?: boolean): Promise<boolean> {
+	private async canExecuteCommand(commandName: string, commandArguments: string[], isDynamicCommand?: boolean): Promise<boolean | ICanExecuteCommandOutput> {
 		const command = this.$injector.resolveCommand(commandName);
 		const beautifiedName = helpers.stringReplaceAll(commandName, "|", " ");
 		if (command) {
