@@ -1,6 +1,6 @@
 import { DevicesService } from "../../../mobile/mobile-core/devices-service";
 import { Yok } from "../../../yok";
-import { DeviceDiscoveryEventNames } from "../../../constants";
+import { EmulatorDiscoveryNames, DeviceDiscoveryEventNames } from "../../../constants";
 
 import { EventEmitter } from "events";
 import { assert, use } from "chai";
@@ -13,6 +13,12 @@ import { CommonLoggerStub, ErrorsStub } from "../stubs";
 import { Messages } from "../../../messages/messages";
 import * as constants from "../../../constants";
 import { DevicePlatformsConstants } from "../../../mobile/device-platforms-constants";
+
+class AndroidEmulatorDiscoveryStub extends EventEmitter {
+	public startLookingForDevices(): void {
+		// Intentionally left blank.
+	}
+}
 
 class DevicesServiceInheritor extends DevicesService {
 	public startEmulatorIfNecessary(data?: Mobile.IDevicesServicesInitializationOptions): Promise<void> {
@@ -176,10 +182,7 @@ function createTestInjector(): IInjector {
 	});
 
 	testInjector.register("androidProcessService", { /* no implementation required */ });
-	testInjector.register("androidEmulatorDiscovery", {
-		on: () => ({}),
-		startLookingForDevices: () => ({})
-	});
+	testInjector.register("androidEmulatorDiscovery", AndroidEmulatorDiscoveryStub);
 	testInjector.register("emulatorHelper", {});
 
 	return testInjector;
@@ -300,7 +303,7 @@ describe("devicesService", () => {
 		assert.deepEqual(devices[1], androidDevice);
 	});
 
-	it("attaches to events when a new custom DevicesService is instantiated", () => {
+	it("attaches to events when a new custom device discovery is instantiated", () => {
 		const customDeviceDiscovery = testInjector.resolve(CustomDeviceDiscoveryStub);
 		devicesService.addDeviceDiscovery(customDeviceDiscovery);
 		assert.isFalse(devicesService.hasDevices, "Initially devicesService hasDevices must be false.");
@@ -310,6 +313,59 @@ describe("devicesService", () => {
 		assert.isTrue(devicesService.hasDevices, "After emitting two devices, hasDevices must be true");
 		assert.deepEqual(devices[0], iOSDevice);
 		assert.deepEqual(devices[1], androidDevice);
+	});
+
+	describe("emits correct event when emulator images are changed", () => {
+		const emulatorDataToEmit: Mobile.IDeviceInfo = {
+			identifier: "identifier",
+			displayName: "displayName",
+			model: "model",
+			version: "version",
+			vendor: "vendor",
+			status: "status",
+			errorHelp: null,
+			isTablet: false,
+			type: "type",
+			platform: "android"
+		};
+
+		it(`emits ${EmulatorDiscoveryNames.EMULATOR_IMAGE_FOUND} event when new Android Emulator image is found`, (done: mocha.Done) => {
+			const androidEmulatorDiscovery = testInjector.resolve<AndroidEmulatorDiscoveryStub>("androidEmulatorDiscovery");
+			devicesService.on(EmulatorDiscoveryNames.EMULATOR_IMAGE_FOUND, (emulatorImage: Mobile.IDeviceInfo) => {
+				assert.deepEqual(emulatorImage, emulatorDataToEmit);
+				done();
+			});
+
+			androidEmulatorDiscovery.emit(EmulatorDiscoveryNames.EMULATOR_IMAGE_FOUND, emulatorDataToEmit);
+		});
+
+		it(`emits ${EmulatorDiscoveryNames.EMULATOR_IMAGE_FOUND} when new iOS Simulator image is found`, (done: mocha.Done) => {
+			devicesService.on(EmulatorDiscoveryNames.EMULATOR_IMAGE_FOUND, (emulatorImage: Mobile.IDeviceInfo) => {
+				assert.deepEqual(emulatorImage, emulatorDataToEmit);
+				done();
+			});
+
+			iOSSimulatorDiscovery.emit(EmulatorDiscoveryNames.EMULATOR_IMAGE_FOUND, emulatorDataToEmit);
+		});
+
+		it(`emits ${EmulatorDiscoveryNames.EMULATOR_IMAGE_LOST} event when new Android Emulator image is deleted`, (done: mocha.Done) => {
+			const androidEmulatorDiscovery = testInjector.resolve<AndroidEmulatorDiscoveryStub>("androidEmulatorDiscovery");
+			devicesService.on(EmulatorDiscoveryNames.EMULATOR_IMAGE_LOST, (emulatorImage: Mobile.IDeviceInfo) => {
+				assert.deepEqual(emulatorImage, emulatorDataToEmit);
+				done();
+			});
+
+			androidEmulatorDiscovery.emit(EmulatorDiscoveryNames.EMULATOR_IMAGE_LOST, emulatorDataToEmit);
+		});
+
+		it(`emits ${EmulatorDiscoveryNames.EMULATOR_IMAGE_LOST} when iOS Simulator image is deleted`, (done: mocha.Done) => {
+			devicesService.on(EmulatorDiscoveryNames.EMULATOR_IMAGE_LOST, (emulatorImage: Mobile.IDeviceInfo) => {
+				assert.deepEqual(emulatorImage, emulatorDataToEmit);
+				done();
+			});
+
+			iOSSimulatorDiscovery.emit(EmulatorDiscoveryNames.EMULATOR_IMAGE_LOST, emulatorDataToEmit);
+		});
 	});
 
 	describe("startEmulatorIfNecessary behaves as expected:", () => {

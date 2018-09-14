@@ -306,7 +306,7 @@ export class AndroidVirtualDeviceService implements Mobile.IAndroidVirtualDevice
 		return {
 			identifier: null,
 			imageIdentifier: avdInfo.avdId || avdInfo.displayName,
-			displayName: avdInfo.displayName || avdInfo.device || avdInfo.avdId,
+			displayName: avdInfo.displayName || avdInfo.avdId || avdInfo.device,
 			model: avdInfo.device,
 			version: this.$emulatorHelper.mapAndroidApiLevelToVersion[avdInfo.target],
 			vendor: AndroidVirtualDevice.AVD_VENDOR_NAME,
