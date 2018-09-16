@@ -66,8 +66,6 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 
 	@exported("devicesService")
 	public async startEmulator(options: Mobile.IStartEmulatorOptions): Promise<string[]> {
-		console.log(`startEmulator options`);
-		console.log(options);
 		if (!options || (!options.imageIdentifier && !options.emulatorIdOrName)) {
 			return ["Missing mandatory image identifier or name option."];
 		}
@@ -349,15 +347,15 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 	public async getDevice(deviceOption: string): Promise<Mobile.IDevice> {
 		let device: Mobile.IDevice = null;
 
-		if (helpers.isNumber(deviceOption)) {
-			device = this.getDeviceByIndex(parseInt(deviceOption, 10));
-		}
-
 		if (!device) {
 			device = _.find(this.getDeviceInstances(), d =>
 				(d.deviceInfo.identifier && d.deviceInfo.identifier === deviceOption) ||
 				(d.deviceInfo.displayName && d.deviceInfo.displayName === deviceOption) ||
 				(d.deviceInfo.imageIdentifier && d.deviceInfo.imageIdentifier === deviceOption));
+		}
+
+		if (!device && helpers.isNumberWithoutExponent(deviceOption)) {
+			device = this.getDeviceByIndex(parseInt(deviceOption, 10));
 		}
 
 		if (!device) {
@@ -500,7 +498,7 @@ export class DevicesService extends EventEmitter implements Mobile.IDevicesServi
 
 		//check if --device(value) is running, if it's not or it's not the same as is specified, start with name from --device(value)
 		if (data.deviceId) {
-			if (!helpers.isNumber(data.deviceId)) {
+			if (!helpers.isNumberWithoutExponent(data.deviceId)) {
 				const activeDeviceInstance = _.find(deviceInstances, (device: Mobile.IDevice) => device.deviceInfo.identifier === data.deviceId);
 				if (!activeDeviceInstance) {
 					return this.startEmulatorCore(data);

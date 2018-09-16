@@ -654,4 +654,47 @@ describe("helpers", () => {
 			_.each(getValueFromNestedObjectTestData, testData => assertValueFromNestedObjectTestData(testData));
 		});
 	});
+
+	describe("isNumberWithoutExponent", () => {
+		const testData: ITestData[] = [
+			{
+				input: 42,
+				expectedResult: true
+			},
+			{
+				input: "42",
+				expectedResult: true
+			},
+			{
+				input: null,
+				expectedResult: false
+			},
+			{
+				input: undefined,
+				expectedResult: false
+			},
+			{
+				input: {},
+				expectedResult: false
+			},
+			{
+				input: "some text",
+				expectedResult: false
+			},
+			{
+				input: "1e7",
+				expectedResult: false
+			},
+			{
+				input: "3.14",
+				expectedResult: true
+			}
+		];
+
+		it("returns correct result", () => {
+			_.each(testData, testCase => {
+				assert.deepEqual(helpers.isNumberWithoutExponent(testCase.input), testCase.expectedResult);
+			});
+		});
+	});
 });
