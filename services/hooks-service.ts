@@ -31,11 +31,7 @@ export class HooksService implements IHooksService {
 	private initialize(projectDir: string): void {
 		this.cachedHooks = {};
 
-		const relativeToLibPath = path.join(__dirname, "../../");
-		this.hooksDirectories = [
-			path.join(relativeToLibPath, HooksService.HOOKS_DIRECTORY_NAME),
-			path.join(relativeToLibPath, "common", HooksService.HOOKS_DIRECTORY_NAME)
-		];
+		this.hooksDirectories = [];
 
 		projectDir = projectDir || this.$projectHelper.projectDir;
 
