@@ -593,6 +593,20 @@ describe("devicesService", () => {
 				await assertAllMethodsResults("1");
 			});
 
+			it("when deviceId is deviceIdentifier that looks like number (with exponent)", async () => {
+				const androidDeviceOriginalId = androidDevice.deviceInfo.identifier;
+				androidDevice.deviceInfo.identifier = "16089e09";
+				await assertAllMethodsResults(androidDevice.deviceInfo.identifier);
+				androidDevice.deviceInfo.identifier = androidDeviceOriginalId;
+			});
+
+			it("when deviceId is deviceIdentifier that looks like number", async () => {
+				const androidDeviceOriginalId = androidDevice.deviceInfo.identifier;
+				androidDevice.deviceInfo.identifier = "4153465641573398";
+				await assertAllMethodsResults(androidDevice.deviceInfo.identifier);
+				androidDevice.deviceInfo.identifier = androidDeviceOriginalId;
+			});
+
 			it("fails when deviceId is invalid index (less than 0)", async () => {
 				const expectedErrorMessage = getErrorMessage(testInjector, "NotFoundDeviceByIndexErrorMessage", "-2");
 				await assert.isRejected(devicesService.initialize({ platform: "android", deviceId: "-1" }), expectedErrorMessage);
