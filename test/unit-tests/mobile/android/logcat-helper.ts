@@ -5,14 +5,14 @@ import * as path from "path";
 import * as childProcess from "child_process";
 
 class ChildProcessStub {
-	public static processSpawnCallCount = 0;
-	public static processKillCallCount = 0;
-	public static adbProcessArgs: string[] = [];
+	public processSpawnCallCount = 0;
+	public processKillCallCount = 0;
+	public adbProcessArgs: string[] = [];
 	private isWin = /^win/.test(process.platform);
 
 	public spawn(command: string, args?: string[], options?: any): childProcess.ChildProcess {
-		ChildProcessStub.adbProcessArgs = args;
-		ChildProcessStub.processSpawnCallCount++;
+		this.adbProcessArgs = args;
+		this.processSpawnCallCount++;
 		let pathToExecutable = "";
 		let shell = "";
 		if (this.isWin) {
@@ -25,8 +25,8 @@ class ChildProcessStub {
 		const pathToSample = path.join(__dirname, "valid-sample.txt");
 		const spawnedProcess = childProcess.spawn(pathToExecutable, [pathToSample], { shell });
 		const spawnedProcessKill = spawnedProcess.kill;
-		spawnedProcess.kill = function (signal: string) {
-			ChildProcessStub.processKillCallCount++;
+		spawnedProcess.kill = (signal: string) => {
+			this.processKillCallCount++;
 			spawnedProcessKill.call(spawnedProcessKill, signal);
 		};
 
@@ -92,12 +92,12 @@ describe("logcat-helper", () => {
 	const validIdentifier = "valid-identifier";
 	let injector: IInjector;
 	let loggedData: string[];
+	let childProcess: ChildProcessStub;
 
 	beforeEach(() => {
 		injector = createTestInjector();
 		loggedData = [];
-		ChildProcessStub.processSpawnCallCount = 0;
-		ChildProcessStub.processKillCallCount = 0;
+		childProcess = injector.resolve<ChildProcessStub>("childProcess");
 	});
 
 	describe("start", () => {
@@ -121,7 +121,7 @@ describe("logcat-helper", () => {
 				logData(line: string, platform: string, deviceIdentifier: string): void {
 					loggedData.push(line);
 					if (line === "end") {
-						assert.include(ChildProcessStub.adbProcessArgs, `--pid=${expectedPid}`);
+						assert.include(childProcess.adbProcessArgs, `--pid=${expectedPid}`);
 						done();
 					}
 				}
@@ -146,7 +146,7 @@ describe("logcat-helper", () => {
 				logData(line: string, platform: string, deviceIdentifier: string): void {
 					loggedData.push(line);
 					if (line === "end") {
-						assert.notInclude(ChildProcessStub.adbProcessArgs, `--pid=${expectedPid}`);
+						assert.notInclude(childProcess.adbProcessArgs, `--pid=${expectedPid}`);
 						done();
 					}
 				}
@@ -168,7 +168,7 @@ describe("logcat-helper", () => {
 				deviceIdentifier: validIdentifier
 			});
 
-			assert.equal(ChildProcessStub.processSpawnCallCount, 1);
+			assert.equal(childProcess.processSpawnCallCount, 1);
 		});
 
 		it("should start multiple logcat processes when called multiple times with different identifiers", async () => {
@@ -184,7 +184,7 @@ describe("logcat-helper", () => {
 				deviceIdentifier: `${validIdentifier}3`
 			});
 
-			assert.equal(ChildProcessStub.processSpawnCallCount, 3);
+			assert.equal(childProcess.processSpawnCallCount, 3);
 		});
 	});
 	describe("stop", () => {
@@ -194,13 +194,13 @@ describe("logcat-helper", () => {
 			await logcatHelper.start({
 				deviceIdentifier: validIdentifier
 			});
-			assert.equal(ChildProcessStub.processSpawnCallCount, 1);
+			assert.equal(childProcess.processSpawnCallCount, 1);
 			await logcatHelper.stop(validIdentifier);
 			await logcatHelper.start({
 				deviceIdentifier: validIdentifier
 			});
 
-			assert.equal(ChildProcessStub.processSpawnCallCount, 2);
+			assert.equal(childProcess.processSpawnCallCount, 2);
 		});
 
 		it("should kill the process just once if called multiple times", async () => {
@@ -212,7 +212,7 @@ describe("logcat-helper", () => {
 			await logcatHelper.stop(validIdentifier);
 			await logcatHelper.stop(validIdentifier);
 
-			assert.equal(ChildProcessStub.processKillCallCount, 1);
+			assert.equal(childProcess.processKillCallCount, 1);
 		});
 
 		it("should not kill the process if started with keepSingleProcess", async () => {
@@ -225,7 +225,7 @@ describe("logcat-helper", () => {
 
 			await logcatHelper.stop(validIdentifier);
 			await logcatHelper.stop(validIdentifier);
-			assert.equal(ChildProcessStub.processKillCallCount, 0);
+			assert.equal(childProcess.processKillCallCount, 0);
 		});
 
 		it("should do nothing if called without start", async () => {
@@ -233,8 +233,8 @@ describe("logcat-helper", () => {
 
 			await logcatHelper.stop(validIdentifier);
 
-			assert.equal(ChildProcessStub.processSpawnCallCount, 0);
-			assert.equal(ChildProcessStub.processKillCallCount, 0);
+			assert.equal(childProcess.processSpawnCallCount, 0);
+			assert.equal(childProcess.processKillCallCount, 0);
 		});
 	});
 });
