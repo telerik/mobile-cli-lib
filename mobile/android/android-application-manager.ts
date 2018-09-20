@@ -15,6 +15,7 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 		private $androidProcessService: Mobile.IAndroidProcessService,
 		private $httpClient: Server.IHttpClient,
 		private $deviceLogProvider: Mobile.IDeviceLogProvider,
+		private $errors: IErrors,
 		$logger: ILogger,
 		$hooksService: IHooksService) {
 		super($logger, $hooksService);
@@ -78,12 +79,14 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 			const processIdentifier = await this.getAppProcessId(deviceIdentifier, appIdentifier);
 			if (processIdentifier) {
 				this.$deviceLogProvider.setApplicationPidForDevice(deviceIdentifier, processIdentifier);
+				await this.$logcatHelper.start({
+					deviceIdentifier: this.identifier,
+					pid: processIdentifier
+				});
+			} else {
+				await this.$logcatHelper.dump(this.identifier);
+				this.$errors.failWithoutHelp(`Unable to find running "${appIdentifier}" application on device "${deviceIdentifier}".`);
 			}
-
-			await this.$logcatHelper.start({
-				deviceIdentifier: this.identifier,
-				pid: processIdentifier
-			});
 		}
 	}
 
@@ -99,10 +102,6 @@ export class AndroidApplicationManager extends ApplicationManagerBase {
 				await sleep(this.PID_CHECK_INTERVAL);
 				hasTimedOut = new Date().getTime() - appIdCheckStartTime > this.PID_CHECK_TIMEOUT;
 			}
-		}
-
-		if (!processIdentifier) {
-			this.$logger.warn(`Unable to find running "${appIdentifier}" application on device "${deviceIdentifier}".`);
 		}
 
 		return processIdentifier;

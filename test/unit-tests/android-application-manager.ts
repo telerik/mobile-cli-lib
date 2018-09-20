@@ -1,7 +1,7 @@
 import { AndroidApplicationManager } from "../../mobile/android/android-application-manager";
 import { Yok } from "../../yok";
 import { assert } from "chai";
-import { CommonLoggerStub, LogcatHelperStub, AndroidProcessServiceStub, DeviceLogProviderStub } from "./stubs";
+import { CommonLoggerStub, LogcatHelperStub, AndroidProcessServiceStub, DeviceLogProviderStub, ErrorsStub } from "./stubs";
 const invalidIdentifier = "invalid.identifier";
 const validDeviceIdentifier = "device.identifier";
 const validIdentifier = "org.nativescript.testApp";
@@ -101,11 +101,11 @@ function createTestInjector(options?: {
 	testInjector.register("adb", AndroidDebugBridgeStub);
 	testInjector.register('childProcess', {});
 	testInjector.register("logger", CommonLoggerStub);
+	testInjector.register("errors", ErrorsStub);
 	testInjector.register("config", {});
 	testInjector.register("staticConfig", {});
 	testInjector.register("androidDebugBridgeResultHandler", {});
 	testInjector.register("options", { justlaunch: options && options.justLaunch || false });
-	testInjector.register("errors", {});
 	testInjector.register("identifier", validDeviceIdentifier);
 	testInjector.register("logcatHelper", LogcatHelperStub);
 	testInjector.register("androidProcessService", AndroidProcessServiceStub);
@@ -224,18 +224,21 @@ describe("android-application-manager", () => {
 			assert.isTrue(logger.output.indexOf(`Unable to find running "${validIdentifier}" application on device `) === -1);
 		});
 
-		it("starts the logcat helper without pid after a timeout, when pid not available", async () => {
+		it("starts the logcat helper without pid after a timeout, when pid not available", () => {
 			setup();
 			const expectedPidTimeout = 100;
 			androidApplicationManager.PID_CHECK_INTERVAL = 10;
 			androidApplicationManager.PID_CHECK_TIMEOUT = expectedPidTimeout;
 			androidProcessService.GetAppProcessIdResult = null;
 
-			await androidApplicationManager.startApplication(validStartOptions);
+			const startApplicationPromise = androidApplicationManager.startApplication(validStartOptions);
 
-			assert.equal(logcatHelper.LastStartCallOptions.pid, null);
-			assert.isTrue(logger.traceOutput.indexOf("Wasn't able to get pid") > -1);
-			assert.isTrue(logger.output.indexOf(`Unable to find running "${validIdentifier}" application on device `) > -1);
+			startApplicationPromise.catch(() => {
+				assert.isTrue(logcatHelper.DumpCallCount > 0);
+				assert.isTrue(logger.traceOutput.indexOf("Wasn't able to get pid") > -1);
+			});
+
+			return assert.isRejected(startApplicationPromise, `Unable to find running "${validIdentifier}" application on device `);
 		});
 	});
 

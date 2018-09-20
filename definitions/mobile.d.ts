@@ -180,6 +180,7 @@ declare module Mobile {
 	interface ILogcatHelper {
 		start(options: ILogcatStartOptions): Promise<void>;
 		stop(deviceIdentifier: string): void;
+		dump(deviceIdentifier: string): Promise<void>;
 	}
 
 	/**
@@ -465,6 +466,15 @@ declare module Mobile {
 
 	interface IDeviceActionResult<T> extends IDeviceIdentifier {
 		result: T;
+	}
+
+	/**
+	 * Describes a projectIdentifier for both platforms.
+	 */
+	interface IProjectIdentifier {
+		ios: string;
+		android: string;
+		[platform: string]: string;
 	}
 
 	interface IDevicesService extends NodeJS.EventEmitter, IPlatform {
