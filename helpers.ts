@@ -263,8 +263,9 @@ export function block(operation: () => void): void {
 	}
 }
 
-export function isNumber(n: any): boolean {
-	return !isNaN(parseFloat(n)) && isFinite(n);
+export function isNumberWithoutExponent(n: any): boolean {
+	const parsedNum = parseFloat(n);
+	return !isNaN(parsedNum) && isFinite(n) && n.toString && n.toString() === parsedNum.toString();
 }
 
 export function fromWindowsRelativePathToUnix(windowsRelativePath: string): string {
